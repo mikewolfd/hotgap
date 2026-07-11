@@ -1,14 +1,126 @@
 {
-  "household": {
-    "people": {
-      "you": {"age": {"2026": 30}, "medicaid": {"2026": null}, "ssi": {"2026": null}, "wic": {"2026": null}, "chip": {"2026": null}},
-      "your first dependent": {"age": {"2026": 5}, "medicaid": {"2026": null}, "chip": {"2026": null}}
+ "household": {
+  "people": {
+   "you": {
+    "age": {
+     "2026": 30
     },
-    "families": {"your family": {"members": ["you", "your first dependent"]}},
-    "marital_units": {"your marital unit": {"members": ["you"]}},
-    "tax_units": {"your tax unit": {"members": ["you", "your first dependent"], "eitc": {"2026": null}, "refundable_ctc": {"2026": null}, "premium_tax_credit": {"2026": null}, "income_tax": {"2026": null}}},
-    "spm_units": {"your spm_unit": {"members": ["you", "your first dependent"], "snap": {"2026": null}, "tanf": {"2026": null}, "spm_unit_capped_housing_subsidy": {"2026": null}, "childcare_expenses": {"2026": 0}}},
-    "households": {"your household": {"members": ["you", "your first dependent"], "state_name": {"2026": "CA"}, "household_net_income": {"2026": null}}},
-    "axes": [[{"name": "employment_income", "min": 0, "max": 100000, "count": 101, "period": "2026"}]]
-  }
+    "medicaid": {
+     "2026": null
+    },
+    "ssi": {
+     "2026": null
+    },
+    "wic": {
+     "2026": null
+    },
+    "chip": {
+     "2026": null
+    }
+   },
+   "your first dependent": {
+    "age": {
+     "2026": 5
+    },
+    "medicaid": {
+     "2026": null
+    },
+    "chip": {
+     "2026": null
+    },
+    "head_start": {
+     "2026": null
+    },
+    "early_head_start": {
+     "2026": null
+    }
+   }
+  },
+  "families": {
+   "your family": {
+    "members": [
+     "you",
+     "your first dependent"
+    ]
+   }
+  },
+  "marital_units": {
+   "your marital unit": {
+    "members": [
+     "you"
+    ]
+   }
+  },
+  "tax_units": {
+   "your tax unit": {
+    "members": [
+     "you",
+     "your first dependent"
+    ],
+    "eitc": {
+     "2026": null
+    },
+    "refundable_ctc": {
+     "2026": null
+    },
+    "premium_tax_credit": {
+     "2026": null
+    },
+    "income_tax": {
+     "2026": null
+    }
+   }
+  },
+  "spm_units": {
+   "your spm_unit": {
+    "members": [
+     "you",
+     "your first dependent"
+    ],
+    "snap": {
+     "2026": null
+    },
+    "tanf": {
+     "2026": null
+    },
+    "spm_unit_capped_housing_subsidy": {
+     "2026": null
+    },
+    "childcare_expenses": {
+     "2026": 0
+    },
+    "free_school_meals": {
+     "2026": null
+    },
+    "reduced_price_school_meals": {
+     "2026": null
+    }
+   }
+  },
+  "households": {
+   "your household": {
+    "members": [
+     "you",
+     "your first dependent"
+    ],
+    "state_name": {
+     "2026": "CA"
+    },
+    "household_net_income": {
+     "2026": null
+    }
+   }
+  },
+  "axes": [
+   [
+    {
+     "name": "employment_income",
+     "min": 0,
+     "max": 100000,
+     "count": 101,
+     "period": "2026"
+    }
+   ]
+  ]
+ }
 }
