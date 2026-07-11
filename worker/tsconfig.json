@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["src"],
+  "compilerOptions": { "outDir": "dist", "types": ["@cloudflare/workers-types"], "lib": ["ES2022"] },
+  "references": [{ "path": "../shared" }]
+}
