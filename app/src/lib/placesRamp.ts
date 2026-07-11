@@ -27,6 +27,25 @@ export interface Ramp {
   binIndex: (value: number) => number;
 }
 
+/** Which places-door summary metric currently drives the map fill, legend, and rank. */
+export type PlacesMetric = "leap" | "loss";
+
+/**
+ * Reads whichever field the selected metric points at off a state's summary
+ * metrics for one archetype. Centralized here (not inlined per call site in
+ * PlacesPage) so the ramp, the per-state map fill, and the rank line can
+ * never quietly diverge on which field backs "leap" vs "loss" — and so this
+ * selection logic gets its own unit tests instead of only being exercised
+ * through component rendering.
+ */
+export function metricValue(
+  m: { biggestLoss: number; leap: number } | undefined,
+  metric: PlacesMetric,
+): number {
+  if (!m) return 0;
+  return metric === "leap" ? m.leap : m.biggestLoss;
+}
+
 export function buildRamp(values: number[]): Ramp {
   const max = Math.max(0, ...values);
 

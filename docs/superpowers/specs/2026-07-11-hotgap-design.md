@@ -10,6 +10,9 @@ A public website where someone with a 5th-grade education can understand their o
 benefits cliff — "if I get paid this much, I lose this much" — and where anyone can
 see which states (later counties/cities) have better or worse benefits gaps.
 
+The product's core question: how hard is it to get off public benefits safely, and
+at what thresholds?
+
 Dual identity, per owner: **public good / civic tool** and **portfolio / craft piece**.
 Free, open source, no ads, no data collection beyond what the calculation needs.
 
@@ -74,17 +77,33 @@ Result page:
 ## 2. Places door — the map and the gap score
 
 *(Shipped: built and reviewed against the real weekly PolicyEngine sweep, not mockups —
-see Plan 2, Tasks 16-19.)*
+see Plan 2, Tasks 16-19. Escape metrics — the leap, safe exit, and program thresholds —
+added in Plan 3, Task 24.)*
 
-- **Choropleth US map** colored by gap severity for a selected household archetype.
-  Default archetype: single parent, two kids (most cliff-prone household). Picker offers
-  8 archetypes: {single, married} × {no kids, 1 kid (age 3), 2 kids (ages 3 and 7),
-  3 kids (ages 1, 4, and 9)}.
-- **Headline metric — "Biggest possible loss":** the maximum drop in net resources a family
-  like this can experience by earning more, in dollars. Survives a 5th-grade explanation.
+The map exists to answer the product's core question at a glance: how hard is it to
+get off public benefits safely, and at what thresholds? Three derived numbers carry
+that answer, in increasing order of specificity:
+
+- **Biggest possible loss:** the maximum drop in net resources a family like this can
+  experience by earning more, in dollars. Survives a 5th-grade explanation. The map's
+  original metric; still one tap away via the metric picker.
+- **The leap** *(map default):* the size of the raise a family must clear in one move
+  to get past the worst rough zone. Answers "how hard is it to escape" more directly
+  than the raw loss figure, so it's the metric picker's default choice.
+- **Safe exit and program thresholds** *(state drill-down only):* the earnings past
+  which more pay is never a risk again ("safe exit" — or an honest "not found" when
+  the sweep never reaches one), plus the earnings where each individual program (SNAP,
+  Medicaid, TANF, etc.) stops. Computed from the same `escapeAnalysis()` math the
+  personal door's "path off help" section uses, so the two doors can never disagree.
+
+- **Choropleth US map** colored by the selected metric (leap or biggest loss) for a
+  selected household archetype. Default archetype: single parent, two kids (most
+  cliff-prone household). Picker offers 8 archetypes: {single, married} × {no kids,
+  1 kid (age 3), 2 kids (ages 3 and 7), 3 kids (ages 1, 4, and 9)}.
 - **Secondary metric — "danger zone width":** how wide the earnings range is where more
   pay means less money.
-- **State drill-down:** the state's curve, its worst cliff, rank vs. neighbors.
+- **State drill-down:** the state's curve, its worst cliff, rank vs. neighbors (by
+  whichever metric is selected), and the safe-exit/leap/program-threshold lines above.
 - Counties/cities layer into the same pages later via housing-cost (HUD FMR) and
   childcare-rate joins in the batch pipeline; no site rework.
 

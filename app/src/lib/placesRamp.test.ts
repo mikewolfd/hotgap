@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { RAMP_BINS, RAMP_COLOR_VARS, buildRamp } from "./placesRamp.js";
+import { RAMP_BINS, RAMP_COLOR_VARS, buildRamp, metricValue } from "./placesRamp.js";
 
 describe("RAMP_COLOR_VARS", () => {
   it("has one CSS variable reference per bin", () => {
@@ -45,5 +45,23 @@ describe("buildRamp", () => {
     expect(ramp.max).toBe(0);
     expect(ramp.upperBounds).toEqual([0]);
     expect(ramp.binIndex(0)).toBe(0);
+  });
+});
+
+// Task 24: the places-door metric picker (leap vs biggest loss) reads its map
+// fill / legend / rank value through this one pure selector, so the three
+// can never disagree about which field backs the currently-selected metric.
+describe("metricValue", () => {
+  it("reads leap when the metric is leap", () => {
+    expect(metricValue({ biggestLoss: 22000, leap: 46000 }, "leap")).toBe(46000);
+  });
+
+  it("reads biggestLoss when the metric is loss", () => {
+    expect(metricValue({ biggestLoss: 22000, leap: 46000 }, "loss")).toBe(22000);
+  });
+
+  it("defaults to 0 for a missing state/archetype entry, regardless of metric", () => {
+    expect(metricValue(undefined, "leap")).toBe(0);
+    expect(metricValue(undefined, "loss")).toBe(0);
   });
 });

@@ -15,26 +15,31 @@ const flat = (earnings: number, netIncome: number): CurvePoint => ({
 describe("stateMetrics on the committed CA fixture", () => {
   // Pinned in the plan: the CA single-parent-one-kid fixture's biggest single
   // drop rounds to $21,957, with at least two cliffs and a nonzero danger
-  // width. This fixture isn't one of the 8 archetypes — it only pins the math.
-  it("computes biggestLoss, cliffCount, and dangerWidth", () => {
+  // width. safeExit/leap are pinned too (64000 / 34000, per escapeAnalysis).
+  // This fixture isn't one of the 8 archetypes — it only pins the math.
+  it("computes biggestLoss, cliffCount, dangerWidth, safeExit, and leap", () => {
     const m = stateMetrics(fixturePoints);
     expect(m.biggestLoss).toBe(21957);
     expect(m.cliffCount).toBeGreaterThanOrEqual(2);
     expect(m.dangerWidth).toBeGreaterThan(0);
+    expect(m.safeExit).toBe(64000);
+    expect(m.leap).toBe(34000);
   });
 });
 
 describe("stateMetrics on synthetic curves", () => {
-  it("reports zero loss and zero danger width for a monotonic curve", () => {
+  it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
-    expect(stateMetrics(pts)).toEqual({ biggestLoss: 0, dangerWidth: 0, cliffCount: 0 });
+    expect(stateMetrics(pts)).toEqual({ biggestLoss: 0, dangerWidth: 0, cliffCount: 0, safeExit: 0, leap: 0 });
   });
 
-  it("measures dangerWidth to the axis max when the zone never recovers", () => {
+  it("measures dangerWidth to the axis max when the zone never recovers, and reports safeExit null", () => {
     const pts = [flat(0, 20000), flat(50000, 30000), flat(100000, 22000)];
     const m = stateMetrics(pts);
     expect(m.biggestLoss).toBe(8000);
     expect(m.cliffCount).toBe(1);
     expect(m.dangerWidth).toBe(50000); // from the $50k peak to the $100k axis end
+    expect(m.safeExit).toBeNull(); // the zone never recovers within the sweep
+    expect(m.leap).toBe(50000); // axisMax - zoneStart = 100000 - 50000
   });
 });

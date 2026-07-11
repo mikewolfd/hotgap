@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { analyzeCurve, type CurveAnalysis, type HouseholdAnswers } from "@hotgap/shared";
+import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type EscapeAnalysis, type HouseholdAnswers } from "@hotgap/shared";
 import { fetchCurve } from "../api/client.js";
 import { fetchFallbackCurve, clampFallbackEarnings } from "../lib/fallback.js";
-import { narrate, type Narration, type PayContext } from "../lib/narration.js";
+import { narrate, narrateEscape, type Narration, type PayContext } from "../lib/narration.js";
 import { t } from "../strings/t.js";
 import { CurveChart } from "./CurveChart.js";
 import { WhyList } from "./WhyList.js";
+import { EscapePath } from "./EscapePath.js";
 
 type Status =
   | { phase: "loading" }
@@ -14,7 +15,7 @@ type Status =
   // curve (the live PolicyEngine call failed) rather than the household's
   // own real-time calculation — the page shows a banner and a still-visible
   // "Try again" button in that case (see the render below).
-  | { phase: "done"; analysis: CurveAnalysis; narration: Narration; fallback: boolean };
+  | { phase: "done"; analysis: CurveAnalysis; narration: Narration; escape: EscapeAnalysis; fallback: boolean };
 
 export function ResultPage(props: {
   answers: HouseholdAnswers;
@@ -32,7 +33,10 @@ export function ResultPage(props: {
         if (!alive) return;
         if (r.ok) {
           const analysis = analyzeCurve(r.data.points, r.data.currentEarnings);
-          setStatus({ phase: "done", analysis, narration: narrate(analysis, props.ctx), fallback: false });
+          const escape = escapeAnalysis(r.data.points);
+          setStatus({
+            phase: "done", analysis, narration: narrate(analysis, props.ctx), escape, fallback: false,
+          });
           return;
         }
         // The live API failed. Try a precomputed archetype curve for this
@@ -56,7 +60,10 @@ export function ResultPage(props: {
           fallbackPoints,
           clampFallbackEarnings(fallbackPoints, props.answers.annualEarnings),
         );
-        setStatus({ phase: "done", analysis, narration: narrate(analysis, props.ctx), fallback: true });
+        const escape = escapeAnalysis(fallbackPoints);
+        setStatus({
+          phase: "done", analysis, narration: narrate(analysis, props.ctx), escape, fallback: true,
+        });
       })
       .catch(() => {
         // Defensive: fetchCurve resolves for expected failures, but a throw
@@ -94,7 +101,13 @@ export function ResultPage(props: {
     );
   }
 
-  const { analysis, narration, fallback } = status;
+  const { analysis, narration, escape, fallback } = status;
+  // Task 23's visibility condition reads the raw EscapeAnalysis fields, not
+  // narrateEscape's output — narrateEscape doesn't carry benefitsEndEarnings
+  // through (it isn't spoken by any of the three EscapeNarration lines), so
+  // that field can only gate the section here.
+  const showEscapePath =
+    escape.benefitsEndEarnings !== null || escape.leap > 0 || Object.keys(escape.programEnds).length > 0;
   return (
     <article className={`result verdict-${analysis.verdict}`}>
       {fallback && (
@@ -104,6 +117,7 @@ export function ResultPage(props: {
       <p className="verdict-body">{narration.body}</p>
       <CurveChart analysis={analysis} ctx={props.ctx} />
       <WhyList items={narration.whyItems} />
+      {showEscapePath && <EscapePath narration={narrateEscape(escape, props.ctx)} />}
       <aside className="honesty" aria-label={t("result.honesty.title")}>
         <h2>{t("result.honesty.title")}</h2>
         <p>{t("result.honesty.body")}</p>

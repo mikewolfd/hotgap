@@ -1,12 +1,18 @@
 import {
   fromAnnual, roundTo,
-  type CurveAnalysis, type PayUnit, type ProgramId,
+  type CurveAnalysis, type EscapeAnalysis, type PayUnit, type ProgramId,
 } from "@hotgap/shared";
 import { t, type StringKey } from "../strings/t.js";
 
 export interface PayContext { unit: PayUnit; hoursPerWeek?: number }
 export interface WhyItem { programLabel: string; lostNear: string | null; currentValue: string }
 export interface Narration { headline: string; body: string; whyItems: WhyItem[] }
+export interface EscapeThreshold { label: string; wage: string }
+export interface EscapeNarration {
+  safeLine: string | null;
+  leapLine: string | null;
+  thresholds: EscapeThreshold[];
+}
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -89,6 +95,60 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
   }));
 
   return { headline, body, whyItems };
+}
+
+// Sorted ascending by earnings, capped at 5 — shared by both doors so the
+// personal door's "Your path off help" and the places door's drill-down can
+// never phrase "when help ends" differently.
+function programThresholds(esc: EscapeAnalysis, ctx: PayContext): EscapeThreshold[] {
+  return (Object.entries(esc.programEnds) as [ProgramId, number][])
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 5)
+    .map(([id, earnings]) => ({
+      label: t(`program.${id}` as StringKey),
+      wage: formatWage(earnings, ctx),
+    }));
+}
+
+export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarration {
+  // safeExitEarnings === 0 means every point on the chart is already safe —
+  // the always_up verdict headline already says that, so no line here.
+  const safeLine =
+    esc.safeExitEarnings === null ? t("escape.safeNever")
+    : esc.safeExitEarnings > 0 ? t("escape.safe", { wage: formatWage(esc.safeExitEarnings, ctx) })
+    : null;
+
+  // The leap is a raise SIZE (a dollar delta the family must clear in one
+  // move), not a wage rate at a point on the chart — formatDollars, not
+  // formatWage, is the right unit here.
+  const leapLine = esc.leap > 0
+    ? t(esc.leapIsLowerBound ? "escape.leapMore" : "escape.leap", { amount: formatDollars(esc.leap) })
+    : null;
+
+  return { safeLine, leapLine, thresholds: programThresholds(esc, ctx) };
+}
+
+// Places-door variant of narrateEscape, for the state drill-down (StatePanel).
+// Third-person framing ("this family", "here") instead of the personal
+// door's "you", and formatDollars (not formatWage) for the safe-exit and leap
+// lines — the drill-down isn't anchored to a real person's pay unit, so a
+// plain dollar figure with " a year" baked into the string is the honest
+// amount to show. Thresholds still speak in year-unit wages (fixed ctx) and
+// reuse the shared escape.ends item string; StatePanel pairs them with its
+// own third-person places.panel.endsTitle ("When help ends here:") rather
+// than the personal door's "…for you:", to stay consistent with the panel's
+// "not your family" framing.
+export function narratePlacesEscape(esc: EscapeAnalysis): EscapeNarration {
+  const safeLine =
+    esc.safeExitEarnings === null ? t("places.panel.safeNever")
+    : esc.safeExitEarnings > 0 ? t("places.panel.safe", { amount: formatDollars(esc.safeExitEarnings) })
+    : null;
+
+  const leapLine = esc.leap > 0
+    ? t(esc.leapIsLowerBound ? "places.panel.leapMore" : "places.panel.leap", { amount: formatDollars(esc.leap) })
+    : null;
+
+  return { safeLine, leapLine, thresholds: programThresholds(esc, { unit: "year" }) };
 }
 
 const HEADLINE_PARAMS: Record<string, string[]> = {

@@ -25,6 +25,9 @@ afterEach(() => {
 });
 
 describe("PlacesPage", () => {
+  // Task 24: the map's default metric is now "the jump to get out" (leap),
+  // not the biggest-loss figure, so every state's default label speaks in
+  // "needs a jump" terms.
   it("renders all 51 state paths, each a focusable, labeled control", () => {
     const { container } = render(<PlacesPage />);
     const paths = container.querySelectorAll("path.state-path");
@@ -32,13 +35,43 @@ describe("PlacesPage", () => {
     for (const p of paths) {
       expect(p.getAttribute("role")).toBe("button");
       expect(p.getAttribute("tabindex")).toBe("0");
-      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/);
+      expect(p.getAttribute("aria-label")).toMatch(/needs a jump of up to \$/);
     }
   });
 
   it("renders a 5-swatch legend for the default archetype (single, 2 kids)", () => {
     const { container } = render(<PlacesPage />);
     expect(container.querySelectorAll(".legend-scale li").length).toBe(5);
+  });
+
+  // Task 24: two-choice metric picker (leap vs biggest loss), default leap.
+  it("defaults to the leap metric: its chip is checked and the leap legend text is visible on mount", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    expect(getByRole("radio", { name: /the jump to get out/i }).getAttribute("aria-checked")).toBe("true");
+    expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("false");
+    expect(container.textContent).toMatch(/how big is the jump to get out/i);
+    expect(container.textContent).toMatch(/needs a jump of up to \$/i);
+  });
+
+  it("toggling to 'Biggest loss' switches the legend text and the map's per-state labels", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
+    expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("true");
+    expect(container.textContent).toMatch(/how much can they lose/i);
+    expect(container.textContent).toMatch(/loses up to \$/i);
+    expect(container.textContent).not.toMatch(/needs a jump of up to \$/i);
+    const paths = container.querySelectorAll("path.state-path");
+    for (const p of paths) {
+      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/);
+    }
+  });
+
+  it("changes at least one state's fill when the metric picker toggles from leap to loss", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    const before = [...container.querySelectorAll("path.state-path")].map((p) => (p as HTMLElement).style.fill);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
+    const after = [...container.querySelectorAll("path.state-path")].map((p) => (p as HTMLElement).style.fill);
+    expect(after).not.toEqual(before);
   });
 
   it("changes at least one state's fill when the family picker toggles to married", () => {
@@ -49,12 +82,27 @@ describe("PlacesPage", () => {
     expect(after).not.toEqual(before);
   });
 
-  it("collapses to a single 'no loss' legend message for an archetype where every state is 0 (single, 0 kids)", () => {
+  // No-kids archetypes have leap === 0 AND biggestLoss === 0 in every state —
+  // a genuinely flat, cliff-free curve, not missing data. The degenerate
+  // legend message must TEACH that (metric-agnostic), never render a loss- or
+  // leap-framed "we found nothing" that reads as a data gap (the review's
+  // Important bug was a loss sentence showing under the leap heading).
+  it("collapses to the educational empty-legend message under the default (leap) metric, single 0 kids", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
     expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
-    expect(container.textContent).toMatch(/did not lose money in any state/i);
+    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
+    expect(container.textContent).not.toMatch(/did not lose money/i);
+  });
+
+  it("shows the SAME educational empty-legend message when the loss metric is selected, single 0 kids", () => {
+    const { container, getByLabelText, getByRole } = render(<PlacesPage />);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
+    fireEvent.click(getByLabelText("fewer kids"));
+    fireEvent.click(getByLabelText("fewer kids"));
+    expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
+    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
   });
 
   it("selecting a state (click) shows its StatePanel with an instant headline", async () => {
@@ -121,8 +169,10 @@ describe("PlacesPage", () => {
 });
 
 // Finding 4: a lookup miss on the archetype id must never fall through to a
-// false "did not lose money" legend claim. isKnownArchetype is the pure
-// guard the legend section checks before rendering anything ramp-derived.
+// false "no cliffs here" legend claim (the degenerate educational message is
+// true for a genuinely-flat archetype, but a lie for a data gap).
+// isKnownArchetype is the pure guard the legend section checks before
+// rendering anything ramp-derived.
 describe("isKnownArchetype", () => {
   it("returns true when the id is present in the summary's archetype list", () => {
     expect(isKnownArchetype("single-2", [{ id: "single-2" }, { id: "married-2" }])).toBe(true);

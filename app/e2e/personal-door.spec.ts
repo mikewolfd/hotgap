@@ -62,6 +62,14 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /watch out/i })).toBeVisible();
   await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
   await expect(page.getByText(/caseworker/i)).toBeVisible();
+
+  // "Your path off help" section: this mocked curve's danger zone never
+  // recovers by the last sampled point ($50k net $31k < the $32k peak at
+  // $30k), so the leap is a lower bound (widest zone = axisMax($50k) -
+  // zoneStart($30k) = $20,000) and the safe-exit line is the "never found a
+  // safe spot" honesty branch, not a concrete wage.
+  await expect(page.getByRole("heading", { name: /your path off help/i })).toBeVisible();
+  await expect(page.getByText(/raise of at least \$20,000/i)).toBeVisible();
 });
 
 // This household (single, 1 kid — clicked below via "more kids") resolves to

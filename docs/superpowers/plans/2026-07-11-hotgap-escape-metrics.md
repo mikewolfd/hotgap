@@ -7,7 +7,7 @@
 **Architecture:** Pure derivation from data we already have. New `escapeAnalysis()` in `@hotgap/shared` consumes the existing 101-point curves; the pipeline gains a `--from-data` mode that recomputes `summary.json` from the committed state files (no network); the personal door gains a "path off help" section; the places door gains a metric picker (leap vs. biggest loss) and threshold lines in the drill-down.
 
 **Verified pins (computed from committed data 2026-07-11 — trust these in tests):**
-- CA fixture (`fixtures/pe-ca-single-1kid-101.json`): zones [23k→28k, 30k→64k]; `safeExitEarnings === 64000`; `leap === 34000`; programEnds: tanf 23000, snap 29000, headstart 30000, eitc 50000, medicaid 57000, aca 84000; `benefitsEndEarnings === 84000`.
+- CA fixture (`fixtures/pe-ca-single-1kid-101.json`): zones [23k→28k, 30k→64k]; `safeExitEarnings === 64000`; `leap === 34000`; programEnds: tanf 23000, snap 29000, headstart 30000, eitc 50000, medicaid 57000, aca 84000; `benefitsEndEarnings === null` (CORRECTED 2026-07-11: CA has universal free school meals — $1,131 flat at every earnings point — so benefits never fully end in the sweep; the original 84000 pin was wrong).
 - Committed single-2 states: OR safeExit 90000 / leap 47000; WV 65000 / 22000; CA 74000 / 46000; TX 65000 / 22000.
 
 ## Global Constraints
