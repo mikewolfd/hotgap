@@ -25,6 +25,9 @@ afterEach(() => {
 });
 
 describe("PlacesPage", () => {
+  // Task 24: the map's default metric is now "the jump to get out" (leap),
+  // not the biggest-loss figure, so every state's default label speaks in
+  // "needs a jump" terms.
   it("renders all 51 state paths, each a focusable, labeled control", () => {
     const { container } = render(<PlacesPage />);
     const paths = container.querySelectorAll("path.state-path");
@@ -32,13 +35,43 @@ describe("PlacesPage", () => {
     for (const p of paths) {
       expect(p.getAttribute("role")).toBe("button");
       expect(p.getAttribute("tabindex")).toBe("0");
-      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/);
+      expect(p.getAttribute("aria-label")).toMatch(/needs a jump of up to \$/);
     }
   });
 
   it("renders a 5-swatch legend for the default archetype (single, 2 kids)", () => {
     const { container } = render(<PlacesPage />);
     expect(container.querySelectorAll(".legend-scale li").length).toBe(5);
+  });
+
+  // Task 24: two-choice metric picker (leap vs biggest loss), default leap.
+  it("defaults to the leap metric: its chip is checked and the leap legend text is visible on mount", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    expect(getByRole("radio", { name: /the jump to get out/i }).getAttribute("aria-checked")).toBe("true");
+    expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("false");
+    expect(container.textContent).toMatch(/how big is the jump to get out/i);
+    expect(container.textContent).toMatch(/needs a jump of up to \$/i);
+  });
+
+  it("toggling to 'Biggest loss' switches the legend text and the map's per-state labels", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
+    expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("true");
+    expect(container.textContent).toMatch(/how much can they lose/i);
+    expect(container.textContent).toMatch(/loses up to \$/i);
+    expect(container.textContent).not.toMatch(/needs a jump of up to \$/i);
+    const paths = container.querySelectorAll("path.state-path");
+    for (const p of paths) {
+      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/);
+    }
+  });
+
+  it("changes at least one state's fill when the metric picker toggles from leap to loss", () => {
+    const { container, getByRole } = render(<PlacesPage />);
+    const before = [...container.querySelectorAll("path.state-path")].map((p) => (p as HTMLElement).style.fill);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
+    const after = [...container.querySelectorAll("path.state-path")].map((p) => (p as HTMLElement).style.fill);
+    expect(after).not.toEqual(before);
   });
 
   it("changes at least one state's fill when the family picker toggles to married", () => {

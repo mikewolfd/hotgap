@@ -8,12 +8,23 @@ import rawSummary from "../data/places/summary.json";
 import { t, type StringKey } from "../strings/t.js";
 import { STATE_NAMES } from "../lib/states.js";
 import { FIPS_TO_USPS } from "../lib/fips.js";
-import { buildRamp, RAMP_COLOR_VARS } from "../lib/placesRamp.js";
+import { buildRamp, RAMP_COLOR_VARS, metricValue, type PlacesMetric } from "../lib/placesRamp.js";
 import { formatDollars, formatAgeList } from "../lib/narration.js";
 import { pickArchetypeId } from "../lib/fallback.js";
 import { StatePanel } from "./StatePanel.js";
 
-interface StateArchetypeMetrics { biggestLoss: number; dangerWidth: number; cliffCount: number }
+// Widened (was a 3-field narrowing behind an `as unknown as` cast) now that
+// the summary carries escape-analysis fields too — safeExit isn't read on
+// this page yet (the drill-down computes its own from the lazy-loaded
+// points), but the interface should describe the real shape of the bundled
+// data, not a stale subset of it.
+interface StateArchetypeMetrics {
+  biggestLoss: number;
+  dangerWidth: number;
+  cliffCount: number;
+  safeExit: number | null;
+  leap: number;
+}
 interface PlacesSummary {
   generated: string;
   year: string;
@@ -62,6 +73,10 @@ export function PlacesPage() {
   const [married, setMarried] = useState(DEFAULT.married);
   const [kids, setKids] = useState(DEFAULT.childAges.length);
   const [selected, setSelected] = useState<string | null>(null);
+  // Default: leap ("the jump to get out") — it answers the owner's core
+  // question (how hard is it to escape safely) more directly than the raw
+  // biggest-loss figure. The loss metric stays one tap away.
+  const [metric, setMetric] = useState<PlacesMetric>("leap");
   // Reuses the same picker the personal door's fallback path uses (Finding 4)
   // instead of hand-deriving the "(single|married)-N" format locally, so the
   // two can never silently desync.
@@ -76,9 +91,9 @@ export function PlacesPage() {
         });
 
   const ramp = useMemo(() => {
-    const values = Object.values(summary.states).map((s) => s[archetypeId]?.biggestLoss ?? 0);
+    const values = Object.values(summary.states).map((s) => metricValue(s[archetypeId], metric));
     return buildRamp(values);
-  }, [archetypeId]);
+  }, [archetypeId, metric]);
 
   function selectState(usps: string) {
     setSelected(usps);
@@ -92,9 +107,12 @@ export function PlacesPage() {
   }
 
   const selectedMetrics = selected ? summary.states[selected]?.[archetypeId] : undefined;
+  // Rank follows the SELECTED metric, not always biggestLoss: worse means a
+  // bigger leap when comparing by leap, a bigger loss when comparing by loss.
+  const selectedMetricValue = metricValue(selectedMetrics, metric);
   const rank = selectedMetrics
     ? Object.entries(summary.states).filter(
-        ([code, byArchetype]) => code !== selected && (byArchetype[archetypeId]?.biggestLoss ?? 0) < selectedMetrics.biggestLoss,
+        ([code, byArchetype]) => code !== selected && metricValue(byArchetype[archetypeId], metric) < selectedMetricValue,
       ).length
     : 0;
 
@@ -141,15 +159,20 @@ export function PlacesPage() {
             role="group" keeps this label while exposing each state button. */}
         <svg
           viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`}
-          role="group" aria-label={t("places.map.alt")} className="places-map"
+          role="group"
+          aria-label={metric === "leap" ? t("places.map.altLeap") : t("places.map.alt")}
+          className="places-map"
         >
           {usStates.features.map((f) => {
             const usps = FIPS_TO_USPS[String(f.id)];
             if (!usps) return null;
-            const loss = summary.states[usps]?.[archetypeId]?.biggestLoss ?? 0;
-            const bin = ramp.binIndex(loss);
+            const value = metricValue(summary.states[usps]?.[archetypeId], metric);
+            const bin = ramp.binIndex(value);
             const name = STATE_NAMES[usps] ?? usps;
             const d = projectionlessPath(f) ?? undefined;
+            const label = metric === "leap"
+              ? t("places.map.stateLabelLeap", { state: name, amount: formatDollars(value) })
+              : t("places.map.stateLabel", { state: name, loss: formatDollars(value) });
             return (
               <path
                 key={usps}
@@ -158,7 +181,7 @@ export function PlacesPage() {
                 style={{ fill: RAMP_COLOR_VARS[bin] }}
                 role="button"
                 tabIndex={0}
-                aria-label={t("places.map.stateLabel", { state: name, loss: formatDollars(loss) })}
+                aria-label={label}
                 onClick={() => selectState(usps)}
                 onKeyDown={(e) => onKeyDownState(e, usps)}
               />
@@ -184,9 +207,28 @@ export function PlacesPage() {
         </select>
       </div>
 
+      {/* Two-choice metric picker, same choice-chip idiom as the family
+          picker above. Default is "leap" — the map, legend, and rank all
+          switch together (Task 24: make the leap a first-class metric). */}
+      <div className="places-metric-picker">
+        <p className="hint" id="places-metric-label">{t("places.metric.title")}</p>
+        <div className="choice-row" role="radiogroup" aria-labelledby="places-metric-label">
+          <button
+            type="button" className={metric === "leap" ? "choice selected" : "choice"}
+            role="radio" aria-checked={metric === "leap"}
+            onClick={() => setMetric("leap")}
+          >{t("places.metric.leap")}</button>
+          <button
+            type="button" className={metric === "loss" ? "choice selected" : "choice"}
+            role="radio" aria-checked={metric === "loss"}
+            onClick={() => setMetric("loss")}
+          >{t("places.metric.loss")}</button>
+        </div>
+      </div>
+
       {archetypeKnown && (
         <section className="places-legend">
-          <h2>{t("places.legend.title")}</h2>
+          <h2>{metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title")}</h2>
           {ramp.max <= 0 ? (
             <p>{t("places.legend.none")}</p>
           ) : (
@@ -194,7 +236,9 @@ export function PlacesPage() {
               {ramp.upperBounds.map((upper, i) => (
                 <li key={upper}>
                   <span className="legend-swatch-map" aria-hidden style={{ background: RAMP_COLOR_VARS[i] }} />
-                  {t("places.legend.upTo", { amount: formatDollars(upper) })}
+                  {metric === "leap"
+                    ? t("places.legend.leapUpTo", { amount: formatDollars(upper) })
+                    : t("places.legend.upTo", { amount: formatDollars(upper) })}
                 </li>
               ))}
             </ul>

@@ -97,6 +97,19 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
   return { headline, body, whyItems };
 }
 
+// Sorted ascending by earnings, capped at 5 — shared by both doors so the
+// personal door's "Your path off help" and the places door's drill-down can
+// never phrase "when help ends" differently.
+function programThresholds(esc: EscapeAnalysis, ctx: PayContext): EscapeThreshold[] {
+  return (Object.entries(esc.programEnds) as [ProgramId, number][])
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 5)
+    .map(([id, earnings]) => ({
+      label: t(`program.${id}` as StringKey),
+      wage: formatWage(earnings, ctx),
+    }));
+}
+
 export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarration {
   // safeExitEarnings === 0 means every point on the chart is already safe —
   // the always_up verdict headline already says that, so no line here.
@@ -112,15 +125,28 @@ export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarra
     ? t(esc.leapIsLowerBound ? "escape.leapMore" : "escape.leap", { amount: formatDollars(esc.leap) })
     : null;
 
-  const thresholds: EscapeThreshold[] = (Object.entries(esc.programEnds) as [ProgramId, number][])
-    .sort((a, b) => a[1] - b[1])
-    .slice(0, 5)
-    .map(([id, earnings]) => ({
-      label: t(`program.${id}` as StringKey),
-      wage: formatWage(earnings, ctx),
-    }));
+  return { safeLine, leapLine, thresholds: programThresholds(esc, ctx) };
+}
 
-  return { safeLine, leapLine, thresholds };
+// Places-door variant of narrateEscape, for the state drill-down (StatePanel).
+// Third-person framing ("this family", "here") instead of the personal
+// door's "you", and formatDollars (not formatWage) for the safe-exit and leap
+// lines — the drill-down isn't anchored to a real person's pay unit, so a
+// plain dollar figure with " a year" baked into the string is the honest
+// amount to show. Thresholds still speak in year-unit wages (fixed ctx),
+// reusing the exact same escape.endsTitle/escape.ends strings as Task 23 so
+// "when help ends" can never read differently between the two doors.
+export function narratePlacesEscape(esc: EscapeAnalysis): EscapeNarration {
+  const safeLine =
+    esc.safeExitEarnings === null ? t("places.panel.safeNever")
+    : esc.safeExitEarnings > 0 ? t("places.panel.safe", { amount: formatDollars(esc.safeExitEarnings) })
+    : null;
+
+  const leapLine = esc.leap > 0
+    ? t(esc.leapIsLowerBound ? "places.panel.leapMore" : "places.panel.leap", { amount: formatDollars(esc.leap) })
+    : null;
+
+  return { safeLine, leapLine, thresholds: programThresholds(esc, { unit: "year" }) };
 }
 
 const HEADLINE_PARAMS: Record<string, string[]> = {

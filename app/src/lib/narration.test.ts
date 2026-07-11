@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parsePEResponse, analyzeCurve, escapeAnalysis, type CurvePoint, type ProgramId } from "@hotgap/shared";
-import { narrate, narrateEscape, formatWage, formatDollars, formatAgeList } from "./narration.js";
+import { narrate, narrateEscape, narratePlacesEscape, formatWage, formatDollars, formatAgeList } from "./narration.js";
 
 const ZERO_PROGRAMS: Record<ProgramId, number> = {
   snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0,
@@ -220,5 +220,61 @@ describe("narrateEscape branch coverage", () => {
       { unit: "year" },
     );
     expect(n.leapLine).toBeNull();
+  });
+});
+
+// Task 24: the places-door drill-down (StatePanel) speaks the same
+// escapeAnalysis fields with different, third-person copy and dollar (not
+// wage) amounts for safe/leap — thresholds stay identical to narrateEscape's
+// (same t() keys, fixed year unit).
+describe("narratePlacesEscape", () => {
+  it("names the safe-exit amount in dollars, not a wage rate", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: 74000, leap: 46000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null,
+    });
+    expect(n.safeLine).toContain("$74,000");
+    expect(n.safeLine).toContain("fully safe here");
+  });
+
+  it("uses the honest safeNever line when safeExitEarnings is null", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null,
+    });
+    expect(n.safeLine).toContain("still hits rough spots here");
+  });
+
+  it("returns null safeLine when safeExitEarnings is 0", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: 0, leap: 0, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null,
+    });
+    expect(n.safeLine).toBeNull();
+    expect(n.leapLine).toBeNull();
+  });
+
+  it("names the leap in dollars, one-move framing", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: 74000, leap: 46000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null,
+    });
+    expect(n.leapLine).toContain("$46,000");
+    expect(n.leapLine).toContain("in one move");
+    expect(n.leapLine).not.toContain("more than");
+  });
+
+  it("uses the leapMore variant when leapIsLowerBound is true", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null,
+    });
+    expect(n.leapLine).toContain("more than $20,000");
+  });
+
+  it("lists thresholds in year-unit wages, ascending, capped at 5", () => {
+    const n = narratePlacesEscape({
+      safeExitEarnings: 74000, leap: 46000, leapIsLowerBound: false,
+      programEnds: { tanf: 23000, snap: 29000 }, benefitsEndEarnings: null,
+    });
+    expect(n.thresholds).toEqual([
+      { label: "cash help (TANF)", wage: "$23,000 a year" },
+      { label: "food help (SNAP)", wage: "$29,000 a year" },
+    ]);
   });
 });

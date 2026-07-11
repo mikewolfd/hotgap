@@ -84,3 +84,76 @@ describe("StatePanel", () => {
     expect(fetchImpl).toHaveBeenCalledWith("/data/states/TX.json");
   });
 });
+
+// Task 24: the drill-down computes escapeAnalysis on the same lazy-loaded
+// points, then renders safe/leap lines and a "when help ends" list — no new
+// data fetch, just more math on what's already there.
+describe("StatePanel escape lines", () => {
+  // Zone opens at the 10000 peak (net rises to 26000, then dips to 18000 —
+  // a >200 drop) and closes at 30000 (net rises back past the peak). So:
+  // safeExitEarnings = 30000, leap = 30000 - 10000 = 20000, not a lower bound.
+  const recoveringFile = {
+    generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
+    archetypes: {
+      "single-2": {
+        points: [mkPoint(0, 20000), mkPoint(10000, 26000), mkPoint(20000, 18000), mkPoint(30000, 32000)],
+      },
+    },
+  };
+
+  it("renders the safe-exit and leap lines with dollar amounts once the curve loads", async () => {
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(recoveringFile) } as Response),
+    );
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
+    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$30,000");
+    expect(container.querySelector(".places-panel-leap")!.textContent).toContain("$20,000");
+  });
+
+  it("shows the honest safeNever line when the zone never recovers within the sweep", async () => {
+    const stuckFile = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
+      archetypes: {
+        "single-2": { points: [mkPoint(0, 20000), mkPoint(10000, 26000), mkPoint(20000, 10000)] },
+      },
+    };
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(stuckFile) } as Response),
+    );
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
+    expect(container.querySelector(".places-panel-safe")!.textContent).toMatch(/still hits rough spots here/i);
+    // leap = axisMax(20000) - zoneStart(10000) = 10000, and it's a lower bound (open zone).
+    expect(container.querySelector(".places-panel-leap")!.textContent).toContain("more than $10,000");
+  });
+
+  it("lists 'when help ends here' thresholds in year-unit wages when programs phase out before the sweep ends", async () => {
+    const withPrograms = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
+      archetypes: {
+        "single-2": {
+          points: [
+            { earnings: 0, netIncome: 20000, programs: { ...PROGRAMS, tanf: 300 } },
+            { earnings: 10000, netIncome: 26000, programs: { ...PROGRAMS, tanf: 0 } },
+            { earnings: 20000, netIncome: 18000, programs: { ...PROGRAMS } },
+            { earnings: 30000, netIncome: 32000, programs: { ...PROGRAMS } },
+          ],
+        },
+      },
+    };
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(withPrograms) } as Response),
+    );
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector(".places-panel-ends-list")).toBeTruthy());
+    expect(container.querySelector(".places-panel-ends-title")!.textContent).toMatch(/when help ends/i);
+    expect(container.querySelector(".places-panel-ends-item")!.textContent).toMatch(/TANF.*\$0 a year/i);
+  });
+
+  it("shows no escape section while the curve is still loading", () => {
+    const fetchImpl = vi.fn(() => new Promise(() => {}));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    expect(container.querySelector(".places-panel-escape")).toBeNull();
+  });
+});

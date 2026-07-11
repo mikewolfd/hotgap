@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { analyzeCurve, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
+import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
 import { t } from "../strings/t.js";
-import { formatDollars } from "../lib/narration.js";
+import { formatDollars, narratePlacesEscape } from "../lib/narration.js";
 import { CurveChart } from "../result/CurveChart.js";
 
 interface StateDataFile {
@@ -48,6 +48,14 @@ export function StatePanel(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateCode, archetypeId]);
 
+  // Escape analysis runs on the same lazy-loaded points the curve chart
+  // already fetched — no new data, and it's the exact math the personal
+  // door's "path off help" section uses, so a state's drill-down and a
+  // household's own result page can never disagree on a number.
+  const escapeNarration = status.phase === "done"
+    ? narratePlacesEscape(escapeAnalysis(status.analysis.points))
+    : null;
+
   return (
     <section className="places-panel" aria-live="polite">
       <h2 className="places-panel-headline">
@@ -66,6 +74,25 @@ export function StatePanel(props: {
       )}
       {status.phase === "done" && (
         <CurveChart analysis={status.analysis} ctx={{ unit: "year" }} showCurrent={false} />
+      )}
+
+      {escapeNarration && (escapeNarration.safeLine || escapeNarration.leapLine || escapeNarration.thresholds.length > 0) && (
+        <div className="places-panel-escape">
+          {escapeNarration.safeLine && <p className="places-panel-safe">{escapeNarration.safeLine}</p>}
+          {escapeNarration.leapLine && <p className="places-panel-leap">{escapeNarration.leapLine}</p>}
+          {escapeNarration.thresholds.length > 0 && (
+            <>
+              <p className="places-panel-ends-title">{t("escape.endsTitle")}</p>
+              <ul className="places-panel-ends-list">
+                {escapeNarration.thresholds.map((th) => (
+                  <li key={th.label} className="places-panel-ends-item">
+                    {t("escape.ends", { label: th.label, wage: th.wage })}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       )}
 
       <p className="places-panel-honesty">{t("places.panel.honesty")}</p>
