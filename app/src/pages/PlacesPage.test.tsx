@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { PlacesPage, isKnownArchetype } from "./PlacesPage.js";
+import { RAMP_BINS } from "../lib/placesRamp.js";
 
 // This project's vitest config doesn't wire up RTL's automatic afterEach
 // cleanup (see the note in CurveChart.test.tsx), so each render() here would
@@ -91,7 +92,7 @@ describe("PlacesPage", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
-    expect(container.querySelectorAll(".legend-scale li").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".legend-scale li").length).toBe(RAMP_BINS);
     expect(container.textContent).not.toMatch(/did not find a cliff/i);
   });
 
