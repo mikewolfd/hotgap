@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
 const mkPoint = (earnings: number, netIncome: number, programs: Partial<typeof PROGRAMS> = {}) =>
-  ({ earnings, netIncome, programs: { ...PROGRAMS, ...programs } });
+  ({ earnings, netIncome, medicalOOP: 0, programs: { ...PROGRAMS, ...programs } });
 // A small 6-point CA fixture. The test toggles the family picker to married
 // before clicking California, so the archetype requested by then is
 // married-2, not the default single-2 — the fixture covers both so the

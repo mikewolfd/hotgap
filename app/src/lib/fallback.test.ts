@@ -3,7 +3,7 @@ import { analyzeCurve } from "@hotgap/shared";
 import { pickArchetypeId, fetchFallbackCurve, clampFallbackEarnings } from "./fallback.js";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, programs: { ...PROGRAMS } });
+const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, medicalOOP: 0, programs: { ...PROGRAMS } });
 const points = [mkPoint(0, 20000), mkPoint(50000, 30000), mkPoint(100000, 45000)];
 
 const stateFile = {

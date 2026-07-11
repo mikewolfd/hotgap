@@ -25,7 +25,14 @@ export interface HouseholdAnswers {
 
 export interface CurvePoint {
   earnings: number;
+  // Resources after paying real health costs: raw household net income minus
+  // SPM medical out-of-pocket (premiums net of subsidy + non-premium OOP).
+  // The whole tool operates on this honest after-health figure.
   netIncome: number;
+  // What the household actually pays for health coverage at this earnings level
+  // (SPM medical out-of-pocket). Surfaced for transparency; already subtracted
+  // from netIncome above.
+  medicalOOP: number;
   programs: Record<ProgramId, number>;
 }
 

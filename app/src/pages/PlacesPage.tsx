@@ -231,13 +231,13 @@ export function PlacesPage() {
         <section className="places-legend">
           <h2>{metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title")}</h2>
           {ramp.max <= 0 ? (
-            // Metric-agnostic on purpose: a no-kids, non-disabled adult
-            // genuinely has a monotonic curve (no cliff, no leap) in every
-            // state — this isn't missing data, it's the finding. One
-            // educational sentence teaches WHY (it holds under either metric),
-            // instead of a loss- or leap-framed "we found nothing" that would
-            // read as a data gap.
-            <p>{t("places.legend.noneKids")}</p>
+            // Defensive fallback: once real health costs are folded in, every
+            // archetype — including childless adults, who hit a health-coverage
+            // cliff when Medicaid gives way to paid ACA premiums — has a cliff
+            // in at least one state, so this branch does not fire on current
+            // data. Kept as an honest, metric-agnostic guard if an archetype
+            // ever comes back all-zero.
+            <p>{t("places.legend.noneFound")}</p>
           ) : (
             <ul className="legend-scale">
               {ramp.upperBounds.map((upper, i) => (

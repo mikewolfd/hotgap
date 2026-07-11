@@ -10,7 +10,8 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  earnings, netIncome, medicalOOP: 0,
+  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
 });
 
 describe("analyzeCurve on synthetic curves", () => {

@@ -10,7 +10,7 @@ type Vars = Record<string, Record<string, number | string | boolean | null>>;
 const y = (value: number | string | boolean | null): Record<string, number | string | boolean | null> => ({ [YEAR]: value });
 
 const PERSON_VARS = ["medicaid", "chip", "wic", "ssi"];
-const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals"];
+const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"];
 const TAX_VARS = ["eitc", "refundable_ctc", "premium_tax_credit"];
 
 // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only

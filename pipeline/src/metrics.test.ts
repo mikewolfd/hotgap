@@ -9,21 +9,23 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  earnings, netIncome, medicalOOP: 0,
+  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
 });
 
 describe("stateMetrics on the committed CA fixture", () => {
-  // Pinned in the plan: the CA single-parent-one-kid fixture's biggest single
-  // drop rounds to $21,957, with at least two cliffs and a nonzero danger
-  // width. safeExit/leap are pinned too (64000 / 34000, per escapeAnalysis).
+  // Pinned post health-adjustment (Plan 4): the CA single-parent-one-kid
+  // fixture's biggest single drop rounds to $22,089, with at least two
+  // cliffs and a nonzero danger width. safeExit/leap are pinned too
+  // (91000 / 45000, per escapeAnalysis on the health-adjusted curve).
   // This fixture isn't one of the 8 archetypes — it only pins the math.
   it("computes biggestLoss, cliffCount, dangerWidth, safeExit, and leap", () => {
     const m = stateMetrics(fixturePoints);
-    expect(m.biggestLoss).toBe(21957);
+    expect(m.biggestLoss).toBe(22089);
     expect(m.cliffCount).toBeGreaterThanOrEqual(2);
     expect(m.dangerWidth).toBeGreaterThan(0);
-    expect(m.safeExit).toBe(64000);
-    expect(m.leap).toBe(34000);
+    expect(m.safeExit).toBe(91000);
+    expect(m.leap).toBe(45000);
   });
 });
 

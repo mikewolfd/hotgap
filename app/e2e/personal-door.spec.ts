@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
 const mkPoint = (earnings: number, netIncome: number, medicaid = 0) => ({
-  earnings, netIncome, programs: { ...PROGRAMS, medicaid },
+  earnings, netIncome, medicalOOP: 0, programs: { ...PROGRAMS, medicaid },
 });
 // A 6-point curve with a $8k cliff at $30k where medicaid disappears.
 const curve = {

@@ -101,11 +101,11 @@ describe("runPipeline", () => {
     for (const state of ["ZZ", "YY"]) {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 21957,
+        biggestLoss: 22089,
         dangerWidth: expect.any(Number),
         cliffCount: expect.any(Number),
-        safeExit: 64000,
-        leap: 34000,
+        safeExit: 91000,
+        leap: 45000,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);

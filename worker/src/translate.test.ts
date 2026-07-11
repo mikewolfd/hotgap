@@ -49,7 +49,7 @@ describe("buildPEPayload", () => {
   it("requests every display variable as null", () => {
     const p = buildPEPayload(base) as any;
     expect(p.household.households.household.household_net_income["2026"]).toBeNull();
-    for (const v of ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals"])
+    for (const v of ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"])
       expect(p.household.spm_units.spm_unit[v]["2026"]).toBeNull();
     for (const v of ["eitc", "refundable_ctc", "premium_tax_credit"])
       expect(p.household.tax_units.tax_unit[v]["2026"]).toBeNull();
