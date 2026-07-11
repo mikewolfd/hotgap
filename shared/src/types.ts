@@ -21,6 +21,9 @@ export interface HouseholdAnswers {
   monthlyChildcare: number | null;
   annualEarnings: number;
   spouseAnnualEarnings: number;
+  getsHeadStart: boolean;
+  getsHousing: boolean;
+  hasEmployerCoverage: boolean;
 }
 
 export interface CurvePoint {
