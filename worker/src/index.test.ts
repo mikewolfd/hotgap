@@ -5,7 +5,8 @@ import { handleRequest } from "./index.js";
 const fixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 
 const good = JSON.stringify({
-  state: "CA", married: false, childAges: [5],
+  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
+  youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null,
   annualEarnings: 30000, spouseAnnualEarnings: 0,
 });

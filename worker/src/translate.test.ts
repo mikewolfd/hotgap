@@ -3,7 +3,8 @@ import { buildPEPayload, axisMax, AXIS_COUNT } from "./translate.js";
 import type { HouseholdAnswers } from "@hotgap/shared";
 
 const base: HouseholdAnswers = {
-  state: "CA", married: false, childAges: [5],
+  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
+  youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null,
   annualEarnings: 30000, spouseAnnualEarnings: 0,
 };
@@ -54,5 +55,37 @@ describe("buildPEPayload", () => {
       expect(p.household.tax_units.tax_unit[v]["2026"]).toBeNull();
     for (const v of ["medicaid", "chip", "wic", "ssi"])
       expect(p.household.people.you[v]["2026"]).toBeNull();
+  });
+
+  it("puts the real ages on 'you' and the spouse instead of a hardcoded 30", () => {
+    const p = buildPEPayload({ ...base, age: 67, married: true, spouseAge: 65, spouseAnnualEarnings: 20000 }) as any;
+    expect(p.household.people.you.age["2026"]).toBe(67);
+    expect(p.household.people.spouse.age["2026"]).toBe(65);
+  });
+
+  it("marks a disabled adult with BOTH is_disabled and is_ssi_disabled", () => {
+    const p = buildPEPayload({
+      ...base, youDisabled: true, married: true, spouseAge: 40, spouseDisabled: true, spouseAnnualEarnings: 20000,
+    }) as any;
+    expect(p.household.people.you.is_disabled["2026"]).toBe(true);
+    expect(p.household.people.you.is_ssi_disabled["2026"]).toBe(true);
+    expect(p.household.people.spouse.is_disabled["2026"]).toBe(true);
+    expect(p.household.people.spouse.is_ssi_disabled["2026"]).toBe(true);
+  });
+
+  it("marks a disabled child with BOTH is_disabled and is_ssi_disabled", () => {
+    const p = buildPEPayload({ ...base, childAges: [8], childDisabled: [true] }) as any;
+    expect(p.household.people.child1.is_disabled["2026"]).toBe(true);
+    expect(p.household.people.child1.is_ssi_disabled["2026"]).toBe(true);
+  });
+
+  it("omits disability keys entirely for non-disabled people (keeps payload canonical for the cache)", () => {
+    const p = buildPEPayload({ ...base, married: true, spouseAge: 40, spouseAnnualEarnings: 20000 }) as any;
+    expect(p.household.people.you.is_disabled).toBeUndefined();
+    expect(p.household.people.you.is_ssi_disabled).toBeUndefined();
+    expect(p.household.people.spouse.is_disabled).toBeUndefined();
+    expect(p.household.people.spouse.is_ssi_disabled).toBeUndefined();
+    expect(p.household.people.child1.is_disabled).toBeUndefined();
+    expect(p.household.people.child1.is_ssi_disabled).toBeUndefined();
   });
 });

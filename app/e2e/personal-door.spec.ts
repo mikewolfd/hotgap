@@ -27,6 +27,7 @@ test("landing → flow → cliff result", async ({ page }) => {
   await page.getByRole("button", { name: /next/i }).click();
 
   await page.getByRole("radio", { name: /just me/i }).click();
+  await page.getByLabel(/how old are you/i).fill("30");
   await page.getByRole("button", { name: "more kids" }).click();
   await page.getByRole("button", { name: /next/i }).click();
 
@@ -66,6 +67,7 @@ test("API failure shows plain-language error with retry", async ({ page }) => {
   await page.goto("/#/check");
   await page.getByLabel(/where do you live/i).fill("94110");
   await page.getByRole("button", { name: /next/i }).click();
+  await page.getByLabel(/how old are you/i).fill("30");
   await page.getByRole("button", { name: /next/i }).click(); // family defaults
   await page.getByRole("button", { name: /next/i }).click(); // housing "not sure"
   await page.getByLabel(/what do you make now/i).fill("12");

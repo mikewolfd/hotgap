@@ -23,8 +23,13 @@
   "flow.family.q": "Who lives with you?",
   "flow.family.single": "Just me",
   "flow.family.married": "Me and my spouse",
+  "flow.family.yourAge": "How old are you?",
+  "flow.family.spouseAge": "How old is your spouse?",
+  "flow.family.youDisabled": "Do you have a disability?",
+  "flow.family.spouseDisabled": "Does your spouse have a disability?",
   "flow.family.kids": "How many kids live with you?",
   "flow.family.kidAge": "How old is kid {n}?",
+  "flow.family.kidDisabled": "This kid has a disability",
 
   "flow.housing.q": "What do you pay to live there each month?",
   "flow.housing.hint": "Rent or house payment. Your best guess is fine.",
@@ -71,6 +76,9 @@
   "unit.hour": "{amount} an hour",
   "unit.month": "{amount} a month",
   "unit.year": "{amount} a year",
+
+  "common.yes": "Yes",
+  "common.no": "No",
 
   "result.tryAgain": "Try again",
   "result.startOver": "Start over",

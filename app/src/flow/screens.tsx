@@ -99,7 +99,59 @@ export function ZipScreen({ answers, dispatch }: { answers: FlowAnswers; dispatc
   );
 }
 
+// Same raw-string-first pattern as MoneyInput (see above): local state holds
+// exactly what was typed, so a digit-by-digit age like "1" -> "10" never gets
+// clobbered by a parse-and-rerender round trip mid-keystroke. Reuses
+// parseMoney since the sanitizer below already strips everything but digits,
+// so there is never a decimal point for it to worry about.
+function AgeInput(props: { id: string; value: number | null; onChange: (v: number | null) => void }) {
+  const [text, setText] = useState(props.value === null ? "" : String(props.value));
+
+  useEffect(() => {
+    if (parseMoney(text) !== props.value) {
+      setText(props.value === null ? "" : String(props.value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.value]);
+
+  return (
+    <input
+      id={props.id} className="input input-small" inputMode="numeric"
+      value={text}
+      onChange={(e) => {
+        const sanitized = e.target.value.replace(/\D/g, "");
+        setText(sanitized);
+        props.onChange(parseMoney(sanitized));
+      }}
+    />
+  );
+}
+
+function YesNoChoice(props: { id: string; question: string; value: boolean; onChange: (v: boolean) => void }) {
+  const labelId = `${props.id}-label`;
+  return (
+    <>
+      <p className="hint" id={labelId}>{props.question}</p>
+      <div className="choice-row" role="radiogroup" aria-labelledby={labelId}>
+        <button
+          type="button" className={props.value ? "choice" : "choice selected"}
+          role="radio" aria-checked={!props.value}
+          onClick={() => props.onChange(false)}
+        >{t("common.no")}</button>
+        <button
+          type="button" className={props.value ? "choice selected" : "choice"}
+          role="radio" aria-checked={props.value}
+          onClick={() => props.onChange(true)}
+        >{t("common.yes")}</button>
+      </div>
+    </>
+  );
+}
+
 export function FamilyScreen({ answers, dispatch }: { answers: FlowAnswers; dispatch: D }) {
+  const id = useId();
+  const ageId = `${id}-age`;
+  const spouseAgeId = `${id}-spouse-age`;
   const kids = answers.childAges;
   return (
     <>
@@ -116,6 +168,25 @@ export function FamilyScreen({ answers, dispatch }: { answers: FlowAnswers; disp
           onClick={() => dispatch({ type: "setMarried", married: true })}
         >{t("flow.family.married")}</button>
       </div>
+
+      <label htmlFor={ageId}>{t("flow.family.yourAge")}</label>
+      <AgeInput id={ageId} value={answers.age} onChange={(v) => dispatch({ type: "setAge", age: v })} />
+      <YesNoChoice
+        id={`${id}-you-disabled`} question={t("flow.family.youDisabled")} value={answers.youDisabled}
+        onChange={(v) => dispatch({ type: "setYouDisabled", disabled: v })}
+      />
+
+      {answers.married && (
+        <>
+          <label htmlFor={spouseAgeId}>{t("flow.family.spouseAge")}</label>
+          <AgeInput id={spouseAgeId} value={answers.spouseAge} onChange={(v) => dispatch({ type: "setSpouseAge", age: v })} />
+          <YesNoChoice
+            id={`${id}-spouse-disabled`} question={t("flow.family.spouseDisabled")} value={answers.spouseDisabled}
+            onChange={(v) => dispatch({ type: "setSpouseDisabled", disabled: v })}
+          />
+        </>
+      )}
+
       <p className="hint" id="kids-label">{t("flow.family.kids")}</p>
       <div className="stepper" aria-labelledby="kids-label">
         <button type="button" className="step-btn" aria-label="fewer kids"
@@ -135,6 +206,11 @@ export function FamilyScreen({ answers, dispatch }: { answers: FlowAnswers; disp
             }}>
             {Array.from({ length: 18 }, (_, y) => <option key={y} value={y}>{y}</option>)}
           </select>
+          <label>
+            <input type="checkbox" checked={answers.childDisabled[i] ?? false}
+              onChange={(e) => dispatch({ type: "setChildDisabled", index: i, disabled: e.target.checked })} />
+            {" "}{t("flow.family.kidDisabled")}
+          </label>
         </div>
       ))}
     </>

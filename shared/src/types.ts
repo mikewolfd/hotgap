@@ -11,7 +11,12 @@ export const PROGRAM_IDS: ProgramId[] = [
 export interface HouseholdAnswers {
   state: string;
   married: boolean;
+  age: number;
+  spouseAge: number | null;
   childAges: number[];
+  youDisabled: boolean;
+  spouseDisabled: boolean;
+  childDisabled: boolean[];
   monthlyRent: number | null;
   monthlyChildcare: number | null;
   annualEarnings: number;
