@@ -1,7 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parsePEResponse, analyzeCurve } from "@hotgap/shared";
+import { parsePEResponse, analyzeCurve, type CurvePoint, type ProgramId } from "@hotgap/shared";
 import { narrate, formatWage, formatDollars } from "./narration.js";
+
+const ZERO_PROGRAMS: Record<ProgramId, number> = {
+  snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0,
+  tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0,
+};
+function pt(earnings: number, netIncome: number): CurvePoint {
+  return { earnings, netIncome, programs: { ...ZERO_PROGRAMS } };
+}
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
@@ -74,5 +82,52 @@ describe("narrate verdict routing", () => {
     const flat = points.map((p, i) => ({ ...p, netIncome: 10000 + i * 500 }));
     const n = narrate(analyzeCurve(flat, 20000), { unit: "year" });
     expect(n.headline).toContain("Good news");
+  });
+});
+
+// Finding 4: an in_danger_zone verdict with no escapeEarnings means the sweep
+// never found a spot where net income recovers. The body must not claim a
+// recovery ("once pay gets past X, earning more helps again") in that case.
+describe("narrate on a synthetic danger zone that DOES recover", () => {
+  const syntheticPoints = [pt(0, 10000), pt(10000, 15000), pt(20000, 14500), pt(30000, 15200)];
+  const analysis = analyzeCurve(syntheticPoints, 20000);
+  it("is in_danger_zone with a non-null escapeEarnings", () => {
+    expect(analysis.verdict).toBe("in_danger_zone");
+    expect(analysis.escapeEarnings).toBe(30000);
+  });
+  it("names the wage where the sweep found recovery", () => {
+    const n = narrate(analysis, { unit: "year" });
+    expect(n.headline).toContain("tough spot");
+    expect(n.body).toContain("$30,000 a year");
+  });
+});
+
+describe("narrate on a synthetic danger zone that NEVER recovers", () => {
+  const syntheticPoints = [pt(0, 10000), pt(10000, 15000), pt(20000, 14500), pt(30000, 14200)];
+  const analysis = analyzeCurve(syntheticPoints, 20000);
+  it("is in_danger_zone with a null escapeEarnings", () => {
+    expect(analysis.verdict).toBe("in_danger_zone");
+    expect(analysis.escapeEarnings).toBeNull();
+  });
+  it("uses the honest 'stuck' body instead of asserting a recovery the data never showed", () => {
+    const n = narrate(analysis, { unit: "year" });
+    expect(n.headline).toContain("tough spot");
+    expect(n.body).toContain("come out ahead again");
+    expect(n.body).not.toContain("helps again");
+    expect(n.body).not.toContain("past");
+  });
+});
+
+// Finding 4 also touches cliff_behind indirectly (both are "good news"
+// verdicts that must stay distinguishable): confirm the headline text.
+describe("narrate on a synthetic curve where the only cliff is behind current earnings", () => {
+  const syntheticPoints = [pt(0, 10000), pt(10000, 8000), pt(20000, 15000), pt(30000, 16000)];
+  const analysis = analyzeCurve(syntheticPoints, 25000);
+  it("is cliff_behind", () => {
+    expect(analysis.verdict).toBe("cliff_behind");
+  });
+  it('uses the "Good news from here on." headline', () => {
+    const n = narrate(analysis, { unit: "year" });
+    expect(n.headline).toBe("Good news from here on.");
   });
 });

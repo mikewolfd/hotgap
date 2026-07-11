@@ -47,13 +47,19 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
     params.drop = formatDollars(analysis.worstCliff.drop);
   }
   if (analysis.escapeEarnings !== null) params.escape = formatWage(analysis.escapeEarnings, ctx);
-  if (v === "in_danger_zone" && analysis.escapeEarnings === null) {
-    // never recovers in the sweep — reuse the zone start as the reference wage
-    params.escape = formatWage(analysis.points[analysis.points.length - 1].earnings, ctx);
-  }
+
+  // In a danger zone, "escape" is only meaningful if the sweep actually found
+  // pay where net income recovers. When escapeEarnings is null, we checked
+  // every point we sampled and never found that spot — claiming "once pay
+  // gets past X, earning more helps again" would be asserting a recovery the
+  // data does not support. Route to a body that says so honestly instead.
+  const stuckInZone = v === "in_danger_zone" && analysis.escapeEarnings === null;
+  const bodyKey: StringKey = stuckInZone
+    ? "result.verdict.in_danger_zone.body_stuck"
+    : (`result.verdict.${v}.body` as StringKey);
 
   const headline = t(`result.verdict.${v}` as StringKey, pick(params, HEADLINE_PARAMS[v]));
-  const body = t(`result.verdict.${v}.body` as StringKey, pick(params, BODY_PARAMS[v]));
+  const body = t(bodyKey, pick(params, stuckInZone ? [] : BODY_PARAMS[v]));
 
   const current = interpolateAt(analysis, analysis.currentEarnings);
   const lost = new Set<ProgramId>(analysis.nextCliff?.programsLost ?? []);

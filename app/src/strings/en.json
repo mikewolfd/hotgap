@@ -18,6 +18,7 @@
   "flow.zip.confirm": "Looks like you live in {state}. Is that right?",
   "flow.zip.fix": "No, pick my state",
   "flow.zip.bad": "That ZIP code does not look right. Please check it.",
+  "flow.zip.territory": "We are sorry. We can not help in this area yet.",
 
   "flow.family.q": "Who lives with you?",
   "flow.family.single": "Just me",
@@ -48,6 +49,7 @@
   "result.verdict.cliff_ahead.body": "If your pay goes past {wage}, you could lose about {drop} a year. People call this a benefits cliff.",
   "result.verdict.in_danger_zone": "You are in a tough spot right now.",
   "result.verdict.in_danger_zone.body": "At your pay, you may end up with less than someone who earns a bit less. Once pay gets past {escape}, earning more helps again.",
+  "result.verdict.in_danger_zone.body_stuck": "At your pay, you may end up with less than someone who earns a bit less. In the pay range we checked, we did not find a spot where you come out ahead again.",
   "result.verdict.cliff_behind": "Good news from here on.",
   "result.verdict.cliff_behind.body": "The big drop is below your pay now. From here, more pay means more for you.",
 
