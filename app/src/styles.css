@@ -9,6 +9,17 @@
   --card: #ffffff;
   --line: #e4ded2;
   --radius: 14px;
+  /* Sequential choropleth ramp: one hue (the --danger clay-red family),
+     5 quantized steps light -> dark. Derived in OKLCH and checked against
+     the dataviz skill's validate_palette.js --ordinal rules (monotone L,
+     adjacent step >= 0.06 L, light end >= 2:1 vs --bg, single hue) — see
+     the Task 18 report for the exact validator run. Bin 1 = smallest loss,
+     bin 5 = biggest loss. */
+  --danger-ramp-1: #ff8972;
+  --danger-ramp-2: #d87562;
+  --danger-ramp-3: #b06152;
+  --danger-ramp-4: #894e42;
+  --danger-ramp-5: #643b33;
   font-size: 18px;
 }
 @media (prefers-color-scheme: dark) {
@@ -17,6 +28,12 @@
     --accent: #4fb3a9; --accent-ink: #10201e;
     --danger: #e0705a; --danger-soft: #3a241f;
     --card: #26231f; --line: #3a362f;
+    /* Re-derived (not flipped) against the dark surface #1c1a17 — see note above. */
+    --danger-ramp-1: #f8866f;
+    --danger-ramp-2: #d77662;
+    --danger-ramp-3: #b76756;
+    --danger-ramp-4: #98584a;
+    --danger-ramp-5: #7a493f;
   }
 }
 * { box-sizing: border-box; }
@@ -115,5 +132,32 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 }
 .honesty h2 { margin-top: 0; }
 .honesty-model { color: var(--muted); font-size: 0.9rem; }
-.places-stub { padding-top: 10dvh; text-align: center; }
-.places-stub .primary { display: inline-block; margin-top: 16px; text-decoration: none; }
+.places-page .hint { margin-bottom: 16px; }
+.places-picker {
+  margin: 16px 0 20px; padding: 16px; border: 2px solid var(--line); border-radius: var(--radius);
+  background: var(--card);
+}
+.places-picker legend { font-weight: 700; padding: 0 6px; }
+
+.places-map-figure { margin: 0 0 20px; }
+.places-map { width: 100%; height: auto; display: block; }
+.state-path {
+  /* fill set inline per-state from RAMP_COLOR_VARS (placesRamp.ts) so the
+     same CSS custom properties drive both the map and the legend swatches. */
+  stroke: var(--line); stroke-width: 0.75;
+  cursor: pointer;
+}
+.state-path:hover, .state-path:focus-visible { stroke: var(--ink); stroke-width: 2; }
+.state-path.selected { stroke: var(--ink); stroke-width: 2.5; }
+
+.places-legend { margin: 0 0 20px; }
+.places-legend h2 { font-size: 1rem; margin: 0 0 8px; }
+.legend-scale { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 0; margin: 0; }
+.legend-scale li { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.85rem; }
+.legend-swatch-map { width: 16px; height: 16px; border-radius: 4px; display: inline-block; flex: none; }
+
+.places-panel { margin-top: 24px; padding: 16px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); }
+.places-panel-headline { font-size: 1.3rem; margin: 0 0 4px; }
+.places-panel-rank { color: var(--muted); margin: 0 0 12px; }
+.places-panel-honesty { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+.places-panel-loading, .places-panel-error { padding: 12px 0; color: var(--muted); }

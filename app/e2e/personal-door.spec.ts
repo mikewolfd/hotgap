@@ -64,12 +64,6 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 });
 
-test("places door shows honest stub", async ({ page }) => {
-  await page.goto("/#/places");
-  await expect(page.getByRole("heading", { name: /compare places/i })).toBeVisible();
-  await expect(page.getByText(/not ready yet/i)).toBeVisible();
-});
-
 test("API failure shows plain-language error with retry", async ({ page }) => {
   await page.route("**/api/curve", (route) => route.fulfill({ status: 502, body: "{}" }));
   await page.goto("/#/check");

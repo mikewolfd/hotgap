@@ -4,7 +4,7 @@ import Flow from "./flow/Flow.js";
 import { ResultPage } from "./result/ResultPage.js";
 import type { PayContext } from "./lib/narration.js";
 import { Landing } from "./pages/Landing.js";
-import { PlacesStub } from "./pages/PlacesStub.js";
+import { PlacesPage } from "./pages/PlacesPage.js";
 
 function useHashRoute(): string {
   const [hash, setHash] = useState(location.hash || "#/");
@@ -30,7 +30,7 @@ export default function App() {
       <Flow onComplete={(answers, ctx) => setResult({ answers, ctx })} />
     );
   } else if (route.startsWith("#/places")) {
-    page = <PlacesStub />;
+    page = <PlacesPage />;
   } else {
     page = <Landing />;
   }

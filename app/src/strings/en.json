@@ -99,6 +99,17 @@
   "program.schoolmeals": "free school meals",
 
   "places.title": "Compare places",
-  "places.body": "We are building a map that shows which states have the worst benefit gaps. It is not ready yet.",
-  "places.back": "Go back home"
+  "places.intro": "Pick a family. See where they could lose the most money by earning more.",
+  "places.pick.title": "Pick a family to compare",
+  "places.pick.kids": "How many kids?",
+  "places.legend.title": "How much can they lose?",
+  "places.legend.upTo": "Loses up to {amount}",
+  "places.legend.none": "This family did not lose money in any state we checked.",
+  "places.map.alt": "A map of the United States. Darker states mean a bigger possible loss for this family.",
+  "places.map.stateLabel": "{state}: can lose up to {loss} a year.",
+  "places.panel.headline": "In {state}, a family like this can lose up to {loss} a year by earning more.",
+  "places.panel.rank": "Worse than {n} of 50 other states.",
+  "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
+  "places.loading": "Getting this state's numbers…",
+  "places.error": "We could not load this state. Please try again."
 }
