@@ -124,7 +124,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(ssi).toBeGreaterThan(0);
   }, 90_000);
 
-  it("head_start:0 override removes Head Start; ESI inputs zero the PTC", async () => {
+  it("head_start:0 override removes Head Start from net income", async () => {
     const withHS = { household: { people: { you: { age: { "2026": 30 }, employment_income: { "2026": 20000 } }, kid: { age: { "2026": 5 }, head_start: { "2026": null } } }, families: { f: { members: ["you", "kid"] } }, marital_units: { m: { members: ["you"] } }, tax_units: { t: { members: ["you", "kid"] } }, spm_units: { s: { members: ["you", "kid"] } }, households: { h: { members: ["you", "kid"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } } } };
     const off = JSON.parse(JSON.stringify(withHS));
     off.household.people.kid.head_start = { "2026": 0 };

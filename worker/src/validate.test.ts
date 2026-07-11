@@ -134,6 +134,7 @@ describe("validateAnswers", () => {
       spouseAnnualEarnings: 20000, age: 30, spouseAge: 30, youDisabled: false,
       spouseDisabled: false, getsHeadStart: true, getsHousing: true, hasEmployerCoverage: true,
     });
+    expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.value.getsHeadStart).toBe(true);
       expect(r.value.getsHousing).toBe(true);
