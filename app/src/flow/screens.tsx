@@ -355,17 +355,22 @@ export function GetsScreen({ answers, dispatch }: { answers: FlowAnswers; dispat
     <>
       <h1>{t("flow.gets.q")}</h1>
       <p className="hint">{t("flow.gets.hint")}</p>
-      {rows.filter((r) => r.show).map((r) => (
-        <div key={r.key} className="gets-row">
-          <span>{r.label}</span>
-          <div className="choice-row">
-            <button type="button" className={answers[r.key] ? "choice selected" : "choice"}
-              onClick={() => dispatch({ type: "setGets", key: r.key, value: true })}>{t("common.yes")}</button>
-            <button type="button" className={answers[r.key] ? "choice" : "choice selected"}
-              onClick={() => dispatch({ type: "setGets", key: r.key, value: false })}>{t("common.no")}</button>
+      {rows.filter((r) => r.show).map((r) => {
+        const labelId = `gets-${r.key}-label`;
+        return (
+          <div key={r.key} className="gets-row">
+            <span id={labelId}>{r.label}</span>
+            <div className="choice-row" role="radiogroup" aria-labelledby={labelId}>
+              <button type="button" className={answers[r.key] ? "choice selected" : "choice"}
+                role="radio" aria-checked={answers[r.key]}
+                onClick={() => dispatch({ type: "setGets", key: r.key, value: true })}>{t("common.yes")}</button>
+              <button type="button" className={answers[r.key] ? "choice" : "choice selected"}
+                role="radio" aria-checked={!answers[r.key]}
+                onClick={() => dispatch({ type: "setGets", key: r.key, value: false })}>{t("common.no")}</button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }

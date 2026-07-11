@@ -73,6 +73,8 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .stepper output { font-size: 1.5rem; min-width: 2ch; text-align: center; }
 .step-btn { width: 48px; background: var(--card); border-color: var(--line); font-size: 1.4rem; }
 .kid-age-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.gets-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
+.gets-row .choice-row { margin: 0; flex-wrap: nowrap; }
 .kid-age-row select, .confirm-row select {
   min-height: 44px; font-size: 1rem; border-radius: 10px;
   background: var(--card); color: var(--ink); border: 2px solid var(--line);
