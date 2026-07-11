@@ -66,6 +66,7 @@ export function validateAnswers(input: unknown): Validation {
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
       hasEmployerCoverage: a.hasEmployerCoverage === true,
+      countyFips: typeof a.countyFips === "string" && /^\d{5}$/.test(a.countyFips) ? a.countyFips : null,
     },
   };
 }

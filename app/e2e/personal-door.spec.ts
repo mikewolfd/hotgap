@@ -185,3 +185,45 @@ test("API failure shows plain-language error with retry when the fallback also f
   await expect(page.getByRole("heading", { name: /could not get your answer/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /try again/i })).toBeVisible();
 });
+
+// Plan 7 (county-level): a known ZIP resolves to a county FIPS via the
+// lazily-fetched crosswalk (app/src/lib/county.ts), and the result page notes
+// that numbers use the county when one is known. Mock the crosswalk to a
+// tiny deterministic fixture rather than relying on the real (33k-row) file,
+// so this test's pass/fail never depends on Census data content.
+test("county note appears on the result when the ZIP resolves to a known county", async ({ page }) => {
+  await page.route("**/data/zip5-county.json", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ "94110": "06075" }) }),
+  );
+  await page.route("**/api/curve", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(curve) }),
+  );
+
+  // The crosswalk is fetched fire-and-forget when the app mounts (App.tsx's
+  // ensureCountyTable effect) and read synchronously the moment the ZIP
+  // field's onChange fires. Register the route before navigating (above) and
+  // explicitly wait for that response to land before touching the ZIP field,
+  // so this test doesn't race the fetch and nondeterministically fall back to
+  // the state-only path.
+  const countyTableLoaded = page.waitForResponse((res) => res.url().includes("zip5-county.json"));
+  await page.goto("/#/check");
+  await countyTableLoaded;
+
+  await page.getByLabel(/where do you live/i).fill("94110");
+  await page.getByRole("button", { name: /next/i }).click();
+
+  await page.getByRole("radio", { name: /just me/i }).click(); // no kids -> no childcare screen
+  await page.getByLabel(/how old are you/i).fill("30");
+  await page.getByRole("button", { name: /next/i }).click();
+
+  await page.getByLabel(/what do you pay to live/i).fill("1500");
+  await page.getByRole("button", { name: /next/i }).click();
+
+  await page.getByRole("button", { name: /next/i }).click(); // gets (which programs do you get now)
+
+  await page.getByLabel(/what do you make now/i).fill("12");
+  await page.getByRole("button", { name: /see my answer/i }).click();
+
+  await expect(page.getByRole("heading", { name: /watch out/i })).toBeVisible();
+  await expect(page.getByText(/your county/i)).toBeVisible();
+});

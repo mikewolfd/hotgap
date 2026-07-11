@@ -141,4 +141,14 @@ describe("validateAnswers", () => {
       expect(r.value.hasEmployerCoverage).toBe(true);
     }
   });
+
+  it("accepts a 5-digit countyFips and defaults it to null when absent or malformed", () => {
+    const good = { state: "CA", married: false, childAges: [], childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0, age: 30, spouseAge: null, youDisabled: false, spouseDisabled: false };
+    const a = validateAnswers({ ...good, countyFips: "06075" });
+    expect(a.ok).toBe(true); if (a.ok) expect(a.value.countyFips).toBe("06075");
+    const b = validateAnswers({ ...good, countyFips: "6075" });
+    if (b.ok) expect(b.value.countyFips).toBeNull();
+    const c = validateAnswers(good);
+    if (c.ok) expect(c.value.countyFips).toBeNull();
+  });
 });

@@ -117,4 +117,37 @@ describe("flow state machine", () => {
     let s = flowReducer(initialFlowState, { type: "setGets", key: "getsHousing", value: true });
     expect(s.answers.getsHousing).toBe(true);
   });
+
+  it("derives countyFips from the ZIP alongside state", async () => {
+    const { ensureCountyTable } = await import("../lib/county.js");
+    await ensureCountyTable((async () => new Response(JSON.stringify({ "94110": "06075" }))) as unknown as typeof fetch);
+    const s = flowReducer(initialFlowState, { type: "setZip", zip: "94110" });
+    expect(s.answers.state).toBe("CA");
+    expect(s.answers.countyFips).toBe("06075");
+  });
+
+  it("clears the ZIP-derived county when the user overrides their state", async () => {
+    const { ensureCountyTable } = await import("../lib/county.js");
+    await ensureCountyTable((async () => new Response(JSON.stringify({ "94110": "06075" }))) as unknown as typeof fetch);
+    let s = flowReducer(initialFlowState, { type: "setZip", zip: "94110" });
+    expect(s.answers.countyFips).toBe("06075");
+    s = flowReducer(s, { type: "setState", state: "NY" });
+    expect(s.answers.state).toBe("NY");
+    expect(s.answers.countyFips).toBeNull();
+  });
+
+  it("drops a border-ZIP county whose state disagrees with the derived state", async () => {
+    const { ensureCountyTable, zipToCounty, __resetCountyTableForTests } = await import("../lib/county.js");
+    const { zipToState } = await import("../lib/zip.js");
+    // 06390 (Fishers Island) sits in NY's county 36103 by area, but its ZIP3
+    // prefix 063 maps to CT. state and county disagree, so county must be dropped.
+    // Reset first: ensureCountyTable no-ops once loaded (earlier tests seeded 94110).
+    __resetCountyTableForTests();
+    await ensureCountyTable((async () => new Response(JSON.stringify({ "06390": "36103" }))) as unknown as typeof fetch);
+    expect(zipToState("06390")).toBe("CT");
+    expect(zipToCounty("06390")).toBe("36103"); // raw crosswalk still resolves the NY county
+    const s = flowReducer(initialFlowState, { type: "setZip", zip: "06390" });
+    expect(s.answers.state).toBe("CT");
+    expect(s.answers.countyFips).toBeNull(); // dropped: 36103 is NY, not CT
+  });
 });

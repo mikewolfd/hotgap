@@ -8,6 +8,7 @@ const base: HouseholdAnswers = {
   monthlyRent: 1500, monthlyChildcare: null,
   annualEarnings: 30000, spouseAnnualEarnings: 0,
   getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
+  countyFips: null,
 };
 
 describe("axisMax", () => {
@@ -130,5 +131,12 @@ describe("buildPEPayload", () => {
   it("uses the family ESI premium when there are kids or a spouse", () => {
     const p = buildPEPayload({ ...base, hasEmployerCoverage: true, childAges: [5] }) as any;
     expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(6500);
+  });
+
+  it("adds county_fips to the household only when countyFips is set", () => {
+    const withCounty = buildPEPayload({ ...base, countyFips: "06075" }) as any;
+    expect(withCounty.household.households.household.county_fips["2026"]).toBe("06075");
+    const without = buildPEPayload({ ...base, countyFips: null }) as any;
+    expect(without.household.households.household.county_fips).toBeUndefined();
   });
 });

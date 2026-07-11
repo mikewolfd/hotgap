@@ -24,6 +24,7 @@ export interface HouseholdAnswers {
   getsHeadStart: boolean;
   getsHousing: boolean;
   hasEmployerCoverage: boolean;
+  countyFips: string | null;
 }
 
 export interface CurvePoint {

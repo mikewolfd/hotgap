@@ -51,7 +51,8 @@ Success criteria:
 
 One question per screen, big type, phone-first. Five questions:
 
-1. **Where do you live?** — ZIP code (derives state now; county/city reserved for later)
+1. **Where do you live?** — ZIP code (derives state, and, when the ZIP resolves,
+   county — see 1a below)
 2. **Who lives with you?** — single/married toggle, kids with ages
 3. **What do you pay to live there each month?** — rent/mortgage; "not sure" allowed
 4. **What do you pay for childcare each month?** — asked only if kids under 13; "none" allowed
@@ -73,6 +74,33 @@ Result page:
 - Client-side math: cliff detection (net-income drops), danger-zone extents (ranges where
   net resources < current), effective marginal tax rate per segment. Narration is selected
   from a fixed template library keyed on curve shape — no free-form generated text.
+
+## 1a. County-level accuracy (Plan 7, 2026-07-11)
+
+**Personal door only — the map does not change.** The ZIP the user already enters in
+question 1 also resolves to a county FIPS via a lazily-fetched crosswalk
+(`app/src/lib/county.ts`, built from the Census 2020 ZCTA-to-county relationship file;
+attribution in README). `HouseholdAnswers.countyFips` carries it through the flow and,
+when non-null, `worker/src/translate.ts` adds `county_fips` to the PolicyEngine
+household — this mainly sharpens the ACA marketplace premium (rating areas vary by
+county within a state) and, when the housing toggle is on, HUD FMR. When the ZIP
+doesn't resolve (crosswalk still loading, or an unmapped ZIP), `countyFips` stays
+`null` and the payload is byte-for-byte the pre-county, state-only shape — a pure
+progressive enhancement, never a new required question.
+
+**Verified live (2026-07-11):** the same single-adult CA household at $45k earnings
+gets a materially different `premium_tax_credit` in San Francisco County (06075, ~$3,459)
+vs. Los Angeles County (06037, ~$1,251) — county genuinely changes the rating area, not
+just an accepted-and-ignored field (contract test in `contract/policyengine.contract.test.ts`).
+A short honesty line on the result (`result.county.note`, "Numbers use your county where
+we can.") shows only when a county was resolved. Full design detail, including the
+crosswalk build steps and its known limitations (ZCTA≈ZIP approximation, dominant-county
+tie-break by land area, not population), lives in
+`docs/superpowers/specs/2026-07-11-hotgap-county-design.md`.
+
+The map stays exactly as it was: archetypes have no address, so the places door's
+51-state choropleth and all committed pipeline data are state-level, untouched by this
+change (see the scope boundary in the county design doc above).
 
 ## 2. Places door — the map and the gap score
 
@@ -293,7 +321,10 @@ note (`result.honesty.reach` / `places.panel.reachNote`) sits in each door's hon
 
 ## Out of scope for v1 (v2 candidates)
 
-- County/city resolution (HUD FMR + childcare market-rate joins)
+- County/city resolution **for the map** (HUD FMR + childcare market-rate joins into the
+  places-door pipeline and archetype curves). The personal door's own county-level
+  accuracy — ZIP-derived `county_fips` sharpening the live ACA premium — shipped in Plan 7
+  (see 1a above); the map is unaffected.
 - Spanish localization (architecture ready day one)
 - Policy-reform overlay ("what would this proposed law do to the map")
 - Shareable result cards
