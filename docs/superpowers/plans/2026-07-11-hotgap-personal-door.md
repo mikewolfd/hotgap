@@ -12,10 +12,10 @@
 
 - `POST https://api.policyengine.org/us/calculate` needs **no auth**. 101-point axes sweep ≈ 3.7 s, HTTP 200.
 - Response mirrors the request household; each requested variable comes back as a **101-element array** under `result.<entity_group>.<entity_name>.<variable>["2026"]`.
-- Verified variable placements: person-level `age`, `employment_income`, `rent`, `medicaid`, `chip`, `wic`, `ssi`; tax-unit `eitc`, `refundable_ctc`, `premium_tax_credit`; spm-unit `snap`, `tanf`, `spm_unit_capped_housing_subsidy`, `childcare_expenses`; household `state_name`, `household_net_income`.
-- Wrong placement returns HTTP 200-shaped **error JSON**: `{"status":"error","message":"...belongs on people, not spm_units..."}` — check `status`, not just HTTP code.
+- Verified variable placements: person-level `age`, `employment_income`, `rent`, `medicaid`, `chip`, `wic`, `ssi`, `head_start`, `early_head_start` (children); tax-unit `eitc`, `refundable_ctc`, `premium_tax_credit`; spm-unit `snap`, `tanf`, `spm_unit_capped_housing_subsidy`, `childcare_expenses`, `free_school_meals`, `reduced_price_school_meals`; household `state_name`, `household_net_income`.
+- Wrong placement returns **HTTP 400** with error JSON: `{"status":"error","message":"...belongs on people, not spm_units..."}` (re-verified live 2026-07-11; the contract test is the authoritative pin) — check `status` on 200s too, not just the HTTP code.
 - The axis varies the **first person key's** `employment_income`. `"you"` must be the first key in `people`.
-- Fixtures committed at `fixtures/pe-ca-single-1kid-101.request.json` and `fixtures/pe-ca-single-1kid-101.json` (CA single parent, one kid age 5: contains a real cliff — net income drops $56,751 → $34,794 between $30k and $31k earnings).
+- Fixtures committed at `fixtures/pe-ca-single-1kid-101.request.json` and `fixtures/pe-ca-single-1kid-101.json` (CA single parent, one kid age 5: contains a real cliff — net income drops $56,751 → $34,794 between $30k and $31k earnings; the driver is the child losing **Head Start** — a $22,285 valued benefit — plus small EITC/ACA phase-outs. Medicaid's dollar value is NOT part of household_net_income, so health coverage shows in the why-list, not the curve. Fixture regenerated 2026-07-11 with head_start/early_head_start/free_school_meals/reduced_price_school_meals).
 
 ## Global Constraints
 
@@ -279,6 +279,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     arr(r.tax_units["your tax unit"].refundable_ctc["2026"]);
     arr(r.tax_units["your tax unit"].premium_tax_credit["2026"]);
     for (const v of ["medicaid", "ssi", "wic", "chip"]) arr(r.people["you"][v]["2026"]);
+    for (const v of ["head_start", "early_head_start"]) arr(r.people["your first dependent"][v]["2026"]);
+    for (const v of ["free_school_meals", "reduced_price_school_meals"]) arr(r.spm_units["your spm_unit"][v]["2026"]);
   }, 90_000);
 
   it("accepts rent on people and childcare_expenses on spm_units", async () => {
@@ -349,7 +351,7 @@ git add -A && git commit -m "test: live PolicyEngine API contract test + nightly
 - Produces (exact — later tasks import these from `@hotgap/shared`):
 
 ```ts
-type ProgramId = "snap" | "medicaid" | "chip" | "eitc" | "ctc" | "aca" | "tanf" | "housing" | "wic" | "ssi";
+type ProgramId = "snap" | "medicaid" | "chip" | "eitc" | "ctc" | "aca" | "tanf" | "housing" | "wic" | "ssi" | "headstart" | "schoolmeals";
 interface HouseholdAnswers {
   state: string;               // "CA"
   married: boolean;
@@ -411,10 +413,12 @@ describe("roundTo", () => {
 ```ts
 export type ProgramId =
   | "snap" | "medicaid" | "chip" | "eitc" | "ctc"
-  | "aca" | "tanf" | "housing" | "wic" | "ssi";
+  | "aca" | "tanf" | "housing" | "wic" | "ssi"
+  | "headstart" | "schoolmeals";
 
 export const PROGRAM_IDS: ProgramId[] = [
   "snap", "medicaid", "chip", "eitc", "ctc", "aca", "tanf", "housing", "wic", "ssi",
+  "headstart", "schoolmeals",
 ];
 
 export interface HouseholdAnswers {
@@ -555,9 +559,11 @@ type Entity = Record<string, Record<string, Record<string, unknown>>>;
 
 const PERSON_PROGRAMS: Record<string, ProgramId> = {
   medicaid: "medicaid", chip: "chip", wic: "wic", ssi: "ssi",
+  head_start: "headstart", early_head_start: "headstart",
 };
 const SPM_PROGRAMS: Record<string, ProgramId> = {
   snap: "snap", tanf: "tanf", spm_unit_capped_housing_subsidy: "housing",
+  free_school_meals: "schoolmeals", reduced_price_school_meals: "schoolmeals",
 };
 const TAX_PROGRAMS: Record<string, ProgramId> = {
   eitc: "eitc", refundable_ctc: "ctc", premium_tax_credit: "aca",
@@ -674,7 +680,7 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0 },
+  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
 });
 
 describe("analyzeCurve on synthetic curves", () => {
@@ -718,12 +724,12 @@ describe("analyzeCurve on synthetic curves", () => {
 });
 
 describe("analyzeCurve on the real CA fixture", () => {
-  it("finds the verified $22k Medicaid cliff at $30k earnings", () => {
+  it("finds the verified $22k Head Start cliff at $30k earnings", () => {
     const a = analyzeCurve(fixturePoints, 20000);
     expect(a.worstCliff).not.toBeNull();
     expect(a.worstCliff!.startEarnings).toBe(30000);
     expect(a.worstCliff!.drop).toBeGreaterThan(20000);
-    expect(a.worstCliff!.programsLost).toContain("medicaid");
+    expect(a.worstCliff!.programsLost).toContain("headstart");
     expect(a.verdict).toBe("cliff_ahead");
   });
 });
@@ -823,9 +829,11 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
   );
   const nextCliff = cliffs.find((c) => c.startEarnings >= currentEarnings) ?? null;
 
+  // Zone membership outranks always_up: cumulative erosion (no single step
+  // > CLIFF_MIN) can put the user inside a danger zone with zero cliffs.
   const verdict: Verdict =
-    cliffs.length === 0 ? "always_up"
-    : zone ? "in_danger_zone"
+    zone ? "in_danger_zone"
+    : cliffs.length === 0 ? "always_up"
     : nextCliff ? "cliff_ahead"
     : "cliff_behind";
 
@@ -929,6 +937,7 @@ describe("buildPEPayload", () => {
     expect(Object.keys(p.household.people)).toEqual(["you", "child1"]);
     expect(p.household.people.you.rent["2026"]).toBe(18000);
     expect(p.household.people.child1.age["2026"]).toBe(5);
+    expect(p.household.people.child1.head_start["2026"]).toBeNull();
     expect(p.household.households.household.state_name["2026"]).toBe("CA");
     expect(p.household.spm_units.spm_unit.childcare_expenses["2026"]).toBe(0);
     expect(p.household.axes[0][0]).toMatchObject({ name: "employment_income", min: 0, max: 100000, count: AXIS_COUNT, period: "2026" });
@@ -950,7 +959,7 @@ describe("buildPEPayload", () => {
   it("requests every display variable as null", () => {
     const p = buildPEPayload(base) as any;
     expect(p.household.households.household.household_net_income["2026"]).toBeNull();
-    for (const v of ["snap", "tanf", "spm_unit_capped_housing_subsidy"])
+    for (const v of ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals"])
       expect(p.household.spm_units.spm_unit[v]["2026"]).toBeNull();
     for (const v of ["eitc", "refundable_ctc", "premium_tax_credit"])
       expect(p.household.tax_units.tax_unit[v]["2026"]).toBeNull();
@@ -978,7 +987,7 @@ type Vars = Record<string, Record<string, number | string | null>>;
 const y = (value: number | string | null): Record<string, number | string | null> => ({ [YEAR]: value });
 
 const PERSON_VARS = ["medicaid", "chip", "wic", "ssi"];
-const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy"];
+const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals"];
 const TAX_VARS = ["eitc", "refundable_ctc", "premium_tax_credit"];
 
 export function buildPEPayload(a: HouseholdAnswers): { household: object } {
@@ -992,7 +1001,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     for (const v of PERSON_VARS) people.spouse[v] = y(null);
   }
   a.childAges.forEach((age, i) => {
-    people[`child${i + 1}`] = { age: y(age), medicaid: y(null), chip: y(null) };
+    people[`child${i + 1}`] = { age: y(age), medicaid: y(null), chip: y(null), head_start: y(null), early_head_start: y(null) };
   });
 
   const members = Object.keys(people);
@@ -1535,6 +1544,8 @@ export default function App() {
   "program.housing": "housing help",
   "program.wic": "food help for moms and babies (WIC)",
   "program.ssi": "SSI cash help",
+  "program.headstart": "Head Start (free early learning)",
+  "program.schoolmeals": "free school meals",
 
   "places.title": "Compare places",
   "places.body": "We are building a map that shows which states have the worst benefit gaps. It is not ready yet.",
@@ -2416,7 +2427,9 @@ export default function Flow(props: {
 
 - [ ] **Step 7: Commit** — `git add -A && git commit -m "feat(app): five-question flow with state machine and API client"`
 
----### Task 12: Result page, curve chart, landing, app shell, styles
+---
+
+### Task 12: Result page, curve chart, landing, app shell, styles
 
 **Read the `dataviz` skill AND the `frontend-design:frontend-design` skill before this task.**
 
@@ -2550,7 +2563,8 @@ const ICONS: Record<string, string> = {
   food: "🍎", health: "🏥", kids: "👶", housing: "🏠", cash: "💵", tax: "🧾",
 };
 function iconFor(label: string): string {
-  if (label.includes("food")) return ICONS.food;
+  if (label.includes("food") || label.includes("meals")) return ICONS.food;
+  if (label.includes("Head Start")) return ICONS.kids;
   if (label.includes("health")) return ICONS.health;
   if (label.includes("child")) return ICONS.kids;
   if (label.includes("housing")) return ICONS.housing;
@@ -2920,7 +2934,7 @@ Add to root `package.json` scripts: `"e2e": "playwright test --config app/playwr
 ```ts
 import { test, expect } from "@playwright/test";
 
-const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0 };
+const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
 const mkPoint = (earnings: number, netIncome: number, medicaid = 0) => ({
   earnings, netIncome, programs: { ...PROGRAMS, medicaid },
 });

@@ -102,8 +102,9 @@ Result page:
 
 - **Frontend:** React + Vite, static-exportable, mobile-first. Custom D3 chart and
   TopoJSON map — the chart is the craft centerpiece; no chart-library defaults.
-- **Hosting:** Cloudflare Pages (static) + one Cloudflare Worker (proxy). Free tier covers
-  a civic-tool audience; swap-out is trivial since the proxy is one function.
+- **Hosting:** One Cloudflare Worker with assets binding (serves static site + proxies API).
+  Spec noted Pages + Worker; Workers-with-assets is the current recommended equivalent
+  and one unified deploy unit. Free tier covers a civic-tool audience; swap-out is trivial.
 - **Proxy:** the Cloudflare Worker. Holds PolicyEngine
   API credentials, translates the 5 answers into PolicyEngine household JSON, forwards the
   axes request, caches responses. If the public `/us/calculate` endpoint needs no auth,
@@ -146,8 +147,8 @@ than silently showing zero.
 
 ## Open questions carried into implementation
 
-1. Exact PolicyEngine API auth story for `/us/calculate` — verify with a live call first;
-   proxy design absorbs either outcome.
+1. **ANSWERED:** No auth required for `/us/calculate`; verified live 2026-07-11; contract
+   test pins the API shape including HTTP 400 + status:"error" validation errors.
 2. Whether housing assistance modeling in policyengine-us is reliable enough to display
    per-state, or gets the "we may not know" treatment.
 3. Final visual language for the map (iterate with real data; owner reviews rendered
