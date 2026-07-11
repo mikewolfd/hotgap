@@ -5,7 +5,9 @@
 HotGap is a free, open-source website that shows benefits cliffs in plain
 language: what happens to a real household's food help, health coverage,
 childcare help, and tax credits as pay goes up. Two doors: check your own
-numbers, or compare which states have the worst gaps on a map.
+numbers, or compare which states have the worst gaps on a map — by biggest
+loss, or by **the leap**, the raise a family must clear in one move to get
+past the worst rough zone and earn safely again.
 
 Calculations come from [PolicyEngine](https://policyengine.org)'s open
 rules engine via its public API. Estimates only — a caseworker decides
