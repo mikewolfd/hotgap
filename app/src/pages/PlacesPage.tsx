@@ -230,7 +230,7 @@ export function PlacesPage() {
         <section className="places-legend">
           <h2>{metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title")}</h2>
           {ramp.max <= 0 ? (
-            <p>{t("places.legend.none")}</p>
+            <p>{metric === "leap" ? t("places.legend.noneLeap") : t("places.legend.none")}</p>
           ) : (
             <ul className="legend-scale">
               {ramp.upperBounds.map((upper, i) => (

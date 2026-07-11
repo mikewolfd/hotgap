@@ -82,8 +82,23 @@ describe("PlacesPage", () => {
     expect(after).not.toEqual(before);
   });
 
-  it("collapses to a single 'no loss' legend message for an archetype where every state is 0 (single, 0 kids)", () => {
+  // The degenerate "every state is 0" legend message must match the selected
+  // metric: no-kids archetypes have leap === 0 AND biggestLoss === 0 in every
+  // state, so with the DEFAULT leap metric the empty message must read in
+  // "jump to get out" terms, not "did not lose money" (that loss-framed
+  // sentence under the leap heading was the review's Important bug).
+  it("collapses to the leap-framed empty legend message under the default metric (single, 0 kids)", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
+    fireEvent.click(getByLabelText("fewer kids"));
+    fireEvent.click(getByLabelText("fewer kids"));
+    expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
+    expect(container.textContent).toMatch(/no jump to get out in any state/i);
+    expect(container.textContent).not.toMatch(/did not lose money/i);
+  });
+
+  it("collapses to the loss-framed empty legend message when the loss metric is selected (single, 0 kids)", () => {
+    const { container, getByLabelText, getByRole } = render(<PlacesPage />);
+    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
     expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
