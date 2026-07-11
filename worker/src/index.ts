@@ -76,7 +76,14 @@ export default {
   async fetch(req: Request, _env: unknown, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
     const cache = caches.default;
     return handleRequest(req, {
-      fetchImpl: fetch,
+      // Bound explicitly: passing the bare `fetch` reference here and invoking
+      // it later as `deps.fetchImpl(...)` calls it with the wrong `this`
+      // (the `deps` object instead of the global scope). workerd's native
+      // fetch implementation checks its receiver and throws "Illegal
+      // invocation" in that case — reproducible with `wrangler dev` against
+      // the real PolicyEngine API. See
+      // https://developers.cloudflare.com/workers/observability/errors/#illegal-invocation-errors
+      fetchImpl: fetch.bind(globalThis),
       cache: {
         match: async (k) => (await cache.match(new Request(k))) ?? undefined,
         put: (k, r) => cache.put(new Request(k), r),
