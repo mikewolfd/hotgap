@@ -7,9 +7,11 @@ type Entity = Record<string, Record<string, Record<string, unknown>>>;
 
 const PERSON_PROGRAMS: Record<string, ProgramId> = {
   medicaid: "medicaid", chip: "chip", wic: "wic", ssi: "ssi",
+  head_start: "headstart", early_head_start: "headstart",
 };
 const SPM_PROGRAMS: Record<string, ProgramId> = {
   snap: "snap", tanf: "tanf", spm_unit_capped_housing_subsidy: "housing",
+  free_school_meals: "schoolmeals", reduced_price_school_meals: "schoolmeals",
 };
 const TAX_PROGRAMS: Record<string, ProgramId> = {
   eitc: "eitc", refundable_ctc: "ctc", premium_tax_credit: "aca",

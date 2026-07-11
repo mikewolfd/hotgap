@@ -76,6 +76,9 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
       peakNet = p.netIncome;
       peakEarnings = p.earnings;
     } else if (p.netIncome < peakNet - CLIFF_MIN && !open) {
+      // Intentional hysteresis: dips smaller than CLIFF_MIN below the running
+      // max are noise, not danger zones. A zone opens only once the shortfall
+      // exceeds CLIFF_MIN, and is backdated to the peak where the decline began.
       open = { startEarnings: peakEarnings, endEarnings: null, peakNet };
     }
   }
@@ -87,9 +90,12 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
   );
   const nextCliff = cliffs.find((c) => c.startEarnings >= currentEarnings) ?? null;
 
+  // Zone membership is checked before always_up: cumulative erosion can open a
+  // danger zone even when no single step exceeds CLIFF_MIN, so a user inside
+  // such a zone must never be told "always_up".
   const verdict: Verdict =
-    cliffs.length === 0 ? "always_up"
-    : zone ? "in_danger_zone"
+    zone ? "in_danger_zone"
+    : cliffs.length === 0 ? "always_up"
     : nextCliff ? "cliff_ahead"
     : "cliff_behind";
 

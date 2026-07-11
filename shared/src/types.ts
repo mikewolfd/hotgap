@@ -1,9 +1,11 @@
 export type ProgramId =
   | "snap" | "medicaid" | "chip" | "eitc" | "ctc"
-  | "aca" | "tanf" | "housing" | "wic" | "ssi";
+  | "aca" | "tanf" | "housing" | "wic" | "ssi"
+  | "headstart" | "schoolmeals";
 
 export const PROGRAM_IDS: ProgramId[] = [
   "snap", "medicaid", "chip", "eitc", "ctc", "aca", "tanf", "housing", "wic", "ssi",
+  "headstart", "schoolmeals",
 ];
 
 export interface HouseholdAnswers {

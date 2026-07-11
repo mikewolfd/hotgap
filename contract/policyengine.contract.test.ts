@@ -34,6 +34,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     arr(r.tax_units["your tax unit"].refundable_ctc["2026"]);
     arr(r.tax_units["your tax unit"].premium_tax_credit["2026"]);
     for (const v of ["medicaid", "ssi", "wic", "chip"]) arr(r.people["you"][v]["2026"]);
+    for (const v of ["head_start", "early_head_start"]) arr(r.people["your first dependent"][v]["2026"]);
+    for (const v of ["free_school_meals", "reduced_price_school_meals"]) arr(r.spm_units["your spm_unit"][v]["2026"]);
   }, 90_000);
 
   it("accepts rent on people and childcare_expenses on spm_units", async () => {

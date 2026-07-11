@@ -10,7 +10,7 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0 },
+  earnings, netIncome, programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
 });
 
 describe("analyzeCurve on synthetic curves", () => {
@@ -51,15 +51,24 @@ describe("analyzeCurve on synthetic curves", () => {
     const pts = [flat(0, 0), flat(10000, 10000)];
     expect(analyzeCurve(pts, 5000).currentNet).toBe(5000);
   });
+
+  it("reports in_danger_zone for cumulative erosion even when no single step is a cliff", () => {
+    // Each step drops < CLIFF_MIN (no cliffs), but the cumulative drop from the
+    // running max exceeds CLIFF_MIN, opening a zone that never recovers.
+    const pts = [flat(0, 30000), flat(10000, 29900), flat(20000, 29850), flat(30000, 29750), flat(40000, 29600)];
+    const a = analyzeCurve(pts, 25000);
+    expect(a.cliffs).toHaveLength(0);
+    expect(a.verdict).toBe("in_danger_zone");
+  });
 });
 
 describe("analyzeCurve on the real CA fixture", () => {
-  it("finds the verified $22k cliff at $30k earnings", () => {
+  it("finds the verified $22k Head Start cliff at $30k earnings", () => {
     const a = analyzeCurve(fixturePoints, 20000);
     expect(a.worstCliff).not.toBeNull();
     expect(a.worstCliff!.startEarnings).toBe(30000);
     expect(a.worstCliff!.drop).toBeGreaterThan(20000);
-    expect(a.worstCliff!.programsLost.length).toBeGreaterThan(0);
+    expect(a.worstCliff!.programsLost).toContain("headstart");
     expect(a.verdict).toBe("cliff_ahead");
   });
 });
