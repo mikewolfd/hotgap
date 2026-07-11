@@ -138,4 +138,66 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const offNet = offR.result.households.h.household_net_income["2026"];
     expect(onNet - offNet).toBeGreaterThan(15000); // Head Start value removed
   }, 90_000);
+
+  // Plan 7 (county-level): county_fips should genuinely change the ACA
+  // marketplace premium via the rating area, not just be accepted and
+  // ignored. $45k for a single adult sits in the marketplace-subsidy range
+  // (verified live) where premium_tax_credit is comfortably nonzero, so a
+  // real difference between counties reflects the rating area, not a
+  // subsidy floor/ceiling both counties happen to hit.
+  const singleAdultHousehold = (countyFips?: string) => ({
+    household: {
+      people: { you: { age: { "2026": 30 }, employment_income: { "2026": 45000 } } },
+      families: { f: { members: ["you"] } },
+      marital_units: { m: { members: ["you"] } },
+      tax_units: { t: { members: ["you"], premium_tax_credit: { "2026": null } } },
+      spm_units: { s: { members: ["you"] } },
+      households: {
+        h: {
+          members: ["you"],
+          state_name: { "2026": "CA" },
+          household_net_income: { "2026": null },
+          ...(countyFips ? { county_fips: { "2026": countyFips } } : {}),
+        },
+      },
+    },
+  });
+
+  it("county_fips shifts the ACA rating area: SF vs LA yield different premium_tax_credit at the same CA income", async () => {
+    const call = async (body: unknown) => {
+      const res = await fetch("https://api.policyengine.org/us/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      });
+      return { status: res.status, body: (await res.json()) as any };
+    };
+    const sf = await call(singleAdultHousehold("06075")); // San Francisco County
+    const la = await call(singleAdultHousehold("06037")); // Los Angeles County
+    expect(sf.status).toBe(200);
+    expect(sf.body.status).toBe("ok");
+    expect(la.status).toBe(200);
+    expect(la.body.status).toBe("ok");
+    const sfPtc = sf.body.result.tax_units.t.premium_tax_credit["2026"];
+    const laPtc = la.body.result.tax_units.t.premium_tax_credit["2026"];
+    expect(sfPtc).toBeGreaterThan(0);
+    expect(laPtc).toBeGreaterThan(0);
+    // Observed live (2026-07-11): SF ~$3,459 vs LA ~$1,251 — a $2k+ gap, not
+    // rounding noise, so a much looser threshold still proves the point.
+    expect(Math.abs(sfPtc - laPtc)).toBeGreaterThan(100);
+  }, 90_000);
+
+  it("still computes ok with no county_fips at all (state-only fallback)", async () => {
+    const res = await fetch("https://api.policyengine.org/us/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(singleAdultHousehold()),
+      signal: AbortSignal.timeout(60_000),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.status).toBe("ok");
+    expect(body.result.tax_units.t.premium_tax_credit["2026"]).toBeGreaterThan(0);
+  }, 90_000);
 });
