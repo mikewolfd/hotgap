@@ -82,17 +82,17 @@ describe("buildSummary", () => {
   // Fixture-driven: feed the real CA fixture's points under an archetype id
   // (the fixture household isn't one of the 8 archetypes — it only pins the
   // math, per the established metrics.test.ts pattern). Verified pins post
-  // health-adjustment (Plan 4): safeExit 91000, leap 45000.
+  // PTC double-count fix (Plan 6): safeExit 81000, leap 52000.
   it("carries safeExit and leap through from escapeAnalysis, per the verified CA fixture pins", () => {
     const results = fullResultsFor("CA");
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
     expect(summary.states.CA["single-1"]).toEqual({
-      biggestLoss: 22089,
+      biggestLoss: 21957,
       dangerWidth: expect.any(Number),
       cliffCount: expect.any(Number),
-      safeExit: 91000,
-      leap: 45000,
+      safeExit: 81000,
+      leap: 52000,
     });
   });
 });

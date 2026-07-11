@@ -68,9 +68,11 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 
   // Plan 4: the chart is labeled as health-adjusted, and the honesty box
-  // explains what that means, so the reframing is never silent.
+  // explains what that means, so the reframing is never silent. Plan 6
+  // reworded this line to be honest about non-expansion states (no
+  // low-cost plan), so it no longer says "paying for other coverage".
   await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
-  await expect(page.getByText(/losing medicaid often means paying for other coverage/i)).toBeVisible();
+  await expect(page.getByText(/losing medicaid means moving to other coverage/i)).toBeVisible();
 
   // "Your path off help" section: this mocked curve's danger zone never
   // recovers by the last sampled point ($50k net $31k < the $32k peak at

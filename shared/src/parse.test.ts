@@ -17,8 +17,8 @@ describe("parsePEResponse", () => {
 
   it("maps net income and program amounts", () => {
     const points = parsePEResponse(fixture, 101);
-    expect(points[30].netIncome).toBeCloseTo(55660.81, 1);
-    expect(points[31].netIncome).toBeCloseTo(33572.16, 1);
+    expect(points[30].netIncome).toBeCloseTo(49006.13, 1);
+    expect(points[31].netIncome).toBeCloseTo(27049.55, 1);
     expect(points[0].programs.snap).toBeGreaterThan(0);
     expect(points[100].programs.snap).toBe(0);
   });
