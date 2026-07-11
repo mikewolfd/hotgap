@@ -8,9 +8,11 @@
     "test": "vitest run",
     "typecheck": "tsc -b shared worker app",
     "readability": "node scripts/readability.mjs",
-    "contract": "RUN_CONTRACT=1 vitest run contract"
+    "contract": "RUN_CONTRACT=1 vitest run contract",
+    "e2e": "playwright test --config app/playwright.config.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.20.1",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
