@@ -64,6 +64,13 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   const taxVars: Vars = {};
   for (const v of TAX_VARS) taxVars[v] = y(null);
 
+  const householdVars: { members: string[]; state_name: ReturnType<typeof y>; household_net_income: ReturnType<typeof y>; county_fips?: ReturnType<typeof y> } = {
+    members,
+    state_name: y(a.state),
+    household_net_income: y(null),
+  };
+  if (a.countyFips) householdVars.county_fips = y(a.countyFips);
+
   return {
     household: {
       people,
@@ -72,7 +79,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
       tax_units: { tax_unit: { members, ...taxVars } },
       spm_units: { spm_unit: { members, ...spmVars } },
       households: {
-        household: { members, state_name: y(a.state), household_net_income: y(null) },
+        household: householdVars,
       },
       axes: [[{ name: "employment_income", min: 0, max: axisMax(a.annualEarnings), count: AXIS_COUNT, period: YEAR }]],
     },
