@@ -64,3 +64,13 @@ Plan 4 candidate (researched, see docs/research/2026-07-11-wage-distribution-dat
 Deferred from the whole-branch review (non-blocking):
 - EscapePath can render "Your path off help" with only the health-cost line (always_up household with health cost, no cliff/leap/thresholds); intended + test-covered, but consider a neutral wrapper heading if it ever reads oddly.
 - Two doors surface health cost at different granularity by design: personal door shows a concrete dollar figure at the user's earnings; map drill-down shows only the static framing note (an archetype has no "current earnings"). Honest, not inconsistent.
+
+# Post-merge notes — model honesty (Plan 6, 2026-07-11)
+
+Deferred from the whole-branch review (non-blocking):
+- Toggles.tsx has a dead `if(visible.length===0) return null` branch (housing/ESI rows are always shown) — harmless defensive code.
+- ESI inputs are set on "you" only (correct for a single family ESI plan; adding to spouse would double the premium).
+- Fallback path (live API down) ignores take-up toggles — it serves the honest-baseline archetype curve, so a flip has no effect in degraded mode. Archetype curves only exist for the baseline; revisit if per-toggle fallbacks are wanted.
+- Each toggle flip briefly shows the loading spinner (whole-page loading state) before the recomputed result — UX polish, not a defect.
+
+Still open from the adversarial review (Plan 7+ candidates): reach income-concept mismatch (employment vs household income) + vintage; uncertainty bounds on reach; external validation vs Atlanta Fed PRD; take-up modeled as user input, not probability; assets/immigration/other-income/household-composition questions; county-level (Plan 7); CCDF childcare subsidy (blocked on PolicyEngine).
