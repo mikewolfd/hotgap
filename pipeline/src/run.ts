@@ -1,7 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { ARCHETYPES, answersFor, parsePEResponse } from "@hotgap/shared";
+import { ARCHETYPES, answersFor, parsePEResponse, type CurvePoint } from "@hotgap/shared";
 import { buildPEPayload, AXIS_COUNT } from "@hotgap/worker/translate";
 import {
   buildStateFile,
@@ -30,6 +30,7 @@ export interface RunOptions {
   states: string[];
   concurrency: number;
   dryRun: boolean;
+  fromData: boolean;
 }
 
 export interface RunResult {
@@ -58,10 +59,15 @@ export function parseArgs(argv: string[]): RunOptions {
   let states = ALL_STATES;
   let concurrency = DEFAULT_CONCURRENCY;
   let dryRun = false;
+  let fromData = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--dry-run") {
       dryRun = true;
+      continue;
+    }
+    if (arg === "--from-data") {
+      fromData = true;
       continue;
     }
     if (!arg.startsWith("--")) continue;
@@ -74,7 +80,7 @@ export function parseArgs(argv: string[]): RunOptions {
       concurrency = Number(value);
     }
   }
-  return { states, concurrency, dryRun };
+  return { states, concurrency, dryRun, fromData };
 }
 
 // Per-request retry: up to 3 total attempts, waiting 2s then 8s between them.
@@ -149,13 +155,59 @@ export async function runPipeline(
   return { ok: true, dryRun: false, gaps: [], summary, stateFiles };
 }
 
+// --from-data support: recompute summary.json offline from the committed
+// per-state files, with zero network calls and the committed state files
+// left byte-identical (we only ever read them).
+
+export type ReadStateFileFn = (state: string) => Promise<string>;
+
+/** Pure: pulls the per-archetype point arrays back out of a stored state file. */
+export function resultsFromStateFile(file: StateFileJson): Record<string, CurvePoint[]> {
+  const byArchetype: Record<string, CurvePoint[]> = {};
+  for (const [archetypeId, { points }] of Object.entries(file.archetypes)) {
+    byArchetype[archetypeId] = points;
+  }
+  return byArchetype;
+}
+
+/** Reads `{statesDir}/{state}.json` from disk — the injectable default for runFromData. */
+export function defaultReadStateFile(statesDir: string): ReadStateFileFn {
+  return (state) => readFile(path.join(statesDir, `${state}.json`), "utf8");
+}
+
+export async function runFromData(states: string[], readStateFile: ReadStateFileFn): Promise<RunResult> {
+  const results: ResultsByStateArchetype = {};
+  for (const state of states) {
+    try {
+      const raw = await readStateFile(state);
+      const file = JSON.parse(raw) as StateFileJson;
+      results[state] = resultsFromStateFile(file);
+    } catch (e) {
+      // Missing/unreadable/corrupt file: leave the state absent from `results`
+      // so validateResults reports it as a normal "missing" gap below.
+      console.error(`--from-data: could not read state file for ${state}: ${(e as Error).message}`);
+    }
+  }
+
+  const validation = validateResults(states, results);
+  if (!validation.ok) return { ok: false, dryRun: false, gaps: validation.gaps };
+
+  const generated = new Date().toISOString();
+  const summary = buildSummary(generated, states, results);
+  return { ok: true, dryRun: false, gaps: [], summary };
+}
+
+export async function writeSummary(summaryPath: string, summary: SummaryJson): Promise<void> {
+  await mkdir(path.dirname(summaryPath), { recursive: true });
+  await writeFile(summaryPath, JSON.stringify(summary));
+}
+
 export async function writeOutputs(
   paths: OutputPaths,
   summary: SummaryJson,
   stateFiles: Record<string, StateFileJson>,
 ): Promise<void> {
-  await mkdir(path.dirname(paths.summaryPath), { recursive: true });
-  await writeFile(paths.summaryPath, JSON.stringify(summary));
+  await writeSummary(paths.summaryPath, summary);
   await mkdir(paths.statesDir, { recursive: true });
   for (const [state, file] of Object.entries(stateFiles)) {
     await writeFile(path.join(paths.statesDir, `${state}.json`), JSON.stringify(file));
@@ -169,6 +221,19 @@ const DEFAULT_PATHS: OutputPaths = {
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   const opts = parseArgs(argv);
+
+  if (opts.fromData) {
+    const result = await runFromData(opts.states, defaultReadStateFile(DEFAULT_PATHS.statesDir));
+    if (!result.ok) {
+      console.error(`Validation failed: ${result.gaps.length} gap(s)`);
+      for (const g of result.gaps) console.error(`  ${g.state} × ${g.archetypeId}: ${g.reason}`);
+      return 1;
+    }
+    await writeSummary(DEFAULT_PATHS.summaryPath, result.summary!);
+    console.log(`Recomputed summary.json from ${opts.states.length} on-disk state file(s) — no network calls, state files untouched.`);
+    return 0;
+  }
+
   const result = await runPipeline(opts, fetch);
 
   if (opts.dryRun) {

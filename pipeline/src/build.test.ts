@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, type CurvePoint } from "@hotgap/shared";
+import { readFileSync } from "node:fs";
+import { ARCHETYPES, parsePEResponse, type CurvePoint } from "@hotgap/shared";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype } from "./build.js";
 import { stateMetrics } from "./metrics.js";
+
+const fixture = JSON.parse(
+  readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
+);
+const fixturePoints = parsePEResponse(fixture, 101);
 
 function linearCurve(netIncomeStart = 10000): CurvePoint[] {
   return Array.from({ length: 101 }, (_, i) => ({
@@ -70,6 +76,23 @@ describe("buildSummary", () => {
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
     expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve()));
     expect(Object.keys(summary.states.CA)).toHaveLength(8);
+  });
+
+  // Fixture-driven: feed the real CA fixture's points under an archetype id
+  // (the fixture household isn't one of the 8 archetypes — it only pins the
+  // math, per the established metrics.test.ts pattern). Verified pins from
+  // the plan: safeExit 64000, leap 34000.
+  it("carries safeExit and leap through from escapeAnalysis, per the verified CA fixture pins", () => {
+    const results = fullResultsFor("CA");
+    results.CA["single-1"] = fixturePoints;
+    const summary = buildSummary("g", ["CA"], results);
+    expect(summary.states.CA["single-1"]).toEqual({
+      biggestLoss: 21957,
+      dangerWidth: expect.any(Number),
+      cliffCount: expect.any(Number),
+      safeExit: 64000,
+      leap: 34000,
+    });
   });
 });
 
