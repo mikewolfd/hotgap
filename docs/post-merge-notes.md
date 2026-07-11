@@ -33,3 +33,17 @@ Deferred findings from the final whole-branch review (all judged non-blocking):
 Batch pipeline (Python + policyengine-us, GitHub Actions weekly) -> state gap scores
 ("biggest possible loss" + danger-zone width per archetype) -> choropleth + drill-down,
 plus per-state archetype fallback curves for the personal door's error path.
+
+# Post-merge notes — places door (2026-07-11)
+
+Deferred from the places-door final review (all non-blocking):
+- Code-split the places route (React.lazy) — topology+summary ride in the main chunk (~106KB gzip total)
+- Quantile bins (with plain-words legend) would discriminate better than equal-width-from-zero
+- Radio chips lack APG roving tabindex (both flow and places pickers); stepper count not aria-live
+- State <select> has no disabled "Choose a state" placeholder option
+- Pipeline: no User-Agent identifying the bot; 400s retried same as 5xx
+- topojson-specification used but undeclared (transitive dep); credit us-atlas/Census in README
+- dangerWidth shipped in summary.json but unused in UI
+- Fallback picker ignores age/disability/rent (framed by the assumptions line, but could match better)
+- PlacesPage tests couple to live summary.json values (may need updating after weekly refreshes)
+- Manual screen-reader pass (VoiceOver/NVDA) on the map still recommended
