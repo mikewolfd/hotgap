@@ -1,6 +1,7 @@
 .playwright-mcp/
 node_modules/
 dist/
+dist-ts/
 .wrangler/
 *.tsbuildinfo
 test-results/

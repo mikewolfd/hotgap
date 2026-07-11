@@ -3,10 +3,10 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "engines": { "node": ">=22" },
-  "workspaces": ["shared", "worker"],
+  "workspaces": ["shared", "worker", "app"],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -b shared worker",
+    "typecheck": "tsc -b shared worker app",
     "readability": "node scripts/readability.mjs",
     "contract": "RUN_CONTRACT=1 vitest run contract"
   },
