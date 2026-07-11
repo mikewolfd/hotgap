@@ -212,6 +212,51 @@ carries the same title/label plus its own honesty-area note (`places.panel.healt
 Medicaid/CHIP stay in the personal door's why-list as coverage received, in plain words —
 never restated as a phantom cash amount.
 
+## 4b. Reach metric (Plan 5, 2026-07-11)
+
+**Owner directive:** "research data sources for income data … is it even possible to make
+the jump?" The escape metrics (Plan 3) answer *how big* the leap out of a danger zone is;
+reach answers a different question — *is that income even attainable, and for whom?* — by
+overlaying the safe-exit income on the real distribution of household incomes for families
+like that one, in that state.
+
+**The load-bearing honesty rule:** reach is a **cross-sectional** signal — how many
+households, right now, already earn at or above the escape income — **not** a probability of
+any one family reaching it. That would need longitudinal earnings data (tracking real
+families' pay over years), which this project does not have and does not claim to have.
+Every reach string says "already earn" or "out-earn ~N% of families like this"; none ever
+says "you can reach," "your odds," or "you could earn." A transparency note ships everywhere
+a reach line can appear, naming the comparison explicitly: Census household income (ACS
+PUMS), not anyone's chance of getting there.
+
+**Data source and method:** the U.S. Census Bureau's ACS 1-Year PUMS **household** file
+(`csv_h{state}.zip`, public domain, downloaded per-state) carries `HINCP` (household income),
+`HHT` (household/family type), `NOC` (number of own children), and `WGTP` (household weight)
+— enough to build an archetype's income distribution with no person-file join. The builder
+(`scripts/build-reach.mjs`, controller-run, output committed) filters each state's households
+to the pipeline's own married/kid-count archetypes (`single-N`: unmarried family household
+with `NOC == N`, or living alone for N=0; `married-N`: married household with `NOC == N`),
+builds a weighted, sorted list of `HINCP`, and emits a **percentile ladder** — income at
+`p0, p5, … p100` (21 points) — into `app/src/data/reach.json`. Cells backed by fewer than 30
+unweighted sample households store `null` instead of a shaky ladder (small-sample honesty).
+`@hotgap/shared`'s `reachPercentile(ladder, income)` linearly interpolates an income's
+position on that ladder into a 0–100 percentile.
+
+**Where it surfaces:** both doors compute the archetype's safe-exit income
+(`escapeAnalysis().safeExitEarnings`) and look up its percentile via `reachForHousehold`/
+`reachForArchetype` (`app/src/lib/reachLookup.ts`, which reuses `pickArchetypeId` rather than
+re-deriving the married/kid-count → archetype mapping). Personal door
+(`escape.reach`/`escape.reachNever`, rendered in `EscapePath` right after the safe-exit line):
+"Clearing the cliffs here takes about {income} a year. At that pay, you'd out-earn about
+{pct}% of families like yours in {state}." Places-door drill-down
+(`places.panel.reach`/`places.panel.reachNever`, `StatePanel.tsx`): "The income to get fully
+clear here is more than about {pct}% of families like this earn." Three honest branches,
+identical on both doors: a finite safe-exit with a real reach cell names the percentage; a
+`null` safe-exit (never safe within the sweep) uses a static top-of-chart line with **no**
+fabricated percentage, since there's no concrete income to look up; a `null` reach cell
+(small sample) **omits the line entirely** rather than showing a shaky number. A transparency
+note (`result.honesty.reach` / `places.panel.reachNote`) sits in each door's honesty area.
+
 ## 5. Language, errors, testing
 
 - **Reading level:** every user-facing string ≤ 5th grade, enforced by a Flesch-Kincaid

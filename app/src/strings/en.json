@@ -75,6 +75,8 @@
   "escape.safeNever": "Even at the top of our chart, we did not find a fully safe spot.",
   "escape.leap": "To clear the worst rough zone in one move, it takes a raise of about {amount} a year.",
   "escape.leapMore": "To clear the worst rough zone in one move, it takes a raise of at least {amount} a year.",
+  "escape.reach": "Clearing the cliffs here takes about {income} a year. At that pay, you'd out-earn about {pct}% of families like yours in {state}.",
+  "escape.reachNever": "Even families like yours with the top pay here still hit rough spots.",
   "escape.endsTitle": "When help ends for you:",
   "escape.ends": "{label}: near {wage}",
 
@@ -82,6 +84,7 @@
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
   "result.honesty.health": "We count what you'd pay for health coverage. Losing Medicaid often means paying for other coverage, not losing it all.",
+  "result.honesty.reach": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not your odds of getting there.",
 
   "unit.hour": "{amount} an hour",
   "unit.month": "{amount} a month",
@@ -139,9 +142,12 @@
   "places.panel.safeNever": "Even at the top of our chart, this family still hits rough spots here.",
   "places.panel.leap": "Getting past the worst rough zone takes a raise of about {amount} in one move.",
   "places.panel.leapMore": "Getting past the worst rough zone takes a raise of at least {amount} in one move.",
+  "places.panel.reach": "The income to get fully clear here is more than about {pct}% of families like this earn.",
+  "places.panel.reachNever": "Even families like this with the top pay here still hit rough spots.",
   "places.panel.endsTitle": "When help ends here:",
   "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
   "places.panel.healthNote": "These numbers also count what a family pays for health coverage, not just cash help.",
+  "places.panel.reachNote": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not this family's odds of getting there.",
   "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
   "places.loading": "Getting this state's numbers…",
   "places.error": "We could not load this state. Please try again."

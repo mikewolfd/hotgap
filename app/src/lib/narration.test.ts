@@ -256,6 +256,60 @@ describe("narrateEscape branch coverage", () => {
   });
 });
 
+// Plan 5: the reach line ("is the escape income even attainable, and for
+// whom?") is a CROSS-SECTIONAL fact -- how common the safe-exit income
+// already is among real households of this archetype -- never a probability.
+describe("narrateEscape reach line", () => {
+  it("names the safe-exit income and the percentile when a finite safe-exit and a real reach cell are both present", () => {
+    const n = narrateEscape(
+      { safeExitEarnings: 91000, leap: 45000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { unit: "year" },
+      { pct: 62.4, stateName: "California" },
+    );
+    expect(n.reachLine).toContain("$91,000");
+    expect(n.reachLine).toContain("62%");
+    expect(n.reachLine).toContain("California");
+    expect(n.reachLine).toMatch(/out-earn/i);
+    expect(n.reachLine).not.toMatch(/you can reach|your odds|you could earn/i);
+  });
+
+  it("uses the honest top-pay line, with no fabricated percentile, when safeExitEarnings is null", () => {
+    const n = narrateEscape(
+      { safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null },
+      { unit: "year" },
+      { pct: null, stateName: "Wyoming" },
+    );
+    expect(n.reachLine).toMatch(/still hit rough spots/i);
+    expect(n.reachLine).not.toMatch(/\d/);
+  });
+
+  it("omits the reach line silently when the reach cell is null (small sample)", () => {
+    const n = narrateEscape(
+      { safeExitEarnings: 74000, leap: 20000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { unit: "year" },
+      { pct: null, stateName: "Wyoming" },
+    );
+    expect(n.reachLine).toBeNull();
+  });
+
+  it("omits the reach line when safeExitEarnings is 0 (already always safe -- nothing to reach)", () => {
+    const n = narrateEscape(
+      { safeExitEarnings: 0, leap: 0, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { unit: "year" },
+      { pct: 90, stateName: "California" },
+    );
+    expect(n.reachLine).toBeNull();
+  });
+
+  it("omits the reach line entirely when the caller supplies no reach context at all", () => {
+    const n = narrateEscape(
+      { safeExitEarnings: 74000, leap: 20000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { unit: "year" },
+    );
+    expect(n.reachLine).toBeNull();
+  });
+});
+
 // Task 24: the places-door drill-down (StatePanel) speaks the same
 // escapeAnalysis fields with different, third-person copy and dollar (not
 // wage) amounts for safe/leap — thresholds stay identical to narrateEscape's
@@ -310,5 +364,43 @@ describe("narratePlacesEscape", () => {
       { label: "cash help (TANF)", wage: "$23,000 a year" },
       { label: "food help (SNAP)", wage: "$29,000 a year" },
     ]);
+  });
+});
+
+// Plan 5: the places-door drill-down's reach line -- third person, no state
+// name repeated (the panel headline already names the state) and no dollar
+// figure (the safe-exit dollar amount is already named by safeLine above it).
+describe("narratePlacesEscape reach line", () => {
+  it("names the percentile when a finite safe-exit and a real reach cell are both present", () => {
+    const n = narratePlacesEscape(
+      { safeExitEarnings: 74000, leap: 46000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { pct: 55.9 },
+    );
+    expect(n.reachLine).toContain("56%");
+    expect(n.reachLine).toMatch(/families like this earn/i);
+    expect(n.reachLine).not.toMatch(/you can reach|odds/i);
+  });
+
+  it("uses the honest top-pay line when safeExitEarnings is null", () => {
+    const n = narratePlacesEscape(
+      { safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null },
+      { pct: null },
+    );
+    expect(n.reachLine).toMatch(/still hit rough spots/i);
+  });
+
+  it("omits the reach line silently when the reach cell is null (small sample)", () => {
+    const n = narratePlacesEscape(
+      { safeExitEarnings: 74000, leap: 20000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+      { pct: null },
+    );
+    expect(n.reachLine).toBeNull();
+  });
+
+  it("omits the reach line entirely when the caller supplies no reach context", () => {
+    const n = narratePlacesEscape(
+      { safeExitEarnings: 74000, leap: 20000, leapIsLowerBound: false, programEnds: {}, benefitsEndEarnings: null },
+    );
+    expect(n.reachLine).toBeNull();
   });
 });

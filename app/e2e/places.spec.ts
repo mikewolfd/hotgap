@@ -84,6 +84,15 @@ test("places door: map renders all 51 states, family picker changes color, and a
   // personal door's e2e test, to avoid a strict-mode multi-match.)
   await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
   await expect(page.getByText(/pays for health coverage/i)).toBeVisible();
+
+  // Plan 5 (reach): married was toggled on above and never reverted, so the
+  // archetype requested for this drill-down is married-2 — a real cell in
+  // the committed reach.json for CA. This curve's safe-exit is $80,000 (zone
+  // opens at the $40k peak, recovers at $80k — see the fixture above), a
+  // finite income, so the honest cross-sectional line names a percentage,
+  // never odds or "can reach" language.
+  await expect(page.getByText(/more than about \d+% of families like this earn/i)).toBeVisible();
+  await expect(page.getByText(/census household income/i)).toBeVisible();
 });
 
 test("places door: a state with no cached data shows a plain-language error, not a stuck spinner", async ({ page }) => {
