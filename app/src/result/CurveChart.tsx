@@ -9,7 +9,15 @@ import type { PayContext } from "../lib/narration.js";
 // constants.
 export const W = 360, H = 240, M = { top: 16, right: 12, bottom: 40, left: 52 };
 
-export function CurveChart({ analysis, ctx }: { analysis: CurveAnalysis; ctx: PayContext }) {
+export function CurveChart({
+  analysis, ctx, showCurrent = true,
+}: {
+  analysis: CurveAnalysis; ctx: PayContext;
+  /** Hides the "you are here" dot + label. Default true (personal-door result page). The
+   * places-door drill-down passes false: its curves belong to an archetype household,
+   * not the visitor, so there is no "you" position to mark. */
+  showCurrent?: boolean;
+}) {
   const pts = analysis.points;
   const x = scaleLinear([pts[0].earnings, pts[pts.length - 1].earnings], [M.left, W - M.right]);
   const yMax = Math.max(...pts.map((p) => p.netIncome));
@@ -68,17 +76,21 @@ export function CurveChart({ analysis, ctx }: { analysis: CurveAnalysis; ctx: Pa
           {t("result.chart.xLabel", { unit: unitLabel })}
         </text>
         <path d={path} className="net-line" fill="none" />
-        <circle
-          className="you-dot" r={6}
-          cx={x(analysis.currentEarnings)} cy={y(analysis.currentNet)}
-        />
-        <text
-          x={x(analysis.currentEarnings)}
-          y={Math.max(M.top + 10, y(analysis.currentNet) - 12)}
-          textAnchor="middle" className="you-label"
-        >
-          {t("result.chart.youAreHere")}
-        </text>
+        {showCurrent && (
+          <>
+            <circle
+              className="you-dot" r={6}
+              cx={x(analysis.currentEarnings)} cy={y(analysis.currentNet)}
+            />
+            <text
+              x={x(analysis.currentEarnings)}
+              y={Math.max(M.top + 10, y(analysis.currentNet) - 12)}
+              textAnchor="middle" className="you-label"
+            >
+              {t("result.chart.youAreHere")}
+            </text>
+          </>
+        )}
       </svg>
       {analysis.dangerZones.length > 0 && (
         <p className="chart-legend">

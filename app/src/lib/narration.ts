@@ -14,6 +14,17 @@ export function formatDollars(n: number): string {
   return money.format(roundTo(n, 100));
 }
 
+// Renders an archetype's child ages as a plain-language list ("3 and 7",
+// "1, 4, and 9") so the places-door kids picker can say what the ages
+// actually are instead of just a bare count — derived from ARCHETYPES at
+// call time rather than hardcoded per kid-count string.
+export function formatAgeList(ages: number[]): string {
+  if (ages.length === 0) return "";
+  if (ages.length === 1) return String(ages[0]);
+  if (ages.length === 2) return `${ages[0]} and ${ages[1]}`;
+  return `${ages.slice(0, -1).join(", ")}, and ${ages[ages.length - 1]}`;
+}
+
 export function formatWage(annual: number, ctx: PayContext): string {
   switch (ctx.unit) {
     case "hour": {

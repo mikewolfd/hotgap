@@ -3,3 +3,4 @@ export * from "./types.js";
 export * from "./income.js";
 export * from "./parse.js";
 export * from "./analyze.js";
+export * from "./archetypes.js";

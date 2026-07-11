@@ -5,7 +5,7 @@
   "landing.check.body": "Answer five short questions. See what happens to your help if your pay goes up.",
   "landing.check.cta": "Start",
   "landing.places.title": "Compare places",
-  "landing.places.body": "See which states have the worst gaps. Coming soon.",
+  "landing.places.body": "See which states have the worst gaps. Tap a state to see how big its cliff is.",
   "landing.privacy": "We do not save what you type. No sign up. No tracking.",
 
   "flow.back": "Back",
@@ -79,9 +79,12 @@
 
   "common.yes": "Yes",
   "common.no": "No",
+  "common.fewerKids": "fewer kids",
+  "common.moreKids": "more kids",
 
   "result.tryAgain": "Try again",
   "result.startOver": "Start over",
+  "result.fallback.banner": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
   "error.title": "We could not get your answer.",
   "error.body": "The math service did not reply. Your answers were not saved. Please try again in a minute.",
 
@@ -99,6 +102,23 @@
   "program.schoolmeals": "free school meals",
 
   "places.title": "Compare places",
-  "places.body": "We are building a map that shows which states have the worst benefit gaps. It is not ready yet.",
-  "places.back": "Go back home"
+  "places.intro": "Pick a family. See where they could lose the most money by earning more.",
+  "places.pick.title": "Pick a family to compare",
+  "places.pick.kids": "How many kids?",
+  "places.pick.kids0": "No kids",
+  "places.pick.kids1": "1 kid, age {ages}",
+  "places.pick.kids2": "2 kids, ages {ages}",
+  "places.pick.kids3": "3 kids, ages {ages}",
+  "places.pick.state": "Or pick a state from a list",
+  "places.legend.title": "How much can they lose?",
+  "places.legend.upTo": "Loses up to {amount}",
+  "places.legend.none": "This family did not lose money in any state we checked.",
+  "places.map.alt": "A map of the United States. Darker states mean a bigger possible loss for this family.",
+  "places.map.stateLabel": "{state}: can lose up to {loss} a year.",
+  "places.panel.headline": "In {state}, a family like this can lose up to {loss} a year by earning more.",
+  "places.panel.rank": "Worse than {n} of 50 other states.",
+  "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
+  "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
+  "places.loading": "Getting this state's numbers…",
+  "places.error": "We could not load this state. Please try again."
 }

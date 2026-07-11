@@ -205,10 +205,10 @@ export function FamilyScreen({ answers, dispatch }: { answers: FlowAnswers; disp
 
       <p className="hint" id="kids-label">{t("flow.family.kids")}</p>
       <div className="stepper" aria-labelledby="kids-label">
-        <button type="button" className="step-btn" aria-label="fewer kids"
+        <button type="button" className="step-btn" aria-label={t("common.fewerKids")}
           onClick={() => dispatch({ type: "setChildAges", ages: kids.slice(0, -1) })}>−</button>
         <output>{kids.length}</output>
-        <button type="button" className="step-btn" aria-label="more kids"
+        <button type="button" className="step-btn" aria-label={t("common.moreKids")}
           disabled={kids.length >= 6}
           onClick={() => dispatch({ type: "setChildAges", ages: [...kids, 5] })}>+</button>
       </div>

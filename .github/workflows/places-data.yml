@@ -1,0 +1,35 @@
+name: Places data refresh
+on:
+  schedule: [{ cron: "0 7 * * 1" }]
+  workflow_dispatch:
+# The default GITHUB_TOKEN is read-only on fresh repos; the commit-if-changed
+# step below pushes, so this workflow needs contents: write explicitly.
+permissions:
+  contents: write
+# Never let two sweeps race each other's push; queue rather than cancel so a
+# manual dispatch during the Monday run still lands.
+concurrency: { group: places-data, cancel-in-progress: false }
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { token: "${{ github.token }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsx pipeline/src/run.ts --concurrency 3
+      # Pushing with the default GITHUB_TOKEN does NOT trigger other workflows'
+      # `push` events, so a semantically-degenerate sweep (e.g. every state
+      # collapsing to a flat curve, or a schema drift the app can't read)
+      # would otherwise land on main with no CI ever having seen it. Gate the
+      # commit on the same checks a normal PR would have to pass.
+      - run: npm test
+      - run: npm run typecheck
+      - name: Commit updated data if changed
+        run: |
+          git config user.name "hotgap-data-bot"
+          git config user.email "hotgap-data-bot@users.noreply.github.com"
+          git add app/src/data/places app/public/data/states
+          git diff --cached --quiet || (git commit -m "data: weekly PolicyEngine sweep" && git push)

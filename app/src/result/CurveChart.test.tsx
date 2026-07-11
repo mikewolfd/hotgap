@@ -38,6 +38,20 @@ describe("CurveChart", () => {
     expect(container.querySelectorAll("rect.danger-zone").length).toBe(analysis.dangerZones.length);
     expect(container.querySelector("circle.you-dot")).toBeTruthy();
   });
+
+  it("hides the you-are-here dot and label when showCurrent is false (places-door drill-down has no 'you')", () => {
+    // Scoped to `container` (not the destructured queryByText, which queries the
+    // shared baseElement/document.body) since RTL auto-cleanup between tests
+    // isn't wired up in this project's vitest config — other renders in this
+    // file/suite can otherwise leave stray "You are here" text nodes behind.
+    const { container } = render(
+      <CurveChart analysis={analysis} ctx={{ unit: "hour", hoursPerWeek: 40 }} showCurrent={false} />,
+    );
+    expect(container.querySelector("circle.you-dot")).toBeNull();
+    expect(container.querySelector(".you-label")).toBeNull();
+    // Everything else about the chart still renders.
+    expect(container.querySelector("path.net-line")).toBeTruthy();
+  });
 });
 
 describe("CurveChart x-axis tick positioning", () => {
