@@ -13,7 +13,7 @@
 - `POST https://api.policyengine.org/us/calculate` needs **no auth**. 101-point axes sweep ≈ 3.7 s, HTTP 200.
 - Response mirrors the request household; each requested variable comes back as a **101-element array** under `result.<entity_group>.<entity_name>.<variable>["2026"]`.
 - Verified variable placements: person-level `age`, `employment_income`, `rent`, `medicaid`, `chip`, `wic`, `ssi`; tax-unit `eitc`, `refundable_ctc`, `premium_tax_credit`; spm-unit `snap`, `tanf`, `spm_unit_capped_housing_subsidy`, `childcare_expenses`; household `state_name`, `household_net_income`.
-- Wrong placement returns HTTP 200-shaped **error JSON**: `{"status":"error","message":"...belongs on people, not spm_units..."}` — check `status`, not just HTTP code.
+- Wrong placement returns **HTTP 400** with error JSON: `{"status":"error","message":"...belongs on people, not spm_units..."}` (re-verified live 2026-07-11; the contract test is the authoritative pin) — check `status` on 200s too, not just the HTTP code.
 - The axis varies the **first person key's** `employment_income`. `"you"` must be the first key in `people`.
 - Fixtures committed at `fixtures/pe-ca-single-1kid-101.request.json` and `fixtures/pe-ca-single-1kid-101.json` (CA single parent, one kid age 5: contains a real cliff — net income drops $56,751 → $34,794 between $30k and $31k earnings).
 
