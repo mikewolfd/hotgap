@@ -19,12 +19,12 @@ export function formatWage(annual: number, ctx: PayContext): string {
     case "hour": {
       const w = roundTo(fromAnnual(annual, "hour", ctx.hoursPerWeek), 0.25);
       const s = Number.isInteger(w) ? money.format(w) : `$${w.toFixed(2)}`;
-      return `${s} an hour`;
+      return t("unit.hour", { amount: s });
     }
     case "month":
-      return `${money.format(roundTo(fromAnnual(annual, "month"), 50))} a month`;
+      return t("unit.month", { amount: money.format(roundTo(fromAnnual(annual, "month"), 50)) });
     case "year":
-      return `${money.format(roundTo(annual, 500))} a year`;
+      return t("unit.year", { amount: money.format(roundTo(annual, 500)) });
   }
 }
 
@@ -58,6 +58,7 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
   const current = interpolateAt(analysis, analysis.currentEarnings);
   const lost = new Set<ProgramId>(analysis.nextCliff?.programsLost ?? []);
   const candidates = (Object.entries(current) as [ProgramId, number][])
+    // Deliberate floor, not a bug: values under $50/year are noise for this audience, not meaningful benefits.
     .filter(([id, value]) => value > 50 || lost.has(id))
     .sort((a, b) => Number(lost.has(b[0])) - Number(lost.has(a[0])) || b[1] - a[1])
     .slice(0, 5);

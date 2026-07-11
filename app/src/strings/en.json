@@ -66,6 +66,10 @@
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
 
+  "unit.hour": "{amount} an hour",
+  "unit.month": "{amount} a month",
+  "unit.year": "{amount} a year",
+
   "result.tryAgain": "Try again",
   "result.startOver": "Start over",
   "error.title": "We could not get your answer.",
