@@ -1,6 +1,7 @@
 import { toAnnual, type HouseholdAnswers, type Pay } from "@hotgap/shared";
 import { zipToState } from "../lib/zip.js";
 import { zipToCounty } from "../lib/county.js";
+import { FIPS_TO_USPS } from "../lib/fips.js";
 
 export type ScreenId = "zip" | "family" | "housing" | "childcare" | "gets" | "pay";
 
@@ -83,10 +84,19 @@ export function canAdvance(s: FlowState): boolean {
 export function flowReducer(s: FlowState, action: FlowAction): FlowState {
   const a = s.answers;
   switch (action.type) {
-    case "setZip": return {
-      ...s,
-      answers: { ...a, zip: action.zip, state: zipToState(action.zip), countyFips: zipToCounty(action.zip) },
-    };
+    case "setZip": {
+      // `state` (3-digit ZIP prefix) and the crosswalk county (full 5-digit ZCTA)
+      // are derived independently, so for ~16 border ZCTAs they can disagree —
+      // e.g. 06390 → state CT but its dominant county is 36103 (NY). Keeping such
+      // a county would produce a wrong-state ACA rating area under the "uses your
+      // county" note. Drop the county whenever its state (FIPS_TO_USPS of the
+      // first two digits) doesn't match the derived state — fall back to
+      // state-only, the honest/backward-compatible path.
+      const state = zipToState(action.zip);
+      const rawCounty = zipToCounty(action.zip);
+      const countyFips = rawCounty && FIPS_TO_USPS[rawCounty.slice(0, 2)] === state ? rawCounty : null;
+      return { ...s, answers: { ...a, zip: action.zip, state, countyFips } };
+    }
     // Overriding the state (the ZIP-confirm "fix my state" dropdown) invalidates
     // the ZIP-derived county: that FIPS belongs to the ORIGINAL state, so keeping
     // it would let county_fips and state_name disagree in the payload. Clear it

@@ -152,7 +152,10 @@ export function ResultPage(props: {
         <EscapePath narration={escapeNarration} healthCostLine={narration.healthCostLine} />
       )}
       <Toggles answers={current} onChange={setCurrent} />
-      {current.countyFips !== null && (
+      {/* Only the LIVE curve is computed with the county; the state-level
+          archetype fallback ignores it, so suppress the "uses your county"
+          note whenever we're showing a fallback curve. */}
+      {current.countyFips !== null && !fallback && (
         <p className="county-note">{t("result.county.note")}</p>
       )}
       <aside className="honesty" aria-label={t("result.honesty.title")}>

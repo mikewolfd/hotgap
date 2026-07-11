@@ -1,4 +1,4 @@
-// Builds app/src/data/zip5-county.json: 5-digit ZIP (ZCTA) -> dominant county FIPS.
+// Builds app/public/data/zip5-county.json: 5-digit ZIP (ZCTA) -> dominant county FIPS.
 // Source: U.S. Census Bureau 2020 ZCTA-to-county relationship file (public domain,
 // no API key). For a ZCTA spanning multiple counties, the county with the largest
 // land-area overlap (AREALAND_PART) wins — a good-enough proxy for a rating-area
