@@ -205,3 +205,15 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .places-panel-assumptions { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
 .places-panel-loading, .places-panel-error { padding: 12px 0; color: var(--muted); }
 .places-metric-picker { margin: 0 0 20px; }
+
+.toggles { margin: 24px 0; padding: 16px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); }
+.toggles h2 { margin-top: 0; }
+.toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 44px; margin: 8px 0; padding: 10px 16px;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 999px;
+  font: inherit; cursor: pointer;
+}
+.toggle.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.toggle-label { text-align: left; }
+.toggle-state { font-weight: 700; }

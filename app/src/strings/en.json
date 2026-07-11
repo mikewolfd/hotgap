@@ -92,6 +92,12 @@
   "result.honesty.health": "We count what you'd pay for health coverage. Losing Medicaid often means paying for other coverage, not losing it all.",
   "result.honesty.reach": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not your odds of getting there.",
 
+  "toggles.title": "What if you get more help?",
+  "toggles.hint": "Turn these on or off to see how your cliffs move.",
+  "toggles.headstart": "Head Start for a child",
+  "toggles.housing": "A housing voucher",
+  "toggles.esi": "Health insurance through a job",
+
   "unit.hour": "{amount} an hour",
   "unit.month": "{amount} a month",
   "unit.year": "{amount} a year",

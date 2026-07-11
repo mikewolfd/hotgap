@@ -9,6 +9,7 @@ import { t } from "../strings/t.js";
 import { CurveChart } from "./CurveChart.js";
 import { WhyList } from "./WhyList.js";
 import { EscapePath } from "./EscapePath.js";
+import { Toggles } from "./Toggles.js";
 
 type Status =
   | { phase: "loading" }
@@ -26,11 +27,19 @@ export function ResultPage(props: {
 }) {
   const [status, setStatus] = useState<Status>({ phase: "loading" });
   const [attempt, setAttempt] = useState(0);
+  // Toggles (Plan 6 Task 5) let the visitor flip take-up assumptions
+  // (Head Start / housing voucher / employer coverage) right on the result
+  // page and see the curve recompute live. `current` starts as the answers
+  // the flow captured, then diverges as the household edits toggles — every
+  // downstream read in this component (the fetch effect, reach lookup,
+  // fallback lookup, state name) must use `current`, never `props.answers`,
+  // or a flip would silently fail to affect the render.
+  const [current, setCurrent] = useState<HouseholdAnswers>(props.answers);
 
   useEffect(() => {
     let alive = true;
     setStatus({ phase: "loading" });
-    fetchCurve(props.answers)
+    fetchCurve(current)
       .then(async (r) => {
         if (!alive) return;
         if (r.ok) {
@@ -52,15 +61,15 @@ export function ResultPage(props: {
         // the "you are here" dot lands off-chart and the verdict could claim
         // "stuck" beyond data the sweep never checked.
         const fallbackPoints = await fetchFallbackCurve(
-          props.answers.state,
-          props.answers.married,
-          props.answers.childAges.length,
+          current.state,
+          current.married,
+          current.childAges.length,
         );
         if (!alive) return;
         if (!fallbackPoints) return setStatus({ phase: "error" });
         const analysis = analyzeCurve(
           fallbackPoints,
-          clampFallbackEarnings(fallbackPoints, props.answers.annualEarnings),
+          clampFallbackEarnings(fallbackPoints, current.annualEarnings),
         );
         const escape = escapeAnalysis(fallbackPoints);
         setStatus({
@@ -74,7 +83,7 @@ export function ResultPage(props: {
         if (alive) setStatus({ phase: "error" });
       });
     return () => { alive = false; };
-  }, [props.answers, props.ctx, attempt]);
+  }, [current, props.ctx, attempt]);
 
   if (status.phase === "loading") {
     return (
@@ -110,9 +119,9 @@ export function ResultPage(props: {
   // `escape.safeExitEarnings ? ... : null` doubles as the "0 or null" guard
   // (both are falsy): a 0 safe-exit means already always safe (nothing to
   // reach), and reachForHousehold only makes sense for a positive income.
-  const stateName = STATE_NAMES[props.answers.state] ?? props.answers.state;
+  const stateName = STATE_NAMES[current.state] ?? current.state;
   const reachPct = escape.safeExitEarnings
-    ? reachForHousehold(props.answers.state, props.answers.married, props.answers.childAges.length, escape.safeExitEarnings)
+    ? reachForHousehold(current.state, current.married, current.childAges.length, escape.safeExitEarnings)
     : null;
   const escapeNarration = narrateEscape(escape, props.ctx, { pct: reachPct, stateName });
   // Task 23's visibility condition reads the raw EscapeAnalysis fields, not
@@ -142,6 +151,7 @@ export function ResultPage(props: {
       {showEscapePath && (
         <EscapePath narration={escapeNarration} healthCostLine={narration.healthCostLine} />
       )}
+      <Toggles answers={current} onChange={setCurrent} />
       <aside className="honesty" aria-label={t("result.honesty.title")}>
         <h2>{t("result.honesty.title")}</h2>
         <p>{t("result.honesty.body")}</p>
