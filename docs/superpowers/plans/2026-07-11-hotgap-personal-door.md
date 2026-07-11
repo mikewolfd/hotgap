@@ -829,9 +829,11 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
   );
   const nextCliff = cliffs.find((c) => c.startEarnings >= currentEarnings) ?? null;
 
+  // Zone membership outranks always_up: cumulative erosion (no single step
+  // > CLIFF_MIN) can put the user inside a danger zone with zero cliffs.
   const verdict: Verdict =
-    cliffs.length === 0 ? "always_up"
-    : zone ? "in_danger_zone"
+    zone ? "in_danger_zone"
+    : cliffs.length === 0 ? "always_up"
     : nextCliff ? "cliff_ahead"
     : "cliff_behind";
 
