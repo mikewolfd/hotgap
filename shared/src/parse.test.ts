@@ -31,6 +31,17 @@ describe("parsePEResponse", () => {
     expect(points[0].programs.medicaid).toBeCloseTo(youMed + kidMed, 1);
   });
 
+  it("subtracts the ACA premium tax credit as well as MOOP (no double-count)", () => {
+    const pts = parsePEResponse(fixture, 101);
+    // At an income with a nonzero PTC, netIncome must be rawNet − PTC − MOOP.
+    // Reconstruct rawNet from the fixture and assert the identity holds.
+    const raw = fixture.result.households["your household"].household_net_income["2026"];
+    const moop = fixture.result.spm_units["your spm_unit"].spm_unit_medical_out_of_pocket_expenses["2026"];
+    const ptc = fixture.result.tax_units["your tax unit"].premium_tax_credit["2026"];
+    const i = 50;
+    expect(pts[i].netIncome).toBeCloseTo(raw[i] - ptc[i] - moop[i], 2);
+  });
+
   it("throws PEParseError on an error-status body", () => {
     expect(() => parsePEResponse({ status: "error", message: "nope" }, 101)).toThrow(PEParseError);
   });

@@ -52,11 +52,17 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
 
   const rawNet = series(household, "household_net_income", expectedCount);
   // Count the real cost of health coverage the household bears (SPM medical
-  // out-of-pocket = premiums net of subsidy + deductibles/copays). PolicyEngine
+  // out-of-pocket = health-insurance premiums net of subsidy). PolicyEngine
   // leaves this out of household_net_income; we subtract it so the curve shows
   // money left AFTER paying for health, and expose it per point for display.
+  // household_net_income already includes the ACA premium tax credit (as a
+  // refundable credit), and MOOP is the premium NET of that same credit, so
+  // subtracting only MOOP would double-count the subsidy. Subtract the PTC
+  // separately (it's also reported, undiminished, in the `aca` program series
+  // below) to avoid that double-count.
   const moop = series(spm, "spm_unit_medical_out_of_pocket_expenses", expectedCount);
-  const net = rawNet.map((n, i) => n - moop[i]);
+  const acaPtc = series(tax, "premium_tax_credit", expectedCount);
+  const net = rawNet.map((n, i) => n - acaPtc[i] - moop[i]);
 
   const programSeries = new Map<ProgramId, number[]>();
   const add = (id: ProgramId, values: number[]) => {
