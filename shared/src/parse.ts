@@ -26,6 +26,11 @@ function firstEntity(group: unknown, label: string): Record<string, Record<strin
 
 function series(entity: Record<string, unknown>, variable: string, count: number): number[] {
   const v = (entity[variable] as Record<string, unknown> | undefined)?.[YEAR];
+  // A take-up override forces a program's value to a scalar (e.g. head_start: 0
+  // when the family does not receive it). PolicyEngine returns a forced scalar
+  // input as-is instead of broadcasting it across the earnings axis, so a
+  // single number is valid here — hold it constant across all points.
+  if (typeof v === "number") return new Array(count).fill(v);
   if (!Array.isArray(v) || v.length !== count || v.some((x) => typeof x !== "number")) {
     throw new PEParseError(`bad series for ${variable}`);
   }

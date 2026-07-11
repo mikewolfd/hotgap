@@ -161,6 +161,7 @@
   "places.panel.healthNote": "These numbers also count what a family pays for health coverage, not just cash help.",
   "places.panel.reachNote": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not this family's odds of getting there.",
   "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
+  "places.panel.baseline": "We also assume they do not get waitlisted help like Head Start or a housing voucher. Most families do not.",
   "places.loading": "Getting this state's numbers…",
   "places.error": "We could not load this state. Please try again."
 }

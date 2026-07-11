@@ -133,6 +133,7 @@ export function StatePanel(props: {
       <p className="places-panel-health-note">{t("places.panel.healthNote")}</p>
       <p className="places-panel-reach-note">{t("places.panel.reachNote")}</p>
       <p className="places-panel-assumptions">{t("places.panel.assumptions")}</p>
+      <p className="places-panel-assumptions">{t("places.panel.baseline")}</p>
     </section>
   );
 }

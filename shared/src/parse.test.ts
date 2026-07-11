@@ -49,4 +49,15 @@ describe("parsePEResponse", () => {
   it("throws PEParseError when arrays are missing or wrong length", () => {
     expect(() => parsePEResponse({ status: "ok", result: {} }, 101)).toThrow(PEParseError);
   });
+
+  it("broadcasts a forced-scalar program override across all points (take-up off)", () => {
+    // A take-up override (e.g. head_start:0) comes back from PolicyEngine as a
+    // scalar, not a per-axis array; parse must hold it constant across points.
+    const body: any = JSON.parse(JSON.stringify(fixture));
+    body.result.spm_units["your spm_unit"].spm_unit_capped_housing_subsidy = { "2026": 0 };
+    const pts = parsePEResponse(body, 101);
+    expect(pts).toHaveLength(101);
+    expect(pts.every((p) => p.programs.housing === 0)).toBe(true);
+  });
+
 });
