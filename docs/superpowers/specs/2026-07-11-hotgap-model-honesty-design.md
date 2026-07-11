@@ -41,8 +41,11 @@ Four things a household may or may not receive, all rationed or coverage-depende
 
 `HouseholdAnswers` gains: `getsHeadStart: boolean`, `getsHousing: boolean`, `getsChildcareSubsidy: boolean`, `hasEmployerCoverage: boolean`. `translate.ts` maps them to the flags above (per-child flags applied to each eligible child; ESI applied to adults).
 
-## 2. Add CCDF childcare subsidy as a tracked program — SPIKE-GATED
+## 2. CCDF childcare subsidy — DESCOPED (spike failed 2026-07-11)
 
+**Spike result:** `spm_unit_ccdf_subsidy` returned `null` for eligible low-income families with young children and real childcare cost across 6 states (CA/TX/NY/FL/CO/GA), and stayed `null` even with `is_enrolled_in_ccdf`, `pre_subsidy_childcare_expenses`, `childcare_hours_per_week`/`days`, and a resolved `ccdf_county_cluster`. PolicyEngine does not produce a household-level CCDF subsidy through the public API for synthetic households. **Decision: no `childcaresubsidy` program, no childcare toggle in Plan 6.** Recorded in the adversarial-review doc as a genuine PolicyEngine data limitation. Plan 6 ships the three verified toggles (Head Start, housing, employer coverage) + the correctness fixes + the honest map baseline.
+
+### (superseded) original spike plan
 **Task 0 of the plan is a spike:** probe `spm_unit_ccdf_subsidy` across ~6 states (expansion + non-expansion, large + small) for eligible low-income families with young children and real childcare cost. Decision gate:
 - **If it returns meaningful nonzero subsidies:** `ProgramId` gains `"childcaresubsidy"`; `translate.ts` requests `spm_unit_ccdf_subsidy`; `parse.ts` sums it into the program; it appears in the why-list and thresholds; the childcare toggle ships. String `program.childcaresubsidy` = "help paying for child care (CCDF)" (gate-checked). Closes the review gap of showing childcare cost without the offsetting help.
 - **If it is ~0/null (not modeled robustly):** DESCOPE — no `childcaresubsidy` program, no childcare toggle. Document the finding in the plan and the review doc. Ship the other three toggles (Head Start, housing, employer coverage) and the correctness fixes, which are all verified to work. Do NOT ship an inert toggle.
