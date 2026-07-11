@@ -47,6 +47,14 @@ test("landing → flow → cliff result", async ({ page }) => {
   const payInput = page.getByLabel(/what do you make now/i);
   await payInput.pressSequentially("18.50");
   await expect(payInput).toHaveValue("18.50");
+
+  // Regression for the second-dot bug: a stray extra "." must be rejected
+  // outright (the field keeps its current value), not accepted into the
+  // text while it quietly parses to NaN -> null underneath and silently
+  // submits "not sure".
+  await payInput.pressSequentially(".");
+  await expect(payInput).toHaveValue("18.50");
+
   await payInput.fill("");
   await payInput.fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();

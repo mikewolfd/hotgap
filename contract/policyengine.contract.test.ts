@@ -86,4 +86,41 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(typeof body.message).toBe("string");
     expect(body.message.length).toBeGreaterThan(0);
   }, 90_000);
+
+  it("pins is_disabled/is_ssi_disabled and the SSI-disabled pathway", async () => {
+    // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only
+    // `is_ssi_disabled: true` does (see worker/src/translate.ts). This pins
+    // both variable names and confirms the pathway actually produces a
+    // nonzero SSI award, not just an accepted request. Observed live
+    // (2026-07-11): ssi = $9,438 for this household.
+    const probe = {
+      household: {
+        people: {
+          you: {
+            age: { "2026": 45 },
+            is_disabled: { "2026": true },
+            is_ssi_disabled: { "2026": true },
+            employment_income: { "2026": 6000 },
+            ssi: { "2026": null },
+          },
+        },
+        families: { f: { members: ["you"] } },
+        marital_units: { m: { members: ["you"] } },
+        tax_units: { t: { members: ["you"] } },
+        spm_units: { s: { members: ["you"] } },
+        households: { h: { members: ["you"], state_name: { "2026": "CA" } } },
+      },
+    };
+    const res = await fetch("https://api.policyengine.org/us/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(probe),
+      signal: AbortSignal.timeout(60_000),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.status).toBe("ok");
+    const ssi = body.result.people["you"].ssi["2026"];
+    expect(ssi).toBeGreaterThan(0);
+  }, 90_000);
 });

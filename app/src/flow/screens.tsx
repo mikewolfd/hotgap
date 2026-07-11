@@ -17,6 +17,22 @@ function parseMoney(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Shared keystroke sanitizer for money-style inputs (digits + at most one
+// decimal point). Strips anything that isn't a digit or ".", then — if that
+// leaves more than one "." — rejects the keystroke outright by returning the
+// previous text unchanged. Without this, typing a second "." (e.g. "18.5"
+// then ".") produces "18.5.", which still passes the digits-and-dots regex
+// but parses to NaN via Number("18.5.") -> null, so the input would keep
+// showing a number-looking string while silently submitting "not sure"
+// underneath. Rejecting the stray keystroke means the field simply doesn't
+// change, which is always safe: a single dot never breaks parsing (e.g.
+// "18." parses fine as 18), so this only ever blocks the invalid case.
+function sanitizeMoneyKeystroke(raw: string, previous: string): string {
+  const sanitized = raw.replace(/[^0-9.]/g, "");
+  const dotCount = sanitized.split(".").length - 1;
+  return dotCount > 1 ? previous : sanitized;
+}
+
 // Money inputs keep the RAW STRING the user typed in local state and only
 // hand a parsed number up to the caller. Parsing on every keystroke and
 // rendering the parsed number back into the controlled input (the old
@@ -49,7 +65,7 @@ function MoneyInput(props: {
         value={text}
         placeholder="0"
         onChange={(e) => {
-          const sanitized = e.target.value.replace(/[^0-9.]/g, "");
+          const sanitized = sanitizeMoneyKeystroke(e.target.value, text);
           setText(sanitized);
           props.onChange(parseMoney(sanitized));
         }}
@@ -295,7 +311,7 @@ function PayEditor({ pay, onChange, label }: { pay: Pay; onChange: (p: Pay) => v
         <input id={id} className="input" inputMode="decimal" value={amountText}
           aria-label={label}
           onChange={(e) => {
-            const sanitized = e.target.value.replace(/[^0-9.]/g, "");
+            const sanitized = sanitizeMoneyKeystroke(e.target.value, amountText);
             setAmountText(sanitized);
             onChange({ ...pay, amount: parseMoney(sanitized) ?? 0 });
           }} />
