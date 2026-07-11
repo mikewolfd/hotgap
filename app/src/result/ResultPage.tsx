@@ -105,9 +105,13 @@ export function ResultPage(props: {
   // Task 23's visibility condition reads the raw EscapeAnalysis fields, not
   // narrateEscape's output — narrateEscape doesn't carry benefitsEndEarnings
   // through (it isn't spoken by any of the three EscapeNarration lines), so
-  // that field can only gate the section here.
+  // that field can only gate the section here. Plan 4 adds narration's own
+  // healthCostLine to the same gate: a household can have a real health cost
+  // at their current pay with no cliff/leap/program-end nearby, and that cost
+  // must still surface somewhere — EscapePath is where it renders.
   const showEscapePath =
-    escape.benefitsEndEarnings !== null || escape.leap > 0 || Object.keys(escape.programEnds).length > 0;
+    escape.benefitsEndEarnings !== null || escape.leap > 0
+    || Object.keys(escape.programEnds).length > 0 || narration.healthCostLine !== null;
   return (
     <article className={`result verdict-${analysis.verdict}`}>
       {fallback && (
@@ -117,11 +121,14 @@ export function ResultPage(props: {
       <p className="verdict-body">{narration.body}</p>
       <CurveChart analysis={analysis} ctx={props.ctx} />
       <WhyList items={narration.whyItems} />
-      {showEscapePath && <EscapePath narration={narrateEscape(escape, props.ctx)} />}
+      {showEscapePath && (
+        <EscapePath narration={narrateEscape(escape, props.ctx)} healthCostLine={narration.healthCostLine} />
+      )}
       <aside className="honesty" aria-label={t("result.honesty.title")}>
         <h2>{t("result.honesty.title")}</h2>
         <p>{t("result.honesty.body")}</p>
         <p className="honesty-model">{t("result.honesty.model")}</p>
+        <p className="honesty-health">{t("result.honesty.health")}</p>
       </aside>
       <div className="nav-row">
         {fallback && (

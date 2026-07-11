@@ -106,6 +106,12 @@ export function StatePanel(props: {
       )}
 
       <p className="places-panel-honesty">{t("places.panel.honesty")}</p>
+      {/* Plan 4: the chart's own y-axis label (rendered by the shared
+          CurveChart component above) already says "after health costs" — this
+          note is the drill-down's honesty-box equivalent of the personal
+          door's result.honesty.health sentence, spelling out what that means
+          in the same "not your family" honesty voice as the line above it. */}
+      <p className="places-panel-health-note">{t("places.panel.healthNote")}</p>
       <p className="places-panel-assumptions">{t("places.panel.assumptions")}</p>
     </section>
   );

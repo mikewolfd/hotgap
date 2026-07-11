@@ -76,6 +76,14 @@ test("places door: map renders all 51 states, family picker changes color, and a
   // Fix 2: the thresholds title is third-person ("here"), not "for you", so
   // it doesn't contradict the panel's own "not your family" line.
   await expect(page.getByText(/when help ends here/i)).toBeVisible();
+
+  // Plan 4: the drill-down's own chart carries the same after-health-costs
+  // framing as the personal door, and the panel's honesty area discloses it.
+  // (Both the chart title and the y-axis label mention "after health costs",
+  // so this targets the title specifically, same wording asserted in the
+  // personal door's e2e test, to avoid a strict-mode multi-match.)
+  await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
+  await expect(page.getByText(/pays for health coverage/i)).toBeVisible();
 });
 
 test("places door: a state with no cached data shows a plain-language error, not a stuck spinner", async ({ page }) => {

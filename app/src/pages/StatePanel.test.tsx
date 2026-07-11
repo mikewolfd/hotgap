@@ -101,6 +101,25 @@ describe("StatePanel", () => {
     expect(container.textContent).toMatch(/no rent or child care/i);
   });
 
+  // Plan 4: the drill-down's curve is health-adjusted like the personal
+  // door's — this note is the panel's honesty-box equivalent of
+  // result.honesty.health, so the reframing is disclosed here too, not just
+  // on the personal door.
+  it("shows the health-costs note alongside the other honesty lines", () => {
+    const fetchImpl = vi.fn(() => new Promise(() => {}));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    expect(container.querySelector(".places-panel-health-note")?.textContent).toMatch(/pays for health coverage/i);
+  });
+
+  it("labels the drill-down chart's y-axis with the same after-health-costs framing as the personal door", async () => {
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(stateFile) } as Response),
+    );
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
+    expect(container.querySelector(".y-axis-label")?.textContent).toMatch(/after health costs/i);
+  });
+
   it("re-fetches when the state or archetype changes", () => {
     const fetchImpl = vi.fn(() => new Promise(() => {}));
     const { rerender } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);

@@ -103,6 +103,29 @@ describe("narrate on the CA fixture at $20k (real next cliff: the smaller $23k T
   });
 });
 
+// Plan 4: the health-adjusted curve subtracts the real cost of health
+// coverage (SPM medical out-of-pocket) from netIncome everywhere -- narrate()
+// must surface that cost explicitly at the household's current pay, not just
+// fold it in silently. Uses the same real CA fixture and nearest-point logic
+// as the $29k/$20k describes above.
+describe("narrate healthCostLine (Plan 4: the health cost surfaced explicitly)", () => {
+  it("is null while the household is still on Medicaid (medicalOOP is $0 at this pay)", () => {
+    const n = narrate(analyzeCurve(points, 20000), { unit: "hour", hoursPerWeek: 40 });
+    expect(n.healthCostLine).toBeNull();
+  });
+
+  it("names the real cost of health coverage once the household pays for it (at $30k, medicalOOP ~$1,090 rounds to $1,100)", () => {
+    const n = narrate(analyzeCurve(points, 30000), { unit: "hour", hoursPerWeek: 40 });
+    expect(n.healthCostLine).toContain("$1,100 a year");
+    expect(n.healthCostLine).toMatch(/health coverage/i);
+  });
+
+  it("is null when the exact point's medicalOOP is 0, even with cliffs/programs present (mkPoint's default of 0)", () => {
+    const n = narrate(analyzeCurve([pt(0, 10000), pt(10000, 8000), pt(20000, 15000)], 5000), { unit: "year" });
+    expect(n.healthCostLine).toBeNull();
+  });
+});
+
 describe("narrate verdict routing", () => {
   it("uses always_up strings when there are no cliffs", () => {
     const flat = points.map((p, i) => ({ ...p, netIncome: 10000 + i * 500 }));

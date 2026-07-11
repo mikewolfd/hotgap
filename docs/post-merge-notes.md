@@ -8,7 +8,9 @@ Deferred findings from the final whole-branch review (all judged non-blocking):
 - Leading "0" in the pay field flashes clear via the money-text resync
 - No focus management on loading->result/error transitions; radio chips lack roving tabindex
 - "fewer/more kids" aria-labels hardcoded (not in en.json); "$/hour" chart unit labels likewise
-- result.chart.yLabel string is unused (y-axis unlabeled beyond $Nk ticks)
+- ~~result.chart.yLabel string is unused (y-axis unlabeled beyond $Nk ticks)~~ RESOLVED
+  (Plan 4, Task 28): repurposed as a real rotated y-axis label on `CurveChart`, carrying the
+  health-adjusted "after health costs" framing.
 - Lost-program with $0 current value reads oddly in the why-list
 
 ## Engineering

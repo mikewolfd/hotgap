@@ -75,6 +75,18 @@ export function CurveChart({
         <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">
           {t("result.chart.xLabel", { unit: unitLabel })}
         </text>
+        {/* Y-axis label, rotated -90deg along the left margin. Plan 4: the
+            curve is health-adjusted (netIncome already has real health costs
+            subtracted out), and this label is the load-bearing spot that says
+            so on the chart itself — result.chart.yLabel was an unused string
+            before this (see docs/post-merge-notes.md), now it has a home. */}
+        <text
+          x={14} y={(M.top + H - M.bottom) / 2}
+          textAnchor="middle" className="axis-label y-axis-label"
+          transform={`rotate(-90 14 ${(M.top + H - M.bottom) / 2})`}
+        >
+          {t("result.chart.yLabel")}
+        </text>
         <path d={path} className="net-line" fill="none" />
         {showCurrent && (
           <>

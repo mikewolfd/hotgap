@@ -39,6 +39,25 @@ describe("CurveChart", () => {
     expect(container.querySelector("circle.you-dot")).toBeTruthy();
   });
 
+  // Plan 4: the curve is health-adjusted (netIncome already has real health
+  // costs subtracted out) -- the chart must say so itself, not just in prose
+  // elsewhere. result.chart.yLabel was previously an unused string (see
+  // docs/post-merge-notes.md); this is its first render.
+  it("labels the y-axis with the after-health-costs framing", () => {
+    const { container } = render(
+      <CurveChart analysis={analysis} ctx={{ unit: "hour", hoursPerWeek: 40 }} />,
+    );
+    const yLabel = container.querySelector(".y-axis-label");
+    expect(yLabel?.textContent).toMatch(/after health costs/i);
+  });
+
+  it("titles the chart with the after-health-costs framing", () => {
+    const { container } = render(
+      <CurveChart analysis={analysis} ctx={{ unit: "hour", hoursPerWeek: 40 }} />,
+    );
+    expect(container.querySelector(".chart-title")?.textContent).toMatch(/after health costs/i);
+  });
+
   it("hides the you-are-here dot and label when showCurrent is false (places-door drill-down has no 'you')", () => {
     // Scoped to `container` (not the destructured queryByText, which queries the
     // shared baseElement/document.body) since RTL auto-cleanup between tests

@@ -1,12 +1,16 @@
 import {
   fromAnnual, roundTo,
-  type CurveAnalysis, type EscapeAnalysis, type PayUnit, type ProgramId,
+  type CurveAnalysis, type CurvePoint, type EscapeAnalysis, type PayUnit, type ProgramId,
 } from "@hotgap/shared";
 import { t, type StringKey } from "../strings/t.js";
 
 export interface PayContext { unit: PayUnit; hoursPerWeek?: number }
 export interface WhyItem { programLabel: string; lostNear: string | null; currentValue: string }
-export interface Narration { headline: string; body: string; whyItems: WhyItem[] }
+// healthCostLine: what the household pays for health coverage at their
+// CURRENT pay (SPM medical out-of-pocket, already subtracted into
+// netIncome) — null when that cost is $0, so the after-health adjustment is
+// never silently hidden but also never invented where there's nothing to say.
+export interface Narration { headline: string; body: string; whyItems: WhyItem[]; healthCostLine: string | null }
 export interface EscapeThreshold { label: string; wage: string }
 export interface EscapeNarration {
   safeLine: string | null;
@@ -45,12 +49,14 @@ export function formatWage(annual: number, ctx: PayContext): string {
   }
 }
 
-function interpolateAt(analysis: CurveAnalysis, earnings: number): Record<ProgramId, number> {
-  // programs at the sample point nearest to earnings (program steps, not slopes, drive the story)
-  const nearest = analysis.points.reduce((a, b) =>
+// The sample point nearest to `earnings` — program steps (and the health
+// cost that rides along with them, e.g. losing Medicaid for paid ACA
+// coverage) change at discrete pay levels, not smoothly, so "nearest point"
+// tells the story better than a smoothed interpolation would.
+function nearestPoint(points: CurvePoint[], earnings: number): CurvePoint {
+  return points.reduce((a, b) =>
     Math.abs(b.earnings - earnings) < Math.abs(a.earnings - earnings) ? b : a,
   );
-  return nearest.programs;
 }
 
 export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
@@ -78,9 +84,9 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
   const headline = t(`result.verdict.${v}` as StringKey, pick(params, HEADLINE_PARAMS[v]));
   const body = t(bodyKey, pick(params, stuckInZone ? [] : BODY_PARAMS[v]));
 
-  const current = interpolateAt(analysis, analysis.currentEarnings);
+  const currentPoint = nearestPoint(analysis.points, analysis.currentEarnings);
   const lost = new Set<ProgramId>(analysis.nextCliff?.programsLost ?? []);
-  const candidates = (Object.entries(current) as [ProgramId, number][])
+  const candidates = (Object.entries(currentPoint.programs) as [ProgramId, number][])
     // Deliberate floor, not a bug: values under $50/year are noise for this audience, not meaningful benefits.
     .filter(([id, value]) => value > 50 || lost.has(id))
     .sort((a, b) => Number(lost.has(b[0])) - Number(lost.has(a[0])) || b[1] - a[1])
@@ -94,7 +100,17 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
     currentValue: formatDollars(value),
   }));
 
-  return { headline, body, whyItems };
+  // Surfaces the health cost the household actually pays at THIS pay (the
+  // transparency half of the health-adjusted curve — see Plan 4): the
+  // adjustment is folded into netIncome everywhere, so it must never be
+  // silent. formatDollars (not formatWage): like the leap, this is an annual
+  // cost figure, not a wage rate at a point on the chart. Null (no line)
+  // when the cost is $0, rather than claiming a cost that isn't there.
+  const healthCostLine = currentPoint.medicalOOP > 0
+    ? t("escape.healthCost", { amount: formatDollars(currentPoint.medicalOOP) })
+    : null;
+
+  return { headline, body, whyItems, healthCostLine };
 }
 
 // Sorted ascending by earnings, capped at 5 — shared by both doors so the
