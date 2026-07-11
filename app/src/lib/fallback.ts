@@ -1,11 +1,21 @@
-import type { CurvePoint } from "@hotgap/shared";
+import { ARCHETYPES, DEFAULT_ARCHETYPE, type CurvePoint } from "@hotgap/shared";
 
-// Mirrors the pipeline's archetype ids (single|married)-(0|1|2|3): the personal
-// door's fallback picks the state-file archetype closest to the real
-// household by married status and kid count, clamping kid count to the
+// The most kids any pipeline archetype models — households with more kids
+// fall back to this archetype's curve as the closest available comparison.
+const MAX_ARCHETYPE_KIDS = Math.max(...ARCHETYPES.map((a) => a.childAges.length));
+
+// The personal door's fallback picks the state-file archetype closest to the
+// real household by married status and kid count, clamping kid count to the
 // largest archetype the pipeline ever built (3+ kids -> the 3-kid curve).
+// Resolved against @hotgap/shared's ARCHETYPES (the same list the pipeline
+// sweeps) rather than re-deriving the "(single|married)-N" id format here, so
+// a rename or reshape of the shared list can never silently desync this
+// picker; DEFAULT_ARCHETYPE is the defensive last resort for an unmatched
+// combination (unreachable today: both married values × 0..MAX kids exist).
 export function pickArchetypeId(married: boolean, kidCount: number): string {
-  return `${married ? "married" : "single"}-${Math.min(kidCount, 3)}`;
+  const kids = Math.min(kidCount, MAX_ARCHETYPE_KIDS);
+  const match = ARCHETYPES.find((a) => a.married === married && a.childAges.length === kids);
+  return match?.id ?? DEFAULT_ARCHETYPE;
 }
 
 interface StateFallbackFile {
