@@ -17,3 +17,22 @@ real benefits.
 - ZIP→state data derived from [GeoNames](https://www.geonames.org/) (CC BY 4.0)
 
 License: AGPL-3.0-only. Design spec: `docs/superpowers/specs/2026-07-11-hotgap-design.md`.
+
+## Develop
+
+    npm install
+    npm test                # unit tests
+    npm run e2e             # Playwright smoke (needs app build)
+    npm run contract        # live PolicyEngine API contract check
+    npm run readability     # 5th-grade copy gate
+
+Local site: `npm run build --workspace @hotgap/app`, then `cd worker && npx wrangler dev`
+→ http://localhost:8787 (serves the SPA and proxies /api/curve to PolicyEngine).
+
+## Deploy
+
+    npm run build --workspace @hotgap/app
+    cd worker && npx wrangler deploy
+
+One Cloudflare Worker serves both the static site (assets binding) and `/api/curve`.
+No secrets are required — the PolicyEngine calculate endpoint is public.
