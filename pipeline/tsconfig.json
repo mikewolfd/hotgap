@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["src"],
+  "compilerOptions": { "outDir": "dist" },
+  "references": [{ "path": "../shared" }, { "path": "../worker" }]
+}
