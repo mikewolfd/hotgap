@@ -28,6 +28,7 @@ real benefits.
   curves
 - ZIP→state data derived from [GeoNames](https://www.geonames.org/) (CC BY 4.0)
 - Income distributions ("reach") from [U.S. Census Bureau ACS 1-Year PUMS](https://www.census.gov/programs-surveys/acs/microdata.html) (public domain). Rebuild: `node scripts/build-reach.mjs`.
+- ZIP→county crosswalk from [U.S. Census Bureau 2020 ZCTA-county relationship file](https://www.census.gov/geographies/reference-files/time-series/geo/relationship-files.html) (public domain). Rebuild: `node scripts/build-zip-county.mjs`.
 
 License: AGPL-3.0-only. Design spec: `docs/superpowers/specs/2026-07-11-hotgap-design.md`.
 
