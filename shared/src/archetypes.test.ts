@@ -33,6 +33,9 @@ describe("answersFor", () => {
       spouseAge: null,
       youDisabled: false,
       spouseDisabled: false,
+      getsHeadStart: false,
+      getsHousing: false,
+      hasEmployerCoverage: false,
     });
   });
 
@@ -47,5 +50,12 @@ describe("answersFor", () => {
   it("marks every child as not disabled, regardless of count", () => {
     const married3 = ARCHETYPES.find((a) => a.id === "married-3")!;
     expect(answersFor("NY", married3).childDisabled).toEqual([false, false, false]);
+  });
+
+  it("defaults the map archetypes to NOT receiving rationed programs (honest baseline)", () => {
+    const a = answersFor("CA", ARCHETYPES.find((x) => x.id === "single-2")!);
+    expect(a.getsHeadStart).toBe(false);
+    expect(a.getsHousing).toBe(false);
+    expect(a.hasEmployerCoverage).toBe(false);
   });
 });

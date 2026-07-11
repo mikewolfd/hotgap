@@ -15,7 +15,7 @@ describe("flow state machine", () => {
 
   it("skips the childcare screen when there is no child under 13", () => {
     const a = { ...initialFlowState.answers, childAges: [15] };
-    expect(visibleScreens(a)).toEqual(["zip", "family", "housing", "pay"]);
+    expect(visibleScreens(a)).toEqual(["zip", "family", "housing", "gets", "pay"]);
     expect(visibleScreens({ ...a, childAges: [3] })).toContain("childcare");
   });
 
@@ -102,5 +102,19 @@ describe("flow state machine", () => {
     const h = toHouseholdAnswers(s.answers);
     expect(h.spouseAge).toBeNull();
     expect(h.spouseDisabled).toBe(false);
+  });
+
+  it("carries take-up answers into HouseholdAnswers, default false", () => {
+    let s = flowReducer(initialFlowState, { type: "setZip", zip: "94110" });
+    s = flowReducer(s, { type: "setAge", age: 30 });
+    const h = toHouseholdAnswers(s.answers);
+    expect(h.getsHeadStart).toBe(false);
+    expect(h.getsHousing).toBe(false);
+    expect(h.hasEmployerCoverage).toBe(false);
+  });
+
+  it("setGets updates a take-up flag", () => {
+    let s = flowReducer(initialFlowState, { type: "setGets", key: "getsHousing", value: true });
+    expect(s.answers.getsHousing).toBe(true);
   });
 });

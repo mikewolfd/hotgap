@@ -29,5 +29,8 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     spouseAge: a.married ? 30 : null,
     youDisabled: false,
     spouseDisabled: false,
+    getsHeadStart: false,
+    getsHousing: false,
+    hasEmployerCoverage: false,
   };
 }

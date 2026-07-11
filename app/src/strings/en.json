@@ -37,6 +37,12 @@
   "flow.childcare.q": "What do you pay for child care each month?",
   "flow.childcare.hint": "If family watches your kids for free, put 0.",
 
+  "flow.gets.q": "Which of these do you get now?",
+  "flow.gets.hint": "Most families do not get these. Say yes only if you do.",
+  "flow.gets.headstart": "Head Start for a child",
+  "flow.gets.housing": "A housing voucher or housing help",
+  "flow.gets.esi": "Health insurance through a job",
+
   "flow.pay.q": "What do you make now, before taxes?",
   "flow.pay.perHour": "Per hour",
   "flow.pay.perMonth": "Per month",

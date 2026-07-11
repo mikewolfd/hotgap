@@ -39,6 +39,8 @@ test("landing → flow → cliff result", async ({ page }) => {
   await page.getByLabel(/child care/i).fill("0");
   await page.getByRole("button", { name: /next/i }).click();
 
+  await page.getByRole("button", { name: /next/i }).click(); // gets (which programs do you get now)
+
   // Regression for the decimal-input bug: typing a "." keystroke-by-keystroke
   // must not get silently swallowed by a parse-then-rerender round trip
   // (e.g. "18." -> Number("18.") = 18 -> rerenders as "18", losing the dot
@@ -124,6 +126,7 @@ async function fillThroughToResult(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /next/i }).click(); // housing
   await page.getByLabel(/child care/i).fill("0");
   await page.getByRole("button", { name: /next/i }).click(); // childcare (visible because the kid is under 13)
+  await page.getByRole("button", { name: /next/i }).click(); // gets (which programs do you get now)
   await page.getByLabel(/what do you make now/i).fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();
 }
