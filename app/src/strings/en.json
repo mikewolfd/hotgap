@@ -89,7 +89,7 @@
   "result.honesty.title": "Please know",
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
-  "result.honesty.health": "We count what you'd pay for health coverage. Losing Medicaid often means paying for other coverage, not losing it all.",
+  "result.honesty.health": "In many states, losing Medicaid means moving to other coverage you help pay for. In some states there is no low-cost plan.",
   "result.honesty.reach": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not your odds of getting there.",
 
   "toggles.title": "What if you get more help?",
