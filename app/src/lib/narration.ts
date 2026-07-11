@@ -1,12 +1,18 @@
 import {
   fromAnnual, roundTo,
-  type CurveAnalysis, type PayUnit, type ProgramId,
+  type CurveAnalysis, type EscapeAnalysis, type PayUnit, type ProgramId,
 } from "@hotgap/shared";
 import { t, type StringKey } from "../strings/t.js";
 
 export interface PayContext { unit: PayUnit; hoursPerWeek?: number }
 export interface WhyItem { programLabel: string; lostNear: string | null; currentValue: string }
 export interface Narration { headline: string; body: string; whyItems: WhyItem[] }
+export interface EscapeThreshold { label: string; wage: string }
+export interface EscapeNarration {
+  safeLine: string | null;
+  leapLine: string | null;
+  thresholds: EscapeThreshold[];
+}
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -89,6 +95,32 @@ export function narrate(analysis: CurveAnalysis, ctx: PayContext): Narration {
   }));
 
   return { headline, body, whyItems };
+}
+
+export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarration {
+  // safeExitEarnings === 0 means every point on the chart is already safe —
+  // the always_up verdict headline already says that, so no line here.
+  const safeLine =
+    esc.safeExitEarnings === null ? t("escape.safeNever")
+    : esc.safeExitEarnings > 0 ? t("escape.safe", { wage: formatWage(esc.safeExitEarnings, ctx) })
+    : null;
+
+  // The leap is a raise SIZE (a dollar delta the family must clear in one
+  // move), not a wage rate at a point on the chart — formatDollars, not
+  // formatWage, is the right unit here.
+  const leapLine = esc.leap > 0
+    ? t(esc.leapIsLowerBound ? "escape.leapMore" : "escape.leap", { amount: formatDollars(esc.leap) })
+    : null;
+
+  const thresholds: EscapeThreshold[] = (Object.entries(esc.programEnds) as [ProgramId, number][])
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 5)
+    .map(([id, earnings]) => ({
+      label: t(`program.${id}` as StringKey),
+      wage: formatWage(earnings, ctx),
+    }));
+
+  return { safeLine, leapLine, thresholds };
 }
 
 const HEADLINE_PARAMS: Record<string, string[]> = {

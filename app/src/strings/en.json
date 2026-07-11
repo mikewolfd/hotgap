@@ -69,6 +69,14 @@
   "result.why.lost": "Near {wage}, you could lose {programs}.",
   "result.why.currentValue": "Right now this is worth about {amount} a year to you.",
 
+  "escape.title": "Your path off help",
+  "escape.safe": "Past {wage}, more pay always helps you.",
+  "escape.safeNever": "Even at the top of our chart, we did not find a fully safe spot.",
+  "escape.leap": "To clear the worst rough zone in one move, it takes a raise of about {amount} a year.",
+  "escape.leapMore": "To clear the worst rough zone in one move, it takes a raise of about more than {amount} a year.",
+  "escape.endsTitle": "When help ends for you:",
+  "escape.ends": "{label}: near {wage}",
+
   "result.honesty.title": "Please know",
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
