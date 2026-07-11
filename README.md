@@ -24,6 +24,7 @@ real benefits.
   producing the places-door map data and the personal door's offline fallback
   curves
 - ZIP→state data derived from [GeoNames](https://www.geonames.org/) (CC BY 4.0)
+- Income distributions ("reach") from [U.S. Census Bureau ACS 1-Year PUMS](https://www.census.gov/programs-surveys/acs/microdata.html) (public domain). Rebuild: `node scripts/build-reach.mjs`.
 
 License: AGPL-3.0-only. Design spec: `docs/superpowers/specs/2026-07-11-hotgap-design.md`.
 
