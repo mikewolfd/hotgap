@@ -62,9 +62,10 @@ const SORTED_STATES = Object.entries(STATE_NAMES)
 // single state with no logged loss can't break the ramp math. But an
 // archetype id missing from the summary ENTIRELY (i.e. absent from every
 // state, not just one) is a different failure: the ?? 0 fallback would make
-// the legend read "did not lose money in any state" — a false claim, not an
-// absence of data. Exported so it's unit-testable without mocking the
-// bundled summary.json import.
+// the whole legend collapse to the degenerate "no cliffs" message — which is
+// true for a genuinely-flat archetype but a false claim for a data gap. This
+// guard keeps that message honest. Exported so it's unit-testable without
+// mocking the bundled summary.json import.
 export function isKnownArchetype(archetypeId: string, archetypes: { id: string }[]): boolean {
   return archetypes.some((a) => a.id === archetypeId);
 }
@@ -230,7 +231,13 @@ export function PlacesPage() {
         <section className="places-legend">
           <h2>{metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title")}</h2>
           {ramp.max <= 0 ? (
-            <p>{metric === "leap" ? t("places.legend.noneLeap") : t("places.legend.none")}</p>
+            // Metric-agnostic on purpose: a no-kids, non-disabled adult
+            // genuinely has a monotonic curve (no cliff, no leap) in every
+            // state — this isn't missing data, it's the finding. One
+            // educational sentence teaches WHY (it holds under either metric),
+            // instead of a loss- or leap-framed "we found nothing" that would
+            // read as a data gap.
+            <p>{t("places.legend.noneKids")}</p>
           ) : (
             <ul className="legend-scale">
               {ramp.upperBounds.map((upper, i) => (

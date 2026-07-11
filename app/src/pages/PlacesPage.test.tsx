@@ -82,27 +82,27 @@ describe("PlacesPage", () => {
     expect(after).not.toEqual(before);
   });
 
-  // The degenerate "every state is 0" legend message must match the selected
-  // metric: no-kids archetypes have leap === 0 AND biggestLoss === 0 in every
-  // state, so with the DEFAULT leap metric the empty message must read in
-  // "jump to get out" terms, not "did not lose money" (that loss-framed
-  // sentence under the leap heading was the review's Important bug).
-  it("collapses to the leap-framed empty legend message under the default metric (single, 0 kids)", () => {
+  // No-kids archetypes have leap === 0 AND biggestLoss === 0 in every state —
+  // a genuinely flat, cliff-free curve, not missing data. The degenerate
+  // legend message must TEACH that (metric-agnostic), never render a loss- or
+  // leap-framed "we found nothing" that reads as a data gap (the review's
+  // Important bug was a loss sentence showing under the leap heading).
+  it("collapses to the educational empty-legend message under the default (leap) metric, single 0 kids", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
     expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
-    expect(container.textContent).toMatch(/no jump to get out in any state/i);
+    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
     expect(container.textContent).not.toMatch(/did not lose money/i);
   });
 
-  it("collapses to the loss-framed empty legend message when the loss metric is selected (single, 0 kids)", () => {
+  it("shows the SAME educational empty-legend message when the loss metric is selected, single 0 kids", () => {
     const { container, getByLabelText, getByRole } = render(<PlacesPage />);
     fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
     expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
-    expect(container.textContent).toMatch(/did not lose money in any state/i);
+    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
   });
 
   it("selecting a state (click) shows its StatePanel with an instant headline", async () => {
@@ -169,8 +169,10 @@ describe("PlacesPage", () => {
 });
 
 // Finding 4: a lookup miss on the archetype id must never fall through to a
-// false "did not lose money" legend claim. isKnownArchetype is the pure
-// guard the legend section checks before rendering anything ramp-derived.
+// false "no cliffs here" legend claim (the degenerate educational message is
+// true for a genuinely-flat archetype, but a lie for a data gap).
+// isKnownArchetype is the pure guard the legend section checks before
+// rendering anything ramp-derived.
 describe("isKnownArchetype", () => {
   it("returns true when the id is present in the summary's archetype list", () => {
     expect(isKnownArchetype("single-2", [{ id: "single-2" }, { id: "married-2" }])).toBe(true);
