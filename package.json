@@ -1,0 +1,17 @@
+{
+  "name": "hotgap",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "engines": { "node": ">=22" },
+  "workspaces": ["shared"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -b shared",
+    "readability": "node scripts/readability.mjs",
+    "contract": "RUN_CONTRACT=1 vitest run contract"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
