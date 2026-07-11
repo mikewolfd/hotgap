@@ -71,3 +71,43 @@ The core value proposition — a plain-language, directional, single-household p
 **Methodology (larger):** a take-up/enrollment question and adjustment; fix the reach income-concept mismatch (compare household earnings, or reframe) + vintage; add an "are you currently receiving these?" path; validate a sample of cliffs against the Atlanta Fed PRD; widen the reach small-sample cutoff and show a range.
 
 **Scope decisions (product):** which invisible populations to bring in (assets, immigration, household composition, other income) vs. explicitly declare out of scope.
+
+## Resolutions (Plan 6, 2026-07-11)
+
+Plan 6 ("model honesty") shipped against this review's findings. Status of each:
+
+- **#1 Rationed programs modeled as guaranteed receipt (all 5 experts, the single biggest
+  distortion) — ADDRESSED.** Head Start, the housing voucher, and employer-sponsored coverage
+  are no longer assumed on income-eligibility. A new "which of these do you get now?" flow
+  screen and live result-page toggles (`<Toggles>`, "What if you get more help?") let the
+  household say what they actually receive, defaulting to **No** — the honest baseline, since
+  most eligible households don't receive rationed benefits. The map's baseline archetype
+  curves were regenerated with that same rationed-off default, so the map no longer silently
+  assumes full take-up either; a household that answers "no" to everything now gets numbers
+  consistent with the map's default. This does not add take-up *probabilities* — see "still
+  open" below.
+- **ACA PTC double-count in the health fold — FIXED.** `netIncome` now subtracts the premium
+  tax credit alongside MOOP so the subsidy is no longer counted twice; all 51 states'
+  precomputed data were regenerated.
+- **`medicalOOP` mislabeled "premiums net of subsidy + deductibles/copays" — FIXED.** The
+  measure is relabeled premiums-only (it never carried non-premium cost-sharing for synthetic
+  axis households); copy and comments no longer claim deductible/copay exposure that isn't
+  there.
+- **`result.honesty.health` false in non-expansion states — FIXED.** The copy no longer
+  universalizes the expansion-state "moving to other coverage" story; non-expansion states
+  (no Medicaid expansion, no marketplace subsidy floor for childless adults in the coverage
+  gap) get honest wording instead of inheriting the expansion-state claim.
+- **CCDF childcare subsidy — DESCOPED, not fixed.** A spike probed
+  `spm_unit_ccdf_subsidy` for eligible low-income families with real childcare cost across
+  several states; PolicyEngine returned null/zero household-side in every case. This is a
+  PolicyEngine modeling limitation, not something Plan 6 could fix, so the childcare-subsidy
+  program and its take-up toggle were dropped rather than shipping a toggle with no effect.
+
+**Still open (carried to Plan 7+):** the reach metric's income-concept mismatch (single-earner
+employment income vs. all-source household income) and PUMS vintage lag; no uncertainty
+bounds on reach percentages or cliff locations; no external validation against the Atlanta Fed
+Policy Rules Database or similar prior art; take-up is now a **user input**, not a modeled
+probability — a household still has to know and report what it receives, there's no
+population-level take-up-rate adjustment for households that don't answer; and the missing
+intake dimensions (assets, immigration status, other income, household composition beyond
+married/single) remain unasked.
