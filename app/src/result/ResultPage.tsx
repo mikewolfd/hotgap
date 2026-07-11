@@ -22,12 +22,19 @@ export function ResultPage(props: {
   useEffect(() => {
     let alive = true;
     setStatus({ phase: "loading" });
-    fetchCurve(props.answers).then((r) => {
-      if (!alive) return;
-      if (!r.ok) return setStatus({ phase: "error" });
-      const analysis = analyzeCurve(r.data.points, r.data.currentEarnings);
-      setStatus({ phase: "done", analysis, narration: narrate(analysis, props.ctx) });
-    });
+    fetchCurve(props.answers)
+      .then((r) => {
+        if (!alive) return;
+        if (!r.ok) return setStatus({ phase: "error" });
+        const analysis = analyzeCurve(r.data.points, r.data.currentEarnings);
+        setStatus({ phase: "done", analysis, narration: narrate(analysis, props.ctx) });
+      })
+      .catch(() => {
+        // Defensive: fetchCurve resolves for expected failures, but a throw
+        // inside the .then() (analyzeCurve/narrate on malformed data) or an
+        // unexpected rejection would otherwise leave the page loading forever.
+        if (alive) setStatus({ phase: "error" });
+      });
     return () => { alive = false; };
   }, [props.answers, props.ctx, attempt]);
 
@@ -43,7 +50,7 @@ export function ResultPage(props: {
 
   if (status.phase === "error") {
     return (
-      <div className="error-page">
+      <div className="error-page" role="alert">
         <h1>{t("error.title")}</h1>
         <p>{t("error.body")}</p>
         <div className="nav-row">
