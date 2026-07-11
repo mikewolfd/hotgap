@@ -125,4 +125,14 @@ describe("flow state machine", () => {
     expect(s.answers.state).toBe("CA");
     expect(s.answers.countyFips).toBe("06075");
   });
+
+  it("clears the ZIP-derived county when the user overrides their state", async () => {
+    const { ensureCountyTable } = await import("../lib/county.js");
+    await ensureCountyTable((async () => new Response(JSON.stringify({ "94110": "06075" }))) as unknown as typeof fetch);
+    let s = flowReducer(initialFlowState, { type: "setZip", zip: "94110" });
+    expect(s.answers.countyFips).toBe("06075");
+    s = flowReducer(s, { type: "setState", state: "NY" });
+    expect(s.answers.state).toBe("NY");
+    expect(s.answers.countyFips).toBeNull();
+  });
 });

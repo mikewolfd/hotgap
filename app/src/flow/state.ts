@@ -87,7 +87,11 @@ export function flowReducer(s: FlowState, action: FlowAction): FlowState {
       ...s,
       answers: { ...a, zip: action.zip, state: zipToState(action.zip), countyFips: zipToCounty(action.zip) },
     };
-    case "setState": return { ...s, answers: { ...a, state: action.state } };
+    // Overriding the state (the ZIP-confirm "fix my state" dropdown) invalidates
+    // the ZIP-derived county: that FIPS belongs to the ORIGINAL state, so keeping
+    // it would let county_fips and state_name disagree in the payload. Clear it
+    // and fall back to state-only — the honest, pre-county behavior.
+    case "setState": return { ...s, answers: { ...a, state: action.state, countyFips: null } };
     case "setMarried":
       return {
         ...s,
