@@ -86,13 +86,13 @@ export function PlacesPage() {
         <p className="hint" id="places-kids-label">{t("places.pick.kids")}</p>
         <div className="stepper" aria-labelledby="places-kids-label">
           <button
-            type="button" className="step-btn" aria-label="fewer kids"
+            type="button" className="step-btn" aria-label={t("common.fewerKids")}
             disabled={kids <= 0}
             onClick={() => setKids((k) => Math.max(0, k - 1))}
           >−</button>
           <output>{kids}</output>
           <button
-            type="button" className="step-btn" aria-label="more kids"
+            type="button" className="step-btn" aria-label={t("common.moreKids")}
             disabled={kids >= KID_MAX}
             onClick={() => setKids((k) => Math.min(KID_MAX, k + 1))}
           >+</button>

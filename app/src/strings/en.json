@@ -5,7 +5,7 @@
   "landing.check.body": "Answer five short questions. See what happens to your help if your pay goes up.",
   "landing.check.cta": "Start",
   "landing.places.title": "Compare places",
-  "landing.places.body": "See which states have the worst gaps. Coming soon.",
+  "landing.places.body": "See which states have the worst gaps. Tap a state to see how big its cliff is.",
   "landing.privacy": "We do not save what you type. No sign up. No tracking.",
 
   "flow.back": "Back",
@@ -79,9 +79,12 @@
 
   "common.yes": "Yes",
   "common.no": "No",
+  "common.fewerKids": "fewer kids",
+  "common.moreKids": "more kids",
 
   "result.tryAgain": "Try again",
   "result.startOver": "Start over",
+  "result.fallback.banner": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
   "error.title": "We could not get your answer.",
   "error.body": "The math service did not reply. Your answers were not saved. Please try again in a minute.",
 

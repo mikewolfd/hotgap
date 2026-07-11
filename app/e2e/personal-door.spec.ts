@@ -64,16 +64,53 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 });
 
-test("API failure shows plain-language error with retry", async ({ page }) => {
-  await page.route("**/api/curve", (route) => route.fulfill({ status: 502, body: "{}" }));
+// This household (single, 1 kid — clicked below via "more kids") resolves to
+// fallback archetype "single-1" (see pickArchetypeId in app/src/lib/fallback.ts).
+// This small fixture covers that one archetype, shaped like the mock curve
+// used elsewhere in this file.
+const fallbackPoints = [
+  mkPoint(0, 18000), mkPoint(20000, 27000), mkPoint(40000, 31000),
+  mkPoint(60000, 23000, 8000), mkPoint(80000, 38000), mkPoint(100000, 48000),
+];
+const caFallbackFixture = {
+  generated: "2026-07-11T00:00:00.000Z",
+  year: "2026",
+  state: "CA",
+  archetypes: { "single-1": { points: fallbackPoints } },
+};
+
+async function fillThroughToResult(page: import("@playwright/test").Page) {
   await page.goto("/#/check");
   await page.getByLabel(/where do you live/i).fill("94110");
   await page.getByRole("button", { name: /next/i }).click();
   await page.getByLabel(/how old are you/i).fill("30");
-  await page.getByRole("button", { name: /next/i }).click(); // family defaults
-  await page.getByRole("button", { name: /next/i }).click(); // housing "not sure"
+  await page.getByRole("button", { name: "more kids" }).click(); // single, 1 kid -> fallback archetype "single-1"
+  await page.getByRole("button", { name: /next/i }).click();
+  await page.getByLabel(/what do you pay to live/i).fill("1500");
+  await page.getByRole("button", { name: /next/i }).click(); // housing
+  await page.getByLabel(/child care/i).fill("0");
+  await page.getByRole("button", { name: /next/i }).click(); // childcare (visible because the kid is under 13)
   await page.getByLabel(/what do you make now/i).fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();
+}
+
+test("API failure falls back to a precomputed state curve with a banner and a working retry", async ({ page }) => {
+  await page.route("**/api/curve", (route) => route.fulfill({ status: 502, body: "{}" }));
+  await page.route("**/data/states/CA.json", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(caFallbackFixture) }),
+  );
+  await fillThroughToResult(page);
+
+  await expect(page.getByText(/could not get your exact numbers/i)).toBeVisible();
+  await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /try again/i })).toBeVisible();
+});
+
+test("API failure shows plain-language error with retry when the fallback also fails", async ({ page }) => {
+  await page.route("**/api/curve", (route) => route.fulfill({ status: 502, body: "{}" }));
+  await page.route("**/data/states/CA.json", (route) => route.fulfill({ status: 404, body: "not found" }));
+  await fillThroughToResult(page);
+
   await expect(page.getByRole("heading", { name: /could not get your answer/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /try again/i })).toBeVisible();
 });

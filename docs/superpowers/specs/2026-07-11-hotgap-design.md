@@ -1,7 +1,7 @@
 # HotGap — Design
 
 **Date:** 2026-07-11
-**Status:** Approved (sections 1, 3, 4 explicitly; section 2 provisionally — iterate on visuals with real data)
+**Status:** Approved and shipped (sections 1-4; the places door's visuals were iterated against real pipeline data before merge, per the note under section 2)
 **Repo:** github.com/mikewolfd/HotGap (fresh, no commits at design time)
 
 ## Mission
@@ -73,7 +73,8 @@ Result page:
 
 ## 2. Places door — the map and the gap score
 
-*(Provisional: structure approved, visuals to be iterated with real data.)*
+*(Shipped: built and reviewed against the real weekly PolicyEngine sweep, not mockups —
+see Plan 2, Tasks 16-19.)*
 
 - **Choropleth US map** colored by gap severity for a selected household archetype.
   Default archetype: single parent, two kids (most cliff-prone household). Picker offers
@@ -96,9 +97,19 @@ Result page:
    ├── Places door  ──► static JSON (map scores, state curves)
    └── Fallback     ──► static JSON (per-state archetype curves)
 
-[Batch pipeline: Python + policyengine-us, GitHub Actions weekly]
+[Batch pipeline: TypeScript (tsx), GitHub Actions weekly]
    └── emits: map scores per state×archetype, fallback curves, build metadata
 ```
+
+**Deviation from the plan above (adjudicated by controller, 2026-07-11, recorded in Plan 2 Task
+19):** the batch pipeline is a TypeScript package (`pipeline/`, run with `tsx`) that sweeps 51
+states × 8 household archetypes through the same public PolicyEngine `/us/calculate` endpoint
+and the same `@hotgap/shared` parse/analyze math the personal door uses, rather than a local
+Python + `policyengine-us` engine. Rationale: 408 requests/week is negligible load on a public
+API that other production screeners (MyFriendBen) already run against and that this repo's own
+nightly contract test already exercises; it drops a heavy Python dependency from CI; and reusing
+the exact shared math guarantees the map and the personal door can never disagree on a number.
+Swapping in a local engine later is a pipeline-internal change, not a site-wide one.
 
 - **Frontend:** React + Vite, static-exportable, mobile-first. Custom D3 chart and
   TopoJSON map — the chart is the craft centerpiece; no chart-library defaults.
@@ -109,12 +120,19 @@ Result page:
   API credentials, translates the 5 answers into PolicyEngine household JSON, forwards the
   axes request, caches responses. If the public `/us/calculate` endpoint needs no auth,
   the proxy still exists for caching, input normalization, and schema-drift insulation.
-- **Batch pipeline:** small Python package in-repo; GitHub Actions weekly; runs
-  policyengine-us directly (no API rate limits); outputs versioned static JSON.
-- **Fallback path:** live API down/slow → serve nearest precomputed archetype curve with
-  banner: "Showing typical numbers for a family like yours — exact numbers aren't available
-  right now." The site never white-screens.
-- **License:** AGPL-3.0 for the whole repo (batch imports policyengine-us; fits mission).
+- **Batch pipeline:** small TypeScript package in-repo (`pipeline/`, run with `tsx`); GitHub
+  Actions weekly (`.github/workflows/places-data.yml`, Monday 07:00 UTC + manual dispatch);
+  calls the same live PolicyEngine API and shared math as the personal door (see the deviation
+  note above); commits updated data only when the sweep's output actually changed.
+- **Fallback path: implemented as designed.** Live API failure on the personal door
+  (`app/src/lib/fallback.ts`) picks the archetype closest to the household (married status +
+  kid count, clamped to the pipeline's 0-3 kid archetypes) and fetches that state's precomputed
+  curve; if it loads, the result page renders the normal verdict at the user's real earnings
+  with an always-visible banner ("We could not get your exact numbers right now. These are
+  numbers for a family like yours in your state.") and a working "Try again" that re-attempts
+  the live API; if the fallback also fails, the existing plain-language error page shows. The
+  site never white-screens.
+- **License:** AGPL-3.0 for the whole repo.
 - **Privacy:** no accounts, no analytics on household inputs; inputs never logged.
 
 ## 4. Program coverage & honesty
@@ -151,5 +169,5 @@ than silently showing zero.
    test pins the API shape including HTTP 400 + status:"error" validation errors.
 2. Whether housing assistance modeling in policyengine-us is reliable enough to display
    per-state, or gets the "we may not know" treatment.
-3. Final visual language for the map (iterate with real data; owner reviews rendered
-   output, not mockups).
+3. **ANSWERED:** Final visual language for the map — a computed, validated sequential clay-red
+   ramp (5 quantized bins), reviewed against the real weekly pipeline data (Plan 2, Task 18).
