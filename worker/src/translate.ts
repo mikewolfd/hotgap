@@ -29,6 +29,15 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   for (const v of PERSON_VARS) you[v] = y(null);
   if (a.monthlyRent !== null) you.rent = y(a.monthlyRent * 12);
   applyDisability(you, a.youDisabled);
+  if (a.hasEmployerCoverage) {
+    // Employer coverage requires all three inputs together to disqualify ACA
+    // subsidies (verified live 2026-07-11). Premium is the family rate
+    // whenever the tax unit includes a spouse or a child, else the single rate.
+    const esiPremium = a.married || a.childAges.length > 0 ? 6500 : 1700;
+    you.has_esi = y(true);
+    you.offered_aca_disqualifying_esi = y(true);
+    you.employer_sponsored_insurance_premiums = y(esiPremium);
+  }
 
   const people: Record<string, Vars> = { you };
   if (a.married) {
@@ -36,8 +45,14 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     for (const v of PERSON_VARS) people.spouse[v] = y(null);
     applyDisability(people.spouse, a.spouseDisabled);
   }
+  // Enrollment flags like `is_enrolled_in_head_start` do NOT work in
+  // PolicyEngine. Take-up "off" instead forces the program's dollar value to
+  // 0 as an input; "on" leaves it null so PolicyEngine computes it (verified
+  // live 2026-07-11).
+  const hsValue = a.getsHeadStart ? null : 0;
   a.childAges.forEach((age, i) => {
-    const child: Vars = { age: y(age), medicaid: y(null), chip: y(null), head_start: y(null), early_head_start: y(null) };
+    const child: Vars = { age: y(age), medicaid: y(null), chip: y(null), early_head_start: y(hsValue) };
+    child.head_start = y(hsValue);
     applyDisability(child, a.childDisabled[i] ?? false);
     people[`child${i + 1}`] = child;
   });
@@ -45,6 +60,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   const members = Object.keys(people);
   const spmVars: Vars = { childcare_expenses: y((a.monthlyChildcare ?? 0) * 12) };
   for (const v of SPM_VARS) spmVars[v] = y(null);
+  if (!a.getsHousing) spmVars.spm_unit_capped_housing_subsidy = y(0);
   const taxVars: Vars = {};
   for (const v of TAX_VARS) taxVars[v] = y(null);
 

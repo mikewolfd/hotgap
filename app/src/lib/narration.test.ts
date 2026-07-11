@@ -59,15 +59,16 @@ describe("formatAgeList", () => {
 // "in_danger_zone").
 //
 // Plan 4 update: folding real medical out-of-pocket costs into netIncome
-// makes a NEW, small cliff visible right at $29k->$30k that did not exist
-// before. At $30k this household loses Medicaid and must instead carry real
-// ACA premiums/OOP (medicalOOP jumps from $0 to ~$1,090), on top of losing
-// the last of SNAP and some EITC -- a combined drop of ~$988 that clears
-// CLIFF_MIN. So `nextCliff` from $29k now finds THIS cliff first, not the
-// bigger $30k->$31k Head Start/EITC/ACA-eligibility cliff (still
-// `worstCliff`, drop ~$22,089 -- see analyze.test.ts). This is the intended
-// effect of Plan 4: losing Medicaid, previously invisible in net income, now
-// shows up as a real cliff.
+// makes a NEW cliff visible right at $29k->$30k that did not exist before. At
+// $30k this household loses Medicaid and (Plan 6: now that the ACA premium
+// tax credit is subtracted from netIncome too, on top of MOOP, instead of
+// double-counting it) starts paying real net-of-subsidy ACA premiums, on top
+// of losing the last of SNAP and some EITC -- a combined drop of ~$7,643 that
+// clears CLIFF_MIN. So `nextCliff` from $29k now finds THIS cliff first, not
+// the bigger $30k->$31k Head Start/EITC/ACA-eligibility cliff (still
+// `worstCliff`, drop ~$21,957 -- see analyze.test.ts). This is the intended
+// effect of Plan 4/6: losing Medicaid, previously invisible in net income,
+// now shows up as a real cliff.
 describe("narrate on the CA fixture at $29k (real next cliff: the new $29k->$30k Medicaid health-cost cliff)", () => {
   const n = narrate(analyzeCurve(points, 29000), { unit: "hour", hoursPerWeek: 40 });
   it("picks the cliff_ahead headline with the cliff wage", () => {
@@ -75,7 +76,7 @@ describe("narrate on the CA fixture at $29k (real next cliff: the new $29k->$30k
     expect(n.headline).toContain("$14 an hour"); // 29000/(40*52) = 13.94 -> rounds to 14.00
   });
   it("mentions the size of the drop in the body", () => {
-    expect(n.body).toContain("$1,000"); // drop ~$988.12 rounds to nearest $100
+    expect(n.body).toContain("$7,600"); // drop ~$7,642.80 rounds to nearest $100
   });
   it("lists Medicaid among the why-items with a lostNear wage (losing it now costs real money via health-adjusted net income)", () => {
     const medicaid = n.whyItems.find((w) => w.programLabel.includes("Medicaid"));
@@ -195,12 +196,12 @@ describe("narrateEscape on the real CA fixture", () => {
   const esc = escapeAnalysis(points);
   const n = narrateEscape(esc, { unit: "hour", hoursPerWeek: 40 });
 
-  it("names the safe-exit wage (91000/2080 = 43.75 -> rounds to $43.75/hr)", () => {
-    expect(n.safeLine).toContain("$43.75 an hour");
+  it("names the safe-exit wage (81000/2080 = 38.94 -> rounds to $39/hr)", () => {
+    expect(n.safeLine).toContain("$39 an hour");
   });
 
-  it("names the leap in dollars (45000, not wage-rounded)", () => {
-    expect(n.leapLine).toContain("$45,000");
+  it("names the leap in dollars (52000, not wage-rounded)", () => {
+    expect(n.leapLine).toContain("$52,000");
     expect(n.leapLine).not.toContain("more than");
   });
 

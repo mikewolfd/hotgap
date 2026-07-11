@@ -344,6 +344,37 @@ function PayEditor({ pay, onChange, label }: { pay: Pay; onChange: (p: Pay) => v
   );
 }
 
+export function GetsScreen({ answers, dispatch }: { answers: FlowAnswers; dispatch: D }) {
+  const hasYoungKid = answers.childAges.some((a) => a < 6);
+  const rows: { key: "getsHeadStart" | "getsHousing" | "hasEmployerCoverage"; label: string; show: boolean }[] = [
+    { key: "getsHeadStart", label: t("flow.gets.headstart"), show: hasYoungKid },
+    { key: "getsHousing", label: t("flow.gets.housing"), show: true },
+    { key: "hasEmployerCoverage", label: t("flow.gets.esi"), show: true },
+  ];
+  return (
+    <>
+      <h1>{t("flow.gets.q")}</h1>
+      <p className="hint">{t("flow.gets.hint")}</p>
+      {rows.filter((r) => r.show).map((r) => {
+        const labelId = `gets-${r.key}-label`;
+        return (
+          <div key={r.key} className="gets-row">
+            <span id={labelId}>{r.label}</span>
+            <div className="choice-row" role="radiogroup" aria-labelledby={labelId}>
+              <button type="button" className={answers[r.key] ? "choice selected" : "choice"}
+                role="radio" aria-checked={answers[r.key]}
+                onClick={() => dispatch({ type: "setGets", key: r.key, value: true })}>{t("common.yes")}</button>
+              <button type="button" className={answers[r.key] ? "choice" : "choice selected"}
+                role="radio" aria-checked={!answers[r.key]}
+                onClick={() => dispatch({ type: "setGets", key: r.key, value: false })}>{t("common.no")}</button>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export function PayScreen({ answers, dispatch }: { answers: FlowAnswers; dispatch: D }) {
   return (
     <>

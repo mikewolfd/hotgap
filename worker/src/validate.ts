@@ -63,6 +63,9 @@ export function validateAnswers(input: unknown): Validation {
       monthlyChildcare: a.monthlyChildcare === null ? null : clamp(a.monthlyChildcare as number, 0, 8000),
       annualEarnings: clamp(a.annualEarnings as number, 0, 500000),
       spouseAnnualEarnings: a.married ? clamp(a.spouseAnnualEarnings as number, 0, 500000) : 0,
+      getsHeadStart: a.getsHeadStart === true,
+      getsHousing: a.getsHousing === true,
+      hasEmployerCoverage: a.hasEmployerCoverage === true,
     },
   };
 }

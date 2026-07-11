@@ -157,10 +157,32 @@ Swapping in a local engine later is a pipeline-internal change, not a site-wide 
 ## 4. Program coverage & honesty
 
 v1 surfaces the programs PolicyEngine models well: SNAP, Medicaid/CHIP, ACA premium tax
-credits, EITC + CTC (federal and state), TANF, CCDF childcare subsidy, SSI, WIC, housing
-assistance. State program depth is uneven (verified in research); where a state's program
-isn't modeled, the UI says "we may not know about [state]'s childcare help yet" rather
-than silently showing zero.
+credits, EITC + CTC (federal and state), TANF, SSI, WIC, housing assistance. State program
+depth is uneven (verified in research); where a state's program isn't modeled, the UI says
+"we may not know about [state]'s childcare help yet" rather than silently showing zero.
+
+**Take-up (Plan 6, 2026-07-11):** Head Start, the housing voucher, and employer-sponsored
+coverage were previously treated as guaranteed once a household was income-eligible — the
+adversarial review's #1 finding, and the single biggest distortion in the tool (see
+`docs/reviews/2026-07-11-adversarial-methodology-review.md`). Take-up is now user-controlled:
+a "which of these do you get now?" screen in the personal-door flow captures each program
+(default **No** — the honest baseline, since most eligible households don't receive rationed
+programs), and the result page carries the same choices as live toggle chips
+(`<Toggles>`, `toggles.title` = "What if you get more help?") that recompute the curve
+on every flip via a fresh `/api/curve` call. The mechanism is a value override (forcing the
+program's dollar amount to 0 across the earnings axis when the household says "no"), not an
+enrollment flag — PolicyEngine's enrollment flags (`is_enrolled_in_head_start`, etc.) turned
+out to be reweighting-only inputs that don't gate the household-level benefit value (see the
+model-honesty design doc). The map's baseline archetype curves are regenerated with the same
+honest default (rationed programs off), so the map and a real household that answers "no" to
+everything now agree, instead of the map silently assuming full take-up.
+
+**CCDF childcare subsidy — descoped.** A spike probed `spm_unit_ccdf_subsidy` for eligible
+low-income families with real childcare cost across several states; PolicyEngine returned
+null/zero on the household side in every case (a PolicyEngine modeling limitation, not a
+HotGap bug). Childcare-subsidy tracking and its take-up toggle are dropped from v1 rather than
+shipping an inert control; the childcare-*cost* question and the childless-of-a-young-child
+Head Start toggle are unaffected.
 
 ## 4a. Health-adjusted resources (Plan 4, 2026-07-11)
 

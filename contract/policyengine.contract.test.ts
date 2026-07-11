@@ -123,4 +123,19 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const ssi = body.result.people["you"].ssi["2026"];
     expect(ssi).toBeGreaterThan(0);
   }, 90_000);
+
+  it("head_start:0 override removes Head Start from net income", async () => {
+    const withHS = { household: { people: { you: { age: { "2026": 30 }, employment_income: { "2026": 20000 } }, kid: { age: { "2026": 5 }, head_start: { "2026": null } } }, families: { f: { members: ["you", "kid"] } }, marital_units: { m: { members: ["you"] } }, tax_units: { t: { members: ["you", "kid"] } }, spm_units: { s: { members: ["you", "kid"] } }, households: { h: { members: ["you", "kid"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } } } };
+    const off = JSON.parse(JSON.stringify(withHS));
+    off.household.people.kid.head_start = { "2026": 0 };
+    const call = async (body: unknown) => {
+      const res = await fetch("https://api.policyengine.org/us/calculate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
+      return (await res.json()) as any;
+    };
+    const on = await call(withHS);
+    const offR = await call(off);
+    const onNet = on.result.households.h.household_net_income["2026"];
+    const offNet = offR.result.households.h.household_net_income["2026"];
+    expect(onNet - offNet).toBeGreaterThan(15000); // Head Start value removed
+  }, 90_000);
 });

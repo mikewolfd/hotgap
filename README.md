@@ -11,6 +11,9 @@ cash benefits, so "what you keep" means money left after paying for health.
 Two doors: check your own numbers, or compare which states have the worst
 gaps on a map — by biggest loss, or by **the leap**, the raise a family must
 clear in one move to get past the worst rough zone and earn safely again.
+Rationed programs (Head Start, a housing voucher, employer coverage) default
+to "off," and live take-up toggles on the result page let you flip each on
+to see how it changes your numbers.
 
 Calculations come from [PolicyEngine](https://policyengine.org)'s open
 rules engine via its public API. Estimates only — a caseworker decides

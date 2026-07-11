@@ -15,11 +15,31 @@ const curve = {
     mkPoint(30000, 32000, 8000), mkPoint(40000, 24000, 0), mkPoint(50000, 31000, 0),
   ],
 };
+// Plan 6 Task 5's result-page toggles (housing/Head Start/employer coverage)
+// recompute the curve live by re-calling /api/curve with the edited answers.
+// This second fixture has strictly increasing net income (no drop ever
+// exceeds analyzeCurve's CLIFF_MIN), so it resolves to verdict "always_up" —
+// a visibly different headline than the cliff mock above, proving a toggle
+// flip actually drives a fresh recompute rather than a local-only UI change.
+const curveAfterToggle = {
+  year: "2026",
+  currentEarnings: 24960,
+  points: [
+    mkPoint(0, 20000), mkPoint(10000, 24000), mkPoint(20000, 29000, 0, 1200),
+    mkPoint(30000, 34000), mkPoint(40000, 39000), mkPoint(50000, 44000),
+  ],
+};
 
 test("landing → flow → cliff result", async ({ page }) => {
-  await page.route("**/api/curve", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(curve) }),
-  );
+  // The route is called once for the initial "gets" answers and again after
+  // the toggle flip below; return the cliff mock first, then the
+  // cliff-free one, so the assertions can tell the two calls apart.
+  let curveCalls = 0;
+  await page.route("**/api/curve", (route) => {
+    curveCalls++;
+    const body = curveCalls === 1 ? curve : curveAfterToggle;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /more pay/i })).toBeVisible();
 
@@ -38,6 +58,8 @@ test("landing → flow → cliff result", async ({ page }) => {
 
   await page.getByLabel(/child care/i).fill("0");
   await page.getByRole("button", { name: /next/i }).click();
+
+  await page.getByRole("button", { name: /next/i }).click(); // gets (which programs do you get now)
 
   // Regression for the decimal-input bug: typing a "." keystroke-by-keystroke
   // must not get silently swallowed by a parse-then-rerender round trip
@@ -66,9 +88,11 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 
   // Plan 4: the chart is labeled as health-adjusted, and the honesty box
-  // explains what that means, so the reframing is never silent.
+  // explains what that means, so the reframing is never silent. Plan 6
+  // reworded this line to be honest about non-expansion states (no
+  // low-cost plan), so it no longer says "paying for other coverage".
   await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
-  await expect(page.getByText(/losing medicaid often means paying for other coverage/i)).toBeVisible();
+  await expect(page.getByText(/losing medicaid means moving to other coverage/i)).toBeVisible();
 
   // "Your path off help" section: this mocked curve's danger zone never
   // recovers by the last sampled point ($50k net $31k < the $32k peak at
@@ -96,6 +120,18 @@ test("landing → flow → cliff result", async ({ page }) => {
   // explicitly disclaims odds, right in the honesty box.
   await expect(page.getByText(/census household income/i)).toBeVisible();
   await expect(page.getByText(/not your odds of getting there/i)).toBeVisible();
+
+  // Plan 6 Task 5: the take-up toggles are live on every result, and
+  // flipping one recomputes the curve for real (not just a local re-render).
+  // Flip housing off -> on; the mocked route above answers the resulting
+  // second /api/curve call with a cliff-free curve, so the page should swap
+  // from the "watch out" cliff headline to the "always_up" one.
+  await expect(page.getByRole("heading", { name: /what if you get more help/i })).toBeVisible();
+  const housingSwitch = page.getByRole("switch", { name: /housing/i });
+  await expect(housingSwitch).toHaveAttribute("aria-checked", "false");
+  await housingSwitch.click();
+  await expect(housingSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("heading", { name: /when you earn more, you keep more/i })).toBeVisible();
 });
 
 // This household (single, 1 kid — clicked below via "more kids") resolves to
@@ -124,6 +160,7 @@ async function fillThroughToResult(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /next/i }).click(); // housing
   await page.getByLabel(/child care/i).fill("0");
   await page.getByRole("button", { name: /next/i }).click(); // childcare (visible because the kid is under 13)
+  await page.getByRole("button", { name: /next/i }).click(); // gets (which programs do you get now)
   await page.getByLabel(/what do you make now/i).fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();
 }

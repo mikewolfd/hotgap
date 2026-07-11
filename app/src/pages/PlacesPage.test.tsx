@@ -85,9 +85,10 @@ describe("PlacesPage", () => {
 
   // Once real health costs are folded in, a childless adult is NOT cliff-free:
   // losing Medicaid means paying ACA premiums, a genuine health-coverage cliff
-  // (leap > 0 in 28/51 Medicaid-expansion states for single-0). So the single-0
-  // legend renders a real scale, not the degenerate fallback — the honest
-  // reversal of the pre-health-adjustment "no-kids families face no cliffs".
+  // (leap > 0 in 42/51 states for single-0, per the honest rationed-off
+  // baseline). So the single-0 legend renders a real scale, not the
+  // degenerate fallback — the honest reversal of the pre-health-adjustment
+  // "no-kids families face no cliffs".
   it("renders a real legend scale for a childless adult (single 0 kids) — health cliffs exist", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
     fireEvent.click(getByLabelText("fewer kids"));

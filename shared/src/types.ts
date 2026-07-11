@@ -21,17 +21,22 @@ export interface HouseholdAnswers {
   monthlyChildcare: number | null;
   annualEarnings: number;
   spouseAnnualEarnings: number;
+  getsHeadStart: boolean;
+  getsHousing: boolean;
+  hasEmployerCoverage: boolean;
 }
 
 export interface CurvePoint {
   earnings: number;
   // Resources after paying real health costs: raw household net income minus
-  // SPM medical out-of-pocket (premiums net of subsidy + non-premium OOP).
-  // The whole tool operates on this honest after-health figure.
+  // the ACA premium tax credit (already counted once in net income as a
+  // refundable credit) minus SPM medical out-of-pocket (health-insurance
+  // premiums, net of that same subsidy). The whole tool operates on this
+  // honest after-health figure.
   netIncome: number;
-  // What the household actually pays for health coverage at this earnings level
-  // (SPM medical out-of-pocket). Surfaced for transparency; already subtracted
-  // from netIncome above.
+  // What the household actually pays for health-insurance premiums at this
+  // earnings level, net of the ACA subsidy (SPM medical out-of-pocket).
+  // Surfaced for transparency; already subtracted from netIncome above.
   medicalOOP: number;
   programs: Record<ProgramId, number>;
 }

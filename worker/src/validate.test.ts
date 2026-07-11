@@ -111,4 +111,34 @@ describe("validateAnswers", () => {
       }
     });
   });
+
+  it("accepts take-up booleans and defaults them to false when absent", () => {
+    const r = validateAnswers({
+      state: "CA", married: false, childAges: [3], childDisabled: [false],
+      monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000,
+      spouseAnnualEarnings: 0, age: 30, spouseAge: null, youDisabled: false,
+      spouseDisabled: false,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.getsHeadStart).toBe(false);
+      expect(r.value.getsHousing).toBe(false);
+      expect(r.value.hasEmployerCoverage).toBe(false);
+    }
+  });
+
+  it("preserves take-up booleans when provided", () => {
+    const r = validateAnswers({
+      state: "CA", married: true, childAges: [], childDisabled: [],
+      monthlyRent: null, monthlyChildcare: null, annualEarnings: 40000,
+      spouseAnnualEarnings: 20000, age: 30, spouseAge: 30, youDisabled: false,
+      spouseDisabled: false, getsHeadStart: true, getsHousing: true, hasEmployerCoverage: true,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.getsHeadStart).toBe(true);
+      expect(r.value.getsHousing).toBe(true);
+      expect(r.value.hasEmployerCoverage).toBe(true);
+    }
+  });
 });

@@ -4,12 +4,13 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ARCHETYPES, parsePEResponse } from "@hotgap/shared";
-import { buildStateFile, buildSummary, type ResultsByStateArchetype } from "./build.js";
+import { buildStateFile, buildSummary, type ResultsByStateArchetype, type StateFileJson } from "./build.js";
 import {
   parseArgs,
   fetchWithRetry,
   runPipeline,
   runFromData,
+  resultsFromStateFile,
   writeOutputs,
   writeSummary,
   ALL_STATES,
@@ -101,11 +102,11 @@ describe("runPipeline", () => {
     for (const state of ["ZZ", "YY"]) {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 22089,
+        biggestLoss: 21957,
         dangerWidth: expect.any(Number),
         cliffCount: expect.any(Number),
-        safeExit: 91000,
-        leap: 45000,
+        safeExit: 81000,
+        leap: 52000,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
@@ -170,9 +171,19 @@ describe("runFromData", () => {
     expect(result.stateFiles).toBeUndefined(); // state files are untouched, never rebuilt
     expect(result.summary).toBeDefined();
 
-    // Round trip: the recomputed summary must match a summary built directly
-    // from the original in-memory results (ignoring the fresh `generated` stamp).
-    const expected = buildSummary("IGNORED", states, results);
+    // Round trip: the recomputed summary must match a summary built from the
+    // same on-disk (whole-dollar-rounded) points runFromData actually reads —
+    // not from the original unrounded in-memory results. buildStateFile rounds
+    // netIncome to whole dollars for storage, so metrics re-derived from raw
+    // floats vs. from the rounded, stored representation can differ by $1 due
+    // to rounding alone; comparing against the same rounded source is the
+    // faithful identity check (ignoring the fresh `generated` stamp).
+    const roundTripped: ResultsByStateArchetype = {};
+    for (const state of states) {
+      const file = JSON.parse(storedStateFiles[state]) as StateFileJson;
+      roundTripped[state] = resultsFromStateFile(file);
+    }
+    const expected = buildSummary("IGNORED", states, roundTripped);
     expect({ ...result.summary, generated: "IGNORED" }).toEqual(expected);
   });
 

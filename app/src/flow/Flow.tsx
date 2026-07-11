@@ -4,7 +4,7 @@ import { t } from "../strings/t.js";
 import {
   canAdvance, flowReducer, initialFlowState, toHouseholdAnswers, visibleScreens,
 } from "./state.js";
-import { ZipScreen, FamilyScreen, HousingScreen, ChildcareScreen, PayScreen } from "./screens.js";
+import { ZipScreen, FamilyScreen, HousingScreen, ChildcareScreen, GetsScreen, PayScreen } from "./screens.js";
 
 export default function Flow(props: {
   onComplete: (answers: HouseholdAnswers, ctx: { unit: PayUnit; hoursPerWeek?: number }) => void;
@@ -16,7 +16,7 @@ export default function Flow(props: {
 
   const Screen = {
     zip: ZipScreen, family: FamilyScreen, housing: HousingScreen,
-    childcare: ChildcareScreen, pay: PayScreen,
+    childcare: ChildcareScreen, gets: GetsScreen, pay: PayScreen,
   }[state.screen];
 
   return (

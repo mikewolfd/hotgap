@@ -6,6 +6,7 @@ const answers: HouseholdAnswers = {
   state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: null, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
+  getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
 };
 
 describe("fetchCurve", () => {

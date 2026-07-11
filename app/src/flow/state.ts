@@ -1,7 +1,7 @@
 import { toAnnual, type HouseholdAnswers, type Pay } from "@hotgap/shared";
 import { zipToState } from "../lib/zip.js";
 
-export type ScreenId = "zip" | "family" | "housing" | "childcare" | "pay";
+export type ScreenId = "zip" | "family" | "housing" | "childcare" | "gets" | "pay";
 
 export interface FlowAnswers {
   zip: string;
@@ -17,6 +17,9 @@ export interface FlowAnswers {
   monthlyChildcare: number | null;
   pay: Pay;
   spousePay: Pay | null;
+  getsHeadStart: boolean;
+  getsHousing: boolean;
+  hasEmployerCoverage: boolean;
 }
 
 export interface FlowState { screen: ScreenId; answers: FlowAnswers }
@@ -35,6 +38,7 @@ export type FlowAction =
   | { type: "setChildcare"; amount: number | null }
   | { type: "setPay"; pay: Pay }
   | { type: "setSpousePay"; pay: Pay | null }
+  | { type: "setGets"; key: "getsHeadStart" | "getsHousing" | "hasEmployerCoverage"; value: boolean }
   | { type: "next" }
   | { type: "back" };
 
@@ -46,6 +50,7 @@ export const initialFlowState: FlowState = {
     monthlyRent: null, monthlyChildcare: null,
     pay: { amount: 0, unit: "hour", hoursPerWeek: 40 },
     spousePay: null,
+    getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
   },
 };
 
@@ -54,6 +59,7 @@ const isValidAge = (age: number | null): age is number => age !== null && age >=
 export function visibleScreens(a: FlowAnswers): ScreenId[] {
   const screens: ScreenId[] = ["zip", "family", "housing"];
   if (a.childAges.some((age) => age < 13)) screens.push("childcare");
+  screens.push("gets");
   screens.push("pay");
   return screens;
 }
@@ -67,6 +73,7 @@ export function canAdvance(s: FlowState): boolean {
         && (!s.answers.married || isValidAge(s.answers.spouseAge));
     case "housing": return true;   // "not sure" (null) is a valid answer
     case "childcare": return true;
+    case "gets": return true;      // all optional; default is "no"
     case "pay": return s.answers.pay.amount > 0;
   }
 }
@@ -111,6 +118,7 @@ export function flowReducer(s: FlowState, action: FlowAction): FlowState {
     case "setChildcare": return { ...s, answers: { ...a, monthlyChildcare: action.amount } };
     case "setPay": return { ...s, answers: { ...a, pay: action.pay } };
     case "setSpousePay": return { ...s, answers: { ...a, spousePay: action.pay } };
+    case "setGets": return { ...s, answers: { ...a, [action.key]: action.value } };
     case "next": {
       if (!canAdvance(s)) return s;
       const order = visibleScreens(a);
@@ -142,5 +150,8 @@ export function toHouseholdAnswers(a: FlowAnswers): HouseholdAnswers {
     monthlyChildcare: a.childAges.some((age) => age < 13) ? a.monthlyChildcare : 0,
     annualEarnings: toAnnual(a.pay),
     spouseAnnualEarnings: a.married && a.spousePay ? toAnnual(a.spousePay) : 0,
+    getsHeadStart: a.getsHeadStart,
+    getsHousing: a.getsHousing,
+    hasEmployerCoverage: a.hasEmployerCoverage,
   };
 }
