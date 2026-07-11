@@ -162,6 +162,56 @@ assistance. State program depth is uneven (verified in research); where a state'
 isn't modeled, the UI says "we may not know about [state]'s childcare help yet" rather
 than silently showing zero.
 
+## 4a. Health-adjusted resources (Plan 4, 2026-07-11)
+
+**Owner directive:** "fold coverage in, think about the real-world implications/cost one
+would gain/lose, but be transparent about it." Both v1's headline curve and every downstream
+consumer (analyze, escape analysis, narration, the pipeline, the map) now operate on money
+left *after paying for health*, not raw cash net income.
+
+**The measure:** every `CurvePoint.netIncome` is `household_net_income` (PolicyEngine's raw
+cash figure) minus `spm_unit_medical_out_of_pocket_expenses` — the Census SPM's medical
+out-of-pocket measure (MOOP): ACA/employer premiums net of subsidy, plus deductibles/copays/
+other non-premium health spending. `CurvePoint.medicalOOP` carries that same subtracted
+amount so it can be surfaced, not just baked in silently.
+
+**MOOP vs. the Medicaid sticker value — why subtract cost, not add value:** the tempting
+alternative — adding Medicaid/CHIP's actuarial (sticker) value as phantom income — overstates
+the real stakes: a household doesn't receive that dollar figure as spendable cash, and losing
+Medicaid eligibility does not usually mean losing coverage outright, it means shifting to
+(often-subsidized) ACA marketplace coverage. Subtracting the honest, lived cost of coverage —
+what the household actually pays out of pocket, whichever program applies — folds coverage
+into the curve exactly as directed without inventing income nobody can spend.
+
+**Verified finding (probed live against PolicyEngine, 2026-07-11):** for a Texas
+single-parent-of-2 household crossing the Medicaid phase-out (~$36k→$42k), the Medicaid
+*sticker* value drops about $23,610 — a number that, added naively, would manufacture a
+dramatic cliff. The real MOOP over that same range barely moves ($1,175 → $1,937), because
+subsidized ACA marketplace coverage cushions the loss. Three consequences ship in the
+after-health curve:
+1. Folding in the honest cost does **not** manufacture a fake Medicaid cliff where the real
+   world has a soft landing.
+2. It **does** surface the health cliffs that are genuinely real — the ACA's 400% FPL
+   subsidy cliff and the 250% FPL cost-sharing-reduction loss — and it makes already-real
+   cliffs *deeper* everywhere a household's own health spending rises at the same pay level
+   a benefit already phases out (e.g. the CA fixture's $29k→$30k cliff, previously invisible,
+   now shows up because Medicaid loss plus real ACA premiums/OOP compound the drop).
+3. Childless adults, previously modeled as the one cliff-free archetype, are **no longer
+   cliff-free**: once real health costs are folded in, they hit a health-coverage cliff too
+   when Medicaid gives way to paid ACA premiums (see `PlacesPage.tsx`'s `ramp.max <= 0` guard,
+   now dead code on current data but kept as an honest fallback).
+
+**Transparency, shipped everywhere the curve appears (the load-bearing half of the
+directive):** the personal door's chart title and y-axis label both say "after health costs"
+(`result.chart.title`, `result.chart.yLabel` — the latter was an unused string before this,
+see `docs/post-merge-notes.md`); the "path off help" section states the household's real
+health cost at their current pay in plain dollars whenever it's nonzero
+(`escape.healthCost`); the honesty box gains one sentence naming the adjustment and the
+Medicaid-cushion finding (`result.honesty.health`); and the places-door drill-down's chart
+carries the same title/label plus its own honesty-area note (`places.panel.healthNote`).
+Medicaid/CHIP stay in the personal door's why-list as coverage received, in plain words —
+never restated as a phantom cash amount.
+
 ## 5. Language, errors, testing
 
 - **Reading level:** every user-facing string ≤ 5th grade, enforced by a Flesch-Kincaid

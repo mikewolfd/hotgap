@@ -50,7 +50,13 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   const people = r.people as Entity | undefined;
   if (!people) throw new PEParseError("missing people");
 
-  const net = series(household, "household_net_income", expectedCount);
+  const rawNet = series(household, "household_net_income", expectedCount);
+  // Count the real cost of health coverage the household bears (SPM medical
+  // out-of-pocket = premiums net of subsidy + deductibles/copays). PolicyEngine
+  // leaves this out of household_net_income; we subtract it so the curve shows
+  // money left AFTER paying for health, and expose it per point for display.
+  const moop = series(spm, "spm_unit_medical_out_of_pocket_expenses", expectedCount);
+  const net = rawNet.map((n, i) => n - moop[i]);
 
   const programSeries = new Map<ProgramId, number[]>();
   const add = (id: ProgramId, values: number[]) => {
@@ -68,6 +74,7 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   return net.map((n, i) => ({
     earnings: axis.min + step * i,
     netIncome: n,
+    medicalOOP: moop[i],
     programs: Object.fromEntries(
       [...programSeries.entries()].map(([id, values]) => [id, values[i]]),
     ) as Record<ProgramId, number>,

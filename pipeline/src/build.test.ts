@@ -13,6 +13,7 @@ function linearCurve(netIncomeStart = 10000): CurvePoint[] {
   return Array.from({ length: 101 }, (_, i) => ({
     earnings: i * 1000,
     netIncome: netIncomeStart + i * 100,
+    medicalOOP: 0,
     programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
   }));
 }
@@ -80,18 +81,18 @@ describe("buildSummary", () => {
 
   // Fixture-driven: feed the real CA fixture's points under an archetype id
   // (the fixture household isn't one of the 8 archetypes — it only pins the
-  // math, per the established metrics.test.ts pattern). Verified pins from
-  // the plan: safeExit 64000, leap 34000.
+  // math, per the established metrics.test.ts pattern). Verified pins post
+  // health-adjustment (Plan 4): safeExit 91000, leap 45000.
   it("carries safeExit and leap through from escapeAnalysis, per the verified CA fixture pins", () => {
     const results = fullResultsFor("CA");
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
     expect(summary.states.CA["single-1"]).toEqual({
-      biggestLoss: 21957,
+      biggestLoss: 22089,
       dangerWidth: expect.any(Number),
       cliffCount: expect.any(Number),
-      safeExit: 64000,
-      leap: 34000,
+      safeExit: 91000,
+      leap: 45000,
     });
   });
 });
@@ -109,7 +110,7 @@ describe("buildStateFile", () => {
   it("rounds netIncome and program values to whole dollars", () => {
     const results = fullResultsFor("CA");
     results.CA["single-0"] = [
-      { earnings: 0, netIncome: 10000.4, programs: { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } },
+      { earnings: 0, netIncome: 10000.4, medicalOOP: 0, programs: { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } },
       ...linearCurve().slice(1),
     ];
     const file = buildStateFile("g", "CA", results);

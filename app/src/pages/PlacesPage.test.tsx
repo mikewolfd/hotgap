@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { PlacesPage, isKnownArchetype } from "./PlacesPage.js";
+import { RAMP_BINS } from "../lib/placesRamp.js";
 
 // This project's vitest config doesn't wire up RTL's automatic afterEach
 // cleanup (see the note in CurveChart.test.tsx), so each render() here would
@@ -14,7 +15,7 @@ afterEach(() => {
 });
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, programs: { ...PROGRAMS } });
+const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, medicalOOP: 0, programs: { ...PROGRAMS } });
 const caFixture = {
   generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
   archetypes: { "single-2": { points: [mkPoint(0, 20000), mkPoint(10000, 26000), mkPoint(20000, 18000), mkPoint(30000, 32000)] } },
@@ -82,27 +83,17 @@ describe("PlacesPage", () => {
     expect(after).not.toEqual(before);
   });
 
-  // No-kids archetypes have leap === 0 AND biggestLoss === 0 in every state —
-  // a genuinely flat, cliff-free curve, not missing data. The degenerate
-  // legend message must TEACH that (metric-agnostic), never render a loss- or
-  // leap-framed "we found nothing" that reads as a data gap (the review's
-  // Important bug was a loss sentence showing under the leap heading).
-  it("collapses to the educational empty-legend message under the default (leap) metric, single 0 kids", () => {
+  // Once real health costs are folded in, a childless adult is NOT cliff-free:
+  // losing Medicaid means paying ACA premiums, a genuine health-coverage cliff
+  // (leap > 0 in 28/51 Medicaid-expansion states for single-0). So the single-0
+  // legend renders a real scale, not the degenerate fallback — the honest
+  // reversal of the pre-health-adjustment "no-kids families face no cliffs".
+  it("renders a real legend scale for a childless adult (single 0 kids) — health cliffs exist", () => {
     const { container, getByLabelText } = render(<PlacesPage />);
     fireEvent.click(getByLabelText("fewer kids"));
     fireEvent.click(getByLabelText("fewer kids"));
-    expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
-    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
-    expect(container.textContent).not.toMatch(/did not lose money/i);
-  });
-
-  it("shows the SAME educational empty-legend message when the loss metric is selected, single 0 kids", () => {
-    const { container, getByLabelText, getByRole } = render(<PlacesPage />);
-    fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
-    fireEvent.click(getByLabelText("fewer kids"));
-    fireEvent.click(getByLabelText("fewer kids"));
-    expect(container.querySelectorAll(".legend-scale li").length).toBe(0);
-    expect(container.textContent).toMatch(/families with kids face the biggest cliffs/i);
+    expect(container.querySelectorAll(".legend-scale li").length).toBe(RAMP_BINS);
+    expect(container.textContent).not.toMatch(/did not find a cliff/i);
   });
 
   it("selecting a state (click) shows its StatePanel with an instant headline", async () => {

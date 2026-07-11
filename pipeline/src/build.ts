@@ -71,6 +71,7 @@ function roundPoint(p: CurvePoint): CurvePoint {
   return {
     earnings: p.earnings,
     netIncome: Math.round(p.netIncome),
+    medicalOOP: Math.round(p.medicalOOP),
     programs: Object.fromEntries(
       Object.entries(p.programs).map(([id, v]) => [id, Math.round(v)]),
     ) as Record<ProgramId, number>,

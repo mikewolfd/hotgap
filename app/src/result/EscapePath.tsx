@@ -5,12 +5,21 @@ import { t } from "../strings/t.js";
 // visibility check in ResultPage, which reads the raw EscapeAnalysis fields
 // that narrateEscape doesn't carry through, like benefitsEndEarnings) so this
 // component never renders an empty shell with just a heading.
-export function EscapePath({ narration }: { narration: EscapeNarration }) {
+//
+// healthCostLine is a separate prop, not part of EscapeNarration: it comes
+// from narrate() (the current point's medicalOOP), not narrateEscape/
+// EscapeAnalysis, which has no notion of "current earnings" at all. This is
+// the section's natural home for it — the honest cost of health coverage is
+// part of the same story as what it takes to get off help.
+export function EscapePath({
+  narration, healthCostLine,
+}: { narration: EscapeNarration; healthCostLine?: string | null }) {
   const { safeLine, leapLine, thresholds } = narration;
-  if (!safeLine && !leapLine && thresholds.length === 0) return null;
+  if (!safeLine && !leapLine && thresholds.length === 0 && !healthCostLine) return null;
   return (
     <section className="escape-path">
       <h2>{t("escape.title")}</h2>
+      {healthCostLine && <p className="escape-health-cost">{healthCostLine}</p>}
       {safeLine && <p className="escape-safe">{safeLine}</p>}
       {leapLine && <p className="escape-leap">{leapLine}</p>}
       {thresholds.length > 0 && (

@@ -58,18 +58,19 @@
   "result.verdict.cliff_behind": "Good news from here on.",
   "result.verdict.cliff_behind.body": "The big drop is below your pay now. From here, more pay means more for you.",
 
-  "result.chart.title": "Your pay vs. what you keep",
+  "result.chart.title": "Your pay vs. what you keep after health costs",
   "result.chart.xLabel": "Your pay ({unit})",
-  "result.chart.yLabel": "What your family ends up with each year",
+  "result.chart.yLabel": "Money left after health costs, per year",
   "result.chart.youAreHere": "You are here",
   "result.chart.dangerZone": "Rough zone: more pay, less money",
-  "result.chart.alt": "A chart of what your family keeps as your pay goes up. Shaded parts show where more pay means less money.",
+  "result.chart.alt": "A chart of what your family keeps after health costs, as your pay goes up. Shaded parts show where more pay means less money.",
 
   "result.why.title": "Why does this happen?",
   "result.why.lost": "Near {wage}, you could lose {programs}.",
   "result.why.currentValue": "Right now this is worth about {amount} a year to you.",
 
   "escape.title": "Your path off help",
+  "escape.healthCost": "You'd pay about {amount} a year for health coverage at this pay.",
   "escape.safe": "Past {wage}, more pay always helps you.",
   "escape.safeNever": "Even at the top of our chart, we did not find a fully safe spot.",
   "escape.leap": "To clear the worst rough zone in one move, it takes a raise of about {amount} a year.",
@@ -80,6 +81,7 @@
   "result.honesty.title": "Please know",
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
+  "result.honesty.health": "We count what you'd pay for health coverage. Losing Medicaid often means paying for other coverage, not losing it all.",
 
   "unit.hour": "{amount} an hour",
   "unit.month": "{amount} a month",
@@ -125,7 +127,7 @@
   "places.legend.titleLeap": "How big is the jump to get out?",
   "places.legend.upTo": "Loses up to {amount}",
   "places.legend.leapUpTo": "Needs a jump of up to {amount}",
-  "places.legend.noneKids": "Families with kids face the biggest cliffs. A home like this one has little help to lose.",
+  "places.legend.noneFound": "We did not find a cliff for a family like this in any state.",
   "places.map.alt": "A map of the United States. Darker states mean a bigger possible loss for this family.",
   "places.map.altLeap": "A map of the United States. Darker states mean a bigger jump needed to get past the worst rough zone for this family.",
   "places.map.stateLabel": "{state}: can lose up to {loss} a year.",
@@ -139,6 +141,7 @@
   "places.panel.leapMore": "Getting past the worst rough zone takes a raise of at least {amount} in one move.",
   "places.panel.endsTitle": "When help ends here:",
   "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
+  "places.panel.healthNote": "These numbers also count what a family pays for health coverage, not just cash help.",
   "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
   "places.loading": "Getting this state's numbers…",
   "places.error": "We could not load this state. Please try again."

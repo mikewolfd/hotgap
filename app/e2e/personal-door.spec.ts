@@ -1,15 +1,17 @@
 import { test, expect } from "@playwright/test";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-const mkPoint = (earnings: number, netIncome: number, medicaid = 0) => ({
-  earnings, netIncome, programs: { ...PROGRAMS, medicaid },
+const mkPoint = (earnings: number, netIncome: number, medicaid = 0, medicalOOP = 0) => ({
+  earnings, netIncome, medicalOOP, programs: { ...PROGRAMS, medicaid },
 });
 // A 6-point curve with a $8k cliff at $30k where medicaid disappears.
+// The $20k point (nearest sampled point to currentEarnings=24960 below) also
+// carries a real health cost — Plan 4's transparency line must surface it.
 const curve = {
   year: "2026",
   currentEarnings: 24960, // $12/hr × 40h
   points: [
-    mkPoint(0, 20000, 8000), mkPoint(10000, 26000, 8000), mkPoint(20000, 30000, 8000),
+    mkPoint(0, 20000, 8000), mkPoint(10000, 26000, 8000), mkPoint(20000, 30000, 8000, 1200),
     mkPoint(30000, 32000, 8000), mkPoint(40000, 24000, 0), mkPoint(50000, 31000, 0),
   ],
 };
@@ -63,6 +65,11 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 
+  // Plan 4: the chart is labeled as health-adjusted, and the honesty box
+  // explains what that means, so the reframing is never silent.
+  await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
+  await expect(page.getByText(/losing medicaid often means paying for other coverage/i)).toBeVisible();
+
   // "Your path off help" section: this mocked curve's danger zone never
   // recovers by the last sampled point ($50k net $31k < the $32k peak at
   // $30k), so the leap is a lower bound (widest zone = axisMax($50k) -
@@ -70,6 +77,10 @@ test("landing → flow → cliff result", async ({ page }) => {
   // safe spot" honesty branch, not a concrete wage.
   await expect(page.getByRole("heading", { name: /your path off help/i })).toBeVisible();
   await expect(page.getByText(/raise of at least \$20,000/i)).toBeVisible();
+
+  // Plan 4: the health-cost line names the real cost at the household's
+  // nearest sampled point (20000, nearest to currentEarnings=24960).
+  await expect(page.getByText(/pay about \$1,200 a year for health coverage/i)).toBeVisible();
 });
 
 // This household (single, 1 kid — clicked below via "more kids") resolves to

@@ -131,12 +131,15 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
   background: var(--card); border-radius: 0 var(--radius) var(--radius) 0;
 }
 .honesty h2 { margin-top: 0; }
-.honesty-model { color: var(--muted); font-size: 0.9rem; }
+.honesty-model, .honesty-health { color: var(--muted); font-size: 0.9rem; }
 
 .escape-path {
   margin: 20px 0; padding: 16px; background: var(--card);
   border-radius: var(--radius); border: 1px solid var(--line);
 }
+/* Not bold like escape-safe/escape-leap below: it states a plain fact (what
+   health coverage costs at this pay), not a "you're safe now" milestone. */
+.escape-health-cost { margin: 0 0 8px; color: var(--muted); }
 .escape-safe, .escape-leap { font-weight: 700; margin: 8px 0; }
 .escape-ends-title { margin: 12px 0 6px; color: var(--muted); }
 .escape-ends-list { list-style: none; padding: 0; display: grid; gap: 6px; }
@@ -196,6 +199,7 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .places-panel-ends-list { list-style: none; padding: 0; display: grid; gap: 6px; }
 .places-panel-ends-item { color: var(--muted); }
 .places-panel-honesty { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+.places-panel-health-note { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
 .places-panel-assumptions { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
 .places-panel-loading, .places-panel-error { padding: 12px 0; color: var(--muted); }
 .places-metric-picker { margin: 0 0 20px; }
