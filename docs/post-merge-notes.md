@@ -58,3 +58,9 @@ Deferred from the whole-branch review (non-blocking):
 
 Plan 4 candidate (researched, see docs/research/2026-07-11-wage-distribution-data-sources.md):
 - A "reach" metric — overlay the leap on real wage distributions to answer "is the jump attainable?" Verify PolicyEngine's enhanced-CPS microdata (state-keyed household incomes) is reusable from our pipeline FIRST; else ACS PUMS. Cross-sectional feasibility signal only, never framed as mobility odds.
+
+# Post-merge notes — health-adjusted resources (Plan 4, 2026-07-11)
+
+Deferred from the whole-branch review (non-blocking):
+- EscapePath can render "Your path off help" with only the health-cost line (always_up household with health cost, no cliff/leap/thresholds); intended + test-covered, but consider a neutral wrapper heading if it ever reads oddly.
+- Two doors surface health cost at different granularity by design: personal door shows a concrete dollar figure at the user's earnings; map drill-down shows only the static framing note (an archetype has no "current earnings"). Honest, not inconsistent.
