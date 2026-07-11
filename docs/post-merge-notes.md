@@ -74,3 +74,13 @@ Deferred from the whole-branch review (non-blocking):
 - Each toggle flip briefly shows the loading spinner (whole-page loading state) before the recomputed result — UX polish, not a defect.
 
 Still open from the adversarial review (Plan 7+ candidates): reach income-concept mismatch (employment vs household income) + vintage; uncertainty bounds on reach; external validation vs Atlanta Fed PRD; take-up modeled as user input, not probability; assets/immigration/other-income/household-composition questions; county-level (Plan 7); CCDF childcare subsidy (blocked on PolicyEngine).
+
+# Post-merge notes — county-level (Plan 7, 2026-07-11)
+
+Deferred from the whole-branch review (non-blocking):
+- No runtime shape-validation of the fetched crosswalk JSON (self-generated, same-origin; worker re-validates FIPS format — end-to-end safe).
+- translate uses truthy `if(a.countyFips)` not `!==null` (safe: validate only ever yields a 5-digit string or null).
+- No App.test for the mount-effect crosswalk load (covered by the deterministic e2e).
+- Contract PTC-diff threshold is loose ($100 vs ~$2,200 observed) — deliberate anti-flake margin.
+
+County scope reminder: county is a live personal-door enhancement only (ACA rating-area accuracy, meaningful in high-cost states, ~nil in flat ones). The map stays state-level by design.
