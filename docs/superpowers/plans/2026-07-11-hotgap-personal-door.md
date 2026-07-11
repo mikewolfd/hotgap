@@ -2427,7 +2427,9 @@ export default function Flow(props: {
 
 - [ ] **Step 7: Commit** — `git add -A && git commit -m "feat(app): five-question flow with state machine and API client"`
 
----### Task 12: Result page, curve chart, landing, app shell, styles
+---
+
+### Task 12: Result page, curve chart, landing, app shell, styles
 
 **Read the `dataviz` skill AND the `frontend-design:frontend-design` skill before this task.**
 
