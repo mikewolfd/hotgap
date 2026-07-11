@@ -69,6 +69,7 @@ export function StatePanel(props: {
       )}
 
       <p className="places-panel-honesty">{t("places.panel.honesty")}</p>
+      <p className="places-panel-assumptions">{t("places.panel.assumptions")}</p>
     </section>
   );
 }

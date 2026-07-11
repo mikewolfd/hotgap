@@ -57,3 +57,19 @@ test("places door: a state with no cached data shows a plain-language error, not
   await page.locator('path[aria-label^="Wyoming"]').click();
   await expect(page.getByText(/could not load this state/i)).toBeVisible();
 });
+
+// Every other drill-down test above intercepts /data/states/**. That leaves
+// one seam entirely unexercised: the real, committed app/public/data/states
+// files served by vite preview from the real path. No route mocking here —
+// California's default (single-2) drill-down must resolve from the actual
+// on-disk JSON file.
+test("places door: clicking a state with NO route interception renders a real drill-down from the committed data file", async ({ page }) => {
+  await page.goto("/#/places");
+  await page.locator('path[aria-label^="California"]').click();
+
+  const headline = page.locator(".places-panel-headline");
+  await expect(headline).toBeVisible();
+  await expect(headline).toContainText("California");
+  await expect(headline).toContainText(/\$[\d,]+/);
+  await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
+});

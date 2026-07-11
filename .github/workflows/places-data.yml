@@ -20,6 +20,13 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npx tsx pipeline/src/run.ts --concurrency 3
+      # Pushing with the default GITHUB_TOKEN does NOT trigger other workflows'
+      # `push` events, so a semantically-degenerate sweep (e.g. every state
+      # collapsing to a flat curve, or a schema drift the app can't read)
+      # would otherwise land on main with no CI ever having seen it. Gate the
+      # commit on the same checks a normal PR would have to pass.
+      - run: npm test
+      - run: npm run typecheck
       - name: Commit updated data if changed
         run: |
           git config user.name "hotgap-data-bot"

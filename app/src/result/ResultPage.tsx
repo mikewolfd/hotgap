@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { analyzeCurve, type CurveAnalysis, type HouseholdAnswers } from "@hotgap/shared";
 import { fetchCurve } from "../api/client.js";
-import { fetchFallbackCurve } from "../lib/fallback.js";
+import { fetchFallbackCurve, clampFallbackEarnings } from "../lib/fallback.js";
 import { narrate, type Narration, type PayContext } from "../lib/narration.js";
 import { t } from "../strings/t.js";
 import { CurveChart } from "./CurveChart.js";
@@ -40,7 +40,11 @@ export function ResultPage(props: {
         // should never white-screen when it already has close-enough
         // numbers on hand. The fallback curve is evaluated at the user's
         // REAL annualEarnings (not the archetype's 0), so the verdict and
-        // chart reflect their actual pay.
+        // chart reflect their actual pay — but archetype curves are only
+        // sampled up to a $100k floor, so earnings past the last sampled
+        // point are clamped down to it (see clampFallbackEarnings): otherwise
+        // the "you are here" dot lands off-chart and the verdict could claim
+        // "stuck" beyond data the sweep never checked.
         const fallbackPoints = await fetchFallbackCurve(
           props.answers.state,
           props.answers.married,
@@ -48,7 +52,10 @@ export function ResultPage(props: {
         );
         if (!alive) return;
         if (!fallbackPoints) return setStatus({ phase: "error" });
-        const analysis = analyzeCurve(fallbackPoints, props.answers.annualEarnings);
+        const analysis = analyzeCurve(
+          fallbackPoints,
+          clampFallbackEarnings(fallbackPoints, props.answers.annualEarnings),
+        );
         setStatus({ phase: "done", analysis, narration: narrate(analysis, props.ctx), fallback: true });
       })
       .catch(() => {

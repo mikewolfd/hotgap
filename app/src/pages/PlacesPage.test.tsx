@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { PlacesPage } from "./PlacesPage.js";
+import { PlacesPage, isKnownArchetype } from "./PlacesPage.js";
 
 // This project's vitest config doesn't wire up RTL's automatic afterEach
 // cleanup (see the note in CurveChart.test.tsx), so each render() here would
@@ -83,5 +83,52 @@ describe("PlacesPage", () => {
     fireEvent.click(ca);
     await waitFor(() => expect(fetchImpl).toHaveBeenCalledWith("/data/states/CA.json"));
     await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
+  });
+
+  // Finding 1: the map's tiny states (DE/RI/DC) are far below tap-target
+  // size at mobile width. A native <select> listing every state gives an
+  // equivalent, always-usable control (WCAG 2.5.8's equivalent-control
+  // exception) and a first-class path for screen reader users.
+  it("renders a native select listing all 51 states, alphabetically by full name", () => {
+    const { getByLabelText } = render(<PlacesPage />);
+    const select = getByLabelText(/pick a state from a list/i) as HTMLSelectElement;
+    const options = [...select.options];
+    expect(options.length).toBe(51);
+    expect(options[0].textContent).toBe("Alabama");
+    expect(options[options.length - 1].textContent).toBe("Wyoming");
+    const names = options.map((o) => o.textContent);
+    expect(names).toEqual([...names].sort((a, b) => a!.localeCompare(b!)));
+  });
+
+  it("choosing a state from the select shows its StatePanel, same as clicking the map", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    const { container, getByLabelText } = render(<PlacesPage />);
+    const select = getByLabelText(/pick a state from a list/i) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "TX" } });
+    await waitFor(() => expect(container.querySelector(".places-panel-headline")).toBeTruthy());
+    expect(container.querySelector(".places-panel-headline")!.textContent).toMatch(/Texas/);
+  });
+
+  // Finding 1 (axe nested-interactive): role="img" is children-presentational,
+  // which can hide the per-state role="button" paths from assistive tech.
+  // role="group" keeps the map's own label while exposing its children.
+  it("uses role=group (not role=img) on the map svg so its per-state buttons stay exposed", () => {
+    const { container } = render(<PlacesPage />);
+    const svg = container.querySelector("svg.places-map")!;
+    expect(svg.getAttribute("role")).toBe("group");
+    expect(svg.getAttribute("aria-label")).toMatch(/map of the united states/i);
+  });
+});
+
+// Finding 4: a lookup miss on the archetype id must never fall through to a
+// false "did not lose money" legend claim. isKnownArchetype is the pure
+// guard the legend section checks before rendering anything ramp-derived.
+describe("isKnownArchetype", () => {
+  it("returns true when the id is present in the summary's archetype list", () => {
+    expect(isKnownArchetype("single-2", [{ id: "single-2" }, { id: "married-2" }])).toBe(true);
+  });
+
+  it("returns false when the id is absent (defensive fallback path; shouldn't happen in practice)", () => {
+    expect(isKnownArchetype("single-9", [{ id: "single-2" }])).toBe(false);
   });
 });

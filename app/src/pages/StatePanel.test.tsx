@@ -67,6 +67,16 @@ describe("StatePanel", () => {
     expect(container.textContent).toMatch(/not your family/i);
   });
 
+  // Finding 5: the honesty line must also spell out the archetype's actual
+  // modeling assumptions (age, sole income, no rent/child care), not just
+  // "not your family" — a reader can't judge fit without knowing what varies.
+  it("shows the archetype's assumptions alongside the 'not your family' line", () => {
+    const fetchImpl = vi.fn(() => new Promise(() => {}));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    expect(container.textContent).toMatch(/grown-ups are 30/i);
+    expect(container.textContent).toMatch(/no rent or child care/i);
+  });
+
   it("re-fetches when the state or archetype changes", () => {
     const fetchImpl = vi.fn(() => new Promise(() => {}));
     const { rerender } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parsePEResponse, analyzeCurve, type CurvePoint, type ProgramId } from "@hotgap/shared";
-import { narrate, formatWage, formatDollars } from "./narration.js";
+import { narrate, formatWage, formatDollars, formatAgeList } from "./narration.js";
 
 const ZERO_PROGRAMS: Record<ProgramId, number> = {
   snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0,
@@ -28,6 +28,23 @@ describe("formatWage", () => {
 describe("formatDollars", () => {
   it("rounds to the nearest hundred", () => {
     expect(formatDollars(21956.57)).toBe("$22,000");
+  });
+});
+
+// Finding 5: the places-door kids stepper must surface each archetype's
+// actual child ages (derived from ARCHETYPES), not just a bare kid count.
+describe("formatAgeList", () => {
+  it("returns an empty string for no ages", () => {
+    expect(formatAgeList([])).toBe("");
+  });
+  it("returns a single age as-is", () => {
+    expect(formatAgeList([3])).toBe("3");
+  });
+  it("joins two ages with 'and'", () => {
+    expect(formatAgeList([3, 7])).toBe("3 and 7");
+  });
+  it("joins three or more ages with commas and a trailing 'and'", () => {
+    expect(formatAgeList([1, 4, 9])).toBe("1, 4, and 9");
   });
 });
 

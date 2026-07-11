@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { pickArchetypeId, fetchFallbackCurve } from "./fallback.js";
+import { analyzeCurve } from "@hotgap/shared";
+import { pickArchetypeId, fetchFallbackCurve, clampFallbackEarnings } from "./fallback.js";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
 const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, programs: { ...PROGRAMS } });
@@ -67,5 +68,35 @@ describe("fetchFallbackCurve", () => {
   it("returns null when fetch itself rejects (network failure)", async () => {
     const fetchImpl = (async () => { throw new TypeError("network down"); }) as unknown as typeof fetch;
     expect(await fetchFallbackCurve("CA", false, 1, fetchImpl)).toBeNull();
+  });
+});
+
+// Finding 2: archetype curves are sampled only up to the pipeline's axis
+// (100000 in this fixture). A real household on the fallback path can earn
+// more than that; feeding analyzeCurve an earnings value beyond the last
+// sampled point puts the "you are here" dot off-chart and can trigger
+// beyond-the-data framing ("stuck in the danger zone") the sweep never
+// actually checked. The fallback flow must clamp to the last point first.
+describe("clampFallbackEarnings", () => {
+  it("clamps earnings beyond the last sampled point down to the curve's max", () => {
+    expect(clampFallbackEarnings(points, 150000)).toBe(100000);
+  });
+
+  it("passes earnings within the sampled range through unchanged", () => {
+    expect(clampFallbackEarnings(points, 40000)).toBe(40000);
+  });
+
+  it("passes the exact last-point earnings through unchanged", () => {
+    expect(clampFallbackEarnings(points, 100000)).toBe(100000);
+  });
+});
+
+describe("fallback flow feeding analyzeCurve (Finding 2 regression)", () => {
+  it("a $150k earner on the fallback path resolves to currentEarnings === 100000, not an off-chart value", async () => {
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify(stateFile), { status: 200 })) as unknown as typeof fetch;
+    const fallbackPoints = await fetchFallbackCurve("CA", false, 1, fetchImpl);
+    const analysis = analyzeCurve(fallbackPoints!, clampFallbackEarnings(fallbackPoints!, 150000));
+    expect(analysis.currentEarnings).toBe(100000);
   });
 });

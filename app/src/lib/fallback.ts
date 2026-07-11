@@ -42,3 +42,15 @@ export async function fetchFallbackCurve(
     return null;
   }
 }
+
+// Archetype curves are only ever sampled up to the pipeline's axis (a $100k
+// floor — see worker/src/translate.ts's axisMax, which archetypes always hit
+// since their own annualEarnings is 0). A real household on the fallback path
+// can earn more than that. Feeding analyzeCurve an unclamped earnings value
+// beyond the last sampled point puts the chart's "you are here" dot off the
+// visible chart (CurveChart's x-scale domain ends at the last point) and can
+// let a danger-zone verdict claim "stuck" beyond data the sweep never
+// actually checked. Clamp to the last sampled point's earnings first.
+export function clampFallbackEarnings(points: CurvePoint[], annualEarnings: number): number {
+  return Math.min(annualEarnings, points[points.length - 1].earnings);
+}

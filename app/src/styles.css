@@ -144,6 +144,14 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
   background: var(--card);
 }
 .places-picker legend { font-weight: 700; padding: 0 6px; }
+/* The places-door kids stepper now shows a full sentence ("2 kids, ages 3
+   and 7"), not a bare digit — the shared .stepper output rule (sized for a
+   single character) would make that sentence oversized, so scope an
+   override to this page only; the personal door's numeric stepper keeps the
+   original sizing. */
+.places-picker .stepper output.places-kids-output {
+  font-size: 1rem; font-weight: 600; min-width: 0; text-align: left; white-space: normal;
+}
 
 .places-map-figure { margin: 0 0 20px; }
 .places-map { width: 100%; height: auto; display: block; }
@@ -156,6 +164,14 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .state-path:hover, .state-path:focus-visible { stroke: var(--ink); stroke-width: 2; }
 .state-path.selected { stroke: var(--ink); stroke-width: 2.5; }
 
+/* Finding 1: equivalent, always-tap-target-sized control for every state
+   (DE/RI/DC render far below 44px/24px on the map itself at mobile width). */
+.places-state-select-row { display: flex; flex-direction: column; gap: 6px; margin: 0 0 20px; }
+.places-state-select-row select {
+  min-height: 44px; font-size: 1rem; border-radius: 10px;
+  background: var(--card); color: var(--ink); border: 2px solid var(--line);
+}
+
 .places-legend { margin: 0 0 20px; }
 .places-legend h2 { font-size: 1rem; margin: 0 0 8px; }
 .legend-scale { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 0; margin: 0; }
@@ -166,4 +182,5 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .places-panel-headline { font-size: 1.3rem; margin: 0 0 4px; }
 .places-panel-rank { color: var(--muted); margin: 0 0 12px; }
 .places-panel-honesty { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+.places-panel-assumptions { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
 .places-panel-loading, .places-panel-error { padding: 12px 0; color: var(--muted); }

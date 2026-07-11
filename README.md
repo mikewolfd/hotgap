@@ -40,7 +40,11 @@ Local site: `npm run build --workspace @hotgap/app`, then `cd worker && npx wran
 and writes `app/src/data/places/summary.json` (bundled map scores) and
 `app/public/data/states/{ST}.json` (lazy per-state curves, also used by the personal door's
 error-path fallback). `.github/workflows/places-data.yml` runs this automatically every Monday
-at 07:00 UTC (and on manual dispatch), committing the refreshed data only when it changed.
+at 07:00 UTC (and on manual dispatch), running the test suite and typecheck before committing
+the refreshed data only when it changed.
+
+Landing on `main` is not the same as reaching production: this repo has no auto-deploy, so a
+refreshed data commit only ships once someone runs the [Deploy](#deploy) step below.
 
 ## Deploy
 

@@ -105,6 +105,11 @@
   "places.intro": "Pick a family. See where they could lose the most money by earning more.",
   "places.pick.title": "Pick a family to compare",
   "places.pick.kids": "How many kids?",
+  "places.pick.kids0": "No kids",
+  "places.pick.kids1": "1 kid, age {ages}",
+  "places.pick.kids2": "2 kids, ages {ages}",
+  "places.pick.kids3": "3 kids, ages {ages}",
+  "places.pick.state": "Or pick a state from a list",
   "places.legend.title": "How much can they lose?",
   "places.legend.upTo": "Loses up to {amount}",
   "places.legend.none": "This family did not lose money in any state we checked.",
@@ -113,6 +118,7 @@
   "places.panel.headline": "In {state}, a family like this can lose up to {loss} a year by earning more.",
   "places.panel.rank": "Worse than {n} of 50 other states.",
   "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
+  "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
   "places.loading": "Getting this state's numbers…",
   "places.error": "We could not load this state. Please try again."
 }
