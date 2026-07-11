@@ -5,3 +5,4 @@ export * from "./parse.js";
 export * from "./analyze.js";
 export * from "./archetypes.js";
 export * from "./escape.js";
+export * from "./reach.js";

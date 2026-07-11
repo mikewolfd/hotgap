@@ -205,3 +205,69 @@ describe("StatePanel escape lines", () => {
     expect(container.querySelector(".places-panel-escape")).toBeNull();
   });
 });
+
+// Plan 5: the reach line pulls from the REAL, committed app/src/data/reach.json
+// (not a route-mocked fetch — reach.json is a static import), so these tests
+// pin against real cells for CA (single-2, a real cell) and WY (single-3, a
+// documented small-sample null cell — see reachLookup.test.ts).
+describe("StatePanel reach line", () => {
+  it("names the percentile once the curve loads, computed from the same safe-exit the safe line names", async () => {
+    // CA single-2's ladder has $62,000 exactly at its p50 (see
+    // app/src/data/reach.json / reachLookup.test.ts) — a zone opening at its
+    // 30000 peak and recovering at 62000 makes safeExitEarnings land there.
+    const file = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
+      archetypes: {
+        "single-2": {
+          points: [mkPoint(0, 20000), mkPoint(30000, 40000), mkPoint(40000, 30000), mkPoint(62000, 45000)],
+        },
+      },
+    };
+    const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(file) } as Response));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector(".places-panel-reach")).toBeTruthy());
+    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$62,000");
+    expect(container.querySelector(".places-panel-reach")!.textContent).toMatch(/more than about 50% of families like this earn/i);
+    // Comes right after the safe line (same reasoning as EscapePath).
+    expect(container.querySelector(".places-panel-reach")!.previousElementSibling?.className).toBe("places-panel-safe");
+  });
+
+  it("shows the honest top-pay line, with no fabricated percentile, when the zone never recovers", async () => {
+    const stuckFile = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
+      archetypes: {
+        "single-2": { points: [mkPoint(0, 20000), mkPoint(10000, 26000), mkPoint(20000, 10000)] },
+      },
+    };
+    const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(stuckFile) } as Response));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    await waitFor(() => expect(container.querySelector(".places-panel-reach")).toBeTruthy());
+    expect(container.querySelector(".places-panel-reach")!.textContent).toMatch(/still hit rough spots/i);
+    expect(container.querySelector(".places-panel-reach")!.textContent).not.toMatch(/\d/);
+  });
+
+  it("omits the reach line silently when the state x archetype has no trustworthy PUMS cell (WY single-3)", async () => {
+    const file = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "WY",
+      archetypes: {
+        "single-3": {
+          points: [mkPoint(0, 20000), mkPoint(30000, 40000), mkPoint(40000, 30000), mkPoint(62000, 45000)],
+        },
+      },
+    };
+    const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(file) } as Response));
+    const { container } = render(
+      <StatePanel {...baseProps()} stateCode="WY" stateName="Wyoming" archetypeId="single-3" fetchImpl={fetchImpl as unknown as typeof fetch} />,
+    );
+    // The safe line still renders (it doesn't depend on reach data) — only
+    // the reach paragraph is missing.
+    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
+    expect(container.querySelector(".places-panel-reach")).toBeNull();
+  });
+
+  it("shows the reach transparency note in the honesty area regardless of load phase", () => {
+    const fetchImpl = vi.fn(() => new Promise(() => {}));
+    const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
+    expect(container.querySelector(".places-panel-reach-note")?.textContent).toMatch(/Census household income/i);
+  });
+});

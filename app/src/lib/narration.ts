@@ -12,11 +12,25 @@ export interface WhyItem { programLabel: string; lostNear: string | null; curren
 // never silently hidden but also never invented where there's nothing to say.
 export interface Narration { headline: string; body: string; whyItems: WhyItem[]; healthCostLine: string | null }
 export interface EscapeThreshold { label: string; wage: string }
+// reachLine: the "reach" feasibility signal (Plan 5) -- how common the
+// safe-exit income already is among real households of this archetype. This
+// is a CROSS-SECTIONAL fact ("N% of families like this already earn that
+// much"), never a probability of any one household getting there. Both
+// narrateEscape and narratePlacesEscape take an optional reach context; when
+// the caller omits it entirely, reachLine stays null (existing call sites
+// that don't care about reach see no behavior change).
 export interface EscapeNarration {
   safeLine: string | null;
   leapLine: string | null;
   thresholds: EscapeThreshold[];
+  reachLine: string | null;
 }
+// pct: where the safe-exit income falls among real households of this
+// archetype (see reachLookup.ts), or null when there's no trustworthy cell
+// for it -- reachLine omits silently in that case rather than showing a
+// shaky number.
+export interface ReachContext { pct: number | null }
+export interface PersonalReachContext extends ReachContext { stateName: string }
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -126,7 +140,33 @@ function programThresholds(esc: EscapeAnalysis, ctx: PayContext): EscapeThreshol
     }));
 }
 
-export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarration {
+// Builds the "reach" line (Plan 5): omitted entirely (null) whenever the
+// caller doesn't supply reach context (existing callers that don't care about
+// reach see no behavior change), when safeExitEarnings is 0 (no escape income
+// to compare -- already always safe, nothing to reach), or when the archetype
+// has no trustworthy PUMS cell (reach.pct is null: small sample or unknown
+// state -- the small-sample honesty rule, never shown with a shaky number).
+// safeExitEarnings === null (never safe within the sweep) needs no pct at
+// all: there's no concrete income to look up, so it gets a static, honest
+// top-of-chart line instead of a fabricated percentile.
+function buildReachLine(
+  safeExitEarnings: number | null,
+  reach: ReachContext | undefined,
+  neverKey: StringKey,
+  lineKey: StringKey,
+  extraParams: Record<string, string>,
+): string | null {
+  if (!reach) return null;
+  if (safeExitEarnings === null) return t(neverKey);
+  if (safeExitEarnings === 0 || reach.pct === null) return null;
+  return t(lineKey, { pct: String(Math.round(reach.pct)), ...extraParams });
+}
+
+export function narrateEscape(
+  esc: EscapeAnalysis,
+  ctx: PayContext,
+  reach?: PersonalReachContext,
+): EscapeNarration {
   // safeExitEarnings === 0 means every point on the chart is already safe —
   // the always_up verdict headline already says that, so no line here.
   const safeLine =
@@ -141,7 +181,14 @@ export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarra
     ? t(esc.leapIsLowerBound ? "escape.leapMore" : "escape.leap", { amount: formatDollars(esc.leap) })
     : null;
 
-  return { safeLine, leapLine, thresholds: programThresholds(esc, ctx) };
+  // extraParams (income/state) are only ever read by buildReachLine once
+  // safeExitEarnings is confirmed to be a positive finite number, so the `?? 0`
+  // / `?? ""` fallbacks here never actually reach a rendered string.
+  const reachLine = buildReachLine(esc.safeExitEarnings, reach, "escape.reachNever", "escape.reach", {
+    income: formatDollars(esc.safeExitEarnings ?? 0), state: reach?.stateName ?? "",
+  });
+
+  return { safeLine, leapLine, thresholds: programThresholds(esc, ctx), reachLine };
 }
 
 // Places-door variant of narrateEscape, for the state drill-down (StatePanel).
@@ -154,7 +201,7 @@ export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarra
 // own third-person places.panel.endsTitle ("When help ends here:") rather
 // than the personal door's "…for you:", to stay consistent with the panel's
 // "not your family" framing.
-export function narratePlacesEscape(esc: EscapeAnalysis): EscapeNarration {
+export function narratePlacesEscape(esc: EscapeAnalysis, reach?: ReachContext): EscapeNarration {
   const safeLine =
     esc.safeExitEarnings === null ? t("places.panel.safeNever")
     : esc.safeExitEarnings > 0 ? t("places.panel.safe", { amount: formatDollars(esc.safeExitEarnings) })
@@ -164,7 +211,9 @@ export function narratePlacesEscape(esc: EscapeAnalysis): EscapeNarration {
     ? t(esc.leapIsLowerBound ? "places.panel.leapMore" : "places.panel.leap", { amount: formatDollars(esc.leap) })
     : null;
 
-  return { safeLine, leapLine, thresholds: programThresholds(esc, { unit: "year" }) };
+  const reachLine = buildReachLine(esc.safeExitEarnings, reach, "places.panel.reachNever", "places.panel.reach", {});
+
+  return { safeLine, leapLine, thresholds: programThresholds(esc, { unit: "year" }), reachLine };
 }
 
 const HEADLINE_PARAMS: Record<string, string[]> = {

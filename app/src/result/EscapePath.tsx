@@ -14,13 +14,17 @@ import { t } from "../strings/t.js";
 export function EscapePath({
   narration, healthCostLine,
 }: { narration: EscapeNarration; healthCostLine?: string | null }) {
-  const { safeLine, leapLine, thresholds } = narration;
-  if (!safeLine && !leapLine && thresholds.length === 0 && !healthCostLine) return null;
+  const { safeLine, leapLine, thresholds, reachLine } = narration;
+  if (!safeLine && !leapLine && !reachLine && thresholds.length === 0 && !healthCostLine) return null;
   return (
     <section className="escape-path">
       <h2>{t("escape.title")}</h2>
       {healthCostLine && <p className="escape-health-cost">{healthCostLine}</p>}
       {safeLine && <p className="escape-safe">{safeLine}</p>}
+      {/* Reach (Plan 5): rendered right after safeLine -- it elaborates on
+          the SAME safe-exit income (how common that income already is among
+          real households), so it belongs next to the line that names it. */}
+      {reachLine && <p className="escape-reach">{reachLine}</p>}
       {leapLine && <p className="escape-leap">{leapLine}</p>}
       {thresholds.length > 0 && (
         <>

@@ -11,9 +11,10 @@ const populated: EscapeNarration = {
     { label: "cash help (TANF)", wage: "$11 an hour" },
     { label: "food help (SNAP)", wage: "$14 an hour" },
   ],
+  reachLine: null,
 };
 
-const empty: EscapeNarration = { safeLine: null, leapLine: null, thresholds: [] };
+const empty: EscapeNarration = { safeLine: null, leapLine: null, thresholds: [], reachLine: null };
 
 describe("EscapePath", () => {
   it("renders the title, both lines, and the ends list when populated", () => {
@@ -68,5 +69,30 @@ describe("EscapePath", () => {
       <EscapePath narration={{ ...empty, safeLine: "Past $30 an hour, more pay always helps you." }} healthCostLine={null} />,
     );
     expect(container.querySelector(".escape-health-cost")).toBeNull();
+  });
+
+  // Plan 5: the reach line renders right after safeLine (the same safe-exit
+  // income it comments on) when present, and is silently omitted when the
+  // narration didn't come with reach context.
+  it("renders the reach line right after the safe line when populated", () => {
+    const { container } = render(
+      <EscapePath narration={{ ...populated, reachLine: "At that pay, you'd out-earn about 62% of families like yours in California." }} />,
+    );
+    const reachEl = container.querySelector(".escape-reach");
+    expect(reachEl?.textContent).toMatch(/out-earn about 62%/i);
+    expect(reachEl?.previousElementSibling?.className).toBe("escape-safe");
+  });
+
+  it("omits the reach paragraph when reachLine is null", () => {
+    const { container } = render(<EscapePath narration={populated} />);
+    expect(container.querySelector(".escape-reach")).toBeNull();
+  });
+
+  it("keeps the section rendered for the reach line alone, even with no safe/leap/thresholds/health-cost", () => {
+    const { container } = render(
+      <EscapePath narration={{ ...empty, reachLine: "Even families like yours with the top pay here still hit rough spots." }} />,
+    );
+    expect(container.querySelector("h2")?.textContent).toMatch(/your path off help/i);
+    expect(container.querySelector(".escape-reach")?.textContent).toMatch(/still hit rough spots/i);
   });
 });

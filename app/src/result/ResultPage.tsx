@@ -3,6 +3,8 @@ import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type EscapeAnalysis, 
 import { fetchCurve } from "../api/client.js";
 import { fetchFallbackCurve, clampFallbackEarnings } from "../lib/fallback.js";
 import { narrate, narrateEscape, type Narration, type PayContext } from "../lib/narration.js";
+import { reachForHousehold } from "../lib/reachLookup.js";
+import { STATE_NAMES } from "../lib/states.js";
 import { t } from "../strings/t.js";
 import { CurveChart } from "./CurveChart.js";
 import { WhyList } from "./WhyList.js";
@@ -102,16 +104,32 @@ export function ResultPage(props: {
   }
 
   const { analysis, narration, escape, fallback } = status;
+  // Reach (Plan 5): the safe-exit income is the household's own real state +
+  // archetype's escape income, so the lookup is keyed off the SAME answers
+  // that produced `escape` -- never a hardcoded/default state or archetype.
+  // `escape.safeExitEarnings ? ... : null` doubles as the "0 or null" guard
+  // (both are falsy): a 0 safe-exit means already always safe (nothing to
+  // reach), and reachForHousehold only makes sense for a positive income.
+  const stateName = STATE_NAMES[props.answers.state] ?? props.answers.state;
+  const reachPct = escape.safeExitEarnings
+    ? reachForHousehold(props.answers.state, props.answers.married, props.answers.childAges.length, escape.safeExitEarnings)
+    : null;
+  const escapeNarration = narrateEscape(escape, props.ctx, { pct: reachPct, stateName });
   // Task 23's visibility condition reads the raw EscapeAnalysis fields, not
   // narrateEscape's output — narrateEscape doesn't carry benefitsEndEarnings
-  // through (it isn't spoken by any of the three EscapeNarration lines), so
-  // that field can only gate the section here. Plan 4 adds narration's own
-  // healthCostLine to the same gate: a household can have a real health cost
-  // at their current pay with no cliff/leap/program-end nearby, and that cost
-  // must still surface somewhere — EscapePath is where it renders.
+  // through (it isn't spoken by any of the three original EscapeNarration
+  // lines), so that field can only gate the section here. Plan 4 adds
+  // narration's own healthCostLine to the same gate: a household can have a
+  // real health cost at their current pay with no cliff/leap/program-end
+  // nearby, and that cost must still surface somewhere — EscapePath is where
+  // it renders. Plan 5's reachLine is included too, defensively: in practice
+  // it's only ever non-null alongside a non-null safeLine (both keyed off the
+  // same safeExitEarnings), so this never changes visibility on real data —
+  // see EscapePath's own belt-and-suspenders guard for the same reasoning.
   const showEscapePath =
     escape.benefitsEndEarnings !== null || escape.leap > 0
-    || Object.keys(escape.programEnds).length > 0 || narration.healthCostLine !== null;
+    || Object.keys(escape.programEnds).length > 0 || narration.healthCostLine !== null
+    || escapeNarration.reachLine !== null;
   return (
     <article className={`result verdict-${analysis.verdict}`}>
       {fallback && (
@@ -122,13 +140,14 @@ export function ResultPage(props: {
       <CurveChart analysis={analysis} ctx={props.ctx} />
       <WhyList items={narration.whyItems} />
       {showEscapePath && (
-        <EscapePath narration={narrateEscape(escape, props.ctx)} healthCostLine={narration.healthCostLine} />
+        <EscapePath narration={escapeNarration} healthCostLine={narration.healthCostLine} />
       )}
       <aside className="honesty" aria-label={t("result.honesty.title")}>
         <h2>{t("result.honesty.title")}</h2>
         <p>{t("result.honesty.body")}</p>
         <p className="honesty-model">{t("result.honesty.model")}</p>
         <p className="honesty-health">{t("result.honesty.health")}</p>
+        <p className="honesty-reach">{t("result.honesty.reach")}</p>
       </aside>
       <div className="nav-row">
         {fallback && (

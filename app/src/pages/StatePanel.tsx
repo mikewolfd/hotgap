@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
 import { t } from "../strings/t.js";
 import { formatDollars, narratePlacesEscape } from "../lib/narration.js";
+import { reachForArchetype } from "../lib/reachLookup.js";
 import type { PlacesMetric } from "../lib/placesRamp.js";
 import { CurveChart } from "../result/CurveChart.js";
 
@@ -60,8 +61,19 @@ export function StatePanel(props: {
   // already fetched — no new data, and it's the exact math the personal
   // door's "path off help" section uses, so a state's drill-down and a
   // household's own result page can never disagree on a number.
+  //
+  // Reach (Plan 5): safeExitEarnings here comes from THIS SAME escapeAnalysis
+  // call, not a separate `safeExit` prop threaded from PlacesPage's bundled
+  // summary.json — the two would compute an identical number (same points,
+  // same math), and reading it from a second source of truth risks the two
+  // silently drifting apart. `esc.safeExitEarnings ? ... : null` doubles as
+  // the "0 or null" guard, same reasoning as the personal door's ResultPage.
   const escapeNarration = status.phase === "done"
-    ? narratePlacesEscape(escapeAnalysis(status.analysis.points))
+    ? (() => {
+        const esc = escapeAnalysis(status.analysis.points);
+        const pct = esc.safeExitEarnings ? reachForArchetype(stateCode, archetypeId, esc.safeExitEarnings) : null;
+        return narratePlacesEscape(esc, { pct });
+      })()
     : null;
 
   return (
@@ -86,9 +98,16 @@ export function StatePanel(props: {
         <CurveChart analysis={status.analysis} ctx={{ unit: "year" }} showCurrent={false} />
       )}
 
-      {escapeNarration && (escapeNarration.safeLine || escapeNarration.leapLine || escapeNarration.thresholds.length > 0) && (
+      {escapeNarration && (
+        escapeNarration.safeLine || escapeNarration.leapLine
+        || escapeNarration.reachLine || escapeNarration.thresholds.length > 0
+      ) && (
         <div className="places-panel-escape">
           {escapeNarration.safeLine && <p className="places-panel-safe">{escapeNarration.safeLine}</p>}
+          {/* Reach (Plan 5): right after safeLine, same reasoning as the
+              personal door's EscapePath -- it elaborates on the same
+              safe-exit income named just above it. */}
+          {escapeNarration.reachLine && <p className="places-panel-reach">{escapeNarration.reachLine}</p>}
           {escapeNarration.leapLine && <p className="places-panel-leap">{escapeNarration.leapLine}</p>}
           {escapeNarration.thresholds.length > 0 && (
             <>
@@ -112,6 +131,7 @@ export function StatePanel(props: {
           door's result.honesty.health sentence, spelling out what that means
           in the same "not your family" honesty voice as the line above it. */}
       <p className="places-panel-health-note">{t("places.panel.healthNote")}</p>
+      <p className="places-panel-reach-note">{t("places.panel.reachNote")}</p>
       <p className="places-panel-assumptions">{t("places.panel.assumptions")}</p>
     </section>
   );

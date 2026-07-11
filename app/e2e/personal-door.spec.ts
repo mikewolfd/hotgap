@@ -81,6 +81,21 @@ test("landing → flow → cliff result", async ({ page }) => {
   // Plan 4: the health-cost line names the real cost at the household's
   // nearest sampled point (20000, nearest to currentEarnings=24960).
   await expect(page.getByText(/pay about \$1,200 a year for health coverage/i)).toBeVisible();
+
+  // Plan 5 (reach): this household is single with 1 kid in California ->
+  // archetype "single-1", a real (non-null) cell in the committed
+  // app/src/data/reach.json (verified directly against the file). Because
+  // this mocked curve's danger zone never recovers by the last sampled
+  // point (safeExitEarnings is null — same fact behind the "at least
+  // $20,000" leap assertion above), the honest reach line has no income to
+  // compare against, so it uses the top-pay framing rather than a
+  // fabricated percentile — it never claims "you can reach" or cites odds.
+  await expect(page.getByText(/still hit rough spots/i)).toBeVisible();
+
+  // The reach transparency note names the Census/PUMS comparison and
+  // explicitly disclaims odds, right in the honesty box.
+  await expect(page.getByText(/census household income/i)).toBeVisible();
+  await expect(page.getByText(/not your odds of getting there/i)).toBeVisible();
 });
 
 // This household (single, 1 kid — clicked below via "more kids") resolves to
