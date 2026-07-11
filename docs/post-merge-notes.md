@@ -47,3 +47,12 @@ Deferred from the places-door final review (all non-blocking):
 - Fallback picker ignores age/disability/rent (framed by the assumptions line, but could match better)
 - PlacesPage tests couple to live summary.json values (may need updating after weekly refreshes)
 - Manual screen-reader pass (VoiceOver/NVDA) on the map still recommended
+
+# Post-merge notes — escape metrics (Plan 3, 2026-07-11)
+
+Deferred from the whole-branch review (non-blocking):
+- summary.json ships `safeExit` per archetype but the app never reads it (drill-down recomputes it live); like `dangerWidth`, it's a duplicated/unused bundled field — trim or consume.
+- StatePanel recomputes escapeAnalysis+narratePlacesEscape on every render (unmemoized); trivial cost, but a useMemo would match the page's discipline.
+
+Plan 4 candidate (researched, see docs/research/2026-07-11-wage-distribution-data-sources.md):
+- A "reach" metric — overlay the leap on real wage distributions to answer "is the jump attainable?" Verify PolicyEngine's enhanced-CPS microdata (state-keyed household incomes) is reusable from our pipeline FIRST; else ACS PUMS. Cross-sectional feasibility signal only, never framed as mobility odds.
