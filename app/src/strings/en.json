@@ -86,6 +86,8 @@
   "escape.endsTitle": "When help ends for you:",
   "escape.ends": "{label}: near {wage}",
 
+  "result.county.note": "Numbers use your county where we can.",
+
   "result.honesty.title": "Please know",
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",

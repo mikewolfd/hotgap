@@ -152,6 +152,9 @@ export function ResultPage(props: {
         <EscapePath narration={escapeNarration} healthCostLine={narration.healthCostLine} />
       )}
       <Toggles answers={current} onChange={setCurrent} />
+      {current.countyFips !== null && (
+        <p className="county-note">{t("result.county.note")}</p>
+      )}
       <aside className="honesty" aria-label={t("result.honesty.title")}>
         <h2>{t("result.honesty.title")}</h2>
         <p>{t("result.honesty.body")}</p>

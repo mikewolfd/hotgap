@@ -5,7 +5,7 @@ import { Toggles } from "./Toggles.js";
 import type { HouseholdAnswers } from "@hotgap/shared";
 
 const answers: HouseholdAnswers = {
-  state: "CA", married: false, childAges: [3], childDisabled: [false],
+  state: "CA", countyFips: null, married: false, childAges: [3], childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000,
   spouseAnnualEarnings: 0, age: 30, spouseAge: null, youDisabled: false,
   spouseDisabled: false, getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,

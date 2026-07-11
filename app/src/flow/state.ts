@@ -1,11 +1,13 @@
 import { toAnnual, type HouseholdAnswers, type Pay } from "@hotgap/shared";
 import { zipToState } from "../lib/zip.js";
+import { zipToCounty } from "../lib/county.js";
 
 export type ScreenId = "zip" | "family" | "housing" | "childcare" | "gets" | "pay";
 
 export interface FlowAnswers {
   zip: string;
   state: string | null;
+  countyFips: string | null;
   married: boolean;
   age: number | null;
   spouseAge: number | null;
@@ -45,7 +47,7 @@ export type FlowAction =
 export const initialFlowState: FlowState = {
   screen: "zip",
   answers: {
-    zip: "", state: null, married: false, age: null, spouseAge: null, childAges: [],
+    zip: "", state: null, countyFips: null, married: false, age: null, spouseAge: null, childAges: [],
     youDisabled: false, spouseDisabled: false, childDisabled: [],
     monthlyRent: null, monthlyChildcare: null,
     pay: { amount: 0, unit: "hour", hoursPerWeek: 40 },
@@ -81,7 +83,10 @@ export function canAdvance(s: FlowState): boolean {
 export function flowReducer(s: FlowState, action: FlowAction): FlowState {
   const a = s.answers;
   switch (action.type) {
-    case "setZip": return { ...s, answers: { ...a, zip: action.zip, state: zipToState(action.zip) } };
+    case "setZip": return {
+      ...s,
+      answers: { ...a, zip: action.zip, state: zipToState(action.zip), countyFips: zipToCounty(action.zip) },
+    };
     case "setState": return { ...s, answers: { ...a, state: action.state } };
     case "setMarried":
       return {
@@ -139,6 +144,7 @@ export function toHouseholdAnswers(a: FlowAnswers): HouseholdAnswers {
   if (a.married && a.spouseAge === null) throw new Error("spouseAge not set");
   return {
     state: a.state,
+    countyFips: a.countyFips,
     married: a.married,
     age: a.age,
     spouseAge: a.married ? a.spouseAge : null,

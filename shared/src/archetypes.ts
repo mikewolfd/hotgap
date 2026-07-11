@@ -18,6 +18,7 @@ export const DEFAULT_ARCHETYPE = "single-2";
 export function answersFor(state: string, a: Archetype): HouseholdAnswers {
   return {
     state,
+    countyFips: null,
     married: a.married,
     childAges: a.childAges,
     childDisabled: a.childAges.map(() => false),

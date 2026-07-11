@@ -22,6 +22,7 @@ describe("answersFor", () => {
     const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
     expect(answersFor("CA", single2)).toEqual({
       state: "CA",
+      countyFips: null,
       married: false,
       childAges: [3, 7],
       childDisabled: [false, false],
@@ -57,5 +58,9 @@ describe("answersFor", () => {
     expect(a.getsHeadStart).toBe(false);
     expect(a.getsHousing).toBe(false);
     expect(a.hasEmployerCoverage).toBe(false);
+  });
+
+  it("map archetypes have no county (state-level map unchanged)", () => {
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-2")!).countyFips).toBeNull();
   });
 });
