@@ -133,9 +133,11 @@ export function narrateEscape(esc: EscapeAnalysis, ctx: PayContext): EscapeNarra
 // door's "you", and formatDollars (not formatWage) for the safe-exit and leap
 // lines — the drill-down isn't anchored to a real person's pay unit, so a
 // plain dollar figure with " a year" baked into the string is the honest
-// amount to show. Thresholds still speak in year-unit wages (fixed ctx),
-// reusing the exact same escape.endsTitle/escape.ends strings as Task 23 so
-// "when help ends" can never read differently between the two doors.
+// amount to show. Thresholds still speak in year-unit wages (fixed ctx) and
+// reuse the shared escape.ends item string; StatePanel pairs them with its
+// own third-person places.panel.endsTitle ("When help ends here:") rather
+// than the personal door's "…for you:", to stay consistent with the panel's
+// "not your family" framing.
 export function narratePlacesEscape(esc: EscapeAnalysis): EscapeNarration {
   const safeLine =
     esc.safeExitEarnings === null ? t("places.panel.safeNever")

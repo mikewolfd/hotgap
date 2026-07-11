@@ -1,13 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, programs: { ...PROGRAMS } });
+const mkPoint = (earnings: number, netIncome: number, programs: Partial<typeof PROGRAMS> = {}) =>
+  ({ earnings, netIncome, programs: { ...PROGRAMS, ...programs } });
 // A small 6-point CA fixture. The test toggles the family picker to married
 // before clicking California, so the archetype requested by then is
 // married-2, not the default single-2 — the fixture covers both so the
-// drill-down resolves regardless of picker state.
+// drill-down resolves regardless of picker state. SNAP phases out by $40k so
+// the drill-down's "when help ends here" threshold list has an entry to show.
 const points = [
-  mkPoint(0, 15000), mkPoint(20000, 28000), mkPoint(40000, 33000),
+  mkPoint(0, 15000, { snap: 400 }), mkPoint(20000, 28000, { snap: 200 }), mkPoint(40000, 33000),
   mkPoint(60000, 25000), mkPoint(80000, 40000), mkPoint(100000, 50000),
 ];
 const caFixture = {
@@ -55,10 +57,13 @@ test("places door: map renders all 51 states, family picker changes color, and a
   );
   await page.locator('path[aria-label^="California"]').click();
 
+  // Metric is leap (we switched back above), so the headline must speak the
+  // leap — the SAME metric the rank line below it sorts by (Fix 1). A loss
+  // figure over a leap-based rank was the cross-door coherence bug.
   const headline = page.locator(".places-panel-headline");
   await expect(headline).toBeVisible();
   await expect(headline).toContainText("California");
-  await expect(headline).toContainText(/\$[\d,]+/);
+  await expect(headline).toContainText(/needs a jump of about \$[\d,]+ a year/i);
   await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
   await expect(page.getByText(/not your family/i)).toBeVisible();
 
@@ -67,6 +72,10 @@ test("places door: map renders all 51 states, family picker changes color, and a
   const safeOrLeap = page.locator(".places-panel-safe, .places-panel-leap");
   await expect(safeOrLeap.first()).toBeVisible();
   await expect(safeOrLeap.first()).toContainText(/\$[\d,]+/);
+
+  // Fix 2: the thresholds title is third-person ("here"), not "for you", so
+  // it doesn't contradict the panel's own "not your family" line.
+  await expect(page.getByText(/when help ends here/i)).toBeVisible();
 });
 
 test("places door: a state with no cached data shows a plain-language error, not a stuck spinner", async ({ page }) => {

@@ -69,7 +69,7 @@ test("landing → flow → cliff result", async ({ page }) => {
   // zoneStart($30k) = $20,000) and the safe-exit line is the "never found a
   // safe spot" honesty branch, not a concrete wage.
   await expect(page.getByRole("heading", { name: /your path off help/i })).toBeVisible();
-  await expect(page.getByText(/raise of about more than \$20,000/i)).toBeVisible();
+  await expect(page.getByText(/raise of at least \$20,000/i)).toBeVisible();
 });
 
 // This household (single, 1 kid — clicked below via "more kids") resolves to

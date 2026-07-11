@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
 import { t } from "../strings/t.js";
 import { formatDollars, narratePlacesEscape } from "../lib/narration.js";
+import type { PlacesMetric } from "../lib/placesRamp.js";
 import { CurveChart } from "../result/CurveChart.js";
 
 interface StateDataFile {
@@ -18,13 +19,20 @@ export function StatePanel(props: {
   stateCode: string;
   stateName: string;
   archetypeId: string;
+  /** Which metric the map/legend/rank currently sort by — the headline must
+   *  describe the SAME number the rank sorts by, or a loss headline reads as
+   *  if the leap-based rank ordered it. */
+  metric: PlacesMetric;
   /** Precomputed from the bundled summary.json — renders instantly, no fetch needed. */
   biggestLoss: number;
-  /** How many of the other 50 states have a strictly smaller biggestLoss for this archetype. */
+  /** The leap (raise to clear the worst zone in one move), same source. */
+  leap: number;
+  /** How many of the other 50 states rank strictly better on the SELECTED
+   *  metric — computed in PlacesPage against whichever metric is active. */
   rank: number;
   fetchImpl?: typeof fetch;
 }) {
-  const { stateCode, archetypeId, fetchImpl = fetch } = props;
+  const { stateCode, archetypeId, metric, fetchImpl = fetch } = props;
   const [status, setStatus] = useState<Status>({ phase: "loading" });
 
   useEffect(() => {
@@ -59,7 +67,9 @@ export function StatePanel(props: {
   return (
     <section className="places-panel" aria-live="polite">
       <h2 className="places-panel-headline">
-        {t("places.panel.headline", { state: props.stateName, loss: formatDollars(props.biggestLoss) })}
+        {metric === "leap"
+          ? t("places.panel.headlineLeap", { state: props.stateName, amount: formatDollars(props.leap) })
+          : t("places.panel.headline", { state: props.stateName, loss: formatDollars(props.biggestLoss) })}
       </h2>
       <p className="places-panel-rank">{t("places.panel.rank", { n: props.rank })}</p>
 
@@ -82,7 +92,7 @@ export function StatePanel(props: {
           {escapeNarration.leapLine && <p className="places-panel-leap">{escapeNarration.leapLine}</p>}
           {escapeNarration.thresholds.length > 0 && (
             <>
-              <p className="places-panel-ends-title">{t("escape.endsTitle")}</p>
+              <p className="places-panel-ends-title">{t("places.panel.endsTitle")}</p>
               <ul className="places-panel-ends-list">
                 {escapeNarration.thresholds.map((th) => (
                   <li key={th.label} className="places-panel-ends-item">

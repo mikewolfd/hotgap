@@ -258,7 +258,9 @@ export function PlacesPage() {
           stateCode={selected}
           stateName={STATE_NAMES[selected] ?? selected}
           archetypeId={archetypeId}
+          metric={metric}
           biggestLoss={selectedMetrics.biggestLoss}
+          leap={selectedMetrics.leap}
           rank={rank}
         />
       )}

@@ -206,12 +206,13 @@ describe("narrateEscape branch coverage", () => {
     expect(n.safeLine).toContain("did not find a fully safe spot");
   });
 
-  it("uses the leapMore variant when leapIsLowerBound is true", () => {
+  it("uses the leapMore variant ('at least') when leapIsLowerBound is true", () => {
     const n = narrateEscape(
       { safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null },
       { unit: "year" },
     );
-    expect(n.leapLine).toContain("more than $20,000");
+    expect(n.leapLine).toContain("at least $20,000");
+    expect(n.leapLine).not.toContain("more than");
   });
 
   it("returns null leapLine when leap is 0", () => {
@@ -260,11 +261,12 @@ describe("narratePlacesEscape", () => {
     expect(n.leapLine).not.toContain("more than");
   });
 
-  it("uses the leapMore variant when leapIsLowerBound is true", () => {
+  it("uses the leapMore variant ('at least') when leapIsLowerBound is true", () => {
     const n = narratePlacesEscape({
       safeExitEarnings: null, leap: 20000, leapIsLowerBound: true, programEnds: {}, benefitsEndEarnings: null,
     });
-    expect(n.leapLine).toContain("more than $20,000");
+    expect(n.leapLine).toContain("at least $20,000");
+    expect(n.leapLine).not.toContain("more than");
   });
 
   it("lists thresholds in year-unit wages, ascending, capped at 5", () => {
