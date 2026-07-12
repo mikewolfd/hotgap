@@ -84,3 +84,24 @@ Deferred from the whole-branch review (non-blocking):
 - Contract PTC-diff threshold is loose ($100 vs ~$2,200 observed) — deliberate anti-flake margin.
 
 County scope reminder: county is a live personal-door enhancement only (ACA rating-area accuracy, meaningful in high-cost states, ~nil in flat ones). The map stays state-level by design.
+
+# Post-merge notes — reach earnings basis (Plan 8, 2026-07-11)
+
+Whole-branch review (Opus) verdict: READY, no Critical/Important. Data
+independently re-validated (all 398 non-null cells monotonic, non-negative,
+21 points; WY single-2 median $47,000 = design probe $42k × 1.12). Two Minor
+items fixed in the builder (dead `fips` param removed; numeric-column quote-
+stripping made fail-safe for a future PUMS vintage — output-neutral today).
+
+Accepted tolerances (not changed — swamped by the deliberately-approximate
+×1.12 inflation factor and $100 rounding):
+- ADJINC (2023 ≈ 1.006, converts rolling-reference income to survey-year
+  dollars) is not applied; <1% effect.
+- Earnings floor WAGP and SEMP per-component at 0, so a business loss that
+  offsets wages isn't netted. This is the documented intent; direction is
+  mildly non-conservative (nudges the jump to look marginally easier);
+  magnitude negligible.
+
+Still-open review items unchanged: uncertainty bounds on the reach line;
+external validation vs Atlanta Fed PRD; the no-escape next-step resource
+pointer (deferred per user "not now").

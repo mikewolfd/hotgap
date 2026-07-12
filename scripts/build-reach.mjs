@@ -52,7 +52,13 @@ function ladder(pairs) {
   return out;
 }
 
-function processState(st, fips, dir) {
+// PUMS CSVs quote only string fields today, so numeric columns parse fine with
+// a bare Number(). Strip quotes anyway so a future vintage that quotes numbers
+// fails safe (a quoted number would otherwise become NaN -> silently 0).
+const cell_str = (v) => String(v ?? "").replace(/"/g, "");
+const num = (v) => Number(cell_str(v)) || 0;
+
+function processState(st, dir) {
   for (const kind of ["h", "p"]) {
     execSync(`curl -sSL -o "${dir}/${kind}.zip" "${BASE}/csv_${kind}${st.toLowerCase()}.zip" --max-time 300`, { stdio: "ignore" });
     execSync(`unzip -oq "${dir}/${kind}.zip" -d "${dir}"`, { stdio: "ignore" });
@@ -63,26 +69,26 @@ function processState(st, fips, dir) {
   // household composition + weight
   const hh = new Map();
   const hlines = execSync(`cat "${dir}/${hcsv}"`, { maxBuffer: 512 * 1024 * 1024 }).toString("utf8").split("\n");
-  const hh0 = hlines[0].split(",").map((s) => s.replace(/"/g, ""));
+  const hh0 = hlines[0].split(",").map(cell_str);
   const [iS, iHHT, iNOC, iWGTP] = ["SERIALNO", "HHT", "NOC", "WGTP"].map((k) => hh0.indexOf(k));
   for (let i = 1; i < hlines.length; i++) {
     if (!hlines[i]) continue;
     const c = hlines[i].split(",");
-    const w = Number(c[iWGTP]) || 0;
+    const w = num(c[iWGTP]);
     if (w <= 0) continue;
-    hh.set(c[iS].replace(/"/g, ""), { hht: Number(c[iHHT]) || 0, noc: c[iNOC] === "" ? 0 : Number(c[iNOC]), w });
+    hh.set(cell_str(c[iS]), { hht: num(c[iHHT]), noc: num(c[iNOC]), w });
   }
   // household earnings = sum(person WAGP + SEMP)
   const earn = new Map();
   const plines = execSync(`cat "${dir}/${pcsv}"`, { maxBuffer: 1024 * 1024 * 1024 }).toString("utf8").split("\n");
-  const p0 = plines[0].split(",").map((s) => s.replace(/"/g, ""));
+  const p0 = plines[0].split(",").map(cell_str);
   const [pS, iWAGP, iSEMP] = ["SERIALNO", "WAGP", "SEMP"].map((k) => p0.indexOf(k));
   for (let i = 1; i < plines.length; i++) {
     if (!plines[i]) continue;
     const c = plines[i].split(",");
-    const s = c[pS].replace(/"/g, "");
-    const wagp = Math.max(0, Number(c[iWAGP]) || 0);
-    const semp = Math.max(0, Number(c[iSEMP]) || 0);
+    const s = cell_str(c[pS]);
+    const wagp = Math.max(0, num(c[iWAGP]));
+    const semp = Math.max(0, num(c[iSEMP]));
     earn.set(s, (earn.get(s) || 0) + wagp + semp);
   }
   const buckets = Object.fromEntries(Object.keys(ARCHETYPES).map((k) => [k, []]));
@@ -103,9 +109,9 @@ function processState(st, fips, dir) {
 
 const dir = execSync("mktemp -d").toString().trim();
 const states = {};
-for (const [st, fips] of Object.entries(STATES)) {
+for (const st of Object.keys(STATES)) {
   process.stderr.write(`  ${st}…`);
-  states[st] = processState(st, fips, dir);
+  states[st] = processState(st, dir);
 }
 process.stderr.write("\n");
 execSync(`rm -rf "${dir}"`, { stdio: "ignore" });
