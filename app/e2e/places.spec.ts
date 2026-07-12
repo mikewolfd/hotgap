@@ -92,7 +92,7 @@ test("places door: map renders all 51 states, family picker changes color, and a
   // finite income, so the honest cross-sectional line names a percentage,
   // never odds or "can reach" language.
   await expect(page.getByText(/more than about \d+% of families like this earn/i)).toBeVisible();
-  await expect(page.getByText(/census household income/i)).toBeVisible();
+  await expect(page.getByText(/pay from work.*Census ACS PUMS/i)).toBeVisible();
 });
 
 test("places door: a state with no cached data shows a plain-language error, not a stuck spinner", async ({ page }) => {
