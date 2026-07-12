@@ -92,7 +92,7 @@
   "result.honesty.body": "This is a guess based on public rules. Your caseworker decides your real benefits. Rules change. Do not make a big choice on this number alone.",
   "result.honesty.model": "Numbers come from PolicyEngine, an open rules model. We may not know every local program.",
   "result.honesty.health": "In many states, losing Medicaid means moving to other coverage you help pay for. In some states there is no low-cost plan.",
-  "result.honesty.reach": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not your odds of getting there.",
+  "result.honesty.reach": "The reach numbers use pay from work for families like yours (Census ACS PUMS). They show how common that pay is. They are not your odds of getting there.",
 
   "toggles.title": "What if you get more help?",
   "toggles.hint": "Turn these on or off to see how your cliffs move.",
@@ -161,7 +161,7 @@
   "places.panel.endsTitle": "When help ends here:",
   "places.panel.honesty": "These are numbers for the family you picked, not your family. Check your own numbers on the home page.",
   "places.panel.healthNote": "These numbers also count what a family pays for health coverage, not just cash help.",
-  "places.panel.reachNote": "The reach numbers compare to Census household income (ACS PUMS). They show how common an income is. They are not this family's odds of getting there.",
+  "places.panel.reachNote": "The reach numbers use pay from work for families like this (Census ACS PUMS). They show how common that pay is. They are not this family's odds of getting there.",
   "places.panel.assumptions": "We assume the grown-ups are 30. Pay is their only income. We also assume no rent or child care cost.",
   "places.panel.baseline": "We also assume they do not get waitlisted help like Head Start or a housing voucher. Most families do not.",
   "places.loading": "Getting this state's numbers…",

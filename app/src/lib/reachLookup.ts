@@ -9,6 +9,7 @@ import { pickArchetypeId } from "./fallback.js";
 // MUST treat null as "no reach line to show", never as "0%".
 interface ReachFile {
   year: string;
+  basis?: string;
   source: string;
   percentiles: number[];
   states: Record<string, Record<string, ReachLadder | null> | undefined>;

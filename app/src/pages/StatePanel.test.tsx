@@ -212,21 +212,21 @@ describe("StatePanel escape lines", () => {
 // documented small-sample null cell — see reachLookup.test.ts).
 describe("StatePanel reach line", () => {
   it("names the percentile once the curve loads, computed from the same safe-exit the safe line names", async () => {
-    // CA single-2's ladder has $62,000 exactly at its p50 (see
+    // CA single-2's earnings ladder has $63,800 exactly at its p50 (see
     // app/src/data/reach.json / reachLookup.test.ts) — a zone opening at its
-    // 30000 peak and recovering at 62000 makes safeExitEarnings land there.
+    // 30000 peak and recovering at 63800 makes safeExitEarnings land there.
     const file = {
       generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA",
       archetypes: {
         "single-2": {
-          points: [mkPoint(0, 20000), mkPoint(30000, 40000), mkPoint(40000, 30000), mkPoint(62000, 45000)],
+          points: [mkPoint(0, 20000), mkPoint(30000, 40000), mkPoint(40000, 30000), mkPoint(63800, 45000)],
         },
       },
     };
     const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(file) } as Response));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
     await waitFor(() => expect(container.querySelector(".places-panel-reach")).toBeTruthy());
-    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$62,000");
+    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$63,800");
     expect(container.querySelector(".places-panel-reach")!.textContent).toMatch(/more than about 50% of families like this earn/i);
     // Comes right after the safe line (same reasoning as EscapePath).
     expect(container.querySelector(".places-panel-reach")!.previousElementSibling?.className).toBe("places-panel-safe");
@@ -268,6 +268,6 @@ describe("StatePanel reach line", () => {
   it("shows the reach transparency note in the honesty area regardless of load phase", () => {
     const fetchImpl = vi.fn(() => new Promise(() => {}));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    expect(container.querySelector(".places-panel-reach-note")?.textContent).toMatch(/Census household income/i);
+    expect(container.querySelector(".places-panel-reach-note")?.textContent).toMatch(/pay from work.*Census ACS PUMS/i);
   });
 });

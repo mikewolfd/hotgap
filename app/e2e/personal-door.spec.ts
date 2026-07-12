@@ -118,7 +118,7 @@ test("landing → flow → cliff result", async ({ page }) => {
 
   // The reach transparency note names the Census/PUMS comparison and
   // explicitly disclaims odds, right in the honesty box.
-  await expect(page.getByText(/census household income/i)).toBeVisible();
+  await expect(page.getByText(/pay from work.*Census ACS PUMS/i)).toBeVisible();
   await expect(page.getByText(/not your odds of getting there/i)).toBeVisible();
 
   // Plan 6 Task 5: the take-up toggles are live on every result, and

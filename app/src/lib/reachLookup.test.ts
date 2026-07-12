@@ -7,10 +7,10 @@ import { reachForArchetype, reachForHousehold } from "./reachLookup.js";
 // lookup from the actual data shape it reads.
 describe("reachForArchetype", () => {
   it("returns the percentile for a real state x archetype cell (CA single-1's own p50 -> 50)", () => {
-    // CA single-1's ladder p50 (index 10 of 21 points) is $70,100 -- see
-    // app/src/data/reach.json. Looking that exact income back up must land
-    // on (very close to) the 50th percentile.
-    expect(reachForArchetype("CA", "single-1", 70100)).toBeCloseTo(50, 0);
+    // CA single-1's ladder p50 (index 10 of 21 points) is $72,800 -- see
+    // app/src/data/reach.json (household earnings, 2026 dollars). Looking that
+    // exact income back up must land on (very close to) the 50th percentile.
+    expect(reachForArchetype("CA", "single-1", 72800)).toBeCloseTo(50, 0);
   });
 
   it("returns a higher percentile for a higher income, for the same cell", () => {
@@ -34,7 +34,7 @@ describe("reachForArchetype", () => {
 
 describe("reachForHousehold", () => {
   it("maps married/kidCount to the archetype the same way the fallback picker does (single-1)", () => {
-    expect(reachForHousehold("CA", false, 1, 70100)).toBeCloseTo(50, 0);
+    expect(reachForHousehold("CA", false, 1, 72800)).toBeCloseTo(50, 0);
   });
 
   it("clamps kid count the same way pickArchetypeId does (5 kids -> single-3, still a real cell in most states)", () => {
