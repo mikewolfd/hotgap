@@ -134,6 +134,25 @@ describe("CurveChart drop markers", () => {
     expect(container.querySelector(".drop-card")).toBeNull();
   });
 
+  it("shows the fallback line (no list) when a drop has no single named program", () => {
+    // Net falls $1,000 (a cliff) but SNAP only slips $50 (< the $100 loss
+    // floor), so programsLost is empty — the card must not render a bullet list.
+    const pts: CurvePoint[] = [
+      mkPoint(0, 20000, { snap: 500 }),
+      mkPoint(10000, 20000, { snap: 500 }),
+      mkPoint(20000, 19000, { snap: 450 }),
+      mkPoint(30000, 25000),
+    ];
+    const a = analyzeCurve(pts, 5000);
+    expect(a.cliffs.length).toBe(1);
+    expect(a.cliffs[0].programsLost).toEqual([]);
+    const { container } = render(<CurveChart analysis={a} ctx={{ unit: "year" }} />);
+    fireEvent.click(container.querySelector("button.drop-marker")!);
+    const card = container.querySelector(".drop-card")!;
+    expect(card.textContent).toMatch(/would get smaller/i);
+    expect(container.querySelector(".drop-card-list")).toBeNull();
+  });
+
   it("the close button dismisses the card", () => {
     const { container } = render(<CurveChart analysis={cliffAnalysis} ctx={{ unit: "year" }} />);
     fireEvent.click(container.querySelector("button.drop-marker")!);

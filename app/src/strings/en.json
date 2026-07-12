@@ -72,10 +72,10 @@
   "result.chart.alt": "A chart of what your family keeps after health costs, as your pay goes up. Shaded parts show where more pay means less money.",
 
   "chart.drop.hint": "Tap a red dot to see what you lose.",
-  "chart.drop.marker.label": "A drop near {pay}. You lose about {amount} a year here. Tap to see what ends.",
+  "chart.drop.marker.label": "A drop near {pay}. You'd lose about {amount} a year here. Tap to see what ends.",
   "chart.drop.card.amount": "At {pay}, more pay drops what you keep by about {amount}.",
-  "chart.drop.card.lose": "You lose:",
-  "chart.drop.card.none": "A few kinds of help get smaller here.",
+  "chart.drop.card.lose": "You'd lose:",
+  "chart.drop.card.none": "A few kinds of help would get smaller here.",
   "chart.drop.card.close": "Close",
 
   "result.why.title": "Why does this happen?",

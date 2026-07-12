@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import { scaleLinear } from "d3-scale";
 import { line as d3line, curveMonotoneX } from "d3-shape";
 import { fromAnnual, toAnnual, type CurveAnalysis } from "@hotgap/shared";
@@ -39,6 +39,24 @@ export function CurveChart({
   const selected = analysis.cliffs.find((c) => c.startEarnings === selectedStart) ?? null;
   const netAt = (earnings: number) =>
     (pts.find((p) => p.earnings === earnings) ?? pts[0]).netIncome;
+  const cardId = useId();
+  const markerRefs = useRef(new Map<number, HTMLButtonElement>());
+
+  // If a re-analysis (e.g. the user flips a take-up toggle) removes the
+  // selected cliff, drop the stale key so the card can't silently re-open if
+  // that same cliff later reappears — a selection only ever survives while its
+  // cliff does.
+  useEffect(() => {
+    if (selectedStart !== null && !selected) setSelectedStart(null);
+  }, [selectedStart, selected]);
+
+  // Closing via the card's × returns focus to the marker that opened it, so a
+  // keyboard user lands back where they were instead of at the page top.
+  const closeCard = () => {
+    const marker = selectedStart !== null ? markerRefs.current.get(selectedStart) : undefined;
+    setSelectedStart(null);
+    marker?.focus();
+  };
 
   // Ticks are chosen in DISPLAY-unit space (dollars/hour, dollars/month, ...)
   // rather than annual dollars, so a label's printed value and its pixel
@@ -130,6 +148,10 @@ export function CurveChart({
           return (
             <button
               key={c.startEarnings}
+              ref={(el) => {
+                if (el) markerRefs.current.set(c.startEarnings, el);
+                else markerRefs.current.delete(c.startEarnings);
+              }}
               type="button"
               className={`drop-marker${isSel ? " drop-marker-selected" : ""}`}
               style={{ left: `${(x(c.startEarnings) / W) * 100}%`, top: `${(y(netAt(c.startEarnings)) / H) * 100}%` }}
@@ -147,15 +169,15 @@ export function CurveChart({
       </div>
 
       {selected && (
-        <div className="drop-card" role="region" aria-label={t("chart.drop.card.lose")}>
+        <div className="drop-card" role="region" aria-labelledby={`${cardId}-amt`}>
           <button
             type="button" className="drop-card-close"
             aria-label={t("chart.drop.card.close")}
-            onClick={() => setSelectedStart(null)}
+            onClick={closeCard}
           >
             ×
           </button>
-          <p className="drop-card-amount">
+          <p id={`${cardId}-amt`} className="drop-card-amount">
             {t("chart.drop.card.amount", {
               pay: formatWage(selected.startEarnings, ctx),
               amount: formatDollars(selected.drop),
