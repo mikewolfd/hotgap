@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { scaleLinear } from "d3-scale";
-import { parsePEResponse, analyzeCurve } from "@hotgap/shared";
+import { parsePEResponse, analyzeCurve, PROGRAM_IDS, type CurvePoint, type ProgramId } from "@hotgap/shared";
 import { CurveChart, W, M } from "./CurveChart.js";
 
 // NOTE: `new URL("...", import.meta.url)` (the pattern used by every other
@@ -70,6 +70,94 @@ describe("CurveChart", () => {
     expect(container.querySelector(".you-label")).toBeNull();
     // Everything else about the chart still renders.
     expect(container.querySelector("path.net-line")).toBeTruthy();
+  });
+});
+
+// Drop markers (Plan 9): a tappable button per cliff, opening a detail card
+// naming the money lost and which help ends. Synthetic points give a known
+// cliff (net falls $4,000 as SNAP+TANF end) so the card's text is exact.
+const zeroPrograms = Object.fromEntries(PROGRAM_IDS.map((id) => [id, 0])) as Record<ProgramId, number>;
+function mkPoint(earnings: number, netIncome: number, programs: Partial<Record<ProgramId, number>> = {}): CurvePoint {
+  return { earnings, netIncome, medicalOOP: 0, programs: { ...zeroPrograms, ...programs } };
+}
+const cliffPoints: CurvePoint[] = [
+  mkPoint(0, 20000, { snap: 5000, tanf: 3000 }),
+  mkPoint(10000, 24000, { snap: 5000, tanf: 3000 }),
+  mkPoint(20000, 20000, { snap: 1000, tanf: 0 }), // net −$4,000; SNAP & TANF collapse
+  mkPoint(30000, 26000, {}),
+];
+const cliffAnalysis = analyzeCurve(cliffPoints, 5000);
+const flatAnalysis = analyzeCurve(
+  [mkPoint(0, 10000), mkPoint(10000, 15000), mkPoint(20000, 20000)],
+  5000,
+);
+
+describe("CurveChart drop markers", () => {
+  it("renders one drop button per cliff (real fixture)", () => {
+    const { container } = render(<CurveChart analysis={analysis} ctx={{ unit: "year" }} />);
+    expect(container.querySelectorAll("button.drop-marker").length).toBe(analysis.cliffs.length);
+  });
+
+  it("has no markers, hint, or card when the curve only goes up", () => {
+    expect(flatAnalysis.cliffs.length).toBe(0);
+    const { container } = render(<CurveChart analysis={flatAnalysis} ctx={{ unit: "year" }} />);
+    expect(container.querySelectorAll("button.drop-marker").length).toBe(0);
+    expect(container.querySelector(".drop-hint")).toBeNull();
+    expect(container.querySelector(".drop-card")).toBeNull();
+  });
+
+  it("markers are real, labeled buttons (keyboard + screen-reader reachable)", () => {
+    const { container } = render(<CurveChart analysis={cliffAnalysis} ctx={{ unit: "year" }} />);
+    const marker = container.querySelector("button.drop-marker")!;
+    expect(marker.tagName).toBe("BUTTON");
+    expect(marker.getAttribute("aria-label")).toMatch(/drop near .* lose about \$4,000/i);
+  });
+
+  it("tapping a drop opens a card naming the money lost and which help ends", () => {
+    const { container } = render(<CurveChart analysis={cliffAnalysis} ctx={{ unit: "year" }} />);
+    expect(container.querySelector(".drop-card")).toBeNull();
+    fireEvent.click(container.querySelector("button.drop-marker")!);
+    const card = container.querySelector(".drop-card")!;
+    expect(card).toBeTruthy();
+    expect(card.textContent).toMatch(/\$10,000 a year/); // where the drop is (pay level)
+    expect(card.textContent).toMatch(/\$4,000/); // how much money is lost
+    expect(card.textContent).toMatch(/SNAP/);
+    expect(card.textContent).toMatch(/TANF/);
+  });
+
+  it("tapping the same drop again closes the card", () => {
+    const { container } = render(<CurveChart analysis={cliffAnalysis} ctx={{ unit: "year" }} />);
+    const marker = () => container.querySelector("button.drop-marker")!;
+    fireEvent.click(marker());
+    expect(container.querySelector(".drop-card")).toBeTruthy();
+    fireEvent.click(marker());
+    expect(container.querySelector(".drop-card")).toBeNull();
+  });
+
+  it("shows the fallback line (no list) when a drop has no single named program", () => {
+    // Net falls $1,000 (a cliff) but SNAP only slips $50 (< the $100 loss
+    // floor), so programsLost is empty — the card must not render a bullet list.
+    const pts: CurvePoint[] = [
+      mkPoint(0, 20000, { snap: 500 }),
+      mkPoint(10000, 20000, { snap: 500 }),
+      mkPoint(20000, 19000, { snap: 450 }),
+      mkPoint(30000, 25000),
+    ];
+    const a = analyzeCurve(pts, 5000);
+    expect(a.cliffs.length).toBe(1);
+    expect(a.cliffs[0].programsLost).toEqual([]);
+    const { container } = render(<CurveChart analysis={a} ctx={{ unit: "year" }} />);
+    fireEvent.click(container.querySelector("button.drop-marker")!);
+    const card = container.querySelector(".drop-card")!;
+    expect(card.textContent).toMatch(/would get smaller/i);
+    expect(container.querySelector(".drop-card-list")).toBeNull();
+  });
+
+  it("the close button dismisses the card", () => {
+    const { container } = render(<CurveChart analysis={cliffAnalysis} ctx={{ unit: "year" }} />);
+    fireEvent.click(container.querySelector("button.drop-marker")!);
+    fireEvent.click(container.querySelector(".drop-card-close")!);
+    expect(container.querySelector(".drop-card")).toBeNull();
   });
 });
 

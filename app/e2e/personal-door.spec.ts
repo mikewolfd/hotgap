@@ -121,6 +121,19 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/pay from work.*Census ACS PUMS/i)).toBeVisible();
   await expect(page.getByText(/not your odds of getting there/i)).toBeVisible();
 
+  // Plan 9: tapping a drop on the chart opens a card naming what ends there.
+  // This mock's only cliff is the $8k fall at $30k where Medicaid disappears,
+  // so exactly one marker renders and its card names Medicaid. No card until
+  // it's tapped.
+  await expect(page.locator(".drop-card")).toHaveCount(0);
+  const dropMarker = page.locator("button.drop-marker");
+  await expect(dropMarker).toHaveCount(1);
+  await dropMarker.click();
+  const dropCard = page.locator(".drop-card");
+  await expect(dropCard).toBeVisible();
+  await expect(dropCard.getByText(/Medicaid/i)).toBeVisible();
+  await expect(dropCard.getByText(/drops what you keep by about \$8,000/i)).toBeVisible();
+
   // Plan 6 Task 5: the take-up toggles are live on every result, and
   // flipping one recomputes the curve for real (not just a local re-render).
   // Flip housing off -> on; the mocked route above answers the resulting
