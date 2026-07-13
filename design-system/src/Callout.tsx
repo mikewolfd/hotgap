@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 export interface CalloutProps {
   /** "info" is a teal-edged note (e.g. an honesty box); "warn" is a red alert
@@ -16,9 +16,12 @@ export interface CalloutProps {
  * problems. Keep the copy plain and never advise — state facts.
  */
 export function Callout({ tone = "info", title, children }: CalloutProps) {
+  const titleId = useId();
+  const cls = tone === "warn" ? "callout callout-warn" : tone === "plain" ? "callout callout-plain" : "callout";
   return (
-    <section className={tone === "warn" ? "callout callout-warn" : tone === "plain" ? "callout callout-plain" : "callout"}>
-      {title && <h2>{title}</h2>}
+    // When titled, the section is a named landmark (screen-reader region nav).
+    <section className={cls} aria-labelledby={title ? titleId : undefined}>
+      {title && <h2 id={titleId}>{title}</h2>}
       {children}
     </section>
   );

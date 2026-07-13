@@ -3,7 +3,8 @@ import { ARCHETYPES, DEFAULT_ARCHETYPE } from "@hotgap/shared";
 import {
   ChoroplethMap,
   Legend,
-  rampLegendItems,
+  buildRamp,
+  RAMP_COLOR_VARS,
   Select,
   type StateValues,
   type UspsCode,
@@ -97,12 +98,13 @@ export function PlacesPage() {
     return v;
   }, [archetypeId, metric]);
 
-  // Largest observed value: drives the honest "no cliff found" fallback below
-  // (max <= 0 means a genuinely flat archetype under this metric).
-  const rampMax = useMemo(
-    () => Math.max(0, ...Object.values(values).filter((n): n is number => typeof n === "number")),
+  // The same 5-bin ramp the DS map shades by, so the legend's bands (and the
+  // "no cliff found" fallback when max <= 0) always agree with the map.
+  const ramp = useMemo(
+    () => buildRamp(Object.values(values).filter((n): n is number => typeof n === "number")),
     [values],
   );
+  const rampMax = ramp.max;
 
   const metricValueLabel = metric === "leap" ? t("places.metric.leap") : t("places.metric.loss");
   const legendTitle = metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title");
@@ -163,6 +165,12 @@ export function PlacesPage() {
           selected={selected}
           valueLabel={metricValueLabel}
           ariaLabel={metric === "leap" ? t("places.map.altLeap") : t("places.map.alt")}
+          stateLabel={(name, value, hasData) =>
+            hasData
+              ? (metric === "leap"
+                ? t("places.map.stateLabelLeap", { state: name, amount: formatDollars(value) })
+                : t("places.map.stateLabel", { state: name, loss: formatDollars(value) }))
+              : name}
           formatValue={(v) => formatDollars(v)}
           onSelect={selectState}
         />
@@ -214,7 +222,15 @@ export function PlacesPage() {
             <p>{t("places.legend.noneFound")}</p>
           </div>
         ) : (
-          <Legend title={legendTitle} items={rampLegendItems(values, (v) => formatDollars(v))} />
+          <Legend
+            title={legendTitle}
+            items={ramp.upperBounds.map((upper, i) => ({
+              color: RAMP_COLOR_VARS[i],
+              label: metric === "leap"
+                ? t("places.legend.leapUpTo", { amount: formatDollars(upper) })
+                : t("places.legend.upTo", { amount: formatDollars(upper) }),
+            }))}
+          />
         ))}
 
       {selected && selectedMetrics && (

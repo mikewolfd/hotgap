@@ -20,7 +20,7 @@ export function Landing() {
         <Door
           title={t("landing.places.title")}
           description={t("landing.places.body")}
-          cta={t("landing.check.cta")}
+          cta={t("landing.places.cta")}
           href="#/places"
         />
       </nav>

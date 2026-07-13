@@ -83,7 +83,7 @@ export function ZipScreen({ answers, dispatch }: { answers: FlowAnswers; dispatc
     <>
       <Field
         id={id} label={t("flow.zip.q")} hint={t("flow.zip.hint")}
-        inputMode="numeric" value={answers.zip}
+        inputMode="numeric" autoComplete="postal-code" value={answers.zip}
         // Field has no maxLength; cap to 5 digits here so the old maxLength={5}
         // behavior is preserved (and it's more robust than the attribute).
         onChange={(v) => dispatch({ type: "setZip", zip: v.replace(/\D/g, "").slice(0, 5) })}
@@ -329,6 +329,8 @@ export function GetsScreen({ answers, dispatch }: { answers: FlowAnswers; dispat
       <p className="hint">{t("flow.gets.hint")}</p>
       <CheckboxGroup
         legend={t("flow.gets.q")}
+        onText={t("common.yes")}
+        offText={t("common.no")}
         options={visible.map((r) => ({ value: r.key, label: r.label }))}
         value={visible.filter((r) => answers[r.key]).map((r) => r.key)}
         onChange={(next) => {

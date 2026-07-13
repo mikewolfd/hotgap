@@ -27,6 +27,9 @@ export interface ChoroplethMapProps {
   /** Accessible name for the whole map — override to say what the shading means
    *  (e.g. "A map shaded darker where the biggest yearly loss is bigger"). */
   ariaLabel?: string;
+  /** Build each state's accessible label — override to pass a full, translated
+   *  sentence (e.g. "Oregon: needs a jump of up to $27,500 to clear it."). */
+  stateLabel?: (name: string, value: number, hasData: boolean) => string;
   onSelect?: (usps: string) => void;
 }
 
@@ -40,6 +43,7 @@ export function ChoroplethMap({
   values, selected, valueLabel = "value",
   formatValue = (v) => `$${Math.round(v).toLocaleString()}`,
   ariaLabel = "A map of the 50 states and Washington, DC, shaded darker where the value is bigger.",
+  stateLabel,
   onSelect,
 }: ChoroplethMapProps) {
   // Parse the atlas lazily inside the component so a bare barrel import never
@@ -64,7 +68,9 @@ export function ChoroplethMap({
         const d = pathGen(f) ?? undefined;
         const noData = !has || !Number.isFinite(value);
         const fill = noData ? "var(--line)" : RAMP_COLOR_VARS[ramp.binIndex(value)];
-        const label = noData ? `${name}: no data` : `${name}: ${valueLabel} ${formatValue(value)}`;
+        const label = stateLabel
+          ? stateLabel(name, value, !noData)
+          : noData ? `${name}: no data` : `${name}: ${valueLabel} ${formatValue(value)}`;
         return (
           <path
             key={usps}

@@ -12,6 +12,8 @@ export interface FieldProps {
   inputMode?: "text" | "numeric" | "decimal";
   /** Narrow the input (e.g. for an age or a small count). */
   small?: boolean;
+  /** Browser autofill hint, e.g. "postal-code". */
+  autoComplete?: string;
   onChange?: (value: string) => void;
   id?: string;
 }
@@ -22,7 +24,7 @@ export interface FieldProps {
  * is a large 52px tap target with a teal focus ring.
  */
 export function Field({
-  label, hint, error, prefix, value, placeholder, inputMode = "text", small, onChange, id,
+  label, hint, error, prefix, value, placeholder, inputMode = "text", small, autoComplete, onChange, id,
 }: FieldProps) {
   const inputId = id ?? label.replace(/\s+/g, "-").toLowerCase();
   const errorId = `${inputId}-error`;
@@ -33,6 +35,7 @@ export function Field({
       value={value}
       placeholder={placeholder}
       inputMode={inputMode}
+      autoComplete={autoComplete}
       aria-invalid={error ? true : undefined}
       aria-describedby={error ? errorId : undefined}
       onChange={(e) => onChange?.(e.target.value)}

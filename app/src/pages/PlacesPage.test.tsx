@@ -37,7 +37,7 @@ describe("PlacesPage", () => {
     for (const p of paths) {
       expect(p.getAttribute("role")).toBe("button");
       expect(p.getAttribute("tabindex")).toBe("0");
-      expect(p.getAttribute("aria-label")).toMatch(/the pay gap to clear it \$/i);
+      expect(p.getAttribute("aria-label")).toMatch(/needs a jump of up to \$/i);
     }
   });
 
@@ -55,7 +55,7 @@ describe("PlacesPage", () => {
     // The map's per-state labels (aria-label, not text) speak in the leap
     // metric's word + a dollar figure.
     const label = container.querySelector("path.state-path")!.getAttribute("aria-label");
-    expect(label).toMatch(/the pay gap to clear it \$/i);
+    expect(label).toMatch(/needs a jump of up to \$/i);
   });
 
   it("toggling to 'Biggest loss' switches the legend title and the map's per-state labels", () => {
@@ -68,8 +68,8 @@ describe("PlacesPage", () => {
     // word + a dollar figure, and no longer in the leap metric's word.
     const paths = container.querySelectorAll("path.state-path");
     for (const p of paths) {
-      expect(p.getAttribute("aria-label")).toMatch(/biggest loss \$/i);
-      expect(p.getAttribute("aria-label")).not.toMatch(/the pay gap to clear it/i);
+      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/i);
+      expect(p.getAttribute("aria-label")).not.toMatch(/needs a jump of up to/i);
     }
   });
 
