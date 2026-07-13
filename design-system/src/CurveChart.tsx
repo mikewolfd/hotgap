@@ -21,6 +21,10 @@ export interface CurveChartLabels {
   cardLose?: string;
   cardNone?: string;
   programLabel?: (id: ProgramId) => string;
+  /** A plain "about N hours a week at minimum wage" line for a drop card, given
+   *  the drop's annual earnings. Return null to show no line (e.g. above
+   *  full-time minimum, where an hours count would be nonsensical). */
+  cardHours?: (earnings: number) => string | null;
 }
 
 export interface CurveChartProps {
@@ -34,6 +38,12 @@ export interface CurveChartProps {
   /** Show the "you are here" dot. Off for comparison charts with no single
    *  household. Default true. */
   showCurrent?: boolean;
+  /** A full-time-minimum-wage reference marker: a dashed vertical line at
+   *  `earnings` (annual, full-time at the state's minimum wage) with a plain
+   *  `label` shown below the chart. Real-world context only — visually
+   *  subordinate to the "you are here" dot. Drawn only when `earnings` falls
+   *  inside the charted pay range. */
+  minWageLine?: { earnings: number; label: string };
   /** Override the component's built-in English copy — pass gate-checked /
    *  translated strings from a host app. Any omitted field keeps the English
    *  default. */
@@ -46,7 +56,7 @@ export interface CurveChartProps {
  * opens a card naming how much money the drop costs and exactly which help ends
  * there. The dots are real buttons (44px, keyboard-focusable).
  */
-export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCurrent = true, labels }: CurveChartProps) {
+export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCurrent = true, minWageLine, labels }: CurveChartProps) {
   const pts = analysis.points;
   // Hooks run unconditionally (rules of hooks); the degenerate-input guard and
   // every pts-derived value come after them.
@@ -129,6 +139,16 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
   const labelNearCliff = hasCurrent
     && analysis.cliffs.some((c) => Math.abs(currentEarningsClamped - c.startEarnings) < 6000);
 
+  // The full-time-minimum-wage reference line, drawn only when its pay lands
+  // inside the charted range (it always should for real wages, but a degenerate
+  // domain shouldn't push the marker off-axis).
+  const showMinWage = !!minWageLine
+    && minWageLine.earnings > pts[0].earnings
+    && minWageLine.earnings < pts[pts.length - 1].earnings;
+
+  // Resolve the drop card's optional "hours a week" line once (it may be null).
+  const hoursLine = selected && labels?.cardHours ? labels.cardHours(selected.startEarnings) : null;
+
   return (
     <figure className="chart-figure">
       <figcaption className="chart-title">{labels?.title ?? "Money you keep as your pay goes up"}</figcaption>
@@ -154,6 +174,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
           <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">{labels?.xLabel ? labels.xLabel(unitLabel) : `Your pay (${unitLabel})`}</text>
           <text x={14} y={(M.top + H - M.bottom) / 2} textAnchor="middle" className="axis-label"
             transform={`rotate(-90 14 ${(M.top + H - M.bottom) / 2})`}>{labels?.yLabel ?? "Money left per year"}</text>
+          {showMinWage && (
+            <line className="minwage-guide" x1={x(minWageLine!.earnings)} x2={x(minWageLine!.earnings)} y1={M.top} y2={H - M.bottom} />
+          )}
           <path d={path} className="net-line" fill="none" />
           {selected && (
             <line className="drop-guide" x1={x(selected.startEarnings)} x2={x(selected.startEarnings)} y1={M.top} y2={H - M.bottom} />
@@ -199,6 +222,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
               ? labels.cardAmount(formatWage(selected.startEarnings, unit, hoursPerWeek), formatDollars(selected.drop))
               : `At ${formatWage(selected.startEarnings, unit, hoursPerWeek)}, more pay drops what you keep by about ${formatDollars(selected.drop)}.`}
           </p>
+          {hoursLine && <p className="drop-card-hours">{hoursLine}</p>}
           {selected.programsLost.length > 0 ? (
             <>
               <p className="drop-card-lose">{labels?.cardLose ?? "You'd lose:"}</p>
@@ -214,6 +238,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
 
       {analysis.dangerZones.length > 0 && (
         <p className="chart-legend"><span className="legend-swatch" aria-hidden /> {labels?.dangerZone ?? "Rough zone: more pay, less money"}</p>
+      )}
+      {showMinWage && (
+        <p className="minwage-note"><span className="minwage-swatch" aria-hidden /> {minWageLine!.label}</p>
       )}
       {analysis.cliffs.length > 0 && <p className="drop-hint">{labels?.dropHint ?? "Tap a red dot to see what you lose."}</p>}
     </figure>

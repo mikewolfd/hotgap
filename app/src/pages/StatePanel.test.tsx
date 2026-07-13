@@ -71,6 +71,26 @@ describe("StatePanel", () => {
     expect(container.querySelector("circle.you-dot")).toBeNull();
   });
 
+  it("draws the full-time-minimum-wage reference line + note for the picked state", async () => {
+    // Texas's federal $7.25 floor puts full-time minimum ($15,080) inside this
+    // 0–30k fixture's range, so the places door's drill-down chart shows the same
+    // real-world reference marker the personal door does — keyed to the picked
+    // state, not the household.
+    const txFile = {
+      generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "TX",
+      archetypes: { "single-2": { points: [mkPoint(0, 20000), mkPoint(5000, 26000), mkPoint(10000, 18000), mkPoint(30000, 30000)] } },
+    };
+    const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(txFile) } as Response));
+    const { container } = render(
+      <StatePanel {...baseProps()} stateCode="TX" stateName="Texas" fetchImpl={fetchImpl as unknown as typeof fetch} />,
+    );
+    await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
+    expect(container.querySelector("line.minwage-guide")).toBeTruthy();
+    const note = container.querySelector(".minwage-note")!;
+    expect(note.textContent).toMatch(/full-time at minimum wage/i);
+    expect(note.textContent).toMatch(/\$7\.25 an hour/);
+  });
+
   it("shows a plain-language error when the fetch fails", async () => {
     const fetchImpl = vi.fn(() => Promise.reject(new Error("network down")));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);

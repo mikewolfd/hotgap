@@ -96,6 +96,13 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
   await expect(page.getByText(/losing medicaid means moving to other coverage/i)).toBeVisible();
 
+  // Real-world framing: a dashed reference line marks full-time pay at the
+  // state's minimum wage (CA $16.90 × 2080 ≈ $35.2k, inside this 0–50k chart),
+  // with a plain note pairing it with the number.
+  await expect(page.getByText(/the dashed line is full-time at minimum wage/i)).toBeVisible();
+  await expect(page.getByText(/\$16\.90 an hour/)).toBeVisible();
+  await expect(page.locator("line.minwage-guide")).toHaveCount(1);
+
   // "How help changes as pay rises" section: this mocked curve's danger zone never
   // recovers by the last sampled point ($50k net $31k < the $32k peak at
   // $30k), so the leap is a lower bound (widest zone = axisMax($50k) -
@@ -135,6 +142,9 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(dropCard).toBeVisible();
   await expect(dropCard.getByText(/Medicaid/i)).toBeVisible();
   await expect(dropCard.getByText(/drops what you keep by about \$8,000/i)).toBeVisible();
+  // This $30k drop is below CA full-time minimum, so the card also translates it
+  // into hours a week at minimum wage (~34h at $16.90).
+  await expect(dropCard.getByText(/about 34 hours a week at minimum wage in California/i)).toBeVisible();
 
   // Plan 6 Task 5: the take-up toggles are live on every result, and
   // flipping one recomputes the curve for real (not just a local re-render).

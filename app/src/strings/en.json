@@ -79,6 +79,9 @@
   "chart.drop.card.lose": "You'd lose:",
   "chart.drop.card.none": "A few kinds of help would get smaller here.",
   "chart.drop.card.close": "Close",
+  "chart.minWage.hours": "That is about {hours} hours a week at minimum wage in {state}.",
+  "chart.minWage.hoursOne": "That is about 1 hour a week at minimum wage in {state}.",
+  "chart.minWage.line": "The dashed line is full-time at minimum wage ({wage} an hour). That is about {income} a year.",
 
   "result.why.title": "Why does this happen?",
   "result.why.lost": "Near {wage}, you could lose {programs}.",
