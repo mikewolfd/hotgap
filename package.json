@@ -5,6 +5,7 @@
   "engines": { "node": ">=22" },
   "workspaces": ["shared", "worker", "app", "pipeline", "design-system"],
   "scripts": {
+    "prepare": "npm run build --workspace @hotgap/design-system",
     "test": "vitest run",
     "typecheck": "tsc -b shared worker app pipeline",
     "readability": "node scripts/readability.mjs",
