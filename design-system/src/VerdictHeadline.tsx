@@ -8,9 +8,9 @@ export interface VerdictHeadlineProps {
 }
 
 /**
- * The big answer at the top of a result — the one line a reader leaves with.
+ * The big answer at the top of a result — the one plain fact a reader takes away.
  * Red when there's a benefits cliff ahead, teal when the path is clear. Keep it
- * short and plain ("Watch out near $14.50 an hour").
+ * short and plain (e.g. "Near $14.50 an hour, more pay can mean less money").
  */
 export function VerdictHeadline({ tone = "good", children }: VerdictHeadlineProps) {
   return (

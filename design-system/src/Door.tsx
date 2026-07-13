@@ -19,11 +19,16 @@ export interface DoorProps {
  * link; `highlighted` gives it the teal border.
  */
 export function Door({ title, description, cta, highlighted, href, onClick }: DoorProps) {
-  return (
-    <a className={`door${highlighted ? " door-check" : ""}`} href={href ?? "#"} onClick={onClick}>
+  const className = `door${highlighted ? " door-check" : ""}`;
+  const inner = (
+    <>
       <h2>{title}</h2>
       <p className="hint">{description}</p>
       <span className="door-cta">{cta} →</span>
-    </a>
+    </>
   );
+  if (href) {
+    return <a className={className} href={href} onClick={onClick}>{inner}</a>;
+  }
+  return <button type="button" className={className} onClick={onClick}>{inner}</button>;
 }

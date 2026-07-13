@@ -4,11 +4,11 @@
   "description": "HotGap design system — tokens and plain-language UI components for the benefits-cliff explorer.",
   "license": "AGPL-3.0",
   "type": "module",
-  "module": "dist/index.mjs",
-  "main": "dist/index.mjs",
+  "module": "dist/index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.mjs" },
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./styles.css": "./src/styles.css"
   },
   "files": ["dist", "src/styles.css"],

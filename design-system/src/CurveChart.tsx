@@ -28,6 +28,25 @@ export interface CurveChartProps {
  */
 export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCurrent = true }: CurveChartProps) {
   const pts = analysis.points;
+  // Hooks run unconditionally (rules of hooks); the degenerate-input guard and
+  // every pts-derived value come after them.
+  const [selectedStart, setSelectedStart] = useState<number | null>(null);
+  const cardId = useId();
+  const markerRefs = useRef(new Map<number, HTMLButtonElement>());
+  const selected = analysis.cliffs.find((c) => c.startEarnings === selectedStart) ?? null;
+  useEffect(() => {
+    if (selectedStart !== null && !selected) setSelectedStart(null);
+  }, [selectedStart, selected]);
+
+  if (pts.length < 2) {
+    return (
+      <figure className="chart-figure">
+        <figcaption className="chart-title">Money you keep as your pay goes up</figcaption>
+        <p className="hint">Not enough data to draw this yet.</p>
+      </figure>
+    );
+  }
+
   const x = scaleLinear([pts[0].earnings, pts[pts.length - 1].earnings], [M.left, W - M.right]);
   const yMax = Math.max(...pts.map((p) => p.netIncome));
   const y = scaleLinear([0, yMax * 1.05], [H - M.bottom, M.top]);
@@ -39,15 +58,21 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
 
   const unitLabel = { hour: "$/hour", month: "$/month", year: "$/year" }[unit];
 
-  const [selectedStart, setSelectedStart] = useState<number | null>(null);
-  const selected = analysis.cliffs.find((c) => c.startEarnings === selectedStart) ?? null;
-  const netAt = (earnings: number) => (pts.find((p) => p.earnings === earnings) ?? pts[0]).netIncome;
-  const cardId = useId();
-  const markerRefs = useRef(new Map<number, HTMLButtonElement>());
-
-  useEffect(() => {
-    if (selectedStart !== null && !selected) setSelectedStart(null);
-  }, [selectedStart, selected]);
+  const netAt = (earnings: number): number => {
+    if (earnings <= pts[0].earnings) return pts[0].netIncome;
+    const last = pts[pts.length - 1];
+    if (earnings >= last.earnings) return last.netIncome;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      if (earnings >= a.earnings && earnings <= b.earnings) {
+        const span = b.earnings - a.earnings;
+        if (span === 0) return a.netIncome;
+        const t = (earnings - a.earnings) / span;
+        return a.netIncome + t * (b.netIncome - a.netIncome);
+      }
+    }
+    return last.netIncome;
+  };
 
   const closeCard = () => {
     const marker = selectedStart !== null ? markerRefs.current.get(selectedStart) : undefined;
@@ -92,7 +117,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
           {selected && (
             <line className="drop-guide" x1={x(selected.startEarnings)} x2={x(selected.startEarnings)} y1={M.top} y2={H - M.bottom} />
           )}
-          {showCurrent && (
+          {showCurrent && typeof analysis.currentEarnings === "number" && typeof analysis.currentNet === "number" && (
             <>
               <circle className="you-dot" r={6} cx={x(analysis.currentEarnings)} cy={y(analysis.currentNet)} />
               <text x={x(analysis.currentEarnings)} y={Math.max(M.top + 10, y(analysis.currentNet) - 12)} textAnchor="middle" className="you-label">You are here</text>

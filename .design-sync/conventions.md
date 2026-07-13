@@ -3,7 +3,10 @@
 HotGap is a plain-language civic tool that shows people benefits cliffs (how
 earning more can leave a household with less). Design for a **5th-grade reading
 level**, and **show-and-explain, never advise** — state facts and thresholds,
-never tell the reader what they *should* do.
+never tell the reader what they *should* do. Never frame benefits as a trap to
+escape or nudge the reader toward earning off them — describe pay thresholds
+neutrally. Banned framings: 'you should', 'watch out', 'clear the trap', 'get
+off help', 'you'd need a raise'.
 
 ## Setup — no provider, just the stylesheet
 
@@ -18,7 +21,7 @@ import { VerdictHeadline, CurveChart, Callout } from "@hotgap/design-system";
 // styles.css is loaded once for the whole surface (the design tool does this).
 
 <div style={{ maxWidth: 560, margin: "0 auto", padding: 16 }}>
-  <VerdictHeadline tone="danger">Watch out near $14.50 an hour.</VerdictHeadline>
+  <VerdictHeadline tone="danger">Near $14.50 an hour, more pay can mean less money.</VerdictHeadline>
   <CurveChart analysis={analysis} unit="hour" hoursPerWeek={40} />
   <Callout tone="info" title="Please know">
     <p>This is a guess based on public rules. Your caseworker decides your real benefits.</p>

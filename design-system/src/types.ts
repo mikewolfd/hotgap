@@ -5,7 +5,7 @@
 /** How pay is shown on an axis or in copy. */
 export type PayUnit = "hour" | "month" | "year";
 
-/** The means-tested programs HotGap tracks. */
+/** The public-benefit programs HotGap tracks. */
 export type ProgramId =
   | "snap" | "tanf" | "housing" | "schoolmeals" | "eitc" | "ctc"
   | "aca" | "medicaid" | "chip" | "headstart" | "wic" | "ssi";
@@ -60,10 +60,15 @@ export interface CurveAnalysis {
   points: CurvePoint[];
   cliffs: Cliff[];
   dangerZones: DangerZone[];
-  /** Where the household is today (omit on comparison charts with no "you"). */
-  currentEarnings: number;
-  currentNet: number;
+  /** Where the household is today. Only needed when the chart shows a "you are
+   *  here" dot; omit on comparison charts with no single household. */
+  currentEarnings?: number;
+  /** Only needed when the chart shows a "you are here" dot. */
+  currentNet?: number;
 }
 
+/** The 51 two-letter USPS codes: the 50 states plus Washington, DC. */
+export type UspsCode = "AL"|"AK"|"AZ"|"AR"|"CA"|"CO"|"CT"|"DE"|"DC"|"FL"|"GA"|"HI"|"ID"|"IL"|"IN"|"IA"|"KS"|"KY"|"LA"|"ME"|"MD"|"MA"|"MI"|"MN"|"MS"|"MO"|"MT"|"NE"|"NV"|"NH"|"NJ"|"NM"|"NY"|"NC"|"ND"|"OH"|"OK"|"OR"|"PA"|"RI"|"SC"|"SD"|"TN"|"TX"|"UT"|"VT"|"VA"|"WA"|"WV"|"WI"|"WY";
+
 /** Two-letter USPS code → a value to shade a state by (e.g. worst yearly loss). */
-export type StateValues = Partial<Record<string, number>>;
+export type StateValues = Partial<Record<UspsCode, number>>;

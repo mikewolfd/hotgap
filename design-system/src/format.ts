@@ -7,14 +7,16 @@ const roundTo = (n: number, step: number) => Math.round(n / step) * step;
 
 /** Convert a yearly amount into a display unit (per hour / month / year). */
 export function fromAnnual(annual: number, unit: PayUnit, hoursPerWeek = DEFAULT_HOURS): number {
-  if (unit === "hour") return annual / (hoursPerWeek * 52);
+  const hpw = hoursPerWeek > 0 ? hoursPerWeek : DEFAULT_HOURS;
+  if (unit === "hour") return annual / (hpw * 52);
   if (unit === "month") return annual / 12;
   return annual;
 }
 
 /** Convert a display-unit amount back into a yearly amount (exact inverse). */
 export function toAnnual(amount: number, unit: PayUnit, hoursPerWeek = DEFAULT_HOURS): number {
-  if (unit === "hour") return amount * hoursPerWeek * 52;
+  const hpw = hoursPerWeek > 0 ? hoursPerWeek : DEFAULT_HOURS;
+  if (unit === "hour") return amount * hpw * 52;
   if (unit === "month") return amount * 12;
   return amount;
 }
@@ -26,9 +28,10 @@ export function formatDollars(n: number): string {
 
 /** Yearly pay shown in a chosen unit (e.g. "$14.50 an hour", "$30,000 a year"). */
 export function formatWage(annual: number, unit: PayUnit, hoursPerWeek = DEFAULT_HOURS): string {
+  const hpw = hoursPerWeek > 0 ? hoursPerWeek : DEFAULT_HOURS;
   switch (unit) {
     case "hour": {
-      const w = roundTo(annual / (hoursPerWeek * 52), 0.25);
+      const w = roundTo(annual / (hpw * 52), 0.25);
       const s = Number.isInteger(w) ? money.format(w) : `$${w.toFixed(2)}`;
       return `${s} an hour`;
     }

@@ -4,7 +4,7 @@ import type { Feature, Geometry } from "geojson";
 import rawTopology from "us-atlas/states-albers-10m.json";
 import { FIPS_TO_USPS, STATE_NAMES } from "./usGeo.js";
 import { buildRamp, RAMP_COLOR_VARS } from "./ramp.js";
-import type { StateValues } from "./types.js";
+import type { StateValues, UspsCode } from "./types.js";
 
 // us-atlas ships a pre-projected Albers topology, so geoPath takes NO projection.
 const topology = rawTopology as unknown as {
@@ -44,24 +44,28 @@ export function ChoroplethMap({
     <svg
       viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`}
       role="group"
-      aria-label="A map of the 50 states and Washington, DC, shaded by value."
+      aria-label="A map of the 50 states and Washington, DC, shaded darker where the value is bigger."
       className="places-map"
     >
       {usStates.features.map((f) => {
         const usps = FIPS_TO_USPS[String(f.id)];
         if (!usps) return null;
-        const value = values[usps] ?? 0;
+        const has = Object.prototype.hasOwnProperty.call(values, usps);
+        const value = has ? (values[usps as UspsCode] ?? 0) : 0;
         const name = STATE_NAMES[usps] ?? usps;
         const d = pathGen(f) ?? undefined;
+        const noData = !has || !Number.isFinite(value);
+        const fill = noData ? "var(--line)" : RAMP_COLOR_VARS[ramp.binIndex(value)];
+        const label = noData ? `${name}: no data` : `${name}: ${valueLabel} ${formatValue(value)}`;
         return (
           <path
             key={usps}
             d={d}
             className={`state-path${selected === usps ? " selected" : ""}`}
-            style={{ fill: RAMP_COLOR_VARS[ramp.binIndex(value)] }}
+            style={{ fill }}
             role="button"
             tabIndex={0}
-            aria-label={`${name}: ${valueLabel} ${formatValue(value)}`}
+            aria-label={label}
             onClick={() => onSelect?.(usps)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(usps); }

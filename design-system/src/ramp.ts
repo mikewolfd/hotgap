@@ -27,7 +27,11 @@ export function buildRamp(values: number[]): Ramp {
   if (max <= 0) return { max: 0, upperBounds: [0], binIndex: () => 0 };
   const step = max / RAMP_BINS;
   const upperBounds = Array.from({ length: RAMP_BINS }, (_, i) => Math.round(step * (i + 1)));
-  const binIndex = (value: number): number =>
-    value <= 0 ? 0 : Math.min(RAMP_BINS - 1, Math.floor(value / step));
+  const binIndex = (value: number): number => {
+    if (!Number.isFinite(value)) return 0;
+    if (value <= 0) return 0;
+    const i = upperBounds.findIndex((b) => b >= value);
+    return i === -1 ? RAMP_BINS - 1 : Math.min(RAMP_BINS - 1, i);
+  };
   return { max, upperBounds, binIndex };
 }

@@ -14,6 +14,12 @@
   --card: #ffffff;
   --line: #e4ded2;
   --radius: 14px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --space-section: 28px;
+  --font-caption: 0.85rem; --font-body: 1rem; --font-label: 1rem; --font-h2: 1.3rem; --font-h1: 1.6rem; --font-display: 1.9rem;
+  --font-regular: 400; --font-bold: 700;
+  --shadow-1: 0 2px 8px rgba(0,0,0,.08);
+  --field-border: #a39a8c;
   /* Sequential choropleth ramp: one hue (the --danger clay-red family), 5
      quantized steps light -> dark (bin 1 = smallest loss, bin 5 = biggest).
      Derived in OKLCH: monotone lightness, adjacent step >= 0.06 L, light end
@@ -31,6 +37,7 @@
     --accent: #4fb3a9; --accent-ink: #10201e;
     --danger: #e0705a; --danger-soft: #3a241f;
     --card: #26231f; --line: #3a362f;
+    --field-border: #6f6a60;
     /* Re-derived (not flipped) against the dark surface #1c1a17. */
     --danger-ramp-1: #f8866f;
     --danger-ramp-2: #d77662;
@@ -46,17 +53,28 @@ body {
   line-height: 1.5;
 }
 h1 { font-size: 1.6rem; line-height: 1.25; margin: 0.4em 0; }
-h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
+h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .hint { color: var(--muted); margin: 0.2em 0 0.8em; }
 .brand { font-weight: 800; letter-spacing: 0.02em; color: var(--accent); margin: 0; }
 
 /* --- Field --- */
 .input {
   width: 100%; min-height: 52px; font-size: 1.2rem; padding: 8px 14px;
-  border: 2px solid var(--line); border-radius: var(--radius);
+  border: 2px solid var(--field-border); border-radius: var(--radius);
   background: var(--card); color: var(--ink);
 }
 .input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.primary:focus-visible, .ghost:focus-visible, .choice:focus-visible, .step-btn:focus-visible,
+.toggle:focus-visible, .door:focus-visible, .drop-card-close:focus-visible, .select:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+/* Ink ring on teal-filled controls (teal-on-teal would be invisible). */
+.choice.selected:focus-visible, .toggle.on:focus-visible, .primary:focus-visible {
+  outline-color: var(--ink);
+}
+/* Field error state (applied by Field.tsx). */
+.input-error { border-color: var(--danger); }
+.field-error { display: block; color: var(--danger); font-size: var(--font-caption); margin: 4px 0 0; font-weight: var(--font-bold); }
 .input-small { width: 6ch; }
 .field { display: block; margin: 12px 0; }
 .field-label { display: block; font-weight: 700; margin-bottom: 6px; }
@@ -99,7 +117,7 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 
 /* --- VerdictHeadline --- */
 .verdict-headline { font-size: 1.7rem; margin: 0.4em 0; }
@@ -111,7 +129,7 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
 .chart-title { font-weight: 700; margin-bottom: 6px; }
 .curve-chart { width: 100%; height: auto; background: var(--card); border-radius: var(--radius); }
 .net-line { stroke: var(--accent); stroke-width: 3; }
-.danger-zone { fill: var(--danger-soft); }
+.danger-zone { fill: var(--danger-soft); stroke: var(--danger); stroke-width: 1; stroke-opacity: 0.4; }
 .tick-line { stroke: var(--line); stroke-width: 1; }
 .tick-text { font-size: 11px; fill: var(--muted); }
 .axis-label { font-size: 12px; fill: var(--muted); }
@@ -215,3 +233,13 @@ h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
   background: var(--danger-soft); border-radius: 0 var(--radius) var(--radius) 0;
   font-weight: 700;
 }
+
+/* --- Card + layout utilities --- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-4); }
+.card-title { font-size: var(--font-h2); font-weight: var(--font-bold); margin: 0 0 var(--space-1); }
+.card-subtitle { color: var(--muted); margin: 0 0 var(--space-3); }
+.nav-row { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-5); }
+.shell { max-width: 560px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-6); }
+
+/* --- Select --- */
+.select { width: 100%; min-height: 48px; font-size: var(--font-body); padding: 8px 14px; border: 2px solid var(--field-border); border-radius: var(--radius); background: var(--card); color: var(--ink); }

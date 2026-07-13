@@ -3,7 +3,7 @@ export interface EscapePathProps {
   healthCost?: string;
   /** The "you're safe past here" line (bold). */
   safe?: string;
-  /** The "you'd need a raise this big to clear the trap" line (bold). */
+  /** The pay distance across the roughest zone, as a plain line (bold). */
   leap?: string;
   /** Programs that end, as plain lines. */
   ends?: string[];
@@ -12,8 +12,8 @@ export interface EscapePathProps {
 }
 
 /**
- * "Your path off help" — the panel that names the safe-exit pay, the size of
- * the single raise that clears a trap ("the leap"), and where each program ends.
+ * How help changes as pay rises — the pay past which more always helps ("safe
+ * exit"), the pay distance across the roughest zone, and where each program ends.
  * Descriptive only: it shows thresholds, it never tells the reader what to do.
  */
 export function EscapePath({ healthCost, safe, leap, ends, endsTitle = "When help ends" }: EscapePathProps) {
