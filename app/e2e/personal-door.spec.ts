@@ -48,7 +48,9 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/looks like you live in california/i)).toBeVisible();
   await page.getByRole("button", { name: /next/i }).click();
 
-  await page.getByRole("radio", { name: /just me/i }).click();
+  // The household choice is a design-system RadioGroup: the real <input> is
+  // visually-hidden, so click its visible pill label.
+  await page.getByText("Just me", { exact: true }).click();
   await page.getByLabel(/how old are you/i).fill("30");
   await page.getByRole("button", { name: "more kids" }).click();
   await page.getByRole("button", { name: /next/i }).click();
@@ -225,7 +227,9 @@ test("county note appears on the result when the ZIP resolves to a known county"
   await page.getByLabel(/where do you live/i).fill("94110");
   await page.getByRole("button", { name: /next/i }).click();
 
-  await page.getByRole("radio", { name: /just me/i }).click(); // no kids -> no childcare screen
+  // The household choice is a design-system RadioGroup: the real <input> is
+  // visually-hidden, so click its visible pill label.
+  await page.getByText("Just me", { exact: true }).click(); // no kids -> no childcare screen
   await page.getByLabel(/how old are you/i).fill("30");
   await page.getByRole("button", { name: /next/i }).click();
 

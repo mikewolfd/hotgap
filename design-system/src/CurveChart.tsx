@@ -213,9 +213,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
       )}
 
       {analysis.dangerZones.length > 0 && (
-        <p className="chart-legend"><span className="legend-swatch" aria-hidden /> Rough zone: more pay, less money</p>
+        <p className="chart-legend"><span className="legend-swatch" aria-hidden /> {labels?.dangerZone ?? "Rough zone: more pay, less money"}</p>
       )}
-      {analysis.cliffs.length > 0 && <p className="drop-hint">Tap a red dot to see what you lose.</p>}
+      {analysis.cliffs.length > 0 && <p className="drop-hint">{labels?.dropHint ?? "Tap a red dot to see what you lose."}</p>}
     </figure>
   );
 }

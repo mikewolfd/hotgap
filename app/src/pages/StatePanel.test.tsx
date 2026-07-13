@@ -117,7 +117,10 @@ describe("StatePanel", () => {
     );
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
     await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
-    expect(container.querySelector(".y-axis-label")?.textContent).toMatch(/after health costs/i);
+    // The DS CurveChart renders both axis labels with class `axis-label`; the
+    // y-axis one carries the after-health-costs framing (result.chart.yLabel).
+    const axisLabels = [...container.querySelectorAll(".axis-label")].map((el) => el.textContent ?? "");
+    expect(axisLabels.some((txt) => /after health costs/i.test(txt))).toBe(true);
   });
 
   it("re-fetches when the state or archetype changes", () => {
@@ -149,9 +152,10 @@ describe("StatePanel escape lines", () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(recoveringFile) } as Response),
     );
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
-    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$30,000");
-    expect(container.querySelector(".places-panel-leap")!.textContent).toContain("$20,000");
+    // The escape lines now render through the DS EscapePath (.escape-* classes).
+    await waitFor(() => expect(container.querySelector(".escape-safe")).toBeTruthy());
+    expect(container.querySelector(".escape-safe")!.textContent).toContain("$30,000");
+    expect(container.querySelector(".escape-leap")!.textContent).toContain("$20,000");
   });
 
   it("shows the honest safeNever line when the zone never recovers within the sweep", async () => {
@@ -165,12 +169,12 @@ describe("StatePanel escape lines", () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(stuckFile) } as Response),
     );
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
-    expect(container.querySelector(".places-panel-safe")!.textContent).toMatch(/still hits rough spots here/i);
+    await waitFor(() => expect(container.querySelector(".escape-safe")).toBeTruthy());
+    expect(container.querySelector(".escape-safe")!.textContent).toMatch(/still hits rough spots here/i);
     // leap = axisMax(20000) - zoneStart(10000) = 10000, and it's a lower bound
     // (open zone) — the "at least" phrasing, not the old "about more than".
-    expect(container.querySelector(".places-panel-leap")!.textContent).toContain("at least $10,000");
-    expect(container.querySelector(".places-panel-leap")!.textContent).not.toContain("more than");
+    expect(container.querySelector(".escape-leap")!.textContent).toContain("at least $10,000");
+    expect(container.querySelector(".escape-leap")!.textContent).not.toContain("more than");
   });
 
   it("lists 'when help ends here' thresholds in year-unit wages when programs phase out before the sweep ends", async () => {
@@ -191,18 +195,20 @@ describe("StatePanel escape lines", () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(withPrograms) } as Response),
     );
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    await waitFor(() => expect(container.querySelector(".places-panel-ends-list")).toBeTruthy());
+    await waitFor(() => expect(container.querySelector(".escape-ends-list")).toBeTruthy());
     // Fix 2: third-person "here", not the personal door's "for you" — the
     // panel elsewhere says "not your family", so "for you" contradicted it.
-    expect(container.querySelector(".places-panel-ends-title")!.textContent).toMatch(/when help ends here/i);
-    expect(container.querySelector(".places-panel-ends-title")!.textContent).not.toMatch(/for you/i);
-    expect(container.querySelector(".places-panel-ends-item")!.textContent).toMatch(/TANF.*\$0 a year/i);
+    // The DS EscapePath renders the ends list; the panel passes its own
+    // third-person places.panel.endsTitle to the endsTitle prop.
+    expect(container.querySelector(".escape-ends-title")!.textContent).toMatch(/when help ends here/i);
+    expect(container.querySelector(".escape-ends-title")!.textContent).not.toMatch(/for you/i);
+    expect(container.querySelector(".escape-ends-item")!.textContent).toMatch(/TANF.*\$0 a year/i);
   });
 
   it("shows no escape section while the curve is still loading", () => {
     const fetchImpl = vi.fn(() => new Promise(() => {}));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    expect(container.querySelector(".places-panel-escape")).toBeNull();
+    expect(container.querySelector(".escape-path")).toBeNull();
   });
 });
 
@@ -225,11 +231,12 @@ describe("StatePanel reach line", () => {
     };
     const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(file) } as Response));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    await waitFor(() => expect(container.querySelector(".places-panel-reach")).toBeTruthy());
-    expect(container.querySelector(".places-panel-safe")!.textContent).toContain("$63,800");
-    expect(container.querySelector(".places-panel-reach")!.textContent).toMatch(/more than about 50% of families like this earn/i);
-    // Comes right after the safe line (same reasoning as EscapePath).
-    expect(container.querySelector(".places-panel-reach")!.previousElementSibling?.className).toBe("places-panel-safe");
+    // The DS EscapePath has no separate reach slot, so the reach sentence is
+    // folded onto the end of the safe line — right where it elaborates on the
+    // safe-exit income the safe line names.
+    await waitFor(() => expect(container.querySelector(".escape-safe")?.textContent).toMatch(/more than about 50% of families like this earn/i));
+    const safeEl = container.querySelector(".escape-safe")!;
+    expect(safeEl.textContent).toContain("$63,800");
   });
 
   it("shows the honest top-pay line, with no fabricated percentile, when the zone never recovers", async () => {
@@ -241,9 +248,13 @@ describe("StatePanel reach line", () => {
     };
     const fetchImpl = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(stuckFile) } as Response));
     const { container } = render(<StatePanel {...baseProps()} fetchImpl={fetchImpl as unknown as typeof fetch} />);
-    await waitFor(() => expect(container.querySelector(".places-panel-reach")).toBeTruthy());
-    expect(container.querySelector(".places-panel-reach")!.textContent).toMatch(/still hit rough spots/i);
-    expect(container.querySelector(".places-panel-reach")!.textContent).not.toMatch(/\d/);
+    // Zone never recovers → the safe line is the "still hits rough spots"
+    // honesty branch, and the reach sentence folded onto it is the honest
+    // top-pay line with NO fabricated percentile (no digits at all).
+    await waitFor(() => expect(container.querySelector(".escape-safe")).toBeTruthy());
+    const safeEl = container.querySelector(".escape-safe")!;
+    expect(safeEl.textContent).toMatch(/still hit rough spots/i);
+    expect(safeEl.textContent).not.toMatch(/\d/);
   });
 
   it("omits the reach line silently when the state x archetype has no trustworthy PUMS cell (WY single-3)", async () => {
@@ -259,10 +270,12 @@ describe("StatePanel reach line", () => {
     const { container } = render(
       <StatePanel {...baseProps()} stateCode="WY" stateName="Wyoming" archetypeId="single-3" fetchImpl={fetchImpl as unknown as typeof fetch} />,
     );
-    // The safe line still renders (it doesn't depend on reach data) — only
-    // the reach paragraph is missing.
-    await waitFor(() => expect(container.querySelector(".places-panel-safe")).toBeTruthy());
-    expect(container.querySelector(".places-panel-reach")).toBeNull();
+    // The safe line still renders (it doesn't depend on reach data) — but no
+    // reach sentence is folded onto it, since there's no trustworthy cell.
+    await waitFor(() => expect(container.querySelector(".escape-safe")).toBeTruthy());
+    const safeEl = container.querySelector(".escape-safe")!;
+    expect(safeEl.textContent).toMatch(/\$[\d,]+/); // names the safe-exit income
+    expect(safeEl.textContent).not.toMatch(/of families like this earn/i);
   });
 
   it("shows the reach transparency note in the honesty area regardless of load phase", () => {

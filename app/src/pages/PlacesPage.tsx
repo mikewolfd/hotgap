@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
-import { geoPath } from "d3-geo";
-import { feature } from "topojson-client";
-import type { GeometryCollection, Topology } from "topojson-specification";
 import { ARCHETYPES, DEFAULT_ARCHETYPE } from "@hotgap/shared";
-import rawTopology from "us-atlas/states-albers-10m.json";
+import {
+  ChoroplethMap,
+  Legend,
+  rampLegendItems,
+  Select,
+  type StateValues,
+  type UspsCode,
+} from "@hotgap/design-system";
 import rawSummary from "../data/places/summary.json";
 import { t, type StringKey } from "../strings/t.js";
 import { STATE_NAMES } from "../lib/states.js";
-import { FIPS_TO_USPS } from "../lib/fips.js";
-import { buildRamp, RAMP_COLOR_VARS, metricValue, type PlacesMetric } from "../lib/placesRamp.js";
+import { metricValue, type PlacesMetric } from "../lib/placesRamp.js";
 import { formatDollars, formatAgeList } from "../lib/narration.js";
 import { pickArchetypeId } from "../lib/fallback.js";
 import { StatePanel } from "./StatePanel.js";
@@ -34,14 +37,6 @@ interface PlacesSummary {
 
 const summary = rawSummary as unknown as PlacesSummary;
 
-interface StateProps { name: string }
-type StatesTopology = Topology<{ states: GeometryCollection<StateProps> }>;
-const topology = rawTopology as unknown as StatesTopology;
-const usStates = feature(topology, topology.objects.states);
-const [bx0, by0, bx1, by1] = topology.bbox ?? [0, 0, 975, 610];
-
-const projectionlessPath = geoPath(); // pre-projected topology: NO projection argument
-
 const DEFAULT = ARCHETYPES.find((a) => a.id === DEFAULT_ARCHETYPE)!;
 
 // The most kids any pipeline archetype models — derived the same way
@@ -49,23 +44,23 @@ const DEFAULT = ARCHETYPES.find((a) => a.id === DEFAULT_ARCHETYPE)!;
 // silently desync the stepper's max from what curves actually exist for.
 const KID_MAX = Math.max(...ARCHETYPES.map((a) => a.childAges.length));
 
-// All 51 states (50 + DC), alphabetical by full name, for the select-list
+// All 51 states (50 + DC), alphabetical by full name, for the DS Select
 // equivalent control (Finding 1: WCAG 2.5.8 target-size exception + a
 // first-class screen-reader path, since DE/RI/DC are far below tap-target
 // size on the rendered map at mobile width).
-const SORTED_STATES = Object.entries(STATE_NAMES)
-  .map(([code, name]) => ({ code, name }))
-  .sort((a, b) => a.name.localeCompare(b.name));
+const STATE_OPTIONS = Object.entries(STATE_NAMES)
+  .map(([value, label]) => ({ value, label }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 // Finding 4 (defensive): the map/legend color scale falls back to 0 for any
-// state missing this archetype's data (summary.states[usps]?.[id] ?? 0) so a
-// single state with no logged loss can't break the ramp math. But an
+// state missing this archetype's data (metricValue returns 0 for undefined) so
+// a single state with no logged loss can't break the ramp math. But an
 // archetype id missing from the summary ENTIRELY (i.e. absent from every
-// state, not just one) is a different failure: the ?? 0 fallback would make
-// the whole legend collapse to the degenerate "no cliffs" message — which is
-// true for a genuinely-flat archetype but a false claim for a data gap. This
-// guard keeps that message honest. Exported so it's unit-testable without
-// mocking the bundled summary.json import.
+// state, not just one) is a different failure: the 0 fallback would make the
+// whole legend collapse to the degenerate "no cliffs" message — which is true
+// for a genuinely-flat archetype but a false claim for a data gap. This guard
+// keeps that message honest. Exported so it's unit-testable without mocking the
+// bundled summary.json import.
 export function isKnownArchetype(archetypeId: string, archetypes: { id: string }[]): boolean {
   return archetypes.some((a) => a.id === archetypeId);
 }
@@ -91,20 +86,29 @@ export function PlacesPage() {
           ages: formatAgeList(kidsArchetype?.childAges ?? []),
         });
 
-  const ramp = useMemo(() => {
-    const values = Object.values(summary.states).map((s) => metricValue(s[archetypeId], metric));
-    return buildRamp(values);
+  // One value per state for the current archetype+metric — the single source
+  // the DS map shades by and the DS legend bins over, so swatches and states
+  // can never disagree.
+  const values = useMemo<StateValues>(() => {
+    const v: StateValues = {};
+    for (const usps of Object.keys(summary.states)) {
+      v[usps as UspsCode] = metricValue(summary.states[usps]?.[archetypeId], metric);
+    }
+    return v;
   }, [archetypeId, metric]);
+
+  // Largest observed value: drives the honest "no cliff found" fallback below
+  // (max <= 0 means a genuinely flat archetype under this metric).
+  const rampMax = useMemo(
+    () => Math.max(0, ...Object.values(values).filter((n): n is number => typeof n === "number")),
+    [values],
+  );
+
+  const metricValueLabel = metric === "leap" ? t("places.metric.leap") : t("places.metric.loss");
+  const legendTitle = metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title");
 
   function selectState(usps: string) {
     setSelected(usps);
-  }
-
-  function onKeyDownState(e: React.KeyboardEvent, usps: string) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      selectState(usps);
-    }
   }
 
   const selectedMetrics = selected ? summary.states[selected]?.[archetypeId] : undefined;
@@ -154,41 +158,14 @@ export function PlacesPage() {
       </fieldset>
 
       <figure className="places-map-figure">
-        {/* role="group" (not "img"): an svg with role="img" is treated as a
-            single children-presentational leaf, which can hide the per-path
-            role="button" states from assistive tech (axe nested-interactive).
-            role="group" keeps this label while exposing each state button. */}
-        <svg
-          viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`}
-          role="group"
-          aria-label={metric === "leap" ? t("places.map.altLeap") : t("places.map.alt")}
-          className="places-map"
-        >
-          {usStates.features.map((f) => {
-            const usps = FIPS_TO_USPS[String(f.id)];
-            if (!usps) return null;
-            const value = metricValue(summary.states[usps]?.[archetypeId], metric);
-            const bin = ramp.binIndex(value);
-            const name = STATE_NAMES[usps] ?? usps;
-            const d = projectionlessPath(f) ?? undefined;
-            const label = metric === "leap"
-              ? t("places.map.stateLabelLeap", { state: name, amount: formatDollars(value) })
-              : t("places.map.stateLabel", { state: name, loss: formatDollars(value) });
-            return (
-              <path
-                key={usps}
-                d={d}
-                className={`state-path${selected === usps ? " selected" : ""}`}
-                style={{ fill: RAMP_COLOR_VARS[bin] }}
-                role="button"
-                tabIndex={0}
-                aria-label={label}
-                onClick={() => selectState(usps)}
-                onKeyDown={(e) => onKeyDownState(e, usps)}
-              />
-            );
-          })}
-        </svg>
+        <ChoroplethMap
+          values={values}
+          selected={selected}
+          valueLabel={metricValueLabel}
+          ariaLabel={metric === "leap" ? t("places.map.altLeap") : t("places.map.alt")}
+          formatValue={(v) => formatDollars(v)}
+          onSelect={selectState}
+        />
       </figure>
 
       {/* Finding 1: an equivalent, always-tap-target-sized control for every
@@ -196,16 +173,13 @@ export function PlacesPage() {
           itself at mobile width, with no other way to reach them precisely.
           Drives the exact same selectState() the map paths use. */}
       <div className="places-state-select-row">
-        <label htmlFor="places-state-select">{t("places.pick.state")}</label>
-        <select
+        <Select
           id="places-state-select"
-          value={selected ?? ""}
-          onChange={(e) => selectState(e.target.value)}
-        >
-          {SORTED_STATES.map(({ code, name }) => (
-            <option key={code} value={code}>{name}</option>
-          ))}
-        </select>
+          label={t("places.pick.state")}
+          options={STATE_OPTIONS}
+          value={selected ?? undefined}
+          onChange={selectState}
+        />
       </div>
 
       {/* Two-choice metric picker, same choice-chip idiom as the family
@@ -227,31 +201,21 @@ export function PlacesPage() {
         </div>
       </div>
 
-      {archetypeKnown && (
-        <section className="places-legend">
-          <h2>{metric === "leap" ? t("places.legend.titleLeap") : t("places.legend.title")}</h2>
-          {ramp.max <= 0 ? (
-            // Defensive fallback: once real health costs are folded in, every
-            // archetype — including childless adults, who hit a health-coverage
-            // cliff when Medicaid gives way to paid ACA premiums — has a cliff
-            // in at least one state, so this branch does not fire on current
-            // data. Kept as an honest, metric-agnostic guard if an archetype
-            // ever comes back all-zero.
+      {archetypeKnown &&
+        (rampMax <= 0 ? (
+          // Defensive fallback: once real health costs are folded in, every
+          // archetype — including childless adults, who hit a health-coverage
+          // cliff when Medicaid gives way to paid ACA premiums — has a cliff
+          // in at least one state, so this branch does not fire on current
+          // data. Kept as an honest, metric-agnostic guard if an archetype
+          // ever comes back all-zero.
+          <div className="places-legend">
+            <h2>{legendTitle}</h2>
             <p>{t("places.legend.noneFound")}</p>
-          ) : (
-            <ul className="legend-scale">
-              {ramp.upperBounds.map((upper, i) => (
-                <li key={upper}>
-                  <span className="legend-swatch-map" aria-hidden style={{ background: RAMP_COLOR_VARS[i] }} />
-                  {metric === "leap"
-                    ? t("places.legend.leapUpTo", { amount: formatDollars(upper) })
-                    : t("places.legend.upTo", { amount: formatDollars(upper) })}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+          </div>
+        ) : (
+          <Legend title={legendTitle} items={rampLegendItems(values, (v) => formatDollars(v))} />
+        ))}
 
       {selected && selectedMetrics && (
         <StatePanel

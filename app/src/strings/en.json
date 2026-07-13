@@ -12,6 +12,7 @@
   "flow.next": "Next",
   "flow.notSure": "Not sure",
   "flow.stepOf": "Step {step} of {total}",
+  "flow.stepNoun": "Step",
 
   "flow.zip.q": "Where do you live?",
   "flow.zip.hint": "Type your ZIP code.",

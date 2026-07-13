@@ -1,15 +1,74 @@
 import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type EscapeAnalysis, type HouseholdAnswers } from "@hotgap/shared";
+import { CurveChart, Callout, EscapePath, VerdictHeadline, WhyList, Toggle, type CurveChartLabels } from "@hotgap/design-system";
 import { fetchCurve } from "../api/client.js";
 import { fetchFallbackCurve, clampFallbackEarnings } from "../lib/fallback.js";
-import { narrate, narrateEscape, type Narration, type PayContext } from "../lib/narration.js";
+import { narrate, narrateEscape, type Narration, type PayContext, type WhyItem } from "../lib/narration.js";
 import { reachForHousehold } from "../lib/reachLookup.js";
 import { STATE_NAMES } from "../lib/states.js";
-import { t } from "../strings/t.js";
-import { CurveChart } from "./CurveChart.js";
-import { WhyList } from "./WhyList.js";
-import { EscapePath } from "./EscapePath.js";
-import { Toggles } from "./Toggles.js";
+import { t, type StringKey } from "../strings/t.js";
+
+// The take-up toggles the result page exposes (Head Start / housing voucher /
+// employer coverage). Flipping one edits `current`, which the fetch effect
+// depends on, so the curve recomputes live — the same recompute-on-flip
+// behavior the old app `Toggles` component drove, now wired to DS `Toggle`s.
+type ToggleKey = "getsHeadStart" | "getsHousing" | "hasEmployerCoverage";
+
+// Plain-language chart copy, passed to the DS `CurveChart` via its `labels`
+// prop so every user-facing chart string stays in en.json and stays
+// gate-checked — the DS component never gets to show its built-in English.
+const CHART_LABELS: CurveChartLabels = {
+  title: t("result.chart.title"),
+  alt: t("result.chart.alt"),
+  xLabel: (unit) => t("result.chart.xLabel", { unit }),
+  yLabel: t("result.chart.yLabel"),
+  youAreHere: t("result.chart.youAreHere"),
+  dangerZone: t("result.chart.dangerZone"),
+  dropHint: t("chart.drop.hint"),
+  close: t("chart.drop.card.close"),
+  markerLabel: (pay, amount) => t("chart.drop.marker.label", { pay, amount }),
+  cardAmount: (pay, amount) => t("chart.drop.card.amount", { pay, amount }),
+  cardLose: t("chart.drop.card.lose"),
+  cardNone: t("chart.drop.card.none"),
+  programLabel: (id) => t(`program.${id}` as StringKey),
+};
+
+// Verdict colouring lives with the DS `VerdictHeadline` now (tone → clay-red /
+// teal). A cliff ahead or being in the zone reads danger; always-up or a cliff
+// already behind reads good.
+function verdictTone(verdict: CurveAnalysis["verdict"]): "danger" | "good" {
+  return verdict === "cliff_ahead" || verdict === "in_danger_zone" ? "danger" : "good";
+}
+
+// Icon per kind of help, by its plain-language label — moved here from the old
+// app `WhyList` so the DS `WhyList` can stay label-agnostic and just take an
+// icon per item.
+const WHY_ICONS: Record<string, string> = {
+  food: "🍎", health: "🏥", kids: "👶", housing: "🏠", cash: "💵", tax: "🧾",
+};
+function iconFor(label: string): string {
+  if (label.includes("food") || label.includes("meals")) return WHY_ICONS.food;
+  if (label.includes("Head Start")) return WHY_ICONS.kids;
+  if (label.includes("health")) return WHY_ICONS.health;
+  if (label.includes("child")) return WHY_ICONS.kids;
+  if (label.includes("housing")) return WHY_ICONS.housing;
+  if (label.includes("tax")) return WHY_ICONS.tax;
+  return WHY_ICONS.cash;
+}
+
+// Maps the app's narration `WhyItem` onto the DS `WhyList` item shape. A
+// program the next cliff takes away leads with the "you could lose …" line;
+// one that's simply worth something now leads with its own name. Either way
+// the muted second line names what it's worth today.
+function toWhyListItem(item: WhyItem) {
+  return {
+    icon: iconFor(item.programLabel),
+    lost: item.lostNear
+      ? t("result.why.lost", { wage: item.lostNear, programs: item.programLabel })
+      : item.programLabel,
+    value: t("result.why.currentValue", { amount: item.currentValue }),
+  };
+}
 
 type Status =
   | { phase: "loading" }
@@ -139,32 +198,79 @@ export function ResultPage(props: {
     escape.benefitsEndEarnings !== null || escape.leap > 0
     || Object.keys(escape.programEnds).length > 0 || narration.healthCostLine !== null
     || escapeNarration.reachLine !== null;
+
+  // The DS EscapePath has no dedicated reach slot, so the reach line — which
+  // elaborates on the very safe-exit income the safe line names, and always
+  // renders right beside it — is folded onto the end of the safe line. Reach
+  // is only ever non-null when the safe line is too (both keyed off
+  // safeExitEarnings), so it never appears orphaned.
+  const safeLine = [escapeNarration.safeLine, escapeNarration.reachLine].filter(Boolean).join(" ") || undefined;
+
+  // The take-up toggles, filtered to the ones that apply (Head Start only
+  // shows with a child under 6). Flipping a switch rewrites `current`, which
+  // re-runs the fetch effect above — the recompute-on-flip behavior preserved
+  // exactly from the old `Toggles` component.
+  const toggleRows: { key: ToggleKey; label: string; show: boolean }[] = [
+    { key: "getsHeadStart", label: t("toggles.headstart"), show: current.childAges.some((a) => a < 6) },
+    { key: "getsHousing", label: t("toggles.housing"), show: true },
+    { key: "hasEmployerCoverage", label: t("toggles.esi"), show: true },
+  ];
+  const visibleToggles = toggleRows.filter((r) => r.show);
+
   return (
     <article className={`result verdict-${analysis.verdict}`}>
       {fallback && (
         <p className="fallback-banner" role="status">{t("result.fallback.banner")}</p>
       )}
-      <h1 className="verdict-headline">{narration.headline}</h1>
+      <VerdictHeadline tone={verdictTone(analysis.verdict)}>{narration.headline}</VerdictHeadline>
       <p className="verdict-body">{narration.body}</p>
-      <CurveChart analysis={analysis} ctx={props.ctx} />
-      <WhyList items={narration.whyItems} />
-      {showEscapePath && (
-        <EscapePath narration={escapeNarration} healthCostLine={narration.healthCostLine} />
+      <CurveChart analysis={analysis} unit={props.ctx.unit} hoursPerWeek={props.ctx.hoursPerWeek} labels={CHART_LABELS} />
+      {narration.whyItems.length > 0 && (
+        <section className="why">
+          <h2>{t("result.why.title")}</h2>
+          <WhyList items={narration.whyItems.map(toWhyListItem)} />
+        </section>
       )}
-      <Toggles answers={current} onChange={setCurrent} />
+      {showEscapePath && (
+        <section className="escape">
+          <h2>{t("escape.title")}</h2>
+          <EscapePath
+            healthCost={narration.healthCostLine ?? undefined}
+            safe={safeLine}
+            leap={escapeNarration.leapLine ?? undefined}
+            ends={escapeNarration.thresholds.map((th) => t("escape.ends", { label: th.label, wage: th.wage }))}
+            endsTitle={t("escape.endsTitle")}
+          />
+        </section>
+      )}
+      {visibleToggles.length > 0 && (
+        <section className="toggles">
+          <h2>{t("toggles.title")}</h2>
+          <p className="hint">{t("toggles.hint")}</p>
+          {visibleToggles.map((r) => (
+            <Toggle
+              key={r.key}
+              label={r.label}
+              on={current[r.key]}
+              onText={t("common.yes")}
+              offText={t("common.no")}
+              onChange={() => setCurrent({ ...current, [r.key]: !current[r.key] })}
+            />
+          ))}
+        </section>
+      )}
       {/* Only the LIVE curve is computed with the county; the state-level
           archetype fallback ignores it, so suppress the "uses your county"
           note whenever we're showing a fallback curve. */}
       {current.countyFips !== null && !fallback && (
         <p className="county-note">{t("result.county.note")}</p>
       )}
-      <aside className="honesty" aria-label={t("result.honesty.title")}>
-        <h2>{t("result.honesty.title")}</h2>
+      <Callout tone="info" title={t("result.honesty.title")}>
         <p>{t("result.honesty.body")}</p>
-        <p className="honesty-model">{t("result.honesty.model")}</p>
-        <p className="honesty-health">{t("result.honesty.health")}</p>
-        <p className="honesty-reach">{t("result.honesty.reach")}</p>
-      </aside>
+        <p className="callout-note">{t("result.honesty.model")}</p>
+        <p className="callout-note">{t("result.honesty.health")}</p>
+        <p className="callout-note">{t("result.honesty.reach")}</p>
+      </Callout>
       <div className="nav-row">
         {fallback && (
           <button type="button" className="primary" onClick={() => setAttempt((n) => n + 1)}>

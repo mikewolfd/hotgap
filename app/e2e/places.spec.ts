@@ -30,7 +30,7 @@ test("places door: map renders all 51 states, family picker changes color, and a
   // state's default label speaks in "needs a jump" terms, not "can lose".
   const first = statePaths.first();
   await expect(first).toHaveAttribute("tabindex", "0");
-  await expect(first).toHaveAttribute("aria-label", /needs a jump of up to \$/);
+  await expect(first).toHaveAttribute("aria-label", /the pay gap to clear it \$/i);
   await expect(page.getByRole("radio", { name: /the pay gap to clear it/i })).toHaveAttribute("aria-checked", "true");
 
   const fillsBefore = await statePaths.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.fill));
@@ -46,7 +46,7 @@ test("places door: map renders all 51 states, family picker changes color, and a
   await page.getByRole("radio", { name: /^biggest loss$/i }).click();
   const fillsAfterMetric = await statePaths.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.fill));
   expect(fillsAfterMetric).not.toEqual(fillsAfter);
-  await expect(first).toHaveAttribute("aria-label", /can lose up to \$/);
+  await expect(first).toHaveAttribute("aria-label", /biggest loss \$/i);
 
   // Switch back to leap for the drill-down assertions below.
   await page.getByRole("radio", { name: /the pay gap to clear it/i }).click();
@@ -69,7 +69,7 @@ test("places door: map renders all 51 states, family picker changes color, and a
 
   // Task 24: the drill-down's escape lines (safe exit / leap), computed from
   // the same lazy-loaded curve, render with dollar amounts.
-  const safeOrLeap = page.locator(".places-panel-safe, .places-panel-leap");
+  const safeOrLeap = page.locator(".escape-safe, .escape-leap");
   await expect(safeOrLeap.first()).toBeVisible();
   await expect(safeOrLeap.first()).toContainText(/\$[\d,]+/);
 

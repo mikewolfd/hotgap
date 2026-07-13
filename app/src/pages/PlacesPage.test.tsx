@@ -26,9 +26,10 @@ afterEach(() => {
 });
 
 describe("PlacesPage", () => {
-  // Task 24: the map's default metric is now "the pay gap to clear it" (leap),
-  // not the biggest-loss figure, so every state's default label speaks in
-  // "needs a jump" terms.
+  // Task 24: the map's default metric is now "the pay gap to clear it" (leap).
+  // The DS ChoroplethMap labels each state "<name>: <valueLabel> <$amount>", so
+  // every default label carries the leap metric's word ("The pay gap to clear
+  // it") followed by a dollar figure.
   it("renders all 51 state paths, each a focusable, labeled control", () => {
     const { container } = render(<PlacesPage />);
     const paths = container.querySelectorAll("path.state-path");
@@ -36,7 +37,7 @@ describe("PlacesPage", () => {
     for (const p of paths) {
       expect(p.getAttribute("role")).toBe("button");
       expect(p.getAttribute("tabindex")).toBe("0");
-      expect(p.getAttribute("aria-label")).toMatch(/needs a jump of up to \$/);
+      expect(p.getAttribute("aria-label")).toMatch(/the pay gap to clear it \$/i);
     }
   });
 
@@ -51,19 +52,24 @@ describe("PlacesPage", () => {
     expect(getByRole("radio", { name: /the pay gap to clear it/i }).getAttribute("aria-checked")).toBe("true");
     expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("false");
     expect(container.textContent).toMatch(/how big is that gap/i);
-    expect(container.textContent).toMatch(/needs a jump of up to \$/i);
+    // The map's per-state labels (aria-label, not text) speak in the leap
+    // metric's word + a dollar figure.
+    const label = container.querySelector("path.state-path")!.getAttribute("aria-label");
+    expect(label).toMatch(/the pay gap to clear it \$/i);
   });
 
-  it("toggling to 'Biggest loss' switches the legend text and the map's per-state labels", () => {
+  it("toggling to 'Biggest loss' switches the legend title and the map's per-state labels", () => {
     const { container, getByRole } = render(<PlacesPage />);
     fireEvent.click(getByRole("radio", { name: /^biggest loss$/i }));
     expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("true");
+    // Legend title switches to the loss question (kept in en.json via t()).
     expect(container.textContent).toMatch(/how much can they lose/i);
-    expect(container.textContent).toMatch(/loses up to \$/i);
-    expect(container.textContent).not.toMatch(/needs a jump of up to \$/i);
+    // The map's per-state labels (aria-label) now speak in the loss metric's
+    // word + a dollar figure, and no longer in the leap metric's word.
     const paths = container.querySelectorAll("path.state-path");
     for (const p of paths) {
-      expect(p.getAttribute("aria-label")).toMatch(/can lose up to \$/);
+      expect(p.getAttribute("aria-label")).toMatch(/biggest loss \$/i);
+      expect(p.getAttribute("aria-label")).not.toMatch(/the pay gap to clear it/i);
     }
   });
 
@@ -126,12 +132,15 @@ describe("PlacesPage", () => {
   });
 
   // Finding 1: the map's tiny states (DE/RI/DC) are far below tap-target
-  // size at mobile width. A native <select> listing every state gives an
-  // equivalent, always-usable control (WCAG 2.5.8's equivalent-control
-  // exception) and a first-class path for screen reader users.
-  it("renders a native select listing all 51 states, alphabetically by full name", () => {
-    const { getByLabelText } = render(<PlacesPage />);
+  // size at mobile width. The DS Select (a real, labeled <select> inside a
+  // .field wrapper) listing every state gives an equivalent, always-usable
+  // control (WCAG 2.5.8's equivalent-control exception) and a first-class path
+  // for screen reader users.
+  it("renders a DS Select listing all 51 states, alphabetically by full name", () => {
+    const { container, getByLabelText } = render(<PlacesPage />);
     const select = getByLabelText(/pick a state from a list/i) as HTMLSelectElement;
+    expect(select.tagName).toBe("SELECT");
+    expect(select.closest(".field")).toBeTruthy();
     const options = [...select.options];
     expect(options.length).toBe(51);
     expect(options[0].textContent).toBe("Alabama");
@@ -140,7 +149,7 @@ describe("PlacesPage", () => {
     expect(names).toEqual([...names].sort((a, b) => a!.localeCompare(b!)));
   });
 
-  it("choosing a state from the select shows its StatePanel, same as clicking the map", async () => {
+  it("choosing a state from the DS Select shows its StatePanel, same as clicking the map", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     const { container, getByLabelText } = render(<PlacesPage />);
     const select = getByLabelText(/pick a state from a list/i) as HTMLSelectElement;
@@ -156,6 +165,8 @@ describe("PlacesPage", () => {
     const { container } = render(<PlacesPage />);
     const svg = container.querySelector("svg.places-map")!;
     expect(svg.getAttribute("role")).toBe("group");
+    // The app passes a metric-specific ariaLabel (leap by default) so the map's
+    // accessible name says what the shading means.
     expect(svg.getAttribute("aria-label")).toMatch(/map of the united states/i);
   });
 });

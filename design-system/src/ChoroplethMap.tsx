@@ -24,6 +24,9 @@ export interface ChoroplethMapProps {
   valueLabel?: string;
   /** How to render a value in a state's accessible label (default: "$" + commas). */
   formatValue?: (value: number) => string;
+  /** Accessible name for the whole map — override to say what the shading means
+   *  (e.g. "A map shaded darker where the biggest yearly loss is bigger"). */
+  ariaLabel?: string;
   onSelect?: (usps: string) => void;
 }
 
@@ -35,7 +38,9 @@ export interface ChoroplethMapProps {
  */
 export function ChoroplethMap({
   values, selected, valueLabel = "value",
-  formatValue = (v) => `$${Math.round(v).toLocaleString()}`, onSelect,
+  formatValue = (v) => `$${Math.round(v).toLocaleString()}`,
+  ariaLabel = "A map of the 50 states and Washington, DC, shaded darker where the value is bigger.",
+  onSelect,
 }: ChoroplethMapProps) {
   // Parse the atlas lazily inside the component so a bare barrel import never
   // pays for feature() extraction on modules that don't render the map.
@@ -47,7 +52,7 @@ export function ChoroplethMap({
     <svg
       viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`}
       role="group"
-      aria-label="A map of the 50 states and Washington, DC, shaded darker where the value is bigger."
+      aria-label={ariaLabel}
       className="places-map"
     >
       {usStates.features.map((f) => {

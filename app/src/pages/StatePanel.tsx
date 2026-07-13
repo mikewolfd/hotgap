@@ -1,10 +1,30 @@
 import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
-import { t } from "../strings/t.js";
+import { CurveChart, EscapePath, type CurveChartLabels } from "@hotgap/design-system";
+import { t, type StringKey } from "../strings/t.js";
 import { formatDollars, narratePlacesEscape } from "../lib/narration.js";
 import { reachForArchetype } from "../lib/reachLookup.js";
 import type { PlacesMetric } from "../lib/placesRamp.js";
-import { CurveChart } from "../result/CurveChart.js";
+
+// Same gate-checked chart copy the personal door passes, so the drill-down's
+// DS `CurveChart` speaks en.json strings (not the component's built-in
+// English). The drill-down chart is always year-unit, so `xLabel` only ever
+// receives "$/year".
+const CHART_LABELS: CurveChartLabels = {
+  title: t("result.chart.title"),
+  alt: t("result.chart.alt"),
+  xLabel: (unit) => t("result.chart.xLabel", { unit }),
+  yLabel: t("result.chart.yLabel"),
+  youAreHere: t("result.chart.youAreHere"),
+  dangerZone: t("result.chart.dangerZone"),
+  dropHint: t("chart.drop.hint"),
+  close: t("chart.drop.card.close"),
+  markerLabel: (pay, amount) => t("chart.drop.marker.label", { pay, amount }),
+  cardAmount: (pay, amount) => t("chart.drop.card.amount", { pay, amount }),
+  cardLose: t("chart.drop.card.lose"),
+  cardNone: t("chart.drop.card.none"),
+  programLabel: (id) => t(`program.${id}` as StringKey),
+};
 
 interface StateDataFile {
   state: string;
@@ -76,6 +96,19 @@ export function StatePanel(props: {
       })()
     : null;
 
+  // The DS EscapePath has no dedicated reach slot, so the reach line — which
+  // elaborates on the very safe-exit income the safe line names — is folded
+  // onto the end of the safe line (reach is only ever non-null when the safe
+  // line is too, so it never appears orphaned). Same treatment as the
+  // personal door's EscapePath.
+  const safeLine = escapeNarration
+    ? [escapeNarration.safeLine, escapeNarration.reachLine].filter(Boolean).join(" ") || undefined
+    : undefined;
+  const showEscape = escapeNarration !== null && (
+    escapeNarration.safeLine !== null || escapeNarration.leapLine !== null
+    || escapeNarration.reachLine !== null || escapeNarration.thresholds.length > 0
+  );
+
   return (
     <section className="places-panel" aria-live="polite">
       <h2 className="places-panel-headline">
@@ -95,33 +128,16 @@ export function StatePanel(props: {
         <p className="places-panel-error" role="alert">{t("places.error")}</p>
       )}
       {status.phase === "done" && (
-        <CurveChart analysis={status.analysis} ctx={{ unit: "year" }} showCurrent={false} />
+        <CurveChart analysis={status.analysis} unit="year" showCurrent={false} labels={CHART_LABELS} />
       )}
 
-      {escapeNarration && (
-        escapeNarration.safeLine || escapeNarration.leapLine
-        || escapeNarration.reachLine || escapeNarration.thresholds.length > 0
-      ) && (
-        <div className="places-panel-escape">
-          {escapeNarration.safeLine && <p className="places-panel-safe">{escapeNarration.safeLine}</p>}
-          {/* Reach (Plan 5): right after safeLine, same reasoning as the
-              personal door's EscapePath -- it elaborates on the same
-              safe-exit income named just above it. */}
-          {escapeNarration.reachLine && <p className="places-panel-reach">{escapeNarration.reachLine}</p>}
-          {escapeNarration.leapLine && <p className="places-panel-leap">{escapeNarration.leapLine}</p>}
-          {escapeNarration.thresholds.length > 0 && (
-            <>
-              <p className="places-panel-ends-title">{t("places.panel.endsTitle")}</p>
-              <ul className="places-panel-ends-list">
-                {escapeNarration.thresholds.map((th) => (
-                  <li key={th.label} className="places-panel-ends-item">
-                    {t("escape.ends", { label: th.label, wage: th.wage })}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+      {showEscape && escapeNarration && (
+        <EscapePath
+          safe={safeLine}
+          leap={escapeNarration.leapLine ?? undefined}
+          ends={escapeNarration.thresholds.map((th) => t("escape.ends", { label: th.label, wage: th.wage }))}
+          endsTitle={t("places.panel.endsTitle")}
+        />
       )}
 
       <p className="places-panel-honesty">{t("places.panel.honesty")}</p>

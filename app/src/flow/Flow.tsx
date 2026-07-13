@@ -1,5 +1,6 @@
 import { useReducer } from "react";
 import type { HouseholdAnswers, PayUnit } from "@hotgap/shared";
+import { Button, Progress } from "@hotgap/design-system";
 import { t } from "../strings/t.js";
 import {
   canAdvance, flowReducer, initialFlowState, toHouseholdAnswers, visibleScreens,
@@ -21,16 +22,16 @@ export default function Flow(props: {
 
   return (
     <div className="flow">
-      <p className="progress">{t("flow.stepOf", { step: index + 1, total: order.length })}</p>
+      <Progress current={index + 1} total={order.length} noun={t("flow.stepNoun")} />
       <Screen answers={state.answers} dispatch={dispatch} />
       <div className="nav-row">
         {index > 0 && (
-          <button type="button" className="ghost" onClick={() => dispatch({ type: "back" })}>
+          <Button variant="ghost" onClick={() => dispatch({ type: "back" })}>
             {t("flow.back")}
-          </button>
+          </Button>
         )}
-        <button
-          type="button" className="primary" disabled={!canAdvance(state)}
+        <Button
+          variant="primary" disabled={!canAdvance(state)}
           onClick={() => {
             if (!last) return dispatch({ type: "next" });
             props.onComplete(toHouseholdAnswers(state.answers), {
@@ -40,7 +41,7 @@ export default function Flow(props: {
           }}
         >
           {last ? t("flow.pay.cta") : t("flow.next")}
-        </button>
+        </Button>
       </div>
     </div>
   );
