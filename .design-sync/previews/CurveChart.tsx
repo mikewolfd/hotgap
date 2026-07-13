@@ -24,3 +24,17 @@ export const Yearly = () => <CurveChart analysis={analysis} unit="year" />;
 export const PerHour = () => <CurveChart analysis={analysis} unit="hour" hoursPerWeek={40} />;
 
 export const Comparison = () => <CurveChart analysis={analysis} unit="year" showCurrent={false} />;
+
+// The full-time-minimum-wage reference line: a dashed marker at full-time
+// earnings (here $16.90/hr × 2080 ≈ $35.2k) with a plain note below the chart,
+// giving the cliffs real-world scale.
+export const WithMinWage = () => (
+  <CurveChart
+    analysis={analysis}
+    unit="year"
+    minWageLine={{
+      earnings: 35152,
+      label: "The dashed line is full-time at minimum wage ($16.90 an hour). That is about $35,200 a year.",
+    }}
+  />
+);
