@@ -187,7 +187,14 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .drop-card-amount { font-weight: 600; margin: 0 0 8px; }
 .drop-card-lose { margin: 0 0 4px; color: var(--muted); }
 .drop-card-list { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.drop-card-hours { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
 .drop-hint { color: var(--muted); font-size: 0.9rem; margin: 8px 0 0; }
+/* Full-time-minimum-wage reference marker: a muted, dashed vertical line kept
+   visually subordinate to the red drop guide and the "you are here" dot, plus a
+   below-chart note pairing it with the number. */
+.minwage-guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.55; }
+.minwage-note { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; margin: 6px 0 0; }
+.minwage-swatch { width: 16px; height: 0; border-top: 2px dashed var(--muted); display: inline-block; flex: none; }
 
 /* --- WhyList --- */
 .why-list { list-style: none; padding: 0; display: grid; gap: 10px; margin: 0; }

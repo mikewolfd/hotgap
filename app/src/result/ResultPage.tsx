@@ -1,37 +1,19 @@
 import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type EscapeAnalysis, type HouseholdAnswers } from "@hotgap/shared";
-import { CurveChart, Callout, EscapePath, VerdictHeadline, WhyList, Toggle, type CurveChartLabels } from "@hotgap/design-system";
+import { CurveChart, Callout, EscapePath, VerdictHeadline, WhyList, Toggle } from "@hotgap/design-system";
 import { fetchCurve } from "../api/client.js";
 import { fetchFallbackCurve, clampFallbackEarnings } from "../lib/fallback.js";
 import { narrate, narrateEscape, type Narration, type PayContext, type WhyItem } from "../lib/narration.js";
 import { reachForHousehold } from "../lib/reachLookup.js";
+import { makeChartLabels, minWageLineFor } from "../lib/chartLabels.js";
 import { STATE_NAMES } from "../lib/states.js";
-import { t, type StringKey } from "../strings/t.js";
+import { t } from "../strings/t.js";
 
 // The take-up toggles the result page exposes (Head Start / housing voucher /
 // employer coverage). Flipping one edits `current`, which the fetch effect
 // depends on, so the curve recomputes live — the same recompute-on-flip
 // behavior the old app `Toggles` component drove, now wired to DS `Toggle`s.
 type ToggleKey = "getsHeadStart" | "getsHousing" | "hasEmployerCoverage";
-
-// Plain-language chart copy, passed to the DS `CurveChart` via its `labels`
-// prop so every user-facing chart string stays in en.json and stays
-// gate-checked — the DS component never gets to show its built-in English.
-const CHART_LABELS: CurveChartLabels = {
-  title: t("result.chart.title"),
-  alt: t("result.chart.alt"),
-  xLabel: (unit) => t("result.chart.xLabel", { unit }),
-  yLabel: t("result.chart.yLabel"),
-  youAreHere: t("result.chart.youAreHere"),
-  dangerZone: t("result.chart.dangerZone"),
-  dropHint: t("chart.drop.hint"),
-  close: t("chart.drop.card.close"),
-  markerLabel: (pay, amount) => t("chart.drop.marker.label", { pay, amount }),
-  cardAmount: (pay, amount) => t("chart.drop.card.amount", { pay, amount }),
-  cardLose: t("chart.drop.card.lose"),
-  cardNone: t("chart.drop.card.none"),
-  programLabel: (id) => t(`program.${id}` as StringKey),
-};
 
 // Verdict colouring lives with the DS `VerdictHeadline` now (tone → clay-red /
 // teal). A cliff ahead or being in the zone reads danger; always-up or a cliff
@@ -224,7 +206,7 @@ export function ResultPage(props: {
       )}
       <VerdictHeadline tone={verdictTone(analysis.verdict)}>{narration.headline}</VerdictHeadline>
       <p className="verdict-body">{narration.body}</p>
-      <CurveChart analysis={analysis} unit={props.ctx.unit} hoursPerWeek={props.ctx.hoursPerWeek} labels={CHART_LABELS} />
+      <CurveChart analysis={analysis} unit={props.ctx.unit} hoursPerWeek={props.ctx.hoursPerWeek} minWageLine={minWageLineFor(current.state)} labels={makeChartLabels(current.state)} />
       {narration.whyItems.length > 0 && (
         <section className="why">
           <h2>{t("result.why.title")}</h2>

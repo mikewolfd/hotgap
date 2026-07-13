@@ -28,6 +28,18 @@ const cliffPoints: CurvePoint[] = [
   mkPoint(30000, 26000),
 ];
 
+// A wider curve (0–100k) so the full-time-minimum-wage reference line (CA:
+// $16.90 × 2080 ≈ $35.2k) lands inside the charted pay range. Its single cliff
+// at $10k pay sits well below full-time minimum, so the drop card also carries
+// the "hours a week" translation.
+const widePoints: CurvePoint[] = [
+  mkPoint(0, 20000, { snap: 5000 }),
+  mkPoint(10000, 24000, { snap: 5000 }),
+  mkPoint(20000, 20000),
+  mkPoint(60000, 40000),
+  mkPoint(100000, 55000),
+];
+
 const answers: HouseholdAnswers = {
   state: "CA", countyFips: null, married: false, childAges: [3], childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000,
@@ -52,6 +64,12 @@ function stubFetch(route: (url: string) => unknown) {
 function stubLiveCurve() {
   return stubFetch((url) =>
     url.includes("/api/curve") ? curveOk({ points: cliffPoints, currentEarnings: 5000 }) : httpFail(404),
+  );
+}
+
+function stubWideCurve() {
+  return stubFetch((url) =>
+    url.includes("/api/curve") ? curveOk({ points: widePoints, currentEarnings: 5000 }) : httpFail(404),
   );
 }
 
@@ -100,6 +118,39 @@ describe("ResultPage", () => {
     expect(card.textContent).toMatch(/drops what you keep by about \$4,000/i);
     expect(card.textContent).toMatch(/SNAP/);
     expect(card.textContent).toMatch(/TANF/);
+  });
+
+  it("adds an 'hours a week at minimum wage' line to a below-full-time drop card", async () => {
+    stubWideCurve();
+    const { container } = renderResult();
+    await waitFor(() => expect(container.querySelector("button.drop-marker")).toBeTruthy());
+    fireEvent.click(container.querySelector("button.drop-marker")!);
+    const card = container.querySelector(".drop-card")!;
+    // CA min wage $16.90; the $10k cliff ≈ 11 hours a week. State name resolved
+    // from the household's own answers, not a default.
+    expect(card.textContent).toMatch(/about 11 hours a week at minimum wage in California/i);
+  });
+
+  it("draws the full-time-minimum-wage reference line + note when it falls in the charted range", async () => {
+    stubWideCurve();
+    const { container } = renderResult();
+    await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
+    // Dashed guide inside the plot, and the plain note pairing it with the number.
+    expect(container.querySelector("line.minwage-guide")).toBeTruthy();
+    const note = container.querySelector(".minwage-note")!;
+    expect(note.textContent).toMatch(/full-time at minimum wage/i);
+    expect(note.textContent).toMatch(/\$16\.90 an hour/);
+    expect(note.textContent).toMatch(/\$35,200 a year/);
+  });
+
+  it("omits the reference line when full-time minimum lands past the charted range", async () => {
+    // The narrow CA fixture only reaches $30k, below CA's ~$35.2k full-time
+    // minimum, so the marker would fall off-axis — it must not render.
+    stubLiveCurve();
+    const { container } = renderResult();
+    await waitFor(() => expect(container.querySelector("svg.curve-chart")).toBeTruthy());
+    expect(container.querySelector("line.minwage-guide")).toBeNull();
+    expect(container.querySelector(".minwage-note")).toBeNull();
   });
 
   it("renders the why-list through DS WhyList with mapped, t() items", async () => {

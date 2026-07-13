@@ -1,30 +1,11 @@
 import { useEffect, useState } from "react";
 import { analyzeCurve, escapeAnalysis, type CurveAnalysis, type CurvePoint } from "@hotgap/shared";
-import { CurveChart, EscapePath, type CurveChartLabels } from "@hotgap/design-system";
-import { t, type StringKey } from "../strings/t.js";
+import { CurveChart, EscapePath } from "@hotgap/design-system";
+import { t } from "../strings/t.js";
 import { formatDollars, narratePlacesEscape } from "../lib/narration.js";
+import { makeChartLabels, minWageLineFor } from "../lib/chartLabels.js";
 import { reachForArchetype } from "../lib/reachLookup.js";
 import type { PlacesMetric } from "../lib/placesRamp.js";
-
-// Same gate-checked chart copy the personal door passes, so the drill-down's
-// DS `CurveChart` speaks en.json strings (not the component's built-in
-// English). The drill-down chart is always year-unit, so `xLabel` only ever
-// receives "$/year".
-const CHART_LABELS: CurveChartLabels = {
-  title: t("result.chart.title"),
-  alt: t("result.chart.alt"),
-  xLabel: (unit) => t("result.chart.xLabel", { unit }),
-  yLabel: t("result.chart.yLabel"),
-  youAreHere: t("result.chart.youAreHere"),
-  dangerZone: t("result.chart.dangerZone"),
-  dropHint: t("chart.drop.hint"),
-  close: t("chart.drop.card.close"),
-  markerLabel: (pay, amount) => t("chart.drop.marker.label", { pay, amount }),
-  cardAmount: (pay, amount) => t("chart.drop.card.amount", { pay, amount }),
-  cardLose: t("chart.drop.card.lose"),
-  cardNone: t("chart.drop.card.none"),
-  programLabel: (id) => t(`program.${id}` as StringKey),
-};
 
 interface StateDataFile {
   state: string;
@@ -128,7 +109,7 @@ export function StatePanel(props: {
         <p className="places-panel-error" role="alert">{t("places.error")}</p>
       )}
       {status.phase === "done" && (
-        <CurveChart analysis={status.analysis} unit="year" showCurrent={false} labels={CHART_LABELS} />
+        <CurveChart analysis={status.analysis} unit="year" showCurrent={false} minWageLine={minWageLineFor(stateCode)} labels={makeChartLabels(stateCode)} />
       )}
 
       {showEscape && escapeNarration && (
