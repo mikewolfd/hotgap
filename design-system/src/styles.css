@@ -1,0 +1,217 @@
+/* HotGap design system — tokens + component styles.
+   Single source of truth for the look: color/type/space tokens, dark-mode
+   re-derivations, and the semantic component classes the components render.
+   Style HotGap UI with these classes and the var(--*) tokens below. */
+
+:root {
+  --bg: #faf7f2;
+  --ink: #23211c;
+  --muted: #6b675e;
+  --accent: #0e6b63;
+  --accent-ink: #fff;
+  --danger: #b4432f;
+  --danger-soft: #f4ded9;
+  --card: #ffffff;
+  --line: #e4ded2;
+  --radius: 14px;
+  /* Sequential choropleth ramp: one hue (the --danger clay-red family), 5
+     quantized steps light -> dark (bin 1 = smallest loss, bin 5 = biggest).
+     Derived in OKLCH: monotone lightness, adjacent step >= 0.06 L, light end
+     >= 2:1 contrast vs --bg, single hue. */
+  --danger-ramp-1: #ff8972;
+  --danger-ramp-2: #d87562;
+  --danger-ramp-3: #b06152;
+  --danger-ramp-4: #894e42;
+  --danger-ramp-5: #643b33;
+  font-size: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1a17; --ink: #f0ede6; --muted: #a8a396;
+    --accent: #4fb3a9; --accent-ink: #10201e;
+    --danger: #e0705a; --danger-soft: #3a241f;
+    --card: #26231f; --line: #3a362f;
+    /* Re-derived (not flipped) against the dark surface #1c1a17. */
+    --danger-ramp-1: #f8866f;
+    --danger-ramp-2: #d77662;
+    --danger-ramp-3: #b76756;
+    --danger-ramp-4: #98584a;
+    --danger-ramp-5: #7a493f;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+h1 { font-size: 1.6rem; line-height: 1.25; margin: 0.4em 0; }
+h2 { font-size: 1.15rem; margin: 0.6em 0 0.3em; }
+.hint { color: var(--muted); margin: 0.2em 0 0.8em; }
+.brand { font-weight: 800; letter-spacing: 0.02em; color: var(--accent); margin: 0; }
+
+/* --- Field --- */
+.input {
+  width: 100%; min-height: 52px; font-size: 1.2rem; padding: 8px 14px;
+  border: 2px solid var(--line); border-radius: var(--radius);
+  background: var(--card); color: var(--ink);
+}
+.input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.input-small { width: 6ch; }
+.field { display: block; margin: 12px 0; }
+.field-label { display: block; font-weight: 700; margin-bottom: 6px; }
+.field-hint { color: var(--muted); font-size: 0.9rem; margin: 4px 0 0; }
+.money-row { display: flex; align-items: center; gap: 8px; }
+.money-prefix { font-size: 1.3rem; color: var(--muted); }
+
+/* --- Button --- */
+.primary, .ghost, .choice, .step-btn {
+  min-height: 48px; border-radius: var(--radius); font-size: 1.05rem;
+  border: 2px solid transparent; cursor: pointer; padding: 10px 20px;
+  font-family: inherit;
+}
+.primary { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.ghost { background: none; color: var(--accent); text-decoration: underline; }
+.choice { background: var(--card); border-color: var(--line); color: var(--ink); }
+.choice.selected { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.choice-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+
+/* --- Stepper --- */
+.stepper { display: flex; align-items: center; gap: 16px; margin: 8px 0; }
+.stepper output { font-size: 1.5rem; min-width: 2ch; text-align: center; }
+.step-btn { width: 48px; background: var(--card); border-color: var(--line); font-size: 1.4rem; }
+
+/* --- Door (choice card) --- */
+.doors { display: grid; gap: 14px; margin-top: 20px; }
+.door {
+  display: block; padding: 20px; border-radius: var(--radius); background: var(--card);
+  border: 2px solid var(--line); color: var(--ink); text-decoration: none;
+}
+.door-check { border-color: var(--accent); }
+.door-cta { color: var(--accent); font-weight: 700; }
+
+/* --- Spinner --- */
+.loading { text-align: center; padding: 24px 0; }
+.spinner {
+  width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 50%;
+  border: 4px solid var(--line); border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+
+/* --- VerdictHeadline --- */
+.verdict-headline { font-size: 1.7rem; margin: 0.4em 0; }
+.verdict-danger { color: var(--danger); }
+.verdict-good { color: var(--accent); }
+
+/* --- CurveChart --- */
+.chart-figure { margin: 20px 0; }
+.chart-title { font-weight: 700; margin-bottom: 6px; }
+.curve-chart { width: 100%; height: auto; background: var(--card); border-radius: var(--radius); }
+.net-line { stroke: var(--accent); stroke-width: 3; }
+.danger-zone { fill: var(--danger-soft); }
+.tick-line { stroke: var(--line); stroke-width: 1; }
+.tick-text { font-size: 11px; fill: var(--muted); }
+.axis-label { font-size: 12px; fill: var(--muted); }
+.you-dot { fill: var(--ink); stroke: var(--bg); stroke-width: 2; }
+.you-label { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.chart-legend { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+.legend-swatch { width: 14px; height: 14px; background: var(--danger-soft); border-radius: 4px; display: inline-block; }
+
+.chart-plot { position: relative; line-height: 0; }
+.drop-marker {
+  position: absolute; width: 44px; height: 44px; margin: 0; padding: 0;
+  transform: translate(-50%, -50%);
+  background: none; border: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.drop-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--danger); border: 2px solid var(--bg);
+  box-sizing: border-box; transition: width 0.1s, height 0.1s;
+}
+.drop-marker:hover .drop-dot { width: 15px; height: 15px; }
+.drop-marker-selected .drop-dot { width: 18px; height: 18px; box-shadow: 0 0 0 3px var(--danger-soft); }
+.drop-marker:focus-visible { outline: 3px solid var(--accent); outline-offset: 0; }
+.drop-guide { stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.6; }
+.drop-card {
+  position: relative; margin-top: 12px; padding: 14px 40px 14px 16px;
+  background: var(--card); border: 1px solid var(--line);
+  border-left: 4px solid var(--danger); border-radius: var(--radius);
+}
+.drop-card-close {
+  position: absolute; top: 4px; right: 4px; width: 44px; height: 44px;
+  background: none; border: 0; cursor: pointer;
+  font-size: 1.5rem; line-height: 1; color: var(--muted); border-radius: 50%;
+}
+.drop-card-close:hover { color: var(--ink); }
+.drop-card-amount { font-weight: 600; margin: 0 0 8px; }
+.drop-card-lose { margin: 0 0 4px; color: var(--muted); }
+.drop-card-list { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.drop-hint { color: var(--muted); font-size: 0.9rem; margin: 8px 0 0; }
+
+/* --- WhyList --- */
+.why-list { list-style: none; padding: 0; display: grid; gap: 10px; margin: 0; }
+.why-item {
+  display: flex; gap: 12px; padding: 12px; background: var(--card);
+  border-radius: var(--radius); border: 1px solid var(--line);
+}
+.why-icon { font-size: 1.5rem; }
+.why-lost { margin: 0; font-weight: 700; color: var(--danger); }
+.why-value { margin: 2px 0 0; color: var(--muted); }
+
+/* --- Callout (honesty / warning) --- */
+.callout {
+  margin: 24px 0; padding: 14px 16px; border-left: 5px solid var(--accent);
+  background: var(--card); border-radius: 0 var(--radius) var(--radius) 0;
+}
+.callout h2 { margin-top: 0; }
+.callout-note { color: var(--muted); font-size: 0.9rem; }
+.callout-warn {
+  border-left-color: var(--danger); background: var(--danger-soft); font-weight: 700;
+}
+
+/* --- EscapePath --- */
+.escape-path {
+  margin: 20px 0; padding: 16px; background: var(--card);
+  border-radius: var(--radius); border: 1px solid var(--line);
+}
+.escape-health-cost { margin: 0 0 8px; color: var(--muted); }
+.escape-safe, .escape-leap { font-weight: 700; margin: 8px 0; }
+.escape-ends-title { margin: 12px 0 6px; color: var(--muted); }
+.escape-ends-list { list-style: none; padding: 0; display: grid; gap: 6px; margin: 0; }
+.escape-ends-item { color: var(--muted); }
+
+/* --- ChoroplethMap + Legend --- */
+.places-map-figure { margin: 0 0 20px; }
+.places-map { width: 100%; height: auto; display: block; }
+.state-path { stroke: var(--line); stroke-width: 0.75; cursor: pointer; }
+.state-path:hover, .state-path:focus-visible { stroke: var(--ink); stroke-width: 2; }
+.state-path.selected { stroke: var(--ink); stroke-width: 2.5; }
+.places-legend { margin: 0 0 20px; }
+.places-legend h2 { font-size: 1rem; margin: 0 0 8px; }
+.legend-scale { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 0; margin: 0; }
+.legend-scale li { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.85rem; }
+.legend-swatch-map { width: 16px; height: 16px; border-radius: 4px; display: inline-block; flex: none; }
+
+/* --- Toggle (pill switch) --- */
+.toggles { margin: 24px 0; padding: 16px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); }
+.toggles h2 { margin-top: 0; }
+.toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 44px; margin: 8px 0; padding: 10px 16px;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 999px;
+  font: inherit; cursor: pointer;
+}
+.toggle.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.toggle-label { text-align: left; }
+.toggle-state { font-weight: 700; }
+
+/* --- Callout as fallback banner --- */
+.fallback-banner {
+  margin: 0 0 16px; padding: 12px 16px; border-left: 5px solid var(--danger);
+  background: var(--danger-soft); border-radius: 0 var(--radius) var(--radius) 0;
+  font-weight: 700;
+}
