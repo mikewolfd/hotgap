@@ -1,0 +1,9 @@
+{
+  "pkg": "@hotgap/design-system",
+  "globalName": "HotGapDS",
+  "projectId": "243d5236-0bbf-413d-a915-bc74e6f12b73",
+  "shape": "package",
+  "buildCmd": "npm run build --workspace @hotgap/design-system",
+  "cssEntry": "src/styles.css",
+  "readmeHeader": ".design-sync/conventions.md"
+}
