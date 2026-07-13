@@ -7,6 +7,9 @@ export interface DoorProps {
   description: ReactNode;
   /** The call-to-action text (an arrow is added, e.g. "Start"). */
   cta: string;
+  /** Show the call-to-action as a plain link (default) or a filled primary button
+   *  — use 'button' for the main action on a screen. */
+  ctaVariant?: "link" | "button";
   /** Draw the teal border to mark the suggested door. */
   highlighted?: boolean;
   href?: string;
@@ -18,13 +21,15 @@ export interface DoorProps {
  * has two: check your own benefits, or compare places). The whole card is the
  * link; `highlighted` gives it the teal border.
  */
-export function Door({ title, description, cta, highlighted, href, onClick }: DoorProps) {
+export function Door({ title, description, cta, ctaVariant = "link", highlighted, href, onClick }: DoorProps) {
   const className = `door${highlighted ? " door-check" : ""}`;
   const inner = (
     <>
       <h2>{title}</h2>
       <p className="hint">{description}</p>
-      <span className="door-cta">{cta} →</span>
+      {ctaVariant === "button"
+        ? <span className="primary" style={{ display: "inline-block", marginTop: 8 }}>{cta}</span>
+        : <span className="door-cta">{cta} →</span>}
     </>
   );
   if (href) {

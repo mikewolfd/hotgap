@@ -16,6 +16,10 @@ defines the `:root` design tokens, the component classes, and the dark-mode
 re-derivations. **Dark mode is automatic** via `@media (prefers-color-scheme:
 dark)` — do not add a theme toggle or override the tokens per component.
 
+In **Claude Design**, use the components straight from the provided library —
+compose them directly, no install step. The npm `import { … } from
+"@hotgap/design-system"` form shown below is for building inside the source repo.
+
 ```jsx
 import { VerdictHeadline, CurveChart, Callout } from "@hotgap/design-system";
 // styles.css is loaded once for the whole surface (the design tool does this).
@@ -65,9 +69,22 @@ loss/danger — never introduce a third accent color.
 ## The components
 
 Primitives: **Button** (primary / ghost / choice), **Field**, **Stepper**,
-**Toggle** (pill switch), **Callout** (info / warn), **Door**, **Spinner**,
-**VerdictHeadline** (danger / good), **Legend**. Rich: **WhyList**,
-**EscapePath**, **CurveChart** (the money-vs-pay chart, with tap-a-drop), and
-**ChoroplethMap** (50 states + DC, shaded on the clay ramp). Feed the chart a
-`CurveAnalysis` and the map a `StateValues` (USPS → number); pair the map with
-`Legend` using the same `var(--danger-ramp-*)` tokens.
+**Toggle** (pill switch), **RadioGroup**, **CheckboxGroup**, **Callout** (info /
+warn), **Door**, **Spinner**, **VerdictHeadline** (danger / good), **Legend**.
+Frame: **Shell** (page column), **Progress** (step N of M), **Banner**
+(full-width problem message). Rich: **WhyList**, **EscapePath**, **CurveChart**
+(the money-vs-pay chart, with tap-a-drop), and **ChoroplethMap** (50 states + DC,
+shaded on the clay ramp). Feed the chart a `CurveAnalysis` and the map a
+`StateValues` (USPS → number); pair the map with `Legend` using the same
+`var(--danger-ramp-*)` tokens.
+
+### Choosing selection controls
+
+- **Toggle** — one standalone yes/no (e.g. "A housing voucher").
+- **RadioGroup** — pick exactly one from a short list. It has correct radio
+  semantics ("1 of N" to a screen reader), so use it over bare choice Buttons for
+  questions like "Just me / Me + a partner".
+- **CheckboxGroup** — pick any number from a list (multi-select).
+
+And for the frame: **Shell** wraps a whole screen; **Progress** shows step N of
+M; **Banner** is a full-width problem message; **Callout** is an inline aside.

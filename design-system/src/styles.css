@@ -19,6 +19,7 @@
   --font-caption: 0.85rem; --font-body: 1rem; --font-label: 1rem; --font-h2: 1.3rem; --font-h1: 1.6rem; --font-display: 1.9rem;
   --font-regular: 400; --font-bold: 700;
   --shadow-1: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-2: 0 8px 24px rgba(0,0,0,.14);
   --field-border: #a39a8c;
   /* Sequential choropleth ramp: one hue (the --danger clay-red family), 5
      quantized steps light -> dark (bin 1 = smallest loss, bin 5 = biggest).
@@ -35,11 +36,11 @@
   :root {
     --bg: #1c1a17; --ink: #f0ede6; --muted: #a8a396;
     --accent: #4fb3a9; --accent-ink: #10201e;
-    --danger: #e0705a; --danger-soft: #3a241f;
+    --danger: #e0705a; --danger-soft: #47281f;
     --card: #26231f; --line: #3a362f;
     --field-border: #6f6a60;
     /* Re-derived (not flipped) against the dark surface #1c1a17. */
-    --danger-ramp-1: #f8866f;
+    --danger-ramp-1: #e2795f;
     --danger-ramp-2: #d77662;
     --danger-ramp-3: #b76756;
     --danger-ramp-4: #98584a;
@@ -72,6 +73,10 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .choice.selected:focus-visible, .toggle.on:focus-visible, .primary:focus-visible {
   outline-color: var(--ink);
 }
+/* Radio/checkbox pills hide the native input; ring the pill when it's focused. */
+.choice:has(> input:focus-visible), .toggle:has(> input:focus-visible) {
+  outline: 3px solid var(--ink); outline-offset: 2px;
+}
 /* Field error state (applied by Field.tsx). */
 .input-error { border-color: var(--danger); }
 .field-error { display: block; color: var(--danger); font-size: var(--font-caption); margin: 4px 0 0; font-weight: var(--font-bold); }
@@ -81,6 +86,14 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .field-hint { color: var(--muted); font-size: 0.9rem; margin: 4px 0 0; }
 .money-row { display: flex; align-items: center; gap: 8px; }
 .money-prefix { font-size: 1.3rem; color: var(--muted); }
+/* Fieldset reset (RadioGroup / CheckboxGroup group their pills in one). */
+.fieldset { border: 0; margin: 12px 0; padding: 0; min-width: 0; }
+.fieldset > legend { padding: 0; }
+/* Visually hide the native radio/checkbox while keeping it focusable. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 
 /* --- Button --- */
 .primary, .ghost, .choice, .step-btn {
@@ -99,6 +112,12 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .stepper { display: flex; align-items: center; gap: 16px; margin: 8px 0; }
 .stepper output { font-size: 1.5rem; min-width: 2ch; text-align: center; }
 .step-btn { width: 48px; background: var(--card); border-color: var(--line); font-size: 1.4rem; }
+
+/* --- Progress (step N of M) --- */
+.progress { margin: 0 0 8px; }
+.progress-label { color: var(--muted); font-size: var(--font-caption); margin: 0 0 6px; }
+.progress-track { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 
 /* --- Door (choice card) --- */
 .doors { display: grid; gap: 14px; margin-top: 20px; }
@@ -173,8 +192,9 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 /* --- WhyList --- */
 .why-list { list-style: none; padding: 0; display: grid; gap: 10px; margin: 0; }
 .why-item {
-  display: flex; gap: 12px; padding: 12px; background: var(--card);
-  border-radius: var(--radius); border: 1px solid var(--line);
+  display: flex; gap: 12px; padding: 12px;
+  background: color-mix(in srgb, var(--danger-soft) 45%, transparent);
+  border: 0; border-radius: 10px;
 }
 .why-icon { font-size: 1.5rem; }
 .why-lost { margin: 0; font-weight: 700; color: var(--danger); }
@@ -190,6 +210,8 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
 .callout-warn {
   border-left-color: var(--danger); background: var(--danger-soft); font-weight: 700;
 }
+/* Neutral aside — a plain disclaimer that shouldn't read as "good/forward". */
+.callout-plain { border-left-color: var(--line); }
 
 /* --- EscapePath --- */
 .escape-path {
@@ -197,8 +219,8 @@ h2 { font-size: var(--font-h2); margin: 0.6em 0 0.3em; }
   border-radius: var(--radius); border: 1px solid var(--line);
 }
 .escape-health-cost { margin: 0 0 8px; color: var(--muted); }
-.escape-safe, .escape-leap { font-weight: 700; margin: 8px 0; }
-.escape-ends-title { margin: 12px 0 6px; color: var(--muted); }
+.escape-safe, .escape-leap { font-weight: 700; font-size: 1.05rem; margin: 10px 0; }
+.escape-ends-title { margin: 12px 0 6px; color: var(--ink); font-weight: var(--font-bold); }
 .escape-ends-list { list-style: none; padding: 0; display: grid; gap: 6px; margin: 0; }
 .escape-ends-item { color: var(--muted); }
 

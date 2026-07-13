@@ -26,6 +26,11 @@ export function formatDollars(n: number): string {
   return money.format(roundTo(n, 100));
 }
 
+/** A compact thousands amount (e.g. "$30k"), for axis ticks and tight labels. */
+export function formatK(n: number): string {
+  return `$${Math.round(n / 1000)}k`;
+}
+
 /** Yearly pay shown in a chosen unit (e.g. "$14.50 an hour", "$30,000 a year"). */
 export function formatWage(annual: number, unit: PayUnit, hoursPerWeek = DEFAULT_HOURS): string {
   const hpw = hoursPerWeek > 0 ? hoursPerWeek : DEFAULT_HOURS;

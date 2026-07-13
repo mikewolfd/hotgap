@@ -12,4 +12,5 @@ export default defineConfig({
   external: ["react", "react-dom"],
   noExternal: ["us-atlas"],
   treeshake: true,
+  onSuccess: "cp src/styles.css dist/styles.css",
 });

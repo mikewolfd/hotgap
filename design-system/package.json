@@ -9,7 +9,7 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./dist/styles.css"
   },
   "files": ["dist", "src/styles.css"],
   "sideEffects": ["*.css"],

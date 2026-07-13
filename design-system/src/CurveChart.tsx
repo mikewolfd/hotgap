@@ -33,10 +33,15 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
   const cardId = useId();
   const markerRefs = useRef(new Map<number, HTMLButtonElement>());
+  const cardRef = useRef<HTMLDivElement>(null);
   const selected = analysis.cliffs.find((c) => c.startEarnings === selectedStart) ?? null;
   useEffect(() => {
     if (selectedStart !== null && !selected) setSelectedStart(null);
   }, [selectedStart, selected]);
+  // Opening a drop card moves focus into it, so a screen reader lands on the details.
+  useEffect(() => {
+    if (selectedStart !== null) cardRef.current?.focus();
+  }, [selectedStart]);
 
   if (pts.length < 2) {
     return (
@@ -90,6 +95,20 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
   }));
   const yTicks = y.ticks(4);
 
+  // "You are here" dot: only draw when both values are finite numbers, and clamp
+  // today's pay into the charted domain so an out-of-range value still lands on-axis.
+  const hasCurrent = showCurrent
+    && typeof analysis.currentEarnings === "number" && Number.isFinite(analysis.currentEarnings)
+    && typeof analysis.currentNet === "number" && Number.isFinite(analysis.currentNet);
+  const currentEarningsClamped = hasCurrent
+    ? Math.min(Math.max(analysis.currentEarnings!, pts[0].earnings), pts[pts.length - 1].earnings)
+    : 0;
+  const currentNet = analysis.currentNet ?? 0;
+  // If the dot sits within ~$6,000 of a cliff, its label can overlap the red drop
+  // marker, so shift the label left and right-align it to clear the marker.
+  const labelNearCliff = hasCurrent
+    && analysis.cliffs.some((c) => Math.abs(currentEarningsClamped - c.startEarnings) < 6000);
+
   return (
     <figure className="chart-figure">
       <figcaption className="chart-title">Money you keep as your pay goes up</figcaption>
@@ -104,11 +123,13 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="tick-line" />
-              <text x={M.left - 6} y={y(v)} dy="0.32em" textAnchor="end" className="tick-text">${Math.round(v / 1000)}k</text>
+              <text x={M.left - 6} y={y(v)} dy="0.32em" textAnchor="end" className="tick-text">{yMax < 1000 ? `$${Math.round(v)}` : `$${Math.round(v / 1000)}k`}</text>
             </g>
           ))}
-          {xTicks.map(({ annual, label }) => (
-            <text key={annual} x={x(annual)} y={H - M.bottom + 16} textAnchor="middle" className="tick-text">{label}</text>
+          {xTicks.map(({ annual, label }, i) => (
+            <text key={annual} x={x(annual)} y={H - M.bottom + 16}
+              textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
+              className="tick-text">{label}</text>
           ))}
           <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">Your pay ({unitLabel})</text>
           <text x={14} y={(M.top + H - M.bottom) / 2} textAnchor="middle" className="axis-label"
@@ -117,10 +138,15 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
           {selected && (
             <line className="drop-guide" x1={x(selected.startEarnings)} x2={x(selected.startEarnings)} y1={M.top} y2={H - M.bottom} />
           )}
-          {showCurrent && typeof analysis.currentEarnings === "number" && typeof analysis.currentNet === "number" && (
+          {hasCurrent && (
             <>
-              <circle className="you-dot" r={6} cx={x(analysis.currentEarnings)} cy={y(analysis.currentNet)} />
-              <text x={x(analysis.currentEarnings)} y={Math.max(M.top + 10, y(analysis.currentNet) - 12)} textAnchor="middle" className="you-label">You are here</text>
+              <circle className="you-dot" r={6} cx={x(currentEarningsClamped)} cy={y(currentNet)} />
+              <text
+                x={x(currentEarningsClamped) - (labelNearCliff ? 14 : 0)}
+                y={Math.max(M.top + 10, y(currentNet) - 12)}
+                textAnchor={labelNearCliff ? "end" : "middle"}
+                className="you-label"
+              >You are here</text>
             </>
           )}
         </svg>
@@ -133,7 +159,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
               type="button"
               className={`drop-marker${isSel ? " drop-marker-selected" : ""}`}
               style={{ left: `${(x(c.startEarnings) / W) * 100}%`, top: `${(y(netAt(c.startEarnings)) / H) * 100}%` }}
-              aria-pressed={isSel}
+              aria-expanded={isSel}
               aria-label={`A drop near ${formatWage(c.startEarnings, unit, hoursPerWeek)}. You'd lose about ${formatDollars(c.drop)} a year here. Tap to see what ends.`}
               onClick={() => setSelectedStart(isSel ? null : c.startEarnings)}
             >
@@ -144,7 +170,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
       </div>
 
       {selected && (
-        <div className="drop-card" role="region" aria-labelledby={`${cardId}-amt`}>
+        <div className="drop-card" role="region" aria-labelledby={`${cardId}-amt`} tabIndex={-1} ref={cardRef}>
           <button type="button" className="drop-card-close" aria-label="Close" onClick={closeCard}>×</button>
           <p id={`${cardId}-amt`} className="drop-card-amount">
             At {formatWage(selected.startEarnings, unit, hoursPerWeek)}, more pay drops what you keep by about {formatDollars(selected.drop)}.

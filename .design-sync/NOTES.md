@@ -17,3 +17,10 @@
 - **CurveChart far-right tick** clips `$100k`→`$100l` at narrow card width — faithful to the shipped app's tick logic, cosmetic, graded good.
 - **Chromium for the render check**: no `~/.cache/ms-playwright/`; the check used a chromium available from the repo's Playwright e2e setup. A fresh clone may need `npx playwright install chromium` before validate.
 - `us-atlas/states-albers-10m.json` geometry is bundled from the npm dep (pinned `^3.0.1`).
+
+## v0.3 (full audit backlog)
+- Grew to 20 components (added Shell, Progress, RadioGroup, CheckboxGroup, Banner).
+- **Lib fork**: `.design-sync/overrides/dts.mjs` raises the 120/140-char JSDoc truncation caps → declared in `cfg.libOverrides`. On a FRESH CLONE, recreate the fork symlink so its `ts-morph` import resolves: `ln -sfn ../.ds-sync/node_modules .design-sync/node_modules`.
+- **cfg.dtsPropsFor** inlines the shapes for CurveChart/Legend/WhyList/ChoroplethMap so the synced `.d.ts` contracts aren't dangling types.
+- Build now copies `src/styles.css` → `dist/styles.css` (tsup `onSuccess`); package `exports["./styles.css"]` points at dist.
+- Deliberately NOT done (pure churn, low value at this size — reasoned deferral): prefixing the global class names (`hg-*`) and a `primitives/charts/geo` src reorg. Revisit if the system grows well past ~20 components.

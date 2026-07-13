@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Feature, Geometry } from "geojson";
@@ -10,9 +11,6 @@ import type { StateValues, UspsCode } from "./types.js";
 const topology = rawTopology as unknown as {
   bbox?: [number, number, number, number];
   objects: { states: Parameters<typeof feature>[1] };
-};
-const usStates = feature(topology as never, topology.objects.states) as unknown as {
-  features: Array<Feature<Geometry, Record<string, unknown>> & { id?: string | number }>;
 };
 const [bx0, by0, bx1, by1] = topology.bbox ?? [0, 0, 975, 610];
 const pathGen = geoPath();
@@ -39,6 +37,11 @@ export function ChoroplethMap({
   values, selected, valueLabel = "value",
   formatValue = (v) => `$${Math.round(v).toLocaleString()}`, onSelect,
 }: ChoroplethMapProps) {
+  // Parse the atlas lazily inside the component so a bare barrel import never
+  // pays for feature() extraction on modules that don't render the map.
+  const usStates = useMemo(() => feature(topology as never, topology.objects.states) as unknown as {
+    features: Array<Feature<Geometry, Record<string, unknown>> & { id?: string | number }>;
+  }, []);
   const ramp = buildRamp(Object.values(values).filter((v): v is number => typeof v === "number"));
   return (
     <svg
@@ -65,6 +68,7 @@ export function ChoroplethMap({
             style={{ fill }}
             role="button"
             tabIndex={0}
+            aria-current={selected === usps ? "true" : undefined}
             aria-label={label}
             onClick={() => onSelect?.(usps)}
             onKeyDown={(e) => {
