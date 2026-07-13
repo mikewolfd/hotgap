@@ -19,7 +19,7 @@ const empty: EscapeNarration = { safeLine: null, leapLine: null, thresholds: [],
 describe("EscapePath", () => {
   it("renders the title, both lines, and the ends list when populated", () => {
     const { container } = render(<EscapePath narration={populated} />);
-    expect(container.querySelector("h2")?.textContent).toMatch(/your path off help/i);
+    expect(container.querySelector("h2")?.textContent).toMatch(/how help changes as pay rises/i);
     expect(container.querySelector(".escape-safe")?.textContent).toMatch(/30\.75 an hour, more pay always helps/i);
     expect(container.querySelector(".escape-leap")?.textContent).toMatch(/raise of about \$34,000/i);
     expect(container.querySelector(".escape-ends-title")?.textContent).toMatch(/when help ends for you/i);
@@ -60,7 +60,7 @@ describe("EscapePath", () => {
     const { container } = render(
       <EscapePath narration={empty} healthCostLine="You'd pay about $500 a year for health coverage at this pay." />,
     );
-    expect(container.querySelector("h2")?.textContent).toMatch(/your path off help/i);
+    expect(container.querySelector("h2")?.textContent).toMatch(/how help changes as pay rises/i);
     expect(container.querySelector(".escape-health-cost")?.textContent).toMatch(/\$500 a year/i);
   });
 
@@ -92,7 +92,7 @@ describe("EscapePath", () => {
     const { container } = render(
       <EscapePath narration={{ ...empty, reachLine: "Even families like yours with the top pay here still hit rough spots." }} />,
     );
-    expect(container.querySelector("h2")?.textContent).toMatch(/your path off help/i);
+    expect(container.querySelector("h2")?.textContent).toMatch(/how help changes as pay rises/i);
     expect(container.querySelector(".escape-reach")?.textContent).toMatch(/still hit rough spots/i);
   });
 });

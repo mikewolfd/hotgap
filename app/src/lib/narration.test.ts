@@ -72,7 +72,7 @@ describe("formatAgeList", () => {
 describe("narrate on the CA fixture at $29k (real next cliff: the new $29k->$30k Medicaid health-cost cliff)", () => {
   const n = narrate(analyzeCurve(points, 29000), { unit: "hour", hoursPerWeek: 40 });
   it("picks the cliff_ahead headline with the cliff wage", () => {
-    expect(n.headline).toContain("Watch out");
+    expect(n.headline).toContain("more pay can mean less money");
     expect(n.headline).toContain("$14 an hour"); // 29000/(40*52) = 13.94 -> rounds to 14.00
   });
   it("mentions the size of the drop in the body", () => {
@@ -99,7 +99,7 @@ describe("narrate on the CA fixture at $29k (real next cliff: the new $29k->$30k
 describe("narrate on the CA fixture at $20k (real next cliff: the smaller $23k TANF cliff)", () => {
   const n = narrate(analyzeCurve(points, 20000), { unit: "hour", hoursPerWeek: 40 });
   it("routes the headline to the nearer $23k cliff, not the bigger $30k one", () => {
-    expect(n.headline).toContain("Watch out");
+    expect(n.headline).toContain("more pay can mean less money");
     expect(n.headline).toContain("$11 an hour"); // 23000/(40*52) = 11.06 -> 11.00
   });
 });

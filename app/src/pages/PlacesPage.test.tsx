@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe("PlacesPage", () => {
-  // Task 24: the map's default metric is now "the jump to get out" (leap),
+  // Task 24: the map's default metric is now "the pay gap to clear it" (leap),
   // not the biggest-loss figure, so every state's default label speaks in
   // "needs a jump" terms.
   it("renders all 51 state paths, each a focusable, labeled control", () => {
@@ -48,9 +48,9 @@ describe("PlacesPage", () => {
   // Task 24: two-choice metric picker (leap vs biggest loss), default leap.
   it("defaults to the leap metric: its chip is checked and the leap legend text is visible on mount", () => {
     const { container, getByRole } = render(<PlacesPage />);
-    expect(getByRole("radio", { name: /the jump to get out/i }).getAttribute("aria-checked")).toBe("true");
+    expect(getByRole("radio", { name: /the pay gap to clear it/i }).getAttribute("aria-checked")).toBe("true");
     expect(getByRole("radio", { name: /^biggest loss$/i }).getAttribute("aria-checked")).toBe("false");
-    expect(container.textContent).toMatch(/how big is the jump to get out/i);
+    expect(container.textContent).toMatch(/how big is that gap/i);
     expect(container.textContent).toMatch(/needs a jump of up to \$/i);
   });
 

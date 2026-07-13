@@ -1,11 +1,27 @@
 import { useState, useEffect, useId, useRef } from "react";
 import { scaleLinear } from "d3-scale";
 import { line as d3line, curveMonotoneX } from "d3-shape";
-import type { CurveAnalysis, PayUnit } from "./types.js";
+import type { CurveAnalysis, PayUnit, ProgramId } from "./types.js";
 import { PROGRAM_LABELS } from "./types.js";
 import { formatDollars, formatWage, fromAnnual, toAnnual } from "./format.js";
 
 const W = 360, H = 240, M = { top: 16, right: 12, bottom: 40, left: 52 };
+
+export interface CurveChartLabels {
+  title?: string;
+  alt?: string;
+  xLabel?: (unitLabel: string) => string;
+  yLabel?: string;
+  youAreHere?: string;
+  dangerZone?: string;
+  dropHint?: string;
+  close?: string;
+  markerLabel?: (pay: string, amount: string) => string;
+  cardAmount?: (pay: string, amount: string) => string;
+  cardLose?: string;
+  cardNone?: string;
+  programLabel?: (id: ProgramId) => string;
+}
 
 export interface CurveChartProps {
   /** The household's money-vs-pay story: points, cliffs, danger zones, and where
@@ -18,6 +34,10 @@ export interface CurveChartProps {
   /** Show the "you are here" dot. Off for comparison charts with no single
    *  household. Default true. */
   showCurrent?: boolean;
+  /** Override the component's built-in English copy — pass gate-checked /
+   *  translated strings from a host app. Any omitted field keeps the English
+   *  default. */
+  labels?: CurveChartLabels;
 }
 
 /**
@@ -26,7 +46,7 @@ export interface CurveChartProps {
  * opens a card naming how much money the drop costs and exactly which help ends
  * there. The dots are real buttons (44px, keyboard-focusable).
  */
-export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCurrent = true }: CurveChartProps) {
+export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCurrent = true, labels }: CurveChartProps) {
   const pts = analysis.points;
   // Hooks run unconditionally (rules of hooks); the degenerate-input guard and
   // every pts-derived value come after them.
@@ -46,7 +66,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
   if (pts.length < 2) {
     return (
       <figure className="chart-figure">
-        <figcaption className="chart-title">Money you keep as your pay goes up</figcaption>
+        <figcaption className="chart-title">{labels?.title ?? "Money you keep as your pay goes up"}</figcaption>
         <p className="hint">Not enough data to draw this yet.</p>
       </figure>
     );
@@ -111,9 +131,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
 
   return (
     <figure className="chart-figure">
-      <figcaption className="chart-title">Money you keep as your pay goes up</figcaption>
+      <figcaption className="chart-title">{labels?.title ?? "Money you keep as your pay goes up"}</figcaption>
       <div className="chart-plot">
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="A chart of the money your family keeps as your pay goes up. Shaded parts show where more pay means less money." className="curve-chart">
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={labels?.alt ?? "A chart of the money your family keeps as your pay goes up. Shaded parts show where more pay means less money."} className="curve-chart">
           {analysis.dangerZones.map((z, i) => (
             <rect key={i} className="danger-zone"
               x={x(z.startEarnings)} y={M.top}
@@ -131,9 +151,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
               textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
               className="tick-text">{label}</text>
           ))}
-          <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">Your pay ({unitLabel})</text>
+          <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">{labels?.xLabel ? labels.xLabel(unitLabel) : `Your pay (${unitLabel})`}</text>
           <text x={14} y={(M.top + H - M.bottom) / 2} textAnchor="middle" className="axis-label"
-            transform={`rotate(-90 14 ${(M.top + H - M.bottom) / 2})`}>Money left per year</text>
+            transform={`rotate(-90 14 ${(M.top + H - M.bottom) / 2})`}>{labels?.yLabel ?? "Money left per year"}</text>
           <path d={path} className="net-line" fill="none" />
           {selected && (
             <line className="drop-guide" x1={x(selected.startEarnings)} x2={x(selected.startEarnings)} y1={M.top} y2={H - M.bottom} />
@@ -146,7 +166,7 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
                 y={Math.max(M.top + 10, y(currentNet) - 12)}
                 textAnchor={labelNearCliff ? "end" : "middle"}
                 className="you-label"
-              >You are here</text>
+              >{labels?.youAreHere ?? "You are here"}</text>
             </>
           )}
         </svg>
@@ -160,7 +180,9 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
               className={`drop-marker${isSel ? " drop-marker-selected" : ""}`}
               style={{ left: `${(x(c.startEarnings) / W) * 100}%`, top: `${(y(netAt(c.startEarnings)) / H) * 100}%` }}
               aria-expanded={isSel}
-              aria-label={`A drop near ${formatWage(c.startEarnings, unit, hoursPerWeek)}. You'd lose about ${formatDollars(c.drop)} a year here. Tap to see what ends.`}
+              aria-label={labels?.markerLabel
+                ? labels.markerLabel(formatWage(c.startEarnings, unit, hoursPerWeek), formatDollars(c.drop))
+                : `A drop near ${formatWage(c.startEarnings, unit, hoursPerWeek)}. You'd lose about ${formatDollars(c.drop)} a year here. Tap to see what ends.`}
               onClick={() => setSelectedStart(isSel ? null : c.startEarnings)}
             >
               <span className="drop-dot" aria-hidden />
@@ -171,19 +193,21 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
 
       {selected && (
         <div className="drop-card" role="region" aria-labelledby={`${cardId}-amt`} tabIndex={-1} ref={cardRef}>
-          <button type="button" className="drop-card-close" aria-label="Close" onClick={closeCard}>×</button>
+          <button type="button" className="drop-card-close" aria-label={labels?.close ?? "Close"} onClick={closeCard}>×</button>
           <p id={`${cardId}-amt`} className="drop-card-amount">
-            At {formatWage(selected.startEarnings, unit, hoursPerWeek)}, more pay drops what you keep by about {formatDollars(selected.drop)}.
+            {labels?.cardAmount
+              ? labels.cardAmount(formatWage(selected.startEarnings, unit, hoursPerWeek), formatDollars(selected.drop))
+              : `At ${formatWage(selected.startEarnings, unit, hoursPerWeek)}, more pay drops what you keep by about ${formatDollars(selected.drop)}.`}
           </p>
           {selected.programsLost.length > 0 ? (
             <>
-              <p className="drop-card-lose">You'd lose:</p>
+              <p className="drop-card-lose">{labels?.cardLose ?? "You'd lose:"}</p>
               <ul className="drop-card-list">
-                {selected.programsLost.map((id) => <li key={id}>{PROGRAM_LABELS[id]}</li>)}
+                {selected.programsLost.map((id) => <li key={id}>{(labels?.programLabel ?? ((id) => PROGRAM_LABELS[id]))(id)}</li>)}
               </ul>
             </>
           ) : (
-            <p className="drop-card-lose">A few kinds of help would get smaller here.</p>
+            <p className="drop-card-lose">{labels?.cardNone ?? "A few kinds of help would get smaller here."}</p>
           )}
         </div>
       )}

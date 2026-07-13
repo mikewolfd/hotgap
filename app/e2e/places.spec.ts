@@ -26,12 +26,12 @@ test("places door: map renders all 51 states, family picker changes color, and a
   const statePaths = page.locator("path.state-path");
   await expect(statePaths).toHaveCount(51);
 
-  // Task 24: default metric is now "the jump to get out" (leap), so every
+  // Task 24: default metric is now "the pay gap to clear it" (leap), so every
   // state's default label speaks in "needs a jump" terms, not "can lose".
   const first = statePaths.first();
   await expect(first).toHaveAttribute("tabindex", "0");
   await expect(first).toHaveAttribute("aria-label", /needs a jump of up to \$/);
-  await expect(page.getByRole("radio", { name: /the jump to get out/i })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: /the pay gap to clear it/i })).toHaveAttribute("aria-checked", "true");
 
   const fillsBefore = await statePaths.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.fill));
 
@@ -49,7 +49,7 @@ test("places door: map renders all 51 states, family picker changes color, and a
   await expect(first).toHaveAttribute("aria-label", /can lose up to \$/);
 
   // Switch back to leap for the drill-down assertions below.
-  await page.getByRole("radio", { name: /the jump to get out/i }).click();
+  await page.getByRole("radio", { name: /the pay gap to clear it/i }).click();
 
   // Click California; intercept its lazy-loaded curve file with a small fixture.
   await page.route("**/data/states/CA.json", (route) =>

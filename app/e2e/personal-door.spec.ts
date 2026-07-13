@@ -83,7 +83,7 @@ test("landing → flow → cliff result", async ({ page }) => {
   await payInput.fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();
 
-  await expect(page.getByRole("heading", { name: /watch out/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /more pay can mean less money/i })).toBeVisible();
   await expect(page.getByRole("img", { name: /chart/i })).toBeVisible();
   await expect(page.getByText(/caseworker/i)).toBeVisible();
 
@@ -94,12 +94,12 @@ test("landing → flow → cliff result", async ({ page }) => {
   await expect(page.getByText(/what you keep after health costs/i)).toBeVisible();
   await expect(page.getByText(/losing medicaid means moving to other coverage/i)).toBeVisible();
 
-  // "Your path off help" section: this mocked curve's danger zone never
+  // "How help changes as pay rises" section: this mocked curve's danger zone never
   // recovers by the last sampled point ($50k net $31k < the $32k peak at
   // $30k), so the leap is a lower bound (widest zone = axisMax($50k) -
   // zoneStart($30k) = $20,000) and the safe-exit line is the "never found a
   // safe spot" honesty branch, not a concrete wage.
-  await expect(page.getByRole("heading", { name: /your path off help/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /how help changes as pay rises/i })).toBeVisible();
   await expect(page.getByText(/raise of at least \$20,000/i)).toBeVisible();
 
   // Plan 4: the health-cost line names the real cost at the household's
@@ -138,7 +138,7 @@ test("landing → flow → cliff result", async ({ page }) => {
   // flipping one recomputes the curve for real (not just a local re-render).
   // Flip housing off -> on; the mocked route above answers the resulting
   // second /api/curve call with a cliff-free curve, so the page should swap
-  // from the "watch out" cliff headline to the "always_up" one.
+  // from the "more pay can mean less money" cliff headline to the "always_up" one.
   await expect(page.getByRole("heading", { name: /what if you get more help/i })).toBeVisible();
   const housingSwitch = page.getByRole("switch", { name: /housing/i });
   await expect(housingSwitch).toHaveAttribute("aria-checked", "false");
@@ -237,6 +237,6 @@ test("county note appears on the result when the ZIP resolves to a known county"
   await page.getByLabel(/what do you make now/i).fill("12");
   await page.getByRole("button", { name: /see my answer/i }).click();
 
-  await expect(page.getByRole("heading", { name: /watch out/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /more pay can mean less money/i })).toBeVisible();
   await expect(page.getByText(/your county/i)).toBeVisible();
 });

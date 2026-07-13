@@ -1,0 +1,72 @@
+/* App-only styles. Loaded AFTER @hotgap/design-system/styles.css, so these
+   layout/page classes (which the design system doesn't own) apply on top of the
+   shared component styles. Everything the DS provides (.primary, .input,
+   .toggle, .curve-chart, .why-item, .escape-*, .card, tokens, …) is NOT
+   duplicated here — it comes from the DS sheet. */
+
+/* Full-height app frame + full-page loading (the DS Shell/Spinner are inline). */
+.shell { min-height: 100dvh; }
+.loading { padding-top: 15dvh; }
+/* Flow step text (until swapped to the Progress component). */
+.progress { color: var(--muted); margin: 0.2em 0 0.8em; }
+
+/* Landing */
+.landing .hero h1 { font-size: 1.9rem; }
+.landing-foot { margin-top: 28px; color: var(--muted); font-size: 0.9rem; }
+
+/* Flow */
+.error-text { color: var(--danger); font-weight: 600; }
+.hours-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.kid-age-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.gets-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
+.gets-row .choice-row { margin: 0; flex-wrap: nowrap; }
+.confirm-row { margin-top: 12px; padding: 12px; background: var(--card); border-radius: var(--radius); }
+.kid-age-row select, .confirm-row select {
+  min-height: 44px; font-size: 1rem; border-radius: 10px;
+  background: var(--card); color: var(--ink); border: 2px solid var(--field-border);
+}
+
+/* Honesty box (until a screen swaps it to Callout) */
+.honesty {
+  margin: 24px 0; padding: 14px 16px; border-left: 5px solid var(--accent);
+  background: var(--card); border-radius: 0 var(--radius) var(--radius) 0;
+}
+.honesty h2 { margin-top: 0; }
+.honesty-model, .honesty-health { color: var(--muted); font-size: 0.9rem; }
+
+/* Verdict headline color by state (until swapped to VerdictHeadline tone) */
+.verdict-cliff_ahead .verdict-headline, .verdict-in_danger_zone .verdict-headline { color: var(--danger); }
+.verdict-always_up .verdict-headline, .verdict-cliff_behind .verdict-headline { color: var(--accent); }
+
+.county-note { margin: 12px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+/* Places page */
+.places-page .hint { margin-bottom: 16px; }
+.places-picker {
+  margin: 16px 0 20px; padding: 16px; border: 2px solid var(--line); border-radius: var(--radius);
+  background: var(--card);
+}
+.places-picker legend { font-weight: 700; padding: 0 6px; }
+.places-picker .stepper output.places-kids-output {
+  font-size: 1rem; font-weight: 600; min-width: 0; text-align: left; white-space: normal;
+}
+.places-metric-picker { margin: 0 0 20px; }
+.places-state-select-row { display: flex; flex-direction: column; gap: 6px; margin: 0 0 20px; }
+.places-state-select-row select {
+  min-height: 44px; font-size: 1rem; border-radius: 10px;
+  background: var(--card); color: var(--ink); border: 2px solid var(--field-border);
+}
+
+/* Places drill-down panel */
+.places-panel { margin-top: 24px; padding: 16px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); }
+.places-panel-headline { font-size: 1.3rem; margin: 0 0 4px; }
+.places-panel-rank { color: var(--muted); margin: 0 0 12px; }
+.places-panel-escape { margin-top: 16px; }
+.places-panel-safe, .places-panel-leap { font-weight: 700; margin: 8px 0; }
+.places-panel-ends-title { margin: 12px 0 6px; color: var(--muted); }
+.places-panel-ends-list { list-style: none; padding: 0; display: grid; gap: 6px; }
+.places-panel-ends-item { color: var(--muted); }
+.places-panel-honesty { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+.places-panel-health-note { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+.places-panel-assumptions { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+.places-panel-loading, .places-panel-error { padding: 12px 0; color: var(--muted); }
