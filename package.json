@@ -3,7 +3,7 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "engines": { "node": ">=22" },
-  "workspaces": ["shared", "worker", "app", "pipeline"],
+  "workspaces": ["shared", "worker", "app", "pipeline", "design-system"],
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b shared worker app pipeline",
