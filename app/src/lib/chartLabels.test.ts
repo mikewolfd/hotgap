@@ -16,9 +16,18 @@ describe("makeChartLabels.cardHours", () => {
     );
   });
 
+  it("still shows exactly at full-time minimum (the 'at or below' boundary)", () => {
+    // $15,080 == full-time at $7.25 → 40 hours a week, shown (not null).
+    expect(makeChartLabels("TX").cardHours!(15080)).toBe(
+      "That is about 40 hours a week at minimum wage in Texas.",
+    );
+  });
+
   it("returns null above full-time minimum, where an hours count is nonsensical", () => {
-    // $50k > full-time at $7.25 ($15,080) → no line.
+    // $50k > full-time at $7.25 ($15,080) → no line. One dollar past the boundary
+    // ($15,081) is likewise hidden.
     expect(makeChartLabels("TX").cardHours!(50000)).toBeNull();
+    expect(makeChartLabels("TX").cardHours!(15081)).toBeNull();
   });
 
   it("returns null for a state with no wage on record", () => {

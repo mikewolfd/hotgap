@@ -139,12 +139,14 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
   const labelNearCliff = hasCurrent
     && analysis.cliffs.some((c) => Math.abs(currentEarningsClamped - c.startEarnings) < 6000);
 
-  // The full-time-minimum-wage reference line, drawn only when its pay lands
-  // inside the charted range (it always should for real wages, but a degenerate
-  // domain shouldn't push the marker off-axis).
-  const showMinWage = !!minWageLine
+  // The full-time-minimum-wage reference marker, resolved to the mark itself (not
+  // a boolean) so its two uses below need no non-null assertion. Kept only when
+  // its pay lands inside the charted range — it always should for real wages, but
+  // a degenerate domain shouldn't push the marker off-axis.
+  const minWageMark = minWageLine
     && minWageLine.earnings > pts[0].earnings
-    && minWageLine.earnings < pts[pts.length - 1].earnings;
+    && minWageLine.earnings < pts[pts.length - 1].earnings
+    ? minWageLine : null;
 
   // Resolve the drop card's optional "hours a week" line once (it may be null).
   const hoursLine = selected && labels?.cardHours ? labels.cardHours(selected.startEarnings) : null;
@@ -174,8 +176,8 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
           <text x={(M.left + W - M.right) / 2} y={H - 4} textAnchor="middle" className="axis-label">{labels?.xLabel ? labels.xLabel(unitLabel) : `Your pay (${unitLabel})`}</text>
           <text x={14} y={(M.top + H - M.bottom) / 2} textAnchor="middle" className="axis-label"
             transform={`rotate(-90 14 ${(M.top + H - M.bottom) / 2})`}>{labels?.yLabel ?? "Money left per year"}</text>
-          {showMinWage && (
-            <line className="minwage-guide" x1={x(minWageLine!.earnings)} x2={x(minWageLine!.earnings)} y1={M.top} y2={H - M.bottom} />
+          {minWageMark && (
+            <line className="minwage-guide" x1={x(minWageMark.earnings)} x2={x(minWageMark.earnings)} y1={M.top} y2={H - M.bottom} />
           )}
           <path d={path} className="net-line" fill="none" />
           {selected && (
@@ -239,8 +241,8 @@ export function CurveChart({ analysis, unit = "year", hoursPerWeek = 40, showCur
       {analysis.dangerZones.length > 0 && (
         <p className="chart-legend"><span className="legend-swatch" aria-hidden /> {labels?.dangerZone ?? "Rough zone: more pay, less money"}</p>
       )}
-      {showMinWage && (
-        <p className="minwage-note"><span className="minwage-swatch" aria-hidden /> {minWageLine!.label}</p>
+      {minWageMark && (
+        <p className="minwage-note"><span className="minwage-swatch" aria-hidden /> {minWageMark.label}</p>
       )}
       {analysis.cliffs.length > 0 && <p className="drop-hint">{labels?.dropHint ?? "Tap a red dot to see what you lose."}</p>}
     </figure>
