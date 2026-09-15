@@ -1,4 +1,4 @@
-import { ARCHETYPES, YEAR, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, YEAR, answersFor, axisSpec, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -26,8 +26,9 @@ export function validateResults(states: string[], results: ResultsByStateArchety
         gaps.push({ state, archetypeId: a.id, reason: "missing" });
         continue;
       }
-      if (points.length !== 101) {
-        gaps.push({ state, archetypeId: a.id, reason: `expected 101 points, got ${points.length}` });
+      const expected = axisSpec(answersFor(state, a)).count;
+      if (points.length !== expected) {
+        gaps.push({ state, archetypeId: a.id, reason: `expected ${expected} points, got ${points.length}` });
         continue;
       }
       if (!pointsAreFinite(points)) {
@@ -65,7 +66,13 @@ export function roundPoint(p: CurvePoint): CurvePoint {
     programs: Object.fromEntries(
       Object.entries(p.programs).map(([id, v]) => [id, Math.round(v)]),
     ) as Record<ProgramId, number>,
-  };
+    childPrograms: Object.fromEntries(
+      Object.entries(p.childPrograms).map(([id, v]) => [id, Math.round(v as number)]),
+    ) as Partial<Record<ProgramId, number>>,
+    otherBenefits: Math.round(p.otherBenefits),
+    // coverageGap is a read-time verdict (evaluate.ts), never a sweep output;
+    // storing `false` 66,000 times bought nothing. Loaders default it.
+  } as CurvePoint;
 }
 
 export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype): StateFileJson {

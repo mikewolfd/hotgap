@@ -34,8 +34,8 @@ export function loadArchetypeCurve(state: string, married: boolean, kidCount: nu
   return archetypeCurveFrom(loadStateFile(state), married, kidCount);
 }
 
-// Archetype curves are only sampled up to the pipeline's axis (a $100k floor —
-// see translate.ts's axisMax, which archetypes always hit since their own
+// Archetype curves are only sampled up to the pipeline's axis (axisSpec's
+// household-size floor, which archetypes always sit at since their own
 // annualEarnings is 0). A real household on the fallback path can earn more.
 // Feeding analyzeCurve an earnings value beyond the last sampled point would
 // let a danger-zone verdict claim "stuck" beyond data the sweep never checked,

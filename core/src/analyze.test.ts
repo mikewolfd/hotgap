@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parsePEResponse } from "./parse.js";
 import { analyzeCurve } from "./analyze.js";
-import type { CurvePoint } from "./types.js";
+import type { CurvePoint, ProgramId } from "./types.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
@@ -12,6 +12,7 @@ const fixturePoints = parsePEResponse(fixture, 101);
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
   earnings, netIncome, medicalOOP: 0,
   programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  childPrograms: {}, otherBenefits: 0, coverageGap: false,
 });
 
 describe("analyzeCurve on synthetic curves", () => {
@@ -60,6 +61,86 @@ describe("analyzeCurve on synthetic curves", () => {
     const a = analyzeCurve(pts, 25000);
     expect(a.cliffs).toHaveLength(0);
     expect(a.verdict).toBe("in_danger_zone");
+  });
+});
+
+const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+// `programs` arrives as a sparse patch over ZERO, so it cannot be the full
+// Record the CurvePoint field is.
+type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
+const pt = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
+  ...flat(earnings, netIncome), ...over, programs: { ...ZERO, ...(over.programs ?? {}) },
+});
+
+describe("cliff attribution", () => {
+  it("splits a drop into benefits, credits, premiums and other, summing to the drop", () => {
+    const pts = [
+      pt(10000, 30000, { programs: { snap: 3000, eitc: 2000 }, otherBenefits: 500, medicalOOP: 0 }),
+      pt(11000, 24000, { programs: { snap: 0, eitc: 1000 }, otherBenefits: 0, medicalOOP: 1200 }),
+    ];
+    const [c] = analyzeCurve(pts, 0).cliffs;
+    expect(c.drop).toBe(6000);
+    expect(c.breakdown.benefits).toBe(3500);   // snap 3000 + untracked remainder 500
+    expect(c.breakdown.credits).toBe(1000);    // eitc 2000 -> 1000
+    expect(c.breakdown.premiums).toBe(1200);
+    // The residual absorbs taxes and the step's own wage gain, so the four
+    // shares always add back to the drop exactly.
+    const { benefits, credits, premiums, other } = c.breakdown;
+    expect(benefits + credits + premiums + other).toBeCloseTo(c.drop, 9);
+    expect(other).toBe(300);
+  });
+
+  it("keeps coverage sticker values out of the breakdown while still naming the loss", () => {
+    // A child ages off Medicaid: a real event worth reporting, but the sticker
+    // value is not cash and is not inside netIncome, so it explains no dollars.
+    const pts = [
+      pt(10000, 30000, { programs: { medicaid: 12000, snap: 1000 } }),
+      pt(11000, 29000, { programs: { medicaid: 0, snap: 0 } }),
+    ];
+    const [c] = analyzeCurve(pts, 0).cliffs;
+    expect(c.programsLost).toContain("medicaid");
+    expect(c.breakdown.benefits).toBe(1000);
+    expect(c.breakdown.credits).toBe(0);
+    expect(c.breakdown.benefits + c.breakdown.credits + c.breakdown.premiums + c.breakdown.other).toBeCloseTo(c.drop, 9);
+  });
+
+  it("names a program lost only at a notch, never on a phase-down", () => {
+    const pts = [
+      pt(10000, 30000, { programs: { snap: 3000, eitc: 2000, tanf: 2000, wic: 50 } }),
+      pt(11000, 25000, { programs: { snap: 2400, eitc: 0, tanf: 900, wic: 0 } }),
+    ];
+    const [c] = analyzeCurve(pts, 0).cliffs;
+    // snap tapered 20% — not a loss. eitc switched off, tanf lost more than
+    // half. wic never cleared PROGRAM_END_MIN, so its going to 0 is nothing.
+    expect(c.programsLost).toEqual(["eitc", "tanf"]);
+  });
+
+  it("never counts the premium tax credit as a credit: it only reaches net income through the premium", () => {
+    // A pure 400%-FPL step: the credit ends, the net premium rises by the same
+    // amount, and PolicyEngine's own net income actually rose $704.
+    const before = pt(106000, 50000, { medicalOOP: 500, programs: { aca: 6000 } });
+    const after = pt(107000, 44704, { medicalOOP: 6500, programs: { aca: 0 } });
+    const c = analyzeCurve([before, after], 0).cliffs[0];
+    expect(c.breakdown).toEqual({ benefits: 0, credits: 0, premiums: 6000, other: -704 });
+    expect(c.programsLost).toEqual(["aca"]); // the credit really did end
+    expect(c.driver).toBe("premiums");
+  });
+
+  it("names a program only when its loss explains a real share of the drop", () => {
+    // SNAP $300 → $0 is a notch, but 4% of a fall that was all premium.
+    const before = pt(40000, 60000, { medicalOOP: 0, programs: { snap: 300 } });
+    const after = pt(41000, 53153, { medicalOOP: 7216, programs: { snap: 0 } });
+    const c = analyzeCurve([before, after], 0).cliffs[0];
+    expect(c.programsLost).toEqual([]);
+    expect(c.driver).toBe("premiums");
+    expect(c.breakdown.benefits).toBe(300);
+  });
+
+  it("reports a zero breakdown when a drop is all tax and wage effects", () => {
+    const pts = [pt(10000, 30000), pt(11000, 29000)];
+    const [c] = analyzeCurve(pts, 0).cliffs;
+    expect(c.breakdown).toEqual({ benefits: 0, credits: 0, premiums: 0, other: 1000 });
+    expect(c.programsLost).toEqual([]);
   });
 });
 

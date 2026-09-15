@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildPEPayload, axisMax, AXIS_COUNT } from "./translate.js";
+import { buildPEPayload, axisSpec } from "./translate.js";
+import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
 import type { HouseholdAnswers } from "./index.js";
 
 const base: HouseholdAnswers = {
@@ -9,12 +10,44 @@ const base: HouseholdAnswers = {
   annualEarnings: 30000, spouseAnnualEarnings: 0,
   getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
   countyFips: null,
+  ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
 };
 
-describe("axisMax", () => {
-  it("floors at $100k and scales to 1.5× earnings rounded up to $5k", () => {
-    expect(axisMax(30000)).toBe(100000);
-    expect(axisMax(90000)).toBe(135000);
+describe("axisSpec", () => {
+  it("floors the axis at $150k so the 400%-FPL subsidy cliff fits on it", () => {
+    // 400% FPL is $106,600 for three and $128,600 for four (2025 guidelines):
+    // the old $100k axis cut the biggest cliff off the top of its own chart.
+    expect(axisSpec({ ...base, annualEarnings: 30000 })).toEqual({ max: 150_000, step: 1000, count: 151 });
+    expect(axisSpec({ ...base, annualEarnings: 90000 })).toEqual({ max: 150_000, step: 1000, count: 151 });
+  });
+
+  it("runs past the 400%-FPL subsidy cliff for larger households", () => {
+    // Four people: 400% FPL = $128,600 → axis to $170,000; five: $150,600 → $195,000.
+    expect(axisSpec({ ...base, married: true, spouseAge: 30, childAges: [3, 7], childDisabled: [false, false] })).toEqual({ max: 170_000, step: 1000, count: 171 });
+    expect(axisSpec({ ...base, married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 195_000, step: 1000, count: 196 });
+  });
+
+  it("scales to 1.5× pay with a wider step, keeping the request near 250 points", () => {
+    // $150k × 1.5 = $225,000 still fits under the $250,000 cap at $1,000 steps.
+    expect(axisSpec({ ...base, annualEarnings: 150_000 })).toEqual({ max: 225_000, step: 1000, count: 226 });
+    // $300k × 1.5 = $450,000 is not a whole number of $2,000 steps — the top
+    // rounds up rather than asking for a fractional count.
+    expect(axisSpec({ ...base, annualEarnings: 300_000 })).toEqual({ max: 450_000, step: 2000, count: 226 });
+    expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 750_000, step: 3000, count: 251 });
+    // The largest household validateAnswers admits, in the state with the highest guidelines, still gets $1,000 steps.
+    expect(axisSpec({ ...base, state: "AK", married: true, spouseAge: 30, childAges: [1, 2, 3, 4, 5, 6], childDisabled: Array(6).fill(false) })).toEqual({ max: 315_000, step: 1000, count: 316 });
+    // Alaska's guidelines are higher: a five-person household still gets $1,000 steps.
+    expect(axisSpec({ ...base, state: "AK", married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 230_000, step: 1000, count: 231 });
+  });
+
+  it("always yields a whole number of steps and both endpoints", () => {
+    for (const annualEarnings of [0, 1, 12_345, 99_999, 150_001, 333_333, 500_000]) {
+      const { max, step, count } = axisSpec({ ...base, annualEarnings });
+      expect(max % step).toBe(0);
+      expect(count).toBe(max / step + 1);
+      expect(Number.isInteger(count)).toBe(true);
+      expect(max).toBeGreaterThanOrEqual(150_000);
+    }
   });
 });
 
@@ -32,7 +65,7 @@ describe("buildPEPayload", () => {
     expect(p.household.people.child1.head_start["2026"]).toBe(0);
     expect(p.household.households.household.state_name["2026"]).toBe("CA");
     expect(p.household.spm_units.spm_unit.childcare_expenses["2026"]).toBe(0);
-    expect(p.household.axes[0][0]).toMatchObject({ name: "employment_income", min: 0, max: 100000, count: AXIS_COUNT, period: "2026" });
+    expect(p.household.axes[0][0]).toMatchObject({ name: "employment_income", min: 0, max: 150000, count: 151, period: "2026" });
   });
 
   it("adds a spouse with fixed employment income when married", () => {
@@ -125,12 +158,29 @@ describe("buildPEPayload", () => {
     const p = buildPEPayload({ ...base, childAges: [], childDisabled: [], hasEmployerCoverage: true }) as any;
     expect(p.household.people.you.has_esi["2026"]).toBe(true);
     expect(p.household.people.you.offered_aca_disqualifying_esi["2026"]).toBe(true);
-    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(1700);
+    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
   });
 
   it("uses the family ESI premium when there are kids or a spouse", () => {
     const p = buildPEPayload({ ...base, hasEmployerCoverage: true, childAges: [5] }) as any;
-    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(6500);
+    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.family);
+  });
+
+  it("asks for household_benefits so a cliff can price untracked programs", () => {
+    const p = buildPEPayload(base) as any;
+    expect(p.household.households.household.household_benefits["2026"]).toBeNull();
+  });
+
+  it("annualizes non-wage income onto 'you', omitting each variable when zero", () => {
+    // All three variable names verified live against PolicyEngine 2026-09-14.
+    const p = buildPEPayload({ ...base, ssdiMonthly: 1500, childSupportMonthly: 400, unemploymentMonthly: 300 }) as any;
+    expect(p.household.people.you.social_security_disability["2026"]).toBe(18000);
+    expect(p.household.people.you.child_support_received["2026"]).toBe(4800);
+    expect(p.household.people.you.unemployment_compensation["2026"]).toBe(3600);
+    const none = buildPEPayload(base) as any;
+    expect(none.household.people.you.social_security_disability).toBeUndefined();
+    expect(none.household.people.you.child_support_received).toBeUndefined();
+    expect(none.household.people.you.unemployment_compensation).toBeUndefined();
   });
 
   it("adds county_fips to the household only when countyFips is set", () => {

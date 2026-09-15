@@ -3,7 +3,7 @@ import { analyzeCurve, escapeAnalysis, type CurvePoint, type StateMetrics } from
 export function stateMetrics(points: CurvePoint[]): StateMetrics {
   const a = analyzeCurve(points, 0);
   const axisMax = points[points.length - 1].earnings;
-  const esc = escapeAnalysis(points);
+  const esc = escapeAnalysis(points, a);
   return {
     biggestLoss: Math.round(a.worstCliff?.drop ?? 0),
     dangerWidth: Math.round(
@@ -12,5 +12,6 @@ export function stateMetrics(points: CurvePoint[]): StateMetrics {
     cliffCount: a.cliffs.length,
     safeExit: esc.safeExitEarnings,
     leap: esc.leap,
+    leapIsLowerBound: esc.leapIsLowerBound,
   };
 }

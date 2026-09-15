@@ -37,6 +37,9 @@ describe("answersFor", () => {
       getsHeadStart: false,
       getsHousing: false,
       hasEmployerCoverage: false,
+      ssdiMonthly: 0,
+      childSupportMonthly: 0,
+      unemploymentMonthly: 0,
     });
   });
 

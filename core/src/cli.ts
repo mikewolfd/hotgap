@@ -8,7 +8,9 @@ import { zipToCounty } from "./county.js";
 import { loadSummary } from "./data.js";
 import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
 import { toAnnual, type PayUnit } from "./income.js";
-import type { HouseholdAnswers } from "./types.js";
+import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
+import type { Cliff } from "./analyze.js";
+import { esiTier, type HouseholdAnswers, type ProgramId } from "./types.js";
 import { validateAnswers } from "./validate.js";
 import { isTerritoryZip, zipToState } from "./zip.js";
 
@@ -24,6 +26,7 @@ const USAGE = `hotgap <command> [options]
     --earnings 30000              annual pay from work
     --pay 15 --unit hour|month|year --hours 40   (instead of --earnings; unit defaults to hour)
     --spouse-earnings 0
+    --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
     --head-start  --housing  --employer-coverage  take-up (default: not received)
     --offline                     use the committed archetype curve
     --json                        print the full evaluation as JSON
@@ -37,7 +40,9 @@ const OPTIONS = {
   disabled: { type: "boolean" }, "spouse-disabled": { type: "boolean" },
   rent: { type: "string" }, childcare: { type: "string" },
   earnings: { type: "string" }, pay: { type: "string" }, unit: { type: "string" }, hours: { type: "string" },
-  "spouse-earnings": { type: "string" }, "head-start": { type: "boolean" }, housing: { type: "boolean" },
+  "spouse-earnings": { type: "string" }, ssdi: { type: "string" },
+  "child-support": { type: "string" }, unemployment: { type: "string" },
+  "head-start": { type: "boolean" }, housing: { type: "boolean" },
   "employer-coverage": { type: "boolean" }, offline: { type: "boolean" }, json: { type: "boolean" },
   help: { type: "boolean" },
 } as const;
@@ -56,6 +61,25 @@ const money = (n: number) => usd.format(n);
 // An hourly wage keeps its cents: rounding $16.90 to "$17" would misstate a published rate.
 const wage = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 const num = (v: string | undefined): number | undefined => (v === undefined ? undefined : Number(v));
+// Signed, because `other` (taxes and market-income effects) can go either way;
+// a zero share is left out rather than printed as "$0".
+const signed = (n: number) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
+// What a cliff was when no program can be named for it.
+const DRIVER_LABEL: Record<Cliff["driver"], string> = {
+  benefits: "a benefit not tracked by name (e.g. SSDI)",
+  credits: "tax credits",
+  premiums: "health premium",
+  other: "taxes / other",
+};
+
+const breakdownOf = (c: Cliff): string => {
+  const parts: string[] = [];
+  if (Math.round(c.breakdown.benefits) !== 0) parts.push(`benefits ${signed(-c.breakdown.benefits)}`);
+  if (Math.round(c.breakdown.credits) !== 0) parts.push(`credits ${signed(-c.breakdown.credits)}`);
+  if (Math.round(c.breakdown.premiums) !== 0) parts.push(`premiums ${signed(c.breakdown.premiums)}`);
+  if (Math.round(c.breakdown.other) !== 0) parts.push(`other ${signed(-c.breakdown.other)}`);
+  return parts.join(" · ");
+};
 const list = (v: string | undefined): string[] => (v ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
 function householdFrom(f: Flags): HouseholdAnswers {
@@ -93,6 +117,9 @@ function householdFrom(f: Flags): HouseholdAnswers {
     monthlyChildcare: num(f.childcare) ?? null,
     annualEarnings,
     spouseAnnualEarnings: num(f["spouse-earnings"]) ?? 0,
+    ssdiMonthly: num(f.ssdi) ?? 0,
+    childSupportMonthly: num(f["child-support"]) ?? 0,
+    unemploymentMonthly: num(f.unemployment) ?? 0,
     getsHeadStart: f["head-start"] === true,
     getsHousing: f.housing === true,
     hasEmployerCoverage: f["employer-coverage"] === true,
@@ -142,8 +169,24 @@ function report(ev: HouseholdEvaluation): string {
     out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""));
     analysis.cliffs.forEach((c, i) => {
       const hours = ev.minWage?.cliffs[i]?.hoursPerWeek ?? null;
-      out.push(row(money(c.startEarnings), money(c.drop), c.programsLost.join(", ") || "—", hours === null ? "" : String(hours)));
+      out.push(row(money(c.startEarnings), money(c.drop), c.programsLost.join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)));
+      // Every dollar of the drop attributed, so "lost SNAP" is never read as
+      // the whole explanation when most of the fall was a premium.
+      out.push(`  ${" ".repeat(10)}${breakdownOf(c)}`);
     });
+  }
+
+  // This household's own position first — the state-level safe exit and leap
+  // below answer a different question (the worst zone anywhere on the curve).
+  out.push("", "your path");
+  if (ev.personal.zone === null) {
+    out.push(`  you are not in a rough zone at ${money(analysis.currentEarnings)}`);
+  } else if (ev.personal.raiseIsLowerBound) {
+    out.push(`  you are in a rough zone from ${money(ev.personal.zone.startEarnings)} that does not recover inside the modeled range`);
+    out.push(`  a raise of at least ${money(ev.personal.raiseToClear!)} to clear it`);
+  } else {
+    out.push(`  you are in a rough zone from ${money(ev.personal.zone.startEarnings)} to ${money(ev.personal.escapeEarnings!)}`);
+    out.push(`  a raise of ${money(ev.personal.raiseToClear!)} clears it`);
   }
 
   out.push(
@@ -152,8 +195,44 @@ function report(ev: HouseholdEvaluation): string {
     `the leap: ${money(esc.leap)}${esc.leapIsLowerBound ? " (at least)" : ""}`,
     `benefits end: ${esc.benefitsEndEarnings === null ? "beyond the modeled range" : money(esc.benefitsEndEarnings)}`,
   );
-  const ends = Object.entries(esc.programEnds).map(([id, at]) => `${id} ${money(at)}`);
+
+  // Adults and children lose the same program at different incomes, so they
+  // only share a line when the thresholds actually coincide.
+  const { adults, children } = esc.programEndsByAge;
+  const ends = Object.entries(esc.programEnds).map(([id, at]) => {
+    const forAdults = adults[id as ProgramId];
+    const forChildren = children[id as ProgramId];
+    if (forAdults !== undefined && forChildren !== undefined && forAdults !== forChildren) {
+      return `${id} adults ${money(forAdults)}, children ${money(forChildren)}`;
+    }
+    return `${id} ${money(at)}`;
+  });
   if (ends.length) out.push(`program ends: ${ends.join(" · ")}`);
+  if (esc.childCoverageEndEarnings !== null) {
+    out.push(
+      `children's coverage: past ${money(esc.childCoverageEndEarnings)} the children no longer qualify — but a child already enrolled keeps Medicaid or CHIP until the next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342), so the loss is deferred, not immediate`,
+    );
+  }
+
+  if (ev.coverageGap) {
+    out.push(
+      "",
+      `no coverage help exists between ${money(ev.coverageGap.fromEarnings)} and ${money(ev.coverageGap.toEarnings)} in ${a.state}${analysis.currentEarnings >= ev.coverageGap.fromEarnings && analysis.currentEarnings <= ev.coverageGap.toEarnings ? " — your pay is in that band" : ""} — too much for ${a.state} Medicaid, too little for a marketplace subsidy (which starts at the poverty line). Shown with no premium, because nobody in that band is buying that plan.`,
+    );
+  }
+  if (ev.headStart) {
+    out.push(
+      "",
+      `Head Start is priced at ${money(ev.headStart.stickerValue)} a year by PolicyEngine, but it is worth what it saves you: ${money(ev.headStart.replacementValue)} of childcare you would otherwise buy. And a raise past the income limit does not end it — an enrolled child stays eligible through the following program year (45 CFR 1302.12(j)(1)).`,
+    );
+  }
+  if (a.hasEmployerCoverage) {
+    const kind = esiTier(a);
+    out.push(
+      "",
+      `employer coverage: counted at ${money(ESI_EMPLOYEE_CONTRIBUTION[kind])}/yr, the average ${kind} employee contribution (AHRQ MEPS-IC 2024), in place of the marketplace premium PolicyEngine would otherwise charge you.`,
+    );
+  }
 
   // "N% earn at or below X" — how common the income is, never odds of reaching it.
   const earnAtOrBelow = (pct: number, at: number, what: string) =>

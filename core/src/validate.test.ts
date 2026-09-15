@@ -151,6 +151,24 @@ describe("validateAnswers", () => {
     }
   });
 
+  it("defaults the non-wage monthly incomes to 0 for old clients that omit them", () => {
+    const r = validateAnswers(good);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect([r.value.ssdiMonthly, r.value.childSupportMonthly, r.value.unemploymentMonthly]).toEqual([0, 0, 0]);
+  });
+
+  it("accepts non-wage monthly incomes, clamped to $20,000 a month", () => {
+    const r = validateAnswers({ ...good, ssdiMonthly: 1500, childSupportMonthly: 400, unemploymentMonthly: 99_999 });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect([r.value.ssdiMonthly, r.value.childSupportMonthly, r.value.unemploymentMonthly]).toEqual([1500, 400, 20000]);
+  });
+
+  it("rejects a negative or non-numeric non-wage income by name", () => {
+    expect(validateAnswers({ ...good, ssdiMonthly: -1 })).toEqual({ ok: false, detail: "ssdiMonthly" });
+    expect(validateAnswers({ ...good, childSupportMonthly: "some" })).toEqual({ ok: false, detail: "childSupportMonthly" });
+    expect(validateAnswers({ ...good, unemploymentMonthly: null })).toEqual({ ok: false, detail: "unemploymentMonthly" });
+  });
+
   it("accepts a 5-digit countyFips and defaults it to null when absent or malformed", () => {
     const good = { state: "CA", married: false, childAges: [], childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0, age: 30, spouseAge: null, youDisabled: false, spouseDisabled: false };
     const a = validateAnswers({ ...good, countyFips: "06075" });

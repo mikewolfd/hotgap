@@ -8,7 +8,7 @@ import {
   answersFor,
   parsePEResponse,
   buildPEPayload,
-  AXIS_COUNT,
+  axisSpec,
   requestPE,
   sleep,
   type CurvePoint,
@@ -101,12 +101,13 @@ export async function runPipeline(
   const results: ResultsByStateArchetype = {};
   await runQueue(tasks, opts.concurrency, async ({ state, archetype }) => {
     try {
-      const payload = buildPEPayload(answersFor(state, archetype));
+      const answers = answersFor(state, archetype);
+      const payload = buildPEPayload(answers);
       // A batch can wait far longer than an interactive caller; the client's
       // 25 s default is for someone watching a screen.
       const body = await requestPE(payload, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
       results[state] ??= {};
-      results[state][archetype.id] = parsePEResponse(body, AXIS_COUNT).map(roundPoint);
+      results[state][archetype.id] = parsePEResponse(body, axisSpec(answers).count).map(roundPoint);
     } catch (e) {
       console.error(`fetch failed for ${state} × ${archetype.id}: ${(e as Error).message}`);
     }

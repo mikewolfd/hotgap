@@ -186,3 +186,60 @@ sticker values; "disabled" models SSI only (no SSDI/SGA cliff); reach ladders
 include retirees and ignore spouse earnings; personal safe-exit/leap are
 whole-curve rather than zone-relative; Head Start is a $22k sticker value with
 an instant cliff; the sweep axis stops at $100k.
+
+# Methodology findings addressed (2026-09-14)
+
+Every library-side finding in
+`docs/reviews/2026-09-14-methodology-validation.md` (the "what is HotGap's
+to fix" list) is implemented, each rule verified live against PolicyEngine
+before being written down (commits `93b4bb8`, `cb919f6`, `27a9392`).
+
+**Implemented, one line each:**
+- Cliff attribution: `core/src/analyze.ts` (`CliffBreakdown`, `breakdownOf`) — every cliff's drop is decomposed into benefits, credits, premiums, and other, summing to the drop exactly.
+- Program labels: `core/src/analyze.ts` (the `programsLost` filter in `analyzeCurve`) — a program is named only when it ends or loses more than half its value in one step, never on a mere phase-down.
+- Program-end / benefits-end conflation: `core/src/escape.ts` — `programEndsByAge` reports adults and children separately; `childCoverageEndEarnings` reports the threshold with the federal 12-month continuous-eligibility deferral noted; `benefitsEndEarnings` counts money only, never a Medicaid/CHIP sticker value.
+- Coverage gap: `core/src/evaluate.ts` (`applyCoverageGap`, `coverageGapSummary`) — below 100% of the 2025 FPL with no adult Medicaid, no premium credit, and no employer plan, the phantom benchmark premium is removed and the point is flagged `coverageGap: true`.
+- Employer coverage: `core/src/evaluate.ts` (`applyEmployerCoverage`) with the constant in `core/src/policyYear.ts` (`ESI_EMPLOYEE_CONTRIBUTION`, AHRQ MEPS-IC 2024: $1,789 single / $7,216 family) — replaces PolicyEngine's marketplace premium with the household's own employee contribution.
+- Head Start: `core/src/evaluate.ts` (`applyHeadStart`, `headStartSummary`) — valued at the household's own reported childcare cost, capped at PolicyEngine's sticker value, noted as deferred under 45 CFR 1302.12(j)(1).
+- SSDI / SGA cliff: `core/src/client.ts` (`fetchSplicedForSSDI`) with `core/src/policyYear.ts` (`SGA_MONTHLY`/`SGA_ANNUAL`, $20,280) — two PolicyEngine requests, spliced at the 2026 SGA threshold, so the whole check switches off in one step.
+- Other income inputs: `core/src/types.ts`, `core/src/validate.ts`, `core/src/translate.ts` add `ssdiMonthly`, `childSupportMonthly`, `unemploymentMonthly`; `core/src/evaluate.ts` nets the steady (non-means-tested) ones out of `otherBenefits` so "benefits end" isn't permanently unreachable for a household that reports them.
+- Personal path: `core/src/evaluate.ts` (`personalEscape`, `PersonalEscape`) — a zone-relative escape earnings and raise-to-clear for this household specifically, alongside the existing whole-curve safe exit and leap.
+- Reach ladders: `scripts/build-reach.mjs` rebuilt — ADJINC applied per record, householder restricted to age 18–64, ladder built on householder-plus-spouse `PERNP` only, replicate-weight (WGTP1–80) margins of error with MOE-based suppression, 2024 1-Year PUMS with the 2020–2024 5-Year substituted for five small states, BLS ECI growth factor 1.067533; `core/src/reachLookup.ts` (`reachCell`) exposes the margin; `core/src/evaluate.ts` now passes householder-plus-spouse earnings into `reachForHousehold` to match.
+- Sweep axis: `core/src/translate.ts` (`axisSpec`) first moved the flat top from $100,000 to $150,000 at $1,000 steps (`cb919f6`), then — after the resweep showed twenty cells with no safe exit because a flat $150,000 axis still clipped the 400%-FPL subsidy cliff for four- and five-person households — was widened again to run past `4 × fpl2025(state, size) + 40,000` for the household's own size (`27a9392`): $150,000 (151 points) for one to three people, $170,000 (171) for four, $195,000 (196) for five, coarser steps only beyond $350,000.
+- Pipeline: `pipeline/src/metrics.ts` carries `leapIsLowerBound` into `summary.json`; `pipeline/src/build.ts`/`run.ts` validate each archetype's curve against its own `axisSpec` and round the new fields.
+
+**Deliberately not done, and why:**
+- SSDI has no trial-work-period timing: `core/src/client.ts`'s splice is the steady-state rule only — SSA's nine-month trial work period and 36-month extended eligibility period mean a worker does not lose the check the month they first cross SGA, and none of that timing is modeled, so the curve answers "at this pay, eventually," never "next month."
+- Head Start is valued at reported childcare, not added on top of it: `core/src/evaluate.ts`'s `applyHeadStart` caps the value at `12 * monthlyChildcare`, so a family reporting $0 childcare gets $0 of Head Start value even though PolicyEngine still prices the slot at its ~$22k sticker cost.
+- ESI replaces rather than adds to the premium: `core/src/evaluate.ts`'s `applyEmployerCoverage` substitutes the MEPS-IC employee contribution for PolicyEngine's marketplace premium rather than charging both, because PolicyEngine already zeroes the premium tax credit for an ESI household and charges the full unsubsidized marketplace premium — adding the employee's share on top would double-charge them.
+- The coverage-gap rule needs `childPrograms` to separate a parent's Medicaid from a child's, so it is withheld on any curve swept before that field existed: `core/src/evaluate.ts`'s `knowsWhoHolds` check, same guard used for `programEndsByAge` and `childCoverageEndEarnings`.
+- Zero-SE reach medians are flagged, not GVF-corrected: per `core/data/reach.json`'s `suppression` metadata and `scripts/build-reach.mjs`, a cell where an interior ladder point has a zero replicate variance is marked `seZero: true` rather than having a generalized-variance-function standard error substituted for it — Census's own guidance says a median should never have a zero SE, and this build reports "unmeasured here," never "exact."
+- `core/src/translate.ts` still sends the MEPS-IC employee contribution in PolicyEngine's `employer_sponsored_insurance_premiums` field even though the field is inert ($6,500 and $13,000 produce byte-identical output, verified live): the field is documented as the *employer's* share, not the employee's, so if PolicyEngine ever starts using it, this needs to switch to the MEPS total premium minus the employee contribution rather than the employee contribution itself.
+
+**Still upstream, not HotGap's to fix** — see
+`docs/upstream/2026-09-14-policyengine-issues.md` for the live-probed detail
+and the exact PolicyEngine commit each was checked against:
+- Massachusetts TAFDC's payment standard and abrupt end (Issue 1) and New York's Essential Plan ceiling stuck at 250% FPL past its 2026-07-01 end date (Issue 2) are PolicyEngine parameter bugs, not HotGap's.
+- The coverage-gap benchmark premium (Issue 3) and the employer premium input not reaching medical out-of-pocket (Issue 4) are PolicyEngine behavior HotGap works around in `evaluate.ts`, not something HotGap can fix upstream of the API.
+- Six non-expansion states' parent/caretaker Medicaid limits differ from what each state currently publishes (Issue 5): five (TX, MS, GA, FL, WY) hold a frozen *dollar* standard, last stamped 2021 (GA 2025), that drifts further from the real percentage every January the guidelines rise; South Carolina's parameter is a flat 100% FPL, stamped 2021, that simply does not match the state's published 67% and never has. The five are flagged in the README's Honesty section; none of the six are hand-corrected in HotGap, since HotGap has no authority to override PolicyEngine's eligibility determination.
+- Three review candidates were disproved by the live probes rather than confirmed, so nothing was implemented for them: the below-100%-FPL immigrant PTC exception is already off for 2026 in PolicyEngine's parameters, the APTC repayment cap is simply unmodeled (not wrongly modeled), and the SNAP non-citizen allowlist already matches the 2025-07-01 statute.
+
+Whole-branch review (Opus, independent) on the findings branch: READY WITH
+FIXES, all applied. The two blockers were read-time bugs in the new code, not
+in the data: cliff attribution counted the premium tax credit as a credit
+*and* as a premium (it reaches net income only through the premium — 79% of
+stored cliffs carried a phantom "credits" share), and the coverage-gap floor
+counted child support, which is not in MAGI, so a Texas parent with child
+support got the phantom premium back between the two lines and a fabricated
+cliff. Also fixed: programs are named on a cliff only when their loss is at
+least a fifth of the drop, with a `driver` naming the dominant component
+otherwise (an SSDI stop or a premium jump no longer prints as "lost aca" or
+"lost snap"); the employer-coverage charge follows who the plan must cover
+(adult on Medicaid pays nothing; children on Medicaid, single tier for an
+unmarried parent) instead of whether PolicyEngine happened to charge a
+premium; the reach guard looks at householder-plus-spouse earnings; the
+reach builder merges partial runs and offers the 5-Year PUMS to any cell the
+1-Year cannot support (406 of 408 now publish); the axis keeps $1,000 steps
+through $350,000 so no admissible household gets a coarser grid; stored
+curve points no longer carry a constant `coverageGap`; the upstream evidence
+lives in `docs/upstream/evidence/`.

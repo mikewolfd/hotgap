@@ -1,16 +1,40 @@
 import { describe, it, expect } from "vitest";
-import { reachForArchetype, reachForHousehold } from "./reachLookup.js";
+import { ARCHETYPES } from "./archetypes.js";
+import { REACH_PERCENTILES } from "./reach.js";
+import { reachCell, reachForArchetype, reachForHousehold } from "./reachLookup.js";
+import { STATE_CODES } from "./states.js";
 
-// Pinned against the real, committed reach.json (see core/data/reach.json
-// and scripts/build-reach.mjs) rather than a synthetic fixture, so a change
-// to the builder or the underlying PUMS pull can't silently desync this
-// lookup from the actual data shape it reads.
+// Everything here is checked against the real, committed reach.json rather than
+// a synthetic fixture, so a change to the builder or the underlying PUMS pull
+// cannot silently desync this lookup from the data shape it reads. Expected
+// values are DERIVED from the file (a cell's own p50 must look itself back up
+// to 50) instead of pinned in dollars, which would only re-pin the artifact to
+// itself and would have to be rewritten on every vintage bump.
+const CELLS = STATE_CODES.flatMap((state) => ARCHETYPES.map((a) => ({ state, id: a.id, cell: reachCell(state, a.id) })));
+const PUBLISHED = CELLS.flatMap(({ state, id, cell }) => (cell ? [{ state, id, cell }] : []));
+const SUPPRESSED = CELLS.filter(({ cell }) => cell === null);
+const P50 = REACH_PERCENTILES.indexOf(50);
+const P25 = REACH_PERCENTILES.indexOf(25);
+
 describe("reachForArchetype", () => {
-  it("returns the percentile for a real state x archetype cell (CA single-1's own p50 -> 50)", () => {
-    // CA single-1's ladder p50 (index 10 of 21 points) is $72,800 -- see
-    // core/data/reach.json (household earnings, 2026 dollars). Looking that
-    // exact income back up must land on (very close to) the 50th percentile.
-    expect(reachForArchetype("CA", "single-1", 72800)).toBeCloseTo(50, 0);
+  it("looks a cell's own median back up to the 50th percentile (CA single-1)", () => {
+    const median = reachCell("CA", "single-1")!.ladder[P50];
+    expect(median).toBeGreaterThan(0);
+    expect(reachForArchetype("CA", "single-1", median)).toBeCloseTo(50, 6);
+  });
+
+  it("looks every ladder point back up to its own percentile, for every published cell", () => {
+    for (const { state, id, cell } of PUBLISHED) {
+      for (let i = 1; i < REACH_PERCENTILES.length; i++) {
+        // A flat step means several percentiles share a value; the lookup
+        // rightly reports the lowest of them. A value tying the ladder's top
+        // is 100 by definition. Neither is a distinct percentile to assert on.
+        if (cell.ladder[i] <= cell.ladder[i - 1]) continue;
+        if (cell.ladder[i] >= cell.ladder[cell.ladder.length - 1]) continue;
+        expect(reachForArchetype(state, id, cell.ladder[i]), `${state} ${id} p${REACH_PERCENTILES[i]}`)
+          .toBeCloseTo(REACH_PERCENTILES[i], 6);
+      }
+    }
   });
 
   it("returns a higher percentile for a higher income, for the same cell", () => {
@@ -19,8 +43,9 @@ describe("reachForArchetype", () => {
     expect(high).toBeGreaterThan(low);
   });
 
-  it("returns null for a small-sample cell stored as null (WY single-3)", () => {
-    expect(reachForArchetype("WY", "single-3", 50000)).toBeNull();
+  it("returns null for every cell the file suppresses", () => {
+    console.log(`reach.json suppresses ${SUPPRESSED.length} of ${CELLS.length} cells: ${SUPPRESSED.map((c) => `${c.state} ${c.id}`).join(", ") || "none"}`);
+    for (const { state, id } of SUPPRESSED) expect(reachForArchetype(state, id, 50000), `${state} ${id}`).toBeNull();
   });
 
   it("returns null for a state absent from the file entirely", () => {
@@ -32,22 +57,79 @@ describe("reachForArchetype", () => {
   });
 });
 
+describe("the committed reach ladders", () => {
+  it("cover every state × archetype, published or explicitly suppressed", () => {
+    expect(CELLS).toHaveLength(STATE_CODES.length * ARCHETYPES.length);
+    expect(PUBLISHED.length).toBeGreaterThan(0);
+  });
+
+  it("carry a 21-point ladder and a 21-point margin of error, non-decreasing", () => {
+    for (const { state, id, cell } of PUBLISHED) {
+      const where = `${state} ${id}`;
+      expect(cell.ladder, where).toHaveLength(REACH_PERCENTILES.length);
+      expect(cell.moe, where).toHaveLength(REACH_PERCENTILES.length);
+      for (let i = 1; i < cell.ladder.length; i++) {
+        expect(cell.ladder[i], `${where} p${REACH_PERCENTILES[i]}`).toBeGreaterThanOrEqual(cell.ladder[i - 1]);
+      }
+      for (const m of cell.moe) expect(m, where).toBeGreaterThanOrEqual(0);
+      expect(cell.households, where).toBeGreaterThan(0);
+      expect(["2024-1yr", "2020-2024-5yr"], where).toContain(cell.vintage);
+    }
+  });
+
+  it("publish nothing below the 30-household floor, or wider than a half-median MOE", () => {
+    for (const { state, id, cell } of PUBLISHED) {
+      const where = `${state} ${id}`;
+      expect(cell.n, where).toBeGreaterThanOrEqual(30);
+      expect(cell.ladder[P50], `${where} median`).toBeGreaterThan(0);
+      expect(cell.moe[P50], `${where} median MOE`).toBeLessThanOrEqual(0.5 * cell.ladder[P50]);
+    }
+  });
+
+  // The pre-fix builder counted any solo resident as "single, no children", so
+  // retirees pushed p25 to $0 in 50 of 51 states (methodology validation, D2).
+  // A working-age householder makes a $0 lower quartile the rare exception it
+  // should be; this is the regression guard on that fix, not a style check.
+  it("no longer bottom out at $0 for the p25 of single-0 in more than a handful of states", () => {
+    const zeros = PUBLISHED.filter(({ id, cell }) => id === "single-0" && cell.ladder[P25] === 0).map((c) => c.state);
+    console.log(`single-0 p25 === $0 in ${zeros.length} of ${STATE_CODES.length} states${zeros.length ? `: ${zeros.join(", ")}` : ""}`);
+    expect(zeros.length).toBeLessThanOrEqual(5);
+  });
+});
+
 describe("reachForHousehold", () => {
   it("maps married/kidCount to the archetype the same way the fallback picker does (single-1)", () => {
-    expect(reachForHousehold("CA", false, 1, 72800)).toBeCloseTo(50, 0);
+    const median = reachCell("CA", "single-1")!.ladder[P50];
+    expect(reachForHousehold("CA", false, 1, median)).toBeCloseTo(50, 6);
   });
 
-  it("clamps kid count the same way pickArchetypeId does (5 kids -> single-3, still a real cell in most states)", () => {
-    const viaClamp = reachForHousehold("CA", false, 5, 50000);
-    const viaDirect = reachForArchetype("CA", "single-3", 50000);
-    expect(viaClamp).toBe(viaDirect);
+  it("clamps kid count the same way pickArchetypeId does (5 kids -> single-3)", () => {
+    expect(reachForHousehold("CA", false, 5, 50000)).toBe(reachForArchetype("CA", "single-3", 50000));
   });
 
-  it("returns null when the mapped archetype's cell is a small-sample null (WY, single, 3 kids)", () => {
-    expect(reachForHousehold("WY", false, 3, 50000)).toBeNull();
+  it("returns null when the mapped archetype's cell is suppressed", () => {
+    const gap = SUPPRESSED.find(({ id }) => ARCHETYPES.some((a) => a.id === id));
+    if (!gap) return; // this vintage suppressed nothing; reachForArchetype's null cases cover the path
+    const archetype = ARCHETYPES.find((a) => a.id === gap.id)!;
+    expect(reachForHousehold(gap.state, archetype.married, archetype.childAges.length, 50000)).toBeNull();
   });
 
   it("returns null for an unknown state", () => {
     expect(reachForHousehold("ZZ", true, 2, 80000)).toBeNull();
+  });
+});
+
+describe("reachCell", () => {
+  it("hands back the whole cell, so a caller can say how sure the number is", () => {
+    const cell = reachCell("CA", "married-2")!;
+    expect(cell.ladder[P50]).toBeGreaterThan(0);
+    expect(cell.moe[P50]).toBeGreaterThan(0);
+    expect(cell.n).toBeGreaterThanOrEqual(30);
+    expect(cell.vintage).toBe("2024-1yr");
+  });
+
+  it("is null on the same terms as reachForArchetype", () => {
+    expect(reachCell("ZZ", "single-1")).toBeNull();
+    expect(reachCell("CA", "not-a-real-archetype")).toBeNull();
   });
 });

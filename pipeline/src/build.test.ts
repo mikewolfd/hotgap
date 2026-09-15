@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, type CurvePoint } from "@hotgap/core";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -9,18 +9,22 @@ const fixture = JSON.parse(
 );
 const fixturePoints = parsePEResponse(fixture, 101);
 
-function linearCurve(netIncomeStart = 10000): CurvePoint[] {
-  return Array.from({ length: 101 }, (_, i) => ({
+const AXIS_COUNT = axisSpec(answersFor("CA", ARCHETYPES[0])).count;
+const countFor = (state: string, archetypeId: string) => axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === archetypeId)!)).count;
+
+function linearCurve(netIncomeStart = 10000, length = AXIS_COUNT): CurvePoint[] {
+  return Array.from({ length }, (_, i) => ({
     earnings: i * 1000,
     netIncome: netIncomeStart + i * 100,
     medicalOOP: 0,
     programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+    childPrograms: {}, otherBenefits: 0, coverageGap: false,
   }));
 }
 
 function fullResultsFor(state: string): ResultsByStateArchetype {
   const forState: Record<string, CurvePoint[]> = {};
-  for (const a of ARCHETYPES) forState[a.id] = linearCurve();
+  for (const a of ARCHETYPES) forState[a.id] = linearCurve(10000, countFor(state, a.id));
   return { [state]: forState };
 }
 
@@ -46,7 +50,7 @@ describe("validateResults", () => {
     expect(v.gaps).toHaveLength(ARCHETYPES.length);
   });
 
-  it("reports a gap when a curve doesn't have exactly 101 points", () => {
+  it("reports a gap when a curve doesn't have exactly the axis's point count", () => {
     const results = fullResultsFor("CA");
     results.CA["single-0"] = linearCurve().slice(0, 50);
     const v = validateResults(["CA"], results);
@@ -75,7 +79,7 @@ describe("buildSummary", () => {
     expect(summary.generated).toBe("2026-07-11T00:00:00.000Z");
     expect(summary.year).toBe("2026");
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
-    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve()));
+    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve(10000, countFor("CA", "single-2"))));
     expect(Object.keys(summary.states.CA)).toHaveLength(8);
   });
 
@@ -93,6 +97,7 @@ describe("buildSummary", () => {
       cliffCount: expect.any(Number),
       safeExit: 91000,
       leap: 45000,
+      leapIsLowerBound: false,
     });
   });
 });
@@ -104,12 +109,12 @@ describe("buildStateFile", () => {
     expect(file.generated).toBe("2026-07-11T00:00:00.000Z");
     expect(file.year).toBe("2026");
     expect(file.state).toBe("CA");
-    expect(file.archetypes["single-2"].points).toHaveLength(101);
+    expect(file.archetypes["single-2"].points).toHaveLength(AXIS_COUNT);
   });
 
   it("roundPoint rounds netIncome, medicalOOP, and program values to whole dollars", () => {
     const programs = { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs });
-    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 } });
+    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5, coverageGap: false });
+    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100 });
   });
 });

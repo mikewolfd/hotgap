@@ -1,7 +1,7 @@
 // Committed data files under data/, read lazily from disk and memoized.
 //
 //   summary.json        weekly sweep: per state × archetype cliff metrics
-//   states/{ST}.json    weekly sweep: the full 101-point curve per archetype
+//   states/{ST}.json    weekly sweep: the full curve per archetype (151–231 points, see axisSpec)
 //   reach.json          ACS PUMS household-earnings percentile ladders
 //   zip3-state.json     ZIP prefix → state (GeoNames)
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
@@ -14,6 +14,9 @@ export interface StateMetrics {
   cliffCount: number;
   safeExit: number | null;
   leap: number;
+  // True when the widest danger zone runs past the sweep's axis, so `leap`
+  // is a floor, not a measurement — rank such cells with care.
+  leapIsLowerBound: boolean;
 }
 
 export interface SummaryJson {

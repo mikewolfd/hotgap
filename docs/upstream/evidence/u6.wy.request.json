@@ -1,0 +1,93 @@
+{
+  "household": {
+    "people": {
+      "you": {
+        "age": {
+          "2026": 35
+        },
+        "medicaid": {
+          "2026": null
+        },
+        "is_medicaid_eligible": {
+          "2026": null
+        },
+        "medicaid_income_level": {
+          "2026": null
+        }
+      },
+      "child1": {
+        "age": {
+          "2026": 4
+        },
+        "medicaid": {
+          "2026": null
+        }
+      },
+      "child2": {
+        "age": {
+          "2026": 8
+        },
+        "medicaid": {
+          "2026": null
+        }
+      }
+    },
+    "families": {
+      "family": {
+        "members": [
+          "you",
+          "child1",
+          "child2"
+        ]
+      }
+    },
+    "marital_units": {
+      "marital_unit": {
+        "members": [
+          "you"
+        ]
+      }
+    },
+    "tax_units": {
+      "tax_unit": {
+        "members": [
+          "you",
+          "child1",
+          "child2"
+        ]
+      }
+    },
+    "spm_units": {
+      "spm_unit": {
+        "members": [
+          "you",
+          "child1",
+          "child2"
+        ]
+      }
+    },
+    "households": {
+      "household": {
+        "members": [
+          "you",
+          "child1",
+          "child2"
+        ],
+        "state_name": {
+          "2026": "WY"
+        }
+      }
+    },
+    "axes": [
+      [
+        {
+          "name": "employment_income",
+          "min": 9000,
+          "max": 17000,
+          "count": 17,
+          "period": "2026"
+        }
+      ]
+    ]
+  }
+}

@@ -3,8 +3,9 @@
 // and an optional result cache keyed on the household answers.
 import { createHash } from "node:crypto";
 import { parsePEResponse, PEParseError } from "./parse.js";
-import { AXIS_COUNT, buildPEPayload } from "./translate.js";
-import { YEAR, type CurveResponse, type HouseholdAnswers } from "./types.js";
+import { SGA_ANNUAL } from "./policyYear.js";
+import { axisSpec, buildPEPayload, type AxisSpec } from "./translate.js";
+import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
 const DEFAULT_TIMEOUT_MS = 25_000;
@@ -97,20 +98,54 @@ export function curveCacheKey(answers: HouseholdAnswers): string {
   return createHash("sha256").update(canonical(answers)).digest("hex");
 }
 
+function parseOrThrow(body: unknown, count: number): CurvePoint[] {
+  try {
+    return parsePEResponse(body, count);
+  } catch (e) {
+    if (e instanceof PEParseError) throw new PolicyEngineError("parse", e.message);
+    throw e;
+  }
+}
+
+/**
+ * The SSDI curve, spliced at substantial gainful activity.
+ *
+ * PolicyEngine has no SGA rule: given `social_security_disability`, it pays
+ * the same benefit at every point on the earnings axis, so a single request
+ * draws a household that keeps its disability check while earning $90,000.
+ * Two requests — one with the benefit, one without — spliced at SGA_ANNUAL put
+ * the real cash cliff on the curve: the whole check stops, in one step.
+ *
+ * This is the steady-state rule only. SSA's nine-month trial work period and
+ * the 36-month extended period of eligibility mean a worker does not lose the
+ * check the month they first cross SGA, and none of that timing is modeled
+ * here — the curve answers "at this pay, eventually", not "next month".
+ */
+async function fetchSplicedForSSDI(
+  answers: HouseholdAnswers,
+  axis: AxisSpec,
+  opts: RequestOptions,
+): Promise<CurvePoint[]> {
+  const [receiving, stopped] = await Promise.all([
+    requestPE(buildPEPayload(answers), opts),
+    requestPE(buildPEPayload({ ...answers, ssdiMonthly: 0 }), opts),
+  ]);
+  const withSSDI = parseOrThrow(receiving, axis.count);
+  const withoutSSDI = parseOrThrow(stopped, axis.count);
+  return withSSDI.map((p, i) => (p.earnings <= SGA_ANNUAL ? p : withoutSSDI[i]));
+}
+
 /** Full earnings sweep for one household, from PolicyEngine (or the cache). */
 export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOptions = {}): Promise<CurveResponse> {
   const key = curveCacheKey(answers);
   const hit = await opts.cache?.get(key);
   if (hit) return hit;
 
-  const body = await requestPE(buildPEPayload(answers), opts);
-  let points;
-  try {
-    points = parsePEResponse(body, AXIS_COUNT);
-  } catch (e) {
-    if (e instanceof PEParseError) throw new PolicyEngineError("parse", e.message);
-    throw e;
-  }
+  const axis = axisSpec(answers);
+  const points = answers.ssdiMonthly > 0
+    ? await fetchSplicedForSSDI(answers, axis, opts)
+    : parseOrThrow(await requestPE(buildPEPayload(answers), opts), axis.count);
+
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };
   await opts.cache?.set(key, curve);
   return curve;

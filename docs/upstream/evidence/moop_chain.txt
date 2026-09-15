@@ -1,0 +1,127 @@
+=========== variables/household/income/spm_unit/spm_unit_medical_out_of_pocket_expenses.py
+from policyengine_us.model_api import *
+
+
+class spm_unit_medical_out_of_pocket_expenses(Variable):
+    value_type = float
+    entity = SPMUnit
+    label = "SPM unit medical out-of-pocket expenses"
+    unit = USD
+    definition_period = YEAR
+    documentation = (
+        "Total medical out-of-pocket expenses at the SPM unit level, "
+        "combining health insurance premiums with non-premium medical "
+        "expenses. Health insurance premiums include other health insurance "
+        "premiums plus modeled Marketplace, CHIP, Medicaid, and Medicare "
+        "Part A and Part B premiums net of Medicare Savings Program coverage "
+        "where modeled, plus the Part D IRMAA surcharge. "
+        "Non-premium expenses include other medical expenses and "
+        "over-the-counter health expenses."
+    )
+
+    adds = [
+        "spm_unit_health_insurance_premiums",
+        "spm_unit_non_premium_medical_out_of_pocket_expenses",
+    ]
+=========== variables/household/income/spm_unit/spm_unit_health_insurance_premiums.py
+from policyengine_us.model_api import *
+
+
+class spm_unit_health_insurance_premiums(Variable):
+    value_type = float
+    entity = SPMUnit
+    label = "SPM unit health insurance premiums"
+    unit = USD
+    definition_period = YEAR
+    documentation = (
+        "Health insurance premium expenses for an SPM unit, combining a "
+        "data-imputed other premium component with modeled premium components "
+        "that can respond to policy reforms, including Medicare Part A and "
+        "Part B premiums and the Part D IRMAA surcharge paid out of pocket."
+    )
+
+    adds = [
+        "other_health_insurance_premiums",
+        "chip_premium",
+        "medicaid_premium",
+        "marketplace_net_premium",
+        "medicare_part_a_premium",
+        "medicare_part_b_premium",
+        "income_adjusted_part_d_premium_surcharge",
+    ]
+=========== variables/household/expense/health/health_insurance_premiums.py
+from policyengine_us.model_api import *
+
+
+class health_insurance_premiums(Variable):
+    value_type = float
+    entity = Person
+    label = "Health insurance premiums"
+    unit = USD
+    definition_period = YEAR
+    documentation = (
+        "Person-level health insurance premiums supplied directly as an input. "
+        "SPM MOOP and statutory medical expense definitions use decomposed "
+        "premium aggregates."
+    )
+=========== variables/gov/aca/eligibility/pays_aca_premium.py
+from policyengine_us.model_api import *
+
+
+class pays_aca_premium(Variable):
+    value_type = bool
+    entity = Person
+    label = "Person pays an ACA marketplace premium"
+    definition_period = YEAR
+
+    def formula(person, period, parameters):
+        immigration_eligible = person("is_aca_ptc_immigration_status_eligible", period)
+        taxpayer_has_tin = person.tax_unit("taxpayer_has_tin", period)
+        is_status_eligible = taxpayer_has_tin & immigration_eligible
+
+        p = parameters(period).gov.aca
+        is_coverage_eligible = add(person, period, p.ineligible_coverage) == 0
+        is_aca_adult = person("age", period) > p.slcsp.max_child_age
+        child_pays = person("aca_child_index", period) <= p.max_child_count
+        pays_age_based_premium = is_aca_adult | child_pays
+
+        return is_status_eligible & is_coverage_eligible & pays_age_based_premium
+=========== variables/gov/aca/ptc/marketplace_net_premium.py
+from policyengine_us.model_api import *
+
+
+class marketplace_net_premium(Variable):
+    value_type = float
+    entity = TaxUnit
+    label = "Marketplace plan net premium after PTC"
+    unit = USD
+    definition_period = YEAR
+    documentation = (
+        "Annual net premium paid by a tax unit for its selected Marketplace "
+        "plan, after the advance premium tax credit is applied. Equal to "
+        "the plan premium proxy minus the PTC actually used. Zero for "
+        "households not taking up Marketplace coverage."
+    )
+    reference = "https://www.law.cornell.edu/uscode/text/26/36B"
+
+    def formula(tax_unit, period, parameters):
+        plan_cost = tax_unit("selected_marketplace_plan_premium_proxy", period)
+        used_ptc = tax_unit("used_aca_ptc", period)
+        return max_(plan_cost - used_ptc, 0)
+=========== variables/gov/aca/person_receives_aca.py
+from policyengine_us.model_api import *
+
+
+class person_receives_aca(Variable):
+    value_type = bool
+    entity = Person
+    label = "Person receives ACA"
+    documentation = (
+        "Whether a person is eligible for ACA premium tax credits and is in a "
+        "tax unit that takes up ACA coverage."
+    )
+    definition_period = YEAR
+    defined_for = "is_aca_ptc_eligible"
+
+    def formula(person, period, parameters):
+        return person.tax_unit("takes_up_aca_if_eligible", period)
