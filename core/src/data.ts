@@ -26,11 +26,14 @@ export interface StateMetrics {
 
 export interface SummaryJson {
   /**
-   * States where the sweep charged a childcare bill and PolicyEngine returned
-   * no child-care subsidy at any point, for at least one household shape — an
-   * upstream gap, not a state whose rules are kinder. Partial coverage counts:
-   * Massachusetts pays a household with an infant and nothing to one whose
-   * only child is a preschooler. Detected per sweep rather than hand-listed, so a state
+   * States where a SINGLE parent paying for care received no child-care
+   * subsidy at any point on the curve — an upstream gap, not a state whose
+   * rules are kinder, since a lone working parent qualifies everywhere.
+   * Judged on the single-parent archetypes alone: the married ones have a
+   * non-earning spouse, and the subsidy's activity test requires every parent
+   * to work, so their $0 is correct policy. Partial coverage across household
+   * shapes still counts (Massachusetts pays a household with an infant and
+   * nothing to one whose only child is a preschooler). Detected per sweep rather than hand-listed, so a state
    * leaves the list the day the engine starts modeling it. A state comparison
    * must footnote these rather than read their missing cliff as good news.
    * See docs/upstream/2026-09-15-local-corrections.md.
