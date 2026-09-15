@@ -1,5 +1,5 @@
-import { ARCHETYPES, YEAR, type CurvePoint, type ProgramId } from "@hotgap/shared";
-import { stateMetrics, type StateMetrics } from "./metrics.js";
+import { ARCHETYPES, YEAR, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
 export type ResultsByStateArchetype = Record<string, Record<string, CurvePoint[]>>;
@@ -7,19 +7,6 @@ export type ResultsByStateArchetype = Record<string, Record<string, CurvePoint[]
 export interface ValidationGap { state: string; archetypeId: string; reason: string }
 export interface ValidationResult { ok: boolean; gaps: ValidationGap[] }
 
-export interface SummaryJson {
-  generated: string;
-  year: string;
-  archetypes: { id: string; married: boolean; childAges: number[] }[];
-  states: Record<string, Record<string, StateMetrics>>;
-}
-
-export interface StateFileJson {
-  generated: string;
-  year: string;
-  state: string;
-  archetypes: Record<string, { points: CurvePoint[] }>;
-}
 
 function pointsAreFinite(points: CurvePoint[]): boolean {
   return points.every(
@@ -67,7 +54,10 @@ export function buildSummary(generated: string, states: string[], results: Resul
   };
 }
 
-function roundPoint(p: CurvePoint): CurvePoint {
+// Whole dollars are what the sweep stores. runPipeline rounds each curve ONCE
+// at ingestion so summary.json and states/*.json derive from identical points,
+// and `--from-data` rebuilds the summary as an exact identity.
+export function roundPoint(p: CurvePoint): CurvePoint {
   return {
     earnings: p.earnings,
     netIncome: Math.round(p.netIncome),
@@ -81,7 +71,7 @@ function roundPoint(p: CurvePoint): CurvePoint {
 export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype): StateFileJson {
   const archetypes: Record<string, { points: CurvePoint[] }> = {};
   for (const a of ARCHETYPES) {
-    archetypes[a.id] = { points: results[state][a.id].map(roundPoint) };
+    archetypes[a.id] = { points: results[state][a.id] };
   }
   return { generated, year: YEAR, state, archetypes };
 }

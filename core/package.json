@@ -1,0 +1,10 @@
+{
+  "name": "@hotgap/core",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Benefits-cliff calculations: household inputs → PolicyEngine curve → cliffs, escape metrics, reach, and minimum-wage context",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

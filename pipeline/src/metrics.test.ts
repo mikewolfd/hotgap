@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parsePEResponse, type CurvePoint } from "@hotgap/shared";
+import { parsePEResponse, type CurvePoint } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 const fixture = JSON.parse(

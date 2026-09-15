@@ -1,14 +1,14 @@
-// Regenerates app/src/data/zip3-state.json from GeoNames (CC BY 4.0).
+// Regenerates core/data/zip3-state.json from GeoNames (CC BY 4.0).
 // Usage: node scripts/build-zip-table.mjs
 import { writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 
-// Must match the 51 keys of app/src/lib/states.ts's STATE_NAMES (50 states +
+// Must match the 51 keys of core/src/states.ts's STATE_NAMES (50 states +
 // DC). GeoNames' US export includes territory rows (e.g. Guam ZIPs tagged
 // "MH", the Marshall Islands compact-of-free-association code) that are not
 // among the 51 codes this app supports; without this filter those rows can
 // win a zip3 prefix's plurality vote and produce a table entry the app can't
-// resolve to a real state (see app/src/lib/zip.ts's runtime guard, which is
+// resolve to a real state (see core/src/zip.ts's runtime guard, which is
 // the actual defense-in-depth — this filter just keeps the committed table
 // honest at the source).
 const VALID_STATES = new Set([
@@ -38,5 +38,5 @@ const table = {};
 for (const [prefix, byState] of [...counts.entries()].sort()) {
   table[prefix] = Object.entries(byState).sort((a, b) => b[1] - a[1])[0][0];
 }
-writeFileSync(new URL("../app/src/data/zip3-state.json", import.meta.url), JSON.stringify(table));
+writeFileSync(new URL("../core/data/zip3-state.json", import.meta.url), JSON.stringify(table));
 console.log(`wrote ${Object.keys(table).length} prefixes`);

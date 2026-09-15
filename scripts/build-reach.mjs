@@ -1,4 +1,4 @@
-// Builds app/src/data/reach.json: per state × household archetype, a percentile
+// Builds core/data/reach.json: per state × household archetype, a percentile
 // ladder of weighted household EARNINGS (person wages + self-employment summed
 // per household), inflation-adjusted from the 2023 ACS to 2026 dollars.
 //
@@ -117,7 +117,7 @@ process.stderr.write("\n");
 execSync(`rm -rf "${dir}"`, { stdio: "ignore" });
 
 writeFileSync(
-  new URL("../app/src/data/reach.json", import.meta.url),
+  new URL("../core/data/reach.json", import.meta.url),
   JSON.stringify({ year: "2026", basis: "ACS 2023 1-Year PUMS household earnings, inflation-adjusted to 2026", source: "U.S. Census Bureau, ACS 1-Year PUMS", percentiles: PCTLS, states }),
 );
 console.log(`wrote reach.json — ${Object.keys(STATES).length} states (household earnings, 2026 dollars)`);

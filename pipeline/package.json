@@ -4,7 +4,6 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "dependencies": {
-    "@hotgap/shared": "*",
-    "@hotgap/worker": "*"
+    "@hotgap/core": "*"
   }
 }

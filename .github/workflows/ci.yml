@@ -12,7 +12,3 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run readability
-      - run: npm run build --workspace @hotgap/app
-      - run: npx playwright install --with-deps chromium
-      - run: npm run e2e

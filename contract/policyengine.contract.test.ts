@@ -89,7 +89,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
 
   it("pins is_disabled/is_ssi_disabled and the SSI-disabled pathway", async () => {
     // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only
-    // `is_ssi_disabled: true` does (see worker/src/translate.ts). This pins
+    // `is_ssi_disabled: true` does (see core/src/translate.ts). This pins
     // both variable names and confirms the pathway actually produces a
     // nonzero SSI award, not just an accepted request. Observed live
     // (2026-07-11): ssi = $9,438 for this household.

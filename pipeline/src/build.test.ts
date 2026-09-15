@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, parsePEResponse, type CurvePoint } from "@hotgap/shared";
-import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype } from "./build.js";
+import { ARCHETYPES, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
 const fixture = JSON.parse(
@@ -107,16 +107,9 @@ describe("buildStateFile", () => {
     expect(file.archetypes["single-2"].points).toHaveLength(101);
   });
 
-  it("rounds netIncome and program values to whole dollars", () => {
-    const results = fullResultsFor("CA");
-    results.CA["single-0"] = [
-      { earnings: 0, netIncome: 10000.4, medicalOOP: 0, programs: { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } },
-      ...linearCurve().slice(1),
-    ];
-    const file = buildStateFile("g", "CA", results);
-    const p0 = file.archetypes["single-0"].points[0];
-    expect(p0.netIncome).toBe(10000);
-    expect(p0.programs.snap).toBe(124);
-    expect(p0.earnings).toBe(0);
+  it("roundPoint rounds netIncome, medicalOOP, and program values to whole dollars", () => {
+    const programs = { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs });
+    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 } });
   });
 });
