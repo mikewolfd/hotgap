@@ -85,6 +85,7 @@ export function validateAnswers(input: unknown): Validation {
       hoursPerWeek: (a.hoursPerWeek as number | null | undefined) ?? null,
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
+      getsChildcareSubsidy: a.getsChildcareSubsidy === true,
       hasEmployerCoverage: a.hasEmployerCoverage === true,
       countyFips,
       ssdiMonthly,

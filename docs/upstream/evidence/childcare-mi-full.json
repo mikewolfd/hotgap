@@ -1,0 +1,556 @@
+{
+ "probed": "2026-09-15",
+ "tag": "mi-full",
+ "httpStatus": 200,
+ "request": {
+  "household": {
+   "people": {
+    "you": {
+     "age": {
+      "2026": 30
+     },
+     "medicaid": {
+      "2026": null
+     },
+     "chip": {
+      "2026": null
+     },
+     "wic": {
+      "2026": null
+     },
+     "ssi": {
+      "2026": null
+     },
+     "weekly_hours_worked_before_lsr": {
+      "2026": 40
+     }
+    },
+    "child1": {
+     "age": {
+      "2026": 3
+     },
+     "medicaid": {
+      "2026": null
+     },
+     "chip": {
+      "2026": null
+     },
+     "wic": {
+      "2026": null
+     },
+     "ssi": {
+      "2026": null
+     },
+     "head_start": {
+      "2026": 0
+     },
+     "early_head_start": {
+      "2026": 0
+     },
+     "childcare_attending_days_per_month": {
+      "2026": 20
+     },
+     "childcare_days_per_week": {
+      "2026": 5
+     },
+     "childcare_hours_per_day": {
+      "2026": 8
+     }
+    }
+   },
+   "families": {
+    "family": {
+     "members": [
+      "you",
+      "child1"
+     ]
+    }
+   },
+   "marital_units": {
+    "marital_unit": {
+     "members": [
+      "you"
+     ]
+    }
+   },
+   "tax_units": {
+    "tax_unit": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "tax_unit_is_filer": {
+      "2026": true
+     },
+     "eitc": {
+      "2026": null
+     },
+     "ctc": {
+      "2026": null
+     },
+     "refundable_ctc": {
+      "2026": null
+     },
+     "premium_tax_credit": {
+      "2026": null
+     },
+     "cdcc": {
+      "2026": null
+     }
+    }
+   },
+   "spm_units": {
+    "spm_unit": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "snap": {
+      "2026": null
+     },
+     "tanf": {
+      "2026": null
+     },
+     "spm_unit_capped_housing_subsidy": {
+      "2026": 0
+     },
+     "free_school_meals": {
+      "2026": null
+     },
+     "reduced_price_school_meals": {
+      "2026": null
+     },
+     "spm_unit_medical_out_of_pocket_expenses": {
+      "2026": null
+     },
+     "childcare_expenses": {
+      "2026": null
+     },
+     "child_care_subsidies": {
+      "2026": null
+     },
+     "mi_child_care_subsidies": {
+      "2026": null
+     },
+     "spm_unit_pre_subsidy_childcare_expenses": {
+      "2026": 9600
+     },
+     "meets_ccdf_activity_test": {
+      "2026": true
+     }
+    }
+   },
+   "households": {
+    "household": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "state_name": {
+      "2026": "MI"
+     },
+     "household_net_income": {
+      "2026": null
+     },
+     "household_benefits": {
+      "2026": null
+     },
+     "household_state_benefits": {
+      "2026": null
+     },
+     "household_refundable_tax_credits": {
+      "2026": null
+     },
+     "county_fips": {
+      "2026": "26163"
+     }
+    }
+   },
+   "axes": [
+    [
+     {
+      "name": "employment_income",
+      "min": 15000,
+      "max": 45000,
+      "count": 4,
+      "period": "2026"
+     }
+    ]
+   ]
+  }
+ },
+ "response": {
+  "message": null,
+  "result": {
+   "axes": [
+    [
+     {
+      "count": 4,
+      "max": 45000,
+      "min": 15000,
+      "name": "employment_income",
+      "period": "2026"
+     }
+    ]
+   ],
+   "families": {
+    "family": {
+     "members": [
+      "you",
+      "child1"
+     ]
+    }
+   },
+   "households": {
+    "household": {
+     "county_fips": {
+      "2026": [
+       "26163",
+       "26163",
+       "26163",
+       "26163"
+      ]
+     },
+     "household_benefits": {
+      "2026": [
+       5503.7724609375,
+       2186.37158203125,
+       1010.8377685546875,
+       723.1546020507812
+      ]
+     },
+     "household_net_income": {
+      "2026": [
+       26837.75,
+       31941.62890625,
+       37069.6953125,
+       43345.61328125
+      ]
+     },
+     "household_refundable_tax_credits": {
+      "2026": [
+       7613.2275390625,
+       7224.5087890625,
+       4718.10888671875,
+       2471.708740234375
+      ]
+     },
+     "household_state_benefits": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "members": [
+      "you",
+      "child1"
+     ],
+     "state_name": {
+      "2026": [
+       "MI",
+       "MI",
+       "MI",
+       "MI"
+      ]
+     }
+    }
+   },
+   "marital_units": {
+    "marital_unit": {
+     "members": [
+      "you"
+     ]
+    }
+   },
+   "people": {
+    "child1": {
+     "age": {
+      "2026": [
+       3,
+       3,
+       3,
+       3
+      ]
+     },
+     "childcare_attending_days_per_month": {
+      "2026": [
+       20,
+       20,
+       20,
+       20
+      ]
+     },
+     "childcare_days_per_week": {
+      "2026": [
+       5,
+       5,
+       5,
+       5
+      ]
+     },
+     "childcare_hours_per_day": {
+      "2026": [
+       8,
+       8,
+       8,
+       8
+      ]
+     },
+     "chip": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "early_head_start": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "head_start": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "medicaid": {
+      "2026": [
+       7957.4736328125,
+       7957.4736328125,
+       7957.4736328125,
+       7957.4736328125
+      ]
+     },
+     "ssi": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "wic": {
+      "2026": [
+       723.1546020507812,
+       723.1546020507812,
+       723.1546020507812,
+       723.1546020507812
+      ]
+     }
+    },
+    "you": {
+     "age": {
+      "2026": [
+       30,
+       30,
+       30,
+       30
+      ]
+     },
+     "chip": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "medicaid": {
+      "2026": [
+       11806.50390625,
+       11806.50390625,
+       0,
+       0
+      ]
+     },
+     "ssi": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "weekly_hours_worked_before_lsr": {
+      "2026": [
+       40,
+       40,
+       40,
+       40
+      ]
+     },
+     "wic": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   },
+   "spm_units": {
+    "spm_unit": {
+     "child_care_subsidies": {
+      "2026": [
+       9600,
+       9210,
+       9210,
+       0
+      ]
+     },
+     "childcare_expenses": {
+      "2026": [
+       0,
+       390,
+       390,
+       9600
+      ]
+     },
+     "free_school_meals": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "meets_ccdf_activity_test": {
+      "2026": [
+       true,
+       true,
+       true,
+       true
+      ]
+     },
+     "members": [
+      "you",
+      "child1"
+     ],
+     "mi_child_care_subsidies": {
+      "2026": [
+       9600,
+       9210,
+       9210,
+       0
+      ]
+     },
+     "reduced_price_school_meals": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "snap": {
+      "2026": [
+       4780.61767578125,
+       1463.2169189453125,
+       287.68316650390625,
+       0
+      ]
+     },
+     "spm_unit_capped_housing_subsidy": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     "spm_unit_medical_out_of_pocket_expenses": {
+      "2026": [
+       0,
+       0,
+       1719.550048828125,
+       3168.7197265625
+      ]
+     },
+     "spm_unit_pre_subsidy_childcare_expenses": {
+      "2026": [
+       9600,
+       9600,
+       9600,
+       9600
+      ]
+     },
+     "tanf": {
+      "2026": [
+       0,
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   },
+   "tax_units": {
+    "tax_unit": {
+     "cdcc": {
+      "2026": [
+       0,
+       85,
+       156,
+       1050.0001220703125
+      ]
+     },
+     "ctc": {
+      "2026": [
+       2200,
+       2200,
+       2200,
+       2200
+      ]
+     },
+     "eitc": {
+      "2026": [
+       4427,
+       4249.6220703125,
+       2651.6220703125,
+       1053.6220703125
+      ]
+     },
+     "members": [
+      "you",
+      "child1"
+     ],
+     "premium_tax_credit": {
+      "2026": [
+       0,
+       0,
+       3692.988525390625,
+       2243.818603515625
+      ]
+     },
+     "refundable_ctc": {
+      "2026": [
+       1700,
+       1700,
+       1271,
+       1102.0001220703125
+      ]
+     },
+     "tax_unit_is_filer": {
+      "2026": [
+       true,
+       true,
+       true,
+       true
+      ]
+     }
+    }
+   }
+  },
+  "status": "ok"
+ }
+}

@@ -424,3 +424,86 @@ Open: `core/data/state-defaults.json` gives Illinois a preschool price of
 $730, byte-identical to the documented national-median fallback used for
 Indiana and New Mexico, though the note names only those two — verify
 whether Cook County resolves from the NDCP or fell back silently.
+
+# Childcare subsidy (CCDF) modeled (2026-09-15)
+
+Both methodology reviews said the childcare-subsidy exit is usually the
+largest cliff for a parent of a young child, and HotGap showed none. It was
+dropped in July because the variable came back empty. The live probes say
+that was our own payload.
+
+**The root cause, and the fix that needed no upstream change:**
+`childcare_expenses` is a DERIVED variable — upstream defines it as
+`pre_subsidy_childcare_expenses` minus `child_care_subsidies`. Every HotGap
+request sent the household's bill as `childcare_expenses`, which forces the
+derived value and leaves `spm_unit_pre_subsidy_childcare_expenses` at its $0
+default, so every state's CCDF formula had no provider charge to reimburse and
+returned $0. Sending the same bill as the pre-subsidy figure instead turns 34
+of the 38 states whose variable is deployed from $0 into a real subsidy.
+
+**Implemented, one line each:**
+- `childcare` is a `ProgramId` and a `CASH_PROGRAM` (`core/src/types.ts`): it
+  pays a provider, which frees the same dollars one for one and is capped at a
+  real bill — school meals and Head Start, not a Medicaid sticker value.
+- Take-up is off by default (`getsChildcareSubsidy`, `--childcare-subsidy`),
+  the same rule every other rationed program here follows; CCDF reaches about
+  one in six eligible children. "Off" is the old payload byte for byte, so
+  every existing curve and the whole archetype sweep are unchanged — verified
+  by re-running the `single-1` archetype live with hours and no childcare in
+  three states and getting the committed curve's metrics exactly.
+- `core/src/translate.ts`'s `applyChildcareSubsidy` sends the bill as
+  `spm_unit_pre_subsidy_childcare_expenses`, leaves `childcare_expenses` for
+  PolicyEngine (so SNAP's dependent-care deduction and the CDCC run on the net
+  bill), and asks for the AGGREGATE `child_care_subsidies`.
+- `core/src/parse.ts` reads it into `programs.childcare` and keeps it OUT of
+  the `otherBenefits` remainder except where `household_benefits` really
+  carried it; `stateOf` reads the state off the response so parsing stays a
+  pure function of the body, and is consulted only when there is a subsidy to
+  place.
+- `core/src/evaluate.ts`'s `applyChildcareSubsidy` is the WORKAROUND
+  (policyengine-us #9405): it adds the subsidy to `netIncome` in the states
+  upstream omits from `household_state_benefits`, and adds nothing in the
+  states that already counted it.
+- `core/src/stateChildcareSubsidies.ts` holds the two lists, read from the
+  deployed model's own metadata; a live contract test pins the per-state
+  variable names, the aggregate, the pre-subsidy input and the inclusion table
+  by forcing each state's variable to 0 and watching net income move.
+
+**Deliberate choices:**
+- The AGGREGATE `child_care_subsidies`, not `<st>_child_care_subsidies`: one
+  name in every state, it spans the states whose own variable is defined per
+  MONTH (CA, MA, …), and 13 states' per-state variables are not in the
+  deployed model at all — `ny_child_care_subsidies` is a 400. The per-state
+  names stay in `stateChildcareSubsidies.ts` as documentation and as the
+  contract test's subject.
+- The inclusion table encodes `main`'s 23 states, not the deployed 18. The
+  five extras (DC, NC, NY, OH, OK) have no subsidy variable deployed at all,
+  so the branch is a no-op today, and the day the API ships `main` they gain
+  the variable and the list entry in the same release. The deployed 18 would
+  have been wrong on that day in the expensive direction.
+- Full-day, full-week attendance is assumed and said out loud. It is not a
+  gate — Colorado pays with or without it — but it changes the number, because
+  the rate ceiling and copay only bind once care has a duration.
+  `meets_ccdf_activity_test` and `weekly_hours_worked_before_lsr` are NOT
+  sent for this: Colorado's output is byte-identical with and without either.
+- Vermont's $22,828 against a $9,600 bill is left uncapped. `vt_ccfap` models
+  the post-2023-12-16 regime where Vermont pays the state rate regardless of
+  the provider's charge, with the citation in its own docstring. A documented
+  rule is not a defect to patch from outside.
+
+**Investigated, reported, not worked around** — see
+`docs/upstream/2026-09-15-local-corrections.md` for each:
+California (deployed formula reads CA-only month-period attendance inputs;
+fixed on `main`), Massachusetts (`ma_ccfa_care_provider_type` defaults to
+school-age, a zero rate for a preschooler), Maryland and Nebraska ($0, cause
+not chased). HotGap reports no subsidy in those four rather than supplying a
+modeling artifact it never asked the household about.
+
+**Measured, left for the maintainer to decide:** what the baseline archetype
+should do. `answersFor` still sends `monthlyChildcare: 0`. With the state's
+own DOL preschool price and the subsidy claimed, the `single-1` archetype
+changes shape completely — the subsidy exit becomes the largest cliff in all
+three states measured, and the leap triples or quadruples. Numbers in the
+report accompanying this branch.
+
+Gates: typecheck, 339 unit tests, dry-run sweep, two new live contract cases.

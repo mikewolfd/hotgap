@@ -42,7 +42,14 @@ export interface PremiumWrap {
    * enrollee pays at a given MAGI and FPL share inside (zeroPremiumUpToFpl,
    * upToFpl]. Connecticut has none: Covered Connecticut is a hard cutoff.
    */
-  nextTier?: { upToFpl: number; annualPremium: (magi: number, fplShare: number, adults: number) => number; source: string };
+  tiers?: PremiumTier[];
+}
+
+/** One reduced-premium band above the $0 tier: (previous bound, upToFpl]. */
+export interface PremiumTier {
+  upToFpl: number;
+  annualPremium: (magi: number, fplShare: number, adults: number) => number;
+  source: string;
 }
 
 /** Linear interpolation of an applicable percentage between two FPL shares. */
@@ -82,8 +89,16 @@ export const STATE_PREMIUM_WRAPS: readonly PremiumWrap[] = [
     state: "MA",
     program: "ConnectorCare Plan Type 2A",
     zeroPremiumUpToFpl: 1.50,
-    // Plan Type 2B (150–200% FPL): $53 per enrollee per month, 2026 table, same page.
-    nextTier: { upToFpl: 2.00, annualPremium: (_magi, _share, adults) => 53 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+    // 2026 lowest-cost premium per enrollee per month, same page: 2B (150.1–200%
+    // FPL) $53, 3A (200.1–250%) $103, 3B (250.1–300%) $152, 3C (300.1–400%) $235.
+    // PolicyEngine models 2B itself but not 3A–3C (external validation,
+    // docs/reviews/2026-09-15-external-validation.md, finding 2).
+    tiers: [
+      { upToFpl: 2.00, annualPremium: (_m, _s, adults) => 53 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 2.50, annualPremium: (_m, _s, adults) => 103 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 3.00, annualPremium: (_m, _s, adults) => 152 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 4.00, annualPremium: (_m, _s, adults) => 235 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+    ],
     source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans",
     readOn: "2026-09-15",
     note: "The $0 is the LOWEST-cost ConnectorCare plan in the enrollee's area; other carriers' Plan Type 2A plans can still charge a premium. Requires Massachusetts residency, lawful presence, no access to affordable employer coverage, and ineligibility for MassHealth or Medicare.",
@@ -111,7 +126,7 @@ export const STATE_PREMIUM_WRAPS: readonly PremiumWrap[] = [
     program: "New Mexico Premium Assistance (Marketplace Affordability Program)",
     zeroPremiumUpToFpl: 2.00,
     // PY26 MAP manual, Table 1: 200–250% FPL contributes 0%→2% of income.
-    nextTier: { upToFpl: 2.50, annualPremium: (magi, share) => magi * pctBetween(share, 2.00, 2.50, 0, 0.02), source: "https://www.hca.nm.gov/health-care-coverage-innovations-hcaf/" },
+    tiers: [{ upToFpl: 2.50, annualPremium: (magi, share) => magi * pctBetween(share, 2.00, 2.50, 0, 0.02), source: "https://www.hca.nm.gov/health-care-coverage-innovations-hcaf/" }],
     source: "https://www.hca.nm.gov/health-care-coverage-innovations-hcaf/",
     readOn: "2026-09-15",
     note: "0% of income toward the benchmark plan, and below 200% FPL the benchmark is priced at 110% of the second-lowest-cost Silver plan, so every plan at or under that price is $0. Requires APTC eligibility. Members of federally recognized tribes get a wider $0 tier (lowest-cost plan from each issuer, to 300% FPL) that this row does not model.",
@@ -134,7 +149,7 @@ export const STATE_PREMIUM_WRAPS: readonly PremiumWrap[] = [
     program: "California Premium Subsidy",
     zeroPremiumUpToFpl: 1.50,
     // 2026 policy explainer, Table 1: 150–165% FPL applicable percentage 3.19%→3.91%.
-    nextTier: { upToFpl: 1.65, annualPremium: (magi, share) => magi * pctBetween(share, 1.50, 1.65, 0.0319, 0.0391), source: "https://hbex.coveredca.com/stakeholders/PDFs/2026-02_StatePremiumSub_PolicyExplainer-Final.pdf" },
+    tiers: [{ upToFpl: 1.65, annualPremium: (magi, share) => magi * pctBetween(share, 1.50, 1.65, 0.0319, 0.0391), source: "https://hbex.coveredca.com/stakeholders/PDFs/2026-02_StatePremiumSub_PolicyExplainer-Final.pdf" }],
     source: "https://hbex.coveredca.com/stakeholders/PDFs/2026-02_StatePremiumSub_PolicyExplainer-Final.pdf",
     readOn: "2026-09-15",
     note: "0% applicable percentage against the benchmark (second-lowest-cost Silver) plan. The enrollee must otherwise be eligible for federal APTC and apply on Covered California's subsidized application; at or below 138% FPL most Californians are Medi-Cal eligible instead, and Medi-Cal enrollees receive neither APTC nor the state subsidy. The published band is 'under 150%' — at exactly 150% FPL the applicable percentage is 3.19%.",
@@ -148,8 +163,9 @@ export function premiumWrapFor(state: string, fplShare: number): PremiumWrap | n
 }
 
 /** The state's reduced-premium tier a marketplace enrollee at this share of FPL sits in, or null. */
-export function premiumTierAbove(state: string, fplShare: number): PremiumWrap | null {
+export function premiumTierAbove(state: string, fplShare: number): { wrap: PremiumWrap; tier: PremiumTier } | null {
   const w = STATE_PREMIUM_WRAPS.find((row) => row.state === state);
-  if (!w?.nextTier || fplShare <= w.zeroPremiumUpToFpl || fplShare > w.nextTier.upToFpl) return null;
-  return w;
+  if (!w?.tiers || fplShare <= w.zeroPremiumUpToFpl) return null;
+  const tier = w.tiers.find((t) => fplShare <= t.upToFpl);
+  return tier ? { wrap: w, tier } : null;
 }

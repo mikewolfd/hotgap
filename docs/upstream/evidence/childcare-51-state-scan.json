@@ -1,0 +1,1096 @@
+{
+ "probed": "2026-09-15",
+ "note": "One request per state on the deployed public API. Household: single parent 30, child 3, state's most populous county, 40 weekly hours, $9,600/yr spm_unit_pre_subsidy_childcare_expenses, meets_ccdf_activity_test true, 20 attending days/month, 5 days/week, 8 hours/day. Earnings axis $15k/$25k/$35k/$45k.",
+ "apiVersion": "1.764.6",
+ "requestTemplate": {
+  "household": {
+   "people": {
+    "you": {
+     "age": {
+      "2026": 30
+     },
+     "medicaid": {
+      "2026": null
+     },
+     "chip": {
+      "2026": null
+     },
+     "wic": {
+      "2026": null
+     },
+     "ssi": {
+      "2026": null
+     },
+     "weekly_hours_worked_before_lsr": {
+      "2026": 40
+     }
+    },
+    "child1": {
+     "age": {
+      "2026": 3
+     },
+     "medicaid": {
+      "2026": null
+     },
+     "chip": {
+      "2026": null
+     },
+     "wic": {
+      "2026": null
+     },
+     "ssi": {
+      "2026": null
+     },
+     "head_start": {
+      "2026": 0
+     },
+     "early_head_start": {
+      "2026": 0
+     },
+     "childcare_attending_days_per_month": {
+      "2026": 20
+     },
+     "childcare_days_per_week": {
+      "2026": 5
+     },
+     "childcare_hours_per_day": {
+      "2026": 8
+     }
+    }
+   },
+   "families": {
+    "family": {
+     "members": [
+      "you",
+      "child1"
+     ]
+    }
+   },
+   "marital_units": {
+    "marital_unit": {
+     "members": [
+      "you"
+     ]
+    }
+   },
+   "tax_units": {
+    "tax_unit": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "tax_unit_is_filer": {
+      "2026": true
+     },
+     "eitc": {
+      "2026": null
+     },
+     "ctc": {
+      "2026": null
+     },
+     "refundable_ctc": {
+      "2026": null
+     },
+     "premium_tax_credit": {
+      "2026": null
+     },
+     "cdcc": {
+      "2026": null
+     }
+    }
+   },
+   "spm_units": {
+    "spm_unit": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "snap": {
+      "2026": null
+     },
+     "tanf": {
+      "2026": null
+     },
+     "spm_unit_capped_housing_subsidy": {
+      "2026": 0
+     },
+     "free_school_meals": {
+      "2026": null
+     },
+     "reduced_price_school_meals": {
+      "2026": null
+     },
+     "spm_unit_medical_out_of_pocket_expenses": {
+      "2026": null
+     },
+     "childcare_expenses": {
+      "2026": null
+     },
+     "child_care_subsidies": {
+      "2026": null
+     },
+     "co_child_care_subsidies": {
+      "2026": null
+     },
+     "spm_unit_pre_subsidy_childcare_expenses": {
+      "2026": 9600
+     },
+     "meets_ccdf_activity_test": {
+      "2026": true
+     }
+    }
+   },
+   "households": {
+    "household": {
+     "members": [
+      "you",
+      "child1"
+     ],
+     "state_name": {
+      "2026": "CO"
+     },
+     "household_net_income": {
+      "2026": null
+     },
+     "household_benefits": {
+      "2026": null
+     },
+     "household_state_benefits": {
+      "2026": null
+     },
+     "household_refundable_tax_credits": {
+      "2026": null
+     },
+     "county_fips": {
+      "2026": "08041"
+     }
+    }
+   },
+   "axes": [
+    [
+     {
+      "name": "employment_income",
+      "min": 15000,
+      "max": 45000,
+      "count": 4,
+      "period": "2026"
+     }
+    ]
+   ]
+  }
+ },
+ "rows": [
+  {
+   "state": "AK",
+   "variable": "ak_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9300,
+    8600,
+    7850,
+    6900
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    31816,
+    35729,
+    41189,
+    46423
+   ]
+  },
+  {
+   "state": "AL",
+   "variable": "al_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9360,
+    8268,
+    7488,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9360,
+    8268,
+    7488,
+    0
+   ],
+   "netIncome": [
+    33630,
+    39026,
+    43514,
+    41875
+   ]
+  },
+  {
+   "state": "AR",
+   "variable": "ar_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    7920,
+    6920,
+    6520,
+    6120
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    7920,
+    6920,
+    6520,
+    6120
+   ],
+   "netIncome": [
+    32872,
+    38709,
+    43319,
+    48835
+   ]
+  },
+  {
+   "state": "AZ",
+   "variable": "az_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9480,
+    9240,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9480,
+    9240,
+    0,
+    0
+   ],
+   "netIncome": [
+    34014,
+    40506,
+    39113,
+    43352
+   ]
+  },
+  {
+   "state": "CA",
+   "variable": "ca_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    35316,
+    36333,
+    38771,
+    43847
+   ]
+  },
+  {
+   "state": "CO",
+   "variable": "co_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9450,
+    8913,
+    7513,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9450,
+    8913,
+    7513,
+    0
+   ],
+   "netIncome": [
+    40255,
+    45226,
+    48639,
+    45928
+   ]
+  },
+  {
+   "state": "CT",
+   "variable": "ct_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8850,
+    8550,
+    7350
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    28487,
+    34121,
+    38416,
+    42953
+   ]
+  },
+  {
+   "state": "DE",
+   "variable": "de_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9600,
+    9600,
+    7150,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9600,
+    9600,
+    7150,
+    0
+   ],
+   "netIncome": [
+    34062,
+    40608,
+    44560,
+    42558
+   ]
+  },
+  {
+   "state": "FL",
+   "variable": "fl_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    7200,
+    7200,
+    5800,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    25168,
+    31828,
+    37685,
+    43713
+   ]
+  },
+  {
+   "state": "GA",
+   "variable": "ga_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    8872,
+    7884,
+    7156,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    8872,
+    7884,
+    7156,
+    0
+   ],
+   "netIncome": [
+    33540,
+    39507,
+    44544,
+    43241
+   ]
+  },
+  {
+   "state": "HI",
+   "variable": "hi_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9540,
+    9445,
+    9254,
+    8968
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    33865,
+    37956,
+    41892,
+    43392
+   ]
+  },
+  {
+   "state": "IA",
+   "variable": "ia_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8586,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    25112,
+    32390,
+    38283,
+    43776
+   ]
+  },
+  {
+   "state": "ID",
+   "variable": "id_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9360,
+    9000,
+    8700,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9360,
+    9000,
+    8700,
+    0
+   ],
+   "netIncome": [
+    33880,
+    40288,
+    46176,
+    43948
+   ]
+  },
+  {
+   "state": "IN",
+   "variable": "in_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9600,
+    8083,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9600,
+    8083,
+    0,
+    0
+   ],
+   "netIncome": [
+    34152,
+    39436,
+    36733,
+    42594
+   ]
+  },
+  {
+   "state": "KS",
+   "variable": "ks_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8880,
+    8556,
+    7596
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    25201,
+    31828,
+    37108,
+    42586
+   ]
+  },
+  {
+   "state": "KY",
+   "variable": "ky_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8400,
+    7680,
+    6960
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    24118,
+    30632,
+    35961,
+    42047
+   ]
+  },
+  {
+   "state": "LA",
+   "variable": "la_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    8190,
+    8190,
+    8190,
+    7648
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    26673,
+    32059,
+    37398,
+    43610
+   ]
+  },
+  {
+   "state": "MA",
+   "variable": "ma_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    7436,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    44302,
+    37357,
+    40213,
+    42608
+   ]
+  },
+  {
+   "state": "MD",
+   "variable": "md_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    30899,
+    37282,
+    39778,
+    43376
+   ]
+  },
+  {
+   "state": "ME",
+   "variable": "me_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    9392,
+    8560,
+    7481
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    30152,
+    34324,
+    38527,
+    44071
+   ]
+  },
+  {
+   "state": "MI",
+   "variable": "mi_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    9210,
+    9210,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    26838,
+    31942,
+    37070,
+    43346
+   ]
+  },
+  {
+   "state": "MN",
+   "variable": "mn_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8898,
+    8534,
+    7442
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    28083,
+    33598,
+    39178,
+    44190
+   ]
+  },
+  {
+   "state": "MO",
+   "variable": "mo_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9599,
+    8400,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9599,
+    8400,
+    0,
+    0
+   ],
+   "netIncome": [
+    34050,
+    39868,
+    37397,
+    43190
+   ]
+  },
+  {
+   "state": "MS",
+   "variable": "ms_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    7800,
+    6425,
+    5525,
+    4875
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    24988,
+    31975,
+    36913,
+    42829
+   ]
+  },
+  {
+   "state": "MT",
+   "variable": "mt_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9480,
+    9225,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9480,
+    9225,
+    0,
+    0
+   ],
+   "netIncome": [
+    36324,
+    41566,
+    39739,
+    42944
+   ]
+  },
+  {
+   "state": "ND",
+   "variable": "nd_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    9600,
+    8929,
+    7833
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    26059,
+    31108,
+    37081,
+    43282
+   ]
+  },
+  {
+   "state": "NE",
+   "variable": "ne_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    31234,
+    37358,
+    40074,
+    46106
+   ]
+  },
+  {
+   "state": "NH",
+   "variable": "nh_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    9340,
+    7150,
+    6450
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    25137,
+    31184,
+    37685,
+    44436
+   ]
+  },
+  {
+   "state": "NJ",
+   "variable": "nj_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    8683,
+    8317,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    27156,
+    33695,
+    39886,
+    44292
+   ]
+  },
+  {
+   "state": "NM",
+   "variable": "nm_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    8820,
+    8820,
+    8820,
+    8820
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    26934,
+    33388,
+    38447,
+    43889
+   ]
+  },
+  {
+   "state": "NV",
+   "variable": "nv_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9600,
+    8520,
+    0,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9600,
+    8520,
+    0,
+    0
+   ],
+   "netIncome": [
+    34048,
+    39952,
+    39224,
+    43713
+   ]
+  },
+  {
+   "state": "PA",
+   "variable": "pa_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    8872,
+    7832,
+    7156,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    27220,
+    32785,
+    37807,
+    43433
+   ]
+  },
+  {
+   "state": "RI",
+   "variable": "ri_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    9600,
+    9100,
+    7150,
+    6450
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    28843,
+    32153,
+    37389,
+    43705
+   ]
+  },
+  {
+   "state": "SC",
+   "variable": "sc_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9600,
+    9600,
+    9288,
+    8872
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9600,
+    9600,
+    9288,
+    8872
+   ],
+   "netIncome": [
+    34341,
+    40708,
+    46225,
+    52513
+   ]
+  },
+  {
+   "state": "VA",
+   "variable": "va_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9540,
+    8350,
+    7850,
+    7350
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9540,
+    8350,
+    7850,
+    7350
+   ],
+   "netIncome": [
+    34792,
+    40156,
+    45021,
+    49421
+   ]
+  },
+  {
+   "state": "VT",
+   "variable": "vt_child_care_subsidies",
+   "inHouseholdStateBenefits": false,
+   "subsidy": [
+    22828,
+    22828,
+    22828,
+    18928
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "netIncome": [
+    29639,
+    34935,
+    38651,
+    43984
+   ]
+  },
+  {
+   "state": "WA",
+   "variable": "wa_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    9600,
+    8820,
+    8595,
+    8520
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    9600,
+    8820,
+    8595,
+    8520
+   ],
+   "netIncome": [
+    36235,
+    40490,
+    46286,
+    51660
+   ]
+  },
+  {
+   "state": "WV",
+   "variable": "wv_child_care_subsidies",
+   "inHouseholdStateBenefits": true,
+   "subsidy": [
+    8160,
+    7500,
+    6900,
+    0
+   ],
+   "aggregateMatchesState": true,
+   "stateBenefits": [
+    8160,
+    7500,
+    6900,
+    0
+   ],
+   "netIncome": [
+    33040,
+    38761,
+    44303,
+    43089
+   ]
+  }
+ ]
+}

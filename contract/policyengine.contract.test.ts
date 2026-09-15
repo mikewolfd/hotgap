@@ -307,4 +307,87 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(body.status).toBe("ok");
     expect(body.result.tax_units.t.premium_tax_credit["2026"]).toBeGreaterThan(0);
   }, 90_000);
+  // The state child-care subsidy (policyengine-us #9405). Two states, one from
+  // each side of `gov.household.household_state_benefits`, checked the only way
+  // that does not just re-read the parameter HotGap's own table came from:
+  // force the state's variable to 0 and see whether household_state_benefits
+  // and net income move with it.
+  //
+  // Pins four things at once — the per-state variable names, the aggregate
+  // `child_care_subsidies` that HotGap actually requests, the fact that
+  // `spm_unit_pre_subsidy_childcare_expenses` (not `childcare_expenses`) is the
+  // input the formulas read, and the inclusion table itself. If any of them
+  // moves, `core/src/stateChildcareSubsidies.ts` has to be re-derived.
+  for (const [state, variable, inNetIncome] of [
+    ["CO", "co_child_care_subsidies", true],
+    ["CT", "ct_child_care_subsidies", false],
+  ] as const) {
+    it(`${state}: ${variable} is computed, and ${inNetIncome ? "IS" : "is NOT"} inside household_state_benefits`, async () => {
+      const y = (v: unknown) => ({ "2026": v });
+      const household = (forced: number | null) => ({
+        household: {
+          people: {
+            you: { age: y(30), employment_income: y(25000) },
+            child1: {
+              age: y(3),
+              childcare_hours_per_day: y(8), childcare_days_per_week: y(5),
+              childcare_attending_days_per_month: y(20),
+            },
+          },
+          families: { f: { members: ["you", "child1"] } },
+          marital_units: { m: { members: ["you"] } },
+          tax_units: { t: { members: ["you", "child1"], tax_unit_is_filer: y(true) } },
+          spm_units: {
+            s: {
+              members: ["you", "child1"],
+              spm_unit_pre_subsidy_childcare_expenses: y(9600),
+              childcare_expenses: y(null),
+              child_care_subsidies: y(null),
+              [variable]: y(forced),
+            },
+          },
+          households: {
+            h: {
+              members: ["you", "child1"], state_name: y(state),
+              household_net_income: y(null), household_state_benefits: y(null),
+            },
+          },
+        },
+      });
+      const call = async (forced: number | null) => {
+        const res = await fetch("https://api.policyengine.org/us/calculate", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(household(forced)), signal: AbortSignal.timeout(60_000),
+        });
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as any;
+        expect(body.status).toBe("ok");
+        return {
+          subsidy: body.result.spm_units.s[variable]["2026"] as number,
+          aggregate: body.result.spm_units.s.child_care_subsidies["2026"] as number,
+          stateBenefits: body.result.households.h.household_state_benefits["2026"] as number,
+          netIncome: body.result.households.h.household_net_income["2026"] as number,
+        };
+      };
+      const paid = await call(null);
+      // Observed live 2026-09-15: CO $8,913, CT $8,850 for this household.
+      expect(paid.subsidy).toBeGreaterThan(5000);
+      // The aggregate HotGap requests is this state's variable, nothing else.
+      expect(paid.aggregate).toBeCloseTo(paid.subsidy, 0);
+
+      const none = await call(0);
+      expect(none.subsidy).toBe(0);
+      const moved = paid.stateBenefits - none.stateBenefits;
+      if (inNetIncome) {
+        expect(moved).toBeCloseTo(paid.subsidy, 0);
+        expect(paid.netIncome).toBeGreaterThan(none.netIncome);
+      } else {
+        expect(moved).toBeCloseTo(0, 0);
+        // Not merely absent: net income is LOWER with the subsidy modeled,
+        // because the net-of-subsidy childcare bill shrinks SNAP's
+        // dependent-care deduction and the CDCC while the money never arrives.
+        expect(paid.netIncome).toBeLessThan(none.netIncome);
+      }
+    }, 120_000);
+  }
 });

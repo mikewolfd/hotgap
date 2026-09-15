@@ -8,7 +8,7 @@ const base: HouseholdAnswers = {
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null,
   annualEarnings: 30000, spouseAnnualEarnings: 0, hoursPerWeek: null,
-  getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
+  getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, hasEmployerCoverage: false,
   countyFips: null,
   ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
 };
@@ -246,5 +246,48 @@ describe("buildPEPayload", () => {
     expect(withCounty.household.households.household.county_fips["2026"]).toBe("06075");
     const without = buildPEPayload({ ...base, countyFips: null }) as any;
     expect(without.household.households.household.county_fips).toBeUndefined();
+  });
+});
+
+describe("the child-care subsidy take-up toggle", () => {
+  const withKids = { ...base, childAges: [3, 8], childDisabled: [false, false], monthlyChildcare: 800 };
+  const spmOf = (a: HouseholdAnswers) =>
+    (buildPEPayload(a).household as { spm_units: { spm_unit: Record<string, Record<string, unknown>> } }).spm_units.spm_unit;
+  const peopleOf = (a: HouseholdAnswers) =>
+    (buildPEPayload(a).household as { people: Record<string, Record<string, Record<string, unknown>>> }).people;
+
+  it("sends the bill as childcare_expenses and asks for no subsidy when take-up is off", () => {
+    const spm = spmOf(withKids);
+    expect(spm.childcare_expenses).toEqual({ "2026": 9600 });
+    expect(spm.spm_unit_pre_subsidy_childcare_expenses).toBeUndefined();
+    expect(spm.child_care_subsidies).toBeUndefined();
+    expect(peopleOf(withKids).child1.childcare_days_per_week).toBeUndefined();
+  });
+
+  it("sends the bill as the PRE-subsidy figure when take-up is on, and lets upstream net it down", () => {
+    // childcare_expenses is upstream's `pre_subsidy - subsidies`, so forcing it
+    // leaves the pre-subsidy figure at $0 and every state's CCDF formula has no
+    // provider charge to reimburse. That is why the July probe found nothing.
+    const spm = spmOf({ ...withKids, getsChildcareSubsidy: true });
+    expect(spm.spm_unit_pre_subsidy_childcare_expenses).toEqual({ "2026": 9600 });
+    expect(spm.childcare_expenses).toEqual({ "2026": null });
+    // The aggregate, not `ca_child_care_subsidies`: 13 states' own variables
+    // are not in the deployed model and asking for one is a 400.
+    expect(spm.child_care_subsidies).toEqual({ "2026": null });
+  });
+
+  it("assumes full-day, full-week care for every child, and none for the adults", () => {
+    const people = peopleOf({ ...withKids, getsChildcareSubsidy: true, married: true, spouseAge: 30 });
+    for (const child of ["child1", "child2"]) {
+      expect(people[child].childcare_hours_per_day, child).toEqual({ "2026": 8 });
+      expect(people[child].childcare_days_per_week, child).toEqual({ "2026": 5 });
+      expect(people[child].childcare_attending_days_per_month, child).toEqual({ "2026": 20 });
+    }
+    expect(people.you.childcare_days_per_week).toBeUndefined();
+    expect(people.spouse.childcare_days_per_week).toBeUndefined();
+  });
+
+  it("still sends $0 as the pre-subsidy bill for a household that reports no childcare", () => {
+    expect(spmOf({ ...base, getsChildcareSubsidy: true }).spm_unit_pre_subsidy_childcare_expenses).toEqual({ "2026": 0 });
   });
 });

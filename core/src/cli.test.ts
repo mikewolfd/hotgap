@@ -49,7 +49,7 @@ describe("CLI correction notices", () => {
   });
 
   it("prints deferred cliffs in their own block, and labels the refundable CTC", async () => {
-    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
     type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
     const pt = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
       earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0,
@@ -87,6 +87,30 @@ describe("CLI correction notices", () => {
     expect(out).toContain("whole child tax credit");
     // The Head Start line quotes the replacement price, not the sticker alone.
     expect(out).toContain("full-day preschool place");
+  });
+
+  it("passes --childcare-subsidy through and prints the subsidy like any other program", async () => {
+    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
+    const pt = (earnings: number, netIncome: number, childcare: number): CurvePoint => ({
+      earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0,
+      stateCredits: 0, totalCtc: 0, coverageGap: false, programs: { ...ZERO, childcare },
+    });
+    const ct = validateAnswers({
+      state: "CT", married: false, age: 30, spouseAge: null, childAges: [3], childDisabled: [false],
+      youDisabled: false, spouseDisabled: false, monthlyRent: null, monthlyChildcare: 800,
+      annualEarnings: 25000, spouseAnnualEarnings: 0, getsChildcareSubsidy: true,
+    });
+    if (!ct.ok) throw new Error(ct.detail);
+    const points = [pt(24000, 33000, 8850), pt(25000, 34121, 8850), pt(26000, 34500, 0), pt(27000, 45000, 0)];
+    vi.mocked(evaluateOffline).mockReturnValue(
+      evaluateCurve(ct.value, { year: "2026", currentEarnings: 25000, points }, "live"),
+    );
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    expect(await main(["curve", "--state", "CT", "--kids", "3", "--childcare", "800", "--childcare-subsidy", "--earnings", "25000", "--offline"])).toBe(0);
+    expect(vi.mocked(evaluateOffline).mock.calls[0][0].getsChildcareSubsidy).toBe(true);
+    const out = log.mock.calls[0][0] as string;
+    expect(out).toContain("childcare");            // the programs-lost column
+    expect(out).toContain("program ends: childcare $25,000");
   });
 
   it("prints the same approximation with the summary rankings", async () => {

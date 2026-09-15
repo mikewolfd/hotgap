@@ -79,6 +79,59 @@ function applyDisability(person: Vars, disabled: boolean, ssiPathway: boolean): 
   if (ssiPathway) person.is_ssi_disabled = y(true);
 }
 
+/**
+ * The childcare bill, and whether PolicyEngine is allowed to subsidize it.
+ *
+ * `childcare_expenses` is NOT an input: upstream defines it as
+ * `pre_subsidy_childcare_expenses - child_care_subsidies`. Forcing it — which
+ * is what HotGap did until now — leaves the pre-subsidy figure at $0, so every
+ * state's CCDF formula has no provider charge to reimburse and returns $0.
+ * That, not a missing variable, is why the July probe found nothing: verified
+ * live 2026-09-15, a Colorado single parent with a 3-year-old and a
+ * $9,600 bill gets $0 with the bill sent as `childcare_expenses` and $9,450
+ * with the same bill sent as `spm_unit_pre_subsidy_childcare_expenses`
+ * (docs/upstream/evidence/childcare-co-legacy-childcare-expenses.json).
+ *
+ * The subsidy is RATIONED — CCDF reaches roughly one in six eligible children
+ * and most states run a waiting list — so it follows the same rule as Head
+ * Start and a housing voucher: off unless the household says it has it. "Off"
+ * here is the old payload exactly, so a household that does not claim the
+ * subsidy gets byte-identical output to before, and the archetype sweep (which
+ * reports no childcare at all) is untouched.
+ *
+ * Attendance is an ASSUMPTION, stated: full-day, full-week care (8 hours a day,
+ * 5 days a week, 20 days a month), matching the full-day preschool price
+ * `stateDefaults` already uses to value a Head Start slot. It is not a
+ * gate but it does change the number — Colorado pays the whole $9,600 bill
+ * without it and $9,450/$8,913/$7,513 with it, because the rate ceiling and
+ * copay only bind once care has a duration (childcare-co-no-attendance.json).
+ * `meets_ccdf_activity_test` and `weekly_hours_worked_before_lsr` are NOT
+ * required: Colorado's output is byte-identical with and without either
+ * (childcare-co-no-activity-test.json, childcare-co-no-hours.json).
+ */
+function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: HouseholdAnswers): void {
+  const annual = (a.monthlyChildcare ?? 0) * 12;
+  if (!a.getsChildcareSubsidy) {
+    spmVars.childcare_expenses = y(annual);
+    return;
+  }
+  spmVars.spm_unit_pre_subsidy_childcare_expenses = y(annual);
+  // Let upstream compute what the family is left paying, so SNAP's
+  // dependent-care deduction and the CDCC run on the net bill, not the gross.
+  spmVars.childcare_expenses = y(null);
+  // The AGGREGATE, not `<st>_child_care_subsidies`: one name in every state,
+  // it spans the states whose own variable is defined per MONTH (CA, MA, …),
+  // and 13 states' per-state variables are not in the deployed model at all —
+  // asking for `ny_child_care_subsidies` is a 400 (childcare-ny-base.json).
+  spmVars.child_care_subsidies = y(null);
+  for (const [name, person] of Object.entries(people)) {
+    if (name === "you" || name === "spouse") continue;
+    person.childcare_hours_per_day = y(8);
+    person.childcare_days_per_week = y(5);
+    person.childcare_attending_days_per_month = y(20);
+  }
+}
+
 export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): { household: object } {
   const ssiPathway = opts.ssiPathway ?? true;
   const you: Vars = { age: y(a.age) };
@@ -135,7 +188,8 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   });
 
   const members = Object.keys(people);
-  const spmVars: Vars = { childcare_expenses: y((a.monthlyChildcare ?? 0) * 12) };
+  const spmVars: Vars = {};
+  applyChildcareSubsidy(spmVars, people, a);
   if (a.state === "MA" && a.childAges.length > 0) {
     for (const v of ["ma_tafdc", "ma_tafdc_payment_standard", "ma_tafdc_non_financial_eligible", "ma_tafdc_countable_unearned_income", "ma_tafdc_dependent_care_deduction"]) spmVars[v] = y(null);
     for (const person of Object.values(people)) {

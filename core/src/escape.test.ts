@@ -13,7 +13,7 @@ const flat = (earnings: number, netIncome: number): CurvePoint => ({
   earnings,
   netIncome,
   medicalOOP: 0,
-  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
   childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
 });
 
@@ -36,7 +36,7 @@ describe("escapeAnalysis on the real CA fixture", () => {
   });
 });
 
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
 // `programs` arrives as a sparse patch over ZERO, so it cannot be the full
 // Record the CurvePoint field is.
 type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
@@ -143,9 +143,9 @@ describe("escapeAnalysis on synthetic curves", () => {
   it("omits a program from programEnds if it is still received at the last point", () => {
     // A program that ends at the last point should be omitted
     const pts = [
-      { earnings: 0, netIncome: 10000, medicalOOP: 0, programs: { snap: 500, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
-      { earnings: 10000, netIncome: 11000, medicalOOP: 0, programs: { snap: 400, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
-      { earnings: 20000, netIncome: 12000, medicalOOP: 0, programs: { snap: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 0, netIncome: 10000, medicalOOP: 0, programs: { snap: 500, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 10000, netIncome: 11000, medicalOOP: 0, programs: { snap: 400, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 20000, netIncome: 12000, medicalOOP: 0, programs: { snap: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
     ];
     const esc = escapeAnalysis(pts);
     // snap is still received at 20000 (last point), so should not appear in programEnds
@@ -162,10 +162,10 @@ describe("escapeAnalysis on synthetic curves", () => {
   it("correctly identifies when multiple programs have different end points", () => {
     // Create a curve with two programs that end at different points
     const pts = [
-      { earnings: 0, netIncome: 10000, medicalOOP: 0, programs: { snap: 300, tanf: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
-      { earnings: 10000, netIncome: 11000, medicalOOP: 0, programs: { snap: 200, tanf: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
-      { earnings: 20000, netIncome: 12000, medicalOOP: 0, programs: { snap: 150, tanf: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
-      { earnings: 30000, netIncome: 13000, medicalOOP: 0, programs: { snap: 0, tanf: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 0, netIncome: 10000, medicalOOP: 0, programs: { snap: 300, tanf: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 10000, netIncome: 11000, medicalOOP: 0, programs: { snap: 200, tanf: 200, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 20000, netIncome: 12000, medicalOOP: 0, programs: { snap: 150, tanf: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
+      { earnings: 30000, netIncome: 13000, medicalOOP: 0, programs: { snap: 0, tanf: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 } , childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false },
     ];
     const esc = escapeAnalysis(pts);
     expect(esc.programEnds.tanf).toBe(10000); // last point where tanf > PROGRAM_END_MIN

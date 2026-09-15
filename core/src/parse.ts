@@ -1,4 +1,5 @@
 import type { MaTafdcInputs } from "./maTafdc.js";
+import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
 import { CASH_PROGRAMS, YEAR, type CurvePoint, type ProgramId } from "./types.js";
 
 export class PEParseError extends Error {}
@@ -25,6 +26,20 @@ function firstEntity(group: unknown, label: string): Record<string, Record<strin
   const first = Object.values(group as Entity)[0];
   if (!first) throw new PEParseError(`empty ${label}`);
   return first;
+}
+
+/**
+ * The household's state, echoed back by PolicyEngine. `state_name` is always an
+ * input (translate.ts sends it), so it comes back as a scalar string rather
+ * than a series. Read here rather than passed in, so parsing stays a pure
+ * function of the response — and so a curve replayed from disk carries its own
+ * state with it.
+ */
+function stateOf(household: Record<string, unknown>): string {
+  const v = (household.state_name as Record<string, unknown> | undefined)?.[YEAR];
+  if (typeof v === "string") return v;
+  if (Array.isArray(v) && typeof v[0] === "string") return v[0];
+  throw new PEParseError("missing state_name");
 }
 
 function series(entity: Record<string, unknown>, variable: string, count: number): number[] {
@@ -78,6 +93,10 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
     into.set(id, existing ? existing.map((x, i) => x + values[i]) : [...values]);
   };
   for (const [variable, id] of Object.entries(SPM_PROGRAMS)) add(programSeries, id, series(spm, variable, expectedCount));
+  // The state child-care subsidy, asked for only when the household claims it
+  // (translate.ts), so absent on every other curve — including every committed
+  // archetype — where it is simply 0.
+  if ("child_care_subsidies" in spm) add(programSeries, "childcare", series(spm, "child_care_subsidies", expectedCount));
   for (const [variable, id] of Object.entries(TAX_PROGRAMS)) add(programSeries, id, series(tax, variable, expectedCount));
   for (const person of Object.values(people)) {
     // Who is a child comes from the person's own `age`, never from the key:
@@ -105,8 +124,20 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   const benefits = "household_benefits" in household
     ? series(household, "household_benefits", expectedCount)
     : null;
+  // `otherBenefits` is household_benefits minus what we name. The child-care
+  // subsidy is only inside household_benefits in the 23 states listed in
+  // `gov.household.household_state_benefits` (policyengine-us #9405); taking
+  // it out anywhere else would eat an equal amount of some OTHER untracked
+  // benefit — or floor the remainder at 0 and hide it.
+  // `stateOf` is only consulted when there IS a subsidy to place, so a body
+  // that never asked for one — every synthetic fixture, every curve swept
+  // before this — does not have to carry a state to parse.
+  const subsidyIsCounted = programSeries.has("childcare") && childcareSubsidyInNetIncome(stateOf(household));
   const trackedCash = (i: number) =>
-    CASH_PROGRAMS.reduce((sum, id) => sum + (programSeries.get(id)?.[i] ?? 0), 0);
+    CASH_PROGRAMS.reduce(
+      (sum, id) => (id === "childcare" && !subsidyIsCounted ? sum : sum + (programSeries.get(id)?.[i] ?? 0)),
+      0,
+    );
 
   // Refundable STATE credits — Colorado's child tax credit and family
   // affordability credit, California's CalEITC, and their kin. They sit inside
