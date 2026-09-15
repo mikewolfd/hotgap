@@ -31,10 +31,16 @@ export interface MaTafdcCorrection {
   message: string;
 }
 
+// A grant difference at or below this is not fed back: SNAP moves by under
+// $30 for it, it is mostly the September clothing allowance's long tail, and
+// each point costs a request. Same floor analyze.ts uses for "meaningfully on".
+const RESAMPLE_MIN_DIFFERENCE = 100;
+
 /**
- * Points whose corrected grant differs from what PolicyEngine paid and that
- * have not yet been fed back to the engine. The client re-requests exactly
- * these, one at a time, with the grant forced as an input.
+ * Points whose corrected grant differs from what PolicyEngine paid by more
+ * than RESAMPLE_MIN_DIFFERENCE and that have not yet been fed back to the
+ * engine. The client re-requests exactly these, one at a time, with the
+ * grant forced as an input.
  */
 export function maTafdcResampleIndices(a: HouseholdAnswers, points: CurvePoint[]): number[] {
   if (a.state !== "MA" || a.childAges.length === 0) return [];
@@ -43,7 +49,7 @@ export function maTafdcResampleIndices(a: HouseholdAnswers, points: CurvePoint[]
   points.forEach((p, i) => {
     if (p.maTafdc!.engineUsedCorrectedGrant) return;
     const grant = maTafdcGrant(p.earnings, a.spouseAnnualEarnings, p.maTafdc!);
-    if (Math.round(grant) !== Math.round(p.programs.tanf ?? 0)) out.push(i);
+    if (Math.abs(grant - (p.programs.tanf ?? 0)) > RESAMPLE_MIN_DIFFERENCE) out.push(i);
   });
   return out;
 }

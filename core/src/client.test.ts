@@ -227,6 +227,13 @@ describe("Massachusetts TAFDC feedback loop", () => {
     expect(correctMaTafdc(maAnswers, out).correction).toMatchObject({ status: "applied", linkedBenefitsRecomputed: true, message: expect.stringContaining("recomputed") });
   });
 
+  it("does not feed back a point whose grant differs by $100 or less", () => {
+    const small = maPoints.map((p) => ({ ...p, programs: { ...p.programs, tanf: maTafdcGrant(p.earnings, 0, p.maTafdc!) + 100 } }));
+    expect(maTafdcResampleIndices(maAnswers, small)).toEqual([]);
+    const big = maPoints.map((p) => ({ ...p, programs: { ...p.programs, tanf: maTafdcGrant(p.earnings, 0, p.maTafdc!) + 101 } }));
+    expect(maTafdcResampleIndices(maAnswers, big)).toHaveLength(maPoints.length);
+  });
+
   it("fetchCurve runs the loop for a Massachusetts household with children and stores the flag", async () => {
     const axis = axisSpec(maAnswers);
     const stretch = (v: unknown): unknown =>

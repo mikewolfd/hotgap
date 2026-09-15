@@ -91,7 +91,9 @@ export async function runPipeline(
       const answers = answersFor(state, archetype);
       // Every batch request gets the longer budget, including requests that
       // do not send parameter overrides.
-      const curve = await fetchCurve(answers, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
+      // opts.concurrency households run at once; keep the Massachusetts point
+      // loop small so the API is never asked for more than ~9 things at a time.
+      const curve = await fetchCurve(answers, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl, resampleConcurrency: 3 });
       results[state] ??= {};
       results[state][archetype.id] = curve.points.map(roundPoint);
     } catch (e) {

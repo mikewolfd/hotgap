@@ -261,3 +261,9 @@ Codex's probe) and a parallel axis on `ma_tafdc` (rejected twice, in two
 ways). The pipeline's queue helper moved into core and is shared. Still
 unmodeled: the six-month full disregard's timing and new-applicant
 eligibility. The step becomes a no-op when policyengine-us PR #9477 merges.
+Speed: measured on fresh households, the loop runs eight point requests at a
+time (the API saturates past ten) and skips differences of $100 or less, so a
+five-person household evaluates in about 26 s instead of 80; the sweep passes
+`resampleConcurrency: 3`. Pre-rolling per household is not possible (rent,
+childcare and spouse pay change the answer), but the weekly sweep already
+pre-rolls the archetypes, so the offline path is instant.

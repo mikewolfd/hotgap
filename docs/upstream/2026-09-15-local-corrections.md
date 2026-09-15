@@ -104,9 +104,16 @@ categorical eligibility and net income from the corrected grant itself — no
 local benefit math. Verified live: at $26,000 with the grant forced to $3,972,
 SNAP rises from $6,019 to $7,836 and net income falls from $109,799 to $99,800.
 Each fed-back point carries `engineUsedCorrectedGrant: true`; the correction
-reports `linkedBenefitsRecomputed` and its message changes accordingly. About
-thirty extra one-second requests per Massachusetts household with children;
-the weekly sweep pays the same for its six such archetypes. The step is a no-op
+reports `linkedBenefitsRecomputed` and its message changes accordingly.
+Cost, measured 2026-09-15 on fresh households (PolicyEngine caches repeats):
+a five-person household needs ~64 point requests, 49 s three at a time, 27 s
+at six, 21 s at ten, and 45 s at fifteen as the API saturates — so the loop
+runs eight at a time (`resampleConcurrency`; the sweep passes 3 because it
+already runs three households at once). Differences of $100 or less are not
+fed back (SNAP moves under $30 for them; they are mostly the September
+clothing allowance's tail). A fresh worst-case household evaluates end to end
+in about 26 s; a repeat is a cache hit; the offline archetype path is instant
+because the weekly sweep stores the fed-back points. The step is a no-op
 once upstream's formula matches the state's rules. What remains unmodeled is
 the six-month full disregard's timing and new-applicant eligibility. Two
 alternatives were tried and rejected: an array of grants along the axis (HTTP

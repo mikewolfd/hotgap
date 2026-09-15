@@ -39,6 +39,13 @@ export interface CurveCache {
 
 export interface FetchCurveOptions extends RequestOptions {
   cache?: CurveCache;
+  /**
+   * In-flight limit for the Massachusetts feedback loop's point requests.
+   * Measured 2026-09-15 on fresh households (64 points): 49 s at 3, 27 s at
+   * 6, 21 s at 10, 45 s at 15 as the API saturates. Default 8; a batch that
+   * already runs several households at once should pass less.
+   */
+  resampleConcurrency?: number;
 }
 
 export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -160,7 +167,7 @@ async function fetchSplicedForSSDI(
 }
 
 /** Full earnings sweep for one household, from PolicyEngine (or the cache). */
-const RESAMPLE_CONCURRENCY = 3;
+const RESAMPLE_CONCURRENCY = 8;
 
 /**
  * One earnings point with a forced SPM-unit input. The public endpoint only
@@ -183,11 +190,11 @@ function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Recor
  * re-requested (about thirty for a household with children), one at a time.
  * A no-op once upstream's formula matches the state's rules.
  */
-export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePoint[], opts: RequestOptions): Promise<CurvePoint[]> {
+export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePoint[], opts: FetchCurveOptions): Promise<CurvePoint[]> {
   const indices = maTafdcResampleIndices(answers, points);
   if (indices.length === 0) return points;
   const out = points.slice();
-  await runQueue(indices, RESAMPLE_CONCURRENCY, async (i) => {
+  await runQueue(indices, opts.resampleConcurrency ?? RESAMPLE_CONCURRENCY, async (i) => {
     const p = points[i];
     // Above SGA the spliced curve came from the no-SSDI request; match it.
     const base = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL ? { ...answers, ssdiMonthly: 0 } : answers;
