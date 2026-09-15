@@ -53,21 +53,22 @@ export function buildSummary(generated: string, states: string[], results: Resul
       };
     }
   }
-  // Judged on the SINGLE-parent archetypes only. A lone working parent paying
-  // for care qualifies for the subsidy in every state, so a curve that is zero
-  // throughout can only mean the engine could not compute it. The married
-  // archetypes cannot be used for this: their spouse has no earnings, and the
-  // subsidy's activity test requires every parent to be working, so their $0
-  // is correct policy rather than a gap (verified live 2026-09-15 — Delaware
-  // pays a married couple $13,260 once the spouse works and $0 when they do
-  // not). Partial coverage across household shapes still counts: Massachusetts
+  // Judged on the archetypes that actually buy care — a single parent, or a
+  // two-earner couple. Every one of them qualifies for the subsidy somewhere on
+  // its curve in every state, so a curve that is zero throughout can only mean
+  // the engine could not compute it. The SINGLE-earner married archetypes
+  // cannot be used for this: their spouse has no earnings, and the subsidy's
+  // activity test requires every parent to be working, so their $0 is correct
+  // policy rather than a gap (verified live 2026-09-15 — Delaware pays a
+  // married couple $13,260 once the spouse works and $0 when they do not).
+  // The test is the childcare bill rather than married/single, because
+  // "married" stopped meaning "a parent is home" the day married-dual-* was
+  // added. Partial coverage across household shapes still counts: Massachusetts
   // pays a household with an infant and nothing to one whose only child is a
   // preschooler, because the provider type defaults to a school-age rate.
   const unmodeled = states.filter((state) => {
-    const soleEarner = ARCHETYPES.filter(
-      (a) => !a.married && (answersFor(state, a).monthlyChildcare ?? 0) > 0,
-    );
-    return soleEarner.some((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
+    const buysCare = ARCHETYPES.filter((a) => (answersFor(state, a).monthlyChildcare ?? 0) > 0);
+    return buysCare.some((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
   });
 
   return {

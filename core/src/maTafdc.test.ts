@@ -62,11 +62,20 @@ describe("Massachusetts ongoing-recipient TAFDC", () => {
     expect(correctMaTafdc(answers, ev.curve.points).points).toEqual(ev.curve.points);
   });
 
-  it("uses the archetype's spouse income offline, even when the caller's spouse earns more", () => {
+  it("uses the archetype's spouse income offline, never the caller's own", () => {
     const curve = { year: "2026", currentEarnings: 26000, points: [point(25000, 10130), point(26000, 9880)] };
-    const baseline = evaluateCurve(answers, curve, "archetype");
+    // A caller with a working spouse is read against the DUAL-earner archetype,
+    // whose spouse earns $15,080 — not against the $40,000 they reported, and
+    // not against a married archetype whose spouse earns nothing. TAFDC counts
+    // a spouse's wages, so which of the two it is changes the grant.
+    const dual = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-dual-3")!);
     const personal = evaluateCurve({ ...answers, spouseAnnualEarnings: 40000 }, curve, "archetype");
-    expect(personal.curve.points).toEqual(baseline.curve.points);
+    expect(personal.curve.points).toEqual(evaluateCurve(dual, curve, "archetype").curve.points);
+    // Their own figure changes nothing: $40,000 and $90,000 give one answer.
+    expect(evaluateCurve({ ...answers, spouseAnnualEarnings: 90000 }, curve, "archetype").curve.points)
+      .toEqual(personal.curve.points);
+    // And it is a different answer from the single-earner archetype's.
+    expect(personal.curve.points).not.toEqual(evaluateCurve(answers, curve, "archetype").curve.points);
   });
 
   it("removes TANF's duplicate from both net income and otherBenefits exactly once", () => {

@@ -98,24 +98,36 @@ describe("the committed reach ladders", () => {
 });
 
 describe("reachForHousehold", () => {
-  it("maps married/kidCount to the archetype the same way the fallback picker does (single-1)", () => {
+  const hh = (married: boolean, kidCount: number, spouseAnnualEarnings = 0) => ({
+    married, spouseAnnualEarnings, childAges: Array.from({ length: kidCount }, () => 5),
+  });
+
+  it("maps a household to the archetype the same way the fallback picker does (single-1)", () => {
     const median = reachCell("CA", "single-1")!.ladder[P50];
-    expect(reachForHousehold("CA", false, 1, median)).toBeCloseTo(50, 6);
+    expect(reachForHousehold("CA", hh(false, 1), median)).toBeCloseTo(50, 6);
   });
 
   it("clamps kid count the same way pickArchetypeId does (5 kids -> single-3)", () => {
-    expect(reachForHousehold("CA", false, 5, 50000)).toBe(reachForArchetype("CA", "single-3", 50000));
+    expect(reachForHousehold("CA", hh(false, 5), 50000)).toBe(reachForArchetype("CA", "single-3", 50000));
+  });
+
+  // A two-earner couple is measured against two-earner couples. Pooled against
+  // every couple it would read low, since most couples living on one pay earn
+  // less — the yardstick would be a different population from the household.
+  it("measures a couple with a second earner against the dual-earner ladder", () => {
+    expect(reachForHousehold("CA", hh(true, 2, 15080), 60000)).toBe(reachForArchetype("CA", "married-dual-2", 60000));
+    expect(reachForHousehold("CA", hh(true, 2), 60000)).toBe(reachForArchetype("CA", "married-2", 60000));
   });
 
   it("returns null when the mapped archetype's cell is suppressed", () => {
     const gap = SUPPRESSED.find(({ id }) => ARCHETYPES.some((a) => a.id === id));
     if (!gap) return; // this vintage suppressed nothing; reachForArchetype's null cases cover the path
     const archetype = ARCHETYPES.find((a) => a.id === gap.id)!;
-    expect(reachForHousehold(gap.state, archetype.married, archetype.childAges.length, 50000)).toBeNull();
+    expect(reachForHousehold(gap.state, hh(archetype.married, archetype.childAges.length, archetype.spouseWorks ? 15080 : 0), 50000)).toBeNull();
   });
 
   it("returns null for an unknown state", () => {
-    expect(reachForHousehold("ZZ", true, 2, 80000)).toBeNull();
+    expect(reachForHousehold("ZZ", hh(true, 2), 80000)).toBeNull();
   });
 });
 

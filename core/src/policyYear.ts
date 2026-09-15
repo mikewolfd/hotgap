@@ -1,3 +1,4 @@
+import { FULL_TIME_HOURS_PER_YEAR } from "./minWage.js";
 // The few figures HotGap holds by hand for the policy year. Everything else
 // comes out of PolicyEngine; these are the values `/us/calculate` does not
 // expose. Each carries the publisher, the table, and the date it was read, so
@@ -111,3 +112,24 @@ export const ESI_FULL_TIME_HOURS = 30;
 // deductibles or copays (see the README's Honesty section).
 export const MEDICARE_PART_B_MONTHLY = 202.90;
 export const MEDICARE_PART_B_ANNUAL = MEDICARE_PART_B_MONTHLY * 12; // $2,434.80
+
+// The federal minimum wage: $7.25/hour, 29 U.S.C. §206(a)(1) ("not less than
+// $7.25 an hour, beginning 24 months after" the 2007 amendments' enactment).
+// Still $7.25 — verified 2026-09-15 against the Wage and Hour Division's own
+// page, https://www.dol.gov/agencies/whd/minimum-wage: "The federal minimum
+// wage is $7.25 per hour effective July 24, 2009."
+//
+// Full time at that wage is $15,080 (2,080 hours). That is what the sweep's
+// DUAL-EARNER archetypes pay the second earner, and it is deliberately the
+// FEDERAL figure rather than each state's own minimum: the map compares state
+// RULES, so a spouse whose pay moved with the state's wage floor would confound
+// every comparison drawn from it — Washington's curve would differ from
+// Alabama's partly because $17.13 ≠ $7.25, not because their benefit rules
+// differ. A fixed national second income holds that variable still. Its cost is
+// that the figure is a real wage almost nowhere: in the 31 jurisdictions above
+// the federal floor a minimum-wage spouse really earns more (STATE_MIN_WAGE), so
+// these archetypes understate a two-earner couple's income there. That is the
+// price of a comparison that isolates the rules, and it is stated here rather
+// than hidden.
+export const FEDERAL_MIN_WAGE_HOURLY = 7.25;
+export const FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL = FEDERAL_MIN_WAGE_HOURLY * FULL_TIME_HOURS_PER_YEAR; // $15,080

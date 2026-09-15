@@ -1,15 +1,32 @@
 import { describe, it, expect } from "vitest";
 import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor } from "./archetypes.js";
+import { FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
 import { STATE_CODES } from "./states.js";
 
 describe("ARCHETYPES", () => {
-  it("defines exactly 8 archetypes: single/married crossed with 0-3 kids", () => {
-    expect(ARCHETYPES).toHaveLength(8);
+  it("defines exactly 11 archetypes: single/married crossed with 0-3 kids, plus a dual-earner couple at 1-3 kids", () => {
+    expect(ARCHETYPES).toHaveLength(11);
     expect(ARCHETYPES.map((a) => a.id)).toEqual([
       "single-0", "single-1", "single-2", "single-3",
       "married-0", "married-1", "married-2", "married-3",
+      "married-dual-1", "married-dual-2", "married-dual-3",
     ]);
+  });
+
+  it("has no childless dual-earner couple: no children, no childcare bill, nothing for the row to add", () => {
+    expect(ARCHETYPES.find((a) => a.id === "married-dual-0")).toBeUndefined();
+  });
+
+  it("gives each dual-earner archetype the same children as its single-earner twin", () => {
+    for (const kids of [1, 2, 3]) {
+      const twin = ARCHETYPES.find((a) => a.id === `married-${kids}`)!;
+      const dual = ARCHETYPES.find((a) => a.id === `married-dual-${kids}`)!;
+      expect(dual.childAges, `married-dual-${kids}`).toEqual(twin.childAges);
+      expect(dual.married).toBe(true);
+      expect(dual.spouseWorks).toBe(true);
+      expect(twin.spouseWorks).toBe(false);
+    }
   });
 
   it("defaults to single-2 (a single parent with two kids)", () => {
@@ -79,11 +96,48 @@ describe("answersFor", () => {
     }
   });
 
-  it("leaves childcare at $0 — the archetype reports no childcare expense", () => {
+  it("charges the state preschool price per child under 6, wherever every parent works", () => {
     // single-3 is aged 1, 4 and 9: two under 6, so two preschool places.
     const price = stateDefaults("CA").monthlyChildcarePreschool;
     expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(2 * price);
     expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-0")!).monthlyChildcare).toBe(0);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-2")!).monthlyChildcare).toBe(price);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-2")!).monthlyChildcare).toBe(price);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-3")!).monthlyChildcare).toBe(2 * price);
+  });
+
+  // The subsidy's activity test requires EVERY parent to be working (verified
+  // live 2026-09-15: Delaware pays a married couple $13,260 once the spouse
+  // works and $0 when they do not), so a couple with a parent at home neither
+  // buys care nor claims the subsidy — charging them for one without the other
+  // is the combination that is wrong both ways.
+  it("buys no care and claims no subsidy for a single-earner couple: a parent is home", () => {
+    for (const id of ["married-0", "married-1", "married-2", "married-3"]) {
+      const a = answersFor("CA", ARCHETYPES.find((x) => x.id === id)!);
+      expect(a.monthlyChildcare, id).toBe(0);
+      expect(a.getsChildcareSubsidy, id).toBe(false);
+      expect(a.spouseAnnualEarnings, id).toBe(0);
+      expect(a.hoursPerWeek, id).toBeNull();
+    }
+  });
+
+  it("differs from its single-earner twin in exactly three things: the spouse's pay, their hours, and the childcare bill", () => {
+    const price = stateDefaults("CO").monthlyChildcarePreschool;
+    for (const kids of [1, 2, 3]) {
+      const twin = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-${kids}`)!);
+      const dual = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-dual-${kids}`)!);
+      const under6 = dual.childAges.filter((age) => age < 6).length;
+      expect(dual, `married-dual-${kids}`).toEqual({
+        ...twin,
+        // Full time at the FEDERAL minimum wage, held national on purpose so
+        // the map compares state rules and not state wage floors.
+        spouseAnnualEarnings: FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL,
+        // The subsidy has an activity test as well as an income one, and
+        // PolicyEngine reads it off weekly hours worked.
+        hoursPerWeek: 40,
+        monthlyChildcare: under6 * price,
+        getsChildcareSubsidy: true,
+      });
+    }
+    expect(FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL).toBe(15_080); // $7.25 x 2,080 hours
   });
 });

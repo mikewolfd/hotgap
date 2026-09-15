@@ -85,7 +85,7 @@ describe("runPipeline", () => {
     expect(called).toBe(false);
   });
 
-  it("fetches 2 fake states × 8 archetypes from an injected fetch and builds correct summary + state files, with zero real network", async () => {
+  it("fetches 2 fake states × every archetype from an injected fetch and builds correct summary + state files, with zero real network", async () => {
     let callCount = 0;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       callCount++;
@@ -94,7 +94,7 @@ describe("runPipeline", () => {
 
     const result = await runPipeline({ states: ["WY", "VT"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
 
-    expect(callCount).toBe(16); // 2 states × 8 archetypes, no retries needed
+    expect(callCount).toBe(2 * ARCHETYPES.length); // 2 states × every archetype, no retries needed
     expect(result.ok).toBe(true);
     expect(result.gaps).toEqual([]);
     expect(result.summary).toBeDefined();
@@ -103,7 +103,7 @@ describe("runPipeline", () => {
     // Every archetype for both fake states resolves to the same fixture-derived
     // metrics, since the fake fetch always returns the same fixture response.
     for (const state of ["WY", "VT"]) {
-      expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
+      expect(Object.keys(result.summary!.states[state])).toEqual(ARCHETYPES.map((a) => a.id));
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
       // Pinned literally (not re-derived from the code under test): the CA
       // fixture's $22,089 Head Start loss at $30k is deferred, so the biggest
@@ -126,15 +126,17 @@ describe("runPipeline", () => {
       expect(points).toHaveLength(axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === "single-2")!)).count);
       expect(Number.isInteger(points[0].netIncome)).toBe(true);
     }
-    expect(result.summary!.archetypes).toHaveLength(8);
+    expect(result.summary!.archetypes).toHaveLength(ARCHETYPES.length);
   });
 
-  it("leaves a gap (not a throw) when one archetype exhausts retries, and skips writing summary/state files", async () => {
+  it("leaves a gap (not a throw) when an archetype exhausts retries, and skips writing summary/state files", async () => {
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       const payload = JSON.parse(init!.body as string);
       const peopleCount = Object.keys(payload.household.people).length;
-      // married-3 is the only archetype with 5 people (you, spouse, 3 kids) —
-      // fail it every time to simulate an upstream that never recovers.
+      // The 5-person households (you, spouse, 3 kids) — married-3 and its
+      // dual-earner twin — fail every time, simulating an upstream that never
+      // recovers. The payload is the only thing this fake fetch can tell them
+      // apart by, and both shapes have the same five people.
       if (peopleCount === 5) return new Response("", { status: 500 });
       return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
@@ -142,7 +144,11 @@ describe("runPipeline", () => {
     const result = await runPipeline({ states: ["CA"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
 
     expect(result.ok).toBe(false);
-    expect(result.gaps).toEqual([{ state: "CA", archetypeId: "married-3", reason: "missing" }]);
+    expect(result.gaps).toEqual(
+      ARCHETYPES.filter((a) => a.married && a.childAges.length === 3)
+        .map((a) => ({ state: "CA", archetypeId: a.id, reason: "missing" })),
+    );
+    expect(result.gaps).toHaveLength(2);
     expect(result.summary).toBeUndefined();
     expect(result.stateFiles).toBeUndefined();
   });

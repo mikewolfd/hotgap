@@ -29,7 +29,7 @@ function fullResultsFor(state: string): ResultsByStateArchetype {
 }
 
 describe("validateResults", () => {
-  it("passes when every requested state has all 8 archetypes with 101 finite points", () => {
+  it("passes when every requested state has every archetype with a full-axis finite curve", () => {
     const results = fullResultsFor("CA");
     expect(validateResults(["CA"], results)).toEqual({ ok: true, gaps: [] });
   });
@@ -115,11 +115,11 @@ describe("buildSummary", () => {
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
     const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
     expect(summary.states.CA["single-2"]).toEqual(stateMetrics(evaluateCurve(answersFor("CA", single2), { year: "2026", currentEarnings: 0, points: linearCurve(10000, countFor("CA", "single-2")) }, "archetype")));
-    expect(Object.keys(summary.states.CA)).toHaveLength(8);
+    expect(Object.keys(summary.states.CA)).toEqual(ARCHETYPES.map((a) => a.id));
   });
 
   // Fixture-driven: feed the real CA fixture's points under an archetype id
-  // (the fixture household isn't one of the 8 archetypes — it only pins the
+  // (the fixture household isn't one of the archetypes — it only pins the
   // math, per the established metrics.test.ts pattern). Verified pins post
   // PTC double-count fix (Plan 6): safeExit 81000, leap 52000.
   it("carries safeExit and leap through from escapeAnalysis, per the verified CA fixture pins", () => {
