@@ -27,11 +27,15 @@ describe("axisSpec", () => {
     expect(axisSpec({ ...base, married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 195_000, step: 1000, count: 196 });
   });
 
-  it("scales to 1.5× pay with a wider step, keeping the request under ~200 points", () => {
-    // $150k × 1.5 = $225,000, which is not a whole number of $2,000 steps —
-    // the top rounds up to $226,000 rather than asking for a fractional count.
-    expect(axisSpec({ ...base, annualEarnings: 150_000 })).toEqual({ max: 226_000, step: 2000, count: 114 });
-    expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 752_000, step: 4000, count: 189 });
+  it("scales to 1.5× pay with a wider step, keeping the request near 250 points", () => {
+    // $150k × 1.5 = $225,000 still fits under the $250,000 cap at $1,000 steps.
+    expect(axisSpec({ ...base, annualEarnings: 150_000 })).toEqual({ max: 225_000, step: 1000, count: 226 });
+    // $300k × 1.5 = $450,000 is not a whole number of $2,000 steps — the top
+    // rounds up rather than asking for a fractional count.
+    expect(axisSpec({ ...base, annualEarnings: 300_000 })).toEqual({ max: 450_000, step: 2000, count: 226 });
+    expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 750_000, step: 3000, count: 251 });
+    // Alaska's guidelines are higher: a five-person household still gets $1,000 steps.
+    expect(axisSpec({ ...base, state: "AK", married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 230_000, step: 1000, count: 231 });
   });
 
   it("always yields a whole number of steps and both endpoints", () => {

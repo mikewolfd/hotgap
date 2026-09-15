@@ -20,9 +20,9 @@ export interface AxisSpec {
  * $100k axis cut the biggest cliff off the top of its own chart. Above
  * $100,000 of pay the axis follows 1.5× earnings instead.
  *
- * The axis stays at $1,000 steps up to $200,000 (151 to 196 points depending
- * on household size); beyond that the step widens so a very high earner's
- * request stays under ~200 points. A wider step raises the cliff-detection
+ * The axis stays at $1,000 steps up to $250,000, which covers every archetype
+ * in every state (Alaska's five-person axis is the longest, $230,000); beyond
+ * that the step widens so a very high earner's request stays near 250 points. A wider step raises the cliff-detection
  * floor (see analyze.ts), which is the price of not asking PolicyEngine for
  * 751 points.
  */
@@ -35,7 +35,7 @@ export function axisSpec(a: HouseholdAnswers): AxisSpec {
   const size = 1 + (a.married ? 1 : 0) + a.childAges.length;
   const pastSubsidyCliff = 4 * fpl2025(a.state, size) + 40_000;
   const wanted = Math.ceil(Math.max(150_000, a.annualEarnings * 1.5, pastSubsidyCliff) / 5000) * 5000;
-  const step = Math.max(1000, Math.ceil(wanted / 200_000) * 1000);
+  const step = Math.max(1000, Math.ceil(wanted / 250_000) * 1000);
   // Round the top up to a whole number of steps: `wanted` is a multiple of
   // $5,000 and `step` need not divide it (a $150,000 earner wants $225,000 at
   // a $2,000 step), and a fractional point count is not a valid axis.
