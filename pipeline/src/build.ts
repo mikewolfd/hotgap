@@ -53,9 +53,17 @@ export function buildSummary(generated: string, states: string[], results: Resul
       };
     }
   }
+  // A state is flagged when every archetype that pays for care got $0 back.
+  const unmodeled = states.filter((state) => {
+    const paying = ARCHETYPES.filter((a) => (answersFor(state, a).monthlyChildcare ?? 0) > 0);
+    if (paying.length === 0) return false;
+    return paying.every((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
+  });
+
   return {
     generated,
     year: YEAR,
+    ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
     archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
     states: summaryStates,
   };

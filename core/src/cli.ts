@@ -311,6 +311,10 @@ function summaryReport(f: Flags): number {
     return 0;
   }
   console.log(`numbers last changed ${summary.generated} · policy year ${summary.year}`);
+  const blind = (summary.childcareSubsidyUnmodeled ?? []).filter((s) => states.includes(s));
+  if (blind.length) {
+    console.log(`note: PolicyEngine models no child-care subsidy in ${blind.join(", ")}, so the childcare cliff is missing there — not a kinder rule.`);
+  }
   const cols = (id: string, loss: string, leap: string, exit: string, count: string, deferred: string, width: string) =>
     `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${deferred.padStart(10)}${width.padStart(14)}`;
   for (const [state, rows] of Object.entries(picked)) {
