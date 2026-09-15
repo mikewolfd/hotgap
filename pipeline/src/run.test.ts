@@ -105,12 +105,20 @@ describe("runPipeline", () => {
     for (const state of ["WY", "VT"]) {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
-      // Same numbers the summary builder derives for these points under this
-      // state's archetype answers (rent, county, and the corrections included).
-      const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
-      const expected = stateMetrics(evaluateCurve(answersFor(state, single2), { year: "2026", currentEarnings: 0, points: result.stateFiles![state].archetypes["single-2"].points }, "archetype"));
-      expect(result.summary!.states[state]["single-2"]).toEqual(expected);
-      expect(expected.biggestLoss).toBeGreaterThan(0);
+      // Pinned literally (not re-derived from the code under test): the CA
+      // fixture's $22,089 Head Start loss at $30k is deferred, so the biggest
+      // immediate loss is the $3,868 subsidy end at $84k and the leap is that
+      // zone's width; same under WY and VT answers since neither the wrap nor
+      // the coverage gap touches this fixture.
+      expect(result.summary!.states[state]["single-2"]).toEqual({
+        biggestLoss: 3868,
+        dangerWidth: 18000,
+        cliffCount: 3,
+        deferredCliffCount: 1,
+        safeExit: 91000,
+        leap: 7000,
+        leapIsLowerBound: false,
+      });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
 

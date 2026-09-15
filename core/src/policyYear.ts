@@ -34,6 +34,23 @@ export const FPL_2025 = {
 // dollar standards with this line, not the 2025 one the marketplace uses.
 export const FPL_2026_CONTIGUOUS = { base: 15_960, perPerson: 5_680 } as const;
 
+// States that had not adopted the ACA Medicaid expansion as of the May 2026
+// CMS enrollment report (41 expansion / 10 non-expansion):
+// https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights
+// Read 2026-09-14. Wisconsin covers adults to 100% FPL without the expansion.
+export const NON_EXPANSION_STATES: ReadonlySet<string> = new Set(["AL", "FL", "GA", "KS", "MS", "SC", "TN", "TX", "WI", "WY"]);
+
+/**
+ * 100% of the 2026 guideline for a household of this size in this state.
+ * Exact for the 48 contiguous states + DC; Alaska and Hawaii are scaled from
+ * their 2025 ladders by the 2026/2025 contiguous ratio (+2.0%), which is
+ * within a few dollars of their published 2026 figures.
+ */
+export function fpl2026(state: string, householdSize: number): number {
+  if (state !== "AK" && state !== "HI") return fpl2026Contiguous(householdSize);
+  return fpl2025(state, householdSize) * (FPL_2026_CONTIGUOUS.base / FPL_2025.contiguous.base);
+}
+
 /** 100% of the 2026 guideline for a contiguous-state household of this size. */
 export function fpl2026Contiguous(householdSize: number): number {
   return FPL_2026_CONTIGUOUS.base + FPL_2026_CONTIGUOUS.perPerson * (Math.max(1, householdSize) - 1);

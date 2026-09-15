@@ -40,12 +40,13 @@ describe("evaluateCurve", () => {
     expect(at31k.analysis.cliffs.map((c) => [c.startEarnings, Math.round(c.drop)])).toEqual(direct.cliffs.map((c) => [c.startEarnings, Math.round(c.drop)]));
     // …but the $30k Head Start loss lands at the next program year, so it is
     // listed as deferred and lifted out of the zones: the trough that ran to
-    // $74k on the raw reading ends at $35k, where only the real $954 step at
-    // $31k (California's wrap ending at 150% FPL) still has to be recovered.
+    // $74k on the raw reading ends at $34k, where only the real step at $31k
+    // (California's $0 band ending at 150% FPL, capped at the next tier's
+    // 3.19% of income) still has to be recovered.
     expect(at31k.deferred.map((c) => [c.startEarnings, c.deferral?.reason])).toEqual([[30000, "head_start_program_year"]]);
     const zoneFrom30k = (zones: { startEarnings: number; endEarnings: number | null }[]) => zones.find((z) => z.startEarnings === 30000)!.endEarnings;
     expect(zoneFrom30k(direct.dangerZones)).toBe(74000);
-    expect(zoneFrom30k(at31k.analysis.dangerZones)).toBe(35000);
+    expect(zoneFrom30k(at31k.analysis.dangerZones)).toBe(34000);
   });
 
   it("places current earnings in the state's reach distribution", () => {
@@ -567,5 +568,58 @@ describe("reach uses householder-plus-spouse earnings", () => {
     const solo = evaluateOn(answersWith({ married: true, spouseAge: 30, annualEarnings: 30000 }), points, 30000);
     const pair = evaluateOn(answersWith({ married: true, spouseAge: 30, annualEarnings: 30000, spouseAnnualEarnings: 45000 }), points, 30000);
     expect(pair.reach.current!).toBeGreaterThan(solo.reach.current!);
+  });
+});
+
+describe("state premium wraps", () => {
+  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+  const enrollee = (earnings: number, moop: number): CurvePoint => ({
+    earnings, netIncome: 30000 - moop, medicalOOP: moop, programs: { ...ZEROS, aca: 4000 }, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
+  });
+  const single = (state: string) => answersWith({ state, childAges: [], childDisabled: [], annualEarnings: 23000 });
+
+  it("zeroes the premium inside the $0 band on the archetype path too", () => {
+    // CT single at $23,000 is 147% FPL: inside Covered Connecticut's 175% band.
+    const ev = evaluateCurve(single("CT"), { year: "2026", currentEarnings: 23000, points: [enrollee(20000, 900), enrollee(23000, 907), enrollee(30000, 1200)] }, "archetype");
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([0, 0, 1200]); // $30k = 192%: outside
+    expect(ev.premiumWrap?.state).toBe("CT");
+  });
+
+  it("caps the premium at the state's next tier just above the $0 band instead of stepping to the federal net premium", () => {
+    // MA single at $25,000 = 160% FPL: Plan Type 2B, $53/month.
+    const ma = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 25000, points: [enrollee(23000, 900), enrollee(25000, 1500)] }, "archetype");
+    expect(ma.curve.points.map((p) => p.medicalOOP)).toEqual([0, 636]);
+    // CA single at $24,300 ≈ 155% FPL: 3.19%→3.91% of MAGI, about 3.43% here.
+    const ca = evaluateCurve(single("CA"), { year: "2026", currentEarnings: 24300, points: [enrollee(23000, 900), enrollee(24300, 1500)] }, "archetype");
+    expect(ca.curve.points[1].medicalOOP).toBeGreaterThan(800);
+    expect(ca.curve.points[1].medicalOOP).toBeLessThan(900);
+    // A premium already under the cap is left alone.
+    const cheap = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 25000, points: [enrollee(23000, 900), enrollee(25000, 300)] }, "archetype");
+    expect(cheap.curve.points[1].medicalOOP).toBe(300);
+  });
+});
+
+describe("transitional medical assistance is a §1931 rule", () => {
+  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+  // A parent with one child whose own Medicaid ends between `at` and the next point.
+  const parentLosesAt = (at: number, state: string) => {
+    const p = (earnings: number, net: number, adultMedicaid: number): CurvePoint => ({
+      earnings, netIncome: net, medicalOOP: adultMedicaid > 0 ? 0 : 3000, programs: { ...ZEROS, medicaid: adultMedicaid + 5000, aca: adultMedicaid > 0 ? 0 : 2000 }, childPrograms: { medicaid: 5000 }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
+    });
+    const points = [p(at - 1000, 30000, 6000), p(at, 30800, 6000), p(at + 1000, 28600, 0), p(at + 2000, 29400, 0)];
+    return evaluateCurve(answersWith({ state, annualEarnings: at }), { year: "2026", currentEarnings: at, points }, "live");
+  };
+  it("defers a parent's loss in a non-expansion state (Texas, at the state's own low limit)", () => {
+    expect(parentLosesAt(6000, "TX").deferred.map((c) => c.deferral?.reason)).toEqual(["transitional_medical_assistance"]);
+  });
+  it("does not defer a loss at the ACA adult group's 138% line in an expansion state (Arizona)", () => {
+    // Two people, 2026 guideline $21,640: 138% is $29,863; the last point with Medicaid is $29,000.
+    expect(parentLosesAt(29000, "AZ").deferred).toEqual([]);
+  });
+  it("defers a §1931 loss well above the adult-group line (DC parents at ~185% FPL)", () => {
+    // DC covers parents to 216% FPL under §1931; a loss at $40,000 (185% for
+    // two) is not the adult group's line, so TMA follows it. (Connecticut
+    // would do the same but its premium wrap removes this synthetic cliff.)
+    expect(parentLosesAt(40000, "DC").deferred.map((c) => c.deferral?.reason)).toEqual(["transitional_medical_assistance"]);
   });
 });

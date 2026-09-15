@@ -213,9 +213,15 @@ describe("buildPEPayload", () => {
     expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
   });
 
-  it("uses the family ESI premium when there are kids or a spouse", () => {
-    const p = buildPEPayload({ ...base, hasEmployerCoverage: true, childAges: [5] }) as any;
-    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.family);
+  it("sends one figure in the inert employer-premium field whatever the household shape", () => {
+    // PolicyEngine reads employer_sponsored_insurance_premiums only into CBO
+    // market-income additions; the tier a household pays is evaluate.ts's.
+    const withKids = buildPEPayload(base) as any;
+    const single = buildPEPayload({ ...base, childAges: [], childDisabled: [] }) as any;
+    expect(withKids.household.people.you.employer_sponsored_insurance_premiums).toBeUndefined();
+    const esi = buildPEPayload({ ...base, hasEmployerCoverage: true }) as any;
+    expect(esi.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
+    void single;
   });
 
   it("asks for household_benefits so a cliff can price untracked programs", () => {

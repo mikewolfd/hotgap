@@ -161,6 +161,13 @@ const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
  * SGA that no such worker can get — an OH household at $22–24k was shown SSI
  * $1,438 and Medicaid $11,078 ending at $24k as a cliff that does not exist.
  */
+// Above SGA the person is no longer receiving a disability benefit, and SNAP
+// defines "disabled" by benefit receipt (7 CFR 271.2), so dropping the SSI
+// pathway in the stopped request also removes the elderly-or-disabled
+// household's uncapped excess shelter deduction and a state supplement like
+// California's SSP. Verified live 2026-09-15 (CA family, $21k, rent $2,903):
+// SNAP $13,214 → $8,972, other benefits $4,102 → $0. That is the rule, not a
+// side effect, and it deepens the SGA cliff for a high-rent family.
 async function fetchSplicedForSSDI(
   answers: HouseholdAnswers,
   axis: AxisSpec,

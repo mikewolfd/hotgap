@@ -399,3 +399,28 @@ for the workaround each retires:
   own.
 
 Gates: typecheck, 316 unit tests, dry-run sweep; the resweep follows.
+
+Whole-branch review (Opus, independent) on `review-2`: READY WITH FIXES, all
+applied. Blockers: the premium wrap was computed and then discarded on the
+archetype path (`: gapped` for `: wrapped`), so every offline evaluation and
+the whole sweep reported a zeroed premium it had not applied; and
+transitional medical assistance was deferring every adult-Medicaid loss in a
+household with children, though §1925 follows only a §1931 loss — 176 of 221
+deferrals sat on the ACA adult group's 138% line and suppressed real cliffs
+(Arizona's single parent read "always up, already clear"). TMA is now gated
+off the adult-group window (128–151% of the 2026 guideline, expansion states
+only; `NON_EXPANSION_STATES` in policyYear.ts). Deferred cliffs sweep-wide
+fell 265 → 47. Also: the reduced-premium tier just above each $0 band is
+modeled (MA $53/month, CA 3.19–3.91% of income to 165%, NM 0–2% to 250%) so
+the band edge steps to the real next price rather than the full federal
+premium; the offline path now measures the swept household for the coverage
+gap and the wrap (not the caller's inputs); one Medicare predicate serves the
+gap exemption and the Part B charge; the SSDI splice's SNAP effect (the
+disabled-member shelter deduction and a state supplement leave above SGA,
+by rule) is documented; `summary` prints deferred cliffs; the duplicate
+two-tier `esiTier` is gone; the pipeline test pins literals again.
+
+Open: `core/data/state-defaults.json` gives Illinois a preschool price of
+$730, byte-identical to the documented national-median fallback used for
+Indiana and New Mexico, though the note names only those two — verify
+whether Cook County resolves from the NDCP or fell back silently.

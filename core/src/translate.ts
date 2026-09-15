@@ -1,5 +1,5 @@
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
-import { esiTier, householdSize, YEAR, type HouseholdAnswers } from "./types.js";
+import { householdSize, YEAR, type HouseholdAnswers } from "./types.js";
 
 export interface AxisSpec {
   /** Top of the earnings sweep, in dollars. */
@@ -105,7 +105,9 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
     // the MEPS-IC employee contribution because that is the figure the money
     // line uses (evaluate.ts); if the variable ever starts doing work, switch
     // this to the MEPS total premium minus that contribution.
-    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION[esiTier(a)];
+    // Inert upstream (see the comment above); the tier the household actually
+    // pays is evaluate.ts's esiTierAt, so this field carries one figure only.
+    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION.single;
     you.has_esi = y(true);
     you.offered_aca_disqualifying_esi = y(true);
     you.employer_sponsored_insurance_premiums = y(esiPremium);

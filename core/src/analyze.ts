@@ -91,6 +91,16 @@ export interface AnalyzeOptions {
    * household context, nothing is excused.
    */
   hasChildren?: boolean;
+  /**
+   * Whether an adult-Medicaid loss at these earnings is the ACA adult group's
+   * 138%-FPL end rather than a §1931 family loss. Transitional Medical
+   * Assistance (§1925 of the Act) continues coverage only after a §1931 loss;
+   * an adult leaving the expansion group goes to the marketplace that month.
+   * Without it, every adult loss in a household with children is treated as
+   * §1931 — wrong in the 41 expansion states, where parents usually leave
+   * Medicaid at the adult-group line.
+   */
+  isAdultGroupLoss?: (earnings: number) => boolean;
 }
 
 export interface CurveAnalysis {
@@ -173,6 +183,7 @@ function deferralOf(
   b: CurvePoint,
   programsLost: ProgramId[],
   hasChildren: boolean,
+  isAdultGroupLoss: (earnings: number) => boolean,
 ): Deferral | null {
   const reasons: DeferralReason[] = [];
   const excused = new Set<ProgramId>();
@@ -187,14 +198,14 @@ function deferralOf(
     for (const id of childCoverage) excused.add(id);
   }
   const adultMedicaidEnds = notches(a, b, "medicaid", ADULTS);
-  if (adultMedicaidEnds && hasChildren) {
+  if (adultMedicaidEnds && hasChildren && !isAdultGroupLoss(a.earnings)) {
     reasons.push("transitional_medical_assistance");
     excused.add("medicaid");
   }
   // Medicaid is only excused when BOTH groups' ends are: a childless adult
   // (or an adult in a household whose children are not the reason) losing it
   // is an immediate loss, whatever the children's continuous eligibility says.
-  if (adultMedicaidEnds && !hasChildren) excused.delete("medicaid");
+  if (adultMedicaidEnds && !excused.has("medicaid")) excused.delete("medicaid");
 
   if (reasons.length === 0) return null;
   // Anything named on this cliff that no rule carries forward makes the whole
@@ -255,7 +266,7 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number, opts
         programsLost,
         breakdown,
         driver,
-        deferral: deferralOf(a, b, programsLost, opts.hasChildren === true),
+        deferral: deferralOf(a, b, programsLost, opts.hasChildren === true, opts.isAdultGroupLoss ?? (() => false)),
       });
     }
   }

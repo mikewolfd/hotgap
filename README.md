@@ -152,6 +152,10 @@ SSA's nine-month trial work period and 36-month extended eligibility period
 are not modeled, so the curve says "at this pay, eventually," never "next
 month."
 
+Above SGA the stopped request also drops SNAP's disabled-member treatment
+(the uncapped excess shelter deduction, 7 CFR 271.2) and any state
+supplement, because "disabled" for SNAP means receiving a disability benefit
+— so a high-rent family's SGA cliff is deeper than the check alone.
 An SSDI household is additionally modeled as already on Medicare: no
 marketplace premium or credit for the recipient, and the 2026 Part B premium
 ($202.90/month, CMS, 2025-11-14) charged instead unless the recipient has

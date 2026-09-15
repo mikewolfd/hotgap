@@ -104,6 +104,3 @@ export interface CurveResponse {
 
 export const householdSize = (a: HouseholdAnswers): number => 1 + (a.married ? 1 : 0) + a.childAges.length;
 
-/** Employer-plan tier: a plan for one person, or one that also covers a spouse or child. */
-export const esiTier = (a: HouseholdAnswers): "single" | "family" =>
-  a.married || a.childAges.length > 0 ? "family" : "single";

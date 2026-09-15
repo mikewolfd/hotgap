@@ -307,13 +307,13 @@ function summaryReport(f: Flags): number {
     return 0;
   }
   console.log(`numbers last changed ${summary.generated} · policy year ${summary.year}`);
-  const cols = (id: string, loss: string, leap: string, exit: string, count: string, width: string) =>
-    `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${width.padStart(14)}`;
+  const cols = (id: string, loss: string, leap: string, exit: string, count: string, deferred: string, width: string) =>
+    `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${deferred.padStart(10)}${width.padStart(14)}`;
   for (const [state, rows] of Object.entries(picked)) {
     console.log(`\n${state}`);
-    console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "danger width"));
+    console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "deferred", "danger width"));
     for (const [id, m] of Object.entries(rows)) {
-      console.log(cols(id, money(m.biggestLoss), money(m.leap), m.safeExit === null ? "none" : money(m.safeExit), String(m.cliffCount), money(m.dangerWidth)));
+      console.log(cols(id, money(m.biggestLoss), money(m.leap), m.safeExit === null ? "none" : money(m.safeExit), String(m.cliffCount), String(m.deferredCliffCount ?? 0), money(m.dangerWidth)));
     }
     for (const message of new Set(Object.values(rows).flatMap((m) => m.maTafdc ? [m.maTafdc.message] : []))) {
       console.log(message);
