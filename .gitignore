@@ -5,3 +5,6 @@ dist/
 
 # Screenshots from browser-driven design work
 .playwright-mcp/
+
+# Subagent git worktrees
+.claude/worktrees/
