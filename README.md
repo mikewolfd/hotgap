@@ -226,14 +226,25 @@ All under `core/data/`:
   `maTafdc` inputs used to replay that correction; use `evaluateOffline` to
   obtain the corrected curve. Rebuild: `npm run pipeline`.
 - `state-defaults.json` — the typical renter each state's archetype sweep
-  uses: HUD FY2026 two-bedroom Fair Market Rent and the Census Vintage 2024
-  most populous county for `monthlyRent`/`countyFips` (`stateDefaults`,
-  read by `answersFor`), and DOL's National Database of Childcare Prices'
-  median county preschool price for `monthlyChildcarePreschool` — not an
-  archetype input itself, but the replacement value of a "free" Head Start
-  slot (`headStart`, above). Hand-assembled, not script-generated; the
-  file's own `sources` object carries each column's publisher, table,
-  vintage, date read, and exact arithmetic.
+  uses (`stateDefaults`, read by `answersFor`). All three figures describe
+  **one** household in **one** county: the Census Vintage 2024 most populous
+  county (`countyFips`), HUD's FY2026 two-bedroom Fair Market Rent for it
+  (`monthlyRent`), and DOL's National Database of Childcare Prices
+  center-based preschool price (`MCPreschool`) for that same county, carried
+  from its NDCP study year to 2026 dollars by the BLS Employment Cost Index
+  (`monthlyChildcarePreschool`) — both the archetype's childcare bill per
+  child under 6 and the replacement value of a "free" Head Start slot
+  (`headStart`, above). The price used to be the state *median* county's
+  while the county and the rent were the largest county's, which understated
+  the bill wherever the biggest county is also the priciest — Virginia was
+  $774 against Fairfax's $1,839. Where the county itself has no NDCP price
+  the state median county stands in (Connecticut only: its planning regions
+  post-date the database), and where a state has none in any year the
+  national median does (IN, NM); `childcareBasis` records the rule and the
+  study year state by state, and `sources` carries each column's publisher,
+  table, vintage, date read and exact arithmetic. Rebuild:
+  `node scripts/build-state-defaults.mjs` — needs `ZYTE_TOKEN`, because
+  huduser.gov answers a plain request with an empty HTTP 202 bot challenge.
 - `reach.json` — household earnings percentile ladders from
   [U.S. Census Bureau ACS PUMS](https://www.census.gov/programs-surveys/acs/microdata.html)
   microdata (public domain): the 2024 1-Year PUMS, with the 2020–2024 5-Year
