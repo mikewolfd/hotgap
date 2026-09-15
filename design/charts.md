@@ -118,11 +118,50 @@ Five bins, never more: past about seven, adjacent classes blur.
 **Bins are recomputed per measure and their bounds are always printed.** A shade
 means nothing across two measures, and the caption says so.
 
+**Three tile states, and none may be mistaken for another.** This is a required
+part of the grammar, not an edge case:
+
+| State | Mark | Meaning |
+|---|---|---|
+| **Shaded** | a step of the five-bin plum ramp | a comparable value |
+| **Past the axis** | no fill, dashed `--rule-strong` outline, reads *past the axis* | `leapIsLowerBound` — the worst zone runs off the top of the sweep, so the figure is a bound, not a value |
+| **Not computed** | grey 45° hatch, solid outline, reads *figures incomplete* | the model returns nothing for this state, so its figure is missing a real cliff |
+
+The third is the dangerous one. `summary.childcareSubsidyUnmodeled` lists the
+states where PolicyEngine returns no child-care subsidy at all — 23 of them in
+the sweep of 2026-09-15, including Texas, California, New York, Illinois and
+Ohio. Those states are **not kinder**. Their largest cliff is simply absent, so a
+naive ramp paints them the lightest step and a reader concludes the opposite of
+the truth. A gap in a sequential ramp always reads as a low value; the grey hatch
+is outside the ramp entirely, and it is deliberately *not* the lightest step.
+
+Four rules follow, and all four are required:
+
+1. **Never shade an incomplete state.** Hatch it, in place, so a reader still
+   finds Texas where Texas is.
+2. **Never rank it.** It leaves the ordered list and goes into a separate block
+   headed *Not ranked — figures incomplete (N)*, never the tail of the ranking,
+   where it would still read as "lowest".
+3. **Never let it move the scale.** Bins are computed over the comparable states
+   only; a known-wrong number must not set a bound.
+4. **Keep the number in the table**, flagged in its own column, because a
+   reporter has to be able to see what the model returned.
+
+Two more properties this has to have:
+
+- **Key off the data, never a list in the design.** The field is self-healing: a
+  state drops off the day upstream starts modelling it, and the legend's count,
+  the prose and the CSV all read from the file.
+- **Scope it honestly.** A missing child-care subsidy can only distort a
+  household that has a child young enough to need paid care. For the two
+  childless archetypes the flag does not apply and the whole treatment
+  disappears — and the figure says why, so a reader who watches 23 hatched
+  states vanish when they change household is not left guessing.
+
 **Readable without colour.** Every tile carries its postal code; a 2px surface
 gap separates tiles; the selected state gets a 2px ink outline, not a hue change.
-`leapIsLowerBound` cells — where the worst zone runs off the top of the axis —
-are **not** shaded at all: they get a dashed outline and read *past the axis*,
-because a lower bound is not a value.
+The three states above are distinguished by fill *pattern* and outline *style*,
+not by hue, so they survive greyscale and `forced-colors`.
 
 **Not interactive on a phone.** At 390px a tile is 26px, and a 26px button breaks
 the 44px rule. The map is a figure (`role="img"`); the ranked list and the table

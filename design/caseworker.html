@@ -102,6 +102,16 @@
 
   .scroll-x { overflow-x: auto; }
   .scroll-x table { min-width: 30rem; }
+  /* Model coverage. Keyed off summary.childcareSubsidyUnmodeled, so it
+     disappears the day upstream starts modelling a state. */
+  .coverage { display: flex; gap: var(--s3); align-items: flex-start;
+              padding: var(--s3) 0; border-bottom: 1px solid var(--rule); }
+  .coverage .mark { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+  .coverage.ok .mark { background: var(--surface-sunk);
+                       outline: 1px solid var(--rule-strong); outline-offset: -1px; }
+  .coverage.gap .mark { outline: 1px solid var(--rule-strong); outline-offset: -1px; }
+  .coverage p { margin: 0; color: var(--ink-2); }
+  .coverage.gap p strong { color: var(--caution); }
   .footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
   .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
                border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; }
@@ -162,6 +172,8 @@
         <span class="sub">percentile, &plusmn;$8,000</span></div>
     </div>
   </div>
+
+  <div class="coverage" id="coverage"></div>
 
   <div class="cols">
     <section>
@@ -241,8 +253,11 @@
           <tr><td class="num money">$54,000</td><td>SNAP</td><td class="who">Household</td></tr>
           <tr><td class="num money">$54,000</td><td>WIC</td><td class="who">Children</td></tr>
           <tr><td class="num money">$54,000</td><td>CCDF child care subsidy
-            <span class="cite">Reaches net income in CO. In 28 states PolicyEngine drops it;
-              HotGap adds it back there.</span></td><td class="who">Household</td></tr>
+            <span class="cite">Computed and reaching net income in CO. Two upstream gaps
+              exist elsewhere and are different problems: a state where the subsidy is
+              computed but dropped from net income (HotGap adds it back), and a state where
+              none is computed at all (23 of them — see the notice above).</span></td>
+            <td class="who">Household</td></tr>
           <tr><td class="num money">$58,000</td><td>EITC</td><td class="who">Household</td></tr>
           <tr><td class="num money">$72,000</td><td>CHIP <span class="later">Deferred</span>
             <span class="cite">12 months continuous eligibility &mdash; 42 CFR 435.926,
@@ -344,7 +359,29 @@ const CLIFFS = [
   { at: 72000, drop: 219,  lost: ["CHIP"], driver: "premiums", deferred: "12 months continuous eligibility (42 CFR 435.926, 457.342)", bd: { benefits: 0, credits: 120, premiums: 975, other: -876 } },
   { at: 106000, drop: 2165, lost: ["Premium tax credit"], driver: "premiums", bd: { benefits: 0, credits: 0, premiums: 2819, other: -654 } },
 ];
-const HH = { current: 38000, currentNet: 67000, zone: { start: 36000, end: 86000, peak: 68348 } };
+const HH = { state: "CO", stateName: "Colorado", hasYoungChild: true,
+             current: 38000, currentNet: 67000,
+             zone: { start: 36000, end: 86000, peak: 68348 } };
+
+/* summary.childcareSubsidyUnmodeled — read from the data file, never hardcoded
+   judgement: a state leaves this list the day PolicyEngine starts modelling it. */
+const UNMODELED = ["CA","DE","DC","ID","IL","IN","MD","MA","NE","NV","NY","NC","ND","OH",
+  "OK","OR","SD","TN","TX","UT","WA","WI","WY"];
+{
+  const gap = HH.hasYoungChild && UNMODELED.includes(HH.state);
+  const el = document.getElementById("coverage");
+  el.className = "coverage " + (gap ? "gap" : "ok");
+  el.innerHTML = `<span class="mark${gap ? " hg-hatch-grey" : ""}" aria-hidden="true"></span><p>` + (gap
+    ? `<strong>The child care subsidy is not modelled in ${HH.stateName}.</strong> ` +
+      `PolicyEngine returns none at all here, so the largest cliff a parent of a young ` +
+      `child meets is missing from this curve. Every figure on this page is a floor, not ` +
+      `a measurement. Do not read this household as better off than one in a state the ` +
+      `model can complete.`
+    : `Child care subsidy: <strong>modelled in ${HH.stateName}</strong>. PolicyEngine ` +
+      `returns none at all in ${UNMODELED.length} states; for a household in one of ` +
+      `those, this page would say so here and every figure on it would be a floor.`) +
+    `</p>`;
+}
 const DEFERRED = CLIFFS.filter(c => c.deferred);
 
 /* THE LIFT — see design/charts.md. analysis.dangerZones describe the curve with

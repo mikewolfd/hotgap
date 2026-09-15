@@ -1,6 +1,6 @@
 # Component inventory
 
-Sixteen components. C = citizen, W = caseworker, J = journalist.
+Seventeen components. C = citizen, W = caseworker, J = journalist.
 
 | # | Component | What it is | C | W | J |
 |---|---|---|:-:|:-:|:-:|
@@ -16,10 +16,11 @@ Sixteen components. C = citizen, W = caseworker, J = journalist.
 | 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Dashed everywhere, always. | ● | ● | ● |
 | 11 | **ScenarioBar** | The household's inputs as chips — state, county, shape, earnings, rent, childcare, and the take-up toggles — plus *add a what-if* and *print*. | | ● | |
 | 12 | **CompareTable** | Two or three scenarios in columns against the same rows. Column identity is a rule under the header, never coloured text. | | ● | |
-| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, five printed bins, a distinct treatment for *past the axis*. | | | ● |
-| 14 | **RankStrip** | The sorted companion to the map — state, bar, value — answering *how much* where the map answers *where*. | | | ● |
+| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, five printed bins, and three mutually distinct tile states — shaded, *past the axis*, *not computed*. | | | ● |
+| 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*. States the model cannot complete are lifted out into their own labelled block, never left at the bottom of the order. | | | ● |
 | 15 | **DataTable** | The text equivalent and the thing a reporter copies: every row, every measure, in its own horizontal scroller, with a CSV export carrying its own provenance columns. | ● | ● | ● |
-| 16 | **SourceNote** | The provenance line that closes every figure and table: publisher, vintage, date read, policy year, and *estimates only*. | ● | ● | ● |
+| 16 | **IncompleteMarker** | The grey 45° hatch and its companions — the legend entry that says *figures incomplete, not low*, the not-ranked block, the flag column, the caseworker's one-line state notice. Rendered from `summary.childcareSubsidyUnmodeled` on every pass, so it heals itself. | | ● | ● |
+| 17 | **SourceNote** | The provenance line that closes every figure and table: publisher, vintage, date read, policy year, and *estimates only*. | ● | ● | ● |
 
 ## Deliberately not components
 

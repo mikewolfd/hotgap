@@ -15,9 +15,10 @@ reading the same one at a different resolution:
 - **The journalist** reads **every state's worst step**, side by side.
 
 That is why three audiences can share a foundation: not because they want the
-same layout, but because they want the same object at one, fifty, or fifty-one
-of resolution. A component that shows a step — its dollar, its rule, its timing
-— is reusable across all three. Only the count changes, and with it the density.
+same layout, but because they want the same object counted differently — one
+step, eleven steps, fifty-one worst steps. A component that shows a step, with
+its dollar, its rule and its timing, is reusable across all three. What changes
+is the count, and with the count, the density.
 
 They diverge in exactly one place, on purpose: **what is allowed to be
 implicit.** The citizen surface leaves the mechanism implicit and makes the
@@ -36,19 +37,27 @@ measures step size, and nothing is a card.
 
 - `tokens.css` — type, colour (light and dark), space, shape, motion
 - `charts.md` — the money curve and the state map
-- `inventory.md` — sixteen components, tagged by persona
-- `citizen.html` · `caseworker.html` · `journalist.html` — three surface sketches
+- `inventory.md` — seventeen components, tagged by persona
+- `citizen.html`, `caseworker.html`, `journalist.html` — three surface sketches
   rendering the real output of
   `npx tsx core/src/cli.ts curve --state CO --kids 3,7 --earnings 38000 --offline --json`
   and `core/data/summary.json`
+
+All three render the sweep stamped **2026-09-15T18:27:06Z** (`summary.generated`),
+the one that carries `childcareSubsidyUnmodeled`. No number in these files was
+typed by hand: the curve is 151 points copied out of the CLI, the 51-state blob is
+injected from `summary.json`, and every figure a reader could check against the
+data — the axis floor, the bin bounds, the count of incomplete states — is
+rendered from the values the code computed rather than written into the copy,
+because a typed number drifts the first time the data moves.
 
 ## Colour
 
 Two ramps and three ink levels, all measured rather than judged. Every value was
 run through the `dataviz` skill's `validate_palette.js`:
 
-- Categorical, light `#2A6FD0 · #D2611F · #1E8E6A` and dark
-  `#4C8DE0 · #D4722F · #22A87C` — all six checks pass in both modes under
+- Categorical, light `#2A6FD0`, `#D2611F`, `#1E8E6A`; dark `#4C8DE0`, `#D4722F`,
+  `#22A87C` — all six checks pass in both modes under
   `--pairs all` (worst CVD ΔE 9.1 light / 9.7 dark; worst normal-vision ΔE 20.4 /
   19.3). Three slots only: that is the all-pairs cap, and a fourth series is a
   signal to facet, not to invent a hue.
@@ -77,6 +86,32 @@ hatch over the band, and a number with a word beside it.
 There is deliberately **no good/bad status pair** in the tokens. `--note` and
 `--caution` exist, and they describe the *data* — an estimate, a stale sweep, a
 suppressed cell — never the household.
+
+### "We cannot compute this" is a value the design has to carry
+
+`summary.childcareSubsidyUnmodeled` names the states where PolicyEngine returns
+no child-care subsidy at all — 23 in the sweep of 2026-09-15, six of the ten
+largest states among them. Their largest cliff is missing, so their figures are
+**floors, not measurements**.
+
+A reader is meant to take a hatched state as *unmeasured*, never as *low*. The
+sentence a journalist may write is "this model cannot yet say what a raise costs
+in Texas." The sentence they may not write is "Texas is gentler than Vermont."
+
+Rendering it as a light step of the loss ramp would say exactly the wrong thing —
+a gap in a sequential ramp always reads as a small value — so the treatment sits
+outside the ramp: a grey 45° hatch, a separate legend entry that spells out
+*figures incomplete, not low*, exclusion from the ranking into its own labelled
+block, and exclusion from the bin bounds so a known-wrong number cannot move the
+scale. The number itself stays in the table, flagged in its own column, because a
+reporter must be able to see what the model returned. The flag is read from the
+data file every render, so a state leaves it the day upstream starts modelling
+it, and it only applies where the household has a child young enough to need paid
+care. Full rules in `charts.md`.
+
+The caseworker surface carries the same fact in its own register: a line under
+the verdict saying whether the subsidy is modelled in this household's state, and
+— when it is not — that every figure on the page is a floor.
 
 ## Type
 
@@ -139,7 +174,17 @@ and the margin travels with the number in all three registers. `ReachSummary`
 returns exactly two points — current and the state's safe exit — and a UI must go
 back to `reachCell` for any third, never interpolate one.
 
-**6. Deferred losses.** A caseworker wants a threshold list they can read out; a
+**6. An incomplete state.** A journalist wants 51 comparable numbers; the model
+can only complete 28 of them for a household with a young child. Dropping the
+other 23 would hide six of the ten largest states; shading them would publish a
+falsehood. *Resolved:* they stay on the map, in place, hatched and outside the
+ramp; they leave the ranking into a block that names why; they never move the bin
+bounds; and their raw figures stay in the table under a flag. The caseworker gets
+the same fact as a one-line notice about their own client's state. The citizen
+surface does not carry it at all — a household in Texas is shown its own curve
+with no cross-state claim on the page, so there is nothing to mislead.
+
+**7. Deferred losses.** A caseworker wants a threshold list they can read out; a
 deferred threshold is on that list but is not a number the client will feel this
 year. *Resolved:* one rule, applied identically on all three surfaces — solid
 means this year, dashed means a later renewal — plus the plotting rule in
@@ -158,7 +203,9 @@ means this year, dashed means a later renewal — plus the plotting rule in
   cannot produce them, and a sketch with invented numbers would be worse than a
   gap. They reuse `StepList` and `ThresholdLedger` unchanged.
 - **Icons.** Nothing here is improved by a pictogram, and a benefit has no icon
-  that is not a stereotype.
+  that is not a stereotype. The one exception is the hatch and the dashed
+  outline, which are patterns rather than pictures and carry meaning colour
+  cannot.
 - **Shadows and rounded cards.** Panels are defined by a rule and a change of
   ground. `--r-panel` is `0` on purpose.
 - **A live tooltip as the primary read.** Values are reachable by keyboard, by
