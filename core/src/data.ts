@@ -27,8 +27,10 @@ export interface StateMetrics {
 export interface SummaryJson {
   /**
    * States where the sweep charged a childcare bill and PolicyEngine returned
-   * no child-care subsidy at any point — an upstream gap, not a state whose
-   * rules are kinder. Detected per sweep rather than hand-listed, so a state
+   * no child-care subsidy at any point, for at least one household shape — an
+   * upstream gap, not a state whose rules are kinder. Partial coverage counts:
+   * Massachusetts pays a household with an infant and nothing to one whose
+   * only child is a preschooler. Detected per sweep rather than hand-listed, so a state
    * leaves the list the day the engine starts modeling it. A state comparison
    * must footnote these rather than read their missing cliff as good news.
    * See docs/upstream/2026-09-15-local-corrections.md.
