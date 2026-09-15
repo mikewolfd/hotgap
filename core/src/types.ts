@@ -20,6 +20,12 @@ export const PROGRAM_IDS: ProgramId[] = [
 // insurance card rather than any money changing hands.
 export const CASH_PROGRAMS: ProgramId[] = ["snap", "tanf", "housing", "wic", "ssi", "headstart", "schoolmeals"];
 export const CREDIT_PROGRAMS: ProgramId[] = ["eitc", "ctc", "aca"];
+// Credits that live inside PolicyEngine's household_net_income. The premium
+// tax credit does NOT (pinned live by the contract suite): it reaches
+// netIncome only through medicalOOP, the premium net of the credit, so a step
+// attributed to it as a credit AND as a premium would count the same dollars
+// twice.
+export const NET_INCOME_CREDITS: ProgramId[] = ["eitc", "ctc"];
 export const COVERAGE_PROGRAMS: ProgramId[] = ["medicaid", "chip"];
 
 export interface HouseholdAnswers {
@@ -76,3 +82,9 @@ export interface CurveResponse {
   currentEarnings: number;
   points: CurvePoint[];
 }
+
+export const householdSize = (a: HouseholdAnswers): number => 1 + (a.married ? 1 : 0) + a.childAges.length;
+
+/** Employer-plan tier: a plan for one person, or one that also covers a spouse or child. */
+export const esiTier = (a: HouseholdAnswers): "single" | "family" =>
+  a.married || a.childAges.length > 0 ? "family" : "single";

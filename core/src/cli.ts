@@ -10,7 +10,7 @@ import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./
 import { toAnnual, type PayUnit } from "./income.js";
 import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
 import type { Cliff } from "./analyze.js";
-import type { HouseholdAnswers, ProgramId } from "./types.js";
+import { esiTier, type HouseholdAnswers, type ProgramId } from "./types.js";
 import { validateAnswers } from "./validate.js";
 import { isTerritoryZip, zipToState } from "./zip.js";
 
@@ -64,6 +64,14 @@ const num = (v: string | undefined): number | undefined => (v === undefined ? un
 // Signed, because `other` (taxes and market-income effects) can go either way;
 // a zero share is left out rather than printed as "$0".
 const signed = (n: number) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
+// What a cliff was when no program can be named for it.
+const DRIVER_LABEL: Record<Cliff["driver"], string> = {
+  benefits: "a benefit not tracked by name (e.g. SSDI)",
+  credits: "tax credits",
+  premiums: "health premium",
+  other: "taxes / other",
+};
+
 const breakdownOf = (c: Cliff): string => {
   const parts: string[] = [];
   if (Math.round(c.breakdown.benefits) !== 0) parts.push(`benefits ${signed(-c.breakdown.benefits)}`);
@@ -161,7 +169,7 @@ function report(ev: HouseholdEvaluation): string {
     out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""));
     analysis.cliffs.forEach((c, i) => {
       const hours = ev.minWage?.cliffs[i]?.hoursPerWeek ?? null;
-      out.push(row(money(c.startEarnings), money(c.drop), c.programsLost.join(", ") || "—", hours === null ? "" : String(hours)));
+      out.push(row(money(c.startEarnings), money(c.drop), c.programsLost.join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)));
       // Every dollar of the drop attributed, so "lost SNAP" is never read as
       // the whole explanation when most of the fall was a premium.
       out.push(`  ${" ".repeat(10)}${breakdownOf(c)}`);
@@ -209,7 +217,7 @@ function report(ev: HouseholdEvaluation): string {
   if (ev.coverageGap) {
     out.push(
       "",
-      `no coverage help exists from ${money(ev.coverageGap.fromEarnings)} to ${money(ev.coverageGap.toEarnings)} at this pay in ${a.state} — too much for ${a.state} Medicaid, too little for a marketplace subsidy (which starts at the poverty line). Shown with no premium, because nobody in that band is buying that plan.`,
+      `no coverage help exists between ${money(ev.coverageGap.fromEarnings)} and ${money(ev.coverageGap.toEarnings)} in ${a.state}${analysis.currentEarnings >= ev.coverageGap.fromEarnings && analysis.currentEarnings <= ev.coverageGap.toEarnings ? " — your pay is in that band" : ""} — too much for ${a.state} Medicaid, too little for a marketplace subsidy (which starts at the poverty line). Shown with no premium, because nobody in that band is buying that plan.`,
     );
   }
   if (ev.headStart) {
@@ -219,7 +227,7 @@ function report(ev: HouseholdEvaluation): string {
     );
   }
   if (a.hasEmployerCoverage) {
-    const kind = a.married || a.childAges.length > 0 ? "family" : "single";
+    const kind = esiTier(a);
     out.push(
       "",
       `employer coverage: counted at ${money(ESI_EMPLOYEE_CONTRIBUTION[kind])}/yr, the average ${kind} employee contribution (AHRQ MEPS-IC 2024), in place of the marketplace premium PolicyEngine would otherwise charge you.`,

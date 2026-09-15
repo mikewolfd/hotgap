@@ -156,11 +156,18 @@ describe("coverage gap (finding 2)", () => {
     }
   });
 
-  it("counts spouse pay and non-wage income against the poverty line", () => {
-    // Same $10k of the householder's earnings, but $15k of child support puts
+  it("counts spouse pay and MAGI income (unemployment, SSDI) against the poverty line", () => {
+    // Same $10k of the householder's earnings, but $15k of unemployment puts
     // the household over the line for two — no gap.
+    const withUi = answersWith({ state: "TX", annualEarnings: 10000, unemploymentMonthly: 1250 });
+    expect(evaluateOn(withUi, [gapPoint(10000), gapPoint(25000)]).coverageGap).toBeNull();
+  });
+
+  it("does not count child support: it is not in MAGI, so it cannot move the subsidy floor", () => {
+    // IRC §36B(d)(2)(B). Counting it ended the gap band $4,800 early and put
+    // the phantom premium back between the two lines.
     const withSupport = answersWith({ state: "TX", annualEarnings: 10000, childSupportMonthly: 1250 });
-    expect(evaluateOn(withSupport, [gapPoint(10000), gapPoint(25000)]).coverageGap).toBeNull();
+    expect(evaluateOn(withSupport, [gapPoint(10000), gapPoint(25000)]).coverageGap).toEqual({ fromEarnings: 10000, toEarnings: 10000 });
   });
 
   it("withholds both the gap verdict and the per-age split on a curve swept before childPrograms existed", () => {
@@ -213,13 +220,24 @@ describe("employer coverage (finding 5)", () => {
     expect(ev.curve.points[1].medicalOOP).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
   });
 
-  it("charges nothing where there is no job and nothing where PolicyEngine charged no premium", () => {
-    // medicalOOP 0 for an ESI household means Medicaid or CHIP is covering
-    // them at that income; inventing a payroll deduction there would draw a
-    // cliff the size of the contribution at the first dollar of pay.
-    const ev = evaluateOn(esiAnswers, [pt(0, 20000, { medicalOOP: 0 }), pt(30000, 40000, { medicalOOP: 0 })]);
-    expect(ev.curve.points.map((p) => p.netIncome)).toEqual([20000, 40000]);
-    expect(ev.curve.points.every((p) => p.medicalOOP === 0)).toBe(true);
+  it("charges by who the plan has to cover, not by whether PolicyEngine charged a premium", () => {
+    const adultOnMedicaid = pt(30000, 40000, { medicalOOP: 0, programs: { medicaid: 5000 } });
+    const kidsOnMedicaid = pt(30000, 40000, { medicalOOP: 0, programs: { medicaid: 5000 }, childPrograms: { medicaid: 5000 } });
+    const nobodyCovered = pt(30000, 40000, { medicalOOP: 0 });
+    const ev = evaluateOn(esiAnswers, [pt(0, 20000, { medicalOOP: 0 }), adultOnMedicaid, kidsOnMedicaid, nobodyCovered]);
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([
+      0,                                  // no job, no payroll deduction
+      0,                                  // the adult is on Medicaid, not buying the plan
+      ESI_EMPLOYEE_CONTRIBUTION.single,   // unmarried parent, children on Medicaid: covers herself
+      ESI_EMPLOYEE_CONTRIBUTION.family,   // nobody else covers the children: family tier
+    ]);
+    expect(ev.curve.points[3].netIncome).toBe(40000 - ESI_EMPLOYEE_CONTRIBUTION.family);
+  });
+
+  it("keeps a married parent on the family tier even while the children are on Medicaid", () => {
+    const married = answersWith({ hasEmployerCoverage: true, married: true, spouseAge: 30 });
+    const ev = evaluateOn(married, [pt(0, 20000, { medicalOOP: 0 }), pt(30000, 40000, { medicalOOP: 0, programs: { medicaid: 5000 }, childPrograms: { medicaid: 5000 } })]);
+    expect(ev.curve.points[1].medicalOOP).toBe(ESI_EMPLOYEE_CONTRIBUTION.family);
   });
 
   it("leaves a household without employer coverage alone", () => {
@@ -282,6 +300,14 @@ describe("personal escape (finding 8)", () => {
     expect(ev.personal.escapeEarnings).toBeNull();
     expect(ev.personal.raiseIsLowerBound).toBe(true);
     expect(ev.personal.raiseToClear).toBe(15000); // to the top of the sweep, at least
+  });
+});
+
+describe("reach guard looks at the household, not the householder alone", () => {
+  it("still places a household living on the spouse's wages", () => {
+    const a = answersWith({ married: true, spouseAge: 30, spouseAnnualEarnings: 50000, annualEarnings: 0 });
+    const ev = evaluateOn(a, [pt(0, 30000), pt(50000, 60000)]);
+    expect(ev.reach.current).toBeTypeOf("number");
   });
 });
 

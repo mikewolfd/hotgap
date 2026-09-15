@@ -1,6 +1,6 @@
 import type { CurvePoint, ProgramId } from "./types.js";
 import { CASH_PROGRAMS, COVERAGE_PROGRAMS, CREDIT_PROGRAMS, PROGRAM_IDS } from "./types.js";
-import { analyzeCurve, PROGRAM_END_MIN } from "./analyze.js";
+import { analyzeCurve, PROGRAM_END_MIN, type CurveAnalysis } from "./analyze.js";
 import { PERSON_LEVEL_PROGRAMS } from "./parse.js";
 
 // PROGRAM_END_MIN now lives in analyze.ts, where the cliff-notch rule needs
@@ -45,8 +45,8 @@ function lastAbove(points: CurvePoint[], value: (p: CurvePoint) => number, floor
   return found;
 }
 
-export function escapeAnalysis(points: CurvePoint[]): EscapeAnalysis {
-  const a = analyzeCurve(points, 0);
+export function escapeAnalysis(points: CurvePoint[], analysis?: CurveAnalysis): EscapeAnalysis {
+  const a = analysis ?? analyzeCurve(points, 0);
   const axisMax = points[points.length - 1].earnings;
   const zones = a.dangerZones;
   const last = zones[zones.length - 1];

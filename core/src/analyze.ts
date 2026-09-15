@@ -1,9 +1,11 @@
 import type { CurvePoint, ProgramId } from "./types.js";
-import { CASH_PROGRAMS, CREDIT_PROGRAMS, PROGRAM_IDS } from "./types.js";
+import { CASH_PROGRAMS, NET_INCOME_CREDITS, PROGRAM_IDS } from "./types.js";
 
 export const CLIFF_MIN = 200;
 /** A program counts as "on" above this many dollars a year. */
 export const PROGRAM_END_MIN = 100;
+// A program is named on a cliff only if its own loss is at least this share of the drop.
+const LOSS_SHARE_MIN = 0.2;
 
 /**
  * Where a cliff's drop came from. The four shares sum to `drop` exactly, so a
@@ -32,6 +34,10 @@ export interface Cliff {
   drop: number;
   programsLost: ProgramId[];
   breakdown: CliffBreakdown;
+  // The breakdown component that explains the most of the drop — so a cliff
+  // with no nameable program (an SSDI stop lives in otherBenefits; a premium
+  // jump is not a program) still says what it was.
+  driver: keyof CliffBreakdown;
 }
 export interface DangerZone {
   startEarnings: number;
@@ -77,7 +83,7 @@ const total = (p: CurvePoint, ids: ProgramId[]): number =>
 
 function breakdownOf(a: CurvePoint, b: CurvePoint, drop: number): CliffBreakdown {
   const benefits = (total(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (total(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
-  const credits = total(a, CREDIT_PROGRAMS) - total(b, CREDIT_PROGRAMS);
+  const credits = total(a, NET_INCOME_CREDITS) - total(b, NET_INCOME_CREDITS);
   const premiums = b.medicalOOP - a.medicalOOP;
   return { benefits, credits, premiums, other: drop - benefits - credits - premiums };
 }
@@ -101,17 +107,26 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
       // A phase-down (EITC at 15.98%/21.06%, SNAP at 24% or 36%) never
       // qualifies, which is the point — naming it "lost SNAP" told people a
       // program had ended when it had only tapered.
+      // …and only when that loss explains a real share of the drop: a SNAP
+      // notch worth 3% of a fall that was 105% premium is not why the money
+      // fell, and saying "lost SNAP" would be read as if it were.
       const programsLost = PROGRAM_IDS.filter((id) => {
         const before = points[i].programs[id] ?? 0;
         const after = points[i + 1].programs[id] ?? 0;
-        return before > PROGRAM_END_MIN && (after <= PROGRAM_END_MIN || after < 0.5 * before);
+        const notch = before > PROGRAM_END_MIN && (after <= PROGRAM_END_MIN || after < 0.5 * before);
+        return notch && before - after >= LOSS_SHARE_MIN * drop;
       });
+      const breakdown = breakdownOf(points[i], points[i + 1], drop);
+      const driver = (Object.keys(breakdown) as (keyof CliffBreakdown)[]).reduce((best, k) =>
+        breakdown[k] > breakdown[best] ? k : best,
+      );
       cliffs.push({
         startEarnings: points[i].earnings,
         endEarnings: points[i + 1].earnings,
         drop,
         programsLost,
-        breakdown: breakdownOf(points[i], points[i + 1], drop),
+        breakdown,
+        driver,
       });
     }
   }

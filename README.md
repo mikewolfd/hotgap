@@ -104,8 +104,10 @@ All under `core/data/`:
 - `summary.json`, `states/{ST}.json` — the weekly 51-state × 8-archetype
   PolicyEngine sweep. Each curve's axis runs past 400% of the 2025 poverty
   line (plus $40,000 of room to recover) for the household's own size, at
-  $1,000 steps up to $250,000 and coarser only beyond that — so the top of
-  the axis is $150,000 (151 points) for a household of one to three,
+  $1,000 steps up to $350,000 and coarser only beyond that — so the top of
+  the axis is $150,000 (151 points) for a household of one to three in the
+  48 contiguous states (Alaska and Hawaii, whose guidelines are higher, get
+  longer axes),
   $170,000 (171 points) for four, $195,000 (196 points) for five, and wider
   still for larger households, rather than one flat axis clipping the ACA
   subsidy cliff off the top of a bigger family's chart (see `axisSpec` in

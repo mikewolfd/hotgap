@@ -1,0 +1,211 @@
+=========== parameters/gov/hhs/basic_health_program/eligibility/income_limit.yaml
+description: The Department of Health and Human Services limits Basic Health Program income to this share of the federal poverty guidelines under the standard coverage path.
+
+values:
+  2015-01-01: 2
+
+metadata:
+  unit: /1
+  period: year
+  label: Basic Health Program income limit
+  reference:
+    - title: Basic Health Program | Medicaid
+      href: https://www.medicaid.gov/basic-health-program
+    - title: MinnesotaCare | Minnesota Department of Human Services
+      href: https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp
+    - title: Oregon Health Plan (OHP) Bridge | Oregon Health Authority
+      href: https://www.oregon.gov/oha/ohp/pages/bridge.aspx
+    - title: DC Health Benefit Exchange Authority Healthy DC Plan Overview - October 2025
+      href: https://hbx.dc.gov/sites/default/files/dc/sites/hbx/page_content/attachments/Healthy%20DC%20Plan%20Overview%20-%20October%202025.pdf
+=========== parameters/gov/hhs/basic_health_program/eligibility/expanded_income_limit.yaml
+description: The Department of Health and Human Services limits Basic Health Program income to this share of the federal poverty guidelines under the expanded coverage path.
+
+values:
+  2015-01-01: 2.5
+
+metadata:
+  unit: /1
+  period: year
+  label: Expanded Basic Health Program income limit
+  reference:
+    - title: Essential Plan Information | NY State of Health
+      href: https://info.nystateofhealth.ny.gov/EssentialPlan
+    - title: New York State Department of Health and NY State of Health Announce the Essential Plan Expansion Increasing Access to Affordable Health Insurance Begins Today
+      href: https://healthweb-back.health.ny.gov/press/releases/2024/2024-04-01_affordable_health_insurance.htm
+    - title: New York BHP suspension approval letter | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-suspension-appvl-ltr-mar-2024.pdf
+    - title: New York BHP Blueprint revision | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-blueprint-revision-feb2026.pdf
+=========== parameters/gov/hhs/basic_health_program/eligibility/expanded_income_limit_states.yaml
+description: These states use the expanded Basic Health Program income limit under this model.
+
+values:
+  2015-01-01:
+    []
+  # New York's 250% FPL Essential Plan expansion launched 2024-04-01 under
+  # the approved section 1332 waiver; first full coverage year is 2025.
+  2025-01-01:
+    - NY
+  # CMS approved termination of New York's section 1332 waiver effective
+  # 2026-07-01. Because this eligibility variable is annual, we keep NY on
+  # the 250% FPL expanded ceiling through 2026 (the waiver still applies for
+  # H1 2026) and revert to the standard 200% FPL BHP ceiling starting 2027.
+  2027-01-01:
+    []
+
+metadata:
+  unit: list
+  period: year
+  label: Basic Health Program expanded-income states
+  reference:
+    - title: Essential Plan Information | NY State of Health
+      href: https://info.nystateofhealth.ny.gov/EssentialPlan
+    - title: New York State Department of Health and NY State of Health Announce the Essential Plan Expansion Increasing Access to Affordable Health Insurance Begins Today
+      href: https://healthweb-back.health.ny.gov/press/releases/2024/2024-04-01_affordable_health_insurance.htm
+    - title: New York BHP suspension approval letter | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-suspension-appvl-ltr-mar-2024.pdf
+    - title: New York BHP Blueprint revision | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-blueprint-revision-feb2026.pdf
+    - title: Letter Approving Termination of New York's Section 1332 Waiver | CMS
+      href: https://www.cms.gov/files/document/1332-ny-termination-approval-letter.pdf
+    - title: New York State Department of Health Provides Update on Federal Approval to Preserve Health Coverage for 1.3 Million New Yorkers
+      href: https://www.health.ny.gov/press/releases/2026/2026-03-23_federal_approval_to_preserve_health_coverage.htm
+=========== parameters/gov/hhs/basic_health_program/eligibility/active_states.yaml
+description: The Department of Health and Human Services treats these states as offering Basic Health Program coverage under this model.
+
+values:
+  # MinnesotaCare was reclassified as BHP effective 2015-01-01
+  # (pre-existing program since 1992).
+  2015-01-01:
+    - MN
+  # NY Essential Plan launched 2015-04-01; first full coverage year is 2016.
+  2016-01-01:
+    - MN
+    - NY
+  # OR OHP Bridge launched 2024-07-01; first full coverage year is 2025.
+  # NY's Essential Plan moved to a section 1332 waiver path on
+  # 2024-04-01 but we keep it in this modeled BHP-like coverage path for
+  # continuity (CMS reinstated NY BHP effective 2026-07-01).
+  2025-01-01:
+    - MN
+    - NY
+    - OR
+  # DC Healthy DC Plan launches 2026-01-01.
+  2026-01-01:
+    - MN
+    - NY
+    - OR
+    - DC
+
+metadata:
+  unit: list
+  period: year
+  label: Basic Health Program active states
+  reference:
+    - title: Basic Health Program | Medicaid
+      href: https://www.medicaid.gov/basic-health-program
+    - title: MinnesotaCare | Minnesota Department of Human Services
+      href: https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp
+    - title: Essential Plan Information | NY State of Health
+      href: https://info.nystateofhealth.ny.gov/EssentialPlan
+    - title: New York BHP suspension approval letter | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-suspension-appvl-ltr-mar-2024.pdf
+    - title: New York BHP Blueprint revision | CMS
+      href: https://www.medicaid.gov/basic-health-program/downloads/ny-bhp-blueprint-revision-feb2026.pdf
+    - title: Oregon Health Plan (OHP) Bridge | Oregon Health Authority
+      href: https://www.oregon.gov/oha/ohp/pages/bridge.aspx
+    - title: Basic Health Plan | DC Health Benefit Exchange Authority
+      href: https://hbx.dc.gov/page/basic-health-plan
+=========== parameters/gov/hhs/basic_health_program/eligibility/income_floor.yaml
+description: The Department of Health and Human Services sets the Basic Health Program income floor at this share of the federal poverty guidelines for US citizens and qualified immigrants, per 42 USC 18051(b)(2)(B). People below this line are generally Medicaid-eligible in expansion states or in the Medicaid coverage gap in non-expansion states.
+
+values:
+  2015-01-01: 1.33
+
+metadata:
+  unit: /1
+  period: year
+  label: Basic Health Program income floor
+  reference:
+    - title: 42 USC 18051(b)(2)(B) - Basic Health Program eligibility income threshold
+      href: https://www.law.cornell.edu/uscode/text/42/18051
+    - title: Basic Health Program | Medicaid
+      href: https://www.medicaid.gov/basic-health-program
+=========== variables/gov/hhs/basic_health_program/is_basic_health_program_eligible.py
+from policyengine_us.model_api import *
+
+
+class is_basic_health_program_eligible(Variable):
+    value_type = bool
+    entity = Person
+    label = "Eligible for Basic Health Program coverage"
+    definition_period = YEAR
+    reference = (
+        "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section18051&num=0&edition=prelim",
+        "https://www.medicaid.gov/basic-health-program",
+        "https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp",
+        "https://info.nystateofhealth.ny.gov/EssentialPlan",
+        "https://www.oregon.gov/oha/ohp/pages/bridge.aspx",
+        "https://hbx.dc.gov/page/basic-health-plan",
+    )
+    documentation = """
+    First slice of Basic Health Program modeling.
+
+    This models the adult public-coverage path that substitutes for Marketplace
+    coverage in states with BHP-like programs. It uses one common program path
+    for MinnesotaCare, New York's Essential Plan, Oregon OHP Bridge, and DC's
+    Healthy DC Plan so ACA interactions can be modeled consistently.
+
+    Child-specific and funding-mechanism nuances remain a follow-up.
+    """
+
+    def formula(person, period, parameters):
+        p = parameters(period).gov.hhs.basic_health_program.eligibility
+
+        state = person.household("state_code_str", period)
+        in_effect = np.isin(state, p.active_states)
+
+        age = person("age", period)
+        age_eligible = (age >= p.min_age) & (age < p.max_age)
+
+        medicaid_eligible = person("is_medicaid_eligible", period)
+        chip_eligible = person("is_chip_eligible", period)
+        esi_eligible = person("is_aca_eshi_eligible", period)
+        medicare_eligible = person("is_medicare_eligible", period)
+        healthier_oregon_eligible = person("or_healthier_oregon_eligible", period)
+        immigration_eligible = person(
+            "is_basic_health_program_immigration_status_eligible", period
+        )
+        medicaid_immigration_status_eligible = person(
+            "is_medicaid_immigration_status_eligible", period
+        )
+
+        income_level = person("medicaid_income_level", period)
+        expanded_limit_state = np.isin(state, p.expanded_income_limit_states)
+        income_limit = where(
+            expanded_limit_state,
+            p.expanded_income_limit,
+            p.income_limit,
+        )
+        # 42 USC 18051(e)(1)(B): standard BHP covers income above 133% FPL.
+        # Lawfully present immigrants below that floor also qualify when
+        # Medicaid-ineligible by alien status.
+        standard_income_range = (income_level >= p.income_floor) & (
+            income_level <= income_limit
+        )
+        alien_status_income_range = (income_level < p.income_floor) & (
+            ~medicaid_immigration_status_eligible
+        )
+        in_income_range = standard_income_range | alien_status_income_range
+
+        return (
+            in_effect
+            & age_eligible
+            & immigration_eligible
+            & ~medicaid_eligible
+            & ~chip_eligible
+            & ~esi_eligible
+            & ~medicare_eligible
+            & ~healthier_oregon_eligible
+            & in_income_range
+        )

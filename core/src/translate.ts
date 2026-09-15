@@ -1,6 +1,5 @@
-import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
-import { fpl2025 } from "./policyYear.js";
-import { YEAR, type HouseholdAnswers } from "./types.js";
+import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
+import { esiTier, householdSize, YEAR, type HouseholdAnswers } from "./types.js";
 
 export interface AxisSpec {
   /** Top of the earnings sweep, in dollars. */
@@ -20,9 +19,10 @@ export interface AxisSpec {
  * $100k axis cut the biggest cliff off the top of its own chart. Above
  * $100,000 of pay the axis follows 1.5× earnings instead.
  *
- * The axis stays at $1,000 steps up to $250,000, which covers every archetype
- * in every state (Alaska's five-person axis is the longest, $230,000); beyond
- * that the step widens so a very high earner's request stays near 250 points. A wider step raises the cliff-detection
+ * The axis stays at $1,000 steps up to $350,000, which covers every household
+ * validateAnswers admits in every state (Alaska, six children: $315,000);
+ * beyond that the step widens so a very high earner's request stays near 350
+ * points. A wider step raises the cliff-detection
  * floor (see analyze.ts), which is the price of not asking PolicyEngine for
  * 751 points.
  */
@@ -32,10 +32,9 @@ export function axisSpec(a: HouseholdAnswers): AxisSpec {
   // on the 2025 guidelines) with room for the curve to recover, or the
   // biggest cliff sits at the top of its own chart and every safe exit past
   // it reads as "never".
-  const size = 1 + (a.married ? 1 : 0) + a.childAges.length;
-  const pastSubsidyCliff = 4 * fpl2025(a.state, size) + 40_000;
+  const pastSubsidyCliff = 4 * fpl2025(a.state, householdSize(a)) + 40_000;
   const wanted = Math.ceil(Math.max(150_000, a.annualEarnings * 1.5, pastSubsidyCliff) / 5000) * 5000;
-  const step = Math.max(1000, Math.ceil(wanted / 250_000) * 1000);
+  const step = Math.max(1000, Math.ceil(wanted / 350_000) * 1000);
   // Round the top up to a whole number of steps: `wanted` is a multiple of
   // $5,000 and `step` need not divide it (a $150,000 earner wants $225,000 at
   // a $2,000 step), and a fractional point count is not a valid axis.
@@ -82,7 +81,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     // the MEPS-IC employee contribution because that is the figure the money
     // line uses (evaluate.ts); if the variable ever starts doing work, switch
     // this to the MEPS total premium minus that contribution.
-    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION[a.married || a.childAges.length > 0 ? "family" : "single"];
+    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION[esiTier(a)];
     you.has_esi = y(true);
     you.offered_aca_disqualifying_esi = y(true);
     you.employer_sponsored_insurance_premiums = y(esiPremium);

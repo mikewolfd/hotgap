@@ -115,6 +115,27 @@ describe("cliff attribution", () => {
     expect(c.programsLost).toEqual(["eitc", "tanf"]);
   });
 
+  it("never counts the premium tax credit as a credit: it only reaches net income through the premium", () => {
+    // A pure 400%-FPL step: the credit ends, the net premium rises by the same
+    // amount, and PolicyEngine's own net income actually rose $704.
+    const before = pt(106000, 50000, { medicalOOP: 500, programs: { aca: 6000 } });
+    const after = pt(107000, 44704, { medicalOOP: 6500, programs: { aca: 0 } });
+    const c = analyzeCurve([before, after], 0).cliffs[0];
+    expect(c.breakdown).toEqual({ benefits: 0, credits: 0, premiums: 6000, other: -704 });
+    expect(c.programsLost).toEqual(["aca"]); // the credit really did end
+    expect(c.driver).toBe("premiums");
+  });
+
+  it("names a program only when its loss explains a real share of the drop", () => {
+    // SNAP $300 → $0 is a notch, but 4% of a fall that was all premium.
+    const before = pt(40000, 60000, { medicalOOP: 0, programs: { snap: 300 } });
+    const after = pt(41000, 53153, { medicalOOP: 7216, programs: { snap: 0 } });
+    const c = analyzeCurve([before, after], 0).cliffs[0];
+    expect(c.programsLost).toEqual([]);
+    expect(c.driver).toBe("premiums");
+    expect(c.breakdown.benefits).toBe(300);
+  });
+
   it("reports a zero breakdown when a drop is all tax and wage effects", () => {
     const pts = [pt(10000, 30000), pt(11000, 29000)];
     const [c] = analyzeCurve(pts, 0).cliffs;

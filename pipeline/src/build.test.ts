@@ -115,6 +115,6 @@ describe("buildStateFile", () => {
   it("roundPoint rounds netIncome, medicalOOP, and program values to whole dollars", () => {
     const programs = { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
     const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5, coverageGap: false });
-    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100, coverageGap: false });
+    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100 });
   });
 });

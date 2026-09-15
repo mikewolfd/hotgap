@@ -205,7 +205,7 @@ before being written down (commits `93b4bb8`, `cb919f6`, `27a9392`).
 - Other income inputs: `core/src/types.ts`, `core/src/validate.ts`, `core/src/translate.ts` add `ssdiMonthly`, `childSupportMonthly`, `unemploymentMonthly`; `core/src/evaluate.ts` nets the steady (non-means-tested) ones out of `otherBenefits` so "benefits end" isn't permanently unreachable for a household that reports them.
 - Personal path: `core/src/evaluate.ts` (`personalEscape`, `PersonalEscape`) — a zone-relative escape earnings and raise-to-clear for this household specifically, alongside the existing whole-curve safe exit and leap.
 - Reach ladders: `scripts/build-reach.mjs` rebuilt — ADJINC applied per record, householder restricted to age 18–64, ladder built on householder-plus-spouse `PERNP` only, replicate-weight (WGTP1–80) margins of error with MOE-based suppression, 2024 1-Year PUMS with the 2020–2024 5-Year substituted for five small states, BLS ECI growth factor 1.067533; `core/src/reachLookup.ts` (`reachCell`) exposes the margin; `core/src/evaluate.ts` now passes householder-plus-spouse earnings into `reachForHousehold` to match.
-- Sweep axis: `core/src/translate.ts` (`axisSpec`) first moved the flat top from $100,000 to $150,000 at $1,000 steps (`cb919f6`), then — after the resweep showed twenty cells with no safe exit because a flat $150,000 axis still clipped the 400%-FPL subsidy cliff for four- and five-person households — was widened again to run past `4 × fpl2025(state, size) + 40,000` for the household's own size (`27a9392`): $150,000 (151 points) for one to three people, $170,000 (171) for four, $195,000 (196) for five, coarser steps only beyond $250,000.
+- Sweep axis: `core/src/translate.ts` (`axisSpec`) first moved the flat top from $100,000 to $150,000 at $1,000 steps (`cb919f6`), then — after the resweep showed twenty cells with no safe exit because a flat $150,000 axis still clipped the 400%-FPL subsidy cliff for four- and five-person households — was widened again to run past `4 × fpl2025(state, size) + 40,000` for the household's own size (`27a9392`): $150,000 (151 points) for one to three people, $170,000 (171) for four, $195,000 (196) for five, coarser steps only beyond $350,000.
 - Pipeline: `pipeline/src/metrics.ts` carries `leapIsLowerBound` into `summary.json`; `pipeline/src/build.ts`/`run.ts` validate each archetype's curve against its own `axisSpec` and round the new fields.
 
 **Deliberately not done, and why:**
@@ -223,3 +223,23 @@ and the exact PolicyEngine commit each was checked against:
 - The coverage-gap benchmark premium (Issue 3) and the employer premium input not reaching medical out-of-pocket (Issue 4) are PolicyEngine behavior HotGap works around in `evaluate.ts`, not something HotGap can fix upstream of the API.
 - Six non-expansion states' parent/caretaker Medicaid limits differ from what each state currently publishes (Issue 5): five (TX, MS, GA, FL, WY) hold a frozen *dollar* standard, last stamped 2021 (GA 2025), that drifts further from the real percentage every January the guidelines rise; South Carolina's parameter is a flat 100% FPL, stamped 2021, that simply does not match the state's published 67% and never has. The five are flagged in the README's Honesty section; none of the six are hand-corrected in HotGap, since HotGap has no authority to override PolicyEngine's eligibility determination.
 - Three review candidates were disproved by the live probes rather than confirmed, so nothing was implemented for them: the below-100%-FPL immigrant PTC exception is already off for 2026 in PolicyEngine's parameters, the APTC repayment cap is simply unmodeled (not wrongly modeled), and the SNAP non-citizen allowlist already matches the 2025-07-01 statute.
+
+Whole-branch review (Opus, independent) on the findings branch: READY WITH
+FIXES, all applied. The two blockers were read-time bugs in the new code, not
+in the data: cliff attribution counted the premium tax credit as a credit
+*and* as a premium (it reaches net income only through the premium — 79% of
+stored cliffs carried a phantom "credits" share), and the coverage-gap floor
+counted child support, which is not in MAGI, so a Texas parent with child
+support got the phantom premium back between the two lines and a fabricated
+cliff. Also fixed: programs are named on a cliff only when their loss is at
+least a fifth of the drop, with a `driver` naming the dominant component
+otherwise (an SSDI stop or a premium jump no longer prints as "lost aca" or
+"lost snap"); the employer-coverage charge follows who the plan must cover
+(adult on Medicaid pays nothing; children on Medicaid, single tier for an
+unmarried parent) instead of whether PolicyEngine happened to charge a
+premium; the reach guard looks at householder-plus-spouse earnings; the
+reach builder merges partial runs and offers the 5-Year PUMS to any cell the
+1-Year cannot support (406 of 408 now publish); the axis keeps $1,000 steps
+through $350,000 so no admissible household gets a coarser grid; stored
+curve points no longer carry a constant `coverageGap`; the upstream evidence
+lives in `docs/upstream/evidence/`.

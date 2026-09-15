@@ -84,7 +84,6 @@ const STATES = {
 // The five smallest states by 2024 1-Year housing records (WY 3,024 / VT 3,875 /
 // AK 4,016 / DC 3,914 / ND 4,345 — D6). For these we also build from the 5-Year
 // PUMS and fall back to it per cell when the 1-Year cell fails the MOE test.
-const FIVE_YEAR_STATES = new Set(["WY", "VT", "AK", "DC", "ND"]);
 
 const ARCHETYPE_IDS = ["single-0", "single-1", "single-2", "single-3", "married-0", "married-1", "married-2", "married-3"];
 const MAX_KIDS = 3; // NOC >= 3 maps to the 3-kid bucket; 4+ own children used to match nothing at all (D2)
@@ -435,7 +434,10 @@ const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new U
 
 const growth = growthFactor(await fetchEci());
 const adjincUsed = {};
-const states = {};
+// A partial run (--states=) must not drop the states it was not asked for:
+// start from the committed file and overwrite only what was rebuilt — the
+// same convention pipeline/src/run.ts uses for summary.json.
+const states = argv.states && existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")).states ?? {} : {};
 const started = Date.now();
 
 for (const st of stateList) {
@@ -448,7 +450,9 @@ for (const st of stateList) {
   for (const id of ARCHETYPE_IDS) cells[id] = buildCell(oneYear.buckets[id], growth.factor, VINTAGE_1YR);
 
   let swapped = 0;
-  if (FIVE_YEAR_STATES.has(st) && ARCHETYPE_IDS.some((id) => !passes(cells[id]))) {
+  // Any cell the 1-Year cannot support gets a second chance from the 5-Year,
+  // whichever state it is in — six extra downloads at most, not a state list.
+  if (ARCHETYPE_IDS.some((id) => !passes(cells[id]))) {
     const fiveYear = await readState(st, true);
     adjincUsed[VINTAGE_5YR] = [...new Set([...(adjincUsed[VINTAGE_5YR] || []), ...fiveYear.adjinc])].sort((a, b) => a - b);
     for (const id of ARCHETYPE_IDS) {

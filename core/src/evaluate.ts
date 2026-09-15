@@ -16,7 +16,7 @@ import { clampFallbackEarnings, loadArchetypeCurve } from "./fallback.js";
 import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
 import { reachForHousehold } from "./reachLookup.js";
-import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
+import { esiTier, householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 /** Where the curve came from: a live PolicyEngine call, or the committed sweep. */
 export type CurveSource = "live" | "archetype";
@@ -128,12 +128,21 @@ const normalize = (p: CurvePoint): CurvePoint => ({
  */
 function applyEmployerCoverage(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
   if (!a.hasEmployerCoverage) return points;
-  const contribution = ESI_EMPLOYEE_CONTRIBUTION[a.married || a.childAges.length > 0 ? "family" : "single"];
-  return points.map((p) =>
-    p.earnings > 0 && p.medicalOOP > 0
-      ? { ...p, netIncome: p.netIncome + p.medicalOOP - contribution, medicalOOP: contribution }
-      : p,
-  );
+  const tier = esiTier(a);
+  return points.map((p) => {
+    if (p.earnings <= 0) return p;
+    // Whether the household pays for the employer plan is a coverage question,
+    // not a "did PolicyEngine charge a premium" question — the marketplace
+    // premium switching on is unrelated to the employer plan. An adult on
+    // Medicaid is not buying the plan; a parent whose children are on
+    // Medicaid or CHIP buys the single tier (a spouse still needs cover, so a
+    // married household stays on the family tier); otherwise the family tier.
+    const adultMedicaid = (p.programs.medicaid ?? 0) - (p.childPrograms.medicaid ?? 0);
+    if (adultMedicaid > PROGRAM_END_MIN) return p;
+    const childrenCovered = (p.childPrograms.medicaid ?? 0) + (p.childPrograms.chip ?? 0) > PROGRAM_END_MIN;
+    const contribution = ESI_EMPLOYEE_CONTRIBUTION[childrenCovered && !a.married ? "single" : tier];
+    return { ...p, netIncome: p.netIncome + p.medicalOOP - contribution, medicalOOP: contribution };
+  });
 }
 
 /**
@@ -189,10 +198,14 @@ function applyHeadStart(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[]
  * (26 CFR 1.36B-1(h)). See policyYear.ts.
  */
 function applyCoverageGap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
-  const householdSize = 1 + (a.married ? 1 : 0) + a.childAges.length;
-  const povertyLine = fpl2025(a.state, householdSize);
-  const nonWageIncome =
-    a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.childSupportMonthly + a.unemploymentMonthly);
+  const povertyLine = fpl2025(a.state, householdSize(a));
+  // The subsidy floor is tested on MAGI (IRC §36B(d)(2)(B)): wages, the
+  // spouse's wages, unemployment, and Social Security (SSDI is added back).
+  // Child support received is not gross income and is not in MAGI — counting
+  // it moved the floor down and restored the phantom premium between the two
+  // lines (verified live 2026-09-15: PolicyEngine's own credit starts at the
+  // family-of-three line on earnings alone).
+  const nonWageIncome = a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
   return points.map((p) => {
     const adultMedicaid = (p.programs.medicaid ?? 0) - (p.childPrograms.medicaid ?? 0);
     const inGap =
@@ -206,19 +219,22 @@ function applyCoverageGap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint
 }
 
 function coverageGapSummary(points: CurvePoint[]): CoverageGapSummary | null {
-  const inGap = points.filter((p) => p.coverageGap);
-  return inGap.length === 0
-    ? null
-    : { fromEarnings: inGap[0].earnings, toEarnings: inGap[inGap.length - 1].earnings };
+  // The first contiguous band only: the summary must never span points that
+  // are not in the gap.
+  const first = points.findIndex((p) => p.coverageGap);
+  if (first === -1) return null;
+  let last = first;
+  while (last + 1 < points.length && points[last + 1].coverageGap) last++;
+  return { fromEarnings: points[first].earnings, toEarnings: points[last].earnings };
 }
 
 function headStartSummary(raw: CurvePoint[], a: HouseholdAnswers): HeadStartSummary | null {
   if (!a.getsHeadStart) return null;
   // The headline figure is the slot at its most valuable point on the curve —
   // the number a family would otherwise see as the size of their cliff.
-  const stickerValue = Math.max(...raw.map((p) => p.programs.headstart ?? 0));
+  const stickerValue = Math.round(Math.max(...raw.map((p) => p.programs.headstart ?? 0)));
   if (stickerValue <= 0) return null;
-  return { stickerValue, replacementValue: Math.min(stickerValue, 12 * (a.monthlyChildcare ?? 0)), deferred: true };
+  return { stickerValue, replacementValue: Math.round(Math.min(stickerValue, 12 * (a.monthlyChildcare ?? 0))), deferred: true };
 }
 
 function personalEscape(analysis: CurveAnalysis): PersonalEscape {
@@ -264,18 +280,19 @@ export function evaluateCurve(
   const points = knowsWhoHolds ? applyCoverageGap(corrected, answers) : corrected;
   const analysis = analyzeCurve(points, curve.currentEarnings);
   const escape = knowsWhoHolds
-    ? escapeAnalysis(points)
-    : { ...escapeAnalysis(points), programEndsByAge: { adults: {}, children: {} }, childCoverageEndEarnings: null };
+    ? escapeAnalysis(points, analysis)
+    : { ...escapeAnalysis(points, analysis), programEndsByAge: { adults: {}, children: {} }, childCoverageEndEarnings: null };
   // A zero (or absent) income has no position in an earnings distribution —
   // reporting "0% of households earn less" would read as a finding, not a gap.
-  const reachAt = (income: number | null): number | null =>
-    income !== null && income > 0
-      ? // The reach ladder is indexed on householder-plus-spouse earnings, so a
-        // married household's position has to include the spouse's pay; asking
-        // with the householder's share alone placed two-earner families far
-        // lower in the distribution than they are.
-        reachForHousehold(answers.state, answers.married, answers.childAges.length, income + answers.spouseAnnualEarnings)
-      : null;
+  // The reach ladder is indexed on householder-plus-spouse earnings, so a
+  // married household's position has to include the spouse's pay — and the
+  // "is there any income to place" guard has to look at the same combined
+  // figure, or a household living on the spouse's wages loses its reach line.
+  const reachAt = (income: number | null): number | null => {
+    if (income === null) return null;
+    const household = income + answers.spouseAnnualEarnings;
+    return household > 0 ? reachForHousehold(answers.state, answers.married, answers.childAges.length, household) : null;
+  };
 
   return {
     answers,

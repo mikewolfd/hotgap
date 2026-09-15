@@ -34,6 +34,8 @@ describe("axisSpec", () => {
     // rounds up rather than asking for a fractional count.
     expect(axisSpec({ ...base, annualEarnings: 300_000 })).toEqual({ max: 450_000, step: 2000, count: 226 });
     expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 750_000, step: 3000, count: 251 });
+    // The largest household validateAnswers admits, in the state with the highest guidelines, still gets $1,000 steps.
+    expect(axisSpec({ ...base, state: "AK", married: true, spouseAge: 30, childAges: [1, 2, 3, 4, 5, 6], childDisabled: Array(6).fill(false) })).toEqual({ max: 315_000, step: 1000, count: 316 });
     // Alaska's guidelines are higher: a five-person household still gets $1,000 steps.
     expect(axisSpec({ ...base, state: "AK", married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 230_000, step: 1000, count: 231 });
   });

@@ -1,0 +1,174 @@
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/earned/ma_tafdc_countable_earned_income.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_countable_earned_income(Variable):
+    value_type = float
+    unit = USD
+    entity = Person
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) countable earned income"
+    definition_period = YEAR
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281"  # (A)&(B)
+    defined_for = StateCode.MA
+
+    def formula(person, period, parameters):
+        # This variable is used for the TAFDC benefit amount calculation
+        # The variable is computed yearly to account for the 100% disregard for the first 6 months of the year
+        p = parameters(period).gov.states.ma.dta.tcap.tafdc.earned_income_disregard
+        total_earned_income = person("ma_tcap_gross_earned_income", period)
+        # fully disregard for 6 months
+        full_disregard_eligible = person(
+            "ma_tafdc_full_earned_income_disregard_eligible", period
+        )
+        full_disregard = (
+            total_earned_income - total_earned_income * p.full_disregard.percentage
+        ) * p.full_disregard.applicable_months
+        remaining_months = MONTHS_IN_YEAR - p.full_disregard.applicable_months
+        # The partially disregarded earned income is either applied for 6 months if the unit received
+        # the full disregard or for the entire year if the unit did not receive the full disregard.
+        partially_disregarded_income = (
+            person("ma_tafdc_partially_disregarded_earned_income", period)
+            / MONTHS_IN_YEAR
+        )
+        last_6_months = partially_disregarded_income * remaining_months
+        first_6_months = where(
+            full_disregard_eligible,
+            full_disregard,
+            partially_disregarded_income * p.full_disregard.applicable_months,
+        )
+        return first_6_months + last_6_months
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/earned/ma_tafdc_earned_income_after_deductions.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_earned_income_after_deductions(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) earned income after deductions"
+    definition_period = YEAR
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-280"
+    defined_for = StateCode.MA
+
+    def formula(spm_unit, period, parameters):
+        # The 50% disregard only applies the unit has received TAFDC in the past 4 months and
+        # is re-applying due to temporary ineligibility
+        gross_earned_income = add(spm_unit, period, ["ma_tcap_gross_earned_income"])
+        deductions = add(
+            spm_unit,
+            period,
+            [
+                "ma_tafdc_work_related_expense_deduction",
+                "ma_tafdc_dependent_care_deduction",
+            ],
+        )
+        return max_(gross_earned_income - deductions, 0)
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/earned/ma_tafdc_partially_disregarded_earned_income.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_partially_disregarded_earned_income(Variable):
+    value_type = float
+    unit = USD
+    entity = Person
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) partially disregarded earned income"
+    definition_period = MONTH
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281"
+    defined_for = StateCode.MA
+
+    def formula(person, period, parameters):
+        work_related_deduction = person(
+            "ma_tafdc_work_related_expense_deduction", period
+        )
+        p = parameters(period).gov.states.ma.dta.tcap.tafdc.earned_income_disregard
+
+        gross_earned_income = person("ma_tcap_gross_earned_income", period)
+        earned_income_after_work_related_deduction = max_(
+            0, gross_earned_income - work_related_deduction
+        )
+        filing_status = person.tax_unit("filing_status", period)
+        joint = filing_status == filing_status.possible_values.JOINT
+        dependent_care_deduction = person.spm_unit(
+            "ma_tafdc_dependent_care_deduction", period
+        )
+        # Attributing the dependent care deduction equally to each spouse if filing jointly
+        applicable_dependent_care_deduction = where(
+            joint, dependent_care_deduction / 2, dependent_care_deduction
+        )
+        return max_(
+            0,
+            earned_income_after_work_related_deduction * p.percentage
+            - applicable_dependent_care_deduction,
+        )
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/deductions/ma_tafdc_work_related_expense_deduction.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_work_related_expense_deduction(Variable):
+    value_type = float
+    unit = USD
+    entity = Person
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) work-related expense deduction"
+    definition_period = MONTH
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-270"
+    defined_for = StateCode.MA
+
+    adds = ["gov.states.ma.dta.tcap.deductions.work_related_expenses.amount"]
+=========== variables/gov/states/ma/dta/tcap/tafdc/eligibility/ma_tafdc_eligible.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_eligible(Variable):
+    value_type = bool
+    entity = SPMUnit
+    label = "Eligible for Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC)"
+    definition_period = MONTH
+    reference = (
+        "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-703-010",
+        "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-000",
+    )
+    defined_for = StateCode.MA
+
+    def formula(spm_unit, period, parameters):
+        non_financial_eligible = spm_unit("ma_tafdc_non_financial_eligible", period)
+        financial_eligible = spm_unit("ma_tafdc_financial_eligible", period)
+        return non_financial_eligible & financial_eligible
+=========== parameters/gov/states/ma/dta/tcap/tafdc/earned_income_disregard/full_disregard/fpg_limit.yaml
+description: Massachusetts disregards the full amount of earned income from the gross income calculation under the Transitional Aid to Families with Dependent Children program for applicants with income less than or equal to this percentage of the federal poverty guidelines.
+values:
+  2000-01-01: 2
+metadata:
+  unit: /1
+  period: year
+  label: Massachusetts TAFDC full earned income disregard fpg limit
+  reference:
+    - title: Mass Legal Services, 2024 TAFDC Advocacy Guide 73. How much income can you have and still qualify for TAFDC?
+      href: https://www.masslegalservices.org/content/73-how-much-income-can-you-have-and-still-qualify-tafdc
+    - title: 106 CMR, § 704.281 - TAFDC Earned Income Disregards For Grant Calculation (A) 
+      href: https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281
+=========== parameters/gov/states/ma/dta/tcap/tafdc/earned_income_disregard/full_disregard/applicable_months.yaml
+description: Massachusetts disregards the full amount of earned income from the gross income calculation under the Transitional Aid to Families with Dependent Children program for this number of months.
+values:
+  2000-01-01: 6
+metadata:
+  unit: month
+  period: year
+  label: Massachusetts TAFDC earned income full disregard applicable months
+  reference:
+    - title: Mass Legal Services, 2024 TAFDC Advocacy Guide, 74. What is the 6-month 100% earned income disregard?
+      href: https://www.masslegalservices.org/content/74-what-6-month-100-earned-income-disregard
+    - title: 106 CMR, § 704.281 - TAFDC Earned Income Disregards For Grant Calculation (A)
+      href: https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281
+=========== parameters/gov/states/ma/dta/tcap/tafdc/earned_income_disregard/full_disregard/percentage.yaml
+description: Massachusetts disregards this percentage of earned income from the gross income calculation for the Transitional Aid to Families with Dependent Children program.
+values:
+  2000-01-01: 1
+metadata:
+  unit: /1
+  period: year
+  label: Massachusetts TAFDC earned income full disregard percentage
+  reference:
+    - title: Mass Legal Services, 2024 TAFDC Advocacy Guide, 74. What is the 6-month 100% earned income disregard?
+      href: https://www.masslegalservices.org/content/74-what-6-month-100-earned-income-disregard
+    - title: 106 CMR, § 704.281 - TAFDC Earned Income Disregards For Grant Calculation (A)
+      href: https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281

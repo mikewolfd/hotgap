@@ -21,7 +21,7 @@ limits, the 2026 PTC 400% cap, and the below-FPL immigration exception being
 off), so the two are treated as the same policy state.
 
 All requests and responses are saved under
-`/private/tmp/claude-501/-Users-mikewolfd-Work-HotGap/7a78aee7-f6cc-403f-9335-6c48eed3b23f/scratchpad/upstream/`.
+`docs/upstream/evidence/` (request/response pairs and parameter excerpts).
 Dollar figures use PolicyEngine's own 2026 poverty guideline for a family of
 three, $27,320 (re-derived from the probes), and $15,960 for one person.
 

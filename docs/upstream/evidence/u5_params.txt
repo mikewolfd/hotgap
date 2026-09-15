@@ -1,0 +1,103 @@
+=========== parameters/gov/aca/below_fpl_immigration_exception_in_effect.yaml
+description: ACA Premium Tax Credit below-FPL immigration exception is in effect.
+values:
+  2014-01-01: true
+  2026-01-01: false
+metadata:
+  unit: bool
+  period: year
+  label: ACA PTC below-FPL immigration exception in effect
+  reference:
+    - title: 26 U.S. Code § 36B(c)(1)(B) - Special rule for certain individuals lawfully present in the United States
+      href: https://www.law.cornell.edu/uscode/text/26/36B#c_1_B
+    - title: Pub. L. 119-21, Section 71302(b), effective date for repeal of 26 U.S.C. § 36B(c)(1)(B)
+      href: https://www.law.cornell.edu/uscode/text/26/36B#notes
+=========== parameters/gov/aca/ptc_income_eligibility.yaml
+description: Eligibility for ACA Premium Tax Credit by percent of modified AGI to federal poverty line.
+metadata:
+  type: single_amount
+  period: year
+  threshold_unit: /1
+  amount_unit: bool
+  label: ACA PTC income eligibility conditions
+  reference:
+    - title: 26 U.S. Code § 36B(c)(1) - Refundable credit for coverage under a qualified health plan
+      href: https://www.law.cornell.edu/uscode/text/26/36B#c_1
+    - title: CMS ; APTC and CSR Basics ; June 2023
+      href: https://www.cms.gov/marketplace/technical-assistance-resources/aptc-csr-basics.pdf#page=6
+brackets:
+  - threshold:
+      0000-01-01: 0
+    amount:
+      0000-01-01: false
+  - threshold:
+      0000-01-01: 1.00
+    amount:
+      0000-01-01: false
+      2014-01-01: true
+  - threshold:
+      0000-01-01: 4.00
+    amount:
+      0000-01-01: false
+      2021-01-01: true  # American Rescue Plan Act for 2021-2022
+      2023-01-01: true  # Inflation Reduction Act for 2023-2025
+      2026-01-01: false
+=========== variables/gov/aca/eligibility/aca_ptc_below_fpl_immigration_exception.py
+from policyengine_us.model_api import *
+
+
+class aca_ptc_below_fpl_immigration_exception(Variable):
+    value_type = bool
+    entity = TaxUnit
+    label = "ACA PTC below-FPL immigration exception"
+    definition_period = YEAR
+    reference = [
+        "https://www.law.cornell.edu/uscode/text/26/36B#c_1_B",
+        "https://www.law.cornell.edu/cfr/text/26/1.36B-2#b_5",
+    ]
+
+    def formula(tax_unit, period, parameters):
+        in_effect = parameters(period).gov.aca.below_fpl_immigration_exception_in_effect
+        below_fpl = tax_unit("aca_magi_fraction", period) < 1
+
+        person = tax_unit.members
+        immigration_status = person("immigration_status", period)
+        non_citizen = immigration_status != immigration_status.possible_values.CITIZEN
+        aca_lawfully_present = person("is_aca_ptc_immigration_status_eligible", period)
+        medicaid_ineligible_due_to_status = ~person(
+            "is_medicaid_immigration_status_eligible", period
+        )
+
+        qualifying_family_member = tax_unit.any(
+            non_citizen & aca_lawfully_present & medicaid_ineligible_due_to_status
+        )
+        return in_effect & below_fpl & qualifying_family_member
+=========== parameters/gov/usda/snap/eligibility/eligible_immigration_statuses.yaml
+description: The Department of Agriculture limits Supplemental Nutrition Assistance Program eligibility to these immigration statuses.
+values:
+  2018-01-01:
+    - CITIZEN
+    - LEGAL_PERMANENT_RESIDENT
+    - REFUGEE
+    - ASYLEE
+    - DEPORTATION_WITHHELD
+    - CUBAN_HAITIAN_ENTRANT
+    - CONDITIONAL_ENTRANT
+    - PAROLED_ONE_YEAR
+
+  2025-07-01: # Real effective date July 4th.
+    - CITIZEN
+    - LEGAL_PERMANENT_RESIDENT
+    - CUBAN_HAITIAN_ENTRANT
+    # Compacts of Free Association (COFA) citizens
+metadata:
+  label: SNAP eligible immigration statuses
+  period: year
+  unit: list
+  reference:
+    - title: 7 USC 2015(f) - Eligibility disqualifications
+      href: https://www.law.cornell.edu/uscode/text/7/2015#f
+    - title: 8 USC 1612 - Limited eligibility of qualified aliens for certain Federal programs
+      href: https://www.law.cornell.edu/uscode/text/8/1612
+    - title: USDA FNS - SNAP Implementation of OBBB - Alien SNAP Eligibility
+      href: https://www.fns.usda.gov/snap/obbb-alien-eligibility

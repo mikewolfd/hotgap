@@ -1,0 +1,162 @@
+=========== variables/gov/states/ma/dta/tcap/tafdc/payment/ma_tafdc_payment_standard.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_payment_standard(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) payment standard"
+    definition_period = MONTH
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-420"
+    defined_for = StateCode.MA
+
+    def formula(spm_unit, period, parameters):
+        in_public_housing = spm_unit.household("is_in_public_housing", period)
+        p = parameters(period).gov.states.ma.dta.tcap.tafdc.eligibility.income_limit
+        unit_size = spm_unit("spm_unit_size", period)
+        capped_unit_size = min_(unit_size, p.max_unit_size)
+        additional_people_in_unit = max_(0, unit_size - p.max_unit_size)
+        # Calculate the base income limit for non-teen parents
+        ps_non_teen_parent = where(
+            in_public_housing,
+            p.base.public_housing.calc(capped_unit_size),
+            p.base.private_housing.calc(capped_unit_size),
+        )
+        additional_person_ps = p.additional_person * additional_people_in_unit
+        return ps_non_teen_parent + additional_person_ps
+=========== variables/gov/states/ma/dta/tcap/tafdc/payment/ma_tafdc_potential_main_benefit.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_potential_main_benefit(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) potential main benefit"
+    definition_period = MONTH
+    reference = "https://www.mass.gov/how-to/transitional-aid-to-families-with-dependent-children-tafdc"
+    defined_for = "ma_tafdc_eligible"
+
+    def formula(spm_unit, period, parameters):
+        payment_standard = spm_unit("ma_tafdc_payment_standard", period)
+        countable_income = spm_unit("ma_tafdc_applicable_income_grant_amount", period)
+        benefit = max_(0, payment_standard - countable_income)
+        return min_(benefit, payment_standard)
+=========== variables/gov/states/ma/dta/tcap/tafdc/ma_tafdc.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC)"
+    definition_period = MONTH
+    reference = "https://www.mass.gov/how-to/transitional-aid-to-families-with-dependent-children-tafdc"
+    defined_for = "ma_tafdc_exceeds_eaedc"
+
+    adds = ["ma_tafdc_if_claimed"]
+=========== variables/gov/states/ma/dta/tcap/tafdc/ma_tafdc_if_claimed.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_if_claimed(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) benefit amount if claimed"
+    definition_period = MONTH
+    reference = "https://www.mass.gov/how-to/transitional-aid-to-families-with-dependent-children-tafdc"
+    defined_for = "ma_tafdc_eligible"
+
+    # The Infant Benefit and Clothing Allowance are mentioned in the TAFDC context
+    # on the Mass.gov website: https://www.mass.gov/how-to/transitional-aid-to-families-with-dependent-children-tafdc
+    adds = [
+        "ma_tafdc_potential_main_benefit",
+        "ma_tafdc_clothing_allowance",
+        "ma_tafdc_infant_benefit",
+    ]
+=========== variables/gov/states/ma/dta/tcap/tafdc/eligibility/ma_tafdc_financial_eligible.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_financial_eligible(Variable):
+    value_type = bool
+    entity = SPMUnit
+    label = "Eligible for Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) due to income"
+    definition_period = MONTH
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-260"
+    defined_for = StateCode.MA
+
+    def formula(spm_unit, period, parameters):
+        total_countable_income = spm_unit(
+            "ma_tafdc_applicable_income_for_financial_eligibility", period
+        )
+        # PolicyEngine's payment standard is built from the TAFDC income-limit
+        # (Need Standard) tables, so it is the applicable Need Standard for this
+        # test. Per 106 CMR 704.260, the filing unit is financially eligible
+        # when total countable income "does not exceed" (is equal to or less
+        # than) the applicable Need Standard, so the boundary is inclusive.
+        payment_standard = spm_unit("ma_tafdc_payment_standard", period)
+
+        return total_countable_income <= payment_standard
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/earned/ma_tafdc_full_earned_income_disregard_eligible.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_full_earned_income_disregard_eligible(Variable):
+    value_type = bool
+    entity = Person
+    label = "Is eligible for the full earned income disregard under the Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC)"
+    definition_period = YEAR
+    reference = (
+        "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-281"  # (A)
+    )
+    defined_for = StateCode.MA
+
+    def formula(person, period, parameters):
+        p = parameters(
+            period
+        ).gov.states.ma.dta.tcap.tafdc.earned_income_disregard.full_disregard
+        gross_income = person.spm_unit(
+            "ma_tafdc_applicable_income_for_financial_eligibility", period
+        )
+
+        fpg = person.spm_unit("spm_unit_fpg", period)
+        income_limit = fpg * p.fpg_limit
+        return gross_income < income_limit
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/ma_tafdc_applicable_income_for_financial_eligibility.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_applicable_income_for_financial_eligibility(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Applicable income for the Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) financial eligibility check"
+    definition_period = YEAR
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-280"
+    defined_for = StateCode.MA
+
+    adds = [
+        "ma_tafdc_earned_income_after_deductions",
+        "ma_tafdc_countable_unearned_income",
+    ]
+=========== variables/gov/states/ma/dta/tcap/tafdc/income/ma_tafdc_applicable_income_grant_amount.py
+from policyengine_us.model_api import *
+
+
+class ma_tafdc_applicable_income_grant_amount(Variable):
+    value_type = float
+    unit = USD
+    entity = SPMUnit
+    label = "Massachusetts Temporary Assistance for Families with Dependent Children (TAFDC) countable income"
+    definition_period = MONTH
+    reference = "https://www.law.cornell.edu/regulations/massachusetts/106-CMR-704-210"
+    defined_for = StateCode.MA
+
+    adds = [
+        "ma_tafdc_countable_earned_income",
+        "ma_tafdc_countable_unearned_income",
+    ]

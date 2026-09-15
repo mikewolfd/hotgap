@@ -70,8 +70,9 @@ export function roundPoint(p: CurvePoint): CurvePoint {
       Object.entries(p.childPrograms).map(([id, v]) => [id, Math.round(v as number)]),
     ) as Partial<Record<ProgramId, number>>,
     otherBenefits: Math.round(p.otherBenefits),
-    coverageGap: p.coverageGap,
-  };
+    // coverageGap is a read-time verdict (evaluate.ts), never a sweep output;
+    // storing `false` 66,000 times bought nothing. Loaders default it.
+  } as CurvePoint;
 }
 
 export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype): StateFileJson {
