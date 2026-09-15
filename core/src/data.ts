@@ -14,6 +14,9 @@ export interface StateMetrics {
   cliffCount: number;
   safeExit: number | null;
   leap: number;
+  // True when the widest danger zone runs past the sweep's axis, so `leap`
+  // is a floor, not a measurement — rank such cells with care.
+  leapIsLowerBound: boolean;
 }
 
 export interface SummaryJson {

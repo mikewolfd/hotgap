@@ -36,6 +36,16 @@ export function validateAnswers(input: unknown): Validation {
   if (a.monthlyChildcare !== null && !money(a.monthlyChildcare)) return { ok: false, detail: "monthlyChildcare" };
   if (!money(a.annualEarnings)) return { ok: false, detail: "annualEarnings" };
   if (!money(a.spouseAnnualEarnings)) return { ok: false, detail: "spouseAnnualEarnings" };
+  // Non-wage monthly income. Old clients send none of these, so `undefined`
+  // means 0 rather than a rejection; anything else present must be real money.
+  const monthly = (v: unknown): number | null =>
+    v === undefined ? 0 : money(v) ? clamp(v, 0, 20000) : null;
+  const ssdiMonthly = monthly(a.ssdiMonthly);
+  const childSupportMonthly = monthly(a.childSupportMonthly);
+  const unemploymentMonthly = monthly(a.unemploymentMonthly);
+  if (ssdiMonthly === null) return { ok: false, detail: "ssdiMonthly" };
+  if (childSupportMonthly === null) return { ok: false, detail: "childSupportMonthly" };
+  if (unemploymentMonthly === null) return { ok: false, detail: "unemploymentMonthly" };
 
   // A county FIPS starts with its state's two digits; a county in another
   // state would put PolicyEngine's ACA rating area in the wrong state.
@@ -68,6 +78,9 @@ export function validateAnswers(input: unknown): Validation {
       getsHousing: a.getsHousing === true,
       hasEmployerCoverage: a.hasEmployerCoverage === true,
       countyFips,
+      ssdiMonthly,
+      childSupportMonthly,
+      unemploymentMonthly,
     },
   };
 }

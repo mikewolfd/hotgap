@@ -12,6 +12,7 @@
 // Committed data (data/): the weekly 51-state × 8-archetype sweep, ACS reach
 // ladders, and ZIP → state / county crosswalks. See README.md.
 export * from "./types.js";
+export * from "./policyYear.js";
 export * from "./income.js";
 export * from "./parse.js";
 export * from "./analyze.js";

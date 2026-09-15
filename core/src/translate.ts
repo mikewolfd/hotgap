@@ -1,9 +1,36 @@
+import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
 import { YEAR, type HouseholdAnswers } from "./types.js";
 
-export const AXIS_COUNT = 101;
+export interface AxisSpec {
+  /** Top of the earnings sweep, in dollars. */
+  max: number;
+  /** Dollars between sampled points. */
+  step: number;
+  /** Number of points, including both endpoints. */
+  count: number;
+}
 
-export function axisMax(annualEarnings: number): number {
-  return Math.max(100_000, Math.ceil((annualEarnings * 1.5) / 5000) * 5000);
+/**
+ * The earnings axis for one household.
+ *
+ * The floor is $150,000, not $100,000: 400% of the 2025 poverty line — where
+ * the ACA premium subsidy ends, usually the largest cliff on the curve — is
+ * $106,600 for a family of three and $128,600 for a family of four, so a
+ * $100k axis cut the biggest cliff off the top of its own chart. Above
+ * $100,000 of pay the axis follows 1.5× earnings instead.
+ *
+ * The step grows with the axis so a request stays near 151 points whatever the
+ * household earns; a wider step raises the cliff-detection floor (see
+ * analyze.ts), which is the price of not asking PolicyEngine for 751 points.
+ */
+export function axisSpec(a: HouseholdAnswers): AxisSpec {
+  const wanted = Math.max(150_000, Math.ceil((a.annualEarnings * 1.5) / 5000) * 5000);
+  const step = Math.max(1000, Math.ceil(wanted / 150_000) * 1000);
+  // Round the top up to a whole number of steps: `wanted` is a multiple of
+  // $5,000 and `step` need not divide it (a $150,000 earner wants $225,000 at
+  // a $2,000 step), and a fractional point count is not a valid axis.
+  const max = Math.ceil(wanted / step) * step;
+  return { max, step, count: max / step + 1 };
 }
 
 type Vars = Record<string, Record<string, number | string | boolean | null>>;
@@ -29,11 +56,23 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   for (const v of PERSON_VARS) you[v] = y(null);
   if (a.monthlyRent !== null) you.rent = y(a.monthlyRent * 12);
   applyDisability(you, a.youDisabled);
+  // Non-wage income, annualized onto the householder. All three names verified
+  // live 2026-09-14; all three land inside household_benefits, so they also
+  // show up in a point's otherBenefits (see parse.ts). Omitted when zero so
+  // the payload — and the cache key built from it — stays canonical.
+  if (a.childSupportMonthly > 0) you.child_support_received = y(a.childSupportMonthly * 12);
+  if (a.unemploymentMonthly > 0) you.unemployment_compensation = y(a.unemploymentMonthly * 12);
+  if (a.ssdiMonthly > 0) you.social_security_disability = y(a.ssdiMonthly * 12);
   if (a.hasEmployerCoverage) {
     // Employer coverage requires all three inputs together to disqualify ACA
-    // subsidies (verified live 2026-07-11). Premium is the family rate
-    // whenever the tax unit includes a spouse or a child, else the single rate.
-    const esiPremium = a.married || a.childAges.length > 0 ? 6500 : 1700;
+    // subsidies (verified live 2026-07-11). Only the two flags do any work:
+    // the premium figure is inert — $6,500 and $13,000 produce byte-identical
+    // output (verified live 2026-09-14) — and PolicyEngine documents the
+    // variable as the EMPLOYER-paid premium, not the employee's share. We send
+    // the MEPS-IC employee contribution because that is the figure the money
+    // line uses (evaluate.ts); if the variable ever starts doing work, switch
+    // this to the MEPS total premium minus that contribution.
+    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION[a.married || a.childAges.length > 0 ? "family" : "single"];
     you.has_esi = y(true);
     you.offered_aca_disqualifying_esi = y(true);
     you.employer_sponsored_insurance_premiums = y(esiPremium);
@@ -64,13 +103,23 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   const taxVars: Vars = {};
   for (const v of TAX_VARS) taxVars[v] = y(null);
 
-  const householdVars: { members: string[]; state_name: ReturnType<typeof y>; household_net_income: ReturnType<typeof y>; county_fips?: ReturnType<typeof y> } = {
+  const householdVars: {
+    members: string[];
+    state_name: ReturnType<typeof y>;
+    household_net_income: ReturnType<typeof y>;
+    household_benefits: ReturnType<typeof y>;
+    county_fips?: ReturnType<typeof y>;
+  } = {
     members,
     state_name: y(a.state),
     household_net_income: y(null),
+    // Asked for so a cliff can report what it cost even when the program that
+    // caused it is one HotGap does not name (parse.ts's otherBenefits).
+    household_benefits: y(null),
   };
   if (a.countyFips) householdVars.county_fips = y(a.countyFips);
 
+  const axis = axisSpec(a);
   return {
     household: {
       people,
@@ -81,7 +130,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
       households: {
         household: householdVars,
       },
-      axes: [[{ name: "employment_income", min: 0, max: axisMax(a.annualEarnings), count: AXIS_COUNT, period: YEAR }]],
+      axes: [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]],
     },
   };
 }

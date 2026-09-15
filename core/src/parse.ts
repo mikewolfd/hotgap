@@ -1,4 +1,4 @@
-import { YEAR, type CurvePoint, type ProgramId } from "./types.js";
+import { CASH_PROGRAMS, YEAR, type CurvePoint, type ProgramId } from "./types.js";
 
 export class PEParseError extends Error {}
 
@@ -8,6 +8,9 @@ const PERSON_PROGRAMS: Record<string, ProgramId> = {
   medicaid: "medicaid", chip: "chip", wic: "wic", ssi: "ssi",
   head_start: "headstart", early_head_start: "headstart",
 };
+/** The programs PolicyEngine reports per person, so they can be split by age. */
+export const PERSON_LEVEL_PROGRAMS: ProgramId[] = [...new Set(Object.values(PERSON_PROGRAMS))];
+
 const SPM_PROGRAMS: Record<string, ProgramId> = {
   snap: "snap", tanf: "tanf", spm_unit_capped_housing_subsidy: "housing",
   free_school_meals: "schoolmeals", reduced_price_school_meals: "schoolmeals",
@@ -28,7 +31,8 @@ function series(entity: Record<string, unknown>, variable: string, count: number
   // A take-up override forces a program's value to a scalar (e.g. head_start: 0
   // when the family does not receive it). PolicyEngine returns a forced scalar
   // input as-is instead of broadcasting it across the earnings axis, so a
-  // single number is valid here — hold it constant across all points.
+  // single number is valid here — hold it constant across all points. `age` is
+  // always a scalar for the same reason: the axis varies employment income only.
   if (typeof v === "number") return new Array(count).fill(v);
   if (!Array.isArray(v) || v.length !== count || v.some((x) => typeof x !== "number")) {
     throw new PEParseError(`bad series for ${variable}`);
@@ -67,24 +71,54 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   const net = rawNet.map((n, i) => n - moop[i]);
 
   const programSeries = new Map<ProgramId, number[]>();
-  const add = (id: ProgramId, values: number[]) => {
-    const existing = programSeries.get(id);
-    programSeries.set(id, existing ? existing.map((x, i) => x + values[i]) : [...values]);
+  const childSeries = new Map<ProgramId, number[]>();
+  const add = (into: Map<ProgramId, number[]>, id: ProgramId, values: number[]) => {
+    const existing = into.get(id);
+    into.set(id, existing ? existing.map((x, i) => x + values[i]) : [...values]);
   };
-  for (const [variable, id] of Object.entries(SPM_PROGRAMS)) add(id, series(spm, variable, expectedCount));
-  for (const [variable, id] of Object.entries(TAX_PROGRAMS)) add(id, series(tax, variable, expectedCount));
+  for (const [variable, id] of Object.entries(SPM_PROGRAMS)) add(programSeries, id, series(spm, variable, expectedCount));
+  for (const [variable, id] of Object.entries(TAX_PROGRAMS)) add(programSeries, id, series(tax, variable, expectedCount));
   for (const person of Object.values(people)) {
+    // Who is a child comes from the person's own `age`, never from the key:
+    // PolicyEngine echoes back whatever names the caller used, which is
+    // "child1…" from translate.ts but "your first dependent" in the July
+    // fixture and in anything built by PolicyEngine's own web app.
+    const isChild = series(person, "age", expectedCount)[0] < 18;
     for (const [variable, id] of Object.entries(PERSON_PROGRAMS)) {
-      if (person[variable]) add(id, series(person, variable, expectedCount));
+      if (!person[variable]) continue;
+      const values = series(person, variable, expectedCount);
+      add(programSeries, id, values);
+      if (isChild) add(childSeries, id, values);
     }
   }
+
+  // household_benefits is what PolicyEngine counts as benefit income for the
+  // household. Verified live 2026-09-14 that for a household whose only
+  // benefits are the ones we track it equals their sum to the dollar (so the
+  // remainder is a true untracked residual, not an offset), that Medicaid and
+  // CHIP sticker values are NOT in it, and that it DOES carry SSDI, child
+  // support and unemployment compensation when those are inputs — a household
+  // with those therefore carries a constant floor here, which cancels in any
+  // step-to-step difference. Absent from curves fetched before we asked for
+  // it (the July fixture), in which case the remainder is simply 0.
+  const benefits = "household_benefits" in household
+    ? series(household, "household_benefits", expectedCount)
+    : null;
+  const trackedCash = (i: number) =>
+    CASH_PROGRAMS.reduce((sum, id) => sum + (programSeries.get(id)?.[i] ?? 0), 0);
+
+  const at = (source: Map<ProgramId, number[]>, i: number) =>
+    Object.fromEntries([...source.entries()].map(([id, values]) => [id, values[i]]));
 
   return net.map((n, i) => ({
     earnings: axis.min + step * i,
     netIncome: n,
     medicalOOP: moop[i],
-    programs: Object.fromEntries(
-      [...programSeries.entries()].map(([id, values]) => [id, values[i]]),
-    ) as Record<ProgramId, number>,
+    programs: at(programSeries, i) as Record<ProgramId, number>,
+    childPrograms: at(childSeries, i) as Partial<Record<ProgramId, number>>,
+    // Float noise around an identity that holds exactly can only go negative
+    // by fractions of a cent, so floor it rather than report a negative benefit.
+    otherBenefits: benefits ? Math.max(0, benefits[i] - trackedCash(i)) : 0,
+    coverageGap: false,
   }));
 }

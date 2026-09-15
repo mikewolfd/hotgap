@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, type StateFileJson } from "@hotgap/core";
 import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import {
   parseArgs,
@@ -16,10 +16,22 @@ import {
   ALL_STATES,
 } from "./run.js";
 
-const fixtureBody = readFileSync(
-  new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url),
-  "utf8",
-);
+// The stored fixture is a 101-point sweep to $100k; the archetype axis is now
+// 151 points to $150k. Pad every series flat beyond the last point so the
+// fixture's pinned cliffs, safe exit, and leap are unchanged.
+const AXIS = axisSpec(answersFor("CA", ARCHETYPES[0]));
+function padSeries(value: unknown): unknown {
+  if (Array.isArray(value) && value.length === 101 && typeof value[0] === "number") {
+    return [...value, ...Array(AXIS.count - 101).fill(value[100])];
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, padSeries(v)]));
+  }
+  return value;
+}
+const fixtureJson = padSeries(JSON.parse(readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"))) as { result: { axes: { max: number; count: number }[][] } };
+fixtureJson.result.axes[0][0] = { ...fixtureJson.result.axes[0][0], max: AXIS.max, count: AXIS.count };
+const fixtureBody = JSON.stringify(fixtureJson);
 const noopSleep = async () => {};
 
 describe("ALL_STATES", () => {
@@ -88,12 +100,13 @@ describe("runPipeline", () => {
         cliffCount: expect.any(Number),
         safeExit: 91000,
         leap: 45000,
+        leapIsLowerBound: false,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
 
       const points = result.stateFiles![state].archetypes["single-2"].points;
-      expect(points).toHaveLength(101);
+      expect(points).toHaveLength(AXIS.count);
       expect(Number.isInteger(points[0].netIncome)).toBe(true);
     }
     expect(result.summary!.archetypes).toHaveLength(8);
@@ -124,7 +137,7 @@ describe("runFromData", () => {
   // disk at core/data/states/{ST}.json. No fetch is ever invoked.
   function syntheticResults(states: string[]): ResultsByStateArchetype {
     // Rounded at ingestion, exactly as runPipeline does.
-    const points = parsePEResponse(JSON.parse(fixtureBody), 101).map(roundPoint);
+    const points = parsePEResponse(JSON.parse(fixtureBody), AXIS.count).map(roundPoint);
     const results: ResultsByStateArchetype = {};
     for (const state of states) {
       results[state] = {};

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parsePEResponse, PEParseError } from "./parse.js";
+import { parsePEResponse, PEParseError, PERSON_LEVEL_PROGRAMS } from "./parse.js";
+import { CASH_PROGRAMS } from "./types.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
@@ -43,6 +44,46 @@ describe("parsePEResponse", () => {
     const i = 50;
     expect(ptc[i]).toBeGreaterThan(1000); // only meaningful where a subsidy exists
     expect(pts[i].netIncome).toBeCloseTo(raw[i] - moop[i], 2);
+  });
+
+  it("splits person-level programs into the children's share by AGE, not by key name", () => {
+    const points = parsePEResponse(fixture, 101);
+    const raw = fixture.result.people;
+    // The recorded payload names the child "your first dependent"; translate.ts
+    // names it "child1". Neither name is what the split is keyed on.
+    expect(Object.keys(raw)).toContain("your first dependent");
+    const youMed = raw["you"].medicaid["2026"][0];
+    const kidMed = raw["your first dependent"].medicaid["2026"][0];
+    expect(points[0].childPrograms.medicaid).toBeCloseTo(kidMed, 1);
+    expect(points[0].programs.medicaid - (points[0].childPrograms.medicaid ?? 0)).toBeCloseTo(youMed, 1);
+    // Head Start belongs entirely to the child, so the household total and the
+    // children's total are the same number wherever it is paid.
+    const hs = points.findIndex((p) => p.programs.headstart > 0);
+    expect(points[hs].childPrograms.headstart).toBeCloseTo(points[hs].programs.headstart, 6);
+    expect(PERSON_LEVEL_PROGRAMS).toEqual(["medicaid", "chip", "wic", "ssi", "headstart"]);
+  });
+
+  it("reports no untracked benefits when household_benefits is absent (the July fixture predates it)", () => {
+    expect(fixture.result.households["your household"].household_benefits).toBeUndefined();
+    const points = parsePEResponse(fixture, 101);
+    expect(points.every((p) => p.otherBenefits === 0)).toBe(true);
+    expect(points.every((p) => p.coverageGap === false)).toBe(true);
+  });
+
+  it("computes otherBenefits as household_benefits minus the tracked cash programs", () => {
+    const tracked = parsePEResponse(fixture, 101).map((p) =>
+      CASH_PROGRAMS.reduce((sum, id) => sum + (p.programs[id] ?? 0), 0),
+    );
+    const withBenefits = (values: number[]) => {
+      const body = JSON.parse(JSON.stringify(fixture));
+      body.result.households["your household"].household_benefits = { "2026": values };
+      return parsePEResponse(body, 101);
+    };
+    expect(withBenefits(tracked.map((c) => c + 3000)).every((p) => Math.abs(p.otherBenefits - 3000) < 1e-6)).toBe(true);
+    // Verified live 2026-09-14: for a household whose only benefits are the
+    // tracked ones the two are equal to the dollar, so any negative remainder
+    // is float noise and floors at 0 rather than becoming a negative benefit.
+    expect(withBenefits(tracked.map((c) => c - 1e-9)).every((p) => p.otherBenefits === 0)).toBe(true);
   });
 
   it("throws PEParseError on an error-status body", () => {

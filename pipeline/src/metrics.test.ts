@@ -11,6 +11,7 @@ const fixturePoints = parsePEResponse(fixture, 101);
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
   earnings, netIncome, medicalOOP: 0,
   programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  childPrograms: {}, otherBenefits: 0, coverageGap: false,
 });
 
 describe("stateMetrics on the committed CA fixture", () => {
@@ -32,7 +33,7 @@ describe("stateMetrics on the committed CA fixture", () => {
 describe("stateMetrics on synthetic curves", () => {
   it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
-    expect(stateMetrics(pts)).toEqual({ biggestLoss: 0, dangerWidth: 0, cliffCount: 0, safeExit: 0, leap: 0 });
+    expect(stateMetrics(pts)).toEqual({ biggestLoss: 0, dangerWidth: 0, cliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false });
   });
 
   it("measures dangerWidth to the axis max when the zone never recovers, and reports safeExit null", () => {

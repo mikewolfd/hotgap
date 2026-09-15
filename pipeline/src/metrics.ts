@@ -12,5 +12,6 @@ export function stateMetrics(points: CurvePoint[]): StateMetrics {
     cliffCount: a.cliffs.length,
     safeExit: esc.safeExitEarnings,
     leap: esc.leap,
+    leapIsLowerBound: esc.leapIsLowerBound,
   };
 }

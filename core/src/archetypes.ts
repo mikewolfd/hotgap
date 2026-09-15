@@ -24,7 +24,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     childDisabled: a.childAges.map(() => false),
     monthlyRent: null,
     monthlyChildcare: 0,
-    annualEarnings: 0,          // the axis varies earnings; this only sets axisMax=100k
+    annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
     spouseAnnualEarnings: 0,
     age: 30,
     spouseAge: a.married ? 30 : null,
@@ -33,5 +33,8 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     getsHeadStart: false,
     getsHousing: false,
     hasEmployerCoverage: false,
+    ssdiMonthly: 0,
+    childSupportMonthly: 0,
+    unemploymentMonthly: 0,
   };
 }

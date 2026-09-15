@@ -240,6 +240,61 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     }
   }, 90_000);
 
+  // The inputs added 2026-09-14 for findings 2, 3 and 6. A wrong variable name
+  // comes back as HTTP 400 with a message naming it, so acceptance is the
+  // whole assertion for the three person-level inputs; household_benefits is
+  // also checked for the composition parse.ts relies on (it equals the sum of
+  // the benefits we track, and it carries SSDI, child support and
+  // unemployment when those are supplied — so parse.ts's untracked remainder
+  // is a real residual, not an offset).
+  it("accepts child_support_received, unemployment_compensation and social_security_disability on people, and household_benefits on households", async () => {
+    const y = (v: unknown) => ({ "2026": v });
+    const probe = {
+      household: {
+        people: {
+          you: {
+            age: y(40),
+            employment_income: y(12000),
+            child_support_received: y(4800),
+            unemployment_compensation: y(3600),
+            social_security_disability: y(18000),
+            ssi: y(null),
+          },
+        },
+        families: { f: { members: ["you"] } },
+        marital_units: { m: { members: ["you"] } },
+        tax_units: { t: { members: ["you"] } },
+        spm_units: { s: { members: ["you"], snap: y(null), tanf: y(null) } },
+        households: {
+          h: {
+            members: ["you"],
+            state_name: y("CA"),
+            household_net_income: y(null),
+            household_benefits: y(null),
+          },
+        },
+      },
+    };
+    const res = await fetch("https://api.policyengine.org/us/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(probe),
+      signal: AbortSignal.timeout(60_000),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.status).toBe("ok");
+    const person = body.result.people["you"];
+    expect(person.child_support_received["2026"]).toBe(4800);
+    expect(person.unemployment_compensation["2026"]).toBe(3600);
+    expect(person.social_security_disability["2026"]).toBe(18000);
+    const benefits = body.result.households.h.household_benefits["2026"];
+    const spm = body.result.spm_units.s;
+    // Observed live 2026-09-14: household_benefits = 26,400, exactly the three
+    // non-wage inputs, with SNAP and TANF at 0 for this household.
+    expect(benefits).toBeCloseTo(4800 + 3600 + 18000 + spm.snap["2026"] + spm.tanf["2026"] + person.ssi["2026"], 0);
+  }, 90_000);
+
   it("still computes ok with no county_fips at all (state-only fallback)", async () => {
     const res = await fetch("https://api.policyengine.org/us/calculate", {
       method: "POST",
