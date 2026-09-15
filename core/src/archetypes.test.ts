@@ -39,6 +39,7 @@ describe("answersFor", () => {
       spouseDisabled: false,
       getsHeadStart: false,
       getsHousing: false,
+      getsChildcareSubsidy: false,
       hasEmployerCoverage: false,
       ssdiMonthly: 0,
       childSupportMonthly: 0,

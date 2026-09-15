@@ -26,7 +26,9 @@ export const DEFAULT_ARCHETYPE = "single-2";
  * premium-driven ranking partly ranked that default. Both now come from
  * stateDefaults (HUD FY2026 FMR, Census Vintage 2024). Childcare stays $0:
  * the archetype reports no childcare expense, and inventing one would inflate
- * its dependent-care deduction.
+ * its dependent-care deduction. With no bill there is nothing for the CCDF
+ * child-care subsidy to reimburse either, so `getsChildcareSubsidy` is off
+ * and every swept curve is unchanged by it.
  */
 // WORKAROUND (partly) — the county below sidesteps PolicyEngine's default
 // rating area, which is identical for CT/IL and CO/IN (policyengine-us #9480);
@@ -50,6 +52,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     spouseDisabled: false,
     getsHeadStart: false,
     getsHousing: false,
+    getsChildcareSubsidy: false,
     hasEmployerCoverage: false,
     ssdiMonthly: 0,
     childSupportMonthly: 0,

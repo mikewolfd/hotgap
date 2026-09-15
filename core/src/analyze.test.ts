@@ -11,7 +11,7 @@ const fixturePoints = parsePEResponse(fixture, 101);
 
 const flat = (earnings: number, netIncome: number): CurvePoint => ({
   earnings, netIncome, medicalOOP: 0,
-  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
   childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
 });
 
@@ -64,7 +64,7 @@ describe("analyzeCurve on synthetic curves", () => {
   });
 });
 
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
 // `programs` arrives as a sparse patch over ZERO, so it cannot be the full
 // Record the CurvePoint field is.
 type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };

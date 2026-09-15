@@ -5,11 +5,11 @@ export const YEAR = "2026" as const;
 export type ProgramId =
   | "snap" | "medicaid" | "chip" | "eitc" | "ctc"
   | "aca" | "tanf" | "housing" | "wic" | "ssi"
-  | "headstart" | "schoolmeals";
+  | "headstart" | "schoolmeals" | "childcare";
 
 export const PROGRAM_IDS: ProgramId[] = [
   "snap", "medicaid", "chip", "eitc", "ctc", "aca", "tanf", "housing", "wic", "ssi",
-  "headstart", "schoolmeals",
+  "headstart", "schoolmeals", "childcare",
 ];
 
 // The three kinds of program value, because they do not belong in the same
@@ -19,7 +19,13 @@ export const PROGRAM_IDS: ProgramId[] = [
 // never cash and is never inside netIncome. Mixing the third into a benefits
 // total is what made "benefits end at $57k" mean the value of a child's
 // insurance card rather than any money changing hands.
-export const CASH_PROGRAMS: ProgramId[] = ["snap", "tanf", "housing", "wic", "ssi", "headstart", "schoolmeals"];
+// `childcare` is the state child-care subsidy (CCDF). It pays a provider
+// rather than the family, which is exactly what makes it CASH here: it frees
+// the same dollars the family would otherwise hand over, one for one, and it
+// is capped at a real bill. That is school meals and Head Start, not a
+// Medicaid sticker price — which is a valuation of coverage nobody would have
+// bought at that price and which never moves a household's own money.
+export const CASH_PROGRAMS: ProgramId[] = ["snap", "tanf", "housing", "wic", "ssi", "headstart", "schoolmeals", "childcare"];
 export const CREDIT_PROGRAMS: ProgramId[] = ["eitc", "ctc", "aca"];
 // Credits that live inside PolicyEngine's household_net_income. The premium
 // tax credit does NOT (pinned live by the contract suite): it reaches
@@ -49,6 +55,11 @@ export interface HouseholdAnswers {
   hoursPerWeek: number | null;
   getsHeadStart: boolean;
   getsHousing: boolean;
+  // Take-up of the state's CCDF child-care subsidy. Off by default, like every
+  // other rationed program here: CCDF reaches roughly one in six eligible
+  // children, and most states run a waiting list. Turning it on also changes
+  // what PolicyEngine is asked for the childcare bill — see translate.ts.
+  getsChildcareSubsidy: boolean;
   hasEmployerCoverage: boolean;
   countyFips: string | null;
   // Monthly non-wage income, 0 when there is none. SSDI is modeled as ending

@@ -70,7 +70,7 @@ describe("evaluateCurve", () => {
     // not an income to locate in a distribution.
     const flat = (earnings: number, netIncome: number): CurvePoint => ({
       earnings, netIncome, medicalOOP: 0,
-      programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
+      programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
       childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
     });
     const points = [flat(0, 10000), flat(10000, 15000), flat(20000, 21000)];
@@ -130,7 +130,7 @@ describe("evaluateHousehold", () => {
   });
 });
 
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
 // `programs` arrives as a sparse patch over ZERO, so it cannot be the full
 // Record the CurvePoint field is.
 type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
@@ -572,7 +572,7 @@ describe("reach uses householder-plus-spouse earnings", () => {
 });
 
 describe("state premium wraps", () => {
-  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
   const enrollee = (earnings: number, moop: number): CurvePoint => ({
     earnings, netIncome: 30000 - moop, medicalOOP: moop, programs: { ...ZEROS, aca: 4000 }, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
   });
@@ -600,7 +600,7 @@ describe("state premium wraps", () => {
 });
 
 describe("transitional medical assistance is a §1931 rule", () => {
-  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
+  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
   // A parent with one child whose own Medicaid ends between `at` and the next point.
   const parentLosesAt = (at: number, state: string) => {
     const p = (earnings: number, net: number, adultMedicaid: number): CurvePoint => ({
@@ -621,5 +621,40 @@ describe("transitional medical assistance is a §1931 rule", () => {
     // two) is not the adult group's line, so TMA follows it. (Connecticut
     // would do the same but its premium wrap removes this synthetic cliff.)
     expect(parentLosesAt(40000, "DC").deferred.map((c) => c.deferral?.reason)).toEqual(["transitional_medical_assistance"]);
+  });
+});
+
+describe("the state child-care subsidy (policyengine-us #9405)", () => {
+  // The live Connecticut and Colorado probes of 2026-09-15: the same household
+  // (single parent, 3-year-old, $9,600 bill) gets ~$8,900 of subsidy in both
+  // states, but only Colorado's reaches household_net_income.
+  const subsidised = (state: string, subsidy: number) =>
+    evaluateOn(answersWith({ state, childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 }),
+      [pt(25000, 34121, { programs: { childcare: subsidy } }), pt(45000, 42953, { programs: { childcare: 0 } })], 25000);
+
+  it("adds the money in a state PolicyEngine leaves it out of", () => {
+    const ct = subsidised("CT", 8850);
+    expect(ct.curve.points[0].netIncome).toBe(34121 + 8850);
+    expect(ct.curve.points[1].netIncome).toBe(42953);
+  });
+
+  it("does NOT add it again where household_state_benefits already carried it", () => {
+    expect(subsidised("CO", 8913).curve.points[0].netIncome).toBe(34121);
+  });
+
+  it("names the subsidy on the cliff its end causes, and reports where it ends", () => {
+    const ct = subsidised("CT", 8850);
+    // $42,971 → $42,953: the subsidy's whole $8,850 leaves over one step.
+    expect(ct.analysis.cliffs).toHaveLength(0); // the $20,000 step out-earns it
+    const steep = evaluateOn(answersWith({ state: "CT", childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 }),
+      [pt(25000, 34121, { programs: { childcare: 8850 } }), pt(26000, 34500, { programs: { childcare: 0 } })], 25000);
+    expect(steep.analysis.cliffs[0].programsLost).toContain("childcare");
+    expect(steep.analysis.cliffs[0].breakdown.benefits).toBeCloseTo(8850, 6);
+    expect(steep.escape.programEnds.childcare).toBe(25000);
+  });
+
+  it("is a no-op on a curve with no subsidy on it — every archetype", () => {
+    const plain = evaluateOn(answersWith({ state: "CT" }), [pt(0, 20000), pt(30000, 40000)]);
+    expect(plain.curve.points.map((p) => p.netIncome)).toEqual([20000, 40000]);
   });
 });

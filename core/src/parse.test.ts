@@ -167,3 +167,68 @@ describe("parsePEResponse", () => {
   });
 
 });
+
+describe("the state child-care subsidy", () => {
+  // Two points, and only the variables parsePEResponse insists on. The numbers
+  // are the live Colorado and Connecticut probes of 2026-09-15 at $25,000 and
+  // $45,000 (docs/upstream/evidence/childcare-co-full.json, childcare-ct-full.json).
+  const body = (state: string, subsidy: [number, number], benefits: [number, number]) => ({
+    status: "ok",
+    result: {
+      axes: [[{ min: 25000, max: 45000, count: 2 }]],
+      households: {
+        h: {
+          state_name: { "2026": state },
+          household_net_income: { "2026": [45226, 45928] },
+          household_benefits: { "2026": benefits },
+        },
+      },
+      spm_units: {
+        s: {
+          snap: { "2026": [1553, 0] }, tanf: { "2026": [0, 0] },
+          spm_unit_capped_housing_subsidy: { "2026": [0, 0] },
+          free_school_meals: { "2026": [0, 0] }, reduced_price_school_meals: { "2026": [0, 0] },
+          spm_unit_medical_out_of_pocket_expenses: { "2026": [0, 3169] },
+          child_care_subsidies: { "2026": subsidy },
+        },
+      },
+      tax_units: { t: { eitc: { "2026": [0, 0] }, refundable_ctc: { "2026": [0, 0] }, premium_tax_credit: { "2026": [0, 0] } } },
+      people: { you: { age: { "2026": [30, 30] } }, child1: { age: { "2026": [3, 3] } } },
+    },
+  });
+
+  it("reads the subsidy as programs.childcare in either kind of state", () => {
+    // Colorado: household_benefits carries SNAP + the subsidy.
+    const co = parsePEResponse(body("CO", [8913, 0], [10466, 0]), 2);
+    expect(co[0].programs.childcare).toBe(8913);
+    // Connecticut: same variable, same value, but household_benefits is SNAP alone.
+    const ct = parsePEResponse(body("CT", [8850, 0], [2577, 0]), 2);
+    expect(ct[0].programs.childcare).toBe(8850);
+  });
+
+  it("takes it out of the untracked remainder where net income counted it, and nowhere else", () => {
+    // CO is one of the 23 states in `gov.household.household_state_benefits`,
+    // so the subsidy IS inside household_benefits: naming it must leave 0 over.
+    expect(parsePEResponse(body("CO", [8913, 0], [10466, 0]), 2)[0].otherBenefits).toBe(0);
+    // CT is not, so household_benefits never held it. Subtracting it anyway
+    // would eat $8,850 of somebody else's untracked benefit — here, a $3,000
+    // one that must survive intact.
+    expect(parsePEResponse(body("CT", [8850, 0], [4553, 0]), 2)[0].otherBenefits).toBe(3000);
+  });
+
+  it("is simply absent — not an error — on a curve that never asked for it", () => {
+    const b = body("CT", [0, 0], [2577, 0]);
+    delete (b.result.spm_units.s as Record<string, unknown>).child_care_subsidies;
+    const points = parsePEResponse(b, 2);
+    expect(points[0].programs.childcare).toBeUndefined();
+    // …and such a body does not even need to carry a state.
+    delete (b.result.households.h as Record<string, unknown>).state_name;
+    expect(parsePEResponse(b, 2)[0].otherBenefits).toBe(1024);
+  });
+
+  it("refuses to guess the state when there IS a subsidy to place", () => {
+    const b = body("CT", [8850, 0], [2577, 0]);
+    delete (b.result.households.h as Record<string, unknown>).state_name;
+    expect(() => parsePEResponse(b, 2)).toThrow(PEParseError);
+  });
+});

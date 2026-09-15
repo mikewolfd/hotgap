@@ -29,6 +29,8 @@ const USAGE = `hotgap <command> [options]
     --spouse-earnings 0
     --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
     --head-start  --housing  --employer-coverage  take-up (default: not received)
+    --childcare-subsidy           take-up of the state's CCDF child-care subsidy
+                                  (default: not received; needs --childcare)
     --offline                     use the committed archetype curve
     --json                        print the full evaluation as JSON
 
@@ -44,6 +46,7 @@ const OPTIONS = {
   "spouse-earnings": { type: "string" }, ssdi: { type: "string" },
   "child-support": { type: "string" }, unemployment: { type: "string" },
   "head-start": { type: "boolean" }, housing: { type: "boolean" },
+  "childcare-subsidy": { type: "boolean" },
   "employer-coverage": { type: "boolean" }, offline: { type: "boolean" }, json: { type: "boolean" },
   help: { type: "boolean" },
 } as const;
@@ -134,6 +137,7 @@ function householdFrom(f: Flags): HouseholdAnswers {
     unemploymentMonthly: num(f.unemployment) ?? 0,
     getsHeadStart: f["head-start"] === true,
     getsHousing: f.housing === true,
+    getsChildcareSubsidy: f["childcare-subsidy"] === true,
     hasEmployerCoverage: f["employer-coverage"] === true,
   });
   return v.ok ? v.value : fail(2, `bad input: ${v.detail}`);
