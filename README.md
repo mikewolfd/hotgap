@@ -24,7 +24,16 @@ that leap lands among real households' incomes.
 - `core/` — `@hotgap/core`: the calculation library (validation, PolicyEngine
   payload/parse, cliff and escape analysis, reach, minimum-wage context) plus
   the committed data files and the `hotgap` CLI
-- `pipeline/` — weekly batch job: sweeps 51 states × 8 household archetypes
+- `pipeline/` — weekly batch job: sweeps 51 states × 11 household archetypes
+  (single with 0–3 children, married with 0–3, and married with 1–3 where
+  **both** parents work). The two married families differ in more than a
+  second wage: a single-earner couple has a parent at home, so it buys no
+  child care and cannot claim the subsidy, which every state conditions on
+  all parents working; a dual-earner couple buys care, claims the subsidy,
+  and is the household the child-care cliff actually hits. The dual-earner
+  spouse earns a fixed $15,080, full-time at the *federal* minimum wage, on
+  purpose — a state-varying second wage would make the map partly a
+  comparison of households rather than of state rules.
   through the same PolicyEngine API and `@hotgap/core` math, producing the
   committed summary and per-state curve data
 - `scripts/` — one-off builders for the ZIP→state, ZIP→county, and reach
@@ -385,7 +394,7 @@ received), `--offline`, `--json`.
     npm test                # unit tests
     npm run typecheck       # tsc -b core pipeline
     npm run contract        # live PolicyEngine API contract check
-    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~10-15 min; 51 states x 8 archetypes, axis sized per household)
+    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~25 min; 51 states x 11 archetypes, axis sized per household)
 
 `npm run pipeline` also takes `--from-data` (recompute summary/state metrics
 from already-fetched curves, no PolicyEngine calls) and `--dry-run` (build every request payload

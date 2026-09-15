@@ -507,3 +507,38 @@ three states measured, and the leap triples or quadruples. Numbers in the
 report accompanying this branch.
 
 Gates: typecheck, 339 unit tests, dry-run sweep, two new live contract cases.
+
+# Dual-earner archetypes, and childcare in the sweep (2026-09-15)
+
+The sweep's archetypes now buy child care and claim the subsidy, and the
+set grew from eight to eleven. Three things came together:
+
+- A working parent of a young child pays for care, so a $0 bill was not a
+  neutral default — it was the one that hid the child-care cliff. Each
+  child under 6 is charged the state's centre-based preschool price.
+- A single-earner married couple has a parent at home, so it buys no care
+  and claims no subsidy; the subsidy's activity test requires every parent
+  to work (verified live — Delaware pays such a couple $13,260 once the
+  spouse works and $0 when they do not). Charging them for care *and*
+  denying them the subsidy was wrong in both directions at once.
+- That left the two-earner couple, the household the cliff actually hits,
+  unmodelled. `married-dual-1/2/3` add it: spouse at a fixed $15,080,
+  full-time at the federal minimum, chosen national rather than
+  state-varying so the map compares state rules and not households.
+
+Consequences worth knowing. The reach ladders for `married-1/2/3` were
+pooling one- and two-earner couples and using the blend as the yardstick
+for a household modelled as single-earner; split properly, a single-earner
+couple with one child has median household earnings of $68,300 against
+$135,500 for a dual-earner one. 558 of 561 reach cells publish. And
+`summary.json` carries `childcareSubsidyUnmodeled`, 18 states where a lone
+working parent paying for care receives nothing — 13 have no state variable
+in the deployed API, four return $0 on default inputs (upstream #9485),
+and the flag is judged on single parents alone, because a married
+archetype's $0 is correct policy rather than an engine gap.
+
+Two process traps, both now guarded: a git worktree has no `node_modules`,
+so a subagent's `@hotgap/core` resolved into the main checkout and its
+tests ran against in-flight code; and because the worktree sits inside the
+repo, vitest collected both copies (706 tests where there are 353).
+`vitest.config.ts` and `.gitignore` exclude `.claude/worktrees/`.
