@@ -321,7 +321,9 @@ function applyHeadStart(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[]
   return points.map((p) => {
     const sticker = p.programs.headstart ?? 0;
     if (sticker <= 0) return p;
-    const value = Math.min(sticker, replacementCost);
+    // A childcare subsidy at this point already pays part of the bill Head
+    // Start would replace; count that part once (both toggles on together).
+    const value = Math.min(sticker, Math.max(0, replacementCost - (p.programs.childcare ?? 0)));
     return {
       ...p,
       netIncome: p.netIncome - (sticker - value),

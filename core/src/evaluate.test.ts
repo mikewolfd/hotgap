@@ -571,6 +571,20 @@ describe("reach uses householder-plus-spouse earnings", () => {
   });
 });
 
+describe("Head Start and a childcare subsidy together", () => {
+  it("values Head Start only for the part of the bill the subsidy does not already pay", () => {
+    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
+    const p = (earnings: number, subsidy: number): CurvePoint => ({
+      earnings, netIncome: 40000, medicalOOP: 0, programs: { ...ZERO, headstart: 20000, childcare: subsidy }, childPrograms: { headstart: 20000 }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
+    });
+    const a = answersWith({ getsHeadStart: true, getsChildcareSubsidy: true, monthlyChildcare: 800, childAges: [3], childDisabled: [false] });
+    const alone = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 0), p(30000, 0)] }, "live");
+    const both = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 9000), p(30000, 9000)] }, "live");
+    const valued = (ev: ReturnType<typeof evaluateCurve>) => ev.curve.points[0].netIncome - 40000 + 20000; // net change vs the $20k sticker
+    expect(valued(both)).toBe(Math.max(0, valued(alone) - 9000));
+  });
+});
+
 describe("state premium wraps", () => {
   const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
   const enrollee = (earnings: number, moop: number): CurvePoint => ({
