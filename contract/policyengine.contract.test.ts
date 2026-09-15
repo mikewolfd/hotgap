@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+// The endpoint under test: the public API unless HOTGAP_PE_URL names another
+// one. Every assertion below is about behaviour the public API has, so a
+// self-hosted stand-in (engine/) has to satisfy all of them unchanged.
+import { peUrl } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -12,7 +16,7 @@ const request = RUN
 
 describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   it("computes a 101-point axes sweep with every variable we display", async () => {
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
@@ -49,7 +53,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } },
       },
     };
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(probe),
@@ -74,7 +78,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } },
       },
     };
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(probe),
@@ -111,7 +115,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" } } },
       },
     };
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(probe),
@@ -129,7 +133,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const off = JSON.parse(JSON.stringify(withHS));
     off.household.people.kid.head_start = { "2026": 0 };
     const call = async (body: unknown) => {
-      const res = await fetch("https://api.policyengine.org/us/calculate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
+      const res = await fetch(peUrl(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
       return (await res.json()) as any;
     };
     const on = await call(withHS);
@@ -165,7 +169,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
 
   it("county_fips shifts the ACA rating area: SF vs LA yield different premium_tax_credit at the same CA income", async () => {
     const call = async (body: unknown) => {
-      const res = await fetch("https://api.policyengine.org/us/calculate", {
+      const res = await fetch(peUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -218,7 +222,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         axes: [[{ name: "employment_income", min: 40000, max: 80000, count: 3, period: "2026" }]],
       },
     };
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(probe),
@@ -275,7 +279,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         },
       },
     };
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(probe),
@@ -296,7 +300,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   }, 90_000);
 
   it("still computes ok with no county_fips at all (state-only fallback)", async () => {
-    const res = await fetch("https://api.policyengine.org/us/calculate", {
+    const res = await fetch(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(singleAdultHousehold()),
@@ -355,7 +359,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         },
       });
       const call = async (forced: number | null) => {
-        const res = await fetch("https://api.policyengine.org/us/calculate", {
+        const res = await fetch(peUrl(), {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(household(forced)), signal: AbortSignal.timeout(60_000),
         });
