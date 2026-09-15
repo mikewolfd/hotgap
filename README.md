@@ -102,9 +102,13 @@ single / $7,216 family).
 All under `core/data/`:
 
 - `summary.json`, `states/{ST}.json` — the weekly 51-state × 8-archetype
-  PolicyEngine sweep, each curve run along a $150,000-floor, $1,000-step axis
-  (151 points; the step widens beyond $150,000 of earnings so any
-  household's curve stays near 151 points — see `axisSpec` in
+  PolicyEngine sweep. Each curve's axis runs past 400% of the 2025 poverty
+  line (plus $40,000 of room to recover) for the household's own size, at
+  $1,000 steps up to $200,000 and coarser only beyond that — so the top of
+  the axis is $150,000 (151 points) for a household of one to three,
+  $170,000 (171 points) for four, $195,000 (196 points) for five, and wider
+  still for larger households, rather than one flat axis clipping the ACA
+  subsidy cliff off the top of a bigger family's chart (see `axisSpec` in
   `core/src/translate.ts`). `summary.json` carries `leapIsLowerBound` per
   archetype: true when its worst danger zone runs off the top of that axis
   rather than actually closing. Rebuild: `npm run pipeline`.
@@ -176,7 +180,7 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
     npm test                # unit tests
     npm run typecheck       # tsc -b core pipeline
     npm run contract        # live PolicyEngine API contract check
-    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~10-15 min; 51 states x 8 archetypes over a 151-point axis)
+    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~10-15 min; 51 states x 8 archetypes, axis sized per household)
 
 `npm run pipeline` also takes `--from-data` (recompute summary/state metrics
 from already-fetched curves, no PolicyEngine calls) and `--dry-run` (build every request payload

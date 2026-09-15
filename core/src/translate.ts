@@ -20,9 +20,11 @@ export interface AxisSpec {
  * $100k axis cut the biggest cliff off the top of its own chart. Above
  * $100,000 of pay the axis follows 1.5× earnings instead.
  *
- * The step grows with the axis so a request stays near 151 points whatever the
- * household earns; a wider step raises the cliff-detection floor (see
- * analyze.ts), which is the price of not asking PolicyEngine for 751 points.
+ * The axis stays at $1,000 steps up to $200,000 (151 to 196 points depending
+ * on household size); beyond that the step widens so a very high earner's
+ * request stays under ~200 points. A wider step raises the cliff-detection
+ * floor (see analyze.ts), which is the price of not asking PolicyEngine for
+ * 751 points.
  */
 export function axisSpec(a: HouseholdAnswers): AxisSpec {
   // The axis must run past the 400%-FPL end of the premium tax credit for this
