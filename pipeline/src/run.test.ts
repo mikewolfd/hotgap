@@ -19,19 +19,29 @@ import {
 // The stored fixture is a 101-point sweep to $100k; the archetype axis is now
 // 151 points to $150k. Pad every series flat beyond the last point so the
 // fixture's pinned cliffs, safe exit, and leap are unchanged.
+const rawFixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 const AXIS = axisSpec(answersFor("CA", ARCHETYPES[0]));
-function padSeries(value: unknown): unknown {
+function padSeries(value: unknown, count: number): unknown {
   if (Array.isArray(value) && value.length === 101 && typeof value[0] === "number") {
-    return [...value, ...Array(AXIS.count - 101).fill(value[100])];
+    return [...value, ...Array(count - 101).fill(value[100])];
   }
   if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, padSeries(v)]));
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, padSeries(v, count)]));
   }
   return value;
 }
-const fixtureJson = padSeries(JSON.parse(readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"))) as { result: { axes: { max: number; count: number }[][] } };
-fixtureJson.result.axes[0][0] = { ...fixtureJson.result.axes[0][0], max: AXIS.max, count: AXIS.count };
-const fixtureBody = JSON.stringify(fixtureJson);
+/** The fixture stretched flat to a given axis, so its pinned cliffs survive whatever length a request asks for. */
+function fixtureFor(count: number, max: number): string {
+  const json = padSeries(JSON.parse(rawFixture), count) as { result: { axes: { max: number; count: number }[][] } };
+  json.result.axes[0][0] = { ...json.result.axes[0][0], max, count };
+  return JSON.stringify(json);
+}
+/** A fake PolicyEngine: answers each request with the fixture on the axis that request asked for. */
+function fixtureForRequest(init?: RequestInit): string {
+  const axis = JSON.parse(init!.body as string).household.axes[0][0] as { max: number; count: number };
+  return fixtureFor(axis.count, axis.max);
+}
+const fixtureBody = fixtureFor(AXIS.count, AXIS.max);
 const noopSleep = async () => {};
 
 describe("ALL_STATES", () => {
@@ -76,9 +86,9 @@ describe("runPipeline", () => {
 
   it("fetches 2 fake states × 8 archetypes from an injected fetch and builds correct summary + state files, with zero real network", async () => {
     let callCount = 0;
-    const fetchImpl = (async () => {
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       callCount++;
-      return new Response(fixtureBody, { status: 200 });
+      return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
 
     const result = await runPipeline({ states: ["ZZ", "YY"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
@@ -106,7 +116,7 @@ describe("runPipeline", () => {
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
 
       const points = result.stateFiles![state].archetypes["single-2"].points;
-      expect(points).toHaveLength(AXIS.count);
+      expect(points).toHaveLength(axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === "single-2")!)).count);
       expect(Number.isInteger(points[0].netIncome)).toBe(true);
     }
     expect(result.summary!.archetypes).toHaveLength(8);
@@ -119,7 +129,7 @@ describe("runPipeline", () => {
       // married-3 is the only archetype with 5 people (you, spouse, 3 kids) —
       // fail it every time to simulate an upstream that never recovers.
       if (peopleCount === 5) return new Response("", { status: 500 });
-      return new Response(fixtureBody, { status: 200 });
+      return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
 
     const result = await runPipeline({ states: ["CA"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
@@ -137,11 +147,13 @@ describe("runFromData", () => {
   // disk at core/data/states/{ST}.json. No fetch is ever invoked.
   function syntheticResults(states: string[]): ResultsByStateArchetype {
     // Rounded at ingestion, exactly as runPipeline does.
-    const points = parsePEResponse(JSON.parse(fixtureBody), AXIS.count).map(roundPoint);
     const results: ResultsByStateArchetype = {};
     for (const state of states) {
       results[state] = {};
-      for (const a of ARCHETYPES) results[state][a.id] = points;
+      for (const a of ARCHETYPES) {
+        const axis = axisSpec(answersFor(state, a));
+        results[state][a.id] = parsePEResponse(JSON.parse(fixtureFor(axis.count, axis.max)), axis.count).map(roundPoint);
+      }
     }
     return results;
   }

@@ -69,11 +69,12 @@ describe("evaluateCurve", () => {
 
 describe("evaluateOffline", () => {
   it("uses the committed archetype curve, clamped to its last sampled point", () => {
-    const ev = evaluateOffline(answersWith({ annualEarnings: 150000 }))!;
+    const ev = evaluateOffline(answersWith({ annualEarnings: 999_999 }))!;
+    const last = ev.curve.points[ev.curve.points.length - 1].earnings;
     expect(ev.source).toBe("archetype");
-    expect(ev.curve.currentEarnings).toBe(100000);
-    expect(ev.curve.points).toHaveLength(101);
-    expect(ev.analysis.currentEarnings).toBe(100000);
+    expect(last).toBeGreaterThanOrEqual(150_000);
+    expect(ev.curve.currentEarnings).toBe(last);
+    expect(ev.analysis.currentEarnings).toBe(last);
   });
 
   it("returns null when no state file exists", () => {

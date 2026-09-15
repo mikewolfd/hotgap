@@ -10,9 +10,10 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const AXIS_COUNT = axisSpec(answersFor("CA", ARCHETYPES[0])).count;
+const countFor = (state: string, archetypeId: string) => axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === archetypeId)!)).count;
 
-function linearCurve(netIncomeStart = 10000): CurvePoint[] {
-  return Array.from({ length: AXIS_COUNT }, (_, i) => ({
+function linearCurve(netIncomeStart = 10000, length = AXIS_COUNT): CurvePoint[] {
+  return Array.from({ length }, (_, i) => ({
     earnings: i * 1000,
     netIncome: netIncomeStart + i * 100,
     medicalOOP: 0,
@@ -23,7 +24,7 @@ function linearCurve(netIncomeStart = 10000): CurvePoint[] {
 
 function fullResultsFor(state: string): ResultsByStateArchetype {
   const forState: Record<string, CurvePoint[]> = {};
-  for (const a of ARCHETYPES) forState[a.id] = linearCurve();
+  for (const a of ARCHETYPES) forState[a.id] = linearCurve(10000, countFor(state, a.id));
   return { [state]: forState };
 }
 
@@ -78,7 +79,7 @@ describe("buildSummary", () => {
     expect(summary.generated).toBe("2026-07-11T00:00:00.000Z");
     expect(summary.year).toBe("2026");
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
-    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve()));
+    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve(10000, countFor("CA", "single-2"))));
     expect(Object.keys(summary.states.CA)).toHaveLength(8);
   });
 

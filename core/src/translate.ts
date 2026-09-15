@@ -1,4 +1,5 @@
 import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
+import { fpl2025 } from "./policyYear.js";
 import { YEAR, type HouseholdAnswers } from "./types.js";
 
 export interface AxisSpec {
@@ -24,8 +25,15 @@ export interface AxisSpec {
  * analyze.ts), which is the price of not asking PolicyEngine for 751 points.
  */
 export function axisSpec(a: HouseholdAnswers): AxisSpec {
-  const wanted = Math.max(150_000, Math.ceil((a.annualEarnings * 1.5) / 5000) * 5000);
-  const step = Math.max(1000, Math.ceil(wanted / 150_000) * 1000);
+  // The axis must run past the 400%-FPL end of the premium tax credit for this
+  // household's size ($106,600 for three, $128,600 for four, $150,600 for five
+  // on the 2025 guidelines) with room for the curve to recover, or the
+  // biggest cliff sits at the top of its own chart and every safe exit past
+  // it reads as "never".
+  const size = 1 + (a.married ? 1 : 0) + a.childAges.length;
+  const pastSubsidyCliff = 4 * fpl2025(a.state, size) + 40_000;
+  const wanted = Math.ceil(Math.max(150_000, a.annualEarnings * 1.5, pastSubsidyCliff) / 5000) * 5000;
+  const step = Math.max(1000, Math.ceil(wanted / 200_000) * 1000);
   // Round the top up to a whole number of steps: `wanted` is a multiple of
   // $5,000 and `step` need not divide it (a $150,000 earner wants $225,000 at
   // a $2,000 step), and a fractional point count is not a valid axis.

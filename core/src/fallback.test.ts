@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { analyzeCurve } from "./analyze.js";
+import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { axisSpec } from "./translate.js";
 import { archetypeCurveFrom, clampFallbackEarnings, loadArchetypeCurve, pickArchetypeId } from "./fallback.js";
 
 const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
@@ -31,8 +33,8 @@ describe("archetypeCurveFrom", () => {
 });
 
 describe("loadArchetypeCurve", () => {
-  it("reads the committed 101-point curve for a real state", () => {
-    expect(loadArchetypeCurve("CA", false, 1)).toHaveLength(101);
+  it("reads the committed curve for a real state, sized to that household's axis", () => {
+    expect(loadArchetypeCurve("CA", false, 1)).toHaveLength(axisSpec(answersFor("CA", ARCHETYPES[1])).count);
   });
   it("returns null for a state we have no file for", () => {
     expect(loadArchetypeCurve("ZZ", false, 1)).toBeNull();

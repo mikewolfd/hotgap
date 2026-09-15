@@ -21,11 +21,17 @@ describe("axisSpec", () => {
     expect(axisSpec({ ...base, annualEarnings: 90000 })).toEqual({ max: 150_000, step: 1000, count: 151 });
   });
 
-  it("scales to 1.5× pay with a wider step, keeping the request near 151 points", () => {
+  it("runs past the 400%-FPL subsidy cliff for larger households", () => {
+    // Four people: 400% FPL = $128,600 → axis to $170,000; five: $150,600 → $195,000.
+    expect(axisSpec({ ...base, married: true, spouseAge: 30, childAges: [3, 7], childDisabled: [false, false] })).toEqual({ max: 170_000, step: 1000, count: 171 });
+    expect(axisSpec({ ...base, married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false] })).toEqual({ max: 195_000, step: 1000, count: 196 });
+  });
+
+  it("scales to 1.5× pay with a wider step, keeping the request under ~200 points", () => {
     // $150k × 1.5 = $225,000, which is not a whole number of $2,000 steps —
     // the top rounds up to $226,000 rather than asking for a fractional count.
     expect(axisSpec({ ...base, annualEarnings: 150_000 })).toEqual({ max: 226_000, step: 2000, count: 114 });
-    expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 750_000, step: 5000, count: 151 });
+    expect(axisSpec({ ...base, annualEarnings: 500_000 })).toEqual({ max: 752_000, step: 4000, count: 189 });
   });
 
   it("always yields a whole number of steps and both endpoints", () => {
