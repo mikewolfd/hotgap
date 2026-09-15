@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import threading
 from collections import OrderedDict
 from importlib.metadata import version
@@ -145,6 +146,39 @@ def _validate(household: dict[str, Any], system) -> None:
 # 0.07 s to build a simulation over one already built. HotGap sends the same
 # handful of parameter corrections on every request for a given state, so keep
 # the last few. Small on purpose — each system holds the full parameter tree.
+# HotGap's parse.ts subtracts the programs it names from `household_benefits`
+# to get an untracked remainder, and its evaluate.ts values Head Start at
+# replacement cost by adjusting net income DOWN from the sticker. Both assume
+# Head Start sits inside household_net_income, which is how the public API
+# behaves and how every committed curve was swept. policyengine-us 2.4.2 moved
+# that behind a parameter defaulting to false, so serving the release as-is
+# would silently change the meaning of every curve and floor that remainder at
+# zero. Restoring it is what makes this service a drop-in rather than a
+# different model; it is named here, switchable, and pinned by HotGap's own
+# contract test ("head_start:0 override removes Head Start from net income"),
+# which fails loudly if either model moves again.
+HEAD_START_IN_NET_INCOME = "gov.simulation.include_head_start_benefits_in_net_income"
+_RESTORE_HEAD_START = os.environ.get("HOTGAP_ENGINE_HEAD_START_IN_NET_INCOME", "1") != "0"
+
+
+def _has_parameter(path: str) -> bool:
+    """True when this model version defines that parameter. A ParameterNode is
+    attribute-addressed, not a mapping, so walk it."""
+    node = BASELINE_SYSTEM.parameters
+    for part in path.split("."):
+        node = getattr(node, part, None)
+        if node is None:
+            return False
+    return True
+
+
+def _baseline_overrides() -> dict[str, Any]:
+    """Parameters this service sets on every request, with their reasons above."""
+    if not _RESTORE_HEAD_START or not _has_parameter(HEAD_START_IN_NET_INCOME):
+        return {}
+    return {HEAD_START_IN_NET_INCOME: {"2000-01-01.2099-12-31": True}}
+
+
 _POLICY_CACHE_SIZE = 8
 _policy_cache: "OrderedDict[str, Any]" = OrderedDict()
 # One lock for the cache AND for running a simulation. policyengine-us hands
@@ -156,6 +190,9 @@ _lock = threading.RLock()
 
 
 def _system_for(policy: dict[str, Any] | None):
+    # The caller's own overrides win: a request that sets the same parameter
+    # is asking for that value deliberately.
+    policy = {**_baseline_overrides(), **(policy or {})}
     if not policy:
         return BASELINE_SYSTEM
     key = json.dumps(policy, sort_keys=True)
