@@ -169,6 +169,14 @@ changes most cells: on the CA single-parent fixture, safe exit moves $81k →
 $91k because the real 400%-FPL subsidy cliff ($84k) becomes visible, and the
 leap shrinks $52k → $45k.
 
+Every factual claim in that review was then validated against primary federal
+and state sources by four independent research agents plus two follow-ups;
+see `docs/reviews/2026-09-14-methodology-validation.md` for the verdicts,
+the corrections to the review (NY Essential Plan now ends at 200% FPL; the
+Massachusetts TAFDC figures came from PolicyEngine and are wrong; children's
+Medicaid cannot end mid-year), and the split between HotGap fixes and
+PolicyEngine upstream reports.
+
 Still open from the same review, each a methodology decision: coverage-gap
 households in the nine non-expansion states are charged the full benchmark
 premium instead of being uninsured; the employer-coverage premium constants
