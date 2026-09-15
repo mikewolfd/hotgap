@@ -9,7 +9,7 @@
 //   evaluateHousehold(answers)        all of the above in one call, with an
 //                                     offline archetype fallback when the API fails
 //
-// Committed data (data/): the weekly 51-state × 8-archetype sweep, ACS reach
+// Committed data (data/): the weekly 51-state × 11-archetype sweep, ACS reach
 // ladders, and ZIP → state / county crosswalks. See README.md.
 export * from "./types.js";
 export * from "./policyYear.js";
