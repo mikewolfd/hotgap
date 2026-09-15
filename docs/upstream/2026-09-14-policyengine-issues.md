@@ -670,3 +670,19 @@ in total.
 | U5(b) APTC repayment cap eliminated | **DISPROVED** — reconciliation not modelled at all | source grep over `3a6e07b` |
 | U5(c) SNAP non-citizen narrowing | **DISPROVED** — allowlist correct from 2025-07-01 | `u5_params.txt` |
 | U6 Frozen parent-Medicaid standards | **CONFIRMED for TX, MS, GA, FL, WY, SC; consistent for AL, KS, TN, WI** — Issue 5 | `u6.sc.request.json`, `u6.sc.response.json`, `u6.wy.request.json`, `u6.wy.response.json`, `paths.txt`, pinned `parent/income_limit.yaml` |
+
+## Filed upstream (2026-09-15)
+
+| Issue | policyengine-us |
+|---|---|
+| MA TAFDC work-expense deduction and eligibility test | https://github.com/PolicyEngine/policyengine-us/issues/9469 |
+| MA TAFDC counted twice (`tanf` and `household_state_benefits`) | https://github.com/PolicyEngine/policyengine-us/issues/9470 |
+| NY Basic Health Program tier ended 2026-07-01 | https://github.com/PolicyEngine/policyengine-us/issues/9471 |
+| Coverage-gap adults charged the benchmark premium | https://github.com/PolicyEngine/policyengine-us/issues/9472 |
+| `employer_sponsored_insurance_premiums` never reaches MOOP | https://github.com/PolicyEngine/policyengine-us/issues/9473 |
+| Parent/caretaker Medicaid limits stale in six states | https://github.com/PolicyEngine/policyengine-us/issues/9474 |
+
+Pull requests are opened from the fork mikewolfd/policyengine-us for the
+four mechanical fixes (parameters for the Medicaid limits and the NY list;
+formula and list changes for Massachusetts). The coverage-gap and employer-
+premium items are modeling decisions left to the maintainers.
