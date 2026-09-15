@@ -42,7 +42,12 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     childAges: a.childAges,
     childDisabled: a.childAges.map(() => false),
     monthlyRent: defaults.monthlyRent,
-    monthlyChildcare: 0,
+    // A working parent of a young child pays for care, so a $0 bill is not the
+    // neutral default — it is the one that hides the childcare cliff. Each
+    // child under 6 is charged the state's center-based preschool price; a
+    // 6-year-old is in school. Infant care really costs more than a
+    // preschooler's, so a household with a baby is understated here.
+    monthlyChildcare: defaults.monthlyChildcarePreschool * a.childAges.filter((age) => age < 6).length,
     annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
     spouseAnnualEarnings: 0,
     hoursPerWeek: null,
@@ -52,7 +57,14 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     spouseDisabled: false,
     getsHeadStart: false,
     getsHousing: false,
-    getsChildcareSubsidy: false,
+    // Unlike Head Start and a housing voucher, the child-care subsidy is ON
+    // for the sweep. Those default off because the personal door answers "what
+    // happens to YOU", and assuming a rationed program a household may not
+    // receive inflates their own numbers. The sweep answers a different
+    // question — how rough are this state's rules — and its exit is the
+    // largest cliff most parents of young children face, so a map that omits
+    // it understates every state. The personal default stays off.
+    getsChildcareSubsidy: true,
     hasEmployerCoverage: false,
     ssdiMonthly: 0,
     childSupportMonthly: 0,
