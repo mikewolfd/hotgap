@@ -1,12 +1,4 @@
-import { analyzeCurve, escapeAnalysis, type CurvePoint } from "@hotgap/shared";
-
-export interface StateMetrics {
-  biggestLoss: number;
-  dangerWidth: number;
-  cliffCount: number;
-  safeExit: number | null;
-  leap: number;
-}
+import { analyzeCurve, escapeAnalysis, type CurvePoint, type StateMetrics } from "@hotgap/core";
 
 export function stateMetrics(points: CurvePoint[]): StateMetrics {
   const a = analyzeCurve(points, 0);

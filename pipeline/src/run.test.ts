@@ -1,18 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, parsePEResponse } from "@hotgap/shared";
-import { buildStateFile, buildSummary, type ResultsByStateArchetype, type StateFileJson } from "./build.js";
+import { ARCHETYPES, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import {
   parseArgs,
-  fetchWithRetry,
   runPipeline,
   runFromData,
   resultsFromStateFile,
   writeOutputs,
   writeSummary,
+  sameIgnoringGenerated,
   ALL_STATES,
 } from "./run.js";
 
@@ -53,26 +53,6 @@ describe("parseArgs", () => {
   });
 });
 
-describe("fetchWithRetry", () => {
-  it("retries up to 3 attempts with 2s/8s backoff, succeeding on the last try", async () => {
-    let calls = 0;
-    const fetchImpl = (async () => {
-      calls++;
-      return calls < 3 ? new Response("", { status: 500 }) : new Response(JSON.stringify({ ok: true }), { status: 200 });
-    }) as unknown as typeof fetch;
-    const sleeps: number[] = [];
-    const body = await fetchWithRetry(fetchImpl, { household: {} }, async (ms) => { sleeps.push(ms); });
-    expect(calls).toBe(3);
-    expect(sleeps).toEqual([2000, 8000]);
-    expect(body).toEqual({ ok: true });
-  });
-
-  it("throws after exhausting all 3 attempts", async () => {
-    const fetchImpl = (async () => new Response("", { status: 500 })) as unknown as typeof fetch;
-    await expect(fetchWithRetry(fetchImpl, {}, noopSleep)).rejects.toThrow();
-  });
-});
-
 describe("runPipeline", () => {
   it("dry-run builds payloads without ever calling fetch", async () => {
     let called = false;
@@ -101,8 +81,9 @@ describe("runPipeline", () => {
     // metrics, since the fake fetch always returns the same fixture response.
     for (const state of ["ZZ", "YY"]) {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
+      // Metrics come from the whole-dollar points the sweep stores, not raw floats.
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 21957,
+        biggestLoss: 21956,
         dangerWidth: expect.any(Number),
         cliffCount: expect.any(Number),
         safeExit: 81000,
@@ -140,9 +121,10 @@ describe("runPipeline", () => {
 describe("runFromData", () => {
   // Two synthetic states, built the same way the real pipeline would (via
   // buildStateFile), then round-tripped through JSON exactly as they'd sit on
-  // disk at app/public/data/states/{ST}.json. No fetch is ever invoked.
+  // disk at core/data/states/{ST}.json. No fetch is ever invoked.
   function syntheticResults(states: string[]): ResultsByStateArchetype {
-    const points = parsePEResponse(JSON.parse(fixtureBody), 101);
+    // Rounded at ingestion, exactly as runPipeline does.
+    const points = parsePEResponse(JSON.parse(fixtureBody), 101).map(roundPoint);
     const results: ResultsByStateArchetype = {};
     for (const state of states) {
       results[state] = {};
@@ -171,19 +153,10 @@ describe("runFromData", () => {
     expect(result.stateFiles).toBeUndefined(); // state files are untouched, never rebuilt
     expect(result.summary).toBeDefined();
 
-    // Round trip: the recomputed summary must match a summary built from the
-    // same on-disk (whole-dollar-rounded) points runFromData actually reads —
-    // not from the original unrounded in-memory results. buildStateFile rounds
-    // netIncome to whole dollars for storage, so metrics re-derived from raw
-    // floats vs. from the rounded, stored representation can differ by $1 due
-    // to rounding alone; comparing against the same rounded source is the
-    // faithful identity check (ignoring the fresh `generated` stamp).
-    const roundTripped: ResultsByStateArchetype = {};
-    for (const state of states) {
-      const file = JSON.parse(storedStateFiles[state]) as StateFileJson;
-      roundTripped[state] = resultsFromStateFile(file);
-    }
-    const expected = buildSummary("IGNORED", states, roundTripped);
+    // Exact identity: the sweep rounds each curve once at ingestion, so the
+    // stored points ARE the points the summary was built from, and a summary
+    // rebuilt from disk equals one built in memory (ignoring the fresh stamp).
+    const expected = buildSummary("IGNORED", states, results);
     expect({ ...result.summary, generated: "IGNORED" }).toEqual(expected);
   });
 
@@ -233,6 +206,117 @@ describe("writeSummary", () => {
 
       const written = JSON.parse(await readFile(summaryPath, "utf8"));
       expect(written).toEqual(summary);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("sameIgnoringGenerated", () => {
+  it("ignores the top-level generated key alone", () => {
+    expect(sameIgnoringGenerated({ generated: "a", x: 1 }, { generated: "b", x: 1 })).toBe(true);
+  });
+
+  it("still reports a difference when anything else changes", () => {
+    expect(sameIgnoringGenerated({ generated: "a", x: 1 }, { generated: "a", x: 2 })).toBe(false);
+  });
+
+  it("compares nested structures deeply, not just the top level", () => {
+    const a = { generated: "a", states: { CA: { biggestLoss: 100 } } };
+    const same = { generated: "b", states: { CA: { biggestLoss: 100 } } };
+    const different = { generated: "b", states: { CA: { biggestLoss: 101 } } };
+    expect(sameIgnoringGenerated(a, same)).toBe(true);
+    expect(sameIgnoringGenerated(a, different)).toBe(false);
+  });
+});
+
+// The weekly-sweep noise fix: writeSummary/writeOutputs must skip a write
+// when nothing but `generated` differs from what's on disk, so an unchanged
+// re-sweep doesn't touch all 52 files (regression coverage for the bug where
+// every file's `generated` stamp changed every week regardless).
+describe("writeSummary skip-on-unchanged", () => {
+  it("writing the same numbers twice leaves the file byte-identical with the first stamp", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));
+    try {
+      const summaryPath = path.join(dir, "summary.json");
+      const base = { year: "2026", archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })), states: {} };
+
+      await writeSummary(summaryPath, { ...base, generated: "first-stamp" } as never);
+      const firstBytes = await readFile(summaryPath, "utf8");
+
+      await writeSummary(summaryPath, { ...base, generated: "second-stamp" } as never);
+      const secondBytes = await readFile(summaryPath, "utf8");
+
+      expect(secondBytes).toBe(firstBytes);
+      expect(JSON.parse(secondBytes).generated).toBe("first-stamp");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("changing a number rewrites the file with the new stamp", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));
+    try {
+      const summaryPath = path.join(dir, "summary.json");
+      const archetypes = ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges }));
+      const metrics = { dangerWidth: 0, cliffCount: 0, safeExit: 0, leap: 0 };
+
+      await writeSummary(summaryPath, { generated: "first-stamp", year: "2026", archetypes, states: { CA: { "single-2": { ...metrics, biggestLoss: 100 } } } } as never);
+      await writeSummary(summaryPath, { generated: "second-stamp", year: "2026", archetypes, states: { CA: { "single-2": { ...metrics, biggestLoss: 200 } } } } as never);
+
+      const written = JSON.parse(await readFile(summaryPath, "utf8"));
+      expect(written.generated).toBe("second-stamp");
+      expect(written.states.CA["single-2"].biggestLoss).toBe(200);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("overwrites a corrupt or missing existing file unconditionally", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));
+    try {
+      const summaryPath = path.join(dir, "summary.json");
+      const summary = { generated: "stamp", year: "2026", archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })), states: {} };
+
+      // Missing: nothing has been written to this path yet.
+      await writeSummary(summaryPath, summary as never);
+      expect(JSON.parse(await readFile(summaryPath, "utf8"))).toEqual(summary);
+
+      // Corrupt: not valid JSON at all — must still be overwritten, not skipped.
+      await writeFile(summaryPath, "{not json");
+      const updated = { ...summary, generated: "stamp-2" };
+      await writeSummary(summaryPath, updated as never);
+      expect(JSON.parse(await readFile(summaryPath, "utf8"))).toEqual(updated);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("applies the same skip-on-unchanged behavior per state file in writeOutputs", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));
+    try {
+      const summaryPath = path.join(dir, "summary.json");
+      const statesDir = path.join(dir, "states");
+      const summary = { generated: "g1", year: "2026", archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })), states: {} };
+      const caFile = { generated: "g1", year: "2026", state: "CA", archetypes: {} };
+
+      await writeOutputs({ summaryPath, statesDir }, summary as never, { CA: caFile } as never);
+      const firstCaBytes = await readFile(path.join(statesDir, "CA.json"), "utf8");
+
+      // Re-run with a new stamp but identical numbers: CA.json must stay byte-identical.
+      await writeOutputs({ summaryPath, statesDir }, { ...summary, generated: "g2" } as never, { CA: { ...caFile, generated: "g2" } } as never);
+      const secondCaBytes = await readFile(path.join(statesDir, "CA.json"), "utf8");
+      expect(secondCaBytes).toBe(firstCaBytes);
+
+      // Re-run with changed CA content: CA.json must be rewritten with the new stamp.
+      await writeOutputs(
+        { summaryPath, statesDir },
+        { ...summary, generated: "g3" } as never,
+        { CA: { ...caFile, generated: "g3", archetypes: { "single-0": { points: [] } } } } as never,
+      );
+      const thirdCa = JSON.parse(await readFile(path.join(statesDir, "CA.json"), "utf8"));
+      expect(thirdCa.generated).toBe("g3");
+      expect(thirdCa.archetypes).toEqual({ "single-0": { points: [] } });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -2,64 +2,103 @@
 
 **If I get paid more, do I lose more than I gain?**
 
-HotGap is a free, open-source website that shows benefits cliffs in plain
-language: what happens to a real household's food help, health coverage,
-childcare help, and tax credits as pay goes up. The money line is
-**health-adjusted** — it counts what a household actually pays for health
-coverage (premiums net of subsidy, plus other out-of-pocket costs), not just
-cash benefits, so "what you keep" means money left after paying for health.
-Two doors: check your own numbers, or compare which states have the worst
-gaps on a map — by biggest loss, or by **the leap**, the raise a family must
-clear in one move to get past the worst rough zone and earn safely again.
-Rationed programs (Head Start, a housing voucher, employer coverage) default
-to "off," and live take-up toggles on the result page let you flip each on
-to see how it changes your numbers.
+HotGap computes benefits cliffs in plain language: what happens to a real
+household's food help, health coverage, childcare help, and tax credits as
+pay goes up. The money line is **health-adjusted** — it counts what a
+household actually pays for health coverage (premiums net of subsidy, plus
+other out-of-pocket costs), not just cash benefits, so "what you keep" means
+money left after paying for health. Rationed programs (Head Start, a housing
+voucher, employer coverage) default to "off." From the curve, HotGap derives
+**the leap** — the raise a family must clear in one move to get past the
+worst rough zone and earn safely again — and **reach** — where that leap
+lands among real households' incomes.
 
-Calculations come from [PolicyEngine](https://policyengine.org)'s open
-rules engine via its public API. Estimates only — a caseworker decides
-real benefits.
+## What's in the repo
 
-- `app/` — React site (question flow, result chart, places map + drill-down)
-- `worker/` — Cloudflare Worker (API proxy + cache + static hosting)
-- `shared/` — types and curve math used by both the app and the pipeline
+- `core/` — `@hotgap/core`: the calculation library (validation, PolicyEngine
+  payload/parse, cliff and escape analysis, reach, minimum-wage context) plus
+  the committed data files and the `hotgap` CLI
 - `pipeline/` — weekly batch job: sweeps 51 states × 8 household archetypes
-  through the same PolicyEngine API and shared math as the personal door,
-  producing the places-door map data and the personal door's offline fallback
-  curves
-- ZIP→state data derived from [GeoNames](https://www.geonames.org/) (CC BY 4.0)
-- Earnings distributions ("reach") from [U.S. Census Bureau ACS 1-Year PUMS](https://www.census.gov/programs-surveys/acs/microdata.html) household + person files (public domain): per household, the sum of members' wages and self-employment income, inflation-adjusted to the policy year. Rebuild: `node scripts/build-reach.mjs`.
-- ZIP→county crosswalk from [U.S. Census Bureau 2020 ZCTA-county relationship file](https://www.census.gov/geographies/reference-files/time-series/geo/relationship-files.html) (public domain). Rebuild: `node scripts/build-zip-county.mjs`.
+  through the same PolicyEngine API and `@hotgap/core` math, producing the
+  committed summary and per-state curve data
+- `scripts/` — one-off builders for the ZIP→state, ZIP→county, and reach
+  (ACS earnings) data files
+- `contract/` — a live PolicyEngine API contract test (schedule-only; not
+  part of the default test run)
+- `fixtures/` — recorded PolicyEngine request/response payloads used by tests
+- `docs/` — review and planning history
 
-License: AGPL-3.0-only. Design spec: `docs/superpowers/specs/2026-07-11-hotgap-design.md`.
+## Library shape
+
+- `validateAnswers(input)` — `unknown` → `HouseholdAnswers` (or a reason)
+- `buildPEPayload(answers)` — `HouseholdAnswers` → PolicyEngine request
+- `fetchCurve(answers)` — the curve via the public
+  [PolicyEngine](https://policyengine.org) API
+- `analyzeCurve` / `escapeAnalysis` — cliffs, danger zones, safe exit, the leap
+- `reachForHousehold` — where an income falls among real households
+- `minWageContext` — hours-a-week-at-minimum-wage framing
+- `evaluateHousehold(answers)` — the one-shot: all of the above in order,
+  with an offline archetype-curve fallback when the live API fails
+- `loadSummary` / `loadStateFile` — read the committed weekly-sweep data
+
+## Data files and sources
+
+All under `core/data/`:
+
+- `summary.json`, `states/{ST}.json` — the weekly 51-state × 8-archetype
+  PolicyEngine sweep. Rebuild: `npm run pipeline`.
+- `reach.json` — household earnings percentile ladders from
+  [U.S. Census Bureau ACS 1-Year PUMS](https://www.census.gov/programs-surveys/acs/microdata.html)
+  household + person files (public domain): per household, the sum of
+  members' wages and self-employment income, inflation-adjusted to the
+  policy year. Rebuild: `node scripts/build-reach.mjs`.
+- `zip3-state.json` — ZIP → state derived from
+  [GeoNames](https://www.geonames.org/) (CC BY 4.0). Rebuild:
+  `node scripts/build-zip-table.mjs`.
+- `zip5-county.json` — ZIP → county crosswalk from the
+  [U.S. Census Bureau 2020 ZCTA-county relationship file](https://www.census.gov/geographies/reference-files/time-series/geo/relationship-files.html)
+  (public domain). Rebuild: `node scripts/build-zip-county.mjs`.
+
+## Try it
+
+    npm install
+    npm run hotgap -- curve --state CA --kids 3,7 --earnings 30000            # live PolicyEngine call
+    npm run hotgap -- curve --zip 94110 --kids 3 --rent 1500 --childcare 600 --earnings 30000
+    npm run hotgap -- curve --state TX --married --kids 1,4,9 --earnings 42000 --offline   # committed archetype curve, no network
+    npm run hotgap -- curve ... --json                                        # full HouseholdEvaluation
+    npm run hotgap -- summary --state CA                                      # weekly sweep metrics
+
+Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
+`--spouse-age`, `--kids`, `--disabled` / `--spouse-disabled` /
+`--kids-disabled`, `--rent`, `--childcare`, `--earnings` or `--pay` /
+`--unit` / `--hours`, `--spouse-earnings`, `--head-start` / `--housing` /
+`--employer-coverage`, `--offline`, `--json`.
 
 ## Develop
 
-    npm install
     npm test                # unit tests
-    npm run e2e             # Playwright smoke (needs app build)
+    npm run typecheck       # tsc -b core pipeline
     npm run contract        # live PolicyEngine API contract check
-    npm run readability     # 5th-grade copy gate
-    npm run pipeline        # re-run the places-door data sweep locally (~10 min)
+    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~10 min)
 
-Local site: `npm run build --workspace @hotgap/app`, then `cd worker && npx wrangler dev`
-→ http://localhost:8787 (serves the SPA and proxies /api/curve to PolicyEngine).
+`npm run pipeline` also takes `--from-data` (recompute summary/state metrics
+from already-fetched curves, no PolicyEngine calls) and `--dry-run` (sweep
+and validate without writing files).
 
-### Places data
+`.github/workflows/places-data.yml` runs the sweep automatically every
+Monday at 07:00 UTC (and on manual dispatch), running the test suite and
+typecheck before committing. Data commits only when the swept numbers
+changed — `generated` in `summary.json` and each state file is the stamp of
+the sweep that last changed that file, not of the most recent sweep.
 
-`npm run pipeline` (`pipeline/src/run.ts`) sweeps every state × archetype through PolicyEngine
-and writes `app/src/data/places/summary.json` (bundled map scores) and
-`app/public/data/states/{ST}.json` (lazy per-state curves, also used by the personal door's
-error-path fallback). `.github/workflows/places-data.yml` runs this automatically every Monday
-at 07:00 UTC (and on manual dispatch), running the test suite and typecheck before committing
-the refreshed data only when it changed.
+Estimates only — a caseworker decides real benefits.
 
-Landing on `main` is not the same as reaching production: this repo has no auto-deploy, so a
-refreshed data commit only ships once someone runs the [Deploy](#deploy) step below.
+## History
 
-## Deploy
+The site UI, design system, and Cloudflare Worker were split out of this
+repo and live at git tag `ui-archive`; the deployed site at
+hotgap.hotgap.workers.dev is unchanged. `docs/superpowers/` specs and plans
+predate that split and cite paths (`app/`, `worker/`, `shared/`) that no
+longer exist.
 
-    npm run build --workspace @hotgap/app
-    cd worker && npx wrangler deploy
-
-One Cloudflare Worker serves both the static site (assets binding) and `/api/curve`.
-No secrets are required — the PolicyEngine calculate endpoint is public.
+License: AGPL-3.0-only.

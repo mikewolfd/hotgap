@@ -105,3 +105,49 @@ Accepted tolerances (not changed — swamped by the deliberately-approximate
 Still-open review items unchanged: uncertainty bounds on the reach line;
 external validation vs Atlanta Fed PRD; the no-escape next-step resource
 pointer (deferred per user "not now").
+
+# Core split (2026-09-14)
+
+The React UI (`app/`), design system, Claude Design sync inputs
+(`.design-sync/`), and Cloudflare Worker (`worker/`) were archived out of
+this repo to git tag `ui-archive`; the deployed site at
+hotgap.hotgap.workers.dev keeps running untouched. What remains is the
+calculation library and its supporting data/tooling: `core/` (`@hotgap/core`,
+formerly `shared/`), `pipeline/`, `scripts/`, `contract/`, `fixtures/`,
+`docs/`.
+
+UI-only modules went with the archive: narration, chart labels, map color
+ramps, `en.json` strings, the readability gate, and the Playwright e2e
+suite. They had no life outside the site.
+
+The modules that were genuinely shared logic, not UI, moved into
+`@hotgap/core` instead of being deleted: `worker/src/translate.ts` and
+`worker/src/validate.ts`, and `app/src/lib/{zip,county,fips,states,minWage,
+reachLookup,fallback}.ts`. They now live at `core/src/translate.ts`,
+`core/src/validate.ts`, `core/src/zip.ts`, `core/src/county.ts`,
+`core/src/states.ts`, `core/src/minWage.ts`, `core/src/reachLookup.ts`, and
+`core/src/fallback.ts`.
+
+The state list was previously duplicated: `validate.ts`'s state check and
+the pipeline's `ALL_STATES` sweep list were each their own hand-maintained
+array. Both now derive from `core/src/states.ts`'s `STATE_CODES` — one list
+of states in the repo, checked everywhere else against it.
+
+Weekly-sweep noise-commit fix: `pipeline/src/run.ts` now compares each new
+summary/state file against what's on disk with the `generated` timestamp
+stripped, and skips writing (so nothing is git-added) when the numbers
+themselves are unchanged. `generated` in the committed data means "the sweep
+that last changed this file's numbers," not "the most recent sweep to run" —
+see `core/src/data.ts`.
+
+Still-open items carried forward (not UI-specific, so not resolved by the
+split): uncertainty bounds on reach; external validation vs the Atlanta Fed
+PRD; assets/immigration/other-income (and household-composition) input
+questions; CCDF childcare subsidy, blocked on PolicyEngine support.
+
+Rounding domain (found while proving the noise fix): the sweep stored whole-dollar
+curves but computed `summary.json` from the unrounded floats, so `--from-data`
+drifted by $1 in 114 `biggestLoss` cells and by one $1,000 grid step in six
+Kansas escape metrics — the summary disagreed with its own stored curve. The
+sweep now rounds each curve once at ingestion and derives both artifacts from
+the same points; `summary.json` was rebuilt from the stored curves.

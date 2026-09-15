@@ -1,29 +1,35 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { ARCHETYPES, answersFor, parsePEResponse, type CurvePoint } from "@hotgap/shared";
-import { buildPEPayload, AXIS_COUNT } from "@hotgap/worker/translate";
+import { isDeepStrictEqual } from "node:util";
+import {
+  ARCHETYPES,
+  STATE_CODES,
+  answersFor,
+  parsePEResponse,
+  buildPEPayload,
+  AXIS_COUNT,
+  requestPE,
+  type CurvePoint,
+  type StateFileJson,
+  type SummaryJson,
+} from "@hotgap/core";
 import {
   buildStateFile,
   buildSummary,
+  roundPoint,
   validateResults,
   type ResultsByStateArchetype,
-  type StateFileJson,
-  type SummaryJson,
   type ValidationGap,
 } from "./build.js";
 
-// 50 states + DC, the full weekly sweep. --states overrides this for partial runs.
-export const ALL_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
-];
+// 50 states + DC, the full weekly sweep. --states overrides this for partial
+// runs. Sourced from core's STATE_CODES so there's one list of states in the repo.
+export const ALL_STATES: string[] = [...STATE_CODES];
 
-const PE_URL = "https://api.policyengine.org/us/calculate";
 const DEFAULT_CONCURRENCY = 3;
+// Per-request retry: up to 3 total attempts, waiting 2s then 8s between them
+// (handed straight to core's requestPE).
 const RETRY_DELAYS_MS = [2000, 8000];
 
 export interface RunOptions {
@@ -83,30 +89,6 @@ export function parseArgs(argv: string[]): RunOptions {
   return { states, concurrency, dryRun, fromData };
 }
 
-// Per-request retry: up to 3 total attempts, waiting 2s then 8s between them.
-export async function fetchWithRetry(
-  fetchImpl: typeof fetch,
-  payload: unknown,
-  sleepImpl: SleepFn = realSleep,
-): Promise<unknown> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-    try {
-      const res = await fetchImpl(PE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.status !== 200) throw new Error(`upstream status ${res.status}`);
-      return await res.json();
-    } catch (e) {
-      lastError = e;
-      if (attempt < RETRY_DELAYS_MS.length) await sleepImpl(RETRY_DELAYS_MS[attempt]);
-    }
-  }
-  throw lastError;
-}
-
 async function runQueue<T>(tasks: T[], concurrency: number, worker: (task: T) => Promise<void>): Promise<void> {
   let next = 0;
   async function pull(): Promise<void> {
@@ -135,10 +117,9 @@ export async function runPipeline(
   await runQueue(tasks, opts.concurrency, async ({ state, archetype }) => {
     try {
       const payload = buildPEPayload(answersFor(state, archetype));
-      const body = await fetchWithRetry(fetchImpl, payload, sleepImpl);
-      const points = parsePEResponse(body, AXIS_COUNT);
+      const body = await requestPE(payload, { fetchImpl, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
       results[state] ??= {};
-      results[state][archetype.id] = points;
+      results[state][archetype.id] = parsePEResponse(body, AXIS_COUNT).map(roundPoint);
     } catch (e) {
       console.error(`fetch failed for ${state} × ${archetype.id}: ${(e as Error).message}`);
     }
@@ -197,8 +178,37 @@ export async function runFromData(states: string[], readStateFile: ReadStateFile
   return { ok: true, dryRun: false, gaps: [], summary };
 }
 
+// Weekly-sweep noise fix: every summary.json/state file embeds a `generated`
+// stamp, so a naive write makes all 52 files change every week even when no
+// number moved. `generated` should mean "the sweep that last changed this
+// file's numbers" (core/src/data.ts documents this), so before writing we
+// compare the new content against what's on disk with `generated` stripped
+// from both sides, and skip the write entirely when nothing else differs.
+
+function stripGenerated(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) return value;
+  const { generated: _generated, ...rest } = value as Record<string, unknown>;
+  return rest;
+}
+
+/** Pure: deep-equal once each side's top-level `generated` key is removed. */
+export function sameIgnoringGenerated(a: unknown, b: unknown): boolean {
+  return isDeepStrictEqual(stripGenerated(a), stripGenerated(b));
+}
+
+/** Parses `filePath` as JSON; undefined when it's missing or unparsable, so the caller overwrites unconditionally. */
+async function readExistingJson(filePath: string): Promise<unknown> {
+  try {
+    return JSON.parse(await readFile(filePath, "utf8"));
+  } catch {
+    return undefined;
+  }
+}
+
 export async function writeSummary(summaryPath: string, summary: SummaryJson): Promise<void> {
   await mkdir(path.dirname(summaryPath), { recursive: true });
+  const existing = await readExistingJson(summaryPath);
+  if (existing !== undefined && sameIgnoringGenerated(existing, summary)) return;
   await writeFile(summaryPath, JSON.stringify(summary));
 }
 
@@ -210,13 +220,16 @@ export async function writeOutputs(
   await writeSummary(paths.summaryPath, summary);
   await mkdir(paths.statesDir, { recursive: true });
   for (const [state, file] of Object.entries(stateFiles)) {
-    await writeFile(path.join(paths.statesDir, `${state}.json`), JSON.stringify(file));
+    const statePath = path.join(paths.statesDir, `${state}.json`);
+    const existing = await readExistingJson(statePath);
+    if (existing !== undefined && sameIgnoringGenerated(existing, file)) continue;
+    await writeFile(statePath, JSON.stringify(file));
   }
 }
 
 const DEFAULT_PATHS: OutputPaths = {
-  summaryPath: path.join(process.cwd(), "app/src/data/places/summary.json"),
-  statesDir: path.join(process.cwd(), "app/public/data/states"),
+  summaryPath: path.join(process.cwd(), "core/data/summary.json"),
+  statesDir: path.join(process.cwd(), "core/data/states"),
 };
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {

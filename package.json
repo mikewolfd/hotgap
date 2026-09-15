@@ -2,19 +2,21 @@
   "name": "hotgap",
   "private": true,
   "license": "AGPL-3.0-only",
-  "engines": { "node": ">=22" },
-  "workspaces": ["shared", "worker", "app", "pipeline", "design-system"],
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "core",
+    "pipeline"
+  ],
   "scripts": {
-    "prepare": "npm run build --workspace @hotgap/design-system",
     "test": "vitest run",
-    "typecheck": "tsc -b shared worker app pipeline",
-    "readability": "node scripts/readability.mjs",
+    "typecheck": "tsc -b core pipeline",
     "contract": "RUN_CONTRACT=1 vitest run contract",
-    "e2e": "playwright test --config app/playwright.config.ts",
-    "pipeline": "tsx pipeline/src/run.ts"
+    "pipeline": "tsx pipeline/src/run.ts",
+    "hotgap": "tsx core/src/cli.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
     "@types/node": "^22.20.1",
     "tsx": "^4.23.0",
     "typescript": "^5.6.0",
