@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HotGap — the journalist surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { font-size: var(--t-small); }
+  .page { max-width: 68rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+  h1 { font-size: var(--t-h1); margin: 0 0 var(--s2); letter-spacing: -0.01em; }
+  h2 { font-size: var(--t-h2); margin: var(--s7) 0 var(--s3); }
+  h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
+  p { max-width: var(--measure-wide); }
+
+  .masthead { border-bottom: 1px solid var(--rule); padding: var(--s4) 0 var(--s4); }
+  .wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 0 var(--s4); }
+  .lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+
+  /* One filter row above everything it scopes — never per-chart filters. */
+  .filters { display: flex; gap: var(--s4); flex-wrap: wrap; align-items: flex-end;
+             padding: var(--s4) 0; border-bottom: 1px solid var(--rule); }
+  .filters > div { min-width: 0; flex: 1 1 15rem; }
+  .filters label { display: block; color: var(--ink-3); font-size: var(--t-micro); }
+  select { min-height: var(--touch); border: 1px solid var(--rule-strong); background: var(--surface);
+           color: var(--ink); border-radius: var(--r-control); padding: 0 var(--s3);
+           width: 100%; max-width: 100%; }
+  .dl { margin-left: auto; display: flex; gap: var(--s2); flex: 0 0 auto; }
+  .dl a, .dl button { display: inline-flex; align-items: center; min-height: var(--touch);
+        padding: 0 var(--s4); border: 1px solid var(--rule-strong); background: var(--surface);
+        color: var(--ink); border-radius: var(--r-control); text-decoration: none; cursor: pointer; }
+
+  .split { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s5);
+           align-items: start; }
+  @media (min-width: 62rem) { .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); } }
+  /* Grid items default to min-width:auto, which lets a wide table push the
+     column past the viewport. The scroller only works if the column can shrink. */
+  .split > * { min-width: 0; }
+
+  /* Everything a screenshot needs is inside the figure. */
+  .figure { background: var(--surface); border: 1px solid var(--rule); padding: var(--s5); }
+  .figure h3 { font-size: var(--t-body); }
+  .figure .sub { color: var(--ink-2); margin: 0 0 var(--s4); }
+
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
+  /* The one place type goes below --t-micro: a postal code sized to its tile.
+     It is a label on a figure, not prose, and the same value is in the table. */
+  .tile { position: relative; aspect-ratio: 1; display: flex; align-items: center;
+          justify-content: center; font-size: clamp(9px, 2.1vw, 12px);
+          font-weight: var(--w-semi); letter-spacing: 0.01em; }
+  .tile.nodata { background: var(--surface-sunk); color: var(--ink-3);
+                 outline: 1px dashed var(--rule-strong); outline-offset: -1px; }
+  .tile.sel { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 2; }
+
+  .scale { display: flex; align-items: stretch; gap: 2px; margin: var(--s4) 0 var(--s2); }
+  .scale .sw { flex: 1; height: 12px; }
+  .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
+                  font-size: var(--t-micro); font-variant-numeric: tabular-nums; }
+
+  /* The ranked reading: a sorted dot strip. The map answers "where"; this
+     answers "how much", which is the question a ranking is actually for. */
+  .rank { list-style: none; margin: 0; padding: 0; }
+  .rank li { display: grid; grid-template-columns: 2.1rem 1fr 4.6rem; gap: var(--s3);
+             align-items: center; min-height: 26px; border-bottom: 1px solid var(--rule); }
+  .rank .st { font-weight: var(--w-semi); }
+  /* A dot on a shared, non-zero axis — never a bar, whose length would have to
+     be read from zero and would make a $115k–$134k spread look identical. */
+  .rank .track { position: relative; height: 14px; }
+  .rank .track::before { content: ""; position: absolute; left: 0; right: 0; top: 6px;
+                         height: 2px; background: var(--surface-sunk); }
+  .rank .dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px;
+               border-radius: 50%; box-shadow: 0 0 0 2px var(--plane); }
+  .rank .past { position: absolute; right: 0; top: 2px; width: 10px; height: 10px;
+                border: 2px dashed var(--loss-3); border-radius: 50%; }
+  .rank-axis { display: flex; justify-content: space-between; color: var(--ink-3);
+               font-size: var(--t-micro); padding: var(--s1) 0 0 2.6rem;
+               font-variant-numeric: tabular-nums; }
+  .rank .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .rank li.sel { background: var(--surface-sunk); }
+
+  table { border-collapse: collapse; width: 100%; }
+  caption { text-align: left; color: var(--ink-2); padding-bottom: var(--s2); }
+  th, td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0; border-bottom: 1px solid var(--rule); }
+  thead th { color: var(--ink-3); font-weight: var(--w-med); font-size: var(--t-micro);
+             border-bottom-color: var(--rule-strong); }
+  td.num, th.num { text-align: right; padding-right: var(--s3); font-variant-numeric: tabular-nums; }
+  tbody tr.sel { background: var(--surface-sunk); }
+  .rowbtn { all: unset; display: block; min-height: var(--touch); line-height: var(--touch); cursor: pointer; }
+  tbody th { padding-block: 0; }
+  /* A wide table is the one thing allowed past the page gutter — in its own
+     scroller, so the page body never scrolls sideways. */
+  .scroll-x { overflow-x: auto; }
+  .scroll-x table { min-width: 34rem; }
+
+  .panel { background: var(--surface); border: 1px solid var(--rule); padding: var(--s5); }
+  .panel ul { margin: 0 0 var(--s4); padding-left: var(--s5); max-width: var(--measure-wide); }
+  .panel li { margin-bottom: var(--s2); }
+  .caution { border-left: 3px solid var(--caution); padding-left: var(--s4); color: var(--ink-2); }
+  .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
+               border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; min-height: var(--touch); }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
+                background: var(--surface); padding: var(--s3); border: 1px solid var(--ink); }
+</style>
+</head>
+<body>
+<a class="skip" href="#table">Skip to the data table</a>
+
+<div class="page masthead">
+  <p class="wordmark">HotGap</p>
+  <h1>What a raise costs, state by state</h1>
+  <p class="lede">Fifty-one sets of rules, eight household shapes, one axis. Each figure is
+    the worst single $1,000 step of earnings in that state&rsquo;s curve for that household
+    &mdash; how much net income falls when pay goes up by a thousand dollars.</p>
+</div>
+
+<div class="page">
+  <div class="filters">
+    <div>
+      <label for="arch">Household</label>
+      <select id="arch">
+        <option value="2" selected>1 adult, 2 children (3 and 7)</option>
+        <option value="0">1 adult, no children</option>
+        <option value="1">1 adult, 1 child (3)</option>
+        <option value="3">1 adult, 3 children (1, 4, 9)</option>
+        <option value="4">2 adults, no children</option>
+        <option value="5">2 adults, 1 child (3)</option>
+        <option value="6">2 adults, 2 children (3 and 7)</option>
+        <option value="7">2 adults, 3 children (1, 4, 9)</option>
+      </select>
+    </div>
+    <div>
+      <label for="metric">Measure</label>
+      <select id="metric">
+        <option value="0" selected>Largest one-step loss ($)</option>
+        <option value="1">Width of the worst danger zone ($)</option>
+        <option value="2">The leap — raise needed to clear it ($)</option>
+        <option value="3">Safe exit — earnings where the last zone ends ($)</option>
+        <option value="4">Number of cliffs</option>
+        <option value="5">Of those, deferred to a later renewal</option>
+      </select>
+    </div>
+    <div class="dl">
+      <button type="button" id="csvBtn">Download these rows (CSV)</button>
+    </div>
+  </div>
+
+  <div class="split">
+    <figure class="figure" style="margin:0">
+      <h3 id="figTitle"></h3>
+      <p class="sub" id="figSub"></p>
+      <div class="grid" id="grid" role="img" aria-labelledby="figTitle" aria-describedby="figDesc"></div>
+      <div class="scale" id="scale" aria-hidden="true"></div>
+      <div class="scale-labels" id="scaleLabels"></div>
+      <p class="hg-source" id="figSrc"></p>
+      <p class="hg-visually-hidden" id="figDesc">A grid of the fifty states and the District
+        of Columbia, each a square in roughly its geographic position, shaded by the selected
+        measure. Every value is listed in the table below this figure.</p>
+    </figure>
+
+    <section>
+      <h3 style="margin-bottom:var(--s3)">Ranked</h3>
+      <ul class="rank" id="rank"></ul>
+      <div class="rank-axis" id="rankAxis"></div>
+      <p class="hg-source">Bins are five equal-width steps over the observed range and are
+        recomputed for every measure, so a shade means nothing across two different measures.
+        Read the bin bounds, not the colour.</p>
+    </section>
+  </div>
+
+  <h2 id="table">All 51, every measure</h2>
+  <div class="scroll-x">
+  <table>
+    <caption id="tabCap"></caption>
+    <thead>
+      <tr><th scope="col">State</th>
+          <th scope="col" class="num">Largest one-step loss</th>
+          <th scope="col" class="num">Danger zone width</th>
+          <th scope="col" class="num">The leap</th>
+          <th scope="col" class="num">Safe exit</th>
+          <th scope="col" class="num">Cliffs</th>
+          <th scope="col" class="num">Deferred</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  </div>
+
+  <h2>How these numbers were made</h2>
+  <div class="panel">
+    <ul>
+      <li>Every cell is one household shape swept through the
+        <a href="https://policyengine.org">PolicyEngine</a> US microsimulation at 2026 rules,
+        earnings varied in $1,000 steps from $0 past 400% of the 2025 poverty guideline for
+        that household size, plus $40,000 of room to recover.</li>
+      <li>The money line is <strong>health-adjusted</strong>: household net income minus what
+        the household actually pays in health-insurance premiums, net of the marketplace
+        subsidy. Deductibles and copays are not included.</li>
+      <li>Each archetype is a typical renter in the state&rsquo;s most populous county &mdash;
+        HUD FY2026 two-bedroom Fair Market Rent, Census Vintage 2024 county, and the DOL
+        National Database of Childcare Prices centre-based preschool price for that same
+        county, carried to 2026 dollars by the BLS Employment Cost Index.</li>
+      <li>The CCDF child care subsidy is <strong>on</strong> for this sweep and off for a
+        household&rsquo;s own lookup. Head Start and housing vouchers are off in both: they
+        are rationed, and assuming a family holds one inflates its numbers.</li>
+      <li>Cliffs deferred to a future renewal &mdash; Head Start&rsquo;s program-year
+        carry-over, a child&rsquo;s 12 months of continuous Medicaid or CHIP eligibility,
+        a parent&rsquo;s Transitional Medical Assistance &mdash; are counted in the
+        <em>deferred</em> column and are lifted out of every other figure here. They are real
+        losses; they do not land in the year of the raise.</li>
+    </ul>
+    <h3>What the model does not include</h3>
+    <ul>
+      <li>Immigration status, assets, and household members aged 65 or over are not inputs.</li>
+      <li>Alaska and Hawaii marketplace subsidies are computed upstream against the
+        48-state poverty guideline rather than their own higher ones
+        (policyengine-us #9482). HotGap does not correct this, so both states&rsquo;
+        premium-driven figures are understated.</li>
+      <li>Four state $0-premium wraps (CT, MA, NM, CA) and the child care subsidy in 28
+        states are local corrections HotGap applies on top of PolicyEngine, pending
+        policyengine-us #9481 and #9405.</li>
+      <li>Massachusetts cash assistance carries a local correction and an approximation
+        notice.</li>
+    </ul>
+    <p class="caution">Where a state&rsquo;s worst danger zone runs off the top of the axis
+      rather than closing, the safe exit is unknown and the leap is a lower bound. Those
+      cells read <strong>past the axis</strong> here and must not be charted as a number.</p>
+    <p class="hg-source" id="methodSrc"></p>
+  </div>
+
+  <p style="margin-top:var(--s7)"><button class="theme-btn" id="themeBtn" type="button">Dark</button></p>
+</div>
+
+<script type="module">
+/* core/data/summary.json, verbatim. Per state, one row per archetype:
+   [biggestLoss, dangerWidth, leap, safeExit, cliffCount, deferredCliffCount, leapIsLowerBound] */
+const GENERATED = "2026-09-15T18:01:14.532Z";
+const YEAR = "2026";
+const S = {"AL":[[1564,4000,4000,24000,1,0,0],[1707,10000,6000,88000,3,0,0],[3499,23000,8000,113000,5,1,0],[5196,26000,9000,137000,6,1,0],[4769,12000,8000,92000,2,0,0],[6466,16000,10000,116000,3,0,0],[8163,28000,13000,141000,5,0,0],[9955,34000,16000,166000,6,0,0]],"AK":[[3935,12000,7000,68000,2,0,0],[9100,23000,13000,96000,2,0,0],[14365,39000,22000,127000,3,0,0],[19530,47000,30000,157000,4,0,0],[12659,24000,17000,99000,2,0,0],[17823,37000,24000,128000,2,0,0],[22988,50000,34000,160000,3,0,0],[28253,58000,41000,189000,4,0,0]],"AZ":[[349,2000,2000,24000,1,0,0],[678,4000,4000,33000,1,0,0],[1176,19000,12000,109000,3,0,0],[2176,24000,13000,133000,4,0,0],[1182,5000,3000,87000,2,0,0],[2471,14000,9000,111000,2,0,0],[3760,22000,12000,134000,3,0,0],[5149,26000,12000,159000,4,0,0]],"AR":[[1301,7000,4000,65000,2,0,0],[4666,16000,8000,92000,4,0,0],[8132,28000,14000,120000,5,0,0],[11497,37000,19000,147000,7,0,0],[7354,15000,11000,95000,2,0,0],[10718,24000,15000,121000,4,0,0],[14083,39000,22000,150000,6,0,0],[17548,48000,28000,178000,7,0,0]],"CA":[[264,2000,2000,25000,1,0,0],[3315,21000,11000,86000,5,0,0],[3540,31000,11000,111000,6,0,0],[7062,39000,15000,135000,6,0,0],[1993,6000,4000,88000,2,0,0],[3565,28000,10000,113000,5,0,0],[5119,37000,10000,137000,6,0,0],[6869,49000,16000,163000,7,0,0]],"CO":[[372,2000,2000,24000,1,0,0],[14080,48000,35000,86000,6,0,0],[9390,64000,50000,111000,10,1,0],[17021,110000,87000,135000,15,1,0],[2274,7000,5000,89000,2,0,0],[13347,60000,49000,113000,6,0,0],[6349,76000,62000,137000,13,0,0],[17156,118000,100000,163000,14,1,0]],"CT":[[3068,9000,6000,68000,2,0,0],[7521,31000,12000,96000,4,0,0],[12165,46000,21000,127000,5,0,0],[16630,59000,28000,156000,6,0,0],[10746,21000,16000,100000,2,0,0],[15264,48000,22000,128000,5,0,0],[19769,62000,32000,160000,5,0,0],[24374,72000,39000,189000,6,0,0]],"DE":[[452,4000,2000,64000,2,0,0],[3240,18000,6000,90000,4,0,0],[6116,35000,21000,117000,4,0,0],[8893,41000,21000,144000,5,0,0],[5642,11000,9000,93000,2,0,0],[8419,29000,13000,119000,3,0,0],[11196,44000,19000,147000,4,0,0],[14073,48000,24000,174000,5,0,0]],"DC":[[1830,8000,5000,70000,2,0,0],[2700,21000,10000,88000,4,0,0],[4650,32000,13000,115000,4,0,0],[7202,40000,14000,142000,4,0,0],[2587,13000,5000,89000,3,0,0],[5324,21000,9000,115000,3,0,0],[8040,28000,14000,142000,3,0,0],[10857,48000,19000,169000,4,0,0]],"FL":[[286,2000,2000,64000,1,0,0],[2991,8000,5000,89000,2,0,0],[5795,15000,10000,116000,3,0,0],[8500,20000,14000,142000,3,0,0],[5359,8000,8000,92000,1,0,0],[8063,14000,12000,118000,2,0,0],[10768,24000,16000,144000,4,0,0],[13573,30000,21000,171000,5,0,0]],"GA":[[1726,4000,4000,24000,1,0,0],[2116,12000,8000,88000,3,0,0],[4550,26000,14000,114000,4,0,0],[6882,33000,15000,140000,5,0,0],[4305,12000,7000,91000,3,0,0],[6638,20000,10000,116000,3,0,0],[8970,34000,15000,143000,5,0,0],[11403,41000,19000,169000,6,0,0]],"HI":[[1251,8000,5000,40000,2,0,0],[2936,28000,11000,86000,5,0,0],[4997,36000,31000,111000,5,1,0],[6902,54000,32000,140000,7,0,0],[2683,17000,8000,89000,4,0,0],[4893,34000,27000,113000,4,0,0],[6856,48000,36000,138000,7,0,0],[8147,60000,38000,164000,7,0,0]],"ID":[[1269,4000,4000,24000,1,0,0],[1691,8000,8000,35000,2,0,0],[2368,16000,10000,109000,4,1,0],[2317,24000,14000,133000,6,0,0],[1532,8000,5000,87000,2,0,0],[2594,14000,9000,111000,3,0,0],[3906,22000,12000,135000,5,0,0],[5319,28000,13000,160000,6,0,0]],"IL":[[373,2000,2000,24000,1,0,0],[3053,18000,5000,72000,4,0,0],[3258,33000,18000,110000,6,0,0],[5873,41000,15000,134000,5,0,0],[1633,9000,4000,88000,3,0,0],[3616,25000,12000,112000,4,0,0],[4499,32000,14000,136000,4,0,0],[6032,40000,14000,161000,6,0,0]],"IN":[[1454,5000,5000,25000,1,0,0],[2210,11000,8000,35000,3,0,0],[2892,21000,12000,108000,6,0,0],[3793,26000,12000,132000,7,1,0],[1645,9000,6000,87000,2,0,0],[2973,17000,9000,110000,4,0,0],[3848,26000,12000,134000,6,0,0],[4508,29000,12000,158000,7,0,0]],"IA":[[481,3000,3000,25000,1,0,0],[834,7000,7000,36000,1,1,0],[1221,15000,9000,108000,3,1,0],[1442,20000,10000,132000,4,1,0],[660,5000,3000,86000,2,0,0],[1769,11000,7000,110000,2,0,0],[2878,18000,9000,133000,3,0,0],[4087,25000,12000,158000,5,1,0]],"KS":[[1729,4000,4000,24000,1,0,0],[1565,12000,7000,87000,4,0,0],[3300,27000,9000,113000,6,0,0],[5274,30000,10000,138000,7,0,0],[3242,11000,6000,90000,2,0,0],[5215,17000,8000,114000,4,0,0],[7188,31000,12000,140000,6,0,0],[9260,38000,16000,166000,7,0,0]],"KY":[[500,3000,3000,25000,1,0,0],[829,11000,6000,87000,3,0,0],[2716,17000,8000,112000,3,0,0],[4521,24000,9000,137000,4,0,0],[2745,8000,5000,89000,2,0,0],[4549,15000,8000,114000,2,0,0],[6354,23000,11000,139000,3,0,0],[8259,30000,14000,164000,4,0,0]],"LA":[[473,3000,3000,25000,1,0,0],[1769,13000,6000,88000,3,0,0],[4070,21000,8000,114000,4,0,0],[6270,28000,11000,139000,5,0,0],[3893,10000,7000,91000,2,0,0],[6094,18000,9000,115000,3,0,0],[8294,28000,13000,141000,5,0,0],[10595,35000,17000,167000,6,0,0]],"ME":[[387,5000,3000,64000,2,0,0],[2943,11000,6000,90000,2,0,0],[5700,29000,14000,117000,3,0,0],[8401,43000,19000,144000,3,0,0],[5279,11000,9000,93000,2,0,0],[7945,18000,12000,118000,2,0,0],[10602,36000,18000,146000,2,0,0],[13359,47000,24000,174000,3,0,0]],"MD":[[403,3000,3000,25000,1,0,0],[2556,15000,9000,75000,2,0,0],[1253,25000,25000,62000,2,1,0],[7064,39000,24000,121000,3,0,0],[487,3000,3000,32000,1,0,0],[1147,14000,12000,108000,2,0,0],[1826,33000,26000,131000,4,0,0],[4341,39000,25000,156000,4,0,0]],"MA":[[1610,6000,4000,55000,2,0,0],[4698,21000,8000,90000,4,0,0],[7896,29000,14000,120000,4,0,0],[10955,33000,19000,147000,4,0,0],[4098,17000,7000,91000,5,0,0],[7160,25000,11000,117000,5,0,0],[10219,32000,17000,145000,5,0,0],[13379,45000,22000,172000,6,0,0]],"MI":[[371,2000,2000,24000,1,0,0],[9240,31000,24000,66000,5,0,0],[7670,46000,38000,110000,6,0,0],[17878,71000,61000,134000,7,0,0],[1697,6000,4000,88000,2,0,0],[9801,39000,24000,112000,5,0,0],[9816,53000,41000,136000,6,0,0],[19572,76000,40000,161000,7,0,0]],"MN":[[1701,5000,5000,36000,1,0,0],[2641,12000,9000,63000,2,0,0],[3336,19000,10000,109000,3,0,0],[3994,15000,8000,133000,3,1,0],[2341,7000,5000,86000,2,0,0],[3266,12000,8000,110000,2,0,0],[3993,15000,9000,134000,2,0,0],[4944,20000,11000,159000,2,1,0]],"MS":[[1106,3000,3000,23000,1,0,0],[1808,9000,5000,88000,2,0,0],[3640,20000,7000,113000,5,0,0],[5373,26000,10000,138000,6,0,0],[4898,11000,8000,92000,2,0,0],[6630,15000,10000,116000,3,0,0],[8363,29000,14000,142000,5,0,0],[10196,35000,17000,167000,6,0,0]],"MO":[[1122,4000,4000,24000,1,0,0],[1087,15000,6000,86000,5,0,0],[1872,24000,8000,110000,5,0,0],[3435,28000,10000,135000,7,1,0],[2022,8000,4000,88000,2,0,0],[3587,20000,7000,112000,5,0,0],[5153,29000,9000,137000,6,0,0],[6817,38000,14000,162000,7,0,0]],"MT":[[371,2000,2000,24000,1,0,0],[892,11000,5000,87000,3,0,0],[2842,23000,9000,112000,4,0,0],[4683,31000,22000,137000,4,1,0],[2842,7000,5000,89000,2,0,0],[4683,17000,8000,114000,3,0,0],[6533,33000,22000,139000,3,0,0],[8474,37000,22000,165000,4,0,0]],"NE":[[479,5000,3000,64000,2,0,0],[3244,19000,7000,90000,4,0,0],[6134,30000,11000,117000,4,0,0],[8922,44000,23000,143000,5,0,0],[5654,12000,9000,93000,2,0,0],[8442,25000,13000,119000,3,0,0],[11231,37000,18000,146000,4,0,0],[14120,51000,23000,173000,5,0,0]],"NV":[[324,2000,2000,24000,1,0,0],[653,7000,4000,45000,2,0,0],[931,6000,4000,108000,2,1,0],[1667,21000,11000,132000,4,0,0],[837,5000,3000,87000,2,0,0],[2017,12000,8000,110000,2,0,0],[3198,20000,11000,133000,3,0,0],[4479,23000,10000,158000,4,0,0]],"NH":[[324,2000,2000,24000,1,0,0],[2209,9000,5000,74000,2,0,0],[1032,9000,6000,53000,2,1,0],[6718,32000,14000,130000,4,0,0],[408,2000,2000,31000,1,0,0],[1160,8000,5000,109000,2,0,0],[2125,23000,13000,132000,4,0,0],[3727,28000,13000,156000,4,0,0]],"NJ":[[342,4000,2000,30000,2,0,0],[1222,14000,5000,86000,5,1,0],[2427,30000,12000,111000,5,1,0],[4148,35000,24000,136000,6,1,0],[2477,9000,5000,89000,3,0,0],[4218,22000,7000,113000,5,0,0],[5939,36000,23000,138000,5,0,0],[8210,43000,26000,164000,7,1,0]],"NM":[[1908,5000,5000,44000,1,0,0],[2767,11000,6000,86000,3,0,0],[3596,12000,8000,110000,2,0,0],[4093,25000,7000,135000,6,0,0],[2734,10000,6000,88000,2,0,0],[3657,14000,8000,112000,2,0,0],[5212,18000,9000,137000,2,0,0],[6891,29000,12000,162000,4,0,0]],"NY":[[3520,14000,7000,69000,3,0,0],[2548,24000,10000,92000,4,1,0],[3479,27000,10000,117000,4,1,0],[3910,34000,10000,141000,6,0,0],[11733,27000,18000,102000,3,0,0],[9536,37000,20000,126000,5,1,0],[7369,42000,23000,151000,5,1,0],[5278,45000,21000,171000,6,1,0]],"NC":[[365,2000,2000,24000,1,0,0],[1421,9000,4000,87000,3,0,0],[3579,22000,12000,113000,3,0,0],[5635,28000,12000,138000,4,0,0],[3476,8000,6000,90000,2,0,0],[5533,19000,10000,115000,2,0,0],[7590,27000,12000,140000,3,0,0],[9746,33000,16000,166000,4,0,0]],"ND":[[443,2000,2000,24000,1,0,0],[772,7000,5000,46000,2,0,0],[1301,14000,7000,108000,5,0,0],[1525,19000,9000,132000,5,0,0],[730,5000,3000,86000,2,0,0],[1874,9000,5000,110000,3,0,0],[3039,17000,9000,133000,4,0,0],[4284,24000,11000,158000,6,0,0]],"OH":[[1424,4000,4000,24000,1,0,0],[1659,13000,7000,86000,5,0,0],[2055,21000,10000,110000,7,0,0],[3578,26000,11000,135000,7,0,0],[2110,10000,6000,88000,2,0,0],[3711,19000,8000,112000,5,0,0],[5312,24000,10000,137000,6,0,0],[7013,32000,12000,162000,7,0,0]],"OK":[[1273,4000,4000,24000,1,0,0],[1206,12000,7000,87000,4,0,0],[2830,21000,10000,112000,6,0,0],[4672,26000,11000,137000,6,0,0],[2841,10000,5000,89000,3,0,0],[4681,18000,8000,114000,4,0,0],[6522,24000,11000,139000,5,0,0],[8463,31000,14000,164000,6,0,0]],"OR":[[1728,5000,5000,36000,1,0,0],[2753,12000,10000,52000,3,1,0],[4614,17000,13000,108000,4,1,0],[3910,19000,8000,131000,5,1,0],[2369,10000,6000,88000,2,0,0],[3401,17000,10000,111000,3,0,0],[3910,22000,9000,134000,5,0,0],[4640,27000,10000,159000,5,0,0]],"PA":[[355,2000,2000,24000,1,0,0],[1746,10000,4000,45000,3,1,0],[1723,20000,7000,110000,5,1,0],[2989,24000,10000,134000,4,1,0],[1722,6000,4000,88000,2,0,0],[3191,18000,6000,112000,4,0,0],[4660,25000,9000,136000,4,0,0],[6229,36000,17000,161000,5,1,0]],"RI":[[372,2000,2000,24000,1,0,0],[727,5000,5000,34000,1,0,0],[1443,25000,9000,110000,5,0,0],[3338,34000,20000,134000,6,0,0],[1668,6000,4000,88000,2,0,0],[3101,16000,6000,112000,3,0,0],[4556,28000,20000,136000,5,0,0],[6101,34000,20000,161000,5,0,0]],"SC":[[1696,4000,4000,24000,1,0,0],[1434,11000,6000,87000,4,0,0],[3562,22000,8000,113000,6,0,0],[5607,25000,11000,139000,5,0,0],[3466,10000,6000,90000,2,0,0],[5511,17000,9000,115000,4,0,0],[7555,27000,13000,141000,5,0,0],[9701,34000,17000,167000,6,0,0]],"SD":[[870,4000,4000,24000,1,0,0],[934,8000,5000,87000,3,0,0],[2910,18000,8000,112000,5,0,0],[4787,22000,9000,136000,5,0,0],[2902,9000,5000,89000,2,0,0],[4778,15000,7000,113000,4,0,0],[6655,23000,10000,138000,5,0,0],[8632,29000,14000,164000,6,0,0]],"TN":[[1548,4000,4000,24000,1,0,0],[2365,11000,5000,88000,4,0,0],[4917,18000,8000,114000,4,1,0],[7370,26000,12000,140000,5,1,0],[4611,11000,7000,91000,2,0,0],[7063,16000,10000,116000,3,0,0],[9516,27000,14000,142000,5,0,0],[12069,36000,19000,169000,6,0,0]],"TX":[[286,2000,2000,64000,1,0,0],[2991,10000,5000,89000,3,0,0],[5795,16000,10000,116000,3,0,0],[8500,26000,14000,142000,5,0,0],[5359,10000,8000,92000,2,0,0],[8063,14000,12000,118000,2,0,0],[10768,26000,16000,144000,4,0,0],[13573,35000,21000,171000,6,0,0]],"UT":[[1424,5000,5000,25000,1,0,0],[1924,13000,8000,87000,4,0,0],[2912,24000,12000,112000,6,0,0],[4172,30000,13000,136000,7,0,0],[3844,13000,7000,91000,2,0,0],[5349,21000,10000,115000,5,0,0],[6854,30000,12000,139000,6,0,0],[8459,36000,15000,165000,7,0,0]],"VT":[[8644,16000,14000,76000,2,0,0],[20949,38000,33000,117000,2,0,0],[18891,47000,32000,138000,3,0,0],[16720,52000,30000,158000,4,0,0],[22041,32000,30000,114000,2,0,0],[32476,54000,44000,null,3,0,1],[30337,60000,42000,null,3,0,1],[28210,67000,45000,null,4,0,1]],"VA":[[374,2000,2000,24000,1,0,0],[742,8000,5000,45000,2,0,0],[1131,19000,10000,58000,3,0,0],[1473,26000,23000,131000,4,0,0],[458,4000,2000,86000,2,0,0],[1408,13000,7000,109000,3,0,0],[2421,27000,22000,133000,4,0,0],[3533,30000,23000,157000,4,0,0]],"WA":[[338,2000,2000,24000,1,0,0],[1484,9000,4000,87000,3,0,0],[3677,18000,7000,113000,4,1,0],[5770,30000,15000,138000,4,1,0],[3556,8000,6000,90000,2,0,0],[5649,16000,9000,115000,3,0,0],[7742,27000,12000,140000,3,0,0],[9934,37000,16000,166000,4,0,0]],"WV":[[4729,10000,8000,70000,2,0,0],[10398,23000,16000,100000,3,0,0],[16167,36000,26000,132000,3,0,0],[21836,51000,36000,164000,4,0,0],[14200,23000,20000,104000,2,0,0],[19869,33000,28000,134000,2,0,0],[25538,44000,40000,168000,2,1,0],[31307,60000,45000,null,4,0,1]],"WI":[[0,0,0,0,0,0,0],[3920,23000,15000,89000,3,0,0],[5353,37000,27000,116000,5,1,0],[7914,46000,32000,142000,5,1,0],[4983,8000,8000,92000,1,0,0],[7556,30000,16000,118000,3,0,0],[10116,44000,22000,145000,5,1,0],[12777,53000,32000,171000,5,1,0]],"WY":[[3971,10000,7000,69000,2,0,0],[9160,21000,14000,98000,3,0,0],[14448,35000,22000,128000,6,0,0],[19637,44000,30000,158000,5,0,0],[12730,20000,17000,101000,2,0,0],[17918,29000,24000,130000,3,0,0],[23107,47000,34000,162000,5,0,0],[28396,58000,41000,191000,6,0,0]]};
+
+const ARCH = ["1 adult, no children", "1 adult, 1 child (3)", "1 adult, 2 children (3 and 7)",
+  "1 adult, 3 children (1, 4, 9)", "2 adults, no children", "2 adults, 1 child (3)",
+  "2 adults, 2 children (3 and 7)", "2 adults, 3 children (1, 4, 9)"];
+const METRIC = [
+  { t: "Largest one-step loss", u: "$", d: "Net income lost in the worst single $1,000 step of earnings." },
+  { t: "Width of the worst danger zone", u: "$", d: "Earnings spanned by the widest stretch where more pay leaves the household no better off." },
+  { t: "The leap", u: "$", d: "The raise a household must clear in one move to get past that stretch." },
+  { t: "Safe exit", u: "$", d: "Earnings at which the last danger zone closes." },
+  { t: "Number of cliffs", u: "", d: "Steps down of $200 or more anywhere on the curve." },
+  { t: "Deferred cliffs", u: "", d: "Of those, the ones that land at a future renewal, not with the raise." },
+];
+
+/* A tile cartogram: 51 equal squares, one per state, roughly where they sit.
+   Equal area is the point — these are 51 sets of rules, not 51 land masses. */
+const TILES = {
+  AK:[1,1], ME:[1,12], VT:[2,11], NH:[2,12],
+  WA:[3,1], ID:[3,2], MT:[3,3], ND:[3,4], MN:[3,5], IL:[3,6], WI:[3,7], MI:[3,8], NY:[3,9], MA:[3,10],
+  OR:[4,1], NV:[4,2], WY:[4,3], SD:[4,4], IA:[4,5], IN:[4,6], OH:[4,7], PA:[4,8], NJ:[4,9], CT:[4,10], RI:[4,11],
+  CA:[5,1], UT:[5,2], CO:[5,3], NE:[5,4], MO:[5,5], KY:[5,6], WV:[5,7], VA:[5,8], MD:[5,9], DE:[5,10],
+  AZ:[6,2], NM:[6,3], KS:[6,4], AR:[6,5], TN:[6,6], NC:[6,7], SC:[6,8], DC:[6,9],
+  OK:[7,4], LA:[7,5], MS:[7,6], AL:[7,7], GA:[7,8],
+  HI:[8,1], TX:[8,4], FL:[8,9],
+};
+
+const $ = id => document.getElementById(id);
+const fmtDate = new Date(GENERATED).toISOString().slice(0, 10);
+let arch = 2, metric = 0, sel = "CO";
+
+const val = (st, a, m) => S[st][a][m];
+const isPastAxis = (st, a, m) => (m === 2 || m === 3) && S[st][a][6] === 1;
+const fmt = (v, m) => v === null ? "past the axis"
+  : METRIC[m].u === "$" ? "$" + v.toLocaleString("en-US") : String(v);
+
+/* Five equal-width bins across the OBSERVED range. Binning from 0 would spend
+   four of five bins on empty space for a measure whose floor is $53,000. Both
+   bounds are printed, so the reader is never guessing what a shade means. */
+function bins(values) {
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const step = (hi - lo) / 5 || 1;
+  return { lo, hi,
+    bounds: Array.from({ length: 5 }, (_, i) => Math.round(lo + step * (i + 1))),
+    index: v => Math.min(4, Math.max(0, Math.floor((v - lo) / step))) };
+}
+
+function render() {
+  const states = Object.keys(S).sort();
+  const rows = states.map(st => ({ st, v: val(st, arch, metric), past: isPastAxis(st, arch, metric) }));
+  const b = bins(rows.filter(r => !r.past && r.v !== null).map(r => r.v));
+
+  $("figTitle").textContent = `${METRIC[metric].t}, by state`;
+  $("figSub").textContent = `${ARCH[arch]}. ${METRIC[metric].d}`;
+  $("figSrc").innerHTML = `HotGap, from PolicyEngine ${YEAR} rules. Weekly sweep generated ` +
+    `${fmtDate}. Net income after health-insurance premiums. Estimates only. Bins: five ` +
+    `equal-width steps from ${fmt(b.lo, metric)} to ${fmt(b.hi, metric)}.`;
+  $("tabCap").textContent = `All six measures for ${ARCH[arch].toLowerCase()}. ` +
+    `PolicyEngine ${YEAR} rules, sweep of ${fmtDate}.`;
+  $("methodSrc").textContent = `Sweep generated ${fmtDate}. Reach ladders: U.S. Census Bureau ` +
+    `ACS 2024 1-Year PUMS, grown to 2026 dollars by the BLS Employment Cost Index. ` +
+    `Licence: AGPL-3.0-only. Estimates only — a caseworker decides real benefits.`;
+
+  /* Map */
+  const g = $("grid"); g.textContent = "";
+  for (const [st, [r, c]] of Object.entries(TILES)) {
+    const d = document.createElement("div");
+    const past = isPastAxis(st, arch, metric);
+    d.className = "tile" + (past ? " nodata" : "") + (st === sel ? " sel" : "");
+    d.style.gridRow = r; d.style.gridColumn = c;
+    d.textContent = st;
+    if (!past) {
+      const i = b.index(val(st, arch, metric));
+      d.style.background = `var(--loss-${i + 1})`;
+      /* Label ink is chosen by the fill, the one place text may sit on a colour. */
+      d.style.color = i >= 3 ? "var(--surface)" : "var(--ink)";
+      d.title = `${st}: ${fmt(val(st, arch, metric), metric)}`;
+    } else { d.title = `${st}: runs past the top of the axis`; }
+    g.append(d);
+  }
+
+  const sc = $("scale"); sc.textContent = "";
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement("span");
+    s.className = "sw"; s.style.background = `var(--loss-${i + 1})`; sc.append(s);
+  }
+  $("scaleLabels").innerHTML = `<span>${fmt(b.lo, metric)}</span>` +
+    b.bounds.map(x => `<span>${fmt(x, metric)}</span>`).join("");
+
+  /* Ranked strip */
+  const ranked = rows.slice().sort((a, z) => (z.past ? Infinity : z.v) - (a.past ? Infinity : a.v));
+  const span = (b.hi - b.lo) || 1;
+  $("rank").innerHTML = ranked.map(r => {
+    const i = r.past ? 4 : b.index(r.v);
+    const at = r.past ? 100 : ((r.v - b.lo) / span) * 100;
+    return `<li class="${r.st === sel ? "sel" : ""}"><span class="st">${r.st}</span>` +
+      `<span class="track">` +
+      (r.past
+        ? `<span class="past" title="runs past the top of the axis"></span>`
+        : `<span class="dot" style="left:${at}%;background:var(--loss-${i + 1})"></span>`) +
+      `</span><span class="v">${r.past ? "past axis" : fmt(r.v, metric)}</span></li>`;
+  }).join("");
+  $("rankAxis").innerHTML =
+    `<span>${fmt(b.lo, metric)}</span><span>${fmt(b.hi, metric)}</span>`;
+
+  /* Full table — the text equivalent, and the thing a reporter actually copies. */
+  $("tbody").innerHTML = states.map(st => {
+    const r = S[st][arch];
+    const past = r[6] === 1;
+    return `<tr class="${st === sel ? "sel" : ""}"><th scope="row">` +
+      `<button class="rowbtn" type="button" data-st="${st}">${st}</button></th>` +
+      `<td class="num">$${r[0].toLocaleString("en-US")}</td>` +
+      `<td class="num">$${r[1].toLocaleString("en-US")}</td>` +
+      `<td class="num">${past ? "&ge; $" + r[2].toLocaleString("en-US") : "$" + r[2].toLocaleString("en-US")}</td>` +
+      `<td class="num">${r[3] === null ? "past the axis" : "$" + r[3].toLocaleString("en-US")}</td>` +
+      `<td class="num">${r[4]}</td><td class="num">${r[5]}</td></tr>`;
+  }).join("");
+  $("tbody").querySelectorAll(".rowbtn").forEach(btn =>
+    btn.addEventListener("click", () => { sel = btn.dataset.st; render(); }));
+}
+
+$("arch").addEventListener("change", e => { arch = +e.target.value; render(); });
+$("metric").addEventListener("change", e => { metric = +e.target.value; render(); });
+
+$("csvBtn").addEventListener("click", () => {
+  const head = ["state", "archetype", "biggest_one_step_loss", "danger_zone_width", "leap",
+    "safe_exit", "cliff_count", "deferred_cliff_count", "leap_is_lower_bound",
+    "policy_year", "sweep_generated", "source"];
+  const lines = [head.join(",")];
+  for (const st of Object.keys(S).sort()) {
+    const r = S[st][arch];
+    lines.push([st, JSON.stringify(ARCH[arch]), r[0], r[1], r[2], r[3] === null ? "" : r[3],
+      r[4], r[5], r[6] ? "true" : "false", YEAR, fmtDate,
+      "HotGap/PolicyEngine"].join(","));
+  }
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `hotgap-${ARCH[arch].replace(/\W+/g, "-")}-${fmtDate}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+});
+
+const btn = $("themeBtn");
+btn.addEventListener("click", () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  btn.textContent = dark ? "Dark" : "Light";
+});
+
+render();
+</script>
+</body>
+</html>

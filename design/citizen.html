@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HotGap — the citizen surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Citizen surface: one column, phone first, nothing to decide. */
+  .page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+  .band { background: var(--surface); border-block: 1px solid var(--rule); }
+  .band > .page { padding-block: var(--s6); }
+
+  .masthead { display: flex; align-items: center; justify-content: space-between;
+              gap: var(--s4); padding-block: var(--s3); flex-wrap: wrap; }
+  .wordmark { font-size: var(--t-h3); font-weight: var(--w-semi); letter-spacing: -0.01em; margin: 0; }
+  .who { color: var(--ink-2); font-size: var(--t-small); margin: 0; max-width: none; }
+
+  /* The answer. The sentence IS the design: the two numbers carry a rule in
+     the colour of the mark they name, so the sentence doubles as the key. */
+  .answer { font-size: var(--t-answer); line-height: var(--lh-answer);
+            font-weight: var(--w-med); letter-spacing: -0.015em;
+            margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
+  .answer .amt { font-weight: var(--w-semi); white-space: nowrap;
+                 box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
+  .amt-keep { --keyed: var(--series-1); }
+  .amt-gap  { --keyed: var(--loss-3); }
+  .answer-sub { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+
+  /* Figure */
+  figure { margin: 0; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline;
+                gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
+  .chart-title { font-size: var(--t-h3); font-weight: var(--w-semi); }
+  .chart-wrap { position: relative; }
+  .chart-wrap:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+
+  .readout { font-size: var(--t-small); color: var(--ink-2); margin: var(--s2) 0 0;
+             min-height: 2.6em; max-width: var(--measure); }
+  .readout b { color: var(--ink); font-weight: var(--w-semi); }
+
+  .key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
+         padding: 0; list-style: none; font-size: var(--t-micro); color: var(--ink-2); }
+  .key li { display: flex; align-items: center; gap: var(--s2); }
+  .key svg { width: 22px; height: 12px; flex: none; }
+
+  figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
+               max-width: var(--measure); }
+
+  details { border-top: 1px solid var(--rule); margin-top: var(--s4); }
+  summary { cursor: pointer; padding: var(--s3) 0; font-weight: var(--w-med);
+            display: flex; align-items: center; gap: var(--s2); }
+  summary::marker { color: var(--ink-3); }
+
+  table { border-collapse: collapse; width: 100%; font-size: var(--t-small); }
+  caption { text-align: left; color: var(--ink-2); font-size: var(--t-small);
+            padding-bottom: var(--s2); }
+  th, td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
+           border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: var(--w-semi); color: var(--ink-2); }
+  td.num, th.num { text-align: right; padding-right: 0; }
+
+  /* The threshold list: each row is a rule with a dollar on it. The rule is
+     the information, not decoration. */
+  .steps { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+  .steps li { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--s3);
+              padding: var(--s3) 0; border-top: 1px solid var(--rule); align-items: start; }
+  .steps .at { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
+  .steps .what { margin: 0; max-width: none; }
+  .steps .loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
+
+  .later { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-chip);
+           border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 1px 9px;
+           font-size: var(--t-micro); font-weight: var(--w-med); line-height: 1.6; }
+
+  .note { border-left: 3px solid var(--note); padding: var(--s1) 0 var(--s1) var(--s4);
+          margin: var(--s5) 0; color: var(--ink-2); }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--ink); }
+
+  footer { color: var(--ink-3); font-size: var(--t-small); }
+  footer p { max-width: var(--measure); }
+  .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
+               border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; }
+
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
+                background: var(--surface); padding: var(--s3); border: 1px solid var(--ink); }
+
+  @media (min-width: 40rem) { .answer { max-width: 26ch; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#answer">Skip to the answer</a>
+
+<div class="page masthead">
+  <p class="wordmark">HotGap</p>
+  <p class="who">A parent with two kids, ages 3 and 7, in El Paso County, Colorado</p>
+</div>
+
+<main>
+<section class="band">
+  <div class="page">
+    <h1 class="hg-visually-hidden">If your pay goes up, do you keep more?</h1>
+    <p class="answer" id="answer">You are paid <span class="amt">$38,000</span> a year.
+      You keep <span class="amt amt-keep">$67,000</span>.
+      More pay does not add to that until you are paid
+      <span class="amt amt-gap">$86,000</span>.</p>
+    <p class="answer-sub">You keep more than your pay because help and tax money are part of
+      it. This number is your pay, plus help, less what you pay for a health plan.</p>
+  </div>
+</section>
+
+<div class="page">
+
+  <figure>
+    <div class="chart-head">
+      <span class="chart-title">Money you keep in a year, as your pay goes up</span>
+    </div>
+
+    <div class="chart-wrap" id="chartWrap" tabindex="0" role="img"
+         aria-describedby="curveCaption"
+         aria-label="A line of the money this household keeps as pay rises from $24,000 to
+           $96,000. The line is flat from $36,000 to $86,000 and drops sharply at $54,000,
+           where child care help ends. The household sits at $38,000 of pay, inside that flat
+           stretch.">
+      <svg id="curve" aria-hidden="true"></svg>
+    </div>
+
+    <p class="readout" id="readout" aria-live="polite">
+      Move along the line with your finger, your mouse, or the left and right arrow keys.
+    </p>
+
+    <ul class="key">
+      <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="1" y1="6" x2="21" y2="6"
+          stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Money you keep</li>
+      <li><svg viewBox="0 0 22 12" aria-hidden="true"><rect x="1" y="1" width="20" height="10"
+          fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/>
+          <path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/></svg>
+        The flat stretch</li>
+      <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
+          stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5"
+          fill="var(--loss-4)"/></svg> A drop this year</li>
+      <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
+          stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/>
+          <circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)"
+          stroke-width="1.5"/></svg> A drop that waits</li>
+      <li><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z"
+          fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/></svg> You now</li>
+    </ul>
+
+    <figcaption id="curveCaption">
+      <span id="axisNote">The side numbers do not start at $0, so the drops are easy to see.</span>
+      These are estimates. They use the rules for 2026 in Colorado.
+    </figcaption>
+  </figure>
+
+  <details>
+    <summary>Show the numbers</summary>
+    <table>
+      <caption>What changes, and at what pay</caption>
+      <thead>
+        <tr><th scope="col">Your pay</th><th scope="col">You keep</th><th scope="col">What changed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>$36,000</td><td>$68,348</td><td>The most you keep before the flat stretch</td></tr>
+        <tr><td>$37,000</td><td>$68,178</td><td>Your own free state health plan (Medicaid) ends. You start paying for a plan.</td></tr>
+        <tr><td>$38,000</td><td>$67,000</td><td>Where you are now</td></tr>
+        <tr><td>$40,000</td><td>$67,180</td><td>Your kids move off Medicaid</td></tr>
+        <tr><td>$54,000</td><td>$63,922</td><td>Food help (called SNAP) and food help for young kids (called WIC) end</td></tr>
+        <tr><td>$55,000</td><td>$54,532</td><td>Child care help ends. You keep $9,390 less.</td></tr>
+        <tr><td>$72,000</td><td>$61,843</td><td>Your kids&rsquo; health plan (called CHIP) ends — but later, not that year</td></tr>
+        <tr><td>$86,000</td><td>$68,198</td><td>You are back to where you were at $36,000</td></tr>
+      </tbody>
+    </table>
+    <p class="hg-source">Source: HotGap, from PolicyEngine 2026 rules, weekly sweep of
+      2026-09-15. Money kept is household net income less health-plan premiums.</p>
+  </details>
+
+  <h2 style="margin-top:var(--s7)">What ends, and when</h2>
+  <ul class="steps">
+    <li><span class="at">$37,000</span>
+      <p class="what">Your own free state health plan ends. It is called Medicaid.
+        <span class="loss">You start paying for a plan.</span></p></li>
+    <li><span class="at">$40,000</span>
+      <p class="what">Your kids move off Medicaid. They move to a plan for kids.</p></li>
+    <li><span class="at">$54,000</span>
+      <p class="what">Food help ends. It is called SNAP. Food help for young kids ends too.
+        It is called WIC. <span class="loss">You keep $2,447 less.</span></p></li>
+    <li><span class="at">$55,000</span>
+      <p class="what">Child care help ends. The state stops paying part of your day care bill.
+        <span class="loss">You keep $9,390 less. This is the biggest drop.</span></p></li>
+    <li><span class="at">$72,000</span>
+      <p class="what"><span class="later">Waits</span> Your kids&rsquo; health plan ends.
+        It is called CHIP. It does not end that day.</p></li>
+  </ul>
+
+  <div class="note">
+    <h2>One change waits</h2>
+    <p>At <strong>$72,000</strong> your kids stop being able to get CHIP, their health plan.
+      But the law lets kids keep it for a full year at a time. So it ends at their next
+      yearly check, up to 12 months later.</p>
+    <p>We do not draw it as a drop today, because it is not one.</p>
+  </div>
+
+  <h2 style="margin-top:var(--s7)">How common is this pay?</h2>
+  <p>About <strong>4 in 10</strong> parents like you in Colorado are paid $38,000 a year or
+    less. The count could be off by a few thousand dollars either way.</p>
+  <p>This says how common the pay is. It does not say what you will earn.</p>
+  <p class="hg-source">From U.S. Census Bureau ACS 2024 1-Year public-use microdata, grown to
+    2026 dollars. 393 households in this cell; the margin at this point is about $8,000.</p>
+
+  <h2 style="margin-top:var(--s7)">Hours</h2>
+  <p>Colorado&rsquo;s lowest legal pay is <strong>$15.16</strong> an hour. Full-time work at
+    that pay is about <strong>$31,500</strong> a year.</p>
+
+  <footer style="margin-top:var(--s7);border-top:1px solid var(--rule);padding-top:var(--s5)">
+    <p><strong>These are estimates.</strong> A case worker decides real help.</p>
+    <p>We use 2026 rules. We do not ask about where you were born, what you own, or anyone
+      in the home aged 65 or more. None of those are part of this.</p>
+    <p>We do not tell you what to do.</p>
+    <p style="margin-top:var(--s5)"><button class="theme-btn" id="themeBtn" type="button">Dark</button></p>
+  </footer>
+</div>
+</main>
+
+<script type="module">
+/* ── The evaluation. Real output of:
+   npx tsx core/src/cli.ts curve --state CO --kids 3,7 --earnings 38000 --offline --json ── */
+const STEP = 1000;                       // the curve's own earnings step
+const NET = [42970,44044,45118,46267,47491,48715,49939,46033,47587,49142,50696,52250,53804,55358,56912,58407,59730,60653,61973,62941,63759,64579,65008,65825,66616,67056,67486,66876,66933,67159,67386,67611,67443,67670,67894,68121,68348,68178,67000,67094,67180,67305,67015,67121,67187,67299,67359,66999,67029,67076,67098,67117,66335,66369,63922,54532,54874,54839,55175,55605,56198,55761,55955,56539,57121,57723,58300,58483,59216,59971,60726,61481,61843,61624,62197,62769,63277,63474,63778,64340,64839,65495,65696,66352,66947,67603,68198,68639,69235,69890,70486,71141,71697,72252,72748,73303,73799,74354,74850,75405,75901,76456,76952,77507,78003,78558,79118,76953,77608,78263,78918,79573,80228,80883,81539,82194,82849,83504,84159,84814,85469,86124,86779,87434,88090,88745,89400,90055,90710,91365,92017,92652,93287,93922,94558,95193,95828,96463,97098,97733,98368,99003,99638,100273,100909,101544,102179,102814,103449,104084,104719];
+
+const HH = {
+  current: 38000, currentNet: 67000,
+  zone: { start: 36000, end: 86000, peak: 68348 },
+  cliffs: [                                   // analysis.cliffs, immediate only
+    { at: 53000, drop: 2447 },
+    { at: 54000, drop: 9390, label: "−$9,390" },
+  ],
+  deferred: [{ at: 72000, drop: 219 }],       // evaluation.deferred
+  window: [24000, 96000],
+};
+
+/* THE LIFT. `analysis.dangerZones` describe the curve with deferred drops taken
+   out, but `analysis.points` are the REAL curve. Plotting one against the other
+   draws two different curves, so the UI lifts the points itself — the same
+   arithmetic as immediateCurve() in core/src/evaluate.ts. */
+const lifted = (() => {
+  const out = NET.slice();
+  for (const d of HH.deferred) {
+    const i = d.at / STEP;
+    for (let k = i + 1; k < out.length; k++) out[k] += d.drop;
+  }
+  return out;
+})();
+
+const money = n => "$" + Math.round(n).toLocaleString("en-US");
+const el = document.getElementById("curve");
+const wrap = document.getElementById("chartWrap");
+const readout = document.getElementById("readout");
+const NS = "http://www.w3.org/2000/svg";
+const mk = (t, a) => { const n = document.createElementNS(NS, t);
+  for (const k in a) n.setAttribute(k, a[k]); return n; };
+
+let cursor = HH.current / STEP;
+
+function draw() {
+  const W = Math.max(300, wrap.clientWidth);
+  const narrow = W < 520;
+  const H = narrow ? 260 : 300;
+  const pad = { t: 26, r: narrow ? 12 : 16, b: 38, l: narrow ? 48 : 58 };
+
+  const [x0, x1] = HH.window;
+  const i0 = x0 / STEP, i1 = x1 / STEP;
+  const slice = lifted.slice(i0, i1 + 1);
+  const lo = Math.min(...slice), hi = Math.max(...slice);
+  const padY = (hi - lo) * 0.14;
+  const y0 = Math.floor((lo - padY) / 1000) * 1000, y1 = Math.ceil((hi + padY) / 1000) * 1000;
+
+  const px = e => pad.l + (e - x0) / (x1 - x0) * (W - pad.l - pad.r);
+  const py = v => pad.t + (y1 - v) / (y1 - y0) * (H - pad.t - pad.b);
+
+  el.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  el.setAttribute("width", W); el.setAttribute("height", H);
+  el.textContent = "";
+
+  const defs = mk("defs");
+  const pat = mk("pattern", { id: "hatch", width: 7, height: 7,
+    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7,
+    stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
+  defs.append(pat); el.append(defs);
+
+  /* Danger band: a wash plus a 45° hatch, so the stretch reads without colour. */
+  const bx0 = px(Math.max(HH.zone.start, x0)), bx1 = px(Math.min(HH.zone.end, x1));
+  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b,
+    fill: "var(--loss-wash)" }));
+  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b,
+    fill: "url(#hatch)" }));
+
+  /* Gridlines: solid hairlines, one step off the surface, never dashed. */
+  const ticks = [];
+  const stepY = (y1 - y0) / (narrow ? 3 : 4);
+  for (let v = y0; v <= y1 + 1; v += stepY) ticks.push(Math.round(v));
+  for (const v of ticks) {
+    el.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v),
+      stroke: "var(--grid)", "stroke-width": 1 }));
+    const t = mk("text", { x: pad.l - 8, y: py(v) + 4, "text-anchor": "end",
+      fill: "var(--ink-3)", "font-size": 12 });
+    t.textContent = "$" + Math.round(v / 1000) + "k"; el.append(t);
+  }
+
+  /* The reference line: the most this household had before the flat stretch. */
+  el.append(mk("line", { x1: bx0, y1: py(HH.zone.peak), x2: bx1, y2: py(HH.zone.peak),
+    stroke: "var(--loss-3)", "stroke-width": 1 }));
+  const rl = mk("text", { x: bx0 + 6, y: py(HH.zone.peak) - 6, fill: "var(--loss-ink)",
+    "font-size": 12, "font-weight": 500 });
+  rl.textContent = narrow ? money(HH.zone.peak) : money(HH.zone.peak) + " — what you had at $36,000";
+  el.append(rl);
+
+  /* x ticks */
+  const xt = narrow ? [30000, 54000, 72000, 96000] : [24000, 38000, 54000, 72000, 86000, 96000];
+  for (const e of xt) {
+    const t = mk("text", { x: px(e), y: H - 14, "text-anchor": "middle",
+      fill: "var(--ink-3)", "font-size": 12 });
+    t.textContent = "$" + e / 1000 + "k"; el.append(t);
+  }
+  el.append(mk("line", { x1: pad.l, y1: H - pad.b, x2: W - pad.r, y2: H - pad.b,
+    stroke: "var(--axis)", "stroke-width": 1 }));
+
+  /* The line: one series, 2px, round caps, no area fill. */
+  let d = "";
+  for (let i = i0; i <= i1; i++) d += (i === i0 ? "M" : "L") + px(i * STEP) + " " + py(lifted[i]);
+  el.append(mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
+    "stroke-linejoin": "round", "stroke-linecap": "round",
+    class: "draw", "pathLength": 1 }));
+
+  /* Immediate drops: filled dot at the top of the step, 2px surface ring,
+     solid connector down to where the line lands. */
+  for (const c of HH.cliffs) {
+    const a = c.at / STEP;
+    el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]), x2: px(c.at), y2: py(lifted[a + 1]),
+      stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
+    el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4.5, fill: "var(--loss-4)",
+      stroke: "var(--surface)", "stroke-width": 2 }));
+    if (c.label) {
+      const t = mk("text", { x: px(c.at) + 9, y: py((lifted[a] + lifted[a + 1]) / 2) + 4,
+        fill: "var(--loss-ink)", "font-size": 13, "font-weight": 600 });
+      t.textContent = c.label; el.append(t);
+    }
+  }
+
+  /* Deferred drops: hollow dot, dashed connector, never a break in the line. */
+  for (const c of HH.deferred) {
+    const a = c.at / STEP;
+    el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]) - 22, x2: px(c.at), y2: py(lifted[a]) - 2,
+      stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+    el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4.5, fill: "var(--surface)",
+      stroke: "var(--ink-3)", "stroke-width": 2 }));
+    const t = mk("text", { x: px(c.at), y: py(lifted[a]) - 28, "text-anchor": "middle",
+      fill: "var(--ink-2)", "font-size": 12, "font-weight": 500 });
+    t.textContent = "later"; el.append(t);
+  }
+
+  /* You are here: a diamond, not a dot — shape carries it when colour cannot. */
+  const cx = px(HH.current), cy = py(HH.currentNet);
+  el.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: H - pad.b,
+    stroke: "var(--ink-3)", "stroke-width": 1 }));
+  el.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`,
+    fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
+  const yl = mk("text", { x: cx, y: pad.t - 8, "text-anchor": "middle", fill: "var(--ink)",
+    "font-size": 13, "font-weight": 600 });
+  yl.textContent = "you"; el.append(yl);
+
+  /* Where the flat stretch ends. */
+  if (HH.zone.end <= x1) {
+    const ex = px(HH.zone.end);
+    el.append(mk("line", { x1: ex, y1: pad.t, x2: ex, y2: H - pad.b,
+      stroke: "var(--loss-3)", "stroke-width": 1 }));
+    if (!narrow) {
+      const t = mk("text", { x: ex - 6, y: pad.t + 12, "text-anchor": "end",
+        fill: "var(--loss-ink)", "font-size": 12, "font-weight": 500 });
+      t.textContent = "back to even"; el.append(t);
+    }
+  }
+
+  document.getElementById("axisNote").textContent =
+    `The side numbers start at ${money(y0)}, not at $0, so the drops are easy to see.`;
+  cursorLayer = { px, py, pad, W, H, i0, i1 };
+  paintCursor();
+}
+
+let cursorLayer = null, cursorNodes = [];
+function paintCursor() {
+  cursorNodes.forEach(n => n.remove()); cursorNodes = [];
+  if (!cursorLayer) return;
+  const { px, py, pad, H } = cursorLayer;
+  const e = cursor * STEP, v = lifted[cursor];
+  if (e !== HH.current) {          // the diamond already marks where they are
+    const line = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b,
+      stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
+    const dot = mk("circle", { cx: px(e), cy: py(v), r: 4.5, fill: "var(--series-1)",
+      stroke: "var(--surface)", "stroke-width": 2 });
+    el.append(line, dot); cursorNodes = [line, dot];
+  }
+  const inZone = e > HH.zone.start && e < HH.zone.end;
+  readout.innerHTML = `Paid <b>${money(e)}</b> a year, you keep <b>${money(v)}</b>.` +
+    (inZone ? " This pay is inside the flat stretch." : " This pay is outside the flat stretch.");
+}
+
+function moveTo(clientX) {
+  if (!cursorLayer) return;
+  const r = el.getBoundingClientRect();
+  const { pad, W, i0, i1 } = cursorLayer;
+  const f = (clientX - r.left - pad.l) / (W - pad.l - pad.r);
+  cursor = Math.min(i1, Math.max(i0, Math.round(i0 + f * (i1 - i0))));
+  paintCursor();
+}
+
+wrap.addEventListener("pointermove", ev => moveTo(ev.clientX));
+wrap.addEventListener("pointerdown", ev => moveTo(ev.clientX));
+wrap.addEventListener("keydown", ev => {
+  const step = ev.shiftKey ? 5 : 1;
+  if (ev.key === "ArrowRight") { cursor = Math.min(cursorLayer.i1, cursor + step); }
+  else if (ev.key === "ArrowLeft") { cursor = Math.max(cursorLayer.i0, cursor - step); }
+  else if (ev.key === "Home") { cursor = cursorLayer.i0; }
+  else if (ev.key === "End") { cursor = cursorLayer.i1; }
+  else return;
+  ev.preventDefault(); paintCursor();
+});
+
+draw();
+addEventListener("resize", draw);
+
+/* The one orchestrated moment: the line draws once, left to right. */
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const p = el.querySelector(".draw");
+  if (p) p.animate([{ strokeDasharray: "0 1" }, { strokeDasharray: "1 0" }],
+    { duration: 700, easing: "cubic-bezier(.2,.6,.2,1)" });
+}
+
+const btn = document.getElementById("themeBtn");
+btn.addEventListener("click", () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  btn.textContent = dark ? "Dark" : "Light";
+  draw();
+});
+</script>
+</body>
+</html>

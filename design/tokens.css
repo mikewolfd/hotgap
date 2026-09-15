@@ -1,0 +1,222 @@
+/* HotGap design tokens.
+   Foundations for three surfaces: citizen, caseworker, journalist.
+   Every color was validated, not eyeballed — see design/README.md § Colour.
+
+   Light surface  #FAFBFC   Light plane  #E8EBEE
+   Dark  surface  #161B20   Dark  plane  #0D1114
+*/
+
+/* ── Type ──────────────────────────────────────────────────────────────
+   One family. Archivo: a squared grotesque with tall figures — the voice of
+   an official form, not of a brochure. Falls back cleanly with no network. */
+:root {
+  --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* 1.185 scale from a 17px body. The citizen answer is the only display size. */
+  --t-answer: clamp(1.625rem, 1.05rem + 2.5vw, 2.375rem);
+  --t-figure: 1.875rem;   /* a hero number inside a tile — same sans, never serif */
+  --t-h1:     1.5rem;
+  --t-h2:     1.1875rem;
+  --t-h3:     1.0625rem;
+  --t-body:   1.0625rem;  /* 17px — citizen default */
+  --t-small:  0.9375rem;  /* 15px — caseworker tables, captions */
+  --t-micro:  0.8125rem;  /* 13px — axis ticks, source lines. The floor for prose;
+                             a label sized to its own mark (a map tile's postal
+                             code) may go smaller when the table repeats it. */
+
+  --lh-answer: 1.2;
+  --lh-tight:  1.3;
+  --lh-body:   1.55;
+
+  --w-reg:  400;
+  --w-med:  500;
+  --w-semi: 600;
+
+  --measure:      60ch;   /* citizen prose */
+  --measure-wide: 76ch;   /* caseworker / journalist prose */
+
+  /* ── Space. 4px base. ── */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --touch: 44px;
+
+  /* ── Shape. Three radii, three jobs. Panels have none: they are defined
+       by rules and ground, never by a rounded card with a shadow. ── */
+  --r-control: 6px;   /* buttons, inputs */
+  --r-chip:    999px; /* status chips only */
+  --r-panel:   0;
+
+  /* ── Motion. One orchestrated moment per surface; everything else answers
+       a person's action. ── */
+  --dur-fast: 120ms;
+  --dur:      240ms;
+  --dur-draw: 700ms;
+  --ease: cubic-bezier(.2,.6,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; --dur-draw: 0ms; }
+}
+
+/* ── Colour: light ─────────────────────────────────────────────────────
+   Cool slate paper, not cream. Ink is blue-black, not tinted near-black. */
+:root {
+  color-scheme: light;
+
+  --plane:        #E8EBEE;
+  --surface:      #FAFBFC;
+  --surface-sunk: #F1F3F6;
+
+  --ink:   #12171C;  /* 17.4:1 on surface */
+  --ink-2: #414B55;  /*  8.6:1 */
+  --ink-3: #5E6871;  /*  5.5:1 — the lightest ink allowed to carry small text */
+  --rule:        #D3D8DE;
+  --rule-strong: #AEB7C0;
+  --link:  #1F5CB4;  /*  6.2:1 */
+  --focus: #12171C;
+
+  /* Categorical slots. Three only — the all-pairs cap for maps and scatters.
+     1 = the household you are looking at. 2 = a what-if or a compared state.
+     3 = reserved; a third line is a signal to facet instead. */
+  --series-1: #2A6FD0;
+  --series-2: #D2611F;
+  --series-3: #1E8E6A;
+
+  /* The loss ramp. ONE hue, five steps, magnitude only — see README § Colour
+     for why this is plum and not red-to-green. 1 = smallest drop. */
+  --loss-1: #D19FC2;
+  --loss-2: #B276A3;
+  --loss-3: #945185;
+  --loss-4: #713366;
+  --loss-5: #4D1E43;
+  --loss-ink:   #713366;                  /* 7.4:1 on plane — text-safe plum */
+  --loss-wash:  rgba(113,51,102,0.10);    /* danger-zone band fill */
+  --loss-hatch: rgba(113,51,102,0.32);    /* 45° hatch over the band */
+
+  /* Chart chrome */
+  --grid: #E1E5EA;
+  --axis: #AEB7C0;
+
+  /* System status. Deliberately NOT good/bad: HotGap never colours a
+     household's money as virtuous or shameful. These say things about the
+     DATA, not about the family. Always shipped with an icon and a word. */
+  --note:    #1F5CB4;  /* an estimate, a source, a definition */
+  --caution: #8A5A00;  /* stale data, offline fallback, a suppressed cell */
+}
+
+/* ── Colour: dark ──────────────────────────────────────────────────────
+   Re-derived against #161B20, not flipped. The loss ramp reverses its anchor:
+   on a dark ground the SMALLEST loss is the step nearest the surface. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane:        #0D1114;
+    --surface:      #161B20;
+    --surface-sunk: #1D242A;
+    --ink:   #F2F5F7;
+    --ink-2: #C2CBD3;
+    --ink-3: #97A1AA;
+    --rule:        #2A3238;
+    --rule-strong: #3F4A53;
+    --link:  #7FB2F0;
+    --focus: #F2F5F7;
+    --series-1: #4C8DE0;
+    --series-2: #D4722F;
+    --series-3: #22A87C;
+    --loss-1: #7C3D6D;
+    --loss-2: #9C5A8C;
+    --loss-3: #BC7BAB;
+    --loss-4: #D9A2C9;
+    --loss-5: #F0C9E2;
+    --loss-ink:   #D9A2C9;
+    --loss-wash:  rgba(217,162,201,0.13);
+    --loss-hatch: rgba(217,162,201,0.34);
+    --grid: #232A31;
+    --axis: #3F4A53;
+    --note:    #7FB2F0;
+    --caution: #E0B056;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane:        #0D1114;
+  --surface:      #161B20;
+  --surface-sunk: #1D242A;
+  --ink:   #F2F5F7;
+  --ink-2: #C2CBD3;
+  --ink-3: #97A1AA;
+  --rule:        #2A3238;
+  --rule-strong: #3F4A53;
+  --link:  #7FB2F0;
+  --focus: #F2F5F7;
+  --series-1: #4C8DE0;
+  --series-2: #D4722F;
+  --series-3: #22A87C;
+  --loss-1: #7C3D6D;
+  --loss-2: #9C5A8C;
+  --loss-3: #BC7BAB;
+  --loss-4: #D9A2C9;
+  --loss-5: #F0C9E2;
+  --loss-ink:   #D9A2C9;
+  --loss-wash:  rgba(217,162,201,0.13);
+  --loss-hatch: rgba(217,162,201,0.34);
+  --grid: #232A31;
+  --axis: #3F4A53;
+  --note:    #7FB2F0;
+  --caution: #E0B056;
+}
+
+/* ── The floor every surface inherits ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3 { line-height: var(--lh-tight); font-weight: var(--w-semi); margin: 0; }
+h1 { font-size: var(--t-h1); }
+h2 { font-size: var(--t-h2); }
+h3 { font-size: var(--t-h3); }
+p  { margin: 0 0 var(--s4); max-width: var(--measure); }
+
+a { color: var(--link); text-underline-offset: 3px; }
+
+/* Focus is never removed and never invisible: a 2px ink ring with a 2px
+   surface gap, so it reads on any ground including a filled control. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+/* Every interactive thing clears 44px. */
+button, [role="button"], summary, select, input, .hg-row-link {
+  min-height: var(--touch);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Numbers in columns align; standalone big numbers do not. */
+table, .hg-tabular { font-variant-numeric: tabular-nums; }
+.hg-figure { font-variant-numeric: proportional-nums; }
+
+.hg-visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* Shared: the source line every chart and table carries so a screenshot
+   survives out of context. */
+.hg-source {
+  font-size: var(--t-micro);
+  color: var(--ink-3);
+  line-height: 1.45;
+  margin: var(--s2) 0 0;
+  max-width: var(--measure-wide);
+}

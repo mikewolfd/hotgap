@@ -1,0 +1,95 @@
+- generic [active] [ref=e1]:
+  - link "Skip to the answer" [ref=e2] [cursor=pointer]:
+    - /url: "#answer"
+  - generic [ref=e3]:
+    - paragraph [ref=e4]: HotGap
+    - paragraph [ref=e5]: A parent with two kids, ages 3 and 7, in El Paso County, Colorado
+  - main [ref=e6]:
+    - generic [ref=e8]:
+      - heading "If your pay goes up, do you keep more?" [level=1] [ref=e9]
+      - paragraph [ref=e10]: You are paid $38,000 a year. You keep $67,000. More pay does not add to that until you are paid $86,000.
+      - paragraph [ref=e11]: You keep more than your pay because help and tax money are part of it. This number is your pay, plus help, less what you pay for a health plan.
+    - generic [ref=e12]:
+      - figure "The side numbers start at $53,000, not at $0, so the drops are easy to see. Colorado rules for 2026. These are estimates." [ref=e13]:
+        - generic [ref=e14]: Money you keep in a year, as your pay goes up
+        - img "A line of the money this household keeps as pay rises from $24,000 to $96,000. The line is flat from $36,000 to $86,000 and drops sharply at $54,000, where child care help ends. The household sits at $38,000 of pay, inside that flat stretch." [ref=e16]:
+          - img [aria-hidden] [ref=e17]:
+            - generic [ref=e20]: $51k
+            - generic [ref=e21]: $58k
+            - generic [ref=e22]: $64k
+            - generic [ref=e23]: $71k
+            - generic [ref=e24]: $77k
+            - generic [ref=e25]: $68,348 — what you had at $36,000
+            - generic [ref=e26]: $24k
+            - generic [ref=e27]: $38k
+            - generic [ref=e28]: $54k
+            - generic [ref=e29]: $72k
+            - generic [ref=e30]: $86k
+            - generic [ref=e31]: $96k
+            - generic [ref=e35]: −$9,390
+            - generic [ref=e37]: later
+            - generic [ref=e39]: you
+            - generic [ref=e40]: back to even
+        - paragraph [ref=e42]: Paid $38,000 a year, you keep $67,000. This pay is inside the flat stretch.
+        - list [ref=e43]:
+          - listitem [ref=e44]: Money you keep
+          - listitem [ref=e46]: The flat stretch
+          - listitem [ref=e50]: A drop this year
+          - listitem [ref=e53]: A drop that waits
+          - listitem [ref=e56]: You now
+      - group [ref=e60]:
+        - generic "Show the numbers" [ref=e61] [cursor=pointer]
+      - heading "What ends, and when" [level=2] [ref=e62]
+      - list [ref=e63]:
+        - listitem [ref=e64]:
+          - generic [ref=e65]: $37,000
+          - paragraph [ref=e66]:
+            - text: Your own free state health plan ends. It is called Medicaid.
+            - generic [ref=e67]: You start paying for a plan.
+        - listitem [ref=e68]:
+          - generic [ref=e69]: $40,000
+          - paragraph [ref=e70]: Your kids move off Medicaid. They move to a plan for kids.
+        - listitem [ref=e71]:
+          - generic [ref=e72]: $54,000
+          - paragraph [ref=e73]:
+            - text: Food help ends. It is called SNAP. Food help for young kids ends too. It is called WIC.
+            - generic [ref=e74]: You keep $2,447 less.
+        - listitem [ref=e75]:
+          - generic [ref=e76]: $55,000
+          - paragraph [ref=e77]:
+            - text: Child care help ends. The state stops paying part of your day care bill.
+            - generic [ref=e78]: You keep $9,390 less. This is the biggest drop.
+        - listitem [ref=e79]:
+          - generic [ref=e80]: $72,000
+          - paragraph [ref=e81]:
+            - generic [ref=e82]: Waits
+            - text: Your kids’ health plan ends. It is called CHIP. It does not end that day.
+      - generic [ref=e83]:
+        - heading "One change waits" [level=2] [ref=e84]
+        - paragraph [ref=e85]:
+          - text: At
+          - strong [ref=e86]: $72,000
+          - text: your kids stop being able to get CHIP, their health plan. But the law lets kids keep it for a full year at a time. So it ends at their next yearly check, up to 12 months later.
+        - paragraph [ref=e87]: We do not draw it as a drop today, because it is not one.
+      - heading "How common is this pay?" [level=2] [ref=e88]
+      - paragraph [ref=e89]:
+        - text: About
+        - strong [ref=e90]: 4 in 10
+        - text: parents like you in Colorado are paid $38,000 a year or less. The count could be off by a few thousand dollars either way.
+      - paragraph [ref=e91]: This says how common the pay is. It does not say what you will earn.
+      - paragraph [ref=e92]: From U.S. Census Bureau ACS 2024 1-Year public-use microdata, grown to 2026 dollars. 393 households in this cell; the margin at this point is about $8,000.
+      - heading "Hours" [level=2] [ref=e93]
+      - paragraph [ref=e94]:
+        - text: Colorado’s lowest legal pay is
+        - strong [ref=e95]: $15.16
+        - text: an hour. Full-time work at that pay is about
+        - strong [ref=e96]: $31,500
+        - text: a year.
+      - generic [ref=e97]:
+        - paragraph [ref=e98]:
+          - strong [ref=e99]: These are estimates.
+          - text: A case worker decides real help.
+        - paragraph [ref=e100]: We use 2026 rules. We do not ask about where you were born, what you own, or anyone in the home aged 65 or more. None of those are part of this.
+        - paragraph [ref=e101]: We do not tell you what to do.
+        - paragraph [ref=e102]:
+          - button "Dark" [ref=e103] [cursor=pointer]
