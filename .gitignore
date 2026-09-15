@@ -3,6 +3,11 @@ dist/
 *.tsbuildinfo
 .superpowers/
 
+# engine/ — the local PolicyEngine service's virtualenv and bytecode
+__pycache__/
+*.pyc
+engine/.venv/
+
 # Screenshots from browser-driven design work
 .playwright-mcp/
 

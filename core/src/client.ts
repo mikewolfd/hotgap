@@ -1,6 +1,7 @@
-// The one place HotGap talks to PolicyEngine. Wraps the public, keyless
-// POST /us/calculate with a timeout, optional retries, error classification,
-// and an optional result cache keyed on the household, request and overrides.
+// The one place HotGap talks to PolicyEngine. Wraps the keyless
+// POST /us/calculate — the public API, or whatever `HOTGAP_PE_URL` names —
+// with a timeout, optional retries, error classification, and an optional
+// result cache keyed on the household, request and overrides.
 import { createHash } from "node:crypto";
 import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
@@ -10,6 +11,23 @@ import { axisSpec, buildPEPayload, type AxisSpec, type PayloadOptions } from "./
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
+
+/**
+ * The endpoint every request goes to: `HOTGAP_PE_URL` when it is set to a
+ * non-empty value, the public API otherwise — so nothing changes for anyone
+ * who does not set it, and the CLI, the pipeline and the contract suite all
+ * follow one switch because all three call through here.
+ *
+ * `engine/` is a self-hosted stand-in for this endpoint; it runs a newer
+ * policyengine-us than the hosted service, which is the point of setting the
+ * variable (13 states' child-care subsidy variables exist only in the newer
+ * model). Read on every call rather than captured at import, so a process can
+ * set it before the first request.
+ */
+export function peUrl(): string {
+  return process.env.HOTGAP_PE_URL?.trim() || PE_URL;
+}
+
 const DEFAULT_TIMEOUT_MS = 25_000;
 // The service builds a reform for per-request parameters. Live probes took
 // 34–39 s end to end; use the batch budget for these requests too.
@@ -66,7 +84,7 @@ export async function runQueue<T>(tasks: T[], concurrency: number, worker: (task
 async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs: number): Promise<unknown> {
   let res: Response;
   try {
-    res = await fetchImpl(PE_URL, {
+    res = await fetchImpl(peUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

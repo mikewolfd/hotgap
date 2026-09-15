@@ -1,0 +1,23 @@
+# The model, pinned: these three decide every number the service returns.
+#
+# `policyengine-us` 2.4.2's own metadata asks for `spm-calculator>=1.0.0,
+# <=1.0.0.post1` while its README prose says the release "pins
+# spm-calculator==0.3.1 to preserve its SPM threshold API". The metadata is the
+# machine-readable truth and the resolver picks 1.0.0.post1; SPM thresholds
+# were checked under it (a CA family of two, 2026: $37,779) and are sane, so
+# the metadata's range is what is pinned here. Revisit if upstream corrects
+# the prose in a later release.
+policyengine-us==2.4.2
+policyengine-core==3.32.5
+spm-calculator==1.0.0.post1
+
+# The HTTP layer. Flask because the public API is a Flask app, and gunicorn
+# because a simulation is not safe to interleave with another in the same
+# process (engine/calculate.py), so parallelism has to come from processes.
+flask==3.1.3
+gunicorn==26.2.0
+
+# Everything else (numpy, pandas>=3, microdf, tables, us, …) is resolved from
+# the model's own metadata. Those are not pinned so the file installs across
+# the Python range the model supports (3.11-3.14); it was built and verified on
+# 3.12 with numpy 2.5.3 / pandas 3.0.5.
