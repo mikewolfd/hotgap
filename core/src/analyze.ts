@@ -1,5 +1,6 @@
 import type { CurvePoint, ProgramId } from "./types.js";
-import { CASH_PROGRAMS, NET_INCOME_CREDITS, PROGRAM_IDS } from "./types.js";
+import { CASH_PROGRAMS, COVERAGE_PROGRAMS, NET_INCOME_CREDITS, PROGRAM_IDS } from "./types.js";
+import { PERSON_LEVEL_PROGRAMS } from "./parse.js";
 
 export const CLIFF_MIN = 200;
 /** A program counts as "on" above this many dollars a year. */
@@ -20,13 +21,46 @@ const LOSS_SHARE_MIN = 0.2;
 export interface CliffBreakdown {
   /** Cash programs plus PolicyEngine's untracked benefit remainder. */
   benefits: number;
-  /** Refundable credits and the ACA premium subsidy. */
+  /** Refundable credits — federal and state — and the ACA premium subsidy. */
   credits: number;
   /** The rise in what the household pays for health coverage. */
   premiums: number;
   /** Everything else: taxes, and market-income effects. */
   other: number;
 }
+
+/**
+ * Why a cliff does not arrive with the raise that causes it.
+ *
+ * Three federal rules carry a household past the income threshold that ends a
+ * program, so the money does not change the month the raise lands — it changes
+ * at a renewal that can be up to a year away. A cliff carrying one of these is
+ * still a real loss and still reported; it just must not drive the verdict,
+ * the danger zones, or the leap (see evaluate.ts).
+ */
+export type DeferralReason =
+  | "head_start_program_year"
+  | "child_continuous_eligibility"
+  | "transitional_medical_assistance";
+
+export interface Deferral {
+  reason: DeferralReason;
+  /** When the loss actually lands, in the household's own words. */
+  until: string;
+}
+
+export const DEFERRAL_UNTIL: Record<DeferralReason, string> = {
+  // 45 CFR 1302.12(j)(1): a child enrolled in Head Start stays eligible for
+  // the remainder of the program year and the one immediately following.
+  head_start_program_year: "the end of the next Head Start program year (45 CFR 1302.12(j)(1))",
+  // 42 CFR 435.926 and 457.342: 12 months of continuous eligibility for a
+  // child in Medicaid or CHIP, regardless of a change in family income.
+  child_continuous_eligibility: "the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342)",
+  // §1925 of the Social Security Act (42 U.S.C. 1396r-6): a family that loses
+  // §1931 Medicaid because of earnings from employment keeps it for 6 months,
+  // and a further 6 on a state's extension.
+  transitional_medical_assistance: "6 to 12 months of Transitional Medical Assistance run out (§1925 of the Social Security Act, 42 U.S.C. 1396r-6)",
+};
 
 export interface Cliff {
   startEarnings: number;
@@ -38,6 +72,8 @@ export interface Cliff {
   // with no nameable program (an SSDI stop lives in otherBenefits; a premium
   // jump is not a program) still says what it was.
   driver: keyof CliffBreakdown;
+  /** Set when nothing this cliff costs is lost in the year of the raise. */
+  deferral: Deferral | null;
 }
 export interface DangerZone {
   startEarnings: number;
@@ -45,6 +81,27 @@ export interface DangerZone {
   peakNet: number;
 }
 export type Verdict = "always_up" | "cliff_ahead" | "in_danger_zone" | "cliff_behind";
+
+export interface AnalyzeOptions {
+  /**
+   * Whether the household has a dependent child. Transitional Medical
+   * Assistance continues coverage only for a §1931 family — a household with a
+   * dependent child — so a childless adult losing expansion Medicaid loses it
+   * on the spot and their cliff is never deferred. Defaults to false: with no
+   * household context, nothing is excused.
+   */
+  hasChildren?: boolean;
+  /**
+   * Whether an adult-Medicaid loss at these earnings is the ACA adult group's
+   * 138%-FPL end rather than a §1931 family loss. Transitional Medical
+   * Assistance (§1925 of the Act) continues coverage only after a §1931 loss;
+   * an adult leaving the expansion group goes to the marketplace that month.
+   * Without it, every adult loss in a household with children is treated as
+   * §1931 — wrong in the 41 expansion states, where parents usually leave
+   * Medicaid at the adult-group line.
+   */
+  isAdultGroupLoss?: (earnings: number) => boolean;
+}
 
 export interface CurveAnalysis {
   points: CurvePoint[];
@@ -83,12 +140,87 @@ const total = (p: CurvePoint, ids: ProgramId[]): number =>
 
 function breakdownOf(a: CurvePoint, b: CurvePoint, drop: number): CliffBreakdown {
   const benefits = (total(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (total(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
-  const credits = total(a, NET_INCOME_CREDITS) - total(b, NET_INCOME_CREDITS);
+  // State refundable credits count here, not in `other`: they are inside
+  // netIncome exactly as the federal ones are (parse.ts). The nonrefundable
+  // part of the CTC is deliberately absent — it never reaches netIncome, so a
+  // credit turning nonrefundable is a tax effect, and lands in `other`.
+  const credits = (total(a, NET_INCOME_CREDITS) + (a.stateCredits ?? 0))
+    - (total(b, NET_INCOME_CREDITS) + (b.stateCredits ?? 0));
   const premiums = b.medicalOOP - a.medicalOOP;
   return { benefits, credits, premiums, other: drop - benefits - credits - premiums };
 }
 
-export function analyzeCurve(points: CurvePoint[], currentEarnings: number): CurveAnalysis {
+// How much of a program one group of people holds at a point. Adults are the
+// household total less the children's share, because PolicyEngine reports the
+// person-level programs per person and parse.ts keeps the children's sum.
+type Group = (p: CurvePoint, id: ProgramId) => number;
+const HOUSEHOLD: Group = (p, id) => p.programs[id] ?? 0;
+const CHILDREN: Group = (p, id) => p.childPrograms?.[id] ?? 0;
+const ADULTS: Group = (p, id) => HOUSEHOLD(p, id) - CHILDREN(p, id);
+
+/** A program switching off, or losing more than half its value, for one group in one step. */
+function notches(a: CurvePoint, b: CurvePoint, id: ProgramId, group: Group): boolean {
+  const before = group(a, id);
+  const after = group(b, id);
+  return before > PROGRAM_END_MIN && (after <= PROGRAM_END_MIN || after < 0.5 * before);
+}
+
+/** …and losing enough of it to explain a real share of this step's drop. */
+const notchesMaterially = (a: CurvePoint, b: CurvePoint, id: ProgramId, group: Group, drop: number): boolean =>
+  notches(a, b, id, group) && group(a, id) - group(b, id) >= LOSS_SHARE_MIN * drop;
+
+/**
+ * The deferral rules that fire at this step, with the programs each excuses.
+ *
+ * Run per person-group, because who loses the coverage decides which rule
+ * carries them: a child's Medicaid or CHIP is continuous for 12 months, while
+ * a parent's §1931 Medicaid converts to Transitional Medical Assistance — and
+ * only if the family has a dependent child, which is what makes it a §1931
+ * family in the first place.
+ */
+function deferralOf(
+  a: CurvePoint,
+  b: CurvePoint,
+  programsLost: ProgramId[],
+  hasChildren: boolean,
+  isAdultGroupLoss: (earnings: number) => boolean,
+): Deferral | null {
+  const reasons: DeferralReason[] = [];
+  const excused = new Set<ProgramId>();
+
+  if (notches(a, b, "headstart", HOUSEHOLD)) {
+    reasons.push("head_start_program_year");
+    excused.add("headstart");
+  }
+  const childCoverage = COVERAGE_PROGRAMS.filter((id) => notches(a, b, id, CHILDREN));
+  if (childCoverage.length > 0) {
+    reasons.push("child_continuous_eligibility");
+    for (const id of childCoverage) excused.add(id);
+  }
+  const adultMedicaidEnds = notches(a, b, "medicaid", ADULTS);
+  if (adultMedicaidEnds && hasChildren && !isAdultGroupLoss(a.earnings)) {
+    reasons.push("transitional_medical_assistance");
+    excused.add("medicaid");
+  }
+  // Medicaid is only excused when BOTH groups' ends are: a childless adult
+  // (or an adult in a household whose children are not the reason) losing it
+  // is an immediate loss, whatever the children's continuous eligibility says.
+  if (adultMedicaidEnds && !excused.has("medicaid")) excused.delete("medicaid");
+
+  if (reasons.length === 0) return null;
+  // Anything named on this cliff that no rule carries forward makes the whole
+  // cliff immediate — a household losing SNAP and Head Start in one step feels
+  // the SNAP the same month. An EMPTY list of named programs still qualifies:
+  // that is the premium-jump case, where the parent's coverage ending is the
+  // whole cliff but the sticker value was too small to be named.
+  if (programsLost.some((id) => !excused.has(id))) return null;
+  // Several rules can fire at once (children age off CHIP in the same step a
+  // parent's TMA starts). Report the first in this fixed order; `until` says
+  // the horizon either way, and the CLI prints the whole cliff, not the label.
+  return { reason: reasons[0], until: DEFERRAL_UNTIL[reasons[0]] };
+}
+
+export function analyzeCurve(points: CurvePoint[], currentEarnings: number, opts: AnalyzeOptions = {}): CurveAnalysis {
   if (points.length < 2) throw new Error("need at least 2 curve points");
 
   const cliffs: Cliff[] = [];
@@ -110,23 +242,31 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number): Cur
       // …and only when that loss explains a real share of the drop: a SNAP
       // notch worth 3% of a fall that was 105% premium is not why the money
       // fell, and saying "lost SNAP" would be read as if it were.
-      const programsLost = PROGRAM_IDS.filter((id) => {
-        const before = points[i].programs[id] ?? 0;
-        const after = points[i + 1].programs[id] ?? 0;
-        const notch = before > PROGRAM_END_MIN && (after <= PROGRAM_END_MIN || after < 0.5 * before);
-        return notch && before - after >= LOSS_SHARE_MIN * drop;
-      });
-      const breakdown = breakdownOf(points[i], points[i + 1], drop);
+      // …and tested per person-group for the programs PolicyEngine reports per
+      // person, not on the household total alone. A parent losing Medicaid
+      // while the children keep theirs leaves the total flat, so the
+      // household test could never name it: 94 of the 271 adult Medicaid ends
+      // that fall on a cliff step in the 2026-09 sweep went unnamed. The
+      // household total stays in the list because two people each holding less
+      // than PROGRAM_END_MIN still add up to a loss neither group can see.
+      const a = points[i];
+      const b = points[i + 1];
+      const programsLost = PROGRAM_IDS.filter((id) =>
+        (PERSON_LEVEL_PROGRAMS.includes(id) ? [HOUSEHOLD, ADULTS, CHILDREN] : [HOUSEHOLD])
+          .some((group) => notchesMaterially(a, b, id, group, drop)),
+      );
+      const breakdown = breakdownOf(a, b, drop);
       const driver = (Object.keys(breakdown) as (keyof CliffBreakdown)[]).reduce((best, k) =>
         breakdown[k] > breakdown[best] ? k : best,
       );
       cliffs.push({
-        startEarnings: points[i].earnings,
-        endEarnings: points[i + 1].earnings,
+        startEarnings: a.earnings,
+        endEarnings: b.earnings,
         drop,
         programsLost,
         breakdown,
         driver,
+        deferral: deferralOf(a, b, programsLost, opts.hasChildren === true, opts.isAdultGroupLoss ?? (() => false)),
       });
     }
   }

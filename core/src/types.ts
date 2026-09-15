@@ -42,6 +42,11 @@ export interface HouseholdAnswers {
   monthlyChildcare: number | null;
   annualEarnings: number;
   spouseAnnualEarnings: number;
+  // Hours a week actually worked, null when not asked. Sent to PolicyEngine as
+  // `weekly_hours_worked_before_lsr`, which Massachusetts' TAFDC dependent-care
+  // deduction scales by; it is not used to derive earnings (the CLI does that
+  // before validation) and never varies along the axis.
+  hoursPerWeek: number | null;
   getsHeadStart: boolean;
   getsHousing: boolean;
   hasEmployerCoverage: boolean;
@@ -74,6 +79,17 @@ export interface CurvePoint {
   // untracked remainder, so a benefit HotGap does not name still shows up in
   // a cliff's size. 0 for a curve fetched before we asked for the variable.
   otherBenefits: number;
+  // Refundable STATE tax credits: household_refundable_tax_credits less the
+  // federal EITC and refundable CTC. They are inside netIncome, so a cliff
+  // that is a state credit ending has to be attributed to credits rather than
+  // left in the unexplained residual. 0 for a curve fetched before we asked.
+  stateCredits: number;
+  // The WHOLE child tax credit, refundable part included; `programs.ctc` is
+  // the refundable part alone, because that is what sits in netIncome. The
+  // total is what says whether the credit ENDED or merely stopped being paid
+  // out as a refund (see escape.ts). Falls back to the refundable series on a
+  // curve fetched before we asked for it.
+  totalCtc: number;
   // Set by evaluate.ts when this household is in the coverage gap at this
   // earnings level (no Medicaid, no subsidy, under 100% FPL); always false
   // out of parse.ts, which has no household context to decide it.
@@ -88,6 +104,3 @@ export interface CurveResponse {
 
 export const householdSize = (a: HouseholdAnswers): number => 1 + (a.married ? 1 : 0) + a.childAges.length;
 
-/** Employer-plan tier: a plan for one person, or one that also covers a spouse or child. */
-export const esiTier = (a: HouseholdAnswers): "single" | "family" =>
-  a.married || a.childAges.length > 0 ? "family" : "single";

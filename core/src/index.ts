@@ -22,6 +22,7 @@ export * from "./archetypes.js";
 export * from "./escape.js";
 export * from "./reach.js";
 export * from "./states.js";
+export * from "./stateDefaults.js";
 export * from "./validate.js";
 export * from "./translate.js";
 export * from "./client.js";

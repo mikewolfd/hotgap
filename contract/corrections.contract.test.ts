@@ -30,7 +30,10 @@ describe.skipIf(process.env.RUN_CONTRACT !== "1")("live policy corrections", () 
     const baseline = parsePEResponse(await call({ household: payload.household }), 2);
     expect(corrected[0].medicalOOP).toBe(0);
     expect(baseline[1].medicalOOP).toBe(0);
-    expect(corrected[1].programs.aca).toBeCloseTo(5387, -1);
+    // The credit's size depends on the county's benchmark premium (Kings
+    // County now that archetypes carry the state's largest county); the net
+    // premium is the applicable-percentage cap on income and is not.
+    expect(corrected[1].programs.aca).toBeGreaterThan(5000);
     expect(corrected[1].medicalOOP).toBeCloseTo(2773, -1);
   }, 190_000);
 

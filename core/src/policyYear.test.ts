@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { ESI_EMPLOYEE_CONTRIBUTION, FPL_2025, fpl2025, SGA_ANNUAL, SGA_MONTHLY } from "./policyYear.js";
+import {
+  ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, FPL_2025, fpl2025,
+  MEDICARE_PART_B_ANNUAL, MEDICARE_PART_B_MONTHLY, SGA_ANNUAL, SGA_MONTHLY,
+} from "./policyYear.js";
 
 describe("fpl2025", () => {
   // Every figure below is read straight off ASPE's 2025 detailed table
@@ -27,8 +30,25 @@ describe("hand-held annual constants", () => {
     expect(SGA_ANNUAL).toBe(20_280);
   });
 
-  it("pins the MEPS-IC 2024 employee contributions, family above single", () => {
-    // AHRQ MEPS-IC 2024 Tables II.C.2 and II.D.2, United States row.
-    expect(ESI_EMPLOYEE_CONTRIBUTION).toEqual({ single: 1_789, family: 7_216 });
+  it("pins all three MEPS-IC 2024 employee contributions, in ascending tier order", () => {
+    // AHRQ MEPS-IC 2024 Tables II.C.2 (single), II.E.2 (employee-plus-one) and
+    // II.D.2 (family), United States row, all firm sizes.
+    expect(ESI_EMPLOYEE_CONTRIBUTION).toEqual({ single: 1_789, plusOne: 4_707, family: 7_216 });
+    const { single, plusOne, family } = ESI_EMPLOYEE_CONTRIBUTION;
+    expect(single).toBeLessThan(plusOne);
+    expect(plusOne).toBeLessThan(family);
+  });
+
+  it("pins the ACA full-time hours threshold", () => {
+    // 26 U.S.C. 4980H(c)(4)(A): 30 hours of service a week.
+    expect(ESI_FULL_TIME_HOURS).toBe(30);
+  });
+
+  it("pins the 2026 standard Medicare Part B premium", () => {
+    // CMS fact sheet 2025-11-14 and Federal Register CMS-8091-N: $202.90 a
+    // month, up $17.90 from 2025's $185.00. The annual figure is 12 of them.
+    expect(MEDICARE_PART_B_MONTHLY).toBe(202.90);
+    expect(MEDICARE_PART_B_ANNUAL).toBeCloseTo(2_434.80, 2);
+    expect(MEDICARE_PART_B_MONTHLY - 17.90).toBeCloseTo(185.00, 2);
   });
 });

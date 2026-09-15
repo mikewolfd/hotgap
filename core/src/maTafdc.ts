@@ -5,6 +5,19 @@ import { YEAR, type CurvePoint, type HouseholdAnswers } from "./types.js";
 // fixes in PR #9477 and #9478). Remove it, the ma_tafdc_* inputs requested
 // in translate.ts, and the resample loop in client.ts once both merge and
 // the API serves them.
+//
+// WHICH REGIME THIS IS, because the state publishes the other one. TAFDC
+// disregards 100% of earnings for the first six months of work, then $200 a
+// month per earner and 50% of the rest for as long as the case stays open
+// (106 CMR 704.281). Everything here is the SECOND regime — the ongoing
+// recipient's, the one a household lives on. DTA's own examples are the first:
+// the FY2026 TAFDC report's "$7,512 at $15,600 of earnings for a family of
+// three" is a year-one figure, six months at the full disregard and six at the
+// 50% one, where this formula gives $4,212 for the same family at the same
+// pay. Neither number is wrong; they are different years of the same case, and
+// a reader comparing HotGap against the state's published example has to know
+// which is which. HotGap models the steady state because the curve answers
+// "what do I live on at this pay", not "what does my first year look like".
 
 /** PolicyEngine inputs retained so the local calculation can be replayed. Dollars are annual. */
 export interface MaTafdcInputs {
@@ -67,14 +80,25 @@ export function maTafdcResampleIndices(a: HouseholdAnswers, points: CurvePoint[]
  * the engine's non-financial eligibility, payment standard, dependent-care
  * deduction and unearned income instead of duplicating those rules here.
  *
+ * Steady state only — a grant computed here is always lower than the state's
+ * published year-one examples, which include six months of the full earnings
+ * disregard (see the note at the top of this file).
+ *
  * September's $500 per eligible child increases that month's need/payment
  * standard. Budget it for one month, including households whose ordinary
  * grant is zero. It is not an annual allowance that vanishes at the ordinary
  * income limit. The engine supplies the eligible children's allowance total.
  */
-export function maTafdcGrant(earnings: number, spouseEarnings: number, inputs: MaTafdcInputs): number {
+export interface MaTafdcGrantParts {
+  /** Twelve ordinary monthly grants plus the infant benefit — what "on TAFDC" means. */
+  ongoing: number;
+  /** The extra paid in September because the $500-per-child clothing allowance raises that month's standard. */
+  septemberExtra: number;
+}
+
+export function maTafdcGrantParts(earnings: number, spouseEarnings: number, inputs: MaTafdcInputs): MaTafdcGrantParts {
   if (YEAR !== "2026") throw new Error("Revalidate the Massachusetts TAFDC correction for the new policy year");
-  if (!inputs.nonFinancialEligible) return 0;
+  if (!inputs.nonFinancialEligible) return { ongoing: 0, septemberExtra: 0 };
   const earned = [earnings, spouseEarnings].reduce((sum, pay) => sum + Math.max(0, pay - 2400) * 0.5, 0);
   const countable = (Math.max(0, earned - inputs.dependentCareDeduction) + inputs.unearnedIncome) / 12;
   const standard = inputs.paymentStandard / 12;
@@ -83,8 +107,17 @@ export function maTafdcGrant(earnings: number, spouseEarnings: number, inputs: M
     const grant = Math.floor(Math.max(0, need - countable));
     return grant >= 10 ? grant : 0;
   };
-  return 11 * pay(standard) + pay(standard + inputs.clothingAllowance)
-    + (countable <= standard ? inputs.infantBenefit : 0);
+  const monthly = pay(standard);
+  return {
+    ongoing: 12 * monthly + (countable <= standard ? inputs.infantBenefit : 0),
+    septemberExtra: pay(standard + inputs.clothingAllowance) - monthly,
+  };
+}
+
+/** The year's total TAFDC cash: what the household receives and what is fed back to PolicyEngine. */
+export function maTafdcGrant(earnings: number, spouseEarnings: number, inputs: MaTafdcInputs): number {
+  const { ongoing, septemberExtra } = maTafdcGrantParts(earnings, spouseEarnings, inputs);
+  return ongoing + septemberExtra;
 }
 
 /** Replace TAFDC before cliff analysis. Other programs retain their upstream values. */
@@ -102,13 +135,18 @@ export function correctMaTafdc(a: HouseholdAnswers, points: CurvePoint[]): { poi
   const linkedBenefitsRecomputed = maTafdcResampleIndices(a, points).length === 0;
   return {
     points: points.map((p) => {
-      const tanf = maTafdcGrant(p.earnings, a.spouseAnnualEarnings, p.maTafdc!);
+      const { ongoing, septemberExtra } = maTafdcGrantParts(p.earnings, a.spouseAnnualEarnings, p.maTafdc!);
+      const tanf = ongoing + septemberExtra;
       const duplicated = p.maTafdc!.duplicatedTanf;
+      // `programs.tanf` is the ongoing grant, so "TANF ends" means the monthly
+      // grant ends (~$31k for five), not the last September a $40 allowance
+      // was paid ($64k). The September extra stays in the money line under
+      // otherBenefits: real cash, not an ongoing program.
       return {
         ...p,
         netIncome: p.netIncome + tanf - (p.programs.tanf ?? 0) - duplicated,
-        programs: { ...p.programs, tanf },
-        otherBenefits: Math.max(0, p.otherBenefits - duplicated),
+        programs: { ...p.programs, tanf: ongoing },
+        otherBenefits: Math.max(0, p.otherBenefits - duplicated) + septemberExtra,
         // The returned point contains no duplicate. Evaluating it again must
         // neither remove a second copy nor change the corrected grant.
         maTafdc: { ...p.maTafdc!, duplicatedTanf: 0 },
@@ -118,8 +156,8 @@ export function correctMaTafdc(a: HouseholdAnswers, points: CurvePoint[]): { poi
       status: "applied",
       linkedBenefitsRecomputed,
       message: linkedBenefitsRecomputed
-        ? "Massachusetts TAFDC uses the state's ongoing-recipient rules ($200/month per earner, then a 50% disregard) in place of PolicyEngine's formula; PolicyEngine recomputed SNAP and every other linked benefit with the corrected grant. The first six months' full disregard and new-applicant eligibility are not modeled."
-        : "Massachusetts TAFDC uses a local calculation for ongoing recipients after the six-month full earnings disregard: $200/month per earner, then a 50% disregard. SNAP and other linked benefits still use PolicyEngine's original TANF, so net income and cliff rankings are approximate. The first six months and new-applicant eligibility are not modeled.",
+        ? "Massachusetts TAFDC uses the state's ONGOING-RECIPIENT rules ($200/month per earner, then a 50% disregard) in place of PolicyEngine's formula; PolicyEngine recomputed SNAP and every other linked benefit with the corrected grant. This is the steady state, not the first year: TAFDC disregards all earnings for six months before the 50% rule starts, so DTA's published examples (its FY2026 report shows $7,512 at $15,600 of earnings for a family of three, where this gives $4,212) are year-one figures and are higher on purpose. New-applicant eligibility is not modeled."
+        : "Massachusetts TAFDC uses a local calculation for ONGOING recipients: $200/month per earner, then a 50% disregard. SNAP and other linked benefits still use PolicyEngine's original TANF, so net income and cliff rankings are approximate. This is the steady state, not the first year: TAFDC disregards all earnings for six months before the 50% rule starts, so DTA's published examples ($7,512 at $15,600 for a family of three in its FY2026 report, against $4,212 here) are year-one figures and are higher on purpose. New-applicant eligibility is not modeled.",
     },
   };
 }

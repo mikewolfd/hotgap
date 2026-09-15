@@ -11,7 +11,7 @@ const inputs: MaTafdcInputs = {
 const answers = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
 const point = (earnings: number, tanf: number): CurvePoint => ({
   earnings, netIncome: earnings + tanf, programs: { tanf, snap: 1000 } as CurvePoint["programs"],
-  childPrograms: {}, medicalOOP: 0, otherBenefits: 0, coverageGap: false, maTafdc: inputs,
+  childPrograms: {}, medicalOOP: 0, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false, maTafdc: inputs,
 });
 
 describe("Massachusetts ongoing-recipient TAFDC", () => {

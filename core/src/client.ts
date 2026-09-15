@@ -6,7 +6,7 @@ import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
 import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
-import { axisSpec, buildPEPayload, type AxisSpec } from "./translate.js";
+import { axisSpec, buildPEPayload, type AxisSpec, type PayloadOptions } from "./translate.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
@@ -124,9 +124,9 @@ export function curveCacheKey(answers: HouseholdAnswers, policy: PolicyOverrides
 }
 
 /** Household request with HotGap's sourced parameter corrections. */
-export function buildCurvePayload(answers: HouseholdAnswers) {
+export function buildCurvePayload(answers: HouseholdAnswers, opts: PayloadOptions = {}) {
   const policy = policyOverridesFor(answers);
-  return { ...buildPEPayload(answers), ...(Object.keys(policy).length ? { policy } : {}) };
+  return { ...buildPEPayload(answers, opts), ...(Object.keys(policy).length ? { policy } : {}) };
 }
 
 function parseOrThrow(body: unknown, count: number): CurvePoint[] {
@@ -137,6 +137,9 @@ function parseOrThrow(body: unknown, count: number): CurvePoint[] {
     throw e;
   }
 }
+
+/** Above substantial gainful activity: still disabled, no SSI pathway. */
+const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
 
 /**
  * The SSDI curve, spliced at substantial gainful activity.
@@ -151,7 +154,20 @@ function parseOrThrow(body: unknown, count: number): CurvePoint[] {
  * the 36-month extended period of eligibility mean a worker does not lose the
  * check the month they first cross SGA, and none of that timing is modeled
  * here — the curve answers "at this pay, eventually", not "next month".
+ *
+ * The "stopped" request drops `is_ssi_disabled` as well (ssiPathway: false).
+ * The person is still disabled, but work at SGA bars a new disability finding,
+ * so leaving the SSI flag on handed them SSI and SSI-linked Medicaid above
+ * SGA that no such worker can get — an OH household at $22–24k was shown SSI
+ * $1,438 and Medicaid $11,078 ending at $24k as a cliff that does not exist.
  */
+// Above SGA the person is no longer receiving a disability benefit, and SNAP
+// defines "disabled" by benefit receipt (7 CFR 271.2), so dropping the SSI
+// pathway in the stopped request also removes the elderly-or-disabled
+// household's uncapped excess shelter deduction and a state supplement like
+// California's SSP. Verified live 2026-09-15 (CA family, $21k, rent $2,903):
+// SNAP $13,214 → $8,972, other benefits $4,102 → $0. That is the rule, not a
+// side effect, and it deepens the SGA cliff for a high-rent family.
 async function fetchSplicedForSSDI(
   answers: HouseholdAnswers,
   axis: AxisSpec,
@@ -159,7 +175,7 @@ async function fetchSplicedForSSDI(
 ): Promise<CurvePoint[]> {
   const [receiving, stopped] = await Promise.all([
     requestPE(buildCurvePayload(answers), opts),
-    requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }), opts),
+    requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }, ABOVE_SGA), opts),
   ]);
   const withSSDI = parseOrThrow(receiving, axis.count);
   const withoutSSDI = parseOrThrow(stopped, axis.count);
@@ -175,8 +191,8 @@ const RESAMPLE_CONCURRENCY = 8;
  * else, but a scalar SPM input broadcasts across an axis — so ask for a
  * two-point axis starting at `earnings` and keep the first point.
  */
-function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Record<string, number>) {
-  const payload = buildCurvePayload({ ...answers, annualEarnings: earnings });
+function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Record<string, number>, opts: PayloadOptions = {}) {
+  const payload = buildCurvePayload({ ...answers, annualEarnings: earnings }, opts);
   const h = payload.household as { spm_units: Record<string, Record<string, unknown>>; axes: unknown };
   h.axes = [[{ name: "employment_income", min: earnings, max: earnings + 1000, count: 2, period: YEAR }]];
   for (const [name, value] of Object.entries(forced)) h.spm_units.spm_unit[name] = { [YEAR]: value };
@@ -203,10 +219,12 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
   const out = points.slice();
   await runQueue(indices, opts.resampleConcurrency ?? RESAMPLE_CONCURRENCY, async (i) => {
     const p = points[i];
-    // Above SGA the spliced curve came from the no-SSDI request; match it.
-    const base = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL ? { ...answers, ssdiMonthly: 0 } : answers;
+    // Above SGA the spliced curve came from the no-SSDI request; match it,
+    // SSI pathway and all, or the fed-back point contradicts its neighbours.
+    const aboveSga = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL;
+    const base = aboveSga ? { ...answers, ssdiMonthly: 0 } : answers;
     const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
-    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }), opts), 2);
+    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, aboveSga ? ABOVE_SGA : {}), opts), 2);
     out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
   });
   return out;

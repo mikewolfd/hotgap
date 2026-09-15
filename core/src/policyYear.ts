@@ -34,6 +34,23 @@ export const FPL_2025 = {
 // dollar standards with this line, not the 2025 one the marketplace uses.
 export const FPL_2026_CONTIGUOUS = { base: 15_960, perPerson: 5_680 } as const;
 
+// States that had not adopted the ACA Medicaid expansion as of the May 2026
+// CMS enrollment report (41 expansion / 10 non-expansion):
+// https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights
+// Read 2026-09-14. Wisconsin covers adults to 100% FPL without the expansion.
+export const NON_EXPANSION_STATES: ReadonlySet<string> = new Set(["AL", "FL", "GA", "KS", "MS", "SC", "TN", "TX", "WI", "WY"]);
+
+/**
+ * 100% of the 2026 guideline for a household of this size in this state.
+ * Exact for the 48 contiguous states + DC; Alaska and Hawaii are scaled from
+ * their 2025 ladders by the 2026/2025 contiguous ratio (+2.0%), which is
+ * within a few dollars of their published 2026 figures.
+ */
+export function fpl2026(state: string, householdSize: number): number {
+  if (state !== "AK" && state !== "HI") return fpl2026Contiguous(householdSize);
+  return fpl2025(state, householdSize) * (FPL_2026_CONTIGUOUS.base / FPL_2025.contiguous.base);
+}
+
 /** 100% of the 2026 guideline for a contiguous-state household of this size. */
 export function fpl2026Contiguous(householdSize: number): number {
   return FPL_2026_CONTIGUOUS.base + FPL_2026_CONTIGUOUS.perPerson * (Math.max(1, householdSize) - 1);
@@ -47,12 +64,19 @@ export function fpl2025(state: string, householdSize: number): number {
 
 // AHRQ Medical Expenditure Panel Survey — Insurance Component, 2024,
 // private-sector: "average total employee contribution (in dollars) per
-// enrolled employee", United States row. Table II.C.2 (single) $1,789 and
-// Table II.D.2 (family) $7,216, read 2026-09-14 from
+// enrolled employee", United States row, all firm sizes. AHRQ publishes THREE
+// tiers, and so does HotGap: a working parent with one child is not buying a
+// family plan. Table II.C.2 (single) $1,789, Table II.E.2 (employee-plus-one)
+// $4,707 and Table II.D.2 (family) $7,216, read 2026-09-14 (single/family) and
+// 2026-09-15 (employee-plus-one) from
 // https://meps.ahrq.gov/data_stats/summ_tables/insr/state/series_2/2024/ic24_iia_f.pdf
 // (index: https://meps.ahrq.gov/data_stats/summ_tables/meps-ic-table-series.shtml;
-// the same numbers appear in AHRQ Research Findings #54). These are the
-// EMPLOYEE's share; the matching total premiums are $8,486 and $24,540.
+// the national series_1 tables I.C.2/I.E.2/I.D.2 carry the same three figures,
+// which is how the plus-one row was re-derived rather than read once). These
+// are the EMPLOYEE's share; the matching total premiums are $8,486, $16,931
+// and $24,540. AHRQ's own tier name is "employee-plus-one"; the letter, not
+// the number, picks the tier (C single, E plus-one, D family), so II.C.3 and
+// II.D.3 are percentages, not a third tier.
 //
 // They replace the $6,500 / $1,700 constants translate.ts used to send, which
 // came from a non-government survey AND sat on the wrong side of the premium:
@@ -62,4 +86,28 @@ export function fpl2025(state: string, householdSize: number): number {
 //
 // MEPS-IC 2025 is also published ($1,817 single / $7,314 family) if this moves
 // to the newer vintage; 2024 is what the methodology review specified.
-export const ESI_EMPLOYEE_CONTRIBUTION = { single: 1_789, family: 7_216 } as const;
+export const ESI_EMPLOYEE_CONTRIBUTION = { single: 1_789, plusOne: 4_707, family: 7_216 } as const;
+
+// An employee counts as full-time — and so is the one an employer must offer
+// coverage to — at 30 hours a week, 26 U.S.C. 4980H(c)(4)(A) and 26 CFR
+// 54.4980H-1(a)(21). Below it HotGap charges no employee contribution, because
+// there is usually no plan to be enrolled in. A household that does not report
+// its hours is charged: "unknown" must not become "part-time".
+export const ESI_FULL_TIME_HOURS = 30;
+
+// Medicare Part B standard monthly premium, 2026: $202.90. CMS Newsroom fact
+// sheet "2026 Medicare Parts A & B Premiums and Deductibles" (2025-11-14),
+// read 2026-09-15 from
+// https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles
+// — "The standard monthly premium for Medicare Part B enrollees will be
+// $202.90 for 2026, an increase of $17.90 from $185.00 in 2025." Re-derived
+// from a second publisher rather than trusted once: Federal Register notice
+// CMS-8091-N (2025-11-19), "The standard monthly Part B premium rate for all
+// enrollees for 2026 is $202.90".
+//
+// The standard premium only. Income-related adjustment amounts start above
+// $109,000 of MAGI for a single filer and are not modeled; neither is the $283
+// annual deductible, because HotGap's money line is premiums, never
+// deductibles or copays (see the README's Honesty section).
+export const MEDICARE_PART_B_MONTHLY = 202.90;
+export const MEDICARE_PART_B_ANNUAL = MEDICARE_PART_B_MONTHLY * 12; // $2,434.80

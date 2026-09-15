@@ -1,3 +1,4 @@
+import { stateDefaults } from "./stateDefaults.js";
 import type { HouseholdAnswers } from "./types.js";
 
 export interface Archetype { id: string; married: boolean; childAges: number[] }
@@ -15,17 +16,34 @@ export const ARCHETYPES: Archetype[] = [
 
 export const DEFAULT_ARCHETYPE = "single-2";
 
+/**
+ * The swept household: a typical renter in the state's largest county.
+ *
+ * Rent and county are no longer null. A null rent is not "unknown" to
+ * PolicyEngine, it is $0 — no SNAP excess-shelter deduction, so every swept
+ * cell understated SNAP by $1–3k — and a null county is the state's default
+ * ACA rating area, identical for CT and IL and for CO and IN, so a
+ * premium-driven ranking partly ranked that default. Both now come from
+ * stateDefaults (HUD FY2026 FMR, Census Vintage 2024). Childcare stays $0:
+ * the archetype reports no childcare expense, and inventing one would inflate
+ * its dependent-care deduction.
+ */
+// WORKAROUND (partly) — the county below sidesteps PolicyEngine's default
+// rating area, which is identical for CT/IL and CO/IN (policyengine-us #9480);
+// sending a real county stays right even after that is fixed.
 export function answersFor(state: string, a: Archetype): HouseholdAnswers {
+  const defaults = stateDefaults(state);
   return {
     state,
-    countyFips: null,
+    countyFips: defaults.countyFips,
     married: a.married,
     childAges: a.childAges,
     childDisabled: a.childAges.map(() => false),
-    monthlyRent: null,
+    monthlyRent: defaults.monthlyRent,
     monthlyChildcare: 0,
     annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
     spouseAnnualEarnings: 0,
+    hoursPerWeek: null,
     age: 30,
     spouseAge: a.married ? 30 : null,
     youDisabled: false,

@@ -693,3 +693,11 @@ Pull requests from the fork mikewolfd/policyengine-us:
 
 The coverage-gap and employer-premium items are modeling decisions left
 to the maintainers (#9472, #9473).
+
+## Filed after the second methodology review (2026-09-15)
+
+| Issue | policyengine-us | HotGap side |
+|---|---|---|
+| Marketplace enrollees under the filing threshold lose the PTC but keep the premium; an $18,780 phantom cliff for a childless couple at $30,000, the largest "cliff" for that archetype in 45 states | https://github.com/PolicyEngine/policyengine-us/issues/9479 | send `tax_unit_is_filer: true` (anyone taking APTC files) |
+| Without `county_fips`, CT/IL and CO/IN share identical benchmark premiums | https://github.com/PolicyEngine/policyengine-us/issues/9480 | sweep with each state's most populous county |
+| State marketplace premium wraps (Covered CT, ConnectorCare, VT, NJ, NM, WA, CO) not modeled | https://github.com/PolicyEngine/policyengine-us/issues/9481 | flag those states in the honesty notes |

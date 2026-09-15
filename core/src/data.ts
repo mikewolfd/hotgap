@@ -14,6 +14,9 @@ export interface StateMetrics {
   biggestLoss: number;
   dangerWidth: number;
   cliffCount: number;
+  // Cliffs whose loss is deferred to a future renewal (Head Start, children's
+  // continuous eligibility, transitional Medicaid); not in cliffCount.
+  deferredCliffCount: number;
   safeExit: number | null;
   leap: number;
   // True when the widest danger zone runs past the sweep's axis, so `leap`

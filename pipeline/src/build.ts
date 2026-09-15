@@ -48,7 +48,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
         year: YEAR, currentEarnings: 0, points: results[state][a.id],
       }, "archetype");
       summaryStates[state][a.id] = {
-        ...stateMetrics(evaluation.curve.points),
+        ...stateMetrics(evaluation),
         ...(evaluation.maTafdc ? { maTafdc: evaluation.maTafdc } : {}),
       };
     }
@@ -77,6 +77,8 @@ export function roundPoint(p: CurvePoint): CurvePoint {
       Object.entries(p.childPrograms).map(([id, v]) => [id, Math.round(v as number)]),
     ) as Partial<Record<ProgramId, number>>,
     otherBenefits: Math.round(p.otherBenefits),
+    stateCredits: Math.round(p.stateCredits ?? 0),
+    totalCtc: Math.round(p.totalCtc ?? p.programs.ctc ?? 0),
     // coverageGap is a read-time verdict (evaluate.ts), never a sweep output;
     // storing `false` 66,000 times bought nothing. Loaders default it.
   } as CurvePoint;

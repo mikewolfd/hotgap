@@ -107,6 +107,31 @@ describe("fetchCurve", () => {
     expect(SGA_ANNUAL).toBe(20280);
   });
 
+  it("keeps the person disabled but off the SSI pathway in the above-SGA request", async () => {
+    // Work at substantial gainful activity bars a new disability finding, so a
+    // person who kept `is_ssi_disabled` above SGA was granted SSI and
+    // SSI-linked Medicaid they could never get — OH at $22–24k showed SSI
+    // $1,438 and Medicaid $11,078 ending at $24k as a cliff that is not real.
+    const disabled = validateAnswers({ ...raw, youDisabled: true, ssdiMonthly: 1500 });
+    if (!disabled.ok) throw new Error(disabled.detail);
+    const payloads: string[] = [];
+    const fetchImpl = (async (_url: string, init: { body: string }) => {
+      payloads.push(init.body);
+      return new Response(body, { status: 200 });
+    }) as unknown as typeof fetch;
+    await fetchCurve(disabled.value, { fetchImpl });
+
+    const [receiving, stopped] = ["", "!"].map((want) =>
+      JSON.parse(payloads.find((p) => (p.includes("social_security_disability") ? "" : "!") === want)!));
+    expect(receiving.household.people.you.is_ssi_disabled["2026"]).toBe(true);
+    expect(stopped.household.people.you.is_disabled["2026"]).toBe(true);
+    expect(stopped.household.people.you.is_ssi_disabled).toBeUndefined();
+    // …and nothing else moved between the two requests.
+    delete receiving.household.people.you.is_ssi_disabled;
+    delete receiving.household.people.you.social_security_disability;
+    expect(stopped).toEqual(receiving);
+  });
+
   it("makes one request when there is no SSDI", async () => {
     let calls = 0;
     const fetchImpl = respond(() => { calls++; return new Response(body, { status: 200 }); });

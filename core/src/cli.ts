@@ -8,9 +8,9 @@ import { zipToCounty } from "./county.js";
 import { loadSummary } from "./data.js";
 import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
 import { toAnnual, type PayUnit } from "./income.js";
-import { ESI_EMPLOYEE_CONTRIBUTION } from "./policyYear.js";
+import { MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import type { Cliff } from "./analyze.js";
-import { esiTier, type HouseholdAnswers, type ProgramId } from "./types.js";
+import { type HouseholdAnswers, type ProgramId } from "./types.js";
 import { validateAnswers } from "./validate.js";
 import { isTerritoryZip, zipToState } from "./zip.js";
 
@@ -24,7 +24,8 @@ const USAGE = `hotgap <command> [options]
     --disabled  --spouse-disabled
     --rent 1500  --childcare 600  monthly; default none
     --earnings 30000              annual pay from work
-    --pay 15 --unit hour|month|year --hours 40   (instead of --earnings; unit defaults to hour)
+    --pay 15 --unit hour|month|year          (instead of --earnings; unit defaults to hour)
+    --hours 40                    hours a week worked; also converts an hourly --pay
     --spouse-earnings 0
     --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
     --head-start  --housing  --employer-coverage  take-up (default: not received)
@@ -72,6 +73,14 @@ const DRIVER_LABEL: Record<Cliff["driver"], string> = {
   other: "taxes / other",
 };
 
+// The two child-tax-credit numbers answer different questions and must not be
+// read as one. A cliff names the REFUNDABLE credit, the part that sits in the
+// money line and can actually fall; `program ends` reports the whole credit,
+// because the refundable part reaching zero usually means a rising tax bill
+// absorbed the credit, not that the family stopped having it.
+const PROGRAM_LABEL: Partial<Record<ProgramId, string>> = { ctc: "ctc (refundable)" };
+const programName = (id: ProgramId): string => PROGRAM_LABEL[id] ?? id;
+
 const breakdownOf = (c: Cliff): string => {
   const parts: string[] = [];
   if (Math.round(c.breakdown.benefits) !== 0) parts.push(`benefits ${signed(-c.breakdown.benefits)}`);
@@ -94,7 +103,6 @@ function householdFrom(f: Flags): HouseholdAnswers {
   }
   if (state === undefined) fail(2, "--state or --zip is required");
   if (f.unit !== undefined && !["hour", "month", "year"].includes(f.unit)) fail(2, "--unit must be hour, month, or year");
-  if (f.hours !== undefined && (f.unit ?? "hour") !== "hour") fail(2, "--hours only applies with --unit hour");
   if (f.earnings === undefined && f.pay === undefined) fail(2, "--earnings or --pay is required");
 
   const childAges = list(f.kids).map(Number);
@@ -117,6 +125,10 @@ function householdFrom(f: Flags): HouseholdAnswers {
     monthlyChildcare: num(f.childcare) ?? null,
     annualEarnings,
     spouseAnnualEarnings: num(f["spouse-earnings"]) ?? 0,
+    // --hours does double duty: it converts an hourly --pay above, and it is
+    // also the household's own weekly hours, which PolicyEngine's
+    // Massachusetts dependent-care deduction scales by.
+    hoursPerWeek: num(f.hours) ?? null,
     ssdiMonthly: num(f.ssdi) ?? 0,
     childSupportMonthly: num(f["child-support"]) ?? 0,
     unemploymentMonthly: num(f.unemployment) ?? 0,
@@ -164,16 +176,33 @@ function report(ev: HouseholdEvaluation): string {
 
   const row = (at: string, drop: string, lost: string, hrs: string) =>
     `  ${at.padEnd(10)}${drop.padEnd(10)}${lost.padEnd(32)}${hrs}`;
-  if (analysis.cliffs.length === 0) out.push("no cliffs on this curve");
-  else {
-    out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""));
-    analysis.cliffs.forEach((c, i) => {
+  // Indices are into analysis.cliffs, which is what minWage.cliffs is built
+  // from, so a filtered block still finds its own hours column.
+  const cliffLines = (pick: (c: Cliff) => boolean): string[] =>
+    analysis.cliffs.flatMap((c, i) => {
+      if (!pick(c)) return [];
       const hours = ev.minWage?.cliffs[i]?.hoursPerWeek ?? null;
-      out.push(row(money(c.startEarnings), money(c.drop), c.programsLost.join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)));
-      // Every dollar of the drop attributed, so "lost SNAP" is never read as
-      // the whole explanation when most of the fall was a premium.
-      out.push(`  ${" ".repeat(10)}${breakdownOf(c)}`);
+      return [
+        row(money(c.startEarnings), money(c.drop), c.programsLost.map(programName).join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)),
+        // Every dollar of the drop attributed, so "lost SNAP" is never read as
+        // the whole explanation when most of the fall was a premium.
+        `  ${" ".repeat(10)}${breakdownOf(c)}`,
+        // …and, for a deferred one, what carries them past it — on its own
+        // row, because two deferred cliffs rarely share a rule.
+        ...(c.deferral ? [`  ${" ".repeat(10)}until ${c.deferral.until}`] : []),
+      ];
     });
+
+  const now = cliffLines((c) => c.deferral === null);
+  if (now.length === 0) out.push(`no cliffs on this curve${ev.deferred.length ? " that arrive with the raise" : ""}`);
+  else out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""), ...now);
+
+  // Deferred cliffs are real losses that simply do not land in the year of the
+  // raise, so they get their own block and stay out of the verdict, the danger
+  // zones and the leap above.
+  if (ev.deferred.length) {
+    out.push("", "later, at the next renewal — these do not arrive with the raise, so nothing above counts them");
+    out.push(...cliffLines((c) => c.deferral !== null));
   }
 
   // This household's own position first — the state-level safe exit and leap
@@ -199,15 +228,23 @@ function report(ev: HouseholdEvaluation): string {
   // Adults and children lose the same program at different incomes, so they
   // only share a line when the thresholds actually coincide.
   const { adults, children } = esc.programEndsByAge;
+  // A curve swept before `ctc` was requested knows only the refundable series,
+  // so its threshold IS a cliff's and carries the same label. Once the sweep
+  // carries the whole credit the two differ, and the note below says how.
+  const knowsTotalCtc = ev.curve.points.some((p) => p.totalCtc !== p.programs.ctc);
   const ends = Object.entries(esc.programEnds).map(([id, at]) => {
+    const name = id === "ctc" && !knowsTotalCtc ? programName("ctc") : id;
     const forAdults = adults[id as ProgramId];
     const forChildren = children[id as ProgramId];
     if (forAdults !== undefined && forChildren !== undefined && forAdults !== forChildren) {
-      return `${id} adults ${money(forAdults)}, children ${money(forChildren)}`;
+      return `${name} adults ${money(forAdults)}, children ${money(forChildren)}`;
     }
-    return `${id} ${money(at)}`;
+    return `${name} ${money(at)}`;
   });
   if (ends.length) out.push(`program ends: ${ends.join(" · ")}`);
+  if (esc.programEnds.ctc !== undefined && knowsTotalCtc) {
+    out.push("  ctc there is the whole child tax credit; a cliff's \"ctc (refundable)\" is only the part paid out as a refund, which stops earlier as a rising tax bill absorbs the credit.");
+  }
   if (esc.childCoverageEndEarnings !== null) {
     out.push(
       `children's coverage: past ${money(esc.childCoverageEndEarnings)} the children no longer qualify — but a child already enrolled keeps Medicaid or CHIP until the next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342), so the loss is deferred, not immediate`,
@@ -223,15 +260,27 @@ function report(ev: HouseholdEvaluation): string {
   if (ev.headStart) {
     out.push(
       "",
-      `Head Start is priced at ${money(ev.headStart.stickerValue)} a year by PolicyEngine, but it is worth what it saves you: ${money(ev.headStart.replacementValue)} of childcare you would otherwise buy. And a raise past the income limit does not end it — an enrolled child stays eligible through the following program year (45 CFR 1302.12(j)(1)).`,
+      `Head Start is priced at ${money(ev.headStart.stickerValue)} a year by PolicyEngine, but it is worth what it would cost to replace: ${money(ev.headStart.replacementValue)}, a full-day preschool place at ${money(ev.headStart.monthlyReplacementCost)} a month — ${ev.headStart.usesStateMarketPrice ? `the going price in ${a.state}, because a free full-day slot replaces the whole bill even for a family paying nothing today` : "the childcare you told us you buy"}. And a raise past the income limit does not end it — an enrolled child stays eligible through the following program year (45 CFR 1302.12(j)(1)).`,
     );
   }
   if (ev.maTafdc) out.push("", ev.maTafdc.message);
-  if (a.hasEmployerCoverage) {
-    const kind = esiTier(a);
+  if (ev.premiumWrap) {
+    const w = ev.premiumWrap;
+    out.push("", `${a.state}'s ${w.program} makes the marketplace plan free up to ${Math.round(w.zeroPremiumUpToFpl * 100)}% of the poverty line — shown with no premium in that band (${w.source}).`);
+  }
+  if (ev.esi) {
+    const TIER_NAME = { single: "single", plusOne: "employee-plus-one", family: "family" } as const;
     out.push(
       "",
-      `employer coverage: counted at ${money(ESI_EMPLOYEE_CONTRIBUTION[kind])}/yr, the average ${kind} employee contribution (AHRQ MEPS-IC 2024), in place of the marketplace premium PolicyEngine would otherwise charge you.`,
+      ev.esi.tier === null
+        ? `employer coverage: nothing charged at ${money(analysis.currentEarnings)} — at this pay the plan holder is on Medicaid${a.hoursPerWeek !== null && a.hoursPerWeek < 30 ? `, or works under 30 hours a week (26 U.S.C. 4980H(c)(4)), so no employer owes them a plan` : ""}.`
+        : `employer coverage: counted at ${money(ev.esi.annualContribution)}/yr, the average ${TIER_NAME[ev.esi.tier]} employee contribution (AHRQ MEPS-IC 2024), in place of the marketplace premium PolicyEngine would otherwise charge you. The tier follows who the plan has to cover at your pay, so it can change along the curve as children move on and off Medicaid.`,
+    );
+  }
+  if (a.ssdiMonthly > 0 && !a.hasEmployerCoverage) {
+    out.push(
+      "",
+      `SSDI: modeled as already on Medicare — entitlement starts 24 months after the first check and runs at least 93 months past a trial work period (42 U.S.C. 426(b)), so crossing substantial gainful activity costs the check, not the coverage. No marketplace premium is charged; the 2026 Part B premium of ${money(MEDICARE_PART_B_ANNUAL)}/yr is, except where you are on Medicaid, which stands in for a Medicare Savings Program paying it. HotGap does not ask how long you have had SSDI: in the first two years there would still be a marketplace premium, and this leaves it out.`,
     );
   }
 
@@ -258,13 +307,13 @@ function summaryReport(f: Flags): number {
     return 0;
   }
   console.log(`numbers last changed ${summary.generated} · policy year ${summary.year}`);
-  const cols = (id: string, loss: string, leap: string, exit: string, count: string, width: string) =>
-    `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${width.padStart(14)}`;
+  const cols = (id: string, loss: string, leap: string, exit: string, count: string, deferred: string, width: string) =>
+    `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${deferred.padStart(10)}${width.padStart(14)}`;
   for (const [state, rows] of Object.entries(picked)) {
     console.log(`\n${state}`);
-    console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "danger width"));
+    console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "deferred", "danger width"));
     for (const [id, m] of Object.entries(rows)) {
-      console.log(cols(id, money(m.biggestLoss), money(m.leap), m.safeExit === null ? "none" : money(m.safeExit), String(m.cliffCount), money(m.dangerWidth)));
+      console.log(cols(id, money(m.biggestLoss), money(m.leap), m.safeExit === null ? "none" : money(m.safeExit), String(m.cliffCount), String(m.deferredCliffCount ?? 0), money(m.dangerWidth)));
     }
     for (const message of new Set(Object.values(rows).flatMap((m) => m.maTafdc ? [m.maTafdc.message] : []))) {
       console.log(message);

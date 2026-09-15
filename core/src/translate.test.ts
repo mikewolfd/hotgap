@@ -7,7 +7,7 @@ const base: HouseholdAnswers = {
   state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null,
-  annualEarnings: 30000, spouseAnnualEarnings: 0,
+  annualEarnings: 30000, spouseAnnualEarnings: 0, hoursPerWeek: null,
   getsHeadStart: false, getsHousing: false, hasEmployerCoverage: false,
   countyFips: null,
   ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
@@ -84,15 +84,67 @@ describe("buildPEPayload", () => {
   it("requests every display variable as null", () => {
     const p = buildPEPayload(base) as any;
     expect(p.household.households.household.household_net_income["2026"]).toBeNull();
+    expect(p.household.households.household.household_refundable_tax_credits["2026"]).toBeNull();
+    // Asked for in every state now, not only Massachusetts.
+    expect(p.household.households.household.household_state_benefits["2026"]).toBeNull();
     // spm_unit_capped_housing_subsidy is excluded here: with the take-up
     // default of getsHousing=false in `base`, it's forced to 0, not null
     // (covered by its own tests below).
     for (const v of ["snap", "tanf", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"])
       expect(p.household.spm_units.spm_unit[v]["2026"]).toBeNull();
-    for (const v of ["eitc", "refundable_ctc", "premium_tax_credit"])
+    for (const v of ["eitc", "ctc", "refundable_ctc", "premium_tax_credit"])
       expect(p.household.tax_units.tax_unit[v]["2026"]).toBeNull();
     for (const v of ["medicaid", "chip", "wic", "ssi"])
       expect(p.household.people.you[v]["2026"]).toBeNull();
+  });
+
+  it("asks a CHILD for wic and ssi too, not just medicaid and chip", () => {
+    // Until this landed, a child's WIC and a disabled child's SSI were never
+    // named: they fell into parse.ts's untracked otherBenefits remainder.
+    const p = buildPEPayload({ ...base, childAges: [2, 8], childDisabled: [false, true] }) as any;
+    for (const child of ["child1", "child2"])
+      for (const v of ["medicaid", "chip", "wic", "ssi"])
+        expect(p.household.people[child][v]["2026"], `${child}.${v}`).toBeNull();
+  });
+
+  it("declares the tax unit a filer, so the premium tax credit is not zeroed", () => {
+    // aca_ptc multiplies by tax_unit_is_filer. A childless couple at $30,000
+    // in IL is under the $32,200 joint filing threshold, so PolicyEngine made
+    // them a non-filer and charged the full premium with no credit (PTC $0,
+    // MOOP $19,870); with the flag, PTC $18,779 and MOOP $1,090 (live
+    // 2026-09-15). Anyone taking a marketplace subsidy files a return.
+    expect((buildPEPayload(base) as any).household.tax_units.tax_unit.tax_unit_is_filer["2026"]).toBe(true);
+    const couple = buildPEPayload({ ...base, married: true, spouseAge: 30, childAges: [], childDisabled: [] }) as any;
+    expect(couple.household.tax_units.tax_unit.tax_unit_is_filer["2026"]).toBe(true);
+  });
+
+  it("sends weekly hours for the earners only, and omits them when unknown", () => {
+    // PolicyEngine's Massachusetts dependent-care deduction scales by
+    // weekly_hours_worked_before_lsr, which defaults to 0 when unsent.
+    const none = buildPEPayload(base) as any;
+    expect(none.household.people.you.weekly_hours_worked_before_lsr).toBeUndefined();
+
+    const solo = buildPEPayload({ ...base, hoursPerWeek: 35 }) as any;
+    expect(solo.household.people.you.weekly_hours_worked_before_lsr["2026"]).toBe(35);
+
+    const earningSpouse = buildPEPayload({ ...base, hoursPerWeek: 35, married: true, spouseAge: 30, spouseAnnualEarnings: 20000 }) as any;
+    expect(earningSpouse.household.people.spouse.weekly_hours_worked_before_lsr["2026"]).toBe(35);
+    // A spouse with no earnings works no hours.
+    const idleSpouse = buildPEPayload({ ...base, hoursPerWeek: 35, married: true, spouseAge: 30, spouseAnnualEarnings: 0 }) as any;
+    expect(idleSpouse.household.people.spouse.weekly_hours_worked_before_lsr).toBeUndefined();
+  });
+
+  it("drops only is_ssi_disabled when the SSI pathway is closed", () => {
+    const disabled = { ...base, youDisabled: true, childAges: [8], childDisabled: [true] };
+    const on = buildPEPayload(disabled) as any;
+    const off = buildPEPayload(disabled, { ssiPathway: false }) as any;
+    for (const who of ["you", "child1"]) {
+      expect(on.household.people[who].is_ssi_disabled["2026"]).toBe(true);
+      expect(off.household.people[who].is_disabled["2026"]).toBe(true);
+      expect(off.household.people[who].is_ssi_disabled).toBeUndefined();
+      delete on.household.people[who].is_ssi_disabled;
+    }
+    expect(off).toEqual(on);
   });
 
   it("puts the real ages on 'you' and the spouse instead of a hardcoded 30", () => {
@@ -161,9 +213,15 @@ describe("buildPEPayload", () => {
     expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
   });
 
-  it("uses the family ESI premium when there are kids or a spouse", () => {
-    const p = buildPEPayload({ ...base, hasEmployerCoverage: true, childAges: [5] }) as any;
-    expect(p.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.family);
+  it("sends one figure in the inert employer-premium field whatever the household shape", () => {
+    // PolicyEngine reads employer_sponsored_insurance_premiums only into CBO
+    // market-income additions; the tier a household pays is evaluate.ts's.
+    const withKids = buildPEPayload(base) as any;
+    const single = buildPEPayload({ ...base, childAges: [], childDisabled: [] }) as any;
+    expect(withKids.household.people.you.employer_sponsored_insurance_premiums).toBeUndefined();
+    const esi = buildPEPayload({ ...base, hasEmployerCoverage: true }) as any;
+    expect(esi.household.people.you.employer_sponsored_insurance_premiums["2026"]).toBe(ESI_EMPLOYEE_CONTRIBUTION.single);
+    void single;
   });
 
   it("asks for household_benefits so a cliff can price untracked programs", () => {

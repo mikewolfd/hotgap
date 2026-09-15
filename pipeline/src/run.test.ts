@@ -3,8 +3,9 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { ARCHETYPES, answersFor, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
 import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
+import { stateMetrics } from "./metrics.js";
 import {
   parseArgs,
   runPipeline,
@@ -91,7 +92,7 @@ describe("runPipeline", () => {
       return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
 
-    const result = await runPipeline({ states: ["ZZ", "YY"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
+    const result = await runPipeline({ states: ["WY", "VT"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
 
     expect(callCount).toBe(16); // 2 states × 8 archetypes, no retries needed
     expect(result.ok).toBe(true);
@@ -101,15 +102,21 @@ describe("runPipeline", () => {
 
     // Every archetype for both fake states resolves to the same fixture-derived
     // metrics, since the fake fetch always returns the same fixture response.
-    for (const state of ["ZZ", "YY"]) {
+    for (const state of ["WY", "VT"]) {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
+      // Pinned literally (not re-derived from the code under test): the CA
+      // fixture's $22,089 Head Start loss at $30k is deferred, so the biggest
+      // immediate loss is the $3,868 subsidy end at $84k and the leap is that
+      // zone's width; same under WY and VT answers since neither the wrap nor
+      // the coverage gap touches this fixture.
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 22089,
-        dangerWidth: expect.any(Number),
-        cliffCount: expect.any(Number),
+        biggestLoss: 3868,
+        dangerWidth: 18000,
+        cliffCount: 3,
+        deferredCliffCount: 1,
         safeExit: 91000,
-        leap: 45000,
+        leap: 7000,
         leapIsLowerBound: false,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
@@ -159,7 +166,7 @@ describe("runFromData", () => {
   }
 
   it("reconstructs results from stored state-file JSON and rebuilds only summary.json", async () => {
-    const states = ["ZZ", "YY"];
+    const states = ["WY", "VT"];
     const results = syntheticResults(states);
     const storedStateFiles: Record<string, string> = {};
     for (const state of states) {
@@ -190,11 +197,11 @@ describe("runFromData", () => {
       throw new Error("ENOENT: no such file");
     };
 
-    const result = await runFromData(["ZZ"], readStateFile);
+    const result = await runFromData(["WY"], readStateFile);
 
     expect(result.ok).toBe(false);
     expect(result.gaps).toHaveLength(ARCHETYPES.length);
-    expect(result.gaps.every((g) => g.state === "ZZ" && g.reason === "missing")).toBe(true);
+    expect(result.gaps.every((g) => g.state === "WY" && g.reason === "missing")).toBe(true);
     expect(result.summary).toBeUndefined();
   });
 });
