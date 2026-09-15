@@ -15,10 +15,14 @@ describe("parsePEResponse", () => {
     expect(points[30].earnings).toBe(30000);
   });
 
-  it("maps net income and program amounts", () => {
+  it("net income is PolicyEngine's net minus medical out-of-pocket, with the ACA subsidy left in", () => {
     const points = parsePEResponse(fixture, 101);
-    expect(points[30].netIncome).toBeCloseTo(49006.13, 1);
-    expect(points[31].netIncome).toBeCloseTo(27049.55, 1);
+    const raw = Object.values(fixture.result.households as Record<string, Record<string, Record<string, number[]>>>)[0].household_net_income["2026"];
+    expect(points[30].netIncome + points[30].medicalOOP).toBeCloseTo(raw[30], 6);
+    expect(points[30].netIncome).toBeCloseTo(55660.81, 1);
+    expect(points[31].netIncome).toBeCloseTo(33572.16, 1);
+    // The premium tax credit is reported as the `aca` program, never subtracted.
+    expect(points[30].programs.aca).toBeGreaterThan(6000);
     expect(points[0].programs.snap).toBeGreaterThan(0);
     expect(points[100].programs.snap).toBe(0);
   });
@@ -31,15 +35,14 @@ describe("parsePEResponse", () => {
     expect(points[0].programs.medicaid).toBeCloseTo(youMed + kidMed, 1);
   });
 
-  it("subtracts the ACA premium tax credit as well as MOOP (no double-count)", () => {
+  it("subtracts MOOP only — the premium tax credit is not in household_net_income, so it must not be subtracted again", () => {
     const pts = parsePEResponse(fixture, 101);
-    // At an income with a nonzero PTC, netIncome must be rawNet − PTC − MOOP.
-    // Reconstruct rawNet from the fixture and assert the identity holds.
     const raw = fixture.result.households["your household"].household_net_income["2026"];
     const moop = fixture.result.spm_units["your spm_unit"].spm_unit_medical_out_of_pocket_expenses["2026"];
     const ptc = fixture.result.tax_units["your tax unit"].premium_tax_credit["2026"];
     const i = 50;
-    expect(pts[i].netIncome).toBeCloseTo(raw[i] - ptc[i] - moop[i], 2);
+    expect(ptc[i]).toBeGreaterThan(1000); // only meaningful where a subsidy exists
+    expect(pts[i].netIncome).toBeCloseTo(raw[i] - moop[i], 2);
   });
 
   it("throws PEParseError on an error-status body", () => {

@@ -17,15 +17,15 @@ describe("stateMetrics on the committed CA fixture", () => {
   // Pinned post PTC double-count fix (Plan 6): the CA single-parent-one-kid
   // fixture's biggest single drop rounds to $21,957, with at least two
   // cliffs and a nonzero danger width. safeExit/leap are pinned too
-  // (81000 / 52000, per escapeAnalysis on the health-adjusted curve).
+  // (91000 / 45000, per escapeAnalysis on the health-adjusted curve).
   // This fixture isn't one of the 8 archetypes — it only pins the math.
   it("computes biggestLoss, cliffCount, dangerWidth, safeExit, and leap", () => {
     const m = stateMetrics(fixturePoints);
-    expect(m.biggestLoss).toBe(21957);
+    expect(m.biggestLoss).toBe(22089);
     expect(m.cliffCount).toBeGreaterThanOrEqual(2);
     expect(m.dangerWidth).toBeGreaterThan(0);
-    expect(m.safeExit).toBe(81000);
-    expect(m.leap).toBe(52000);
+    expect(m.safeExit).toBe(91000);
+    expect(m.leap).toBe(45000);
   });
 });
 

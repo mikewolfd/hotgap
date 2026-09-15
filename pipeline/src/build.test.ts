@@ -88,11 +88,11 @@ describe("buildSummary", () => {
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
     expect(summary.states.CA["single-1"]).toEqual({
-      biggestLoss: 21957,
+      biggestLoss: 22089,
       dangerWidth: expect.any(Number),
       cliffCount: expect.any(Number),
-      safeExit: 81000,
-      leap: 52000,
+      safeExit: 91000,
+      leap: 45000,
     });
   });
 });

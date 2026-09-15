@@ -19,8 +19,9 @@ const flat = (earnings: number, netIncome: number): CurvePoint => ({
 describe("escapeAnalysis on the real CA fixture", () => {
   it("computes verified safe exit, leap, and program thresholds", () => {
     const esc = escapeAnalysis(fixturePoints);
-    expect(esc.safeExitEarnings).toBe(81000);
-    expect(esc.leap).toBe(52000);
+    // The last danger zone is the 400%-FPL end of the ACA subsidy ($84k → $91k).
+    expect(esc.safeExitEarnings).toBe(91000);
+    expect(esc.leap).toBe(45000);
     expect(esc.leapIsLowerBound).toBe(false);
     expect(esc.programEnds.tanf).toBe(23000);
     expect(esc.programEnds.snap).toBe(29000);

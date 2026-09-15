@@ -188,6 +188,58 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(Math.abs(sfPtc - laPtc)).toBeGreaterThan(100);
   }, 90_000);
 
+  // parse.ts subtracts SPM medical out-of-pocket (the premium NET of the
+  // premium tax credit) from household_net_income. That is only right if the
+  // PTC is not already inside household_net_income. Until 2026-09-14 the code
+  // assumed it was and subtracted the PTC too, erasing the subsidy from every
+  // curve. Pin the composition live so the formula never again rests on an
+  // assumption: net = market + benefits + refundable credits − tax, and the
+  // refundable credits are the EITC and CTC only.
+  it("household_net_income = market + benefits + refundable credits − tax, and the premium tax credit is not inside it", async () => {
+    const y = (v: unknown) => ({ "2026": v });
+    const probe = {
+      household: {
+        people: { you: { age: y(30), medicaid: y(null) }, kid: { age: y(5), medicaid: y(null), chip: y(null) } },
+        families: { f: { members: ["you", "kid"] } },
+        marital_units: { m: { members: ["you"] } },
+        tax_units: { t: { members: ["you", "kid"], eitc: y(null), refundable_ctc: y(null), premium_tax_credit: y(null) } },
+        spm_units: { s: { members: ["you", "kid"], spm_unit_medical_out_of_pocket_expenses: y(null) } },
+        households: {
+          h: {
+            members: ["you", "kid"],
+            state_name: y("CA"),
+            household_net_income: y(null),
+            household_market_income: y(null),
+            household_benefits: y(null),
+            household_refundable_tax_credits: y(null),
+            household_tax_before_refundable_credits: y(null),
+          },
+        },
+        axes: [[{ name: "employment_income", min: 40000, max: 80000, count: 3, period: "2026" }]],
+      },
+    };
+    const res = await fetch("https://api.policyengine.org/us/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(probe),
+      signal: AbortSignal.timeout(60_000),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.status).toBe("ok");
+    const h = body.result.households.h;
+    const t = body.result.tax_units.t;
+    const at = (o: any, v: string): number[] => o[v]["2026"];
+    const [net, mkt, ben, ref, tax] = ["household_net_income", "household_market_income", "household_benefits", "household_refundable_tax_credits", "household_tax_before_refundable_credits"].map((v) => at(h, v));
+    const [ptc, eitc, ctc] = ["premium_tax_credit", "eitc", "refundable_ctc"].map((v) => at(t, v));
+    // Only meaningful where a subsidy actually exists.
+    expect(Math.max(...ptc)).toBeGreaterThan(1000);
+    for (let i = 0; i < 3; i++) {
+      expect(net[i]).toBeCloseTo(mkt[i] + ben[i] + ref[i] - tax[i], 0);
+      expect(ref[i]).toBeCloseTo(eitc[i] + ctc[i], 0);
+    }
+  }, 90_000);
+
   it("still computes ok with no county_fips at all (state-only fallback)", async () => {
     const res = await fetch("https://api.policyengine.org/us/calculate", {
       method: "POST",

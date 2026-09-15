@@ -32,11 +32,9 @@ export interface HouseholdAnswers {
 
 export interface CurvePoint {
   earnings: number;
-  // Resources after paying real health costs: raw household net income minus
-  // the ACA premium tax credit (already counted once in net income as a
-  // refundable credit) minus SPM medical out-of-pocket (health-insurance
-  // premiums, net of that same subsidy). The whole tool operates on this
-  // honest after-health figure.
+  // Resources after paying real health costs: PolicyEngine's household net
+  // income minus SPM medical out-of-pocket (health-insurance premiums, net of
+  // the ACA subsidy). The whole tool operates on this after-health figure.
   netIncome: number;
   // What the household actually pays for health-insurance premiums at this
   // earnings level, net of the ACA subsidy (SPM medical out-of-pocket).

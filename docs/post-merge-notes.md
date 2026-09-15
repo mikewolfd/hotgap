@@ -151,3 +151,30 @@ drifted by $1 in 114 `biggestLoss` cells and by one $1,000 grid step in six
 Kansas escape metrics — the summary disagreed with its own stored curve. The
 sweep now rounds each curve once at ingestion and derives both artifacts from
 the same points; `summary.json` was rebuilt from the stored curves.
+
+# Net-income correction (2026-09-14)
+
+A methodology review (a policy-fellow agent; top finding re-verified by a
+direct PolicyEngine decomposition on a second household) found that
+`core/src/parse.ts` computed `net = household_net_income − premium_tax_credit −
+MOOP`. The premise, recorded in the July adversarial review and in Plan 4/6,
+was that PolicyEngine's net income already contained the PTC. It does not:
+`household_net_income == household_market_income + household_benefits +
+household_refundable_tax_credits − household_tax_before_refundable_credits` to
+the dollar, and the refundable credits are the EITC and refundable CTC only.
+MOOP is already the premium net of the PTC, so the stored curves were cash
+minus the GROSS premium — the subsidy was erased. The fix is `net = rawNet −
+moop`; the contract suite now pins the identity live. Regenerating the sweep
+changes most cells: on the CA single-parent fixture, safe exit moves $81k →
+$91k because the real 400%-FPL subsidy cliff ($84k) becomes visible, and the
+leap shrinks $52k → $45k.
+
+Still open from the same review, each a methodology decision: coverage-gap
+households in the nine non-expansion states are charged the full benchmark
+premium instead of being uninsured; the employer-coverage premium constants
+never reach the money line; cliff labels name programs that merely phased
+down; program-end and benefits-end mix children's and parents' limits and
+sticker values; "disabled" models SSI only (no SSDI/SGA cliff); reach ladders
+include retirees and ignore spouse earnings; personal safe-exit/leap are
+whole-curve rather than zone-relative; Head Start is a $22k sticker value with
+an instant cliff; the sweep axis stops at $100k.

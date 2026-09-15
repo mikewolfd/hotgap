@@ -83,11 +83,11 @@ describe("runPipeline", () => {
       expect(Object.keys(result.summary!.states[state])).toHaveLength(8);
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 21956,
+        biggestLoss: 22089,
         dangerWidth: expect.any(Number),
         cliffCount: expect.any(Number),
-        safeExit: 81000,
-        leap: 52000,
+        safeExit: 91000,
+        leap: 45000,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
