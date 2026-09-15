@@ -8,6 +8,33 @@ const fixture = JSON.parse(
 );
 
 describe("parsePEResponse", () => {
+  const maFixture = JSON.parse(readFileSync(new URL("../../docs/upstream/evidence/local-ma-tafdc.response.json", import.meta.url), "utf8"));
+
+  it("retains Massachusetts calculation inputs from a recorded live sweep", () => {
+    const points = parsePEResponse(maFixture, 11);
+    expect(points[2].programs.tanf).toBe(9880);
+    expect(points[2].maTafdc).toEqual({
+      paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
+      dependentCareDeduction: 0, clothingAllowance: 1500, infantBenefit: 0,
+      duplicatedTanf: 9880,
+    });
+    expect(points[3].programs.tanf).toBe(0);
+    // Inputs survive even where upstream's faulty financial test ends TANF.
+    expect(points[3].maTafdc?.nonFinancialEligible).toBe(true);
+  });
+
+  it("rejects incomplete, non-finite or malformed Massachusetts inputs", () => {
+    const body = structuredClone(maFixture);
+    body.result.spm_units.spm_unit.ma_tafdc_non_financial_eligible["2026"] = [true];
+    expect(() => parsePEResponse(body, 11)).toThrow(PEParseError);
+    body.result.spm_units.spm_unit.ma_tafdc_non_financial_eligible["2026"] = true;
+    expect(parsePEResponse(body, 11)[0].maTafdc?.nonFinancialEligible).toBe(true);
+    body.result.spm_units.spm_unit.ma_tafdc_payment_standard["2026"][0] = NaN;
+    expect(() => parsePEResponse(body, 11)).toThrow(PEParseError);
+    delete body.result.spm_units.spm_unit.ma_tafdc_countable_unearned_income;
+    expect(() => parsePEResponse(body, 11)).toThrow(PEParseError);
+  });
+
   it("produces one point per axis step with reconstructed earnings", () => {
     const points = parsePEResponse(fixture, 101);
     expect(points).toHaveLength(101);

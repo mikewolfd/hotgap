@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, correctMaTafdc, evaluateCurve, type CurvePoint } from "@hotgap/core";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -73,6 +73,37 @@ describe("validateResults", () => {
 });
 
 describe("buildSummary", () => {
+  it("uses the same coverage-gap correction as an offline household evaluation", () => {
+    const results = fullResultsFor("TX");
+    const points = results.TX["single-2"];
+    for (const p of points) {
+      if (p.earnings >= 6000 && p.earnings < 27000) {
+        p.medicalOOP = 7000;
+        p.netIncome -= 7000;
+      }
+    }
+    const a = answersFor("TX", ARCHETYPES.find((a) => a.id === "single-2")!);
+    const evaluation = evaluateCurve(a, { year: "2026", currentEarnings: 0, points }, "archetype");
+    expect(evaluation.curve.points[6].coverageGap).toBe(true);
+    const summary = buildSummary("g", ["TX"], results);
+    expect(summary.states.TX["single-2"]).toEqual(stateMetrics(evaluation.curve.points));
+    expect(summary.states.TX["single-2"]).not.toEqual(stateMetrics(points));
+  });
+
+  it("corrects Massachusetts rankings from retained raw points and reports the approximation", () => {
+    const raw = JSON.parse(readFileSync(new URL("../../docs/upstream/evidence/local-ma-tafdc.response.json", import.meta.url), "utf8"));
+    const points = parsePEResponse(raw, 11).map(roundPoint);
+    const results = fullResultsFor("MA");
+    results.MA["married-3"] = points;
+    const a = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
+    const corrected = correctMaTafdc(a, points);
+    expect(buildSummary("g", ["MA"], results).states.MA["married-3"]).toEqual({
+      ...stateMetrics(corrected.points), maTafdc: corrected.correction,
+    });
+    expect(points[2].programs.tanf).toBe(9880);
+    expect(buildStateFile("g", "MA", results).archetypes["married-3"].points[2].maTafdc).toEqual(points[2].maTafdc);
+  });
+
   it("produces the schema: generated, year, archetype defs, and per-state per-archetype metrics", () => {
     const results = fullResultsFor("CA");
     const summary = buildSummary("2026-07-11T00:00:00.000Z", ["CA"], results);

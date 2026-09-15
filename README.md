@@ -41,6 +41,8 @@ lands among real households' incomes.
   also validates the three non-wage-income inputs below (each optional,
   default 0)
 - `buildPEPayload(answers)` — `HouseholdAnswers` → PolicyEngine request
+- `buildCurvePayload(answers)` — the request with sourced per-household
+  parameter overrides; used by `fetchCurve` and the weekly sweep
 - `fetchCurve(answers)` — the curve via the public
   [PolicyEngine](https://policyengine.org) API; when `ssdiMonthly > 0` this
   is two requests spliced together (see SSDI, below)
@@ -73,6 +75,9 @@ lands among real households' incomes.
   - `headStart` — the program's PolicyEngine sticker value alongside what it
     is actually worth to this family: capped at their own reported childcare
     cost, since a family paying $0 for childcare gains $0 from a "free" slot
+  - `maTafdc` — whether the local Massachusetts cash-assistance correction
+    was applied, plus its limits; SNAP and other linked benefits retain
+    their original PolicyEngine values, so the combined result is approximate
   - a `curve` where an employer-coverage household's health cost has already
     been replaced with the MEPS-IC employee contribution in place of the
     marketplace premium PolicyEngine would otherwise charge (live curves
@@ -113,7 +118,11 @@ All under `core/data/`:
   subsidy cliff off the top of a bigger family's chart (see `axisSpec` in
   `core/src/translate.ts`). `summary.json` carries `leapIsLowerBound` per
   archetype: true when its worst danger zone runs off the top of that axis
-  rather than actually closing. Rebuild: `npm run pipeline`.
+  rather than actually closing. Massachusetts summary metrics include the
+  local TAFDC correction and an approximation notice. State files retain
+  PolicyEngine's TANF and the `maTafdc` inputs used to replay that correction;
+  use `evaluateOffline` to obtain the corrected curve. Rebuild:
+  `npm run pipeline`.
 - `reach.json` — household earnings percentile ladders from
   [U.S. Census Bureau ACS PUMS](https://www.census.gov/programs-surveys/acs/microdata.html)
   microdata (public domain): the 2024 1-Year PUMS, with the 2020–2024 5-Year
@@ -170,12 +179,21 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
 - HotGap does not ask about immigration status, assets, or a household
   member aged 65+. None of those are inputs, and the reach ladders
   themselves only cover householders 18–64.
-- Parent-Medicaid thresholds come from PolicyEngine's own parameters. Five
-  non-expansion states (TX, MS, GA, FL, WY) hold a frozen dollar standard
-  that PolicyEngine hasn't refreshed since 2021 (GA since 2025), so the
-  modeled threshold drifts above the state's real one every January until
-  PolicyEngine updates it — see
-  [docs/upstream/2026-09-14-policyengine-issues.md](docs/upstream/2026-09-14-policyengine-issues.md).
+- Parent-Medicaid limits in TX, MS, GA, FL and WY use the states' published
+  dollar tables for the household's size, converted to PolicyEngine's 2026
+  poverty-line fraction. SC uses 67%. HotGap sends these as request parameters;
+  PolicyEngine still calculates eligibility and related benefits. New York
+  uses the 200% Essential Plan ceiling effective July 1, 2026. These are
+  annualized current-rule scenarios, not prorated calendar-year benefit totals.
+- Massachusetts TAFDC uses the ongoing-recipient formula after the six-month
+  full earnings disregard. The local correction removes a duplicate TAFDC
+  payment from upstream net income, then changes TANF and net income
+  before analysis, including offline results and summary rankings. SNAP and
+  other linked benefits still reflect the original TANF calculation, so
+  Massachusetts results are approximate. Older curves without the required
+  inputs are flagged as uncorrected. See
+  [local corrections and evidence](docs/upstream/2026-09-15-local-corrections.md)
+  for sources, scope and removal checks.
 
 ## Develop
 

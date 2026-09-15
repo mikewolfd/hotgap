@@ -1,0 +1,122 @@
+{
+  "household": {
+    "people": {
+      "you": {
+        "age": {
+          "2026": 30
+        }
+      },
+      "spouse": {
+        "age": {
+          "2026": 30
+        },
+        "employment_income": {
+          "2026": 0
+        }
+      },
+      "child1": {
+        "age": {
+          "2026": 1
+        }
+      },
+      "child2": {
+        "age": {
+          "2026": 4
+        }
+      },
+      "child3": {
+        "age": {
+          "2026": 9
+        }
+      }
+    },
+    "families": {
+      "family": {
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ]
+      }
+    },
+    "marital_units": {
+      "marital_unit": {
+        "members": [
+          "you",
+          "spouse"
+        ]
+      }
+    },
+    "tax_units": {
+      "tax_unit": {
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ]
+      }
+    },
+    "spm_units": {
+      "spm_unit": {
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ],
+        "tanf": {
+          "2026": [
+            2980,
+            2480,
+            1980
+          ]
+        },
+        "ma_tafdc": {
+          "2026": null
+        },
+        "ma_tafdc_payment_standard": {
+          "2026": null
+        },
+        "spm_unit_size": {
+          "2026": null
+        },
+        "snap": {
+          "2026": null
+        }
+      }
+    },
+    "households": {
+      "household": {
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ],
+        "state_name": {
+          "2026": "MA"
+        },
+        "household_net_income": {
+          "2026": null
+        }
+      }
+    },
+    "axes": [
+      [
+        {
+          "name": "employment_income",
+          "min": 25000,
+          "max": 27000,
+          "count": 3,
+          "period": "2026"
+        }
+      ]
+    ]
+  }
+}

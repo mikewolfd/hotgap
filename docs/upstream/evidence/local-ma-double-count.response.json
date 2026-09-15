@@ -1,0 +1,411 @@
+{
+  "message": null,
+  "result": {
+    "axes": [
+      [
+        {
+          "count": 2,
+          "max": 27000,
+          "min": 26000,
+          "name": "employment_income",
+          "period": "2026"
+        }
+      ]
+    ],
+    "families": {
+      "family": {
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ]
+      }
+    },
+    "households": {
+      "household": {
+        "household_benefits": {
+          "2026": [
+            28356.064453125,
+            11842.365234375
+          ]
+        },
+        "household_net_income": {
+          "2026": [
+            68005.3125,
+            52511.06640625
+          ]
+        },
+        "household_state_benefits": {
+          "2026": [
+            9880,
+            0
+          ]
+        },
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ],
+        "state_name": {
+          "2026": [
+            "MA",
+            "MA"
+          ]
+        }
+      }
+    },
+    "marital_units": {
+      "marital_unit": {
+        "members": [
+          "you",
+          "spouse"
+        ]
+      }
+    },
+    "people": {
+      "child1": {
+        "age": {
+          "2026": [
+            1,
+            1
+          ]
+        },
+        "chip": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "early_head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_clothing_allowance": {
+          "2026": [
+            500,
+            500
+          ]
+        },
+        "ma_tafdc_infant_benefit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "medicaid": {
+          "2026": [
+            10982.05078125,
+            10982.05078125
+          ]
+        }
+      },
+      "child2": {
+        "age": {
+          "2026": [
+            4,
+            4
+          ]
+        },
+        "chip": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "early_head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_clothing_allowance": {
+          "2026": [
+            500,
+            500
+          ]
+        },
+        "ma_tafdc_infant_benefit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "medicaid": {
+          "2026": [
+            10982.05078125,
+            10982.05078125
+          ]
+        }
+      },
+      "child3": {
+        "age": {
+          "2026": [
+            9,
+            9
+          ]
+        },
+        "chip": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "early_head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "head_start": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_clothing_allowance": {
+          "2026": [
+            500,
+            500
+          ]
+        },
+        "ma_tafdc_infant_benefit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "medicaid": {
+          "2026": [
+            10982.05078125,
+            10982.05078125
+          ]
+        }
+      },
+      "spouse": {
+        "age": {
+          "2026": [
+            30,
+            30
+          ]
+        },
+        "chip": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "employment_income": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_clothing_allowance": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_infant_benefit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "medicaid": {
+          "2026": [
+            18819.94140625,
+            18819.94140625
+          ]
+        },
+        "ssi": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "wic": {
+          "2026": [
+            0,
+            0
+          ]
+        }
+      },
+      "you": {
+        "age": {
+          "2026": [
+            30,
+            30
+          ]
+        },
+        "chip": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_clothing_allowance": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_infant_benefit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "medicaid": {
+          "2026": [
+            18819.94140625,
+            18819.94140625
+          ]
+        },
+        "ssi": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "wic": {
+          "2026": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "spm_units": {
+      "spm_unit": {
+        "childcare_expenses": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "free_school_meals": {
+          "2026": [
+            1130.9622802734375,
+            1130.9622802734375
+          ]
+        },
+        "ma_tafdc": {
+          "2026": [
+            9880,
+            0
+          ]
+        },
+        "ma_tafdc_countable_unearned_income": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_dependent_care_deduction": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "ma_tafdc_non_financial_eligible": {
+          "2026": [
+            true,
+            true
+          ]
+        },
+        "ma_tafdc_payment_standard": {
+          "2026": [
+            14280,
+            14280
+          ]
+        },
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ],
+        "reduced_price_school_meals": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "snap": {
+          "2026": [
+            6018.95361328125,
+            9265.25390625
+          ]
+        },
+        "spm_unit_capped_housing_subsidy": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "spm_unit_medical_out_of_pocket_expenses": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "tanf": {
+          "2026": [
+            9880,
+            0
+          ]
+        }
+      }
+    },
+    "tax_units": {
+      "tax_unit": {
+        "eitc": {
+          "2026": [
+            8231,
+            8231
+          ]
+        },
+        "members": [
+          "you",
+          "spouse",
+          "child1",
+          "child2",
+          "child3"
+        ],
+        "premium_tax_credit": {
+          "2026": [
+            0,
+            0
+          ]
+        },
+        "refundable_ctc": {
+          "2026": [
+            3525.000244140625,
+            3675.000244140625
+          ]
+        }
+      }
+    }
+  },
+  "status": "ok"
+}

@@ -12,10 +12,12 @@
 import { analyzeCurve, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
 import { fetchCurve, PolicyEngineError, type FetchCurveOptions } from "./client.js";
 import { escapeAnalysis, type EscapeAnalysis } from "./escape.js";
-import { clampFallbackEarnings, loadArchetypeCurve } from "./fallback.js";
+import { clampFallbackEarnings, loadArchetypeCurve, pickArchetypeId } from "./fallback.js";
 import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
 import { reachForHousehold } from "./reachLookup.js";
+import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
 import { esiTier, householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 /** Where the curve came from: a live PolicyEngine call, or the committed sweep. */
@@ -74,6 +76,7 @@ export interface HouseholdEvaluation {
   minWage: MinWageSummary | null;
   coverageGap: CoverageGapSummary | null;
   headStart: HeadStartSummary | null;
+  maTafdc: MaTafdcCorrection | null;
 }
 
 function minWageSummary(state: string, cliffs: Cliff[]): MinWageSummary | null {
@@ -276,7 +279,12 @@ export function evaluateCurve(
   // archetype sweep never sent (it runs every take-up toggle off and nobody
   // with ESI), so they apply to a live curve only. The coverage gap is a
   // property of the state and the income, so it applies to both.
-  const corrected = source === "live" ? applyHeadStart(applyEmployerCoverage(raw, answers), answers) : raw;
+  // Offline points describe the swept archetype, including its spouse's $0
+  // pay. Never apply the caller's personal inputs to that baseline.
+  const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
+    ARCHETYPES.find((a) => a.id === pickArchetypeId(answers.married, answers.childAges.length))!);
+  const tafdc = correctMaTafdc(modeledAnswers, raw);
+  const corrected = source === "live" ? applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers) : tafdc.points;
   const points = knowsWhoHolds ? applyCoverageGap(corrected, answers) : corrected;
   const analysis = analyzeCurve(points, curve.currentEarnings);
   const escape = knowsWhoHolds
@@ -305,6 +313,7 @@ export function evaluateCurve(
     minWage: minWageSummary(answers.state, analysis.cliffs),
     coverageGap: coverageGapSummary(points),
     headStart: source === "live" ? headStartSummary(raw, answers) : null,
+    maTafdc: tafdc.correction,
   };
 }
 

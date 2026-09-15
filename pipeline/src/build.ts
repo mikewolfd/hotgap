@@ -1,4 +1,4 @@
-import { ARCHETYPES, YEAR, answersFor, axisSpec, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -44,7 +44,13 @@ export function buildSummary(generated: string, states: string[], results: Resul
   for (const state of states) {
     summaryStates[state] = {};
     for (const a of ARCHETYPES) {
-      summaryStates[state][a.id] = stateMetrics(results[state][a.id]);
+      const evaluation = evaluateCurve(answersFor(state, a), {
+        year: YEAR, currentEarnings: 0, points: results[state][a.id],
+      }, "archetype");
+      summaryStates[state][a.id] = {
+        ...stateMetrics(evaluation.curve.points),
+        ...(evaluation.maTafdc ? { maTafdc: evaluation.maTafdc } : {}),
+      };
     }
   }
   return {
@@ -60,6 +66,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
 // and `--from-data` rebuilds the summary as an exact identity.
 export function roundPoint(p: CurvePoint): CurvePoint {
   return {
+    ...(p.maTafdc ? { maTafdc: p.maTafdc } : {}),
     earnings: p.earnings,
     netIncome: Math.round(p.netIncome),
     medicalOOP: Math.round(p.medicalOOP),

@@ -226,6 +226,7 @@ function report(ev: HouseholdEvaluation): string {
       `Head Start is priced at ${money(ev.headStart.stickerValue)} a year by PolicyEngine, but it is worth what it saves you: ${money(ev.headStart.replacementValue)} of childcare you would otherwise buy. And a raise past the income limit does not end it — an enrolled child stays eligible through the following program year (45 CFR 1302.12(j)(1)).`,
     );
   }
+  if (ev.maTafdc) out.push("", ev.maTafdc.message);
   if (a.hasEmployerCoverage) {
     const kind = esiTier(a);
     out.push(
@@ -264,6 +265,9 @@ function summaryReport(f: Flags): number {
     console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "danger width"));
     for (const [id, m] of Object.entries(rows)) {
       console.log(cols(id, money(m.biggestLoss), money(m.leap), m.safeExit === null ? "none" : money(m.safeExit), String(m.cliffCount), money(m.dangerWidth)));
+    }
+    for (const message of new Set(Object.values(rows).flatMap((m) => m.maTafdc ? [m.maTafdc.message] : []))) {
+      console.log(message);
     }
   }
   return 0;

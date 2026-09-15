@@ -6,10 +6,8 @@ import {
   ARCHETYPES,
   STATE_CODES,
   answersFor,
-  parsePEResponse,
-  buildPEPayload,
-  axisSpec,
-  requestPE,
+  buildCurvePayload,
+  fetchCurve,
   sleep,
   type CurvePoint,
   type StateFileJson,
@@ -94,7 +92,7 @@ export async function runPipeline(
   const tasks = opts.states.flatMap((state) => ARCHETYPES.map((archetype) => ({ state, archetype })));
 
   if (opts.dryRun) {
-    for (const { state, archetype } of tasks) buildPEPayload(answersFor(state, archetype));
+    for (const { state, archetype } of tasks) buildCurvePayload(answersFor(state, archetype));
     return { ok: true, dryRun: true, gaps: [] };
   }
 
@@ -102,12 +100,11 @@ export async function runPipeline(
   await runQueue(tasks, opts.concurrency, async ({ state, archetype }) => {
     try {
       const answers = answersFor(state, archetype);
-      const payload = buildPEPayload(answers);
-      // A batch can wait far longer than an interactive caller; the client's
-      // 25 s default is for someone watching a screen.
-      const body = await requestPE(payload, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
+      // Every batch request gets the longer budget, including requests that
+      // do not send parameter overrides.
+      const curve = await fetchCurve(answers, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
       results[state] ??= {};
-      results[state][archetype.id] = parsePEResponse(body, axisSpec(answers).count).map(roundPoint);
+      results[state][archetype.id] = curve.points.map(roundPoint);
     } catch (e) {
       console.error(`fetch failed for ${state} × ${archetype.id}: ${(e as Error).message}`);
     }

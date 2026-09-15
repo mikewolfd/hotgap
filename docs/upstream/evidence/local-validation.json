@@ -1,0 +1,81 @@
+{
+  "verifiedAt": "2026-09-15T04:55:40.835Z",
+  "hotgapHeadBeforeChange": "f46f1156bc03531800abab1249803eae7f6d5d26",
+  "stateArchetypeMetricsChecked": 408,
+  "summaryReplay": "exact match",
+  "offlineLeapAndLargestLoss": "exact match",
+  "statesWithChangedSummaryMetrics": [
+    "AL",
+    "FL",
+    "GA",
+    "KS",
+    "MA",
+    "MS",
+    "NY",
+    "SC",
+    "TN",
+    "TX",
+    "WY"
+  ],
+  "parentChecks": [
+    {
+      "state": "SC",
+      "lastCoveredEarnings": 18000,
+      "sourceLimit": 18304.4
+    },
+    {
+      "state": "TX",
+      "lastCoveredEarnings": 4000,
+      "sourceLimit": 4126.2
+    },
+    {
+      "state": "MS",
+      "lastCoveredEarnings": 5000,
+      "sourceLimit": 5976
+    },
+    {
+      "state": "GA",
+      "lastCoveredEarnings": 7000,
+      "sourceLimit": 7944
+    },
+    {
+      "state": "FL",
+      "lastCoveredEarnings": 7000,
+      "sourceLimit": 7200
+    },
+    {
+      "state": "WY",
+      "lastCoveredEarnings": 11000,
+      "sourceLimit": 11842
+    }
+  ],
+  "maLeap": {
+    "single-2": {
+      "oldLeap": 44000,
+      "newLeap": 17000
+    },
+    "single-3": {
+      "oldLeap": 51000,
+      "newLeap": 23000
+    },
+    "married-3": {
+      "oldLeap": 55000,
+      "newLeap": 34000
+    }
+  },
+  "maCliffAt26000": false,
+  "maPoints": [
+    {
+      "earnings": 26000,
+      "tanf": 3972,
+      "otherBenefits": 1446,
+      "netIncome": 52217
+    },
+    {
+      "earnings": 27000,
+      "tanf": 3480,
+      "otherBenefits": 1446,
+      "netIncome": 55991
+    }
+  ]
+}

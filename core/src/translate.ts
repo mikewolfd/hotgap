@@ -107,6 +107,13 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
 
   const members = Object.keys(people);
   const spmVars: Vars = { childcare_expenses: y((a.monthlyChildcare ?? 0) * 12) };
+  if (a.state === "MA" && a.childAges.length > 0) {
+    for (const v of ["ma_tafdc", "ma_tafdc_payment_standard", "ma_tafdc_non_financial_eligible", "ma_tafdc_countable_unearned_income", "ma_tafdc_dependent_care_deduction"]) spmVars[v] = y(null);
+    for (const person of Object.values(people)) {
+      person.ma_tafdc_clothing_allowance = y(null);
+      person.ma_tafdc_infant_benefit = y(null);
+    }
+  }
   for (const v of SPM_VARS) spmVars[v] = y(null);
   if (!a.getsHousing) spmVars.spm_unit_capped_housing_subsidy = y(0);
   const taxVars: Vars = {};
@@ -117,6 +124,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     state_name: ReturnType<typeof y>;
     household_net_income: ReturnType<typeof y>;
     household_benefits: ReturnType<typeof y>;
+    household_state_benefits?: ReturnType<typeof y>;
     county_fips?: ReturnType<typeof y>;
   } = {
     members,
@@ -127,6 +135,7 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     household_benefits: y(null),
   };
   if (a.countyFips) householdVars.county_fips = y(a.countyFips);
+  if (a.state === "MA" && a.childAges.length > 0) householdVars.household_state_benefits = y(null);
 
   const axis = axisSpec(a);
   return {

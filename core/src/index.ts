@@ -13,6 +13,8 @@
 // ladders, and ZIP → state / county crosswalks. See README.md.
 export * from "./types.js";
 export * from "./policyYear.js";
+export * from "./policyOverrides.js";
+export * from "./maTafdc.js";
 export * from "./income.js";
 export * from "./parse.js";
 export * from "./analyze.js";

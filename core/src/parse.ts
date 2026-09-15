@@ -1,3 +1,4 @@
+import type { MaTafdcInputs } from "./maTafdc.js";
 import { CASH_PROGRAMS, YEAR, type CurvePoint, type ProgramId } from "./types.js";
 
 export class PEParseError extends Error {}
@@ -110,7 +111,39 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   const at = (source: Map<ProgramId, number[]>, i: number) =>
     Object.fromEntries([...source.entries()].map(([id, values]) => [id, values[i]]));
 
+  let maTafdc: MaTafdcInputs[] | undefined;
+  if ("ma_tafdc_payment_standard" in spm) {
+    const standard = series(spm, "ma_tafdc_payment_standard", expectedCount);
+    const unearned = series(spm, "ma_tafdc_countable_unearned_income", expectedCount);
+    const care = series(spm, "ma_tafdc_dependent_care_deduction", expectedCount);
+    // The served model includes ma_tafdc in household_state_benefits AND
+    // tanf in household_benefits. Retain the overlap for local removal from
+    // both net income and the otherwise-unexplained otherBenefits remainder.
+    // Pinned by the live contract test; recheck when upstream changes its sums.
+    const tafdc = series(spm, "ma_tafdc", expectedCount);
+    const stateBenefits = series(household, "household_state_benefits", expectedCount);
+    const eligible = spm.ma_tafdc_non_financial_eligible?.[YEAR];
+    const flags = typeof eligible === "boolean" ? new Array(expectedCount).fill(eligible) : eligible;
+    if (!Array.isArray(flags) || flags.length !== expectedCount || flags.some((v) => typeof v !== "boolean")) {
+      throw new PEParseError("bad series for ma_tafdc_non_financial_eligible");
+    }
+    const sumPeople = (variable: string) => Object.values(people).reduce(
+      (sum, person) => series(person, variable, expectedCount).map((v, i) => v + sum[i]), new Array(expectedCount).fill(0) as number[],
+    );
+    const clothing = sumPeople("ma_tafdc_clothing_allowance");
+    const infant = sumPeople("ma_tafdc_infant_benefit");
+    maTafdc = standard.map((paymentStandard, i) => ({
+      paymentStandard, nonFinancialEligible: flags[i], unearnedIncome: unearned[i],
+      dependentCareDeduction: care[i], clothingAllowance: clothing[i], infantBenefit: infant[i],
+      duplicatedTanf: Math.min(tafdc[i], programSeries.get("tanf")![i], stateBenefits[i]),
+    }));
+    if (maTafdc.some((inputs) => Object.values(inputs).some((v) => typeof v === "number" && (!Number.isFinite(v) || v < 0)))) {
+      throw new PEParseError("invalid Massachusetts TAFDC inputs");
+    }
+  }
+
   return net.map((n, i) => ({
+    ...(maTafdc ? { maTafdc: maTafdc[i] } : {}),
     earnings: axis.min + step * i,
     netIncome: n,
     medicalOOP: moop[i],

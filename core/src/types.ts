@@ -1,3 +1,4 @@
+import type { MaTafdcInputs } from "./maTafdc.js";
 // Policy year every calculation runs against (PolicyEngine variable period).
 export const YEAR = "2026" as const;
 
@@ -53,6 +54,8 @@ export interface HouseholdAnswers {
 }
 
 export interface CurvePoint {
+  /** MA-only inputs for the local TAFDC correction; absent in older sweeps. */
+  maTafdc?: MaTafdcInputs;
   earnings: number;
   // Resources after paying real health costs: PolicyEngine's household net
   // income minus SPM medical out-of-pocket (health-insurance premiums, net of

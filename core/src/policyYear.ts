@@ -28,6 +28,17 @@ export const FPL_2025 = {
   HI: { base: 17_990, perPerson: 6_330 },
 } as const;
 
+// 2026 HHS poverty guidelines, 48 contiguous states + DC (FR Doc. 2026-00755,
+// effective 2026-01-13): $15,960 + $5,680 per additional person. Medicaid uses
+// the current-year guideline, so the parent-Medicaid overrides convert state
+// dollar standards with this line, not the 2025 one the marketplace uses.
+export const FPL_2026_CONTIGUOUS = { base: 15_960, perPerson: 5_680 } as const;
+
+/** 100% of the 2026 guideline for a contiguous-state household of this size. */
+export function fpl2026Contiguous(householdSize: number): number {
+  return FPL_2026_CONTIGUOUS.base + FPL_2026_CONTIGUOUS.perPerson * (Math.max(1, householdSize) - 1);
+}
+
 /** 100% of the 2025 federal poverty line for a household of this size in this state. */
 export function fpl2025(state: string, householdSize: number): number {
   const ladder = state === "AK" ? FPL_2025.AK : state === "HI" ? FPL_2025.HI : FPL_2025.contiguous;

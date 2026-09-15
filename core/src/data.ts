@@ -6,9 +6,11 @@
 //   zip3-state.json     ZIP prefix → state (GeoNames)
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
 import { existsSync, readFileSync } from "node:fs";
+import type { MaTafdcCorrection } from "./maTafdc.js";
 import type { CurvePoint } from "./types.js";
 
 export interface StateMetrics {
+  maTafdc?: MaTafdcCorrection;
   biggestLoss: number;
   dangerWidth: number;
   cliffCount: number;

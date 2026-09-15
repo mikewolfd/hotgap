@@ -1,14 +1,18 @@
 // The one place HotGap talks to PolicyEngine. Wraps the public, keyless
 // POST /us/calculate with a timeout, optional retries, error classification,
-// and an optional result cache keyed on the household answers.
+// and an optional result cache keyed on the household, request and overrides.
 import { createHash } from "node:crypto";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
+import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
 import { axisSpec, buildPEPayload, type AxisSpec } from "./translate.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
 const DEFAULT_TIMEOUT_MS = 25_000;
+// The service builds a reform for per-request parameters. Live probes took
+// 34–39 s end to end; use the batch budget for these requests too.
+const POLICY_TIMEOUT_MS = 90_000;
 
 export type PolicyEngineErrorKind = "timeout" | "network" | "upstream" | "parse";
 
@@ -93,9 +97,15 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** Stable key for a set of answers: SHA-256 of their key-sorted JSON. */
-export function curveCacheKey(answers: HouseholdAnswers): string {
-  return createHash("sha256").update(canonical(answers)).digest("hex");
+/** Stable key including the exact request, year, axis and effective overrides. */
+export function curveCacheKey(answers: HouseholdAnswers, policy: PolicyOverrides = policyOverridesFor(answers)): string {
+  return createHash("sha256").update(canonical({ answers, payload: buildPEPayload(answers), policy })).digest("hex");
+}
+
+/** Household request with HotGap's sourced parameter corrections. */
+export function buildCurvePayload(answers: HouseholdAnswers) {
+  const policy = policyOverridesFor(answers);
+  return { ...buildPEPayload(answers), ...(Object.keys(policy).length ? { policy } : {}) };
 }
 
 function parseOrThrow(body: unknown, count: number): CurvePoint[] {
@@ -127,8 +137,8 @@ async function fetchSplicedForSSDI(
   opts: RequestOptions,
 ): Promise<CurvePoint[]> {
   const [receiving, stopped] = await Promise.all([
-    requestPE(buildPEPayload(answers), opts),
-    requestPE(buildPEPayload({ ...answers, ssdiMonthly: 0 }), opts),
+    requestPE(buildCurvePayload(answers), opts),
+    requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }), opts),
   ]);
   const withSSDI = parseOrThrow(receiving, axis.count);
   const withoutSSDI = parseOrThrow(stopped, axis.count);
@@ -142,9 +152,13 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (hit) return hit;
 
   const axis = axisSpec(answers);
+  const requestOpts = {
+    ...opts,
+    timeoutMs: opts.timeoutMs ?? (Object.keys(policyOverridesFor(answers)).length ? POLICY_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
+  };
   const points = answers.ssdiMonthly > 0
-    ? await fetchSplicedForSSDI(answers, axis, opts)
-    : parseOrThrow(await requestPE(buildPEPayload(answers), opts), axis.count);
+    ? await fetchSplicedForSSDI(answers, axis, requestOpts)
+    : parseOrThrow(await requestPE(buildCurvePayload(answers), requestOpts), axis.count);
 
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };
   await opts.cache?.set(key, curve);
