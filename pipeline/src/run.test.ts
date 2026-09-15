@@ -195,6 +195,24 @@ describe("writeOutputs", () => {
   });
 });
 
+describe("writeSummary with a partial --states run", () => {
+  it("merges the swept states into the existing file instead of dropping the others", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));
+    try {
+      const summaryPath = path.join(dir, "summary.json");
+      const file = (states: Record<string, unknown>, generated: string) => ({ generated, year: "2026", archetypes: [], states });
+      await writeSummary(summaryPath, file({ ZZ: { leap: 1 }, YY: { leap: 2 } }, "g1") as never);
+      await writeSummary(summaryPath, file({ YY: { leap: 3 } }, "g2") as never);
+      expect(JSON.parse(await readFile(summaryPath, "utf8"))).toEqual(file({ ZZ: { leap: 1 }, YY: { leap: 3 } }, "g2"));
+      // An unchanged partial rewrite is still skipped.
+      await writeSummary(summaryPath, file({ YY: { leap: 3 } }, "g3") as never);
+      expect(JSON.parse(await readFile(summaryPath, "utf8")).generated).toBe("g2");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("writeSummary", () => {
   it("writes only summary.json, creating directories as needed, and touches nothing else", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "hotgap-pipeline-test-"));

@@ -12,7 +12,7 @@ const DEFAULT_TIMEOUT_MS = 25_000;
 export type PolicyEngineErrorKind = "timeout" | "network" | "upstream" | "parse";
 
 export class PolicyEngineError extends Error {
-  constructor(readonly kind: PolicyEngineErrorKind, message: string) {
+  constructor(readonly kind: PolicyEngineErrorKind, message: string, readonly status?: number) {
     super(message);
     this.name = "PolicyEngineError";
   }
@@ -35,7 +35,7 @@ export interface FetchCurveOptions extends RequestOptions {
   cache?: CurveCache;
 }
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs: number): Promise<unknown> {
   let res: Response;
@@ -50,24 +50,34 @@ async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs:
     const { name, message } = e as Error;
     throw new PolicyEngineError(name === "AbortError" || name === "TimeoutError" ? "timeout" : "network", message);
   }
-  if (res.status !== 200) throw new PolicyEngineError("upstream", `PolicyEngine responded ${res.status}`);
+  if (res.status !== 200) {
+    // A rejected payload comes back as { status: "error", message } — keep the message.
+    const detail = await res.json().then((b) => (b as { message?: string })?.message, () => undefined);
+    throw new PolicyEngineError("upstream", `PolicyEngine responded ${res.status}${detail ? `: ${detail}` : ""}`, res.status);
+  }
   try {
     return await res.json();
-  } catch {
-    throw new PolicyEngineError("upstream", "PolicyEngine returned non-JSON");
+  } catch (e) {
+    // The timeout signal also aborts the body stream, so a slow body lands here.
+    const { name, message } = e as Error;
+    if (name === "AbortError" || name === "TimeoutError") throw new PolicyEngineError("timeout", message);
+    throw new PolicyEngineError("upstream", "PolicyEngine returned non-JSON", res.status);
   }
 }
 
 /** POST a raw PolicyEngine payload and return the parsed JSON body. */
 export async function requestPE(payload: unknown, opts: RequestOptions = {}): Promise<unknown> {
-  const { fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS, retryDelaysMs = [], sleep = defaultSleep } = opts;
+  const { fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS, retryDelaysMs = [], sleep: wait = sleep } = opts;
   let lastError: PolicyEngineError | undefined;
   for (let attempt = 0; attempt <= retryDelaysMs.length; attempt++) {
     try {
       return await requestOnce(fetchImpl, payload, timeoutMs);
     } catch (e) {
       lastError = e as PolicyEngineError;
-      if (attempt < retryDelaysMs.length) await sleep(retryDelaysMs[attempt]);
+      // A 4xx means our payload is wrong; retrying cannot fix it.
+      const ourFault = lastError.status !== undefined && lastError.status >= 400 && lastError.status < 500;
+      if (ourFault || attempt >= retryDelaysMs.length) break;
+      await wait(retryDelaysMs[attempt]);
     }
   }
   throw lastError;

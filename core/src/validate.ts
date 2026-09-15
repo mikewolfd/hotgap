@@ -1,4 +1,4 @@
-import { STATE_CODES } from "./states.js";
+import { FIPS_TO_USPS, STATE_CODES } from "./states.js";
 import type { HouseholdAnswers } from "./types.js";
 
 const STATES = new Set(STATE_CODES);
@@ -37,6 +37,11 @@ export function validateAnswers(input: unknown): Validation {
   if (!money(a.annualEarnings)) return { ok: false, detail: "annualEarnings" };
   if (!money(a.spouseAnnualEarnings)) return { ok: false, detail: "spouseAnnualEarnings" };
 
+  // A county FIPS starts with its state's two digits; a county in another
+  // state would put PolicyEngine's ACA rating area in the wrong state.
+  const countyFips = typeof a.countyFips === "string" && /^\d{5}$/.test(a.countyFips) ? a.countyFips : null;
+  if (countyFips !== null && FIPS_TO_USPS[countyFips.slice(0, 2)] !== a.state) return { ok: false, detail: "countyFips" };
+
   // Sort ages and their matching disabled flags together (as pairs) so the
   // permutation applied to childAges is mirrored onto childDisabled, then
   // split the sorted pairs back into two parallel arrays.
@@ -62,7 +67,7 @@ export function validateAnswers(input: unknown): Validation {
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
       hasEmployerCoverage: a.hasEmployerCoverage === true,
-      countyFips: typeof a.countyFips === "string" && /^\d{5}$/.test(a.countyFips) ? a.countyFips : null,
+      countyFips,
     },
   };
 }

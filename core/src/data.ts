@@ -32,15 +32,16 @@ export interface StateFileJson {
   archetypes: Record<string, { points: CurvePoint[] }>;
 }
 
-export const DATA_DIR = new URL("../data/", import.meta.url);
+const DATA_DIR = new URL("../data/", import.meta.url);
 
 const cache = new Map<string, unknown>();
 
-/** Parse `data/<relPath>` once; null when the file does not exist. */
+/** Parse `data/<relPath>` once; null when the file does not exist or the path escapes data/. */
 export function readData<T>(relPath: string): T | null {
   if (!cache.has(relPath)) {
     const url = new URL(relPath, DATA_DIR);
-    cache.set(relPath, existsSync(url) ? (JSON.parse(readFileSync(url, "utf8")) as T) : null);
+    const inside = url.href.startsWith(DATA_DIR.href);
+    cache.set(relPath, inside && existsSync(url) ? (JSON.parse(readFileSync(url, "utf8")) as T) : null);
   }
   return cache.get(relPath) as T | null;
 }

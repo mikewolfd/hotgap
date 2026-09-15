@@ -70,6 +70,16 @@ describe("requestPE retries", () => {
     expect(body).toEqual({ ok: true });
   });
 
+  it("does not retry a 4xx, and keeps PolicyEngine's message", async () => {
+    let calls = 0;
+    const fetchImpl = respond(() => { calls++; return new Response(JSON.stringify({ status: "error", message: "Household variable `rent` belongs on `people`" }), { status: 400 }); });
+    const err = (await requestPE({}, { fetchImpl, retryDelaysMs: [1, 1], sleep: noopSleep }).catch((e) => e)) as PolicyEngineError;
+    expect(err).toBeInstanceOf(PolicyEngineError);
+    expect(err.status).toBe(400);
+    expect(err.message).toContain("belongs on `people`");
+    expect(calls).toBe(1);
+  });
+
   it("throws the last error after exhausting all attempts, and does not retry by default", async () => {
     let calls = 0;
     const fetchImpl = respond(() => { calls++; return new Response("", { status: 500 }); });

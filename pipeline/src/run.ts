@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { isDeepStrictEqual } from "node:util";
+import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import {
   ARCHETYPES,
   STATE_CODES,
@@ -10,6 +10,7 @@ import {
   buildPEPayload,
   AXIS_COUNT,
   requestPE,
+  sleep,
   type CurvePoint,
   type StateFileJson,
   type SummaryJson,
@@ -31,6 +32,7 @@ const DEFAULT_CONCURRENCY = 3;
 // Per-request retry: up to 3 total attempts, waiting 2s then 8s between them
 // (handed straight to core's requestPE).
 const RETRY_DELAYS_MS = [2000, 8000];
+const BATCH_TIMEOUT_MS = 90_000;
 
 export interface RunOptions {
   states: string[];
@@ -54,39 +56,22 @@ export interface OutputPaths {
 
 export type SleepFn = (ms: number) => Promise<void>;
 
-const realSleep: SleepFn = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function splitFlag(arg: string): [string, string | null] {
-  const eq = arg.indexOf("=");
-  return eq === -1 ? [arg.slice(2), null] : [arg.slice(2, eq), arg.slice(eq + 1)];
-}
-
 export function parseArgs(argv: string[]): RunOptions {
-  let states = ALL_STATES;
-  let concurrency = DEFAULT_CONCURRENCY;
-  let dryRun = false;
-  let fromData = false;
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === "--dry-run") {
-      dryRun = true;
-      continue;
-    }
-    if (arg === "--from-data") {
-      fromData = true;
-      continue;
-    }
-    if (!arg.startsWith("--")) continue;
-    const [flag, inline] = splitFlag(arg);
-    if (flag === "states") {
-      const value = inline ?? argv[++i];
-      states = value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
-    } else if (flag === "concurrency") {
-      const value = inline ?? argv[++i];
-      concurrency = Number(value);
-    }
-  }
-  return { states, concurrency, dryRun, fromData };
+  const { values } = parseNodeArgs({
+    args: argv,
+    options: {
+      states: { type: "string" },
+      concurrency: { type: "string" },
+      "dry-run": { type: "boolean" },
+      "from-data": { type: "boolean" },
+    },
+  });
+  return {
+    states: values.states ? values.states.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) : ALL_STATES,
+    concurrency: values.concurrency === undefined ? DEFAULT_CONCURRENCY : Number(values.concurrency),
+    dryRun: values["dry-run"] === true,
+    fromData: values["from-data"] === true,
+  };
 }
 
 async function runQueue<T>(tasks: T[], concurrency: number, worker: (task: T) => Promise<void>): Promise<void> {
@@ -104,7 +89,7 @@ async function runQueue<T>(tasks: T[], concurrency: number, worker: (task: T) =>
 export async function runPipeline(
   opts: RunOptions,
   fetchImpl: typeof fetch = fetch,
-  sleepImpl: SleepFn = realSleep,
+  sleepImpl: SleepFn = sleep,
 ): Promise<RunResult> {
   const tasks = opts.states.flatMap((state) => ARCHETYPES.map((archetype) => ({ state, archetype })));
 
@@ -117,7 +102,9 @@ export async function runPipeline(
   await runQueue(tasks, opts.concurrency, async ({ state, archetype }) => {
     try {
       const payload = buildPEPayload(answersFor(state, archetype));
-      const body = await requestPE(payload, { fetchImpl, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
+      // A batch can wait far longer than an interactive caller; the client's
+      // 25 s default is for someone watching a screen.
+      const body = await requestPE(payload, { fetchImpl, timeoutMs: BATCH_TIMEOUT_MS, retryDelaysMs: RETRY_DELAYS_MS, sleep: sleepImpl });
       results[state] ??= {};
       results[state][archetype.id] = parsePEResponse(body, AXIS_COUNT).map(roundPoint);
     } catch (e) {
@@ -191,7 +178,7 @@ function stripGenerated(value: unknown): unknown {
   return rest;
 }
 
-/** Pure: deep-equal once each side's top-level `generated` key is removed. */
+/** Pure: deep-equal once each side's top-level `generated` key is removed (the only stamp either artifact carries). */
 export function sameIgnoringGenerated(a: unknown, b: unknown): boolean {
   return isDeepStrictEqual(stripGenerated(a), stripGenerated(b));
 }
@@ -207,9 +194,12 @@ async function readExistingJson(filePath: string): Promise<unknown> {
 
 export async function writeSummary(summaryPath: string, summary: SummaryJson): Promise<void> {
   await mkdir(path.dirname(summaryPath), { recursive: true });
-  const existing = await readExistingJson(summaryPath);
-  if (existing !== undefined && sameIgnoringGenerated(existing, summary)) return;
-  await writeFile(summaryPath, JSON.stringify(summary));
+  const existing = (await readExistingJson(summaryPath)) as Partial<SummaryJson> | undefined;
+  // A partial run (--states) must not drop the states it did not sweep: merge
+  // its metrics into the existing file rather than replacing the file.
+  const next = existing?.states ? { ...summary, states: { ...existing.states, ...summary.states } } : summary;
+  if (existing !== undefined && sameIgnoringGenerated(existing, next)) return;
+  await writeFile(summaryPath, JSON.stringify(next));
 }
 
 export async function writeOutputs(

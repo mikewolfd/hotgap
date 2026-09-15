@@ -63,11 +63,14 @@ function householdFrom(f: Flags): HouseholdAnswers {
   let county = f.county ?? null;
   if (f.zip !== undefined) {
     if (isTerritoryZip(f.zip)) fail(2, "HotGap does not model US territories yet");
-    state = zipToState(f.zip) ?? fail(2, `no state for ZIP ${f.zip}`);
+    const zipState = zipToState(f.zip) ?? fail(2, `no state for ZIP ${f.zip}`);
+    if (state !== undefined && state !== zipState) fail(2, `ZIP ${f.zip} is in ${zipState}, not ${state}`);
+    state = zipState;
     county = county ?? zipToCounty(f.zip, state);
   }
   if (state === undefined) fail(2, "--state or --zip is required");
   if (f.unit !== undefined && !["hour", "month", "year"].includes(f.unit)) fail(2, "--unit must be hour, month, or year");
+  if (f.hours !== undefined && (f.unit ?? "hour") !== "hour") fail(2, "--hours only applies with --unit hour");
   if (f.earnings === undefined && f.pay === undefined) fail(2, "--earnings or --pay is required");
 
   const childAges = list(f.kids).map(Number);
@@ -115,6 +118,9 @@ async function evaluateFor(answers: HouseholdAnswers, offline: boolean): Promise
 function report(ev: HouseholdEvaluation): string {
   const a = ev.answers;
   const { analysis, escape: esc } = ev;
+  // The archetype sweep stops at the top of its axis; pay beyond it is
+  // evaluated at that top, and every line below must say so.
+  const clamped = analysis.currentEarnings !== a.annualEarnings;
   const out: string[] = [
     [
       a.state + (a.countyFips ? ` county ${a.countyFips}` : ""),
@@ -123,6 +129,7 @@ function report(ev: HouseholdEvaluation): string {
       `${money(a.annualEarnings)}/yr from work`,
     ].join(" · "),
     `source: ${ev.source === "live" ? "live PolicyEngine" : "archetype curve (offline)"}`,
+    ...(clamped ? [`pay is above the modeled range — evaluated at ${money(analysis.currentEarnings)}, the top of the sweep`] : []),
     `verdict: ${analysis.verdict.replace(/_/g, " ")}`,
     `money after health costs at ${money(analysis.currentEarnings)}: ${money(analysis.currentNet)}`,
     "",
@@ -152,7 +159,7 @@ function report(ev: HouseholdEvaluation): string {
   const earnAtOrBelow = (pct: number, at: number, what: string) =>
     `  ${Math.round(pct)}% of similar households earn at or below ${money(at)} (${what})`;
   const reach: string[] = [];
-  if (ev.reach.current !== null) reach.push(earnAtOrBelow(ev.reach.current, analysis.currentEarnings, "your pay"));
+  if (ev.reach.current !== null) reach.push(earnAtOrBelow(ev.reach.current, analysis.currentEarnings, clamped ? "evaluated pay" : "your pay"));
   if (ev.reach.safeExit !== null) reach.push(earnAtOrBelow(ev.reach.safeExit, esc.safeExitEarnings!, "safe exit"));
   if (reach.length) out.push("", "reach", ...reach);
 
@@ -165,12 +172,12 @@ function report(ev: HouseholdEvaluation): string {
 function summaryReport(f: Flags): number {
   const summary = loadSummary();
   const states = f.state ? [f.state.toUpperCase()] : Object.keys(summary.states).sort();
-  const picked = Object.fromEntries(states.map((s) => [s, summary.states[s] ?? fail(2, `no sweep data for ${f.state}`)]));
+  const picked = Object.fromEntries(states.map((s) => [s, summary.states[s] ?? fail(2, `no sweep data for ${s}`)]));
   if (f.json) {
     console.log(JSON.stringify({ generated: summary.generated, year: summary.year, states: picked }, null, 2));
     return 0;
   }
-  console.log(`swept ${summary.generated} · policy year ${summary.year}`);
+  console.log(`numbers last changed ${summary.generated} · policy year ${summary.year}`);
   const cols = (id: string, loss: string, leap: string, exit: string, count: string, width: string) =>
     `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${width.padStart(14)}`;
   for (const [state, rows] of Object.entries(picked)) {
@@ -208,7 +215,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 // Only run when this file is the invoked entrypoint (via `tsx core/src/cli.ts`),
 // not when imported by a test.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().then((code) => {
-    process.exitCode = code;
-  });
+  main().then(
+    (code) => { process.exitCode = code; },
+    (e: unknown) => fail(1, e instanceof Error ? e.message : String(e)),
+  );
 }

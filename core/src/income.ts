@@ -18,7 +18,3 @@ export function fromAnnual(annual: number, unit: PayUnit, hoursPerWeek = DEFAULT
     case "year": return annual;
   }
 }
-
-export function roundTo(n: number, step: number): number {
-  return Math.round(n / step) * step;
-}

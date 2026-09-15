@@ -34,6 +34,15 @@ describe("validateAnswers", () => {
     expect(validateAnswers({}).ok).toBe(false);
     expect(validateAnswers({ ...good, annualEarnings: "lots" }).ok).toBe(false);
   });
+  it("keeps a county in the household's state and rejects one from another state", () => {
+    const base = { state: "CA", married: false, age: 30, spouseAge: null, childAges: [], youDisabled: false, spouseDisabled: false, childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 1, spouseAnnualEarnings: 0 };
+    const la = validateAnswers({ ...base, countyFips: "06037" });
+    expect(la.ok && la.value.countyFips).toBe("06037");
+    expect(validateAnswers({ ...base, countyFips: "36061" })).toEqual({ ok: false, detail: "countyFips" });
+    const shapeless = validateAnswers({ ...base, countyFips: "6037" });
+    expect(shapeless.ok && shapeless.value.countyFips).toBeNull();
+  });
+
   it("zeroes spouse earnings when unmarried", () => {
     const r = validateAnswers({ ...good, spouseAnnualEarnings: 50000 });
     if (r.ok) expect(r.value.spouseAnnualEarnings).toBe(0);

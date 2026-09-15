@@ -82,8 +82,8 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
     npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~10 min)
 
 `npm run pipeline` also takes `--from-data` (recompute summary/state metrics
-from already-fetched curves, no PolicyEngine calls) and `--dry-run` (sweep
-and validate without writing files).
+from already-fetched curves, no PolicyEngine calls) and `--dry-run` (build every request payload
+without calling PolicyEngine or writing files).
 
 `.github/workflows/places-data.yml` runs the sweep automatically every
 Monday at 07:00 UTC (and on manual dispatch), running the test suite and

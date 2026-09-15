@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ARCHETYPES } from "./archetypes.js";
 import { loadStateFile, loadSummary, readData } from "./data.js";
+import { REACH_PERCENTILES } from "./reach.js";
 import { STATE_CODES } from "./states.js";
 
 describe("committed data", () => {
@@ -27,5 +28,14 @@ describe("committed data", () => {
 
   it("memoizes reads (same object back)", () => {
     expect(readData("reach.json")).toBe(readData("reach.json"));
+  });
+
+  it("never reads outside data/", () => {
+    expect(readData("../package.json")).toBeNull();
+    expect(readData("/etc/hosts")).toBeNull();
+  });
+
+  it("reach.json is sampled at the percentile steps the code assumes", () => {
+    expect(readData<{ percentiles: number[] }>("reach.json")?.percentiles).toEqual(REACH_PERCENTILES);
   });
 });

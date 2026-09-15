@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toAnnual, fromAnnual, roundTo } from "./income.js";
+import { toAnnual, fromAnnual } from "./income.js";
 
 describe("toAnnual", () => {
   it("converts hourly pay using hours/week × 52", () => {
@@ -23,9 +23,3 @@ describe("fromAnnual", () => {
   });
 });
 
-describe("roundTo", () => {
-  it("rounds to the nearest step", () => {
-    expect(roundTo(21956, 100)).toBe(22000);
-    expect(roundTo(19.4, 0.5)).toBe(19.5);
-  });
-});
