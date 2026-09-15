@@ -53,9 +53,21 @@ export function buildSummary(generated: string, states: string[], results: Resul
       };
     }
   }
+  // Flagged when ANY archetype that pays for care never receives a subsidy.
+  // At $0 earnings a family paying for care qualifies in every state, so a
+  // curve that is zero throughout means the engine could not model it — and
+  // partial coverage is still a hole: Massachusetts pays a household with an
+  // infant but nothing to one whose only child is a preschooler, because the
+  // provider type defaults to a school-age rate.
+  const unmodeled = states.filter((state) => {
+    const paying = ARCHETYPES.filter((a) => (answersFor(state, a).monthlyChildcare ?? 0) > 0);
+    return paying.some((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
+  });
+
   return {
     generated,
     year: YEAR,
+    ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
     archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
     states: summaryStates,
   };

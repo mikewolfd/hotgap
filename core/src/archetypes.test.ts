@@ -29,7 +29,8 @@ describe("answersFor", () => {
       childAges: [3, 7],
       childDisabled: [false, false],
       monthlyRent: 2903,            // HUD FY2026 two-bedroom FMR there
-      monthlyChildcare: 0,
+      // One child under 6 (the 3-year-old); the 7-year-old is in school.
+      monthlyChildcare: stateDefaults("CA").monthlyChildcarePreschool,
       annualEarnings: 0,
       spouseAnnualEarnings: 0,
       hoursPerWeek: null,
@@ -39,7 +40,7 @@ describe("answersFor", () => {
       spouseDisabled: false,
       getsHeadStart: false,
       getsHousing: false,
-      getsChildcareSubsidy: false,
+      getsChildcareSubsidy: true,   // on for the sweep, off for a personal evaluation
       hasEmployerCoverage: false,
       ssdiMonthly: 0,
       childSupportMonthly: 0,
@@ -79,6 +80,10 @@ describe("answersFor", () => {
   });
 
   it("leaves childcare at $0 — the archetype reports no childcare expense", () => {
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(0);
+    // single-3 is aged 1, 4 and 9: two under 6, so two preschool places.
+    const price = stateDefaults("CA").monthlyChildcarePreschool;
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(2 * price);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-0")!).monthlyChildcare).toBe(0);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-2")!).monthlyChildcare).toBe(price);
   });
 });

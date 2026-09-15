@@ -1,0 +1,758 @@
+- generic [active] [ref=f7e1]:
+  - link "Skip to the data table" [ref=f7e2] [cursor=pointer]:
+    - /url: "#table"
+  - generic [ref=f7e3]:
+    - paragraph [ref=f7e4]: HotGap
+    - heading "What a raise costs, state by state" [level=1] [ref=f7e5]
+    - paragraph [ref=f7e6]: Fifty-one sets of rules, eight household shapes, one axis. Each figure is the worst single $1,000 step of earnings in that state’s curve for that household — how much net income falls when pay goes up by a thousand dollars.
+  - generic [ref=f7e7]:
+    - generic [ref=f7e8]:
+      - generic [ref=f7e9]:
+        - generic [ref=f7e10]: Household
+        - combobox "Household" [ref=f7e11]:
+          - option "1 adult, 2 children (3 and 7)" [selected]
+          - option "1 adult, no children"
+          - option "1 adult, 1 child (3)"
+          - option "1 adult, 3 children (1, 4, 9)"
+          - option "2 adults, no children"
+          - option "2 adults, 1 child (3)"
+          - option "2 adults, 2 children (3 and 7)"
+          - option "2 adults, 3 children (1, 4, 9)"
+      - generic [ref=f7e12]:
+        - generic [ref=f7e13]: Measure
+        - combobox "Measure" [ref=f7e14]:
+          - option "Largest one-step loss ($)" [selected]
+          - option "Width of the worst danger zone ($)"
+          - option "The leap — raise needed to clear it ($)"
+          - option "Safe exit — earnings where the last zone ends ($)"
+          - option "Number of cliffs"
+          - option "Of those, deferred to a later renewal"
+      - button "Download these rows (CSV)" [ref=f7e16] [cursor=pointer]
+    - generic [ref=f7e17]:
+      - figure [ref=f7e18]:
+        - heading "Largest one-step loss, by state" [level=3] [ref=f7e19]
+        - paragraph [ref=f7e20]: 1 adult, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.
+        - img "Largest one-step loss, by state" [ref=f7e21]:
+          - 'generic "AK: $14,365" [ref=f7e22]': AK
+          - 'generic "ME: $5,700" [ref=f7e23]': ME
+          - 'generic "VT: $18,891" [ref=f7e24]': VT
+          - 'generic "NH: $1,032" [ref=f7e25]': NH
+          - 'generic "WA: $3,677" [ref=f7e26]': WA
+          - 'generic "ID: $2,368" [ref=f7e27]': ID
+          - 'generic "MT: $2,842" [ref=f7e28]': MT
+          - 'generic "ND: $1,301" [ref=f7e29]': ND
+          - 'generic "MN: $3,336" [ref=f7e30]': MN
+          - 'generic "IL: $3,258" [ref=f7e31]': IL
+          - 'generic "WI: $5,353" [ref=f7e32]': WI
+          - 'generic "MI: $7,670" [ref=f7e33]': MI
+          - 'generic "NY: $3,479" [ref=f7e34]': NY
+          - 'generic "MA: $7,896" [ref=f7e35]': MA
+          - 'generic "OR: $4,614" [ref=f7e36]': OR
+          - 'generic "NV: $931" [ref=f7e37]': NV
+          - 'generic "WY: $14,448" [ref=f7e38]': WY
+          - 'generic "SD: $2,910" [ref=f7e39]': SD
+          - 'generic "IA: $1,221" [ref=f7e40]': IA
+          - 'generic "IN: $2,892" [ref=f7e41]': IN
+          - 'generic "OH: $2,055" [ref=f7e42]': OH
+          - 'generic "PA: $1,723" [ref=f7e43]': PA
+          - 'generic "NJ: $2,427" [ref=f7e44]': NJ
+          - 'generic "CT: $12,165" [ref=f7e45]': CT
+          - 'generic "RI: $1,443" [ref=f7e46]': RI
+          - 'generic "CA: $3,540" [ref=f7e47]': CA
+          - 'generic "UT: $2,912" [ref=f7e48]': UT
+          - 'generic "CO: $9,390" [ref=f7e49]': CO
+          - 'generic "NE: $6,134" [ref=f7e50]': NE
+          - 'generic "MO: $1,872" [ref=f7e51]': MO
+          - 'generic "KY: $2,716" [ref=f7e52]': KY
+          - 'generic "WV: $16,167" [ref=f7e53]': WV
+          - 'generic "VA: $1,131" [ref=f7e54]': VA
+          - 'generic "MD: $1,253" [ref=f7e55]': MD
+          - 'generic "DE: $6,116" [ref=f7e56]': DE
+          - 'generic "AZ: $1,176" [ref=f7e57]': AZ
+          - 'generic "NM: $3,596" [ref=f7e58]': NM
+          - 'generic "KS: $3,300" [ref=f7e59]': KS
+          - 'generic "AR: $8,132" [ref=f7e60]': AR
+          - 'generic "TN: $4,917" [ref=f7e61]': TN
+          - 'generic "NC: $3,579" [ref=f7e62]': NC
+          - 'generic "SC: $3,562" [ref=f7e63]': SC
+          - 'generic "DC: $4,650" [ref=f7e64]': DC
+          - 'generic "OK: $2,830" [ref=f7e65]': OK
+          - 'generic "LA: $4,070" [ref=f7e66]': LA
+          - 'generic "MS: $3,640" [ref=f7e67]': MS
+          - 'generic "AL: $3,499" [ref=f7e68]': AL
+          - 'generic "GA: $4,550" [ref=f7e69]': GA
+          - 'generic "HI: $4,997" [ref=f7e70]': HI
+          - 'generic "TX: $5,795" [ref=f7e71]': TX
+          - 'generic "FL: $5,795" [ref=f7e72]': FL
+        - generic [ref=f7e79]:
+          - generic [ref=f7e80]: $0
+          - generic [ref=f7e81]: $3,778
+          - generic [ref=f7e82]: $7,556
+          - generic [ref=f7e83]: $11,335
+          - generic [ref=f7e84]: $15,113
+          - generic [ref=f7e85]: $18,891
+        - paragraph [ref=f7e86]: "HotGap, from PolicyEngine 2026 rules. Weekly sweep generated 2026-09-15. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps to $18,891."
+        - paragraph [ref=f7e87]: A grid of the fifty states and the District of Columbia, each a square in roughly its geographic position, shaded by the selected measure. Every value is listed in the table below this figure.
+      - generic [ref=f7e88]:
+        - heading "Ranked" [level=3] [ref=f7e89]
+        - list [ref=f7e90]:
+          - listitem [ref=f7e91]:
+            - generic [ref=f7e92]: VT
+            - generic [ref=f7e95]: $18,891
+          - listitem [ref=f7e96]:
+            - generic [ref=f7e97]: WV
+            - generic [ref=f7e100]: $16,167
+          - listitem [ref=f7e101]:
+            - generic [ref=f7e102]: WY
+            - generic [ref=f7e105]: $14,448
+          - listitem [ref=f7e106]:
+            - generic [ref=f7e107]: AK
+            - generic [ref=f7e110]: $14,365
+          - listitem [ref=f7e111]:
+            - generic [ref=f7e112]: CT
+            - generic [ref=f7e115]: $12,165
+          - listitem [ref=f7e116]:
+            - generic [ref=f7e117]: CO
+            - generic [ref=f7e120]: $9,390
+          - listitem [ref=f7e121]:
+            - generic [ref=f7e122]: AR
+            - generic [ref=f7e125]: $8,132
+          - listitem [ref=f7e126]:
+            - generic [ref=f7e127]: MA
+            - generic [ref=f7e130]: $7,896
+          - listitem [ref=f7e131]:
+            - generic [ref=f7e132]: MI
+            - generic [ref=f7e135]: $7,670
+          - listitem [ref=f7e136]:
+            - generic [ref=f7e137]: NE
+            - generic [ref=f7e140]: $6,134
+          - listitem [ref=f7e141]:
+            - generic [ref=f7e142]: DE
+            - generic [ref=f7e145]: $6,116
+          - listitem [ref=f7e146]:
+            - generic [ref=f7e147]: FL
+            - generic [ref=f7e150]: $5,795
+          - listitem [ref=f7e151]:
+            - generic [ref=f7e152]: TX
+            - generic [ref=f7e155]: $5,795
+          - listitem [ref=f7e156]:
+            - generic [ref=f7e157]: ME
+            - generic [ref=f7e160]: $5,700
+          - listitem [ref=f7e161]:
+            - generic [ref=f7e162]: WI
+            - generic [ref=f7e165]: $5,353
+          - listitem [ref=f7e166]:
+            - generic [ref=f7e167]: HI
+            - generic [ref=f7e170]: $4,997
+          - listitem [ref=f7e171]:
+            - generic [ref=f7e172]: TN
+            - generic [ref=f7e175]: $4,917
+          - listitem [ref=f7e176]:
+            - generic [ref=f7e177]: DC
+            - generic [ref=f7e180]: $4,650
+          - listitem [ref=f7e181]:
+            - generic [ref=f7e182]: OR
+            - generic [ref=f7e185]: $4,614
+          - listitem [ref=f7e186]:
+            - generic [ref=f7e187]: GA
+            - generic [ref=f7e190]: $4,550
+          - listitem [ref=f7e191]:
+            - generic [ref=f7e192]: LA
+            - generic [ref=f7e195]: $4,070
+          - listitem [ref=f7e196]:
+            - generic [ref=f7e197]: WA
+            - generic [ref=f7e200]: $3,677
+          - listitem [ref=f7e201]:
+            - generic [ref=f7e202]: MS
+            - generic [ref=f7e205]: $3,640
+          - listitem [ref=f7e206]:
+            - generic [ref=f7e207]: NM
+            - generic [ref=f7e210]: $3,596
+          - listitem [ref=f7e211]:
+            - generic [ref=f7e212]: NC
+            - generic [ref=f7e215]: $3,579
+          - listitem [ref=f7e216]:
+            - generic [ref=f7e217]: SC
+            - generic [ref=f7e220]: $3,562
+          - listitem [ref=f7e221]:
+            - generic [ref=f7e222]: CA
+            - generic [ref=f7e225]: $3,540
+          - listitem [ref=f7e226]:
+            - generic [ref=f7e227]: AL
+            - generic [ref=f7e230]: $3,499
+          - listitem [ref=f7e231]:
+            - generic [ref=f7e232]: NY
+            - generic [ref=f7e235]: $3,479
+          - listitem [ref=f7e236]:
+            - generic [ref=f7e237]: MN
+            - generic [ref=f7e240]: $3,336
+          - listitem [ref=f7e241]:
+            - generic [ref=f7e242]: KS
+            - generic [ref=f7e245]: $3,300
+          - listitem [ref=f7e246]:
+            - generic [ref=f7e247]: IL
+            - generic [ref=f7e250]: $3,258
+          - listitem [ref=f7e251]:
+            - generic [ref=f7e252]: UT
+            - generic [ref=f7e255]: $2,912
+          - listitem [ref=f7e256]:
+            - generic [ref=f7e257]: SD
+            - generic [ref=f7e260]: $2,910
+          - listitem [ref=f7e261]:
+            - generic [ref=f7e262]: IN
+            - generic [ref=f7e265]: $2,892
+          - listitem [ref=f7e266]:
+            - generic [ref=f7e267]: MT
+            - generic [ref=f7e270]: $2,842
+          - listitem [ref=f7e271]:
+            - generic [ref=f7e272]: OK
+            - generic [ref=f7e275]: $2,830
+          - listitem [ref=f7e276]:
+            - generic [ref=f7e277]: KY
+            - generic [ref=f7e280]: $2,716
+          - listitem [ref=f7e281]:
+            - generic [ref=f7e282]: NJ
+            - generic [ref=f7e285]: $2,427
+          - listitem [ref=f7e286]:
+            - generic [ref=f7e287]: ID
+            - generic [ref=f7e290]: $2,368
+          - listitem [ref=f7e291]:
+            - generic [ref=f7e292]: OH
+            - generic [ref=f7e295]: $2,055
+          - listitem [ref=f7e296]:
+            - generic [ref=f7e297]: MO
+            - generic [ref=f7e300]: $1,872
+          - listitem [ref=f7e301]:
+            - generic [ref=f7e302]: PA
+            - generic [ref=f7e305]: $1,723
+          - listitem [ref=f7e306]:
+            - generic [ref=f7e307]: RI
+            - generic [ref=f7e310]: $1,443
+          - listitem [ref=f7e311]:
+            - generic [ref=f7e312]: ND
+            - generic [ref=f7e315]: $1,301
+          - listitem [ref=f7e316]:
+            - generic [ref=f7e317]: MD
+            - generic [ref=f7e320]: $1,253
+          - listitem [ref=f7e321]:
+            - generic [ref=f7e322]: IA
+            - generic [ref=f7e325]: $1,221
+          - listitem [ref=f7e326]:
+            - generic [ref=f7e327]: AZ
+            - generic [ref=f7e330]: $1,176
+          - listitem [ref=f7e331]:
+            - generic [ref=f7e332]: VA
+            - generic [ref=f7e335]: $1,131
+          - listitem [ref=f7e336]:
+            - generic [ref=f7e337]: NH
+            - generic [ref=f7e340]: $1,032
+          - listitem [ref=f7e341]:
+            - generic [ref=f7e342]: NV
+            - generic [ref=f7e345]: $931
+        - paragraph [ref=f7e346]: Bins are five equal-width steps over the observed range and are recomputed for every measure, so a shade means nothing across two different measures. Read the bin bounds, not the colour.
+    - heading "All 51, every measure" [level=2] [ref=f7e347]
+    - table [ref=f7e349]:
+      - caption [ref=f7e350]: All six measures for 1 adult, 2 children (3 and 7). PolicyEngine 2026 rules, sweep of 2026-09-15.
+      - rowgroup [ref=f7e351]:
+        - row [ref=f7e352]:
+          - columnheader "State" [ref=f7e353]
+          - columnheader "Largest one-step loss" [ref=f7e354]
+          - columnheader "Danger zone width" [ref=f7e355]
+          - columnheader "The leap" [ref=f7e356]
+          - columnheader "Safe exit" [ref=f7e357]
+          - columnheader "Cliffs" [ref=f7e358]
+          - columnheader "Deferred" [ref=f7e359]
+      - rowgroup [ref=f7e360]:
+        - row [ref=f7e361]:
+          - rowheader [ref=f7e362]:
+            - button "AK" [ref=f7e363] [cursor=pointer]
+          - cell "$14,365" [ref=f7e364]
+          - cell "$39,000" [ref=f7e365]
+          - cell "$22,000" [ref=f7e366]
+          - cell "$127,000" [ref=f7e367]
+          - cell "3" [ref=f7e368]
+          - cell "0" [ref=f7e369]
+        - row [ref=f7e370]:
+          - rowheader [ref=f7e371]:
+            - button "AL" [ref=f7e372] [cursor=pointer]
+          - cell "$3,499" [ref=f7e373]
+          - cell "$23,000" [ref=f7e374]
+          - cell "$8,000" [ref=f7e375]
+          - cell "$113,000" [ref=f7e376]
+          - cell "5" [ref=f7e377]
+          - cell "1" [ref=f7e378]
+        - row [ref=f7e379]:
+          - rowheader [ref=f7e380]:
+            - button "AR" [ref=f7e381] [cursor=pointer]
+          - cell "$8,132" [ref=f7e382]
+          - cell "$28,000" [ref=f7e383]
+          - cell "$14,000" [ref=f7e384]
+          - cell "$120,000" [ref=f7e385]
+          - cell "5" [ref=f7e386]
+          - cell "0" [ref=f7e387]
+        - row [ref=f7e388]:
+          - rowheader [ref=f7e389]:
+            - button "AZ" [ref=f7e390] [cursor=pointer]
+          - cell "$1,176" [ref=f7e391]
+          - cell "$19,000" [ref=f7e392]
+          - cell "$12,000" [ref=f7e393]
+          - cell "$109,000" [ref=f7e394]
+          - cell "3" [ref=f7e395]
+          - cell "0" [ref=f7e396]
+        - row [ref=f7e397]:
+          - rowheader [ref=f7e398]:
+            - button "CA" [ref=f7e399] [cursor=pointer]
+          - cell "$3,540" [ref=f7e400]
+          - cell "$31,000" [ref=f7e401]
+          - cell "$11,000" [ref=f7e402]
+          - cell "$111,000" [ref=f7e403]
+          - cell "6" [ref=f7e404]
+          - cell "0" [ref=f7e405]
+        - row [ref=f7e406]:
+          - rowheader [ref=f7e407]:
+            - button "CO" [ref=f7e408] [cursor=pointer]
+          - cell "$9,390" [ref=f7e409]
+          - cell "$64,000" [ref=f7e410]
+          - cell "$50,000" [ref=f7e411]
+          - cell "$111,000" [ref=f7e412]
+          - cell "10" [ref=f7e413]
+          - cell "1" [ref=f7e414]
+        - row [ref=f7e415]:
+          - rowheader [ref=f7e416]:
+            - button "CT" [ref=f7e417] [cursor=pointer]
+          - cell "$12,165" [ref=f7e418]
+          - cell "$46,000" [ref=f7e419]
+          - cell "$21,000" [ref=f7e420]
+          - cell "$127,000" [ref=f7e421]
+          - cell "5" [ref=f7e422]
+          - cell "0" [ref=f7e423]
+        - row [ref=f7e424]:
+          - rowheader [ref=f7e425]:
+            - button "DC" [ref=f7e426] [cursor=pointer]
+          - cell "$4,650" [ref=f7e427]
+          - cell "$32,000" [ref=f7e428]
+          - cell "$13,000" [ref=f7e429]
+          - cell "$115,000" [ref=f7e430]
+          - cell "4" [ref=f7e431]
+          - cell "0" [ref=f7e432]
+        - row [ref=f7e433]:
+          - rowheader [ref=f7e434]:
+            - button "DE" [ref=f7e435] [cursor=pointer]
+          - cell "$6,116" [ref=f7e436]
+          - cell "$35,000" [ref=f7e437]
+          - cell "$21,000" [ref=f7e438]
+          - cell "$117,000" [ref=f7e439]
+          - cell "4" [ref=f7e440]
+          - cell "0" [ref=f7e441]
+        - row [ref=f7e442]:
+          - rowheader [ref=f7e443]:
+            - button "FL" [ref=f7e444] [cursor=pointer]
+          - cell "$5,795" [ref=f7e445]
+          - cell "$15,000" [ref=f7e446]
+          - cell "$10,000" [ref=f7e447]
+          - cell "$116,000" [ref=f7e448]
+          - cell "3" [ref=f7e449]
+          - cell "0" [ref=f7e450]
+        - row [ref=f7e451]:
+          - rowheader [ref=f7e452]:
+            - button "GA" [ref=f7e453] [cursor=pointer]
+          - cell "$4,550" [ref=f7e454]
+          - cell "$26,000" [ref=f7e455]
+          - cell "$14,000" [ref=f7e456]
+          - cell "$114,000" [ref=f7e457]
+          - cell "4" [ref=f7e458]
+          - cell "0" [ref=f7e459]
+        - row [ref=f7e460]:
+          - rowheader [ref=f7e461]:
+            - button "HI" [ref=f7e462] [cursor=pointer]
+          - cell "$4,997" [ref=f7e463]
+          - cell "$36,000" [ref=f7e464]
+          - cell "$31,000" [ref=f7e465]
+          - cell "$111,000" [ref=f7e466]
+          - cell "5" [ref=f7e467]
+          - cell "1" [ref=f7e468]
+        - row [ref=f7e469]:
+          - rowheader [ref=f7e470]:
+            - button "IA" [ref=f7e471] [cursor=pointer]
+          - cell "$1,221" [ref=f7e472]
+          - cell "$15,000" [ref=f7e473]
+          - cell "$9,000" [ref=f7e474]
+          - cell "$108,000" [ref=f7e475]
+          - cell "3" [ref=f7e476]
+          - cell "1" [ref=f7e477]
+        - row [ref=f7e478]:
+          - rowheader [ref=f7e479]:
+            - button "ID" [ref=f7e480] [cursor=pointer]
+          - cell "$2,368" [ref=f7e481]
+          - cell "$16,000" [ref=f7e482]
+          - cell "$10,000" [ref=f7e483]
+          - cell "$109,000" [ref=f7e484]
+          - cell "4" [ref=f7e485]
+          - cell "1" [ref=f7e486]
+        - row [ref=f7e487]:
+          - rowheader [ref=f7e488]:
+            - button "IL" [ref=f7e489] [cursor=pointer]
+          - cell "$3,258" [ref=f7e490]
+          - cell "$33,000" [ref=f7e491]
+          - cell "$18,000" [ref=f7e492]
+          - cell "$110,000" [ref=f7e493]
+          - cell "6" [ref=f7e494]
+          - cell "0" [ref=f7e495]
+        - row [ref=f7e496]:
+          - rowheader [ref=f7e497]:
+            - button "IN" [ref=f7e498] [cursor=pointer]
+          - cell "$2,892" [ref=f7e499]
+          - cell "$21,000" [ref=f7e500]
+          - cell "$12,000" [ref=f7e501]
+          - cell "$108,000" [ref=f7e502]
+          - cell "6" [ref=f7e503]
+          - cell "0" [ref=f7e504]
+        - row [ref=f7e505]:
+          - rowheader [ref=f7e506]:
+            - button "KS" [ref=f7e507] [cursor=pointer]
+          - cell "$3,300" [ref=f7e508]
+          - cell "$27,000" [ref=f7e509]
+          - cell "$9,000" [ref=f7e510]
+          - cell "$113,000" [ref=f7e511]
+          - cell "6" [ref=f7e512]
+          - cell "0" [ref=f7e513]
+        - row [ref=f7e514]:
+          - rowheader [ref=f7e515]:
+            - button "KY" [ref=f7e516] [cursor=pointer]
+          - cell "$2,716" [ref=f7e517]
+          - cell "$17,000" [ref=f7e518]
+          - cell "$8,000" [ref=f7e519]
+          - cell "$112,000" [ref=f7e520]
+          - cell "3" [ref=f7e521]
+          - cell "0" [ref=f7e522]
+        - row [ref=f7e523]:
+          - rowheader [ref=f7e524]:
+            - button "LA" [ref=f7e525] [cursor=pointer]
+          - cell "$4,070" [ref=f7e526]
+          - cell "$21,000" [ref=f7e527]
+          - cell "$8,000" [ref=f7e528]
+          - cell "$114,000" [ref=f7e529]
+          - cell "4" [ref=f7e530]
+          - cell "0" [ref=f7e531]
+        - row [ref=f7e532]:
+          - rowheader [ref=f7e533]:
+            - button "MA" [ref=f7e534] [cursor=pointer]
+          - cell "$7,896" [ref=f7e535]
+          - cell "$29,000" [ref=f7e536]
+          - cell "$14,000" [ref=f7e537]
+          - cell "$120,000" [ref=f7e538]
+          - cell "4" [ref=f7e539]
+          - cell "0" [ref=f7e540]
+        - row [ref=f7e541]:
+          - rowheader [ref=f7e542]:
+            - button "MD" [ref=f7e543] [cursor=pointer]
+          - cell "$1,253" [ref=f7e544]
+          - cell "$25,000" [ref=f7e545]
+          - cell "$25,000" [ref=f7e546]
+          - cell "$62,000" [ref=f7e547]
+          - cell "2" [ref=f7e548]
+          - cell "1" [ref=f7e549]
+        - row [ref=f7e550]:
+          - rowheader [ref=f7e551]:
+            - button "ME" [ref=f7e552] [cursor=pointer]
+          - cell "$5,700" [ref=f7e553]
+          - cell "$29,000" [ref=f7e554]
+          - cell "$14,000" [ref=f7e555]
+          - cell "$117,000" [ref=f7e556]
+          - cell "3" [ref=f7e557]
+          - cell "0" [ref=f7e558]
+        - row [ref=f7e559]:
+          - rowheader [ref=f7e560]:
+            - button "MI" [ref=f7e561] [cursor=pointer]
+          - cell "$7,670" [ref=f7e562]
+          - cell "$46,000" [ref=f7e563]
+          - cell "$38,000" [ref=f7e564]
+          - cell "$110,000" [ref=f7e565]
+          - cell "6" [ref=f7e566]
+          - cell "0" [ref=f7e567]
+        - row [ref=f7e568]:
+          - rowheader [ref=f7e569]:
+            - button "MN" [ref=f7e570] [cursor=pointer]
+          - cell "$3,336" [ref=f7e571]
+          - cell "$19,000" [ref=f7e572]
+          - cell "$10,000" [ref=f7e573]
+          - cell "$109,000" [ref=f7e574]
+          - cell "3" [ref=f7e575]
+          - cell "0" [ref=f7e576]
+        - row [ref=f7e577]:
+          - rowheader [ref=f7e578]:
+            - button "MO" [ref=f7e579] [cursor=pointer]
+          - cell "$1,872" [ref=f7e580]
+          - cell "$24,000" [ref=f7e581]
+          - cell "$8,000" [ref=f7e582]
+          - cell "$110,000" [ref=f7e583]
+          - cell "5" [ref=f7e584]
+          - cell "0" [ref=f7e585]
+        - row [ref=f7e586]:
+          - rowheader [ref=f7e587]:
+            - button "MS" [ref=f7e588] [cursor=pointer]
+          - cell "$3,640" [ref=f7e589]
+          - cell "$20,000" [ref=f7e590]
+          - cell "$7,000" [ref=f7e591]
+          - cell "$113,000" [ref=f7e592]
+          - cell "5" [ref=f7e593]
+          - cell "0" [ref=f7e594]
+        - row [ref=f7e595]:
+          - rowheader [ref=f7e596]:
+            - button "MT" [ref=f7e597] [cursor=pointer]
+          - cell "$2,842" [ref=f7e598]
+          - cell "$23,000" [ref=f7e599]
+          - cell "$9,000" [ref=f7e600]
+          - cell "$112,000" [ref=f7e601]
+          - cell "4" [ref=f7e602]
+          - cell "0" [ref=f7e603]
+        - row [ref=f7e604]:
+          - rowheader [ref=f7e605]:
+            - button "NC" [ref=f7e606] [cursor=pointer]
+          - cell "$3,579" [ref=f7e607]
+          - cell "$22,000" [ref=f7e608]
+          - cell "$12,000" [ref=f7e609]
+          - cell "$113,000" [ref=f7e610]
+          - cell "3" [ref=f7e611]
+          - cell "0" [ref=f7e612]
+        - row [ref=f7e613]:
+          - rowheader [ref=f7e614]:
+            - button "ND" [ref=f7e615] [cursor=pointer]
+          - cell "$1,301" [ref=f7e616]
+          - cell "$14,000" [ref=f7e617]
+          - cell "$7,000" [ref=f7e618]
+          - cell "$108,000" [ref=f7e619]
+          - cell "5" [ref=f7e620]
+          - cell "0" [ref=f7e621]
+        - row [ref=f7e622]:
+          - rowheader [ref=f7e623]:
+            - button "NE" [ref=f7e624] [cursor=pointer]
+          - cell "$6,134" [ref=f7e625]
+          - cell "$30,000" [ref=f7e626]
+          - cell "$11,000" [ref=f7e627]
+          - cell "$117,000" [ref=f7e628]
+          - cell "4" [ref=f7e629]
+          - cell "0" [ref=f7e630]
+        - row [ref=f7e631]:
+          - rowheader [ref=f7e632]:
+            - button "NH" [ref=f7e633] [cursor=pointer]
+          - cell "$1,032" [ref=f7e634]
+          - cell "$9,000" [ref=f7e635]
+          - cell "$6,000" [ref=f7e636]
+          - cell "$53,000" [ref=f7e637]
+          - cell "2" [ref=f7e638]
+          - cell "1" [ref=f7e639]
+        - row [ref=f7e640]:
+          - rowheader [ref=f7e641]:
+            - button "NJ" [ref=f7e642] [cursor=pointer]
+          - cell "$2,427" [ref=f7e643]
+          - cell "$30,000" [ref=f7e644]
+          - cell "$12,000" [ref=f7e645]
+          - cell "$111,000" [ref=f7e646]
+          - cell "5" [ref=f7e647]
+          - cell "1" [ref=f7e648]
+        - row [ref=f7e649]:
+          - rowheader [ref=f7e650]:
+            - button "NM" [ref=f7e651] [cursor=pointer]
+          - cell "$3,596" [ref=f7e652]
+          - cell "$12,000" [ref=f7e653]
+          - cell "$8,000" [ref=f7e654]
+          - cell "$110,000" [ref=f7e655]
+          - cell "2" [ref=f7e656]
+          - cell "0" [ref=f7e657]
+        - row [ref=f7e658]:
+          - rowheader [ref=f7e659]:
+            - button "NV" [ref=f7e660] [cursor=pointer]
+          - cell "$931" [ref=f7e661]
+          - cell "$6,000" [ref=f7e662]
+          - cell "$4,000" [ref=f7e663]
+          - cell "$108,000" [ref=f7e664]
+          - cell "2" [ref=f7e665]
+          - cell "1" [ref=f7e666]
+        - row [ref=f7e667]:
+          - rowheader [ref=f7e668]:
+            - button "NY" [ref=f7e669] [cursor=pointer]
+          - cell "$3,479" [ref=f7e670]
+          - cell "$27,000" [ref=f7e671]
+          - cell "$10,000" [ref=f7e672]
+          - cell "$117,000" [ref=f7e673]
+          - cell "4" [ref=f7e674]
+          - cell "1" [ref=f7e675]
+        - row [ref=f7e676]:
+          - rowheader [ref=f7e677]:
+            - button "OH" [ref=f7e678] [cursor=pointer]
+          - cell "$2,055" [ref=f7e679]
+          - cell "$21,000" [ref=f7e680]
+          - cell "$10,000" [ref=f7e681]
+          - cell "$110,000" [ref=f7e682]
+          - cell "7" [ref=f7e683]
+          - cell "0" [ref=f7e684]
+        - row [ref=f7e685]:
+          - rowheader [ref=f7e686]:
+            - button "OK" [ref=f7e687] [cursor=pointer]
+          - cell "$2,830" [ref=f7e688]
+          - cell "$21,000" [ref=f7e689]
+          - cell "$10,000" [ref=f7e690]
+          - cell "$112,000" [ref=f7e691]
+          - cell "6" [ref=f7e692]
+          - cell "0" [ref=f7e693]
+        - row [ref=f7e694]:
+          - rowheader [ref=f7e695]:
+            - button "OR" [ref=f7e696] [cursor=pointer]
+          - cell "$4,614" [ref=f7e697]
+          - cell "$17,000" [ref=f7e698]
+          - cell "$13,000" [ref=f7e699]
+          - cell "$108,000" [ref=f7e700]
+          - cell "4" [ref=f7e701]
+          - cell "1" [ref=f7e702]
+        - row [ref=f7e703]:
+          - rowheader [ref=f7e704]:
+            - button "PA" [ref=f7e705] [cursor=pointer]
+          - cell "$1,723" [ref=f7e706]
+          - cell "$20,000" [ref=f7e707]
+          - cell "$7,000" [ref=f7e708]
+          - cell "$110,000" [ref=f7e709]
+          - cell "5" [ref=f7e710]
+          - cell "1" [ref=f7e711]
+        - row [ref=f7e712]:
+          - rowheader [ref=f7e713]:
+            - button "RI" [ref=f7e714] [cursor=pointer]
+          - cell "$1,443" [ref=f7e715]
+          - cell "$25,000" [ref=f7e716]
+          - cell "$9,000" [ref=f7e717]
+          - cell "$110,000" [ref=f7e718]
+          - cell "5" [ref=f7e719]
+          - cell "0" [ref=f7e720]
+        - row [ref=f7e721]:
+          - rowheader [ref=f7e722]:
+            - button "SC" [ref=f7e723] [cursor=pointer]
+          - cell "$3,562" [ref=f7e724]
+          - cell "$22,000" [ref=f7e725]
+          - cell "$8,000" [ref=f7e726]
+          - cell "$113,000" [ref=f7e727]
+          - cell "6" [ref=f7e728]
+          - cell "0" [ref=f7e729]
+        - row [ref=f7e730]:
+          - rowheader [ref=f7e731]:
+            - button "SD" [ref=f7e732] [cursor=pointer]
+          - cell "$2,910" [ref=f7e733]
+          - cell "$18,000" [ref=f7e734]
+          - cell "$8,000" [ref=f7e735]
+          - cell "$112,000" [ref=f7e736]
+          - cell "5" [ref=f7e737]
+          - cell "0" [ref=f7e738]
+        - row [ref=f7e739]:
+          - rowheader [ref=f7e740]:
+            - button "TN" [ref=f7e741] [cursor=pointer]
+          - cell "$4,917" [ref=f7e742]
+          - cell "$18,000" [ref=f7e743]
+          - cell "$8,000" [ref=f7e744]
+          - cell "$114,000" [ref=f7e745]
+          - cell "4" [ref=f7e746]
+          - cell "1" [ref=f7e747]
+        - row [ref=f7e748]:
+          - rowheader [ref=f7e749]:
+            - button "TX" [ref=f7e750] [cursor=pointer]
+          - cell "$5,795" [ref=f7e751]
+          - cell "$16,000" [ref=f7e752]
+          - cell "$10,000" [ref=f7e753]
+          - cell "$116,000" [ref=f7e754]
+          - cell "3" [ref=f7e755]
+          - cell "0" [ref=f7e756]
+        - row [ref=f7e757]:
+          - rowheader [ref=f7e758]:
+            - button "UT" [ref=f7e759] [cursor=pointer]
+          - cell "$2,912" [ref=f7e760]
+          - cell "$24,000" [ref=f7e761]
+          - cell "$12,000" [ref=f7e762]
+          - cell "$112,000" [ref=f7e763]
+          - cell "6" [ref=f7e764]
+          - cell "0" [ref=f7e765]
+        - row [ref=f7e766]:
+          - rowheader [ref=f7e767]:
+            - button "VA" [ref=f7e768] [cursor=pointer]
+          - cell "$1,131" [ref=f7e769]
+          - cell "$19,000" [ref=f7e770]
+          - cell "$10,000" [ref=f7e771]
+          - cell "$58,000" [ref=f7e772]
+          - cell "3" [ref=f7e773]
+          - cell "0" [ref=f7e774]
+        - row [ref=f7e775]:
+          - rowheader [ref=f7e776]:
+            - button "VT" [ref=f7e777] [cursor=pointer]
+          - cell "$18,891" [ref=f7e778]
+          - cell "$47,000" [ref=f7e779]
+          - cell "$32,000" [ref=f7e780]
+          - cell "$138,000" [ref=f7e781]
+          - cell "3" [ref=f7e782]
+          - cell "0" [ref=f7e783]
+        - row [ref=f7e784]:
+          - rowheader [ref=f7e785]:
+            - button "WA" [ref=f7e786] [cursor=pointer]
+          - cell "$3,677" [ref=f7e787]
+          - cell "$18,000" [ref=f7e788]
+          - cell "$7,000" [ref=f7e789]
+          - cell "$113,000" [ref=f7e790]
+          - cell "4" [ref=f7e791]
+          - cell "1" [ref=f7e792]
+        - row [ref=f7e793]:
+          - rowheader [ref=f7e794]:
+            - button "WI" [ref=f7e795] [cursor=pointer]
+          - cell "$5,353" [ref=f7e796]
+          - cell "$37,000" [ref=f7e797]
+          - cell "$27,000" [ref=f7e798]
+          - cell "$116,000" [ref=f7e799]
+          - cell "5" [ref=f7e800]
+          - cell "1" [ref=f7e801]
+        - row [ref=f7e802]:
+          - rowheader [ref=f7e803]:
+            - button "WV" [ref=f7e804] [cursor=pointer]
+          - cell "$16,167" [ref=f7e805]
+          - cell "$36,000" [ref=f7e806]
+          - cell "$26,000" [ref=f7e807]
+          - cell "$132,000" [ref=f7e808]
+          - cell "3" [ref=f7e809]
+          - cell "0" [ref=f7e810]
+        - row [ref=f7e811]:
+          - rowheader [ref=f7e812]:
+            - button "WY" [ref=f7e813] [cursor=pointer]
+          - cell "$14,448" [ref=f7e814]
+          - cell "$35,000" [ref=f7e815]
+          - cell "$22,000" [ref=f7e816]
+          - cell "$128,000" [ref=f7e817]
+          - cell "6" [ref=f7e818]
+          - cell "0" [ref=f7e819]
+    - heading "How these numbers were made" [level=2] [ref=f7e820]
+    - generic [ref=f7e821]:
+      - list [ref=f7e822]:
+        - listitem [ref=f7e823]:
+          - text: Every cell is one household shape swept through the
+          - link "PolicyEngine" [ref=f7e824] [cursor=pointer]:
+            - /url: https://policyengine.org
+          - text: US microsimulation at 2026 rules, earnings varied in $1,000 steps from $0 past 400% of the 2025 poverty guideline for that household size, plus $40,000 of room to recover.
+        - listitem [ref=f7e825]:
+          - text: The money line is
+          - strong [ref=f7e826]: health-adjusted
+          - text: ": household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included."
+        - listitem [ref=f7e827]: Each archetype is a typical renter in the state’s most populous county — HUD FY2026 two-bedroom Fair Market Rent, Census Vintage 2024 county, and the DOL National Database of Childcare Prices centre-based preschool price for that same county, carried to 2026 dollars by the BLS Employment Cost Index.
+        - listitem [ref=f7e828]:
+          - text: The CCDF child care subsidy is
+          - strong [ref=f7e829]: "on"
+          - text: "for this sweep and off for a household’s own lookup. Head Start and housing vouchers are off in both: they are rationed, and assuming a family holds one inflates its numbers."
+        - listitem [ref=f7e830]:
+          - text: Cliffs deferred to a future renewal — Head Start’s program-year carry-over, a child’s 12 months of continuous Medicaid or CHIP eligibility, a parent’s Transitional Medical Assistance — are counted in the
+          - emphasis [ref=f7e831]: deferred
+          - text: column and are lifted out of every other figure here. They are real losses; they do not land in the year of the raise.
+      - heading "What the model does not include" [level=3] [ref=f7e832]
+      - list [ref=f7e833]:
+        - listitem [ref=f7e834]: Immigration status, assets, and household members aged 65 or over are not inputs.
+        - listitem [ref=f7e835]: "Alaska and Hawaii marketplace subsidies are computed upstream against the 48-state poverty guideline rather than their own higher ones (policyengine-us #9482). HotGap does not correct this, so both states’ premium-driven figures are understated."
+        - listitem [ref=f7e836]: "Four state $0-premium wraps (CT, MA, NM, CA) and the child care subsidy in 28 states are local corrections HotGap applies on top of PolicyEngine, pending policyengine-us #9481 and #9405."
+        - listitem [ref=f7e837]: Massachusetts cash assistance carries a local correction and an approximation notice.
+      - paragraph [ref=f7e838]:
+        - text: Where a state’s worst danger zone runs off the top of the axis rather than closing, the safe exit is unknown and the leap is a lower bound. Those cells read
+        - strong [ref=f7e839]: past the axis
+        - text: here and must not be charted as a number.
+      - paragraph [ref=f7e840]: "Sweep generated 2026-09-15. Reach ladders: U.S. Census Bureau ACS 2024 1-Year PUMS, grown to 2026 dollars by the BLS Employment Cost Index. Licence: AGPL-3.0-only. Estimates only — a caseworker decides real benefits."
+    - paragraph [ref=f7e841]:
+      - button "Dark" [ref=f7e842] [cursor=pointer]

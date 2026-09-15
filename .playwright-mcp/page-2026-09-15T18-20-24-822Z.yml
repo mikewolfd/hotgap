@@ -1,0 +1,308 @@
+- generic [active] [ref=f2e1]:
+  - link "Skip to the threshold ledger" [ref=f2e2] [cursor=pointer]:
+    - /url: "#ledger"
+  - generic [ref=f2e4]:
+    - paragraph [ref=f2e5]: HotGap
+    - button "State CO" [ref=f2e6] [cursor=pointer]:
+      - generic [ref=f2e7]: State
+      - generic [ref=f2e8]: CO
+    - button "County El Paso" [ref=f2e9] [cursor=pointer]:
+      - generic [ref=f2e10]: County
+      - generic [ref=f2e11]: El Paso
+    - button "Household 1 adult, kids 3 & 7" [ref=f2e12] [cursor=pointer]:
+      - generic [ref=f2e13]: Household
+      - generic [ref=f2e14]: 1 adult, kids 3 & 7
+    - button "Earnings $38,000" [ref=f2e15] [cursor=pointer]:
+      - generic [ref=f2e16]: Earnings
+      - generic [ref=f2e17]: $38,000
+    - button "Rent $1,735/mo" [ref=f2e18] [cursor=pointer]:
+      - generic [ref=f2e19]: Rent
+      - generic [ref=f2e20]: $1,735/mo
+    - button "Childcare $1,438/mo" [ref=f2e21] [cursor=pointer]:
+      - generic [ref=f2e22]: Childcare
+      - generic [ref=f2e23]: $1,438/mo
+    - button "CCDF subsidy on" [pressed] [ref=f2e24] [cursor=pointer]:
+      - generic [ref=f2e25]: CCDF subsidy
+      - generic [ref=f2e26]: "on"
+    - button "Head Start off" [ref=f2e27] [cursor=pointer]:
+      - generic [ref=f2e28]: Head Start
+      - generic [ref=f2e29]: "off"
+    - button "Housing off" [ref=f2e30] [cursor=pointer]:
+      - generic [ref=f2e31]: Housing
+      - generic [ref=f2e32]: "off"
+    - generic [ref=f2e33]:
+      - button "Add a what-if" [ref=f2e34] [cursor=pointer]
+      - button "Print the client sheet" [ref=f2e35] [cursor=pointer]
+  - main [ref=f2e36]:
+    - generic [ref=f2e37]:
+      - paragraph [ref=f2e38]: In a danger zone. Pay rises to $86,000 leave her no better off than she is at $38,000.
+      - generic [ref=f2e39]:
+        - generic [ref=f2e40]:
+          - generic [ref=f2e41]: Net, after premiums
+          - generic [ref=f2e42]: $67,000
+          - generic [ref=f2e43]: at $38,000 earned
+        - generic [ref=f2e44]:
+          - generic [ref=f2e45]: Raise to clear the zone
+          - generic [ref=f2e46]: $48,000
+          - generic [ref=f2e47]: to $86,000 earned
+        - generic [ref=f2e48]:
+          - generic [ref=f2e49]: Largest single-step drop
+          - generic [ref=f2e50]: $9,390
+          - generic [ref=f2e51]: at $54,000 → $55,000
+        - generic [ref=f2e52]:
+          - generic [ref=f2e53]: Reach at current earnings
+          - generic [ref=f2e54]: 40th
+          - generic [ref=f2e55]: percentile, ±$8,000
+    - generic [ref=f2e56]:
+      - generic [ref=f2e57]:
+        - figure [ref=f2e58]:
+          - heading "Net income after premiums, $0–$150,000 of earnings" [level=2] [ref=f2e59]
+          - img "Net income after premiums against earnings, 0 to 150,000 dollars. Flat from 36,000 to 86,000 with an 9,390 dollar step down at 54,000 where the child care subsidy ends, then rising to the top of the axis." [ref=f2e60]:
+            - img [aria-hidden] [ref=f2e61]:
+              - generic [ref=f2e64]: $40k
+              - generic [ref=f2e65]: $53k
+              - generic [ref=f2e66]: $67k
+              - generic [ref=f2e67]: $80k
+              - generic [ref=f2e68]: $94k
+              - generic [ref=f2e69]: $107k
+              - generic [ref=f2e70]: $0k
+              - generic [ref=f2e71]: $25k
+              - generic [ref=f2e72]: $50k
+              - generic [ref=f2e73]: $75k
+              - generic [ref=f2e74]: $100k
+              - generic [ref=f2e75]: $125k
+              - generic [ref=f2e76]: $150k
+              - generic [ref=f2e89]: −$9,390
+          - paragraph [ref=f2e92]: Earnings $38,000 → net $67,000. Inside the danger zone (ends $86,000; peak $68,348 at $36,000).
+          - list [ref=f2e93]:
+            - listitem [ref=f2e94]: Net income
+            - listitem [ref=f2e96]: Danger zone
+            - listitem [ref=f2e100]: Immediate cliff
+            - listitem [ref=f2e103]: Deferred cliff
+            - listitem [ref=f2e106]: Current earnings
+          - generic [ref=f2e109]:
+            - text: y-axis starts at $42,000, not $0. Deferred drops are lifted out of the plotted line, which is what
+            - code [ref=f2e110]: analysis.dangerZones
+            - text: "describes; the real curve including the deferred drop is the dashed ghost. Source: HotGap / PolicyEngine 2026 rules, committed archetype sweep of 2026-09-15 — not this family's own live call."
+        - heading "Every step down" [level=2] [ref=f2e111]
+        - table [ref=f2e112]:
+          - caption [ref=f2e113]: Select a row to see where the drop came from.
+          - rowgroup [ref=f2e114]:
+            - row [ref=f2e115]:
+              - columnheader "Earnings" [ref=f2e116]
+              - columnheader "Drop" [ref=f2e117]
+              - columnheader "Programs lost" [ref=f2e118]
+              - columnheader "Driver" [ref=f2e119]
+          - rowgroup [ref=f2e120]:
+            - row [ref=f2e121] [cursor=pointer]:
+              - cell [ref=f2e122]:
+                - button "$6k → $7k" [ref=f2e123]
+              - cell "−$3,906" [ref=f2e124]
+              - cell "TANF" [ref=f2e125]
+              - cell "benefits" [ref=f2e126]
+            - row [ref=f2e127] [cursor=pointer]:
+              - cell [ref=f2e128]:
+                - button "$26k → $27k" [ref=f2e129]
+              - cell "−$610" [ref=f2e130]
+              - cell "none named" [ref=f2e131]
+              - cell "credits" [ref=f2e132]
+            - row [ref=f2e133] [cursor=pointer]:
+              - cell [ref=f2e134]:
+                - button "$37k → $38k" [ref=f2e135]
+              - cell "−$1,178" [ref=f2e136]
+              - cell "Medicaid (adult)" [ref=f2e137]
+              - cell "premiums" [ref=f2e138]
+            - row [ref=f2e139] [cursor=pointer]:
+              - cell [ref=f2e140]:
+                - button "$41k → $42k" [ref=f2e141]
+              - cell "−$290" [ref=f2e142]
+              - cell "none named" [ref=f2e143]
+              - cell "credits" [ref=f2e144]
+            - row [ref=f2e145] [cursor=pointer]:
+              - cell [ref=f2e146]:
+                - button "$46k → $47k" [ref=f2e147]
+              - cell "−$360" [ref=f2e148]
+              - cell "none named" [ref=f2e149]
+              - cell "credits" [ref=f2e150]
+            - row [ref=f2e151] [cursor=pointer]:
+              - cell [ref=f2e152]:
+                - button "$51k → $52k" [ref=f2e153]
+              - cell "−$782" [ref=f2e154]
+              - cell "none named" [ref=f2e155]
+              - cell "credits" [ref=f2e156]
+            - row [ref=f2e157] [cursor=pointer]:
+              - cell [ref=f2e158]:
+                - button "$53k → $54k" [ref=f2e159]
+              - cell "−$2,447" [ref=f2e160]
+              - cell "SNAP, WIC" [ref=f2e161]
+              - cell "benefits" [ref=f2e162]
+            - row [selected] [ref=f2e163] [cursor=pointer]:
+              - cell [ref=f2e164]:
+                - button "$54k → $55k" [ref=f2e165]
+              - cell "−$9,390" [ref=f2e166]
+              - cell "CCDF child care" [ref=f2e167]
+              - cell "benefits" [ref=f2e168]
+            - row [ref=f2e169] [cursor=pointer]:
+              - cell [ref=f2e170]:
+                - button "$60k → $61k" [ref=f2e171]
+              - cell "−$437" [ref=f2e172]
+              - cell "none named" [ref=f2e173]
+              - cell "credits" [ref=f2e174]
+            - row [ref=f2e175] [cursor=pointer]:
+              - cell [ref=f2e176]:
+                - button "$72k → $73k" [ref=f2e177]
+              - cell "−$219" [ref=f2e178]
+              - cell "CHIP Deferred 12 months continuous eligibility (42 CFR 435.926, 457.342)" [ref=f2e179]:
+                - text: CHIP
+                - generic [ref=f2e180]: Deferred
+                - generic [ref=f2e181]: 12 months continuous eligibility (42 CFR 435.926, 457.342)
+              - cell "premiums" [ref=f2e182]
+            - row [ref=f2e183] [cursor=pointer]:
+              - cell [ref=f2e184]:
+                - button "$106k → $107k" [ref=f2e185]
+              - cell "−$2,165" [ref=f2e186]
+              - cell "Premium tax credit" [ref=f2e187]
+              - cell "premiums" [ref=f2e188]
+        - generic [ref=f2e189]:
+          - heading "Where the $9,390 went — $54k to $55k" [level=3] [ref=f2e190]
+          - generic [ref=f2e191]:
+            - generic [ref=f2e192]:
+              - generic [ref=f2e193]: Benefits
+              - generic [ref=f2e197]: $9,733
+            - generic [ref=f2e198]:
+              - generic [ref=f2e199]: Credits
+              - generic [ref=f2e203]: $383
+            - generic [ref=f2e204]:
+              - generic [ref=f2e205]: Premiums
+              - generic [ref=f2e209]: $147
+            - generic [ref=f2e210]:
+              - generic [ref=f2e211]: Other
+              - generic [ref=f2e215]: −$873
+            - paragraph [ref=f2e216]: "Sums to −$9,390. Driver: benefits."
+          - paragraph [ref=f2e217]:
+            - text: "Components sum to the drop exactly. A negative component offsets the loss — here, a falling tax bill. Medicaid and CHIP never appear: their value is a coverage sticker price, never cash, so it cannot move net income. A child losing coverage shows in"
+            - emphasis [ref=f2e218]: programs lost
+            - text: instead.
+      - generic [ref=f2e219]:
+        - heading "Where each program ends" [level=2] [ref=f2e220]
+        - table [ref=f2e221]:
+          - caption [ref=f2e222]: Adults and children are reported separately — a parent usually loses coverage far below a child’s limit.
+          - rowgroup [ref=f2e223]:
+            - row [ref=f2e224]:
+              - columnheader "Earnings" [ref=f2e225]
+              - columnheader "Program" [ref=f2e226]
+              - columnheader "Who" [ref=f2e227]
+          - rowgroup [ref=f2e228]:
+            - row [ref=f2e229]:
+              - cell "$6,000" [ref=f2e230]
+              - cell "TANF cash assistance" [ref=f2e231]
+              - cell "Household" [ref=f2e232]
+            - row [ref=f2e233]:
+              - cell "$37,000" [ref=f2e234]
+              - cell "Medicaid Adult group, 138% FPL. Not §1931, so no Transitional Medical Assistance — coverage ends that month." [ref=f2e235]:
+                - text: Medicaid
+                - generic [ref=f2e236]: Adult group, 138% FPL. Not §1931, so no Transitional Medical Assistance — coverage ends that month.
+              - cell "Adult" [ref=f2e237]
+            - row [ref=f2e238]:
+              - cell "$40,000" [ref=f2e239]
+              - cell "Medicaid" [ref=f2e240]
+              - cell "Children" [ref=f2e241]
+            - row [ref=f2e242]:
+              - cell "$54,000" [ref=f2e243]
+              - cell "SNAP" [ref=f2e244]
+              - cell "Household" [ref=f2e245]
+            - row [ref=f2e246]:
+              - cell "$54,000" [ref=f2e247]
+              - cell "WIC" [ref=f2e248]
+              - cell "Children" [ref=f2e249]
+            - row [ref=f2e250]:
+              - cell "$54,000" [ref=f2e251]
+              - cell "CCDF child care subsidy Reaches net income in CO. In 28 states PolicyEngine drops it; HotGap adds it back there." [ref=f2e252]:
+                - text: CCDF child care subsidy
+                - generic [ref=f2e253]: Reaches net income in CO. In 28 states PolicyEngine drops it; HotGap adds it back there.
+              - cell "Household" [ref=f2e254]
+            - row [ref=f2e255]:
+              - cell "$58,000" [ref=f2e256]
+              - cell "EITC" [ref=f2e257]
+              - cell "Household" [ref=f2e258]
+            - row [ref=f2e259]:
+              - cell "$72,000" [ref=f2e260]
+              - cell "CHIP Deferred 12 months continuous eligibility — 42 CFR 435.926, 457.342. Crossing this does not end coverage this year." [ref=f2e261]:
+                - text: CHIP
+                - generic [ref=f2e262]: Deferred
+                - generic [ref=f2e263]: 12 months continuous eligibility — 42 CFR 435.926, 457.342. Crossing this does not end coverage this year.
+              - cell "Children" [ref=f2e264]
+            - row [ref=f2e265]:
+              - cell "$106,000" [ref=f2e266]
+              - cell "Premium tax credit Net premium jumps $6,498 in one $1,000 step." [ref=f2e267]:
+                - text: Premium tax credit
+                - generic [ref=f2e268]: Net premium jumps $6,498 in one $1,000 step.
+              - cell "Household" [ref=f2e269]
+        - paragraph [ref=f2e270]: "Cash benefits never end inside this axis. Child coverage ends at $72,000, deferred. No coverage gap band: Colorado expanded Medicaid. No state $0-premium wrap applies."
+        - heading "Compare" [level=2] [ref=f2e271]
+        - table [ref=f2e272]:
+          - caption [ref=f2e273]: Two questions asked of the same rules.
+          - rowgroup [ref=f2e274]:
+            - row [ref=f2e275]:
+              - columnheader [ref=f2e276]
+              - columnheader "Now 1 adult, $38,000" [ref=f2e277]:
+                - text: Now
+                - generic [ref=f2e278]: 1 adult, $38,000
+              - columnheader "After the raise 1 adult, $55,000" [ref=f2e279]:
+                - text: After the raise
+                - generic [ref=f2e280]: 1 adult, $55,000
+              - columnheader "Partner joins 2 adults, $38,000" [ref=f2e281]:
+                - text: Partner joins
+                - generic [ref=f2e282]: 2 adults, $38,000
+          - rowgroup [ref=f2e283]:
+            - row [ref=f2e284]:
+              - rowheader "Net after premiums" [ref=f2e285]
+              - cell "$67,000" [ref=f2e286]
+              - cell "$54,532" [ref=f2e287]
+              - cell "$74,394" [ref=f2e288]
+            - row [ref=f2e289]:
+              - rowheader "Change from now" [ref=f2e290]
+              - cell "—" [ref=f2e291]
+              - cell "−$12,468" [ref=f2e292]
+              - cell "+$7,394" [ref=f2e293]
+            - row [ref=f2e294]:
+              - rowheader "In a danger zone" [ref=f2e295]
+              - cell "Yes" [ref=f2e296]
+              - cell "Yes" [ref=f2e297]
+              - cell "Yes" [ref=f2e298]
+            - row [ref=f2e299]:
+              - rowheader "Zone ends at" [ref=f2e300]
+              - cell "$86,000" [ref=f2e301]
+              - cell "$86,000" [ref=f2e302]
+              - cell "$98,000" [ref=f2e303]
+            - row [ref=f2e304]:
+              - rowheader "Raise still needed" [ref=f2e305]
+              - cell "$48,000" [ref=f2e306]
+              - cell "$31,000" [ref=f2e307]
+              - cell "$60,000" [ref=f2e308]
+            - row [ref=f2e309]:
+              - rowheader "Adult Medicaid ends" [ref=f2e310]
+              - cell "$37,000" [ref=f2e311]
+              - cell "$37,000" [ref=f2e312]
+              - cell "$45,000" [ref=f2e313]
+            - row [ref=f2e314]:
+              - rowheader "Child coverage ends" [ref=f2e315]
+              - cell "$72,000" [ref=f2e316]
+              - cell "$72,000" [ref=f2e317]
+              - cell "$87,000" [ref=f2e318]
+            - row [ref=f2e319]:
+              - rowheader "Reach at these earnings" [ref=f2e320]
+              - cell "40th" [ref=f2e321]
+              - cell "50th" [ref=f2e322]
+              - cell "5th" [ref=f2e323]
+        - paragraph [ref=f2e324]: Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there. The married column uses the married ladder, which is why the same $38,000 sits at the 5th percentile there and the 40th here.
+        - generic [ref=f2e325]:
+          - heading "What this model does not include" [level=3] [ref=f2e326]
+          - list [ref=f2e327]:
+            - listitem [ref=f2e328]: Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.
+            - listitem [ref=f2e329]: Immigration status, assets, and anyone aged 65 or over are not inputs.
+            - listitem [ref=f2e330]: Take-up is assumed for what is switched on above, and only that.
+            - listitem [ref=f2e331]: Annualised current-rule scenarios, not prorated calendar-year benefit totals.
+          - paragraph [ref=f2e332]: "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: committed archetype sweep, generated 2026-09-15. Rent: HUD FY2026 two-bedroom FMR, El Paso County. Child care price: DOL National Database of Childcare Prices, carried to 2026 dollars by the BLS Employment Cost Index."
+    - paragraph [ref=f2e333]:
+      - button "Dark" [ref=f2e334] [cursor=pointer]

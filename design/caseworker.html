@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HotGap — the caseworker surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Caseworker surface: dense, exact, printable. Body steps down to 15px —
+     this reader is scanning thresholds, not reading prose. */
+  body { font-size: var(--t-small); }
+  .page { max-width: 76rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+  h2 { font-size: var(--t-h2); margin: var(--s6) 0 var(--s3); }
+  h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
+  p { max-width: var(--measure-wide); }
+
+  .bar { background: var(--surface); border-bottom: 1px solid var(--rule);
+         position: sticky; top: 0; z-index: 5; }
+  .bar-in { max-width: 76rem; margin: 0 auto; padding: var(--s3) var(--s4);
+            display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+  .wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 var(--s3) 0 0; }
+
+  .chip { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch);
+          padding: 0 var(--s3); border: 1px solid var(--rule-strong); background: var(--surface);
+          color: var(--ink); border-radius: var(--r-control); cursor: pointer; white-space: nowrap; }
+  .chip .k { color: var(--ink-3); }
+  .chip .v { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
+  .chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .chip.off .v { color: var(--ink-3); font-weight: var(--w-reg); }
+  .act { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+  .act .chip { background: var(--ink); color: var(--plane); border-color: var(--ink); font-weight: var(--w-med); }
+  .act .chip.secondary { background: var(--surface); color: var(--ink); border-color: var(--rule-strong); font-weight: var(--w-reg); }
+
+  .verdict { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-end;
+             padding: var(--s5) 0 var(--s4); border-bottom: 1px solid var(--rule); }
+  .verdict-line { font-size: var(--t-h1); font-weight: var(--w-med); line-height: var(--lh-tight);
+                  max-width: 30ch; letter-spacing: -0.01em; margin: 0; }
+  .tiles { display: flex; gap: var(--s5); flex-wrap: wrap; margin-left: auto; }
+  .tile .lab { color: var(--ink-3); font-size: var(--t-micro); display: block; }
+  .tile .val { font-size: var(--t-figure); font-weight: var(--w-semi); line-height: 1.1;
+               letter-spacing: -0.02em; display: block; }
+  .tile .sub { color: var(--ink-2); font-size: var(--t-micro); display: block; }
+
+  .cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s5); }
+  @media (min-width: 60rem) { .cols { grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); } }
+  /* Grid items default to min-width:auto, which lets a wide table push the
+     column past the viewport. The scroller only works if the column can shrink. */
+  .cols > * { min-width: 0; }
+
+  svg.plot { display: block; width: 100%; height: auto; }
+  .chart-wrap { position: relative; }
+  .chart-wrap:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .readout { color: var(--ink-2); margin: var(--s2) 0 0; min-height: 2.4em; }
+  .readout b { color: var(--ink); }
+  .key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
+         padding: 0; list-style: none; font-size: var(--t-micro); color: var(--ink-2); }
+  .key li { display: flex; align-items: center; gap: var(--s2); }
+  .key svg { width: 22px; height: 12px; flex: none; }
+
+  table { border-collapse: collapse; width: 100%; }
+  caption { text-align: left; color: var(--ink-2); padding-bottom: var(--s2); }
+  th, td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
+           border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { color: var(--ink-3); font-weight: var(--w-med); font-size: var(--t-micro);
+             border-bottom-color: var(--rule-strong); }
+  td.num, th.num { text-align: right; padding-right: var(--s3); white-space: nowrap; }
+  .money { font-weight: var(--w-semi); }
+  .cite { color: var(--ink-3); font-size: var(--t-micro); display: block; }
+
+  /* The ledger: a rule per threshold, a dollar on every rule. */
+  .ledger tbody tr { cursor: default; }
+  .ledger .who { color: var(--ink-2); }
+  .drops tbody tr { cursor: pointer; }
+  .drops tbody tr[aria-selected="true"] { background: var(--surface-sunk); }
+  .drops tbody tr:hover { background: var(--surface-sunk); }
+  .drops td:first-child { font-weight: var(--w-semi); }
+  .drop-btn { all: unset; display: block; min-height: var(--touch); line-height: var(--touch); }
+
+  .later { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--r-chip);
+           border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 0 8px;
+           font-size: var(--t-micro); font-weight: var(--w-med); }
+
+  .bd { margin: var(--s3) 0 0; }
+  .bd-row { display: grid; grid-template-columns: 5.5rem 1fr 5rem; gap: var(--s3);
+            align-items: center; padding: var(--s1) 0; }
+  .bd-track { position: relative; height: 14px; background: var(--surface-sunk); }
+  .bd-zero { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--rule-strong); }
+  .bd-fill { position: absolute; top: 2px; height: 10px; border-radius: 0 3px 3px 0; }
+  .bd-fill.neg { border-radius: 3px 0 0 3px; }
+  .bd-val { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .panel { background: var(--surface); border: 1px solid var(--rule); padding: var(--s4); }
+  .panel h3 { margin-top: 0; }
+
+  .compare th:first-child { width: 12rem; }
+  .compare td { font-variant-numeric: tabular-nums; }
+  .compare thead .b { box-shadow: inset 0 -3px 0 0 var(--series-2); }
+  .compare tbody .b { box-shadow: inset -1px 0 0 0 var(--series-2), inset 1px 0 0 0 var(--series-2); }
+
+  .scroll-x { overflow-x: auto; }
+  .scroll-x table { min-width: 30rem; }
+  .footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
+  .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
+               border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; }
+
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
+                background: var(--surface); padding: var(--s3); border: 1px solid var(--ink); }
+
+  .handout { display: none; }
+  @media print {
+    .bar, .act, .theme-btn, .no-print { display: none !important; }
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .handout { display: block; page-break-before: always; }
+    .cols { grid-template-columns: 1fr; }
+    a[href]::after { content: ""; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#ledger">Skip to the threshold ledger</a>
+
+<div class="bar">
+  <div class="bar-in">
+    <p class="wordmark">HotGap</p>
+    <button class="chip" type="button"><span class="k">State</span><span class="v">CO</span></button>
+    <button class="chip" type="button"><span class="k">County</span><span class="v">El Paso</span></button>
+    <button class="chip" type="button"><span class="k">Household</span><span class="v">1 adult, kids 3 &amp; 7</span></button>
+    <button class="chip" type="button"><span class="k">Earnings</span><span class="v">$38,000</span></button>
+    <button class="chip" type="button"><span class="k">Rent</span><span class="v">$1,735/mo</span></button>
+    <button class="chip" type="button"><span class="k">Childcare</span><span class="v">$1,438/mo</span></button>
+    <button class="chip" type="button" aria-pressed="true"><span class="k">CCDF subsidy</span><span class="v">on</span></button>
+    <button class="chip off" type="button" aria-pressed="false"><span class="k">Head Start</span><span class="v">off</span></button>
+    <button class="chip off" type="button" aria-pressed="false"><span class="k">Housing</span><span class="v">off</span></button>
+    <span class="act">
+      <button class="chip secondary" type="button">Add a what-if</button>
+      <button class="chip" type="button" id="printBtn">Print the client sheet</button>
+    </span>
+  </div>
+</div>
+
+<main class="page">
+
+  <div class="verdict">
+    <p class="verdict-line">In a danger zone. Between $36,000 and $86,000 of earnings she
+      never gets back to the $68,348 she nets at $36,000.</p>
+    <div class="tiles">
+      <div class="tile"><span class="lab">Net, after premiums</span>
+        <span class="val hg-figure">$67,000</span>
+        <span class="sub">at $38,000 earned</span></div>
+      <div class="tile"><span class="lab">Raise to clear the zone</span>
+        <span class="val hg-figure">$48,000</span>
+        <span class="sub">to $86,000 earned</span></div>
+      <div class="tile"><span class="lab">Largest single-step drop</span>
+        <span class="val hg-figure">$9,390</span>
+        <span class="sub">at $54,000 &rarr; $55,000</span></div>
+      <div class="tile"><span class="lab">Reach at current earnings</span>
+        <span class="val hg-figure">40th</span>
+        <span class="sub">percentile, &plusmn;$8,000</span></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <section>
+      <figure style="margin:0">
+        <h2 style="margin-top:var(--s5)">Net income after premiums, $0&ndash;$150,000 of earnings</h2>
+        <div class="chart-wrap" id="chartWrap" tabindex="0" role="img"
+             aria-describedby="curveCap"
+             aria-label="Net income after premiums against earnings, 0 to 150,000 dollars.
+               Flat from 36,000 to 86,000 with an 9,390 dollar step down at 54,000 where the
+               child care subsidy ends, then rising to the top of the axis.">
+          <svg class="plot" id="curve" aria-hidden="true"></svg>
+        </div>
+        <p class="readout" id="readout" aria-live="polite">Arrow keys, or drag, to read any point.</p>
+        <ul class="key">
+          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="1" y1="6" x2="21" y2="6"
+              stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/></svg> Net income</li>
+          <li><svg viewBox="0 0 22 12" aria-hidden="true"><rect x="1" y="1" width="20" height="10"
+              fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/>
+              <path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/></svg>
+              Danger zone</li>
+          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
+              stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5"
+              fill="var(--loss-4)"/></svg> Immediate cliff</li>
+          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
+              stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/>
+              <circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)"
+              stroke-width="1.5"/></svg> Deferred cliff</li>
+          <li><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z"
+              fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/></svg> Current earnings</li>
+        </ul>
+        <figcaption class="hg-source" id="curveCap">
+          <span id="axisNote">The y-axis does not start at $0.</span> Deferred drops are lifted out of the plotted line,
+          which is what <code>analysis.dangerZones</code> describes; the real curve including
+          the deferred drop is the dashed ghost. Source: HotGap / PolicyEngine 2026 rules,
+          committed archetype sweep of 2026-09-15 &mdash; not this family's own live call.
+        </figcaption>
+      </figure>
+
+      <h2 id="drops">Every step down</h2>
+      <div class="scroll-x">
+      <table class="drops">
+        <caption>Select a row to see where the drop came from.</caption>
+        <thead>
+          <tr><th scope="col">Earnings</th><th scope="col" class="num">Drop</th>
+              <th scope="col">Programs lost</th><th scope="col">Driver</th></tr>
+        </thead>
+        <tbody id="dropRows"></tbody>
+      </table>
+      </div>
+
+      <div class="panel" style="margin-top:var(--s4)">
+        <h3 id="bdTitle">Where the $9,390 went &mdash; $54,000 to $55,000</h3>
+        <div class="bd" id="bdBars"></div>
+        <p class="footnote" style="margin:var(--s3) 0 0">Components sum to the drop exactly.
+          A negative component offsets the loss &mdash; here, a falling tax bill.
+          Medicaid and CHIP never appear: their value is a coverage sticker price, never
+          cash, so it cannot move net income. A child losing coverage shows in
+          <em>programs lost</em> instead.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2 id="ledger" style="margin-top:var(--s5)">Where each program ends</h2>
+      <table class="ledger">
+        <caption>Adults and children are reported separately &mdash; a parent usually loses
+          coverage far below a child&rsquo;s limit.</caption>
+        <thead>
+          <tr><th scope="col" class="num">Earnings</th><th scope="col">Program</th>
+              <th scope="col">Who</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num money">$6,000</td><td>TANF cash assistance</td><td class="who">Household</td></tr>
+          <tr><td class="num money">$37,000</td><td>Medicaid
+            <span class="cite">Adult group, 138% FPL. Not §1931, so no Transitional Medical
+              Assistance &mdash; coverage ends that month.</span></td><td class="who">Adult</td></tr>
+          <tr><td class="num money">$40,000</td><td>Medicaid</td><td class="who">Children</td></tr>
+          <tr><td class="num money">$54,000</td><td>SNAP</td><td class="who">Household</td></tr>
+          <tr><td class="num money">$54,000</td><td>WIC</td><td class="who">Children</td></tr>
+          <tr><td class="num money">$54,000</td><td>CCDF child care subsidy
+            <span class="cite">Reaches net income in CO. In 28 states PolicyEngine drops it;
+              HotGap adds it back there.</span></td><td class="who">Household</td></tr>
+          <tr><td class="num money">$58,000</td><td>EITC</td><td class="who">Household</td></tr>
+          <tr><td class="num money">$72,000</td><td>CHIP <span class="later">Deferred</span>
+            <span class="cite">12 months continuous eligibility &mdash; 42 CFR 435.926,
+              457.342. Crossing this does not end coverage this year.</span></td>
+            <td class="who">Children</td></tr>
+          <tr><td class="num money">$106,000</td><td>Premium tax credit
+            <span class="cite">Net premium jumps $6,498 in one $1,000 step.</span></td>
+            <td class="who">Household</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote">Cash benefits never end inside this axis. Child coverage ends at
+        $72,000, deferred. No coverage gap band: Colorado expanded Medicaid. No state
+        $0-premium wrap applies.</p>
+
+      <h2>Compare</h2>
+      <div class="scroll-x">
+      <table class="compare">
+        <caption>Two questions asked of the same rules.</caption>
+        <thead>
+          <tr><th scope="col"></th>
+              <th scope="col" class="num">Now<br><span class="cite">1 adult, $38,000</span></th>
+              <th scope="col" class="num b">After the raise<br><span class="cite">1 adult, $55,000</span></th>
+              <th scope="col" class="num">Partner joins<br><span class="cite">2 adults, $38,000</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Net after premiums</th>
+              <td class="num money">$67,000</td><td class="num money b">$54,532</td><td class="num money">$74,394</td></tr>
+          <tr><th scope="row">Change from now</th>
+              <td class="num">&mdash;</td><td class="num b">&minus;$12,468</td><td class="num">+$7,394</td></tr>
+          <tr><th scope="row">In a danger zone</th>
+              <td class="num">Yes</td><td class="num b">Yes</td><td class="num">Yes</td></tr>
+          <tr><th scope="row">Zone ends at</th>
+              <td class="num">$86,000</td><td class="num b">$86,000</td><td class="num">$98,000</td></tr>
+          <tr><th scope="row">Raise still needed</th>
+              <td class="num">$48,000</td><td class="num b">$31,000</td><td class="num">$60,000</td></tr>
+          <tr><th scope="row">Adult Medicaid ends</th>
+              <td class="num">$37,000</td><td class="num b">$37,000</td><td class="num">$45,000</td></tr>
+          <tr><th scope="row">Child coverage ends</th>
+              <td class="num">$72,000</td><td class="num b">$72,000</td><td class="num">$87,000</td></tr>
+          <tr><th scope="row">Reach at these earnings</th>
+              <td class="num">40th</td><td class="num b">51st</td><td class="num">5th</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="footnote">Reach is the share of households of the same shape in Colorado
+        earning at or below this figure &mdash; it says how common the pay is, never the odds
+        of getting there. The married column uses the married ladder, which is why the same
+        $38,000 sits at the 5th percentile there and the 40th here.</p>
+
+      <div class="panel" style="margin-top:var(--s5)">
+        <h3>What this model does not include</h3>
+        <ul style="margin:0;padding-left:var(--s5)">
+          <li>Health cost is premiums only &mdash; no deductibles, copays or other
+            out-of-pocket spending.</li>
+          <li>Immigration status, assets, and anyone aged 65 or over are not inputs.</li>
+          <li>Take-up is assumed for what is switched on above, and only that.</li>
+          <li>Annualised current-rule scenarios, not prorated calendar-year benefit totals.</li>
+        </ul>
+        <p class="hg-source" style="margin-top:var(--s3)">Estimates only &mdash; a caseworker
+          decides real benefits. Rules: 2026. Curve: committed archetype sweep, generated
+          2026-09-15. Rent: HUD FY2026 two-bedroom FMR, El Paso County. Child care price:
+          DOL National Database of Childcare Prices, carried to 2026 dollars by the BLS
+          Employment Cost Index.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="handout">
+    <h2>For the client &mdash; Colorado, one parent, two children</h2>
+    <p>You are paid $38,000 a year. You keep $67,000. More pay does not add to that until
+      you are paid about $86,000.</p>
+    <p>The biggest drop is at $55,000 of pay: child care help ends and you keep $9,390 less.
+      Food help ends at $54,000.</p>
+    <p>Your kids&rsquo; health plan ends at $72,000 of pay &mdash; but not that year. It ends
+      at their next yearly check, up to 12 months later.</p>
+    <p>These are estimates. A case worker decides real help.</p>
+    <p>Printed from HotGap. 2026 rules. Sweep of 2026-09-15.</p>
+  </section>
+
+  <p class="no-print" style="margin-top:var(--s7)">
+    <button class="theme-btn" id="themeBtn" type="button">Dark</button></p>
+</main>
+
+<script type="module">
+const STEP = 1000;
+const NET = [42970,44044,45118,46267,47491,48715,49939,46033,47587,49142,50696,52250,53804,55358,56912,58407,59730,60653,61973,62941,63759,64579,65008,65825,66616,67056,67486,66876,66933,67159,67386,67611,67443,67670,67894,68121,68348,68178,67000,67094,67180,67305,67015,67121,67187,67299,67359,66999,67029,67076,67098,67117,66335,66369,63922,54532,54874,54839,55175,55605,56198,55761,55955,56539,57121,57723,58300,58483,59216,59971,60726,61481,61843,61624,62197,62769,63277,63474,63778,64340,64839,65495,65696,66352,66947,67603,68198,68639,69235,69890,70486,71141,71697,72252,72748,73303,73799,74354,74850,75405,75901,76456,76952,77507,78003,78558,79118,76953,77608,78263,78918,79573,80228,80883,81539,82194,82849,83504,84159,84814,85469,86124,86779,87434,88090,88745,89400,90055,90710,91365,92017,92652,93287,93922,94558,95193,95828,96463,97098,97733,98368,99003,99638,100273,100909,101544,102179,102814,103449,104084,104719];
+
+/* analysis.cliffs, verbatim. `bd` is the CliffBreakdown; the four parts sum to `drop`. */
+const CLIFFS = [
+  { at: 6000,  drop: 3906, lost: ["TANF"], driver: "benefits", bd: { benefits: 5480, credits: -655, premiums: 0, other: -919 } },
+  { at: 26000, drop: 610,  lost: [],       driver: "credits",  bd: { benefits: 254, credits: 1232, premiums: 0, other: -876 } },
+  { at: 37000, drop: 1178, lost: ["Medicaid (adult)"], driver: "premiums", bd: { benefits: 435, credits: 214, premiums: 1404, other: -875 } },
+  { at: 41000, drop: 290,  lost: [], driver: "credits",  bd: { benefits: 435, credits: 605, premiums: 125, other: -875 } },
+  { at: 46000, drop: 360,  lost: [], driver: "credits",  bd: { benefits: 435, credits: 657, premiums: 143, other: -875 } },
+  { at: 51000, drop: 782,  lost: [], driver: "credits",  bd: { benefits: 438, credits: 1058, premiums: 162, other: -876 } },
+  { at: 53000, drop: 2447, lost: ["SNAP", "WIC"], driver: "benefits", bd: { benefits: 2783, credits: 383, premiums: 157, other: -876 } },
+  { at: 54000, drop: 9390, lost: ["CCDF child care"], driver: "benefits", bd: { benefits: 9733, credits: 383, premiums: 147, other: -873 } },
+  { at: 60000, drop: 437,  lost: [], driver: "credits", bd: { benefits: 0, credits: 1170, premiums: 143, other: -876 } },
+  { at: 72000, drop: 219,  lost: ["CHIP"], driver: "premiums", deferred: "12 months continuous eligibility (42 CFR 435.926, 457.342)", bd: { benefits: 0, credits: 120, premiums: 975, other: -876 } },
+  { at: 106000, drop: 2165, lost: ["Premium tax credit"], driver: "premiums", bd: { benefits: 0, credits: 0, premiums: 2819, other: -654 } },
+];
+const HH = { current: 38000, currentNet: 67000, zone: { start: 36000, end: 86000, peak: 68348 } };
+const DEFERRED = CLIFFS.filter(c => c.deferred);
+
+/* THE LIFT — see design/charts.md. analysis.dangerZones describe the curve with
+   deferred drops removed; analysis.points do not. Plot the lifted line. */
+const lifted = (() => { const o = NET.slice();
+  for (const d of DEFERRED) for (let k = d.at / STEP + 1; k < o.length; k++) o[k] += d.drop;
+  return o; })();
+
+const money = n => (n < 0 ? "−$" : "$") + Math.abs(Math.round(n)).toLocaleString("en-US");
+const NS = "http://www.w3.org/2000/svg";
+const mk = (t, a) => { const n = document.createElementNS(NS, t);
+  for (const k in a) n.setAttribute(k, a[k]); return n; };
+const el = document.getElementById("curve");
+const wrap = document.getElementById("chartWrap");
+const readout = document.getElementById("readout");
+let cursor = HH.current / STEP, layer = null, cursorNodes = [];
+
+function draw() {
+  const W = Math.max(320, wrap.clientWidth);
+  const narrow = W < 560;
+  const H = narrow ? 240 : 320;
+  const pad = { t: 24, r: 14, b: 34, l: 52 };
+  const x0 = 0, x1 = (NET.length - 1) * STEP;
+  const lo = Math.min(...lifted), hi = Math.max(...lifted);
+  const y0 = Math.floor((lo - 2000) / 1000) * 1000, y1 = Math.ceil((hi + 2000) / 1000) * 1000;
+  const px = e => pad.l + (e - x0) / (x1 - x0) * (W - pad.l - pad.r);
+  const py = v => pad.t + (y1 - v) / (y1 - y0) * (H - pad.t - pad.b);
+
+  el.setAttribute("viewBox", `0 0 ${W} ${H}`); el.setAttribute("height", H);
+  el.textContent = "";
+  const defs = mk("defs");
+  const pat = mk("pattern", { id: "hatch2", width: 7, height: 7,
+    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
+  defs.append(pat); el.append(defs);
+
+  const bx0 = px(HH.zone.start), bx1 = px(HH.zone.end);
+  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b, fill: "var(--loss-wash)" }));
+  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b, fill: "url(#hatch2)" }));
+
+  const n = narrow ? 3 : 5;
+  for (let i = 0; i <= n; i++) {
+    const v = y0 + (y1 - y0) * i / n;
+    el.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    const t = mk("text", { x: pad.l - 7, y: py(v) + 4, "text-anchor": "end", fill: "var(--ink-3)", "font-size": 11 });
+    t.textContent = "$" + Math.round(v / 1000) + "k"; el.append(t);
+  }
+  for (const e of (narrow ? [0, 50000, 100000, 150000] : [0, 25000, 50000, 75000, 100000, 125000, 150000])) {
+    const t = mk("text", { x: px(e), y: H - 12, "text-anchor": "middle", fill: "var(--ink-3)", "font-size": 11 });
+    t.textContent = e === 0 ? "$0" : "$" + e / 1000 + "k"; el.append(t);
+  }
+  el.append(mk("line", { x1: pad.l, y1: H - pad.b, x2: W - pad.r, y2: H - pad.b, stroke: "var(--axis)", "stroke-width": 1 }));
+  document.getElementById("axisNote").textContent =
+    `The y-axis starts at ${money(y0)}, not $0.`;
+
+  el.append(mk("line", { x1: bx0, y1: py(HH.zone.peak), x2: bx1, y2: py(HH.zone.peak),
+    stroke: "var(--loss-3)", "stroke-width": 1 }));
+
+  /* The ghost: the real curve, deferred drop included, shown only when that drop
+     would be visible. Dashed, because it is not this year. */
+  const yRange = y1 - y0;
+  if (DEFERRED.some(d => d.drop / yRange > 0.015)) {
+    let g = "";
+    for (let i = 0; i < NET.length; i++) g += (i ? "L" : "M") + px(i * STEP) + " " + py(NET[i]);
+    el.append(mk("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5,
+      "stroke-dasharray": "5 4" }));
+  }
+
+  let d = "";
+  for (let i = 0; i < lifted.length; i++) d += (i ? "L" : "M") + px(i * STEP) + " " + py(lifted[i]);
+  el.append(mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
+    "stroke-linejoin": "round", "stroke-linecap": "round" }));
+
+  for (const c of CLIFFS) {
+    const a = c.at / STEP;
+    if (c.deferred) {
+      el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]) - 18, x2: px(c.at), y2: py(lifted[a]) - 2,
+        stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+      el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4, fill: "var(--surface)",
+        stroke: "var(--ink-3)", "stroke-width": 2 }));
+    } else {
+      el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]), x2: px(c.at), y2: py(lifted[a + 1]),
+        stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
+      el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4, fill: "var(--loss-4)",
+        stroke: "var(--surface)", "stroke-width": 2 }));
+    }
+  }
+  /* One direct label: the extreme. The rest live in the ledger below. */
+  const w = CLIFFS.reduce((m, c) => (!c.deferred && c.drop > m.drop ? c : m), CLIFFS[0]);
+  const wt = mk("text", { x: px(w.at) + 8, y: py((lifted[w.at / STEP] + lifted[w.at / STEP + 1]) / 2) + 4,
+    fill: "var(--loss-ink)", "font-size": 12, "font-weight": 600 });
+  wt.textContent = money(-w.drop); el.append(wt);
+
+  const cx = px(HH.current), cy = py(HH.currentNet);
+  el.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1 }));
+  el.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`,
+    fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
+
+  layer = { px, py, pad, W, H };
+  paintCursor();
+}
+
+function paintCursor() {
+  cursorNodes.forEach(n => n.remove()); cursorNodes = [];
+  if (!layer) return;
+  const { px, py, pad, H } = layer;
+  const e = cursor * STEP, v = lifted[cursor];
+  const l = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b,
+    stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
+  const dot = mk("circle", { cx: px(e), cy: py(v), r: 4, fill: "var(--series-1)",
+    stroke: "var(--surface)", "stroke-width": 2 });
+  el.append(l, dot); cursorNodes = [l, dot];
+  const z = e > HH.zone.start && e < HH.zone.end;
+  readout.innerHTML = `Earnings <b>${money(e)}</b> &rarr; net <b>${money(v)}</b>. ` +
+    (z ? `Inside the danger zone (ends $86,000; peak ${money(HH.zone.peak)} at $36,000).`
+       : "Outside any danger zone.");
+}
+
+wrap.addEventListener("pointerdown", ev => move(ev.clientX));
+wrap.addEventListener("pointermove", ev => { if (ev.buttons) move(ev.clientX); });
+function move(clientX) {
+  const r = el.getBoundingClientRect(), { pad, W } = layer;
+  const f = (clientX - r.left - pad.l) / (W - pad.l - pad.r);
+  cursor = Math.min(NET.length - 1, Math.max(0, Math.round(f * (NET.length - 1))));
+  paintCursor();
+}
+wrap.addEventListener("keydown", ev => {
+  const s = ev.shiftKey ? 10 : 1;
+  if (ev.key === "ArrowRight") cursor = Math.min(NET.length - 1, cursor + s);
+  else if (ev.key === "ArrowLeft") cursor = Math.max(0, cursor - s);
+  else if (ev.key === "Home") cursor = 0;
+  else if (ev.key === "End") cursor = NET.length - 1;
+  else return;
+  ev.preventDefault(); paintCursor();
+});
+
+/* Drop ledger + breakdown */
+const rows = document.getElementById("dropRows");
+let selected = CLIFFS.findIndex(c => c.drop === 9390);
+function renderRows() {
+  rows.textContent = "";
+  CLIFFS.forEach((c, i) => {
+    const tr = document.createElement("tr");
+    tr.setAttribute("aria-selected", i === selected);
+    tr.innerHTML =
+      `<td><button class="drop-btn" type="button">$${(c.at / 1000)}k &rarr; $${(c.at / 1000 + 1)}k</button></td>` +
+      `<td class="num money">${money(-c.drop)}</td>` +
+      `<td>${c.lost.length ? c.lost.join(", ") : "<span style='color:var(--ink-3)'>none named</span>"}` +
+      (c.deferred ? ` <span class="later">Deferred</span><span class="cite">${c.deferred}</span>` : "") + `</td>` +
+      `<td>${c.driver}</td>`;
+    tr.querySelector("button").addEventListener("click", () => { selected = i; renderRows(); renderBd(); });
+    rows.append(tr);
+  });
+}
+function renderBd() {
+  const c = CLIFFS[selected];
+  document.getElementById("bdTitle").textContent =
+    `Where the $${c.drop.toLocaleString("en-US")} went — $${(c.at / 1000)}k to $${(c.at / 1000 + 1)}k`;
+  const parts = [["Benefits", c.bd.benefits], ["Credits", c.bd.credits],
+                 ["Premiums", c.bd.premiums], ["Other", c.bd.other]];
+  const max = Math.max(...parts.map(p => Math.abs(p[1])), 1);
+  const host = document.getElementById("bdBars");
+  host.textContent = "";
+  for (const [name, v] of parts) {
+    const row = document.createElement("div"); row.className = "bd-row";
+    const w = Math.abs(v) / max * 50;
+    row.innerHTML = `<span>${name}</span>` +
+      `<span class="bd-track"><span class="bd-zero" style="left:50%"></span>` +
+      `<span class="bd-fill${v < 0 ? " neg" : ""}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%;` +
+      `background:var(--loss-${v < 0 ? 2 : 4})"></span></span>` +
+      `<span class="bd-val">${money(v)}</span>`;
+    host.append(row);
+  }
+  const sum = document.createElement("p");
+  sum.className = "footnote";
+  sum.style.margin = "var(--s2) 0 0";
+  sum.textContent = `Sums to −$${c.drop.toLocaleString("en-US")}. Driver: ${c.driver}.`;
+  host.append(sum);
+}
+renderRows(); renderBd(); draw();
+addEventListener("resize", draw);
+document.getElementById("printBtn").addEventListener("click", () => print());
+
+const btn = document.getElementById("themeBtn");
+btn.addEventListener("click", () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  btn.textContent = dark ? "Dark" : "Light"; draw();
+});
+</script>
+</body>
+</html>
