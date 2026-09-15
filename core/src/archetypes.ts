@@ -47,7 +47,17 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     // child under 6 is charged the state's center-based preschool price; a
     // 6-year-old is in school. Infant care really costs more than a
     // preschooler's, so a household with a baby is understated here.
-    monthlyChildcare: defaults.monthlyChildcarePreschool * a.childAges.filter((age) => age < 6).length,
+    //
+    // Only the sole-earner households buy it. These married archetypes have
+    // one earner and a spouse at home, who is the childcare. Charging them for
+    // care AND denying them the subsidy — which every state conditions on all
+    // parents working — is the one combination that is wrong both ways, and it
+    // was costing them up to $34,000 a year of expense with nothing against it.
+    // The consequence is that no married row on the map shows a childcare
+    // cliff, which is true of a single-earner couple and not true of a
+    // two-earner one. A dual-earner couple is the household that cliff bites
+    // hardest, and it is not among the eight archetypes.
+    monthlyChildcare: a.married ? 0 : defaults.monthlyChildcarePreschool * a.childAges.filter((age) => age < 6).length,
     annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
     spouseAnnualEarnings: 0,
     hoursPerWeek: null,
@@ -64,7 +74,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     // question — how rough are this state's rules — and its exit is the
     // largest cliff most parents of young children face, so a map that omits
     // it understates every state. The personal default stays off.
-    getsChildcareSubsidy: true,
+    getsChildcareSubsidy: !a.married,
     hasEmployerCoverage: false,
     ssdiMonthly: 0,
     childSupportMonthly: 0,

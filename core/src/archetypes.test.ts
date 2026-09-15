@@ -84,6 +84,10 @@ describe("answersFor", () => {
     const price = stateDefaults("CA").monthlyChildcarePreschool;
     expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(2 * price);
     expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-0")!).monthlyChildcare).toBe(0);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-2")!).monthlyChildcare).toBe(price);
+    // A single-earner couple has a parent at home: no bill, and no subsidy,
+    // since every state's activity test requires both parents to work.
+    const married2 = answersFor("CA", ARCHETYPES.find((x) => x.id === "married-2")!);
+    expect(married2.monthlyChildcare).toBe(0);
+    expect(married2.getsChildcareSubsidy).toBe(false);
   });
 });
