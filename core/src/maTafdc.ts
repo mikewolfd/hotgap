@@ -10,6 +10,12 @@ export interface MaTafdcInputs {
   infantBenefit: number;
   /** Upstream TANF counted again in this point's net income and otherBenefits. */
   duplicatedTanf: number;
+  /**
+   * True when this point was re-requested with the corrected grant forced
+   * as an input, so PolicyEngine's SNAP and every other linked benefit on
+   * the point already reflect it (see client.ts resampleMaTafdc).
+   */
+  engineUsedCorrectedGrant: boolean;
 }
 
 export const MA_TAFDC_SOURCES = {
@@ -20,7 +26,26 @@ export const MA_TAFDC_SOURCES = {
 
 export interface MaTafdcCorrection {
   status: "applied" | "unavailable";
+  /** Every point whose grant changed was recomputed by PolicyEngine with the corrected grant. */
+  linkedBenefitsRecomputed: boolean;
   message: string;
+}
+
+/**
+ * Points whose corrected grant differs from what PolicyEngine paid and that
+ * have not yet been fed back to the engine. The client re-requests exactly
+ * these, one at a time, with the grant forced as an input.
+ */
+export function maTafdcResampleIndices(a: HouseholdAnswers, points: CurvePoint[]): number[] {
+  if (a.state !== "MA" || a.childAges.length === 0) return [];
+  if (!points.every((p) => p.maTafdc?.duplicatedTanf !== undefined)) return [];
+  const out: number[] = [];
+  points.forEach((p, i) => {
+    if (p.maTafdc!.engineUsedCorrectedGrant) return;
+    const grant = maTafdcGrant(p.earnings, a.spouseAnnualEarnings, p.maTafdc!);
+    if (Math.round(grant) !== Math.round(p.programs.tanf ?? 0)) out.push(i);
+  });
+  return out;
 }
 
 /**
@@ -56,9 +81,13 @@ export function correctMaTafdc(a: HouseholdAnswers, points: CurvePoint[]): { poi
   if (!points.every((p) => p.maTafdc?.duplicatedTanf !== undefined)) {
     return { points, correction: {
       status: "unavailable",
+      linkedBenefitsRecomputed: false,
       message: "Massachusetts TAFDC correction unavailable: this curve lacks the required inputs. Its TANF cliffs may reflect the known upstream formula error; refresh the sweep.",
     } };
   }
+  // Exact when every point whose grant changed was fed back to the engine;
+  // otherwise SNAP and the other linked benefits still sit on upstream's TANF.
+  const linkedBenefitsRecomputed = maTafdcResampleIndices(a, points).length === 0;
   return {
     points: points.map((p) => {
       const tanf = maTafdcGrant(p.earnings, a.spouseAnnualEarnings, p.maTafdc!);
@@ -75,7 +104,10 @@ export function correctMaTafdc(a: HouseholdAnswers, points: CurvePoint[]): { poi
     }),
     correction: {
       status: "applied",
-      message: "Massachusetts TAFDC uses a local calculation for ongoing recipients after the six-month full earnings disregard: $200/month per earner, then a 50% disregard. SNAP and other linked benefits still use PolicyEngine's original TANF, so net income and cliff rankings are approximate. The first six months and new-applicant eligibility are not modeled.",
+      linkedBenefitsRecomputed,
+      message: linkedBenefitsRecomputed
+        ? "Massachusetts TAFDC uses the state's ongoing-recipient rules ($200/month per earner, then a 50% disregard) in place of PolicyEngine's formula; PolicyEngine recomputed SNAP and every other linked benefit with the corrected grant. The first six months' full disregard and new-applicant eligibility are not modeled."
+        : "Massachusetts TAFDC uses a local calculation for ongoing recipients after the six-month full earnings disregard: $200/month per earner, then a 50% disregard. SNAP and other linked benefits still use PolicyEngine's original TANF, so net income and cliff rankings are approximate. The first six months and new-applicant eligibility are not modeled.",
     },
   };
 }

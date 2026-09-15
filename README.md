@@ -76,8 +76,8 @@ lands among real households' incomes.
     is actually worth to this family: capped at their own reported childcare
     cost, since a family paying $0 for childcare gains $0 from a "free" slot
   - `maTafdc` — whether the local Massachusetts cash-assistance correction
-    was applied, plus its limits; SNAP and other linked benefits retain
-    their original PolicyEngine values, so the combined result is approximate
+    was applied and whether PolicyEngine recomputed the linked benefits
+    with the corrected grant (it does for live curves and the current sweep)
   - a `curve` where an employer-coverage household's health cost has already
     been replaced with the MEPS-IC employee contribution in place of the
     marketplace premium PolicyEngine would otherwise charge (live curves
@@ -188,10 +188,11 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
 - Massachusetts TAFDC uses the ongoing-recipient formula after the six-month
   full earnings disregard. The local correction removes a duplicate TAFDC
   payment from upstream net income, then changes TANF and net income
-  before analysis, including offline results and summary rankings. SNAP and
-  other linked benefits still reflect the original TANF calculation, so
-  Massachusetts results are approximate. Older curves without the required
-  inputs are flagged as uncorrected. See
+  before analysis, including offline results and summary rankings. The
+  corrected grant is then fed back to PolicyEngine one earnings point at a
+  time, so SNAP and every other linked benefit follow from it; only the
+  six-month full disregard's timing stays unmodeled. Older curves without
+  the required inputs are flagged as uncorrected. See
   [local corrections and evidence](docs/upstream/2026-09-15-local-corrections.md)
   for sources, scope and removal checks.
 

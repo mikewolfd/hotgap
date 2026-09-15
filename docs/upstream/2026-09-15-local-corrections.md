@@ -95,14 +95,23 @@ A live counterfactual setting `tanf` to zero leaves the $9,880 in state
 benefits. These assumptions are pinned by the live regression case and must
 be rechecked when upstream changes.
 
-**Approximation:** after removing the duplicate, the corrected TANF changes
-net income dollar for dollar.
-SNAP and other linked benefits still use the original upstream TANF, including
-any effects on other cash assistance, housing and categorical eligibility.
-Those interactions are not recomputed. The evaluation and CLI identify this
-limit, and Massachusetts summary metrics carry the same notice. The first six
-months of a new work spell and new-applicant eligibility are not modeled.
-Other eligibility and deduction assumptions remain PolicyEngine's.
+**Linked benefits (added 2026-09-15):** after the axis request, the client
+re-requests every earnings point whose corrected grant differs from
+PolicyEngine's, one point at a time, with `ma_tafdc` forced as a scalar
+SPM-unit input on a two-point axis (`client.ts` `resampleMaTafdc`). A scalar
+SPM input broadcasts across an axis, so PolicyEngine recomputes SNAP, EAEDC,
+categorical eligibility and net income from the corrected grant itself — no
+local benefit math. Verified live: at $26,000 with the grant forced to $3,972,
+SNAP rises from $6,019 to $7,836 and net income falls from $109,799 to $99,800.
+Each fed-back point carries `engineUsedCorrectedGrant: true`; the correction
+reports `linkedBenefitsRecomputed` and its message changes accordingly. About
+thirty extra one-second requests per Massachusetts household with children;
+the weekly sweep pays the same for its six such archetypes. The step is a no-op
+once upstream's formula matches the state's rules. What remains unmodeled is
+the six-month full disregard's timing and new-applicant eligibility. Two
+alternatives were tried and rejected: an array of grants along the axis (HTTP
+500) and a second, parallel axis on `ma_tafdc` (rejected twice, in two ways —
+the public endpoint varies one person-level variable).
 
 The API rejected an array of corrected grants on an earnings axis with HTTP
 500 (`setting an array element with a sequence`). That probe is retained;

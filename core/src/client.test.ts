@@ -1,5 +1,8 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { curveCacheKey, fetchCurve, PolicyEngineError, requestPE, type CurveCache } from "./client.js";
+import { curveCacheKey, fetchCurve, PolicyEngineError, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
+import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
 import { axisSpec, type AxisSpec } from "./translate.js";
 import { validateAnswers } from "./validate.js";
@@ -152,5 +155,97 @@ describe("requestPE retries", () => {
     calls = 0;
     await expect(requestPE({}, { fetchImpl })).rejects.toBeInstanceOf(PolicyEngineError);
     expect(calls).toBe(1);
+  });
+});
+
+describe("Massachusetts TAFDC feedback loop", () => {
+  // A real 11-point PolicyEngine response ($24k–$34k) for a married couple with
+  // children aged 1, 4 and 9 in private housing, carrying every ma_tafdc_* input.
+  const maFixture = JSON.parse(readFileSync(new URL("../../fixtures/pe-ma-married-3kids-11.json", import.meta.url), "utf8"));
+  const maAnswers = (() => {
+    const v = validateAnswers({
+      state: "MA", married: true, age: 30, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false],
+      youDisabled: false, spouseDisabled: false, monthlyRent: 1500, monthlyChildcare: null,
+      annualEarnings: 26000, spouseAnnualEarnings: 0,
+    });
+    if (!v.ok) throw new Error(v.detail);
+    return v.value;
+  })();
+  const maPoints = parsePEResponse(maFixture, 11);
+  const YEAR = "2026";
+
+  // A fake PolicyEngine: for a forced-grant point request, answer with the
+  // fixture's point at that earnings, the grant as forced, and SNAP raised by
+  // $1,000 so the test can see the engine's answer land in the curve.
+  function pointBody(payload: any): string {
+    const axis = payload.household.axes[0][0];
+    const forced = payload.household.spm_units.spm_unit.ma_tafdc[YEAR] as number;
+    const k = Math.round((axis.min - 24000) / 1000);
+    const pick = (v: unknown): unknown =>
+      Array.isArray(v) && v.length === 11 ? [v[k], v[k]] : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, pick(b)])) : v;
+    const body = pick(maFixture) as any;
+    body.result.axes = payload.household.axes;
+    const spm = Object.values(body.result.spm_units)[0] as any;
+    spm.ma_tafdc[YEAR] = [forced, forced];
+    spm.tanf[YEAR] = [forced, forced];
+    spm.snap[YEAR] = spm.snap[YEAR].map((x: number) => x + 1000);
+    (Object.values(body.result.households)[0] as any).household_state_benefits[YEAR] = [forced, forced];
+    return JSON.stringify(body);
+  }
+
+  it("re-requests only the points whose corrected grant differs, forcing that grant, and splices the engine's answer back", async () => {
+    const requests: any[] = [];
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      const payload = JSON.parse(init!.body as string);
+      requests.push(payload);
+      return new Response(pointBody(payload), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const expected = maTafdcResampleIndices(maAnswers, maPoints);
+    expect(expected.length).toBeGreaterThan(0);
+    const out = await resampleMaTafdc(maAnswers, maPoints, { fetchImpl });
+
+    expect(requests.map((r) => r.household.axes[0][0].min).sort((a, b) => a - b)).toEqual(expected.map((i) => maPoints[i].earnings));
+    for (const r of requests) {
+      const earnings = r.household.axes[0][0].min;
+      const i = maPoints.findIndex((p) => p.earnings === earnings);
+      expect(r.household.axes[0][0].count).toBe(2);
+      expect(r.household.people.you.employment_income).toBeUndefined(); // the axis carries earnings
+      expect(r.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(maTafdcGrant(earnings, 0, maPoints[i].maTafdc!));
+    }
+    for (const i of expected) {
+      expect(out[i].earnings).toBe(maPoints[i].earnings);
+      expect(out[i].programs.snap).toBe(maPoints[i].programs.snap + 1000);
+      expect(out[i].programs.tanf).toBe(maTafdcGrant(maPoints[i].earnings, 0, maPoints[i].maTafdc!));
+      expect(out[i].maTafdc?.engineUsedCorrectedGrant).toBe(true);
+    }
+    for (let i = 0; i < maPoints.length; i++) if (!expected.includes(i)) expect(out[i]).toBe(maPoints[i]);
+
+    // Fed-back points need no second pass, and the correction now says so.
+    expect(maTafdcResampleIndices(maAnswers, out)).toEqual([]);
+    expect(correctMaTafdc(maAnswers, maPoints).correction?.linkedBenefitsRecomputed).toBe(false);
+    expect(correctMaTafdc(maAnswers, out).correction).toMatchObject({ status: "applied", linkedBenefitsRecomputed: true, message: expect.stringContaining("recomputed") });
+  });
+
+  it("fetchCurve runs the loop for a Massachusetts household with children and stores the flag", async () => {
+    const axis = axisSpec(maAnswers);
+    const stretch = (v: unknown): unknown =>
+      Array.isArray(v) && v.length === 11 ? Array.from({ length: axis.count }, (_, i) => v[Math.min(i, 10)]) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, stretch(b)])) : v;
+    let pointRequests = 0;
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      const payload = JSON.parse(init!.body as string);
+      if (payload.household.axes[0][0].count === 2) { pointRequests++; return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }).replace(/"min":24000/, `"min":${payload.household.axes[0][0].min}`), { status: 200 }); }
+      const body = stretch(maFixture) as any;
+      body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]];
+      return new Response(JSON.stringify(body), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const curve = await fetchCurve(maAnswers, { fetchImpl });
+    const swept = parsePEResponse(JSON.parse(JSON.stringify(stretch(maFixture))).result ? (() => { const b = stretch(maFixture) as any; b.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]]; return b; })() : null, axis.count);
+    const expected = maTafdcResampleIndices(maAnswers, swept);
+    expect(pointRequests).toBe(expected.length);
+    expect(curve.points).toHaveLength(axis.count);
+    for (const i of expected) expect(curve.points[i].maTafdc?.engineUsedCorrectedGrant).toBe(true);
+    expect(curve.points.filter((p) => p.maTafdc?.engineUsedCorrectedGrant).length).toBe(expected.length);
   });
 });

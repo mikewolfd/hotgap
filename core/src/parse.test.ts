@@ -16,7 +16,7 @@ describe("parsePEResponse", () => {
     expect(points[2].maTafdc).toEqual({
       paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
       dependentCareDeduction: 0, clothingAllowance: 1500, infantBenefit: 0,
-      duplicatedTanf: 9880,
+      duplicatedTanf: 9880, engineUsedCorrectedGrant: false
     });
     expect(points[3].programs.tanf).toBe(0);
     // Inputs survive even where upstream's faulty financial test ends TANF.

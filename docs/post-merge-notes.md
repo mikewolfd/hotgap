@@ -243,3 +243,21 @@ reach builder merges partial runs and offers the 5-Year PUMS to any cell the
 through $350,000 so no admissible household gets a coarser grid; stored
 curve points no longer carry a constant `coverageGap`; the upstream evidence
 lives in `docs/upstream/evidence/`.
+
+# Massachusetts grant fed back to the engine (2026-09-15)
+
+The local TAFDC correction no longer leaves SNAP on upstream's TANF. After
+the axis request, `core/src/client.ts` (`resampleMaTafdc`) re-requests every
+point whose corrected grant differs from PolicyEngine's — about thirty for a
+household with children — with `ma_tafdc` forced as a scalar SPM-unit input
+on a two-point axis, and splices the engine's answer back. SNAP, EAEDC,
+categorical eligibility and net income then follow from the corrected grant
+with no local benefit math. Fed-back points carry
+`engineUsedCorrectedGrant: true`; `correctMaTafdc` reports
+`linkedBenefitsRecomputed` and says so in its message. Verified live before
+building: at $26,000 with the grant forced to $3,972, SNAP rose from $6,019
+to $7,836. Rejected on the way: an array of grants along the axis (HTTP 500,
+Codex's probe) and a parallel axis on `ma_tafdc` (rejected twice, in two
+ways). The pipeline's queue helper moved into core and is shared. Still
+unmodeled: the six-month full disregard's timing and new-applicant
+eligibility. The step becomes a no-op when policyengine-us PR #9477 merges.

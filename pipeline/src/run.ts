@@ -8,6 +8,7 @@ import {
   answersFor,
   buildCurvePayload,
   fetchCurve,
+  runQueue,
   sleep,
   type CurvePoint,
   type StateFileJson,
@@ -70,18 +71,6 @@ export function parseArgs(argv: string[]): RunOptions {
     dryRun: values["dry-run"] === true,
     fromData: values["from-data"] === true,
   };
-}
-
-async function runQueue<T>(tasks: T[], concurrency: number, worker: (task: T) => Promise<void>): Promise<void> {
-  let next = 0;
-  async function pull(): Promise<void> {
-    while (next < tasks.length) {
-      const task = tasks[next++];
-      await worker(task);
-    }
-  }
-  const workers = Math.max(1, Math.min(concurrency, tasks.length));
-  await Promise.all(Array.from({ length: workers }, pull));
 }
 
 export async function runPipeline(

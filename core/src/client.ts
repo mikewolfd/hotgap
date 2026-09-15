@@ -2,6 +2,7 @@
 // POST /us/calculate with a timeout, optional retries, error classification,
 // and an optional result cache keyed on the household, request and overrides.
 import { createHash } from "node:crypto";
+import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
 import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
@@ -41,6 +42,19 @@ export interface FetchCurveOptions extends RequestOptions {
 }
 
 export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Run `worker` over `tasks` with at most `concurrency` in flight; order of completion is not preserved. */
+export async function runQueue<T>(tasks: T[], concurrency: number, worker: (task: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  async function pull(): Promise<void> {
+    while (next < tasks.length) {
+      const task = tasks[next++];
+      await worker(task);
+    }
+  }
+  const workers = Math.max(1, Math.min(concurrency, tasks.length));
+  await Promise.all(Array.from({ length: workers }, pull));
+}
 
 async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs: number): Promise<unknown> {
   let res: Response;
@@ -146,6 +160,44 @@ async function fetchSplicedForSSDI(
 }
 
 /** Full earnings sweep for one household, from PolicyEngine (or the cache). */
+const RESAMPLE_CONCURRENCY = 3;
+
+/**
+ * One earnings point with a forced SPM-unit input. The public endpoint only
+ * varies a person-level variable along an axis and rejects arrays for anything
+ * else, but a scalar SPM input broadcasts across an axis — so ask for a
+ * two-point axis starting at `earnings` and keep the first point.
+ */
+function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Record<string, number>) {
+  const payload = buildCurvePayload({ ...answers, annualEarnings: earnings });
+  const h = payload.household as { spm_units: Record<string, Record<string, unknown>>; axes: unknown };
+  h.axes = [[{ name: "employment_income", min: earnings, max: earnings + 1000, count: 2, period: YEAR }]];
+  for (const [name, value] of Object.entries(forced)) h.spm_units.spm_unit[name] = { [YEAR]: value };
+  return payload;
+}
+
+/**
+ * Feed the corrected Massachusetts grant back to PolicyEngine so SNAP,
+ * EAEDC, categorical eligibility and net income follow from it — no local
+ * benefit math. Only the points whose grant differs from upstream's are
+ * re-requested (about thirty for a household with children), one at a time.
+ * A no-op once upstream's formula matches the state's rules.
+ */
+export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePoint[], opts: RequestOptions): Promise<CurvePoint[]> {
+  const indices = maTafdcResampleIndices(answers, points);
+  if (indices.length === 0) return points;
+  const out = points.slice();
+  await runQueue(indices, RESAMPLE_CONCURRENCY, async (i) => {
+    const p = points[i];
+    // Above SGA the spliced curve came from the no-SSDI request; match it.
+    const base = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL ? { ...answers, ssdiMonthly: 0 } : answers;
+    const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
+    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }), opts), 2);
+    out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
+  });
+  return out;
+}
+
 export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOptions = {}): Promise<CurveResponse> {
   const key = curveCacheKey(answers);
   const hit = await opts.cache?.get(key);
@@ -156,9 +208,10 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
     ...opts,
     timeoutMs: opts.timeoutMs ?? (Object.keys(policyOverridesFor(answers)).length ? POLICY_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
   };
-  const points = answers.ssdiMonthly > 0
+  const swept = answers.ssdiMonthly > 0
     ? await fetchSplicedForSSDI(answers, axis, requestOpts)
     : parseOrThrow(await requestPE(buildCurvePayload(answers), requestOpts), axis.count);
+  const points = await resampleMaTafdc(answers, swept, requestOpts);
 
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };
   await opts.cache?.set(key, curve);

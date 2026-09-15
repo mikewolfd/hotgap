@@ -6,7 +6,7 @@ import type { CurvePoint } from "./types.js";
 
 const inputs: MaTafdcInputs = {
   paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
-  dependentCareDeduction: 0, clothingAllowance: 0, infantBenefit: 0, duplicatedTanf: 0,
+  dependentCareDeduction: 0, clothingAllowance: 0, infantBenefit: 0, duplicatedTanf: 0, engineUsedCorrectedGrant: false,
 };
 const answers = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
 const point = (earnings: number, tanf: number): CurvePoint => ({

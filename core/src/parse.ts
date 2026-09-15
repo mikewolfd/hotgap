@@ -136,6 +136,7 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
       paymentStandard, nonFinancialEligible: flags[i], unearnedIncome: unearned[i],
       dependentCareDeduction: care[i], clothingAllowance: clothing[i], infantBenefit: infant[i],
       duplicatedTanf: Math.min(tafdc[i], programSeries.get("tanf")![i], stateBenefits[i]),
+      engineUsedCorrectedGrant: false,
     }));
     if (maTafdc.some((inputs) => Object.values(inputs).some((v) => typeof v === "number" && (!Number.isFinite(v) || v < 0)))) {
       throw new PEParseError("invalid Massachusetts TAFDC inputs");
