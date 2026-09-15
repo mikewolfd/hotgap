@@ -6,9 +6,13 @@ const PERIOD = "2026-01-01.2026-12-31";
 const PARENT_LIMIT = "gov.hhs.medicaid.eligibility.categories.parent.income_limit";
 export const BHP_EXPANDED_STATES = "gov.hhs.basic_health_program.eligibility.expanded_income_limit_states";
 
+// WORKAROUND — per-request parameter overrides for values PolicyEngine holds
+// stale (policyengine-us #9474, fix in PR #9475) or cannot express mid-year
+// (#9471, annual variable). Drop a state here the day upstream carries its
+// 2026 value; drop the NY entry when upstream handles the July change.
 // These are current-rule, annualized 2026 curves, including changes effective
 // during 2026. They do not prorate the months before a change. Sources checked
-// 2026-09-15. Issue reports are local drafts, not filed GitHub issues.
+// 2026-09-15.
 const PARENT_ISSUE = "docs/upstream/2026-09-14-policyengine-issues.md#issue-5--parentcaretaker-medicaid-income-limits-are-five-years-stale-in-the-frozen-dollar-standard-states";
 export const POLICY_OVERRIDE_SOURCES = {
   TX: { source: "https://fhb.hhs.texas.gov/handbooks/texas-works-handbook/c-130-medical-programs", issueReport: PARENT_ISSUE },

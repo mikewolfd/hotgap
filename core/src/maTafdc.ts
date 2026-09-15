@@ -1,5 +1,11 @@
 import { YEAR, type CurvePoint, type HouseholdAnswers } from "./types.js";
 
+// WORKAROUND — this whole module re-implements one state's TAFDC grant
+// because PolicyEngine's formula is wrong (policyengine-us #9469, #9470;
+// fixes in PR #9477 and #9478). Remove it, the ma_tafdc_* inputs requested
+// in translate.ts, and the resample loop in client.ts once both merge and
+// the API serves them.
+
 /** PolicyEngine inputs retained so the local calculation can be replayed. Dollars are annual. */
 export interface MaTafdcInputs {
   paymentStandard: number;

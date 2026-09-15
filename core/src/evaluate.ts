@@ -129,6 +129,8 @@ const normalize = (p: CurvePoint): CurvePoint => ({
  * employer plan. Without that second guard the curve grew a false cliff the
  * full size of the contribution at the first dollar of pay.
  */
+// WORKAROUND — remove when upstream models the employee ESI share
+// (policyengine-us #9473).
 function applyEmployerCoverage(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
   if (!a.hasEmployerCoverage) return points;
   const tier = esiTier(a);
@@ -200,6 +202,8 @@ function applyHeadStart(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[]
  * 2026 runs on the guidelines in effect when open enrollment began
  * (26 CFR 1.36B-1(h)). See policyYear.ts.
  */
+// WORKAROUND — remove when upstream gates marketplace take-up on subsidy
+// eligibility (policyengine-us #9472).
 function applyCoverageGap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
   const povertyLine = fpl2025(a.state, householdSize(a));
   // The subsidy floor is tested on MAGI (IRC §36B(d)(2)(B)): wages, the

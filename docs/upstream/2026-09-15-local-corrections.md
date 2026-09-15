@@ -1,5 +1,21 @@
 # Local PolicyEngine corrections
 
+## Workarounds to retire
+
+Every item below is a hack around a PolicyEngine defect, marked `WORKAROUND`
+in the code. Each names what removes it.
+
+| Workaround | Code | Retire when |
+|---|---|---|
+| Six parent-Medicaid limits sent as request parameters | `core/src/policyOverrides.ts` | policyengine-us PR #9475 merges and the API serves it (issue #9474) |
+| New York BHP list emptied for the whole 2026 scenario | `core/src/policyOverrides.ts` | upstream handles the 2026-07-01 change sub-annually (issue #9471; a parameter fix is inert, see the issue comment) |
+| Massachusetts TAFDC grant recomputed locally | `core/src/maTafdc.ts`, `ma_tafdc_*` inputs in `translate.ts` | PRs #9477 and #9478 merge (issues #9469, #9470) |
+| Corrected grant fed back one point at a time so SNAP follows it | `core/src/client.ts` `resampleMaTafdc` | same as above — the loop then makes zero requests and can be deleted |
+| Coverage-gap adults' phantom premium zeroed | `core/src/evaluate.ts` `applyCoverageGap` | upstream gates marketplace take-up on subsidy eligibility (issue #9472) |
+| Employee ESI contribution replaces the marketplace premium | `core/src/evaluate.ts` `applyEmployerCoverage` | upstream models the employee share (issue #9473) |
+
+Check with `grep -rn WORKAROUND core/src`.
+
 HotGap now corrects six parent-Medicaid limits, New York's Essential Plan
 ceiling, and the Massachusetts TAFDC earnings formula. The existing coverage-gap
 and employer-premium corrections remain in `evaluate.ts`.

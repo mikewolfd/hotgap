@@ -184,6 +184,13 @@ function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Recor
 }
 
 /**
+ * WORKAROUND — remove when policyengine-us #9477 merges (then the corrected
+ * grant equals the engine's own and this loop makes zero requests; delete
+ * it, maTafdcResampleIndices, and MaTafdcInputs.engineUsedCorrectedGrant).
+ * It leans on an undocumented behavior of the public endpoint: a scalar
+ * SPM-unit input broadcasts across a person-level axis. Arrays and parallel
+ * axes are rejected.
+ *
  * Feed the corrected Massachusetts grant back to PolicyEngine so SNAP,
  * EAEDC, categorical eligibility and net income follow from it — no local
  * benefit math. Only the points whose grant differs from upstream's are
