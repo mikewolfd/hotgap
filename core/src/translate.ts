@@ -143,6 +143,8 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   }
   for (const v of SPM_VARS) spmVars[v] = y(null);
   if (!a.getsHousing) spmVars.spm_unit_capped_housing_subsidy = y(0);
+  // WORKAROUND — remove when upstream stops zeroing the credit for non-filers
+  // who take APTC (policyengine-us #9479).
   // `aca_ptc` multiplies by `tax_unit_is_filer`, which PolicyEngine derives
   // from the filing thresholds — so a childless couple past the end of the
   // EITC but under the $32,200 joint threshold is "not a filer" and gets no

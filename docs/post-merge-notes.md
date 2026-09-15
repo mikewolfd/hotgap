@@ -267,3 +267,135 @@ five-person household evaluates in about 26 s instead of 80; the sweep passes
 `resampleConcurrency: 3`. Pre-rolling per household is not possible (rent,
 childcare and spouse pay change the answer), but the weekly sweep already
 pre-rolls the archetypes, so the offline path is instant.
+
+# Second methodology review addressed (2026-09-15)
+
+**Implemented, one line each:**
+- Filer flag: `core/src/translate.ts` sends `tax_unit_is_filer: true` on
+  every request — without it PolicyEngine zeroed the credit for a childless
+  couple between the EITC's end and the joint filing threshold while still
+  charging the full premium, an $18,780 cliff at $30,000 that was the
+  largest "loss" for that archetype in 45 states.
+- Children's WIC and SSI: `core/src/translate.ts`'s `PERSON_VARS` now asks
+  every person, children included — the constant "other benefits" in every
+  curve with a young child was the child's untracked WIC.
+- Hours worked: `core/src/validate.ts` (`hoursPerWeek`, 1–80 when given) and
+  `core/src/translate.ts` (`weekly_hours_worked_before_lsr`) — Massachusetts'
+  TAFDC dependent-care deduction and the employer-coverage 30-hour floor
+  both scale by it.
+- SSDI's "stopped" request: `core/src/client.ts`'s `ABOVE_SGA` option
+  (`ssiPathway: false`) drops `is_ssi_disabled` from the above-SGA request,
+  so working at substantial gainful activity no longer grants an SSI finding
+  (and SSI-linked Medicaid) a person could never actually get.
+- Archetypes: `core/src/archetypes.ts`'s `answersFor` now reads
+  `core/src/stateDefaults.ts` for a typical renter — HUD FY2026 two-bedroom
+  Fair Market Rent and the Census Vintage 2024 most populous county — in
+  place of the null rent and null county every swept cell used to send.
+- Head Start's replacement value: `core/src/evaluate.ts`'s
+  `applyHeadStart`/`headStartSummary`, backed by `core/src/stateDefaults.ts`'s
+  `monthlyChildcarePreschool` (DOL National Database of Childcare Prices) —
+  a family reporting $0 childcare because the Head Start slot IS the
+  childcare now gets the state's market price of a preschool slot, not $0.
+- Per-adult/per-child attribution: `core/src/analyze.ts`'s `Group` types
+  (`HOUSEHOLD`/`ADULTS`/`CHILDREN`) run the cliff-notch test per group, not
+  just on the household total — 94 of 271 adult Medicaid ends that fall on a
+  cliff step in the 2026-09 sweep went unnamed under the household-only test.
+- State credits as credits: `core/src/translate.ts` requests
+  `household_refundable_tax_credits`; `core/src/analyze.ts`'s `breakdownOf`
+  folds `stateCredits` into `credits`, not `other`.
+- CTC from the total credit: `core/src/translate.ts` requests `ctc` (the
+  whole credit) alongside `refundable_ctc`; `core/src/escape.ts`'s
+  `programEnds.ctc` reads the total, while a cliff's own `programsLost` and
+  `breakdown.credits` keep the refundable series, labeled as such in
+  `core/src/cli.ts`'s report.
+- Deferred losses: `core/src/analyze.ts` (`DeferralReason`, `Deferral`,
+  `deferralOf`) marks a cliff whose cost is carried forward by Head Start's
+  program-year rule, a child's 12-month continuous eligibility, or a
+  parent's Transitional Medical Assistance; `core/src/evaluate.ts`'s
+  `immediateCurve` lifts those drops out of the curve that drives the
+  verdict, the danger zones, the leap, and the personal path, while
+  `HouseholdEvaluation.deferred` and `analysis.cliffs` still carry every one
+  of them in full.
+- Summary counts them apart: `pipeline/src/metrics.ts`'s `stateMetrics`
+  reads `deferred` off the shared evaluation and reports
+  `deferredCliffCount` next to `cliffCount`; `core/src/data.ts`'s
+  `StateMetrics` carries the new field.
+- Medicare for SSDI: `core/src/evaluate.ts`'s `applyMedicare`, backed by
+  `core/src/policyYear.ts`'s `MEDICARE_PART_B_MONTHLY`/`_ANNUAL` ($202.90,
+  CMS, 2025-11-14) — no marketplace premium or credit for the recipient,
+  Part B charged unless they are on Medicaid.
+- Employer coverage's three tiers: `core/src/evaluate.ts`'s `esiTierAt`,
+  backed by `core/src/policyYear.ts`'s `ESI_EMPLOYEE_CONTRIBUTION`
+  (single/plusOne/family) and `ESI_FULL_TIME_HOURS` (30) — a per-adult
+  Medicaid guard and a 30-hour floor, decided by who the plan actually has
+  to cover.
+- State premium wraps: `core/src/statePremiumWraps.ts`'s table, applied by
+  `core/src/evaluate.ts`'s `applyPremiumWrap` — Connecticut (175% FPL),
+  Massachusetts and California (150%), New Mexico (200%) each zero the net
+  premium in their own $0-premium band.
+- Massachusetts ongoing grant vs. September extra: `core/src/maTafdc.ts`'s
+  `maTafdcGrantParts` splits the ongoing monthly grant from the one-month,
+  $500-per-child September clothing allowance, so `programs.tanf` reports
+  only the ongoing grant and "TANF ends" means that grant's end.
+
+**Deliberate choices:**
+- Medicare assumes the 24-month wait is already past: HotGap never asks how
+  long a household has been receiving SSDI, so `applyMedicare` models every
+  SSDI household as already Medicare-entitled. The error runs one way — a
+  household in its first two years on SSDI would in reality still owe a
+  marketplace premium, and this leaves it out.
+- `immediateCurve` (`core/src/evaluate.ts`) is the only place HotGap alters
+  a curve for TIMING rather than for a wrong number: every other correction
+  in that file changes a number PolicyEngine got wrong; this one changes
+  when a correct number arrives, and the real curve — deferred cliffs full
+  size, in place — is still what `HouseholdEvaluation.curve` and
+  `analysis.cliffs` return.
+- Three ESI tiers by headcount, not two: AHRQ publishes single,
+  employee-plus-one, and family employee contributions, and a parent with
+  one child is not buying a family plan.
+- The $100 resample floor (`core/src/maTafdc.ts`'s
+  `RESAMPLE_MIN_DIFFERENCE`, from the prior review) also does the work of
+  not feeding back most of the new September-allowance tail: SNAP moves
+  under $30 for a difference that small, so it is mostly not worth another
+  request.
+- The premium wrap models the benchmark or lowest-cost plan as free: exact
+  for Connecticut, New Mexico, and California, whose $0 tier IS the
+  benchmark; slightly generous for Massachusetts, whose $0 is the
+  lowest-cost ConnectorCare plan, which can be cheaper than the benchmark.
+- Transitional Medical Assistance is withheld on any curve that cannot say
+  who holds a program (`knowsWhoHolds`, same guard as the coverage gap and
+  `programEndsByAge`): excusing a cliff is the strong claim, and a curve
+  that cannot tell a parent's Medicaid from a child's does not get to make
+  it.
+
+**Investigated:**
+- Alaska and Hawaii's marketplace subsidies are computed by PolicyEngine
+  against the 48-contiguous-states poverty guideline, not their own higher
+  ones (verified live 2026-09-15). HotGap's own `fpl2025` table already
+  carries the correct AK/HI guidelines for the corrections above (the
+  coverage gap and the premium wraps); the marketplace premium and credit
+  PolicyEngine itself returns for an Alaska or Hawaii household are still
+  computed on the wrong line, inside the subsidy formula rather than behind
+  an overridable input, so there is no per-request parameter that fixes it
+  the way the parent-Medicaid and TAFDC overrides do. Left to upstream:
+  policyengine-us #9482.
+- Massachusetts' apparent "TANF ends at $64,000": this was never the
+  ongoing grant ending — it was the last year the $40 September clothing
+  allowance happened to survive the ordinary income test. Fixed locally by
+  splitting the ongoing grant from the September extra (above), rather than
+  left as a discrepancy.
+
+**Filed upstream from this review** — see `docs/upstream/2026-09-15-local-corrections.md`
+for the workaround each retires:
+- policyengine-us #9479 — the filer flag: `tax_unit_is_filer` should follow
+  APTC eligibility, not just the ordinary filing thresholds.
+- policyengine-us #9480 — the default ACA rating area is byte-identical for
+  Connecticut and Illinois, and for Colorado and Indiana, when no county is
+  sent.
+- policyengine-us #9481 — state premium wraps (Connecticut, Massachusetts,
+  New Mexico, California) are not modeled at all.
+- policyengine-us #9482 — Alaska and Hawaii marketplace subsidies are
+  computed against the contiguous-states poverty guideline instead of their
+  own.
+
+Gates: typecheck, 316 unit tests, dry-run sweep; the resweep follows.

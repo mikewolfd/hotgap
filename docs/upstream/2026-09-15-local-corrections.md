@@ -2,8 +2,12 @@
 
 ## Workarounds to retire
 
-Every item below is a hack around a PolicyEngine defect, marked `WORKAROUND`
-in the code. Each names what removes it.
+Every item below is a hack around a PolicyEngine defect. Most are marked
+`WORKAROUND` in the code — check with `grep -rn WORKAROUND core/src` — but a
+few (noted below) simply supply a value PolicyEngine would otherwise get
+wrong, without a literal `WORKAROUND` comment; they belong in this table on
+the same footing, since the defect and the retirement condition are just as
+real. Each row names what removes it.
 
 | Workaround | Code | Retire when |
 |---|---|---|
@@ -13,12 +17,25 @@ in the code. Each names what removes it.
 | Corrected grant fed back one point at a time so SNAP follows it | `core/src/client.ts` `resampleMaTafdc` | same as above — the loop then makes zero requests and can be deleted |
 | Coverage-gap adults' phantom premium zeroed | `core/src/evaluate.ts` `applyCoverageGap` | upstream gates marketplace take-up on subsidy eligibility (issue #9472) |
 | Employee ESI contribution replaces the marketplace premium | `core/src/evaluate.ts` `applyEmployerCoverage` | upstream models the employee share (issue #9473) |
+| State $0-premium marketplace tiers (CT, MA, NM, CA) modeled locally | `core/src/statePremiumWraps.ts`, `core/src/evaluate.ts` `applyPremiumWrap` | policyengine-us #9481 models the state wraps |
+| `tax_unit_is_filer: true` sent on every request (no `WORKAROUND` comment — see note above) | `core/src/translate.ts` | policyengine-us #9479 derives filer status from APTC eligibility rather than the ordinary filing thresholds |
+| A real county sent for every archetype and every resolved ZIP/county (no `WORKAROUND` comment) | `core/src/stateDefaults.ts`, `core/src/archetypes.ts` `answersFor` | policyengine-us #9480 fixes the default rating area — but sending a real county is correct regardless of that fix, so only the DEFECT this sidesteps retires; the input itself should stay |
+| SSDI recipient modeled as on Medicare (Part B charged; no marketplace premium or credit) — no `WORKAROUND` comment | `core/src/evaluate.ts` `applyMedicare` | upstream models Medicare enrollment/entitlement for an SSDI beneficiary directly; no issue is filed for this because HotGap has not found any evidence PolicyEngine tracks Medicare entitlement at all |
 
-Check with `grep -rn WORKAROUND core/src`.
+**Upstream-only, nothing to retire here:** policyengine-us #9482 (Alaska and
+Hawaii's marketplace subsidy computed against the 48-contiguous-states
+poverty guideline instead of their own) is not a HotGap workaround. HotGap's
+own `fpl2025` table (`core/src/policyYear.ts`) already carries the correct
+Alaska and Hawaii guidelines for the coverage-gap and premium-wrap
+corrections above; the defect is in the marketplace premium and credit
+PolicyEngine itself returns, which HotGap does not and cannot correct from
+outside the API. Nothing in this repo changes when #9482 merges.
 
 HotGap now corrects six parent-Medicaid limits, New York's Essential Plan
-ceiling, and the Massachusetts TAFDC earnings formula. The existing coverage-gap
-and employer-premium corrections remain in `evaluate.ts`.
+ceiling, the Massachusetts TAFDC earnings formula, four states' $0-premium
+marketplace tiers, the filer flag, the default rating area, and Medicare
+enrollment for an SSDI recipient. The existing coverage-gap and
+employer-premium corrections remain in `evaluate.ts`.
 
 ## Parameter overrides
 
@@ -71,6 +88,18 @@ own earnings, then half the remaining earnings are counted. The calculation
 retains PolicyEngine's payment standard, non-financial eligibility, unearned
 income, dependent-care deduction and eligible-child allowance amounts.
 
+**Which regime this is:** Massachusetts publishes two. TAFDC disregards
+100% of earnings for a case's first six months, then applies the $200/month
+per earner plus 50%-of-the-rest rule modeled here for as long as the case
+stays open (106 CMR 704.281). Everything in this file is the SECOND,
+ongoing-recipient regime — the one a household actually lives on. DTA's own
+published examples are the first: the FY2026 TAFDC report's "$7,512 at
+$15,600 of earnings for a family of three" is a YEAR-ONE figure, six months
+at the full disregard and six at the ongoing 50% rule, where this formula
+gives $4,212 for the same family at the same pay. Neither number is wrong —
+they are different years of the same case — but a reader comparing HotGap
+against a DTA example has to know which year it is.
+
 The monthly grant is rounded down to whole dollars, with no cash payment below
 $10, following [106 CMR 704.260, .270, .281(B) and .500(A)](https://www.mass.gov/doc/106-cmr-704-transitional-cash-assistance-program-financial-eligibility/download).
 The [current payment-standard table](https://www.mass.gov/doc/table-of-need-payment-standards/download)
@@ -82,7 +111,7 @@ the ordinary income test.
 For two parents and three children in private housing, with one earner and no
 other income or childcare deduction:
 
-| Earnings | Upstream annual TANF | Local annual TANF, including September allowance |
+| Earnings | Upstream annual TANF | Local annual TAFDC cash, ongoing grant plus September |
 | --- | ---: | ---: |
 | $24,000 | $10,380 | $4,980 |
 | $25,000 | $10,130 | $4,476 |
@@ -91,9 +120,15 @@ other income or childcare deduction:
 | $30,000 | $0 | $1,980 |
 | $31,000 | $0 | $1,498 |
 
-The regular monthly benefit reaches break-even at $30,960 before the $10
-minimum-payment rule. The September supplement can remain beyond that point;
-annual TANF therefore does not end at the ordinary monthly break-even income.
+The total cash figure is unchanged by the 2026-09-15 ongoing/September
+split — only which field carries which part of it changed.
+`programs.tanf` (`maTafdcGrantParts`'s `ongoing`) reaches break-even at
+$30,960, before the $10 minimum-payment rule, and reports $0 from there on:
+so "TANF ends" now means that ongoing grant's end. The September
+supplement — $500 per eligible child, budgeted for one month even when the
+ordinary monthly grant is $0 (`septemberExtra`) — is counted separately, as
+cash under `otherBenefits`, and can survive past $30,960; it is not an
+ongoing program and does not appear as one.
 
 **Duplicate benefit:** the served model counts TAFDC twice: once through
 `tanf` and again through `household_state_benefits`. At $26,000 in the example,

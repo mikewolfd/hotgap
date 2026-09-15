@@ -255,6 +255,8 @@ function applyEmployerCoverage(points: CurvePoint[], a: HouseholdAnswers): Curve
  * alongside a plan from current work is a choice about which pays first, and
  * HotGap does not ask. Their employee contribution stands unchanged.
  */
+// WORKAROUND — remove when upstream models Medicare enrollment for SSDI
+// beneficiaries (no issue filed; PolicyEngine has no Medicare enrollment input).
 function applyMedicare(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
   if (a.ssdiMonthly <= 0 || a.hasEmployerCoverage) return points;
   return points.map((p) => {

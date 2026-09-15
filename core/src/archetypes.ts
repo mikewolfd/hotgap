@@ -28,6 +28,9 @@ export const DEFAULT_ARCHETYPE = "single-2";
  * the archetype reports no childcare expense, and inventing one would inflate
  * its dependent-care deduction.
  */
+// WORKAROUND (partly) — the county below sidesteps PolicyEngine's default
+// rating area, which is identical for CT/IL and CO/IN (policyengine-us #9480);
+// sending a real county stays right even after that is fixed.
 export function answersFor(state: string, a: Archetype): HouseholdAnswers {
   const defaults = stateDefaults(state);
   return {
