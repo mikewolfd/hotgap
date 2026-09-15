@@ -682,7 +682,13 @@ in total.
 | `employer_sponsored_insurance_premiums` never reaches MOOP | https://github.com/PolicyEngine/policyengine-us/issues/9473 |
 | Parent/caretaker Medicaid limits stale in six states | https://github.com/PolicyEngine/policyengine-us/issues/9474 |
 
-Pull requests are opened from the fork mikewolfd/policyengine-us for the
-four mechanical fixes (parameters for the Medicaid limits and the NY list;
-formula and list changes for Massachusetts). The coverage-gap and employer-
-premium items are modeling decisions left to the maintainers.
+Pull requests from the fork mikewolfd/policyengine-us:
+
+| PR | Fixes | Status |
+|---|---|---|
+| https://github.com/PolicyEngine/policyengine-us/pull/9475 — 2026 parent Medicaid limits in six frozen-standard states | #9474 | open; 22 targeted + ~1,800 surrounding YAML tests pass |
+| NY Basic Health Program end date | #9471 | not opened: `is_basic_health_program_eligible` is an annual variable that reads the January 1 parameter value, so a `2026-07-01: []` entry is inert for 2026 (the file's own comment already says so). The fix needs sub-annual handling in the variable, a maintainer decision; HotGap's local override models the post-July rule for the whole annual scenario. |
+| MA TAFDC formula; MA TAFDC double count | #9469, #9470 | in progress |
+
+The coverage-gap and employer-premium items are modeling decisions left
+to the maintainers (#9472, #9473).
