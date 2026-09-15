@@ -329,9 +329,13 @@ received), `--offline`, `--json`.
   bound read from the state's own page — a WORKAROUND (the table in
   `core/src/statePremiumWraps.ts`, applied by `evaluate.ts`'s
   `applyPremiumWrap`) until PolicyEngine models the wraps itself
-  (policyengine-us #9481). Only the $0 tier is modeled; each state's
-  reduced-premium sliding scale above that tier is left at PolicyEngine's
-  own (still slightly overstated) number.
+  (policyengine-us #9481). The reduced-premium tiers above the $0 band are
+  modeled where the state publishes them — Massachusetts' ConnectorCare
+  Plan Types 2B–3C to 400% FPL, California's scale to 165%, New Mexico's to
+  250% — so a band edge steps to the state's real next price. PolicyEngine
+  itself models ConnectorCare 2B but not 3A–3C; before this, Massachusetts
+  premiums above 200% FPL were overstated by up to $9,300 a year (external
+  validation, `docs/reviews/2026-09-15-external-validation.md`).
 - The childcare subsidy reaches PolicyEngine's net income in only 23 states.
   PolicyEngine models a CCDF child-care subsidy in every state, but only the
   states listed in `gov.household.household_state_benefits` flow into

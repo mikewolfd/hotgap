@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { STATE_CODES } from "./states.js";
-import { premiumWrapFor, STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
+import { STATE_PREMIUM_WRAPS, premiumTierAbove, premiumWrapFor } from "./statePremiumWraps.js";
 
 // A state exchange that does not publish on a .gov domain. Every other source
 // must be government. Listing them by name is the point: it is what stops a
@@ -126,5 +126,19 @@ describe("premiumWrapFor", () => {
   it("gives no wrap for a share that is not a number", () => {
     expect(premiumWrapFor("CT", Number.NaN)).toBeNull();
     expect(premiumWrapFor("CT", Number.POSITIVE_INFINITY)).toBeNull();
+  });
+});
+
+describe("reduced-premium tiers", () => {
+  it("are ordered, start above the $0 band, and price MA's ladder per enrollee", () => {
+    for (const w of STATE_PREMIUM_WRAPS) {
+      if (!w.tiers) continue;
+      let prev = w.zeroPremiumUpToFpl;
+      for (const t of w.tiers) { expect(t.upToFpl).toBeGreaterThan(prev); prev = t.upToFpl; expect(t.source.startsWith("https://")).toBe(true); }
+    }
+    expect(premiumTierAbove("MA", 2.12)?.tier.annualPremium(0, 2.12, 1)).toBe(103 * 12);
+    expect(premiumTierAbove("MA", 3.5)?.tier.annualPremium(0, 3.5, 2)).toBe(235 * 12 * 2);
+    expect(premiumTierAbove("MA", 4.5)).toBeNull();
+    expect(premiumTierAbove("CT", 1.8)).toBeNull();
   });
 });

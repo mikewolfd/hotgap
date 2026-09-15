@@ -607,6 +607,11 @@ describe("state premium wraps", () => {
     const ca = evaluateCurve(single("CA"), { year: "2026", currentEarnings: 24300, points: [enrollee(23000, 900), enrollee(24300, 1500)] }, "archetype");
     expect(ca.curve.points[1].medicalOOP).toBeGreaterThan(800);
     expect(ca.curve.points[1].medicalOOP).toBeLessThan(900);
+    // MA's ladder continues: 3A at 212% FPL is $103/month, 3C at 320% is $235.
+    const ma3a = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 33200, points: [enrollee(23000, 900), enrollee(33200, 3000)] }, "archetype");
+    expect(ma3a.curve.points[1].medicalOOP).toBe(1236);
+    const ma3c = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 50000, points: [enrollee(23000, 900), enrollee(50000, 6000)] }, "archetype");
+    expect(ma3c.curve.points[1].medicalOOP).toBe(2820);
     // A premium already under the cap is left alone.
     const cheap = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 25000, points: [enrollee(23000, 900), enrollee(25000, 300)] }, "archetype");
     expect(cheap.curve.points[1].medicalOOP).toBe(300);

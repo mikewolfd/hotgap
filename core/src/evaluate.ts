@@ -443,9 +443,9 @@ function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: 
     // state's own sliding scale does not have.
     const t = premiumTierAbove(a.state, share);
     if (!t) return p;
-    const cap = Math.round(t.nextTier!.annualPremium(magi, share, a.married ? 2 : 1));
+    const cap = Math.round(t.tier.annualPremium(magi, share, a.married ? 2 : 1));
     if (cap >= p.medicalOOP) return p;
-    wrap = t;
+    wrap = t.wrap;
     return { ...p, netIncome: p.netIncome + p.medicalOOP - cap, medicalOOP: cap };
   });
   return { points: out, wrap };
