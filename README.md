@@ -14,10 +14,10 @@ would otherwise charge them for. The premium tax credit is never subtracted
 twice — an earlier version of this line double-counted it; see
 [the methodology validation](docs/reviews/2026-09-14-methodology-validation.md)
 for how that was found and fixed. Rationed programs (Head Start, a housing
-voucher, employer coverage) default to "off." From the curve, HotGap derives
-**the leap** — the raise a family must clear in one move to get past the
-worst rough zone and earn safely again — and **reach** — where that leap
-lands among real households' incomes.
+voucher, a childcare subsidy, employer coverage) default to "off." From the
+curve, HotGap derives **the leap** — the raise a family must clear in one move
+to get past the worst rough zone and earn safely again — and **reach** — where
+that leap lands among real households' incomes.
 
 ## What's in the repo
 
@@ -140,6 +140,23 @@ remainder. Hours worked (`hoursPerWeek`) are sent when given, because two
 things elsewhere in this file scale by them: Massachusetts' TAFDC
 dependent-care deduction, and the 30-hour employer-coverage floor below.
 
+**The childcare subsidy** (`getsChildcareSubsidy`, `--childcare-subsidy`) is a
+take-up toggle like Head Start, off by default: CCDF reaches roughly one in
+six eligible children and most states run a waiting list. Turning it on also
+changes what PolicyEngine is asked. `childcare_expenses` is NOT an input
+upstream — it is defined as `pre_subsidy_childcare_expenses` minus the
+subsidy — so forcing it, which every HotGap request used to do, left the
+pre-subsidy figure at $0 and every state's CCDF formula with no provider
+charge to reimburse. That, not a missing variable, is why a July probe found
+the subsidy empty in every state. With the toggle on, the household's bill is
+sent as `spm_unit_pre_subsidy_childcare_expenses`, `childcare_expenses` is
+left for PolicyEngine to compute (so SNAP's dependent-care deduction and the
+child and dependent care credit run on the net bill), and full-day, full-week
+attendance is assumed for each child — a stated assumption that changes the
+subsidy's size but does not gate it. The value arrives as
+`programs.childcare`. Verified live 2026-09-15: a Colorado single parent with
+a 3-year-old and a $9,600 bill gets $0 the old way and $9,450 the new one.
+
 **Four inputs beyond the household's basics:** `ssdiMonthly`,
 `childSupportMonthly`, `unemploymentMonthly` — monthly dollars, all optional
 (default 0) — and `hoursPerWeek`, hours a week actually worked, optional
@@ -246,6 +263,7 @@ All under `core/data/`:
     npm run hotgap -- curve --state TX --married --kids 1,4,9 --earnings 42000 --offline                 # committed archetype curve, no network
     npm run hotgap -- curve --state CA --age 45 --disabled --ssdi 1500 --child-support 400 --earnings 15000   # live call; modeled as already on Medicare, splices the marketplace-vs-none check at the 2026 SGA ($20,280)
     npm run hotgap -- curve --state CA --married --kids 4,8 --earnings 60000 --employer-coverage --hours 40   # live call; MEPS-IC employee premium replaces the marketplace charge; --hours must clear the 30-hour floor (26 U.S.C. 4980H(c)(4)) for a contribution to be charged
+    npm run hotgap -- curve --state CT --kids 3 --childcare 1416 --childcare-subsidy --hours 40 --earnings 25000   # live call; the CCDF childcare subsidy, added to net income in the 28 states PolicyEngine leaves it out of
     npm run hotgap -- curve ... --json                                                                   # full HouseholdEvaluation
     npm run hotgap -- summary --state CA                                                                 # weekly sweep metrics
 
@@ -254,13 +272,14 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
 `--spouse-disabled`, `--rent`, `--childcare`, `--earnings` or `--pay` /
 `--unit` / `--hours`, `--spouse-earnings`, `--ssdi` / `--child-support` /
 `--unemployment` (monthly, other income), `--head-start` / `--housing` /
-`--employer-coverage` (take-up, default: not received), `--offline`,
-`--json`.
+`--childcare-subsidy` / `--employer-coverage` (take-up, default: not
+received), `--offline`, `--json`.
 
 ## Honesty
 
 - Archetype (`--offline`) curves still ignore childcare, age, disability,
-  every take-up toggle (Head Start, housing, employer coverage), and SSDI —
+  every take-up toggle (Head Start, housing, the childcare subsidy, employer
+  coverage), and SSDI —
   they're the honest baseline for a household shaped like this in this
   state, not this family's own numbers. Rent and county are no longer part
   of that ignore list: since 2026-09-15 every archetype uses the state's
@@ -313,6 +332,23 @@ Flags: `--state` / `--zip` / `--county`, `--age`, `--married` /
   (policyengine-us #9481). Only the $0 tier is modeled; each state's
   reduced-premium sliding scale above that tier is left at PolicyEngine's
   own (still slightly overstated) number.
+- The childcare subsidy reaches PolicyEngine's net income in only 23 states.
+  PolicyEngine models a CCDF child-care subsidy in every state, but only the
+  states listed in `gov.household.household_state_benefits` flow into
+  `household_net_income`; in the rest the money is computed and dropped, and
+  the household is left looking POORER for holding it, because the
+  net-of-subsidy childcare bill shrinks SNAP's dependent-care deduction and
+  the CDCC while the benefit never arrives (Connecticut, single parent with a
+  3-year-old, $25,000 of pay: $34,121 against $38,102 with the subsidy forced
+  off, for an $8,850 benefit). HotGap adds it back in those states — a
+  WORKAROUND (`applyChildcareSubsidy` in `core/src/evaluate.ts`, with the
+  table in `core/src/stateChildcareSubsidies.ts`) until policyengine-us #9405
+  routes every state's subsidy into household benefits. Four of the 38 states
+  whose variable is deployed today still return $0 for a plainly eligible
+  household — California, Massachusetts, Maryland and Nebraska — and HotGap
+  reports no subsidy there rather than inventing one; see
+  [local corrections and evidence](docs/upstream/2026-09-15-local-corrections.md)
+  for each cause.
 - Alaska and Hawaii's marketplace subsidies are computed by PolicyEngine
   against the 48-contiguous-states poverty guideline, not their own higher
   guidelines (verified live 2026-09-15) — filed upstream as policyengine-us

@@ -20,6 +20,7 @@ real. Each row names what removes it.
 | State $0-premium marketplace tiers (CT, MA, NM, CA) modeled locally | `core/src/statePremiumWraps.ts`, `core/src/evaluate.ts` `applyPremiumWrap` | policyengine-us #9481 models the state wraps |
 | `tax_unit_is_filer: true` sent on every request (no `WORKAROUND` comment — see note above) | `core/src/translate.ts` | policyengine-us #9479 derives filer status from APTC eligibility rather than the ordinary filing thresholds |
 | A real county sent for every archetype and every resolved ZIP/county (no `WORKAROUND` comment) | `core/src/stateDefaults.ts`, `core/src/archetypes.ts` `answersFor` | policyengine-us #9480 fixes the default rating area — but sending a real county is correct regardless of that fix, so only the DEFECT this sidesteps retires; the input itself should stay |
+| State child-care subsidy added to net income in the states upstream omits | `core/src/evaluate.ts` `applyChildcareSubsidy`, `core/src/stateChildcareSubsidies.ts` | policyengine-us #9405 adds every `child_care_subsidy_programs` entry to `gov.household.household_state_benefits` (or replaces the per-state entries with the aggregate) |
 | SSDI recipient modeled as on Medicare (Part B charged; no marketplace premium or credit) — no `WORKAROUND` comment | `core/src/evaluate.ts` `applyMedicare` | upstream models Medicare enrollment/entitlement for an SSDI beneficiary directly; no issue is filed for this because HotGap has not found any evidence PolicyEngine tracks Medicare entitlement at all |
 
 **Upstream-only, nothing to retire here:** policyengine-us #9482 (Alaska and
@@ -33,9 +34,84 @@ outside the API. Nothing in this repo changes when #9482 merges.
 
 HotGap now corrects six parent-Medicaid limits, New York's Essential Plan
 ceiling, the Massachusetts TAFDC earnings formula, four states' $0-premium
-marketplace tiers, the filer flag, the default rating area, and Medicare
-enrollment for an SSDI recipient. The existing coverage-gap and
-employer-premium corrections remain in `evaluate.ts`.
+marketplace tiers, the filer flag, the default rating area, Medicare
+enrollment for an SSDI recipient, and the child-care subsidy's missing path
+into net income. The existing coverage-gap and employer-premium corrections
+remain in `evaluate.ts`.
+
+## The child-care subsidy (CCDF)
+
+Three separate things, only one of which is a HotGap workaround.
+
+**1. Our own payload was the reason the July probe found $0.**
+`childcare_expenses` is a DERIVED variable — upstream defines it as
+`pre_subsidy_childcare_expenses - child_care_subsidies`. HotGap sent the
+household's bill as `childcare_expenses`, which forces the derived value and
+leaves `spm_unit_pre_subsidy_childcare_expenses` at its $0 default, so every
+state's CCDF formula had no provider charge to reimburse. Sending the same
+bill as the pre-subsidy figure instead is the whole fix; nothing upstream has
+to change. Colorado, single parent, one 3-year-old, $9,600/yr, four earnings
+points: $0/$0/$0/$0 as `childcare_expenses`, $9,450/$8,913/$7,513/$0 as
+`spm_unit_pre_subsidy_childcare_expenses`
+(`evidence/childcare-co-legacy-childcare-expenses.json` vs
+`evidence/childcare-co-full.json`).
+
+**2. The workaround: policyengine-us #9405.** `child_care_subsidy_programs`
+lists a subsidy variable for every state, but only the states named in
+`gov.household.household_state_benefits` reach `household_benefits` and
+therefore `household_net_income`. In the rest the money is computed and
+dropped — and the household is left looking POORER for holding the subsidy,
+because the net-of-subsidy `childcare_expenses` shrinks SNAP's dependent-care
+deduction and the CDCC while the benefit never arrives. Connecticut, the same
+household at $25,000: net income $34,121 with the subsidy modeled, $38,102
+with `ct_child_care_subsidies` forced to 0, for an $8,850 benefit
+(`evidence/childcare-ct-full.json`, `evidence/childcare-ct-forced-zero.json`).
+Colorado's identical household moves the other way — its
+`household_state_benefits` equals the subsidy to the dollar — which is why
+`applyChildcareSubsidy` adds nothing there.
+
+**3. Two lists, read from the DEPLOYED model, not the repository.** On
+2026-09-15 `https://api.policyengine.org/us/metadata` served policyengine-us
+1.764.6, which has 38 of the 51 state variables and 18 of them in the 2026
+`household_state_benefits` block; `main` has 51 and 23. `main`'s 23 is what
+`core/src/stateChildcareSubsidies.ts` encodes, because the five states in it
+that the deployed model lacks (DC, NC, NY, OH, OK) have no subsidy variable
+deployed at all — their subsidy is $0 today and the branch is a no-op, and
+the day the API ships `main` they gain the variable and the list entry in the
+same release. Encoding the deployed 18 would have been wrong on that day in
+the expensive direction: the money counted twice. The live contract test
+checks the table the only way that is not circular — it forces each state's
+variable to 0 and watches `household_state_benefits` and net income move.
+
+**Upstream defects found while probing, not filed and not worked around.**
+Each returns $0 for a household that plainly qualifies, so HotGap simply
+reports no subsidy there:
+
+- **California**: the deployed `ca_calworks_child_care_time_coefficient` reads
+  CA-specific month-period attendance inputs
+  (`ca_calworks_child_care_weeks_per_month`, `_days_per_month`) that default
+  to 0, so the payment standard is multiplied by zero. `main` has already
+  refactored it onto the shared `childcare_days_per_week` /
+  `childcare_attending_days_per_month` inputs, so California starts working
+  when the API catches up. Confirmed by supplying the CA-only inputs:
+  $0 → $9,600 (`evidence/childcare-ca-diag2.json`,
+  `evidence/childcare-ca-weeks-per-month.json`). HotGap does NOT send them —
+  they are a modeling artifact, not a household fact.
+- **Massachusetts**: `ma_ccfa_care_provider_type` defaults to
+  `CENTER_BASED_CARE_SCHOOL_AGE`, which pays a zero rate for a preschooler,
+  although `ma_ccfa_child_age_category` computes the child's age category
+  correctly from `age`. Setting the provider type to
+  `CENTER_BASED_CARE_EARLY_EDUCATION` gives $9,600/$9,427/$8,734/$7,811
+  (`evidence/childcare-ma-provider.json`). HotGap does not send it: which kind
+  of provider a family uses is a fact it never asks for.
+- **Maryland and Nebraska** also return $0 for this household; the cause was
+  not chased. The upstream issue's own comment reports MD defaulting to a
+  provider type of `NONE`.
+- **Vermont** pays $22,828 against a $9,600 bill. This is deliberate and
+  cited: `vt_ccfap` models the post-2023-12-16 regime, where Vermont pays the
+  state rate regardless of the provider's charge. Left uncapped — a
+  documented rule with a citation is not a defect to patch from outside.
+
 
 ## Parameter overrides
 
@@ -196,6 +272,11 @@ Recorded request/response pairs in `evidence/`:
 - `local-ma-array.*`: the rejected array-input probe.
 - `local-ma-double-count.*` and `local-ma-tanf-zero.*`: the duplicate benefit
   and the counterfactual that leaves it in state benefits.
+- `childcare-*.json`: 22 request/response pairs for the child-care subsidy,
+  plus `childcare-51-state-scan.json`, one request per deployed state with the
+  same household (single parent, 3-year-old, state's most populous county,
+  $9,600/yr pre-subsidy bill, full-day attendance) — the measurement behind
+  "34 of the 38 deployed states return a subsidy, four return $0".
 
 Regression tests cover dollar-table conversion, household size, two earners,
 unearned income, monthly rounding, September allowances, cache invalidation,
