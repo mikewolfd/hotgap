@@ -1,5 +1,5 @@
 import { readData } from "./data.js";
-import { pickArchetypeId } from "./fallback.js";
+import { pickArchetypeId, type ArchetypeMatch } from "./fallback.js";
 import { reachPercentile, type ReachLadder } from "./reach.js";
 
 // Shape of the committed data/reach.json (see scripts/build-reach.mjs and
@@ -52,15 +52,15 @@ export function reachForArchetype(state: string, archetypeId: string, income: nu
 
 // Maps household answers -> the reach archetype the SAME way the archetype
 // fallback picker does (pickArchetypeId), so the two can never silently
-// desync on how kid count clamps or married/single maps to an archetype id.
+// desync on how kid count clamps, how married/single maps to an archetype id,
+// or which side of the one/two-earner split a household falls.
 //
 // `householdEarnings` is householder + spouse employment earnings -- the two
 // adults the tool models -- NOT the whole household's income.
 export function reachForHousehold(
   state: string,
-  married: boolean,
-  kidCount: number,
+  household: ArchetypeMatch,
   householdEarnings: number,
 ): number | null {
-  return reachForArchetype(state, pickArchetypeId(married, kidCount), householdEarnings);
+  return reachForArchetype(state, pickArchetypeId(household), householdEarnings);
 }

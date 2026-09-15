@@ -6,6 +6,7 @@ import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js
 import { parsePEResponse } from "./parse.js";
 import { validateAnswers } from "./validate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
+import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
 import type { CurvePoint, CurveResponse, HouseholdAnswers, ProgramId } from "./types.js";
 
@@ -563,11 +564,28 @@ describe("reach guard looks at the household, not the householder alone", () => 
 });
 
 describe("reach uses householder-plus-spouse earnings", () => {
+  const couple = (spouseAnnualEarnings: number) =>
+    answersWith({ married: true, spouseAge: 30, annualEarnings: 30000, spouseAnnualEarnings });
+  const points = [pt(0, 20000), pt(30000, 40000)];
+
   it("places a two-earner household by the pair's combined pay", () => {
-    const points = [pt(0, 20000), pt(30000, 40000)];
-    const solo = evaluateOn(answersWith({ married: true, spouseAge: 30, annualEarnings: 30000 }), points, 30000);
-    const pair = evaluateOn(answersWith({ married: true, spouseAge: 30, annualEarnings: 30000, spouseAnnualEarnings: 45000 }), points, 30000);
-    expect(pair.reach.current!).toBeGreaterThan(solo.reach.current!);
+    // Both are two-earner couples, so both are measured against the same
+    // ladder and the only thing that moves is the money. Comparing a one-earner
+    // couple with a two-earner one would change the yardstick as well as the
+    // income, and would be a test of the archetype split, not of the sum.
+    const low = evaluateOn(couple(5000), points, 30000);
+    const high = evaluateOn(couple(45000), points, 30000);
+    expect(high.reach.current!).toBeGreaterThan(low.reach.current!);
+    expect(high.reach.current).toBe(reachForArchetype("CA", "married-dual-1", 75000));
+  });
+
+  it("measures a one-earner couple against one-earner couples, not against every couple", () => {
+    // The two curves model different households — one pay with a parent at
+    // home, or two pays and a childcare bill — so they are read off different
+    // ladders. A couple living on one wage compared against every couple, most
+    // of them two-earner, reads as poorer than it is against its own kind.
+    expect(evaluateOn(couple(0), points, 30000).reach.current)
+      .toBe(reachForArchetype("CA", "married-1", 30000));
   });
 });
 

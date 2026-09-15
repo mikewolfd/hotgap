@@ -584,7 +584,7 @@ export function evaluateCurve(
   // Offline points describe the swept archetype, including its spouse's $0
   // pay. Never apply the caller's personal inputs to that baseline.
   const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
-    ARCHETYPES.find((a) => a.id === pickArchetypeId(answers.married, answers.childAges.length))!);
+    ARCHETYPES.find((a) => a.id === pickArchetypeId(answers))!);
   const tafdc = correctMaTafdc(modeledAnswers, raw);
   // The child-care subsidy correction is a property of the STATE and the
   // curve's own numbers, so it runs on both paths — a no-op on the archetype
@@ -644,7 +644,7 @@ export function evaluateCurve(
   const reachAt = (income: number | null): number | null => {
     if (income === null) return null;
     const household = income + answers.spouseAnnualEarnings;
-    return household > 0 ? reachForHousehold(answers.state, answers.married, answers.childAges.length, household) : null;
+    return household > 0 ? reachForHousehold(answers.state, answers, household) : null;
   };
 
   return {
@@ -675,7 +675,7 @@ export function evaluateCurve(
  * last sampled point so no verdict claims anything past the data.
  */
 export function evaluateOffline(answers: HouseholdAnswers): HouseholdEvaluation | null {
-  const points = loadArchetypeCurve(answers.state, answers.married, answers.childAges.length);
+  const points = loadArchetypeCurve(answers.state, answers);
   if (!points) return null;
   const curve: CurveResponse = {
     year: YEAR,

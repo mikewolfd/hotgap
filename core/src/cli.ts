@@ -316,7 +316,7 @@ function summaryReport(f: Flags): number {
     console.log(`note: PolicyEngine models no child-care subsidy in ${blind.join(", ")}, so the childcare cliff is missing there — not a kinder rule.`);
   }
   const cols = (id: string, loss: string, leap: string, exit: string, count: string, deferred: string, width: string) =>
-    `  ${id.padEnd(11)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${deferred.padStart(10)}${width.padStart(14)}`;
+    `  ${id.padEnd(15)}${loss.padStart(13)}${leap.padStart(10)}${exit.padStart(11)}${count.padStart(8)}${deferred.padStart(10)}${width.padStart(14)}`;
   for (const [state, rows] of Object.entries(picked)) {
     console.log(`\n${state}`);
     console.log(cols("archetype", "biggest loss", "leap", "safe exit", "cliffs", "deferred", "danger width"));

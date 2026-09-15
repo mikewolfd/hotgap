@@ -22,7 +22,7 @@ describe("stateMetrics on the committed CA fixture", () => {
   // archetype: its $22,089 Head Start loss at $30k is deferred to the next
   // program year, so the biggest immediate loss is the 400%-FPL subsidy end
   // ($3,868 at $84k) and the leap is that zone's width. safeExit is unchanged.
-  // This fixture isn't one of the 8 archetypes — it only pins the math.
+  // This fixture isn't one of the archetypes — it only pins the math.
   it("computes biggestLoss, cliffCount, dangerWidth, safeExit, and leap", () => {
     const m = stateMetrics(evaluated(fixturePoints));
     expect(m.biggestLoss).toBe(3868);

@@ -15,6 +15,27 @@
 // We therefore sum PERNP for RELSHIPP 20 (reference person) and 21/23 (spouse)
 // only. See docs/reviews/2026-09-14-methodology-validation.md, Appendix D8.
 //
+// Why married couples split one-earner from two-earner: the archetypes they are
+// a yardstick FOR are now two different households. `married-N` models a couple
+// living on one pay with a parent at home; `married-dual-N` models both parents
+// working. Pooling every couple into one ladder, as this builder used to, meant
+// the one-pay archetype's reach was read off a distribution that is mostly
+// two-pay households — a leap judged against a ladder its household could not
+// be on. The split is on the two adults' OWN PERNP: a couple is two-earner when
+// BOTH the reference person and the spouse report positive earnings.
+//   Symmetric on purpose. Which of two adults is "the householder" is whoever
+// the respondent named first, so a rule keyed on the spouse's pay alone would
+// put roughly half of all one-earner couples — the half who named the
+// non-earner first — in the two-earner ladder. "Both earn" cannot be flipped by
+// that label. It does differ from the rule pickArchetypeId uses on a live
+// household (spouse's pay above zero), and it has to: there the householder's
+// own pay IS the axis and starts at $0, so it cannot be a membership test.
+//   PERNP is a PAY test, not an activity test. A spouse whose self-employment
+// year lost money reads as not earning, so a few genuinely two-earner couples
+// sit in the one-earner ladder. WKHP would test activity directly; PERNP is
+// what this builder already reads, and the archetype's second earner is defined
+// by pay ($15,080), so pay is the matching concept.
+//
 // Why a working-age householder: HHT/NOC are purely structural. "NOC = 0" is
 // true of an 80-year-old couple and "living alone" is true at any age, so 23%–46%
 // of the childless cells were 65+ householders and p25 was structurally $0 in
@@ -85,8 +106,27 @@ const STATES = {
 // AK 4,016 / DC 3,914 / ND 4,345 — D6). For these we also build from the 5-Year
 // PUMS and fall back to it per cell when the 1-Year cell fails the MOE test.
 
-const ARCHETYPE_IDS = ["single-0", "single-1", "single-2", "single-3", "married-0", "married-1", "married-2", "married-3"];
+// Must stay in step with ARCHETYPES in core/src/archetypes.ts; the reach lookup
+// test checks every state x archetype has a cell here, published or suppressed.
+const ARCHETYPE_IDS = [
+  "single-0", "single-1", "single-2", "single-3",
+  "married-0", "married-1", "married-2", "married-3",
+  "married-dual-1", "married-dual-2", "married-dual-3",
+];
 const MAX_KIDS = 3; // NOC >= 3 maps to the 3-kid bucket; 4+ own children used to match nothing at all (D2)
+
+/**
+ * The archetype a PUMS household belongs to. `married-0` is deliberately NOT
+ * split by earner count: there is no married-dual-0 archetype to be a yardstick
+ * for — what the dual rows add is the childcare dimension, and a childless
+ * couple has none — so pickArchetypeId sends every childless couple to
+ * married-0, and this bucket has to hold every one of them to match.
+ */
+function bucketFor(married, kids, twoEarners) {
+  if (!married) return `single-${kids}`;
+  if (kids === 0) return "married-0";
+  return twoEarners ? `married-dual-${kids}` : `married-${kids}`;
+}
 
 // ---------------------------------------------------------------- CSV parsing
 
@@ -186,8 +226,10 @@ function csvEntry(zipPath, kind) {
  * One state × one vintage → { buckets, adjinc }.
  *
  * Housing pass: keep occupied units with a working-age householder, remember
- * the main + 80 replicate weights and the archetype. Person pass: add up the
- * reference person's and spouse's ADJINC-adjusted PERNP.
+ * the main + 80 replicate weights and the household's shape. Person pass: add
+ * up the reference person's and spouse's ADJINC-adjusted PERNP, keeping the two
+ * apart so the couples can be split one-earner from two-earner. Bucketing waits
+ * for that pass, because the earner count is not on the housing record.
  */
 async function readState(st, fiveYear) {
   const [hZip, pZip] = await Promise.all([fetchZip("h", st, fiveYear), fetchZip("p", st, fiveYear)]);
@@ -218,13 +260,15 @@ async function readState(st, fiveYear) {
 
     const adjinc = num(f[hi.adjinc]) / 1e6; // 6 implied decimals (D1)
     if (adjinc > 0) adjincSeen.add(num(f[hi.adjinc]));
-    const id = `${hht === 1 ? "married" : "single"}-${Math.min(num(f[hi.noc]), MAX_KIDS)}`;
 
     const rep = new Int32Array(REPS);
     for (let r = 0; r < REPS; r++) rep[r] = num(f[hi.rep[r]]);
-    const rec = { w, rep, earn: 0, adj: adjinc || 1 };
+    const rec = {
+      w, rep, adj: adjinc || 1,
+      married: hht === 1, kids: Math.min(num(f[hi.noc]), MAX_KIDS),
+      ownEarn: 0, spouseEarn: 0, earn: 0,
+    };
     bySerial.set(f[hi.serial], rec);
-    buckets[id].push(rec);
   });
 
   let pi = {};
@@ -239,14 +283,20 @@ async function readState(st, fiveYear) {
     if (rel !== 20 && rel !== 21 && rel !== 23) return;
     const rec = bySerial.get(f[pi.serial]);
     if (!rec) return;
-    rec.earn += num(f[pi.pernp]) * rec.adj; // PERNP keeps self-employment losses
+    // PERNP keeps self-employment losses. Kept per adult, not only summed: the
+    // sum cannot say whether one adult earned it all or two split it.
+    if (rel === 20) rec.ownEarn += num(f[pi.pernp]) * rec.adj;
+    else rec.spouseEarn += num(f[pi.pernp]) * rec.adj;
   });
 
-  // Floor the SUM, not each component: a spouse's self-employment loss really
-  // does reduce what the couple took home, and PERNP ranges to −$10,000. Only a
-  // household whose combined earnings are negative is clamped, to 0 — the
-  // reach ladder is a "how much do you bring in" axis with no negative rung.
-  for (const rec of bySerial.values()) rec.earn = Math.max(0, rec.earn);
+  for (const rec of bySerial.values()) {
+    // Floor the SUM, not each component: a spouse's self-employment loss really
+    // does reduce what the couple took home, and PERNP ranges to −$10,000. Only
+    // a household whose combined earnings are negative is clamped, to 0 — the
+    // reach ladder is a "how much do you bring in" axis with no negative rung.
+    rec.earn = Math.max(0, rec.ownEarn + rec.spouseEarn);
+    buckets[bucketFor(rec.married, rec.kids, rec.ownEarn > 0 && rec.spouseEarn > 0)].push(rec);
+  }
 
   return { buckets, adjinc: [...adjincSeen].sort((a, b) => a - b) };
 }
@@ -464,7 +514,7 @@ for (const st of stateList) {
 
   states[st] = Object.fromEntries(ARCHETYPE_IDS.map((id) => [id, passes(cells[id]) ? cells[id] : null]));
   const kept = ARCHETYPE_IDS.filter((id) => states[st][id]).length;
-  process.stderr.write(`  ${st}  ${kept}/8 cells${swapped ? `, ${swapped} from the 5-year` : ""}  ${((Date.now() - t0) / 1000).toFixed(1)}s\n`);
+  process.stderr.write(`  ${st}  ${kept}/${ARCHETYPE_IDS.length} cells${swapped ? `, ${swapped} from the 5-year` : ""}  ${((Date.now() - t0) / 1000).toFixed(1)}s\n`);
 }
 
 const body = {
@@ -482,9 +532,13 @@ const body = {
   earningsConcept: "householder + spouse PERNP, ADJINC-adjusted, floored at 0",
   householderAge: [18, 64],
   archetypes: {
-    married: "HHT = 1 (married-couple household).",
+    married: "HHT = 1 (married-couple household), with one earner (married-N) or two (married-dual-N).",
     single: "any other household type with a householder aged 18-64, including nonfamily households not living alone (HHT 5/7) and family households with no own children (HHT 2/3, NOC 0).",
     kids: `NOC (own children under 18); NOC >= ${MAX_KIDS} maps to the ${MAX_KIDS}-kid bucket.`,
+    earners:
+      "A married couple is two-earner (married-dual-N) when BOTH the reference person and the spouse report positive own PERNP, and one-earner (married-N) otherwise — which includes a couple where neither earns. " +
+      "The test is on both adults rather than on the spouse alone because which of the two Census calls the householder is whoever the respondent named first, and a spouse-only test would put about half of all one-earner couples in the two-earner ladder. " +
+      "married-0 is NOT split: there is no married-dual-0 archetype for it to be a yardstick for, so it holds every childless couple, one earner or two.",
   },
   suppression:
     `A cell is null unless it clears both tests. Reliability: the 90% margin of error of its median, computed by ` +
@@ -508,6 +562,6 @@ writeFileSync(outPath, JSON.stringify({ generated: unchanged ? priorStamp : new 
 const cellCount = Object.values(states).flatMap((s) => Object.values(s)).filter(Boolean).length;
 const fromFive = Object.values(states).flatMap((s) => Object.values(s)).filter((c) => c && c.vintage === VINTAGE_5YR).length;
 console.log(
-  `wrote ${outPath.pathname} — ${Object.keys(states).length} states, ${cellCount}/${Object.keys(states).length * 8} cells published ` +
+  `wrote ${outPath.pathname} — ${Object.keys(states).length} states, ${cellCount}/${Object.keys(states).length * ARCHETYPE_IDS.length} cells published ` +
   `(${fromFive} from the 5-year PUMS), 2026 dollars, in ${((Date.now() - started) / 1000 / 60).toFixed(1)} min`,
 );
