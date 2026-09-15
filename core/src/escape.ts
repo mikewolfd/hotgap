@@ -71,7 +71,19 @@ export function escapeAnalysis(points: CurvePoint[], analysis?: CurveAnalysis): 
 
   const programEnds: Partial<Record<ProgramId, number>> = {};
   for (const id of PROGRAM_IDS) {
-    const at = ends((p) => p.programs[id] ?? 0);
+    // The child tax credit is reported on its TOTAL, not on the refundable
+    // part `programs.ctc` carries. For most earners the refundable amount
+    // reaches zero where a rising tax bill absorbs the credit — the point the
+    // credit turns NONREFUNDABLE, not the point it is lost. Reporting that as
+    // "ctc ends at $44,000" told a family they had lost a $6,600 credit they
+    // still had in full. The refundable series keeps its own job: it is what
+    // sits in netIncome, so it is what a cliff's `credits` share and
+    // `programsLost` are built from. A curve fetched before `ctc` was
+    // requested falls back to the refundable series, which is all it knows.
+    const value = id === "ctc"
+      ? (p: CurvePoint) => p.totalCtc ?? p.programs.ctc ?? 0
+      : (p: CurvePoint) => p.programs[id] ?? 0;
+    const at = ends(value);
     if (at !== null) programEnds[id] = at;
   }
 

@@ -46,6 +46,14 @@ export function validateAnswers(input: unknown): Validation {
   if (ssdiMonthly === null) return { ok: false, detail: "ssdiMonthly" };
   if (childSupportMonthly === null) return { ok: false, detail: "childSupportMonthly" };
   if (unemploymentMonthly === null) return { ok: false, detail: "unemploymentMonthly" };
+  // Hours a week actually worked. Optional — most callers never ask — but a
+  // present value must be a whole workable week: PolicyEngine's Massachusetts
+  // dependent-care deduction scales by it, so 0 and 100 are both wrong answers
+  // rather than harmless ones.
+  if (a.hoursPerWeek !== undefined && a.hoursPerWeek !== null &&
+      !(typeof a.hoursPerWeek === "number" && Number.isInteger(a.hoursPerWeek) && a.hoursPerWeek >= 1 && a.hoursPerWeek <= 80)) {
+    return { ok: false, detail: "hoursPerWeek" };
+  }
 
   // A county FIPS starts with its state's two digits; a county in another
   // state would put PolicyEngine's ACA rating area in the wrong state.
@@ -74,6 +82,7 @@ export function validateAnswers(input: unknown): Validation {
       monthlyChildcare: a.monthlyChildcare === null ? null : clamp(a.monthlyChildcare as number, 0, 8000),
       annualEarnings: clamp(a.annualEarnings as number, 0, 500000),
       spouseAnnualEarnings: a.married ? clamp(a.spouseAnnualEarnings as number, 0, 500000) : 0,
+      hoursPerWeek: (a.hoursPerWeek as number | null | undefined) ?? null,
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
       hasEmployerCoverage: a.hasEmployerCoverage === true,

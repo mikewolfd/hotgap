@@ -113,6 +113,41 @@ describe("parsePEResponse", () => {
     expect(withBenefits(tracked.map((c) => c - 1e-9)).every((p) => p.otherBenefits === 0)).toBe(true);
   });
 
+  it("computes stateCredits as the refundable credits the federal EITC and CTC do not explain", () => {
+    // Verified live 2026-09-15 against a Colorado single parent of three: at
+    // $25,000, household_refundable_tax_credits $21,648 less eitc $7,997 and
+    // refundable_ctc $3,375 is $10,276 of Colorado credits. The shape is
+    // reproduced here on the committed CA fixture so the test needs no network.
+    const base = parsePEResponse(fixture, 101);
+    const withState = (extra: number) => {
+      const body = JSON.parse(JSON.stringify(fixture));
+      body.result.households["your household"].household_refundable_tax_credits = {
+        "2026": base.map((p) => p.programs.eitc + p.programs.ctc + extra),
+      };
+      return parsePEResponse(body, 101);
+    };
+    expect(withState(10_276).every((p) => Math.abs(p.stateCredits - 10_276) < 1e-6)).toBe(true);
+    // Float noise around a difference that is zero in most states floors at 0
+    // rather than becoming a negative credit.
+    expect(withState(-1e-9).every((p) => p.stateCredits === 0)).toBe(true);
+    // Absent from the July fixture, which never asked for the variable.
+    expect(fixture.result.households["your household"].household_refundable_tax_credits).toBeUndefined();
+    expect(base.every((p) => p.stateCredits === 0)).toBe(true);
+  });
+
+  it("keeps the whole child tax credit apart from the refundable part, and falls back to it", () => {
+    const body = JSON.parse(JSON.stringify(fixture));
+    const refundable = body.result.tax_units["your tax unit"].refundable_ctc["2026"] as number[];
+    body.result.tax_units["your tax unit"].ctc = { "2026": refundable.map(() => 6600) };
+    const pts = parsePEResponse(body, 101);
+    expect(pts.every((p) => p.totalCtc === 6600)).toBe(true);
+    expect(pts[60].programs.ctc).toBeLessThan(6600);
+    // The July fixture predates the request; the refundable series is all it knows.
+    expect(fixture.result.tax_units["your tax unit"].ctc).toBeUndefined();
+    const old = parsePEResponse(fixture, 101);
+    expect(old.every((p) => p.totalCtc === p.programs.ctc)).toBe(true);
+  });
+
   it("throws PEParseError on an error-status body", () => {
     expect(() => parsePEResponse({ status: "error", message: "nope" }, 101)).toThrow(PEParseError);
   });

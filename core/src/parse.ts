@@ -108,6 +108,41 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
   const trackedCash = (i: number) =>
     CASH_PROGRAMS.reduce((sum, id) => sum + (programSeries.get(id)?.[i] ?? 0), 0);
 
+  // Refundable STATE credits — Colorado's child tax credit and family
+  // affordability credit, California's CalEITC, and their kin. They sit inside
+  // household_refundable_tax_credits, which sits inside household_net_income,
+  // so they were real money falling out of a cliff with nothing to explain it:
+  // before 2026-09-15 every dollar of them landed in the breakdown's
+  // unattributed `other`.
+  //
+  // Verified live 2026-09-15 on a Colorado single parent of three (ages 3, 7,
+  // 10): at $25,000, household_refundable_tax_credits $21,648 less eitc $7,997
+  // and refundable_ctc $3,375 leaves $10,276, and the federal pair matches
+  // PolicyEngine's own income_tax_refundable_credits ($11,372) to the cent —
+  // so the remainder is exactly the state's share. It drops $1,215 over the
+  // single step from $26,000 to $27,000.
+  //
+  // The remainder is NOT the premium tax credit and NOT a benefit, so it
+  // double-counts nothing: at $100,000 the same household's PTC is $6,450
+  // while the remainder is $25, and household_benefits is a separate term of
+  // the net-income identity from household_refundable_tax_credits (which is
+  // why otherBenefits, built from household_benefits, cannot contain it).
+  const refundable = "household_refundable_tax_credits" in household
+    ? series(household, "household_refundable_tax_credits", expectedCount)
+    : null;
+  const stateCredits = (i: number) => {
+    if (!refundable) return 0;
+    const federal = (programSeries.get("eitc")?.[i] ?? 0) + (programSeries.get("ctc")?.[i] ?? 0);
+    // Float noise around a difference that is zero in most states can only go
+    // negative by fractions of a cent; floor it rather than report a negative.
+    return Math.max(0, refundable[i] - federal);
+  };
+
+  // The whole child tax credit, kept apart from programs.ctc (the refundable
+  // part). Absent from curves fetched before we asked for it, where the
+  // refundable series is all we know.
+  const totalCtc = "ctc" in tax ? series(tax, "ctc", expectedCount) : null;
+
   const at = (source: Map<ProgramId, number[]>, i: number) =>
     Object.fromEntries([...source.entries()].map(([id, values]) => [id, values[i]]));
 
@@ -153,6 +188,8 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
     // Float noise around an identity that holds exactly can only go negative
     // by fractions of a cent, so floor it rather than report a negative benefit.
     otherBenefits: benefits ? Math.max(0, benefits[i] - trackedCash(i)) : 0,
+    stateCredits: stateCredits(i),
+    totalCtc: totalCtc ? totalCtc[i] : (programSeries.get("ctc")?.[i] ?? 0),
     coverageGap: false,
   }));
 }

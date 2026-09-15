@@ -1,17 +1,23 @@
-import { analyzeCurve, escapeAnalysis, type CurvePoint, type StateMetrics } from "@hotgap/core";
+import type { HouseholdEvaluation, StateMetrics } from "@hotgap/core";
 
-export function stateMetrics(points: CurvePoint[]): StateMetrics {
-  const a = analyzeCurve(points, 0);
+/**
+ * Summary metrics come from the shared evaluation, so a state's ranking
+ * reads the same curve a household sees offline: verdicts from the immediate
+ * curve (deferred losses lifted out), the real cliffs counted separately.
+ */
+export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
+  const { analysis, escape, deferred } = ev;
+  const points = analysis.points;
   const axisMax = points[points.length - 1].earnings;
-  const esc = escapeAnalysis(points, a);
   return {
-    biggestLoss: Math.round(a.worstCliff?.drop ?? 0),
+    biggestLoss: Math.round(analysis.worstCliff?.drop ?? 0),
     dangerWidth: Math.round(
-      a.dangerZones.reduce((w, z) => w + (z.endEarnings ?? axisMax) - z.startEarnings, 0),
+      analysis.dangerZones.reduce((w, z) => w + (z.endEarnings ?? axisMax) - z.startEarnings, 0),
     ),
-    cliffCount: a.cliffs.length,
-    safeExit: esc.safeExitEarnings,
-    leap: esc.leap,
-    leapIsLowerBound: esc.leapIsLowerBound,
+    cliffCount: analysis.cliffs.length - deferred.length,
+    deferredCliffCount: deferred.length,
+    safeExit: escape.safeExitEarnings,
+    leap: escape.leap,
+    leapIsLowerBound: escape.leapIsLowerBound,
   };
 }

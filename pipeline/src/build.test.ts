@@ -18,7 +18,7 @@ function linearCurve(netIncomeStart = 10000, length = AXIS_COUNT): CurvePoint[] 
     netIncome: netIncomeStart + i * 100,
     medicalOOP: 0,
     programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 },
-    childPrograms: {}, otherBenefits: 0, coverageGap: false,
+    childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
   }));
 }
 
@@ -86,8 +86,10 @@ describe("buildSummary", () => {
     const evaluation = evaluateCurve(a, { year: "2026", currentEarnings: 0, points }, "archetype");
     expect(evaluation.curve.points[6].coverageGap).toBe(true);
     const summary = buildSummary("g", ["TX"], results);
-    expect(summary.states.TX["single-2"]).toEqual(stateMetrics(evaluation.curve.points));
-    expect(summary.states.TX["single-2"]).not.toEqual(stateMetrics(points));
+    expect(summary.states.TX["single-2"]).toEqual(stateMetrics(evaluation));
+    // The phantom premium is gone from the summary's curve and still there on the raw points.
+    expect(evaluation.curve.points[6].medicalOOP).toBe(0);
+    expect(points[6].medicalOOP).toBe(7000);
   });
 
   it("corrects Massachusetts rankings from retained raw points and reports the approximation", () => {
@@ -96,10 +98,11 @@ describe("buildSummary", () => {
     const results = fullResultsFor("MA");
     results.MA["married-3"] = points;
     const a = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
-    const corrected = correctMaTafdc(a, points);
+    const evaluation = evaluateCurve(a, { year: "2026", currentEarnings: 0, points }, "archetype");
     expect(buildSummary("g", ["MA"], results).states.MA["married-3"]).toEqual({
-      ...stateMetrics(corrected.points), maTafdc: corrected.correction,
+      ...stateMetrics(evaluation), maTafdc: evaluation.maTafdc,
     });
+    expect(evaluation.maTafdc?.status).toBe("applied");
     expect(points[2].programs.tanf).toBe(9880);
     expect(buildStateFile("g", "MA", results).archetypes["married-3"].points[2].maTafdc).toEqual(points[2].maTafdc);
   });
@@ -110,7 +113,8 @@ describe("buildSummary", () => {
     expect(summary.generated).toBe("2026-07-11T00:00:00.000Z");
     expect(summary.year).toBe("2026");
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
-    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(linearCurve(10000, countFor("CA", "single-2"))));
+    const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
+    expect(summary.states.CA["single-2"]).toEqual(stateMetrics(evaluateCurve(answersFor("CA", single2), { year: "2026", currentEarnings: 0, points: linearCurve(10000, countFor("CA", "single-2")) }, "archetype")));
     expect(Object.keys(summary.states.CA)).toHaveLength(8);
   });
 
@@ -122,12 +126,16 @@ describe("buildSummary", () => {
     const results = fullResultsFor("CA");
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
+    // The $22,089 Head Start loss at $30k is deferred to the next program
+    // year, so the biggest immediate loss is the 400%-FPL subsidy end and the
+    // leap is the zone that end opens, not the Head Start one.
     expect(summary.states.CA["single-1"]).toEqual({
-      biggestLoss: 22089,
+      biggestLoss: 3868,
       dangerWidth: expect.any(Number),
-      cliffCount: expect.any(Number),
+      cliffCount: 3,
+      deferredCliffCount: 1,
       safeExit: 91000,
-      leap: 45000,
+      leap: 7000,
       leapIsLowerBound: false,
     });
   });
@@ -145,7 +153,7 @@ describe("buildStateFile", () => {
 
   it("roundPoint rounds netIncome, medicalOOP, and program values to whole dollars", () => {
     const programs = { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0 };
-    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5, coverageGap: false });
-    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100 });
+    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5, stateCredits: 0, totalCtc: 0, coverageGap: false });
+    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100, stateCredits: 0, totalCtc: 0 });
   });
 });

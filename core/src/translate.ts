@@ -45,26 +45,50 @@ export function axisSpec(a: HouseholdAnswers): AxisSpec {
 type Vars = Record<string, Record<string, number | string | boolean | null>>;
 const y = (value: number | string | boolean | null): Record<string, number | string | boolean | null> => ({ [YEAR]: value });
 
+// Asked for on EVERY person, children included. Children used to be asked
+// only for medicaid/chip/head_start, so a child's WIC and a disabled child's
+// SSI landed in the untracked otherBenefits remainder instead of being named
+// (the constant $723 "other" in every stored curve with a child under 5 is
+// that child's WIC).
 const PERSON_VARS = ["medicaid", "chip", "wic", "ssi"];
 const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"];
-const TAX_VARS = ["eitc", "refundable_ctc", "premium_tax_credit"];
+// `ctc` is the whole child tax credit and `refundable_ctc` only the refundable
+// part; both are requested because a step can move one without the other.
+const TAX_VARS = ["eitc", "ctc", "refundable_ctc", "premium_tax_credit"];
+
+export interface PayloadOptions {
+  /**
+   * Whether a disabled person is also claimed to be disabled *for SSI*.
+   * Default true. `fetchSplicedForSSDI` sends false on its above-SGA request:
+   * work at substantial gainful activity bars a new disability finding, so a
+   * person who keeps `is_ssi_disabled` there is granted SSI (and SSI-linked
+   * Medicaid) they could never actually get — OH at $22–24k showed SSI $1,438
+   * and Medicaid $11,078 vanishing at $24k as a cliff that does not exist.
+   */
+  ssiPathway?: boolean;
+}
 
 // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only
 // `is_ssi_disabled: true` does (verified live 2026-07-11). We set both on any
 // person marked disabled so SSI/SSDI-related cliffs are modeled. Non-disabled
 // people get neither key at all (omitted, not `false`) so payloads — and
 // therefore cache keys — stay canonical between otherwise-identical requests.
-function applyDisability(person: Vars, disabled: boolean): void {
+function applyDisability(person: Vars, disabled: boolean, ssiPathway: boolean): void {
   if (!disabled) return;
   person.is_disabled = y(true);
-  person.is_ssi_disabled = y(true);
+  if (ssiPathway) person.is_ssi_disabled = y(true);
 }
 
-export function buildPEPayload(a: HouseholdAnswers): { household: object } {
+export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): { household: object } {
+  const ssiPathway = opts.ssiPathway ?? true;
   const you: Vars = { age: y(a.age) };
   for (const v of PERSON_VARS) you[v] = y(null);
   if (a.monthlyRent !== null) you.rent = y(a.monthlyRent * 12);
-  applyDisability(you, a.youDisabled);
+  // Massachusetts scales its TAFDC dependent-care deduction by
+  // `weekly_hours_worked_before_lsr`, which defaults to 0 when nobody sends
+  // it, so the deduction was always zero for every household.
+  if (a.hoursPerWeek !== null) you.weekly_hours_worked_before_lsr = y(a.hoursPerWeek);
+  applyDisability(you, a.youDisabled, ssiPathway);
   // Non-wage income, annualized onto the householder. All three names verified
   // live 2026-09-14; all three land inside household_benefits, so they also
   // show up in a point's otherBenefits (see parse.ts). Omitted when zero so
@@ -91,7 +115,10 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   if (a.married) {
     people.spouse = { age: y(a.spouseAge), employment_income: y(a.spouseAnnualEarnings) };
     for (const v of PERSON_VARS) people.spouse[v] = y(null);
-    applyDisability(people.spouse, a.spouseDisabled);
+    // Only a spouse with earnings works the hours; a stay-at-home spouse at 40
+    // hours a week would be a different household.
+    if (a.hoursPerWeek !== null && a.spouseAnnualEarnings > 0) people.spouse.weekly_hours_worked_before_lsr = y(a.hoursPerWeek);
+    applyDisability(people.spouse, a.spouseDisabled, ssiPathway);
   }
   // Enrollment flags like `is_enrolled_in_head_start` do NOT work in
   // PolicyEngine. Take-up "off" instead forces the program's dollar value to
@@ -99,9 +126,9 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   // live 2026-07-11).
   const hsValue = a.getsHeadStart ? null : 0;
   a.childAges.forEach((age, i) => {
-    const child: Vars = { age: y(age), medicaid: y(null), chip: y(null), early_head_start: y(hsValue) };
-    child.head_start = y(hsValue);
-    applyDisability(child, a.childDisabled[i] ?? false);
+    const child: Vars = { age: y(age), early_head_start: y(hsValue), head_start: y(hsValue) };
+    for (const v of PERSON_VARS) child[v] = y(null);
+    applyDisability(child, a.childDisabled[i] ?? false, ssiPathway);
     people[`child${i + 1}`] = child;
   });
 
@@ -116,7 +143,14 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
   }
   for (const v of SPM_VARS) spmVars[v] = y(null);
   if (!a.getsHousing) spmVars.spm_unit_capped_housing_subsidy = y(0);
-  const taxVars: Vars = {};
+  // `aca_ptc` multiplies by `tax_unit_is_filer`, which PolicyEngine derives
+  // from the filing thresholds — so a childless couple past the end of the
+  // EITC but under the $32,200 joint threshold is "not a filer" and gets no
+  // premium credit while still being charged the full premium (IL couple at
+  // $30,000, verified live 2026-09-15: PTC $0, MOOP $19,870, after-health
+  // income $6,914; with this flag PTC $18,779, MOOP $1,090, $25,694). Anyone
+  // claiming a premium tax credit files a return, so say so.
+  const taxVars: Vars = { tax_unit_is_filer: y(true) };
   for (const v of TAX_VARS) taxVars[v] = y(null);
 
   const householdVars: {
@@ -124,7 +158,8 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     state_name: ReturnType<typeof y>;
     household_net_income: ReturnType<typeof y>;
     household_benefits: ReturnType<typeof y>;
-    household_state_benefits?: ReturnType<typeof y>;
+    household_state_benefits: ReturnType<typeof y>;
+    household_refundable_tax_credits: ReturnType<typeof y>;
     county_fips?: ReturnType<typeof y>;
   } = {
     members,
@@ -133,9 +168,14 @@ export function buildPEPayload(a: HouseholdAnswers): { household: object } {
     // Asked for so a cliff can report what it cost even when the program that
     // caused it is one HotGap does not name (parse.ts's otherBenefits).
     household_benefits: y(null),
+    // State benefits used to be asked for only in Massachusetts; every state
+    // has some, and a cliff driven by one of them was otherwise unexplained.
+    household_state_benefits: y(null),
+    // The refundable credits that ARE inside household_net_income, so a step
+    // in net income can be attributed to them rather than guessed at.
+    household_refundable_tax_credits: y(null),
   };
   if (a.countyFips) householdVars.county_fips = y(a.countyFips);
-  if (a.state === "MA" && a.childAges.length > 0) householdVars.household_state_benefits = y(null);
 
   const axis = axisSpec(a);
   return {

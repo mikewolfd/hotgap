@@ -169,6 +169,26 @@ describe("validateAnswers", () => {
     expect(validateAnswers({ ...good, unemploymentMonthly: null })).toEqual({ ok: false, detail: "unemploymentMonthly" });
   });
 
+  describe("hoursPerWeek", () => {
+    it("defaults to null when absent or explicitly null", () => {
+      const absent = validateAnswers(good);
+      expect(absent.ok && absent.value.hoursPerWeek).toBeNull();
+      const explicit = validateAnswers({ ...good, hoursPerWeek: null });
+      expect(explicit.ok && explicit.value.hoursPerWeek).toBeNull();
+    });
+    it("accepts a whole week between 1 and 80", () => {
+      for (const hoursPerWeek of [1, 35, 40, 80]) {
+        const r = validateAnswers({ ...good, hoursPerWeek });
+        expect(r.ok && r.value.hoursPerWeek, String(hoursPerWeek)).toBe(hoursPerWeek);
+      }
+    });
+    it("rejects zero, a fraction, and more hours than a week of work", () => {
+      for (const hoursPerWeek of [0, -1, 37.5, 81, "40"]) {
+        expect(validateAnswers({ ...good, hoursPerWeek }), String(hoursPerWeek)).toEqual({ ok: false, detail: "hoursPerWeek" });
+      }
+    });
+  });
+
   it("accepts a 5-digit countyFips and defaults it to null when absent or malformed", () => {
     const good = { state: "CA", married: false, childAges: [], childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0, age: 30, spouseAge: null, youDisabled: false, spouseDisabled: false };
     const a = validateAnswers({ ...good, countyFips: "06075" });
