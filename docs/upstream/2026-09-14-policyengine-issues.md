@@ -688,7 +688,8 @@ Pull requests from the fork mikewolfd/policyengine-us:
 |---|---|---|
 | https://github.com/PolicyEngine/policyengine-us/pull/9475 — 2026 parent Medicaid limits in six frozen-standard states | #9474 | open; 22 targeted + ~1,800 surrounding YAML tests pass |
 | NY Basic Health Program end date | #9471 | not opened: `is_basic_health_program_eligible` is an annual variable that reads the January 1 parameter value, so a `2026-07-01: []` entry is inert for 2026 (the file's own comment already says so). The fix needs sub-annual handling in the variable, a maintainer decision; HotGap's local override models the post-July rule for the whole annual scenario. |
-| MA TAFDC formula; MA TAFDC double count | #9469, #9470 | in progress |
+| MA TAFDC work-expense deduction and financial eligibility — branch `fix-ma-tafdc-work-expense-and-eligibility` | #9469 | to open as a draft: 542 MA tests pass; one partner contract expectation (`partners/analytics_coverage/.../snap/ma.yaml`) legitimately changes because SNAP now sees the corrected TAFDC, which needs a maintainer's sign-off. The eligibility test applies 704.281(B)'s 50% disregard but not 704.281(A)'s six-month full disregard (pointing it at the grant's blended income made a $45,600 family eligible). Exit is $30,960; DTA's $7,512 example reproduces exactly. |
+| MA TAFDC counted once — branch `fix-ma-tafdc-double-count` | #9470 | to open: `ma_tafdc` was the only `STATE_TANF_VARIABLES` member also listed in `household_state_benefits`; removed from all four dated lists, with a test that fails on the old parameter. 1,160 MA + partner tests pass. |
 
 The coverage-gap and employer-premium items are modeling decisions left
 to the maintainers (#9472, #9473).
