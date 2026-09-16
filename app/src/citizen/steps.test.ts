@@ -55,6 +55,28 @@ describe("stepRows", () => {
     expect(stepSentence(s, stepRows(s).find((r) => r.at === 72_000)!)).toBe(
       "Your kids' free state health plan would end. It is called Medicaid. It does not end that day. Food help for moms and babies would end. It is called WIC.");
   });
+  test("a parent's Medicaid ending is listed even when the children's runs past the axis and the household total never ends", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { deferredCliff: false }), year);
+    expect(s.ev.escape.programEnds.medicaid).toBeUndefined();
+    expect(s.ev.escape.programEndsByAge.adults.medicaid).toBe(37_000);
+    const row = stepRows(s).find((r) => r.at === 38_000)!;
+    expect(row.programs).toEqual([{ id: "medicaid", group: "adults", onCliff: false }]);
+    expect(row.waits).toBe(false);
+    expect(stepSentence(s, row)).toBe("Your own free state health plan ends. It is called Medicaid.");
+  });
+  test("a child's coverage ending that is not a cliff still waits for the next renewal (escape.ts childCoverageEndEarnings)", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { deferredCliff: false, chipEndsAt: 80_000 }), year);
+    expect(s.cliffs.some((c) => c.endEarnings === 81_000)).toBe(false);
+    const row = stepRows(s).find((r) => r.at === 81_000)!;
+    expect(row.waits).toBe(true);
+    expect(stepSentence(s, row)).toBe("A health plan for kids would end. It is called CHIP. It does not end that day.");
+    expect(stepLoss(s, row)).toBeNull();
+    expect(waitsText(s)).toEqual({
+      head: "One change waits",
+      body: ["At $81,000 a year your kids stop being able to get a health plan for kids. But the law lets kids keep it for a full year at a time. So it ends at their next yearly check, up to 12 months later."],
+      foot: "We do not draw it as a drop today, because it is not one.",
+    });
+  });
   test("the tense turns to 'would' above current pay", () => {
     const s = sceneOf(makeEvaluation({}, 80_000), year);
     expect(rowsOf(s).map((r) => r.sentence)).toEqual(expect.arrayContaining([expect.stringMatching(/^Child care help ends\./)]));

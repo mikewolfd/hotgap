@@ -100,13 +100,32 @@ describe("marks", () => {
     const loose = clusterCliffs(s.immediate, (e) => e / 100);
     expect(loose).toHaveLength(2);
   });
-  test("a layout puts immediate cliffs in clusters and deferred ones in `later`, and draws no ghost for a small deferred drop", () => {
+  test("a layout clusters every cliff in the window, a cluster of deferred cliffs alone is hollow, and the ghost follows its own test", () => {
     const s = sceneOf(makeEvaluation(), year);
     const L = layout(s, 800);
-    expect(L.clusters.flatMap((c) => c.cliffs).map((c) => c.startEarnings)).toEqual([41_000, 54_000]);
-    expect(L.later.map((c) => c.startEarnings)).toEqual([71_000]);
-    expect(L.ghost).toBe(L.later[0].drop > 0.015 * (L.y1 - L.y0));
+    expect(L.clusters.map((c) => [c.cliffs.map((x) => x.startEarnings), c.later])).toEqual([[[41_000], false], [[54_000], false], [[71_000], true]]);
+    expect(L.ghost).toBe(s.deferred[0].drop > 0.015 * (L.y1 - L.y0));
     expect(L.narrow).toBe(false);
     expect(layout(s, 358).narrow).toBe(true);
+    // A deferred cliff and an immediate one under 10px apart share one solid mark.
+    const tight = clusterCliffs(s.inWindow, () => 100);
+    expect(tight).toHaveLength(1);
+    expect(tight[0].later).toBe(false);
+    expect(tight[0].cliffs).toHaveLength(3);
+  });
+  test("the drop label is the curve's biggest drop, and only when it is in the picture", () => {
+    const inside = sceneOf(makeEvaluation(), year);
+    expect(layout(inside, 800).labelled).toBe(inside.worst);
+    // A household at $120k: the window starts past the $55k cliff, so the label is withheld and the caption says so.
+    const far = sceneOf(makeEvaluation({}, 120_000), year);
+    expect(far.window[0]).toBeGreaterThan(55_000);
+    expect(far.worst?.startEarnings).toBe(54_000);
+    expect(layout(far, 800).labelled).toBeNull();
+  });
+  test("a deferred step at or past the window's right edge draws no ghost, however big the drop", () => {
+    const s = sceneOf(makeEvaluation(), year);
+    expect(layout(s, 800).ghost).toBe(true);
+    const cropped = { ...s, window: [20_000, 60_000] as [number, number], inWindow: s.inWindow.filter((c) => c.endEarnings <= 60_000) };
+    expect(layout(cropped, 800).ghost).toBe(false);
   });
 });

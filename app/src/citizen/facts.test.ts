@@ -116,7 +116,7 @@ describe("SourceNote", () => {
 
 describe("reach and hours", () => {
   test("reach is how common the pay is, never odds; the count rounds to tenths", () => {
-    expect(reachText(sceneOf(makeEvaluation(), year))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less.");
+    expect(reachText(sceneOf(makeEvaluation(), year))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less. The count could be off by a few thousand dollars either way.");
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 3, safeExit: null } }), year))).toMatch(/^Fewer than 1 in 10/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 97, safeExit: null } }), year))).toMatch(/^Almost all/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: null, safeExit: null } }), year))).toBeNull();

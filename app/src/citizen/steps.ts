@@ -3,7 +3,8 @@
 // a program ends): a program ends at the first pay at which it is gone —
 // cliff.endEarnings, or programEnds[id] + one axis step. A row is the card
 // a cliff mark opens (M6). Pure: rows and sentences, no DOM.
-import type { Cliff, ProgramId } from "@hotgap/core";
+import { COVERAGE_PROGRAMS, type Cliff, type ProgramId } from "@hotgap/core";
+import { capitalize } from "../places/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { called, noun, phrase } from "./programs.js";
@@ -18,7 +19,18 @@ export interface StepRow {
   programs: { id: ProgramId; group: Group | null; onCliff: boolean }[];
   /** Above current pay the tense is "would" (W1). */
   future: boolean;
+  /**
+   * The row's loss lands at a renewal, not with the raise: a deferred cliff,
+   * or a child's Medicaid or CHIP ending — 42 CFR 435.926 gives children 12
+   * months of continuous eligibility, and core/src/escape.ts says any front
+   * end that shows that threshold has to say so.
+   */
+  waits: boolean;
 }
+
+/** A child's coverage ending waits for the next renewal whether or not it is a cliff. */
+const childCoverageWaits = (p: { id: ProgramId; group: Group | null }): boolean =>
+  p.group === "children" && (COVERAGE_PROGRAMS as ProgramId[]).includes(p.id);
 
 /** The rows, sorted by pay. O(cliffs × programs). */
 export function stepRows(s: Scene): StepRow[] {
@@ -28,22 +40,27 @@ export function stepRows(s: Scene): StepRow[] {
   const groupOf = (id: ProgramId, at: number): Group | null =>
     (["adults", "children"] as Group[]).find((g) => byAge[g][id] !== undefined && byAge[g][id]! + s.step === at) ?? null;
   const rows = new Map<number, StepRow>();
-  const rowAt = (at: number): StepRow => rows.get(at) ?? rows.set(at, { at, cliff: null, programs: [], future: at > s.current }).get(at)!;
+  const rowAt = (at: number): StepRow => rows.get(at) ?? rows.set(at, { at, cliff: null, programs: [], future: at > s.current, waits: false }).get(at)!;
   for (const c of s.cliffs) {
     const r = rowAt(c.endEarnings);
     r.cliff = c;
     for (const id of c.programsLost) r.programs.push({ id, group: split(id) ? groupOf(id, c.endEarnings) : null, onCliff: true });
   }
   const placed = new Set(s.cliffs.flatMap((c) => c.programsLost));
-  for (const [id, last] of Object.entries(ends) as [ProgramId, number][]) {
-    if (split(id)) {
-      // Each group's own ending, unless a cliff already names it.
-      for (const g of ["adults", "children"] as Group[]) {
-        const at = byAge[g][id]! + s.step;
-        if (!rowAt(at).programs.some((p) => p.id === id)) rowAt(at).programs.push({ id, group: g, onCliff: false });
-      }
-    } else if (!placed.has(id)) rowAt(last + s.step).programs.push({ id, group: null, onCliff: false });
+  // A person-level program is listed per group — a parent's Medicaid can end
+  // while the children's runs past the axis, when the household total never
+  // ends and programEnds has no entry — and any other by its household end.
+  const personLevel = new Set<ProgramId>([...Object.keys(byAge.adults), ...Object.keys(byAge.children)] as ProgramId[]);
+  for (const g of ["adults", "children"] as Group[]) {
+    for (const [id, last] of Object.entries(byAge[g]) as [ProgramId, number][]) {
+      const at = last + s.step;
+      if (!rowAt(at).programs.some((p) => p.id === id)) rowAt(at).programs.push({ id, group: g, onCliff: false });
+    }
   }
+  for (const [id, last] of Object.entries(ends) as [ProgramId, number][]) {
+    if (!personLevel.has(id) && !placed.has(id)) rowAt(last + s.step).programs.push({ id, group: null, onCliff: false });
+  }
+  for (const r of rows.values()) r.waits = (r.cliff !== null && r.cliff.deferral !== null) || r.programs.some(childCoverageWaits);
   return [...rows.values()].sort((a, b) => a.at - b.at);
 }
 
@@ -51,16 +68,18 @@ export function stepRows(s: Scene): StepRow[] {
 export function stepSentence(s: Scene, r: StepRow): string {
   const byAge = s.ev.escape.programEndsByAge;
   const split = (id: ProgramId) => byAge.adults[id] !== undefined && byAge.children[id] !== undefined;
-  const ends = ({ id, group }: StepRow["programs"][number]) => group
+  // A phrase that already names the kids ("a health plan for kids") takes the plain template, not "Your kids' … for kids".
+  const ends = ({ id, group }: StepRow["programs"][number]) => group && !(group === "children" && /kids$/.test(noun(id)))
     ? fill(copy.steps[r.future ? "wouldEndGroup" : "endsGroup"][group], { noun: noun(id), name: called(id) })
     : t(r.future ? "steps.wouldEnd" : "steps.ends", { Phrase: capitalize(phrase(id)), name: called(id) });
   // The cliff's own programs, then — for a deferred cliff — "it does not end
   // that day", which belongs to them and not to a program that merely ends
-  // at the same pay; those follow.
+  // at the same pay; those follow, each child's coverage ending with the
+  // same words, because it waits for the next renewal on its own.
   let out = r.programs.filter((p) => p.onCliff).map(ends).join(" ");
   if (!r.programs.length && r.cliff) out += copy.steps[r.future ? "wouldSmaller" : "smaller"][r.cliff.driver];
   if (r.cliff?.deferral) out += t("steps.waitsTail");
-  out += r.programs.filter((p) => !p.onCliff).map((p) => " " + ends(p)).join("");
+  out += r.programs.filter((p) => !p.onCliff).map((p) => " " + ends(p) + (childCoverageWaits(p) ? t("steps.waitsTail") : "")).join("");
   for (const [id, ats] of Object.entries(s.starts) as [ProgramId, number[]][]) {
     if (ats.includes(r.at) && !r.programs.some((p) => p.id === id)) out += t(r.future ? "steps.wouldStart" : "steps.starts", { phrase: phrase(id), name: called(id) });
   }
@@ -80,17 +99,23 @@ export function stepLoss(s: Scene, r: StepRow): string | null {
   return t(r.future ? "steps.wouldLoss" : "steps.loss", { drop }) + (r.cliff === s.worst ? t("steps.biggest") : "");
 }
 
-export const capitalize = (x: string): string => x.charAt(0).toUpperCase() + x.slice(1);
-
-/** The deferred callout's sentences, one per deferred cliff, or none. */
+/**
+ * The deferred callout: one paragraph per deferred cliff, and one per
+ * child's coverage ending that is not a cliff (the same continuous-
+ * eligibility rule, said the same way), or none.
+ */
 export function waitsText(s: Scene): { head: string; body: string[]; foot: string } | null {
-  if (!s.deferred.length) return null;
-  return {
-    head: s.deferred.length > 1 ? t("waits.headMany", { n: s.deferred.length }) : t("waits.head"),
-    body: s.deferred.map((c) => fill(copy.waits.reasons[c.deferral!.reason], {
-      at: s.m.payUnit(c.endEarnings),
-      phrase: c.programsLost.length ? phrase(c.programsLost[0]) : copy.waits.thisHelp,
-    })),
-    foot: t("waits.foot"),
-  };
+  const body = s.deferred.map((c) => fill(copy.waits.reasons[c.deferral!.reason], {
+    at: s.m.payUnit(c.endEarnings),
+    phrase: c.programsLost.length ? phrase(c.programsLost[0]) : copy.waits.thisHelp,
+  }));
+  const deferredAt = new Set(s.deferred.map((c) => c.endEarnings));
+  for (const r of stepRows(s)) {
+    if (r.cliff?.deferral || deferredAt.has(r.at)) continue;
+    for (const p of r.programs.filter(childCoverageWaits)) {
+      body.push(fill(copy.waits.reasons.child_continuous_eligibility, { at: s.m.payUnit(r.at), phrase: phrase(p.id) }));
+    }
+  }
+  if (!body.length) return null;
+  return { head: body.length > 1 ? t("waits.headMany", { n: body.length }) : t("waits.head"), body, foot: t("waits.foot") };
 }

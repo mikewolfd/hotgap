@@ -3,7 +3,7 @@ import { copy, fill, parts, t } from "./copy.js";
 
 describe("t()", () => {
   test("fills a dotted key", () => {
-    expect(t("again", { from: "$46,000", to: "$67,000" })).toBe("It happens again between $46,000 and $67,000.");
+    expect(t("again", { from: "$54,000", to: "$67,000" })).toBe("It happens again from $54,000 to $67,000.");
   });
   test("throws on a missing key, a missing param, an unknown param", () => {
     expect(() => t("no.such.key")).toThrow(/missing string/);

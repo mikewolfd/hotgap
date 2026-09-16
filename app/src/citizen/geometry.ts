@@ -52,17 +52,21 @@ export function xTicks(s: Scene, n: number): { value: number; annual: number }[]
   return niceTicks(d0, d1, niceStep(d1 - d0, n)).map((value) => ({ value, annual: toAnnual({ amount: value, unit, hoursPerWeek: hours }) }));
 }
 
-export interface Cluster { cliffs: Cliff[]; x: number }
+/** One mark: the cliffs under it, its x, and whether every one of them waits for a renewal (a hollow dot). */
+export interface Cluster { cliffs: Cliff[]; x: number; later: boolean }
 
-/** Dots closer than `gap` px merge into one mark (S8). Input in window order. */
+/** Dots closer than `gap` px merge into one mark, whichever kind they are (S8). Input in window order. */
 export function clusterCliffs(cliffs: Cliff[], px: (earnings: number) => number, gap = 10): Cluster[] {
   const out: Cluster[] = [];
   for (const c of cliffs) {
     const last = out[out.length - 1];
     if (last && px(c.startEarnings) - px(last.cliffs[last.cliffs.length - 1].startEarnings) < gap) last.cliffs.push(c);
-    else out.push({ cliffs: [c], x: 0 });
+    else out.push({ cliffs: [c], x: 0, later: false });
   }
-  for (const cl of out) cl.x = cl.cliffs.reduce((sum, c) => sum + px(c.startEarnings), 0) / cl.cliffs.length;
+  for (const cl of out) {
+    cl.x = cl.cliffs.reduce((sum, c) => sum + px(c.startEarnings), 0) / cl.cliffs.length;
+    cl.later = cl.cliffs.every((c) => c.deferral !== null);
+  }
   return out;
 }
 
@@ -76,10 +80,12 @@ export interface Layout {
   yTicks: number[];
   xTicks: { value: number; annual: number }[];
   clusters: Cluster[];
-  /** The largest immediate drop in the window: the chart's one labelled cliff. */
+  /**
+   * The chart's one drop label is the curve's biggest drop (charts.md § Direct
+   * labels), drawn only when that drop is in the picture; otherwise the
+   * caption says where it is.
+   */
   labelled: Cliff | null;
-  /** Deferred cliffs in the window, each its own hollow mark. */
-  later: Cliff[];
   ghost: boolean;
 }
 
@@ -93,16 +99,16 @@ export function layout(s: Scene, width: number): Layout {
   const [x0, x1] = s.window;
   const px = (e: number) => pad.l + ((e - x0) / (x1 - x0)) * (W - pad.l - pad.r);
   const py = (v: number) => pad.t + ((y1 - v) / (y1 - y0)) * (H - pad.t - pad.b);
-  const immediate = s.inWindow.filter((c) => c.deferral === null);
   return {
     W, H, narrow, pad, i0: s.idx(x0), i1: s.idx(x1), y0, y1, stepY, maxDrop, px, py,
     yTicks: niceTicks(y0, y1, stepY),
     xTicks: xTicks(s, narrow ? 4 : 5),
-    clusters: clusterCliffs(immediate, px),
-    labelled: immediate.length ? immediate.reduce((a, b) => (b.drop > a.drop ? b : a)) : null,
-    later: s.inWindow.filter((c) => c.deferral !== null),
-    // The ghost is drawn only when a deferred drop exceeds 1.5% of the
-    // y-range; the caption sentence comes from the same test (S14).
-    ghost: s.deferred.some((c) => c.drop > 0.015 * (y1 - y0)),
+    clusters: clusterCliffs(s.inWindow, px),
+    labelled: s.worst && s.inWindow.includes(s.worst) ? s.worst : null,
+    // The ghost is drawn only when a deferred drop that starts before the
+    // window's right edge exceeds 1.5% of the y-range — past the edge the
+    // real curve lies on the line; the caption sentence comes from the same
+    // test (S14).
+    ghost: s.deferred.some((c) => c.startEarnings < x1 && c.drop > 0.015 * (y1 - y0)),
   };
 }

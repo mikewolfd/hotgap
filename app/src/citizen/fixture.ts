@@ -30,10 +30,12 @@ export interface Shape {
   deferredCliff?: boolean;
   /** A drop at this pay the curve never recovers from inside the axis. */
   stuckAt?: number;
+  /** The children's CHIP ($4,000 sticker) is received up to this pay and then gone, with no step in net income. */
+  chipEndsAt?: number;
 }
 
 /** Net income rises $800 a step from $20,000; the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
-export function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt }: Shape = {}): CurvePoint[] {
+export function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt }: Shape = {}): CurvePoint[] {
   const points: CurvePoint[] = [];
   let net = 20_000;
   for (let e = 0; e <= TOP; e += STEP) {
@@ -43,6 +45,8 @@ export function makePoints({ snapCliff = true, snapTail = false, careCliff = tru
     if (careCliff && e <= 54_000) programs.childcare = 20_000;
     const childMedicaid = deferredCliff ? (e <= 71_000 ? 8000 : 0) : 8000;
     programs.medicaid = (e <= 37_000 ? 6000 : 0) + childMedicaid;
+    const childChip = chipEndsAt !== undefined && e <= chipEndsAt ? 4000 : 0;
+    programs.chip = childChip;
     if (e >= 39_000) programs.aca = 2000;
     if (e >= 1000 && e <= 57_000) programs.eitc = 3000;
     if (e > 0) net += 800;
@@ -52,7 +56,7 @@ export function makePoints({ snapCliff = true, snapTail = false, careCliff = tru
     if (stuckAt !== undefined && e === stuckAt) net -= 100_000;
     points.push({
       earnings: e, netIncome: net, medicalOOP: e >= 39_000 ? 1200 : 0, programs,
-      childPrograms: { medicaid: childMedicaid }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
+      childPrograms: { medicaid: childMedicaid, chip: childChip }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
     });
   }
   return points;

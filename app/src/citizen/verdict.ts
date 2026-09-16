@@ -44,8 +44,16 @@ export const verdictParts = (s: Scene): VerdictPart[] =>
 
 export const verdictText = (s: Scene): string => verdictParts(s).map((p) => p.text).join("");
 
-/** "It happens again between {exit} and {safeExit}." when further zones lie beyond the household's (charts.md § 1 rule 2). */
+/**
+ * When further zones lie beyond the household's (charts.md § 1 rule 2):
+ * "It happens again from {start of the next zone} to {safe exit}", or, with
+ * several, how many times between the first's start and the safe exit. The
+ * zones are read off analysis.dangerZones, never assumed to abut the exit.
+ */
 export function againText(s: Scene): string | null {
   if (s.zone === null || s.stuck || s.exit === null || s.safeExit === null || s.safeExit === s.exit) return null;
-  return fill(copy.again, { from: s.m.pay(s.exit), to: s.m.pay(s.safeExit) });
+  const beyond = s.otherZones.filter((z) => z.startEarnings >= s.exit!);
+  if (!beyond.length) return null;
+  const slots = { from: s.m.pay(beyond[0].startEarnings), to: s.m.pay(s.safeExit) };
+  return beyond.length === 1 ? fill(copy.again, slots) : fill(copy.againMany, { n: beyond.length, ...slots });
 }

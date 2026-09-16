@@ -17,7 +17,8 @@ provideData({ "state-defaults.json": stateDefaultsJson });
 
 /** Under the answer: why "you keep" is not your pay, and the largest non-cash part of it (S6). */
 export function subText(s: Scene): string {
-  const at = s.ev.curve.points[s.idx(s.current)];
+  // The last sampled point at or below the household's pay, the point core reads too (evaluate.ts unclaimedFrom).
+  const at = s.ev.curve.points.filter((p) => p.earnings <= s.current).pop() ?? s.ev.curve.points[0];
   let out = s.currentNet >= s.current ? copy.sub.more : copy.sub.less;
   const [id, amount] = NONCASH.map((p) => [p, at?.programs[p] ?? 0] as const).sort((a, b) => b[1] - a[1])[0];
   if (amount > 0) out += " " + fill(copy.noncash[id], { amount: s.m.money(amount) });
@@ -125,7 +126,8 @@ export function reachText(s: Scene): string | null {
   const A = s.modeled;
   const who = A.childAges.length ? copy.reach.who.parents : A.married ? copy.reach.who.couples : copy.reach.who.people;
   const params = { who, state: s.stateName, pay: s.m.payUnit(s.current) };
-  return n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params });
+  // The margin travels with the number (design/README.md conflict 5); the cell's own figure is not in the evaluation yet.
+  return (n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params })) + t("reach.margin");
 }
 
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {

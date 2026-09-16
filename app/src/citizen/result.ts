@@ -162,7 +162,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       const steps = stepRows(s);
       const stepList = h("ul", { class: "hg-rows", id: "steps" }, ...steps.map((r) => {
         const p = h("p");
-        if (r.cliff?.deferral) p.append(h("span", { class: "hg-badge" }, t("steps.waitsBadge")), " ");
+        if (r.waits) p.append(h("span", { class: "hg-badge" }, t("steps.waitsBadge")), " ");
         p.append(stepSentence(s, r));
         const loss = stepLoss(s, r);
         if (loss) p.append(" ", h("span", { class: "hg-rows__loss" }, loss));

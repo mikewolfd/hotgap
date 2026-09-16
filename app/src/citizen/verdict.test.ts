@@ -12,9 +12,11 @@ describe("verdict shapes", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(verdictKey(s)).toBe("in_danger_zone");
     expect(verdictText(s)).toBe("You are paid $43,000 a year. You keep $51,100. More pay does not add to that until you are paid $46,000: a raise of $3,000.");
-    // The whole curve's safe exit is $67,000; the sentence names the household's own $46,000 and says the rest happens again.
+    // The whole curve's safe exit is $67,000; the sentence names the household's own $46,000 and says where it happens
+    // again — from the NEXT zone's start ($54,000), read off dangerZones, never assumed to abut the exit.
     expect(s.safeExit).toBe(67_000);
-    expect(againText(s)).toBe("It happens again between $46,000 and $67,000.");
+    expect(s.otherZones.map((z) => z.startEarnings)).toEqual([54_000]);
+    expect(againText(s)).toBe("It happens again from $54,000 to $67,000.");
   });
   test("cliff ahead: the threshold is the step's landing point, the drop about-rounded", () => {
     const s = sceneOf(makeEvaluation({}, 38_000), year);

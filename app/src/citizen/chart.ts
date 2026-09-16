@@ -80,16 +80,20 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const [x0, x1] = s.window;
   const picture = svg("svg", { "aria-hidden": "true" });
   const marksLayer = h("div", { class: "hg-marks" });
-  const wrapper = h("div", { class: "hg-chart", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption", "aria-label": ariaLabel(s) }, picture, marksLayer);
+  const wrapper = h("div", { class: "hg-chart", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption chartKeys", "aria-label": ariaLabel(s) }, picture, marksLayer);
   const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint"));
+  /* How the chart is operated: read out until the first touch or key, and always there for a screen reader through aria-describedby. */
+  const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint"));
   const caption = h("figcaption", { id: "curveCaption" });
   const hasOther = s.otherZones.some((z) => (z.endEarnings ?? Infinity) >= x0 && z.startEarnings <= x1);
   const hasDrop = s.inWindow.some((c) => c.deferral === null);
   const hasLater = s.inWindow.some((c) => c.deferral !== null);
+  /* The readout paints the caret only once a person has moved it; before that it holds the hint. */
+  let touched = false;
   figure.append(
     h("div", { class: "chart-head" }, h("span", { class: "chart-title" }, t("chart.title")),
       h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
-    wrapper, readout, keyList(s, hasOther, hasLater, hasDrop), caption,
+    wrapper, readout, keys, keyList(s, hasOther, hasLater, hasDrop), caption,
   );
 
   let L: Layout | null = null;
@@ -168,40 +172,45 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       picture.append(svg("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }));
     }
 
-    /* Cliff marks (S8): a cluster is one --loss-4 dot at the first cliff's top, one connector to the lowest landing. */
-    clusters = L.clusters;
-    for (const cl of clusters) {
-      const first = cl.cliffs[0], n = cl.cliffs.length;
-      const y = py(s.lifted[s.idx(first.startEarnings)]);
-      const land = Math.min(...cl.cliffs.map((c) => s.lifted[s.idx(c.endEarnings)]));
-      picture.append(svg("line", { x1: cl.x, y1: y, x2: cl.x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
-      picture.append(svg("circle", { cx: cl.x, cy: y, r: n > 1 ? 6 : 4.5, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
-      /* One of the chart's two direct labels: the largest drop in the picture,
-         beside a tall connector, or above the dot when the drop is too short
-         to sit a label beside without it lying on the line. */
-      if (L.labelled && cl.cliffs.includes(L.labelled)) {
-        const tall = py(land) - y >= 24;
-        picture.append(svg("text", { x: cl.x + 9, y: tall ? (y + py(land)) / 2 + 4 : y - 9, class: LOSS_LABEL, "font-weight": 600 }, "−" + m.money(L.labelled.drop)));
-      }
-    }
-
-    /* Deferred drops: hollow dot, dashed stub, the word later. Never a break in the line. */
-    for (const c of L.later) {
-      const x = px(c.startEarnings), y = py(s.lifted[s.idx(c.startEarnings)]);
-      picture.append(svg("line", { x1: x, y1: y - 22, x2: x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-      picture.append(svg("circle", { cx: x, cy: y, r: 4.5, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
-      picture.append(svg("text", { x, y: y - 28, "text-anchor": "middle", class: "hg-label", "font-weight": 500 }, copy.chart.labels.later));
-    }
-
     /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
     /* The diamond sits at the household's own money today (analysis.currentNet is the real curve's), which is off the lifted line only past a deferred step, where the ghost shows why. */
     const cx = px(s.current), cy = py(s.currentNet);
-    if (s.zone && (s.stuck || exitInWindow)) {
-      const bx = s.stuck ? W - pad.r : px(s.exit!), by = yPeak - 20;
+    const bracket = s.zone !== null && (s.stuck || exitInWindow);
+    const by = yPeak - 20;
+    if (bracket) {
+      const bx = s.stuck ? W - pad.r : px(s.exit!);
       picture.append(svg("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (s.stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
       const leap = m.diff(s.current, s.stuck ? s.top : s.exit!);
       picture.append(svg("text", { x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: LOSS_LABEL, "font-weight": 600 },
         t(s.stuck ? "chart.labels.leapMore" : "chart.labels.leap", { leap })));
+    }
+
+    /* Cliff marks (S8): a cluster is one dot at the first cliff's top — solid
+       --loss-4 with a connector to the lowest landing, or, when every cliff
+       under it waits, hollow with a dashed stub and the word later. */
+    clusters = L.clusters;
+    for (const cl of clusters) {
+      const first = cl.cliffs[0], n = cl.cliffs.length;
+      const y = py(s.lifted[s.idx(first.startEarnings)]);
+      if (cl.later) {
+        picture.append(svg("line", { x1: cl.x, y1: y - 22, x2: cl.x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+        picture.append(svg("circle", { cx: cl.x, cy: y, r: n > 1 ? 6 : 4.5, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
+        picture.append(svg("text", { x: cl.x, y: y - 28, "text-anchor": "middle", class: "hg-label", "font-weight": 500 }, copy.chart.labels.later));
+        continue;
+      }
+      const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.lifted[s.idx(c.endEarnings)]));
+      picture.append(svg("line", { x1: cl.x, y1: y, x2: cl.x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
+      picture.append(svg("circle", { cx: cl.x, cy: y, r: n > 1 ? 6 : 4.5, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
+      /* The chart's other direct label: the biggest drop, beside a tall
+         connector; above the dot when the drop is too short to sit a label
+         beside without it lying on the line; below the landing when the leap
+         label already sits above. */
+      if (L.labelled && cl.cliffs.includes(L.labelled)) {
+        const tall = py(land) - y >= 24;
+        const above = y - 9;
+        const clash = bracket && Math.abs(above - (by - 5)) < 16;
+        picture.append(svg("text", { x: cl.x + 9, y: tall ? (y + py(land)) / 2 + 4 : clash ? py(land) + 14 : above, class: LOSS_LABEL, "font-weight": 600 }, "−" + m.money(L.labelled.drop)));
+      }
     }
 
     /* You are here: a diamond, so position survives greyscale. */
@@ -210,34 +219,36 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink", "font-weight": 600 }, copy.chart.labels.you));
 
     /* The caption, from the values just computed (never typed). */
-    let text = t("chart.axisNote", { floor: m.money(y0) });
+    let text = y0 > 0 ? t(clusters.some((cl) => !cl.later) ? "chart.axisNote" : "chart.axisNoteBare", { floor: m.money(y0) }) : "";
+    if (s.worst && !L.labelled) text += t("chart.biggestBeyond", { drop: m.about(s.worst.drop), pay: m.payUnit(s.worst.endEarnings) });
     if (s.safeExit === null) text += t("chart.safeNever", { top: m.pay(s.top) });
     else if (s.safeExit > x1) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
-    if (L.ghost) text += t("chart.ghost");
-    caption.textContent = text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName });
+    // A household already past a deferred step is on the dashed line today (evaluate.ts: currentNet stays the real curve's).
+    if (L.ghost) text += t(s.deferred.some((c) => c.startEarnings < s.current) ? "chart.ghostNow" : "chart.ghost");
+    caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
 
     wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
     firstDraw = false;
     paintMarks();
-    paintCursor();
+    if (touched) paintCursor();
   }
 
   /* Cliff marks as controls (M6): one 44px button per cluster and per deferred cliff. */
   const keyOf = (c: Cliff) => c.endEarnings;
   function paintMarks(): void {
     if (!L) return;
+    // A repaint (a resize) must not drop the mark that has focus.
+    const focused = (document.activeElement as HTMLElement | null)?.closest(".hg-mark")?.getAttribute("data-key") ?? null;
     marksLayer.textContent = "";
-    const marks: { cl: Cluster; x: number; y: number }[] = clusters.map((cl) => ({ cl, x: cl.x, y: L!.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]) }));
-    for (const c of L.later) marks.push({ cl: { cliffs: [c], x: L.px(c.startEarnings) }, x: L.px(c.startEarnings), y: L.py(s.lifted[s.idx(c.startEarnings)]) });
-    marks.sort((a, b) => a.x - b.x);
-    for (const { cl, x, y } of marks) {
+    for (const cl of clusters) {
       const key = keyOf(cl.cliffs[0]);
       const b = h("button", { type: "button", class: "hg-mark", tabindex: "-1", "data-key": key,
         "aria-label": markLabel(s, cl), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
-      b.style.left = `${(x / L.W) * 100}%`;
-      b.style.top = `${(y / L.H) * 100}%`;
-      if (cl.cliffs.length > 1) b.append(h("span", { class: "hg-mark__count", "aria-hidden": "true" }, String(cl.cliffs.length)));
+      b.style.left = `${(cl.x / L.W) * 100}%`;
+      b.style.top = `${(L.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]) / L.H) * 100}%`;
+      if (cl.cliffs.length > 1) b.append(h("span", { class: cl.later ? "hg-mark__count hg-mark__count--later" : "hg-mark__count", "aria-hidden": "true" }, String(cl.cliffs.length)));
       b.addEventListener("click", () => {
+        touched = true;
         cursor = s.idx(cl.cliffs[0].startEarnings);
         paintCursor();
         readout.textContent = markLabel(s, cl);
@@ -245,6 +256,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       });
       marksLayer.append(b);
     }
+    if (focused !== null) markFor(Number(focused))?.focus();
   }
   const markFor = (key: number | null) => (key === null ? null : marksLayer.querySelector<HTMLButtonElement>(`.hg-mark[data-key="${key}"]`));
 
@@ -272,6 +284,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   }
   function moveTo(clientX: number): void {
     if (!L) return;
+    touched = true;
     const r = picture.getBoundingClientRect();
     const f = ((clientX - r.left) / r.width) * L.W;
     cursor = Math.min(L.i1, Math.max(L.i0, Math.round(L.i0 + ((f - L.pad.l) / (L.W - L.pad.l - L.pad.r)) * (L.i1 - L.i0))));
@@ -298,6 +311,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     } else if (ev.key === "Escape") { hooks.onEscape(); ev.preventDefault(); return; }
     else return;
     ev.preventDefault();
+    touched = true;
     paintCursor();
   });
 

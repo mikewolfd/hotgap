@@ -1,7 +1,6 @@
 // The citizen surface's entry: the editor (app/src/editor) above, the
-// result below, the household in the URL between them. What is rendered as
-// the result today is the minimal placeholder in result.ts; the citizen page
-// proper replaces that module and keeps everything here.
+// result (result.ts and the pure modules beside it) below, the household in
+// the URL between them.
 //
 // URL contract: the query is a HouseholdFlags (core/src/flags.ts), the same
 // words as the CLI — `/?zip=94110&kids=3,7&pay=30000&unit=year`. Landing
