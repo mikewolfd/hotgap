@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, it, expect } from "vitest";
-import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { canonical, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -269,7 +269,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
     let probes = 0;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       const payload = JSON.parse(init!.body as string);
-      if (!payload.household.axes) { probes++; return new Response(probeBody(MA_TAFDC_PROBE_SENTINEL), { status: 200 }); }
+      if (!payload.household.axes) { probes++; return new Response(probeBody(PROBE_SENTINEL), { status: 200 }); }
       if (payload.household.axes[0][0].count === 2) { pointRequests++; return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }).replace(/"min":24000/, `"min":${payload.household.axes[0][0].min}`), { status: 200 }); }
       const body = stretch(maFixture) as any;
       body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]];
@@ -287,7 +287,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
   });
 
   /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits`. */
-  function probeBody(stateBenefits: number, benefits = MA_TAFDC_PROBE_SENTINEL + stateBenefits): string {
+  function probeBody(stateBenefits: number, benefits = PROBE_SENTINEL + stateBenefits): string {
     return JSON.stringify({ status: "ok", message: null, result: { households: { household: { household_state_benefits: { [YEAR]: stateBenefits }, household_benefits: { [YEAR]: benefits } } } } });
   }
   /** A fetch that answers the probe with `stateBenefits` under a distinct endpoint, so the per-endpoint cache starts empty. */
@@ -301,9 +301,9 @@ describe("Massachusetts TAFDC feedback loop", () => {
   it("probe: the sentinel is forced on a bare Massachusetts household and read back from household_state_benefits", async () => {
     const payload = maTafdcProbePayload() as any;
     expect(payload.household.households.household.state_code[YEAR]).toBe("MA");
-    expect(payload.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(MA_TAFDC_PROBE_SENTINEL);
+    expect(payload.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(PROBE_SENTINEL);
     expect(payload.household.axes).toBeUndefined();
-    const doubled = probeFetch(MA_TAFDC_PROBE_SENTINEL - 0.06, "https://double.example/us/calculate");
+    const doubled = probeFetch(PROBE_SENTINEL - 0.06, "https://double.example/us/calculate");
     const fixed = probeFetch(3_120, "https://fixed.example/us/calculate");
     try {
       process.env.HOTGAP_PE_URL = "https://double.example/us/calculate";
@@ -414,7 +414,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
 describe("the child-care subsidy probe (policyengine-us #9503)", () => {
   const YEAR = "2026";
   /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits` and the forced aggregate reads back as `aggregate`. */
-  const probeBody = (stateBenefits: number, aggregate = CHILDCARE_SUBSIDY_PROBE_SENTINEL) => JSON.stringify({
+  const probeBody = (stateBenefits: number, aggregate = PROBE_SENTINEL) => JSON.stringify({
     status: "ok", message: null,
     result: {
       households: { household: { household_state_benefits: { [YEAR]: stateBenefits } } },
@@ -431,9 +431,9 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
   it("forces the aggregate on a bare Connecticut household — a state no pre-#9503 list names — and reads household_state_benefits back", async () => {
     const payload = childcareSubsidyProbePayload() as any;
     expect(payload.household.households.household.state_code[YEAR]).toBe("CT");
-    expect(payload.household.spm_units.spm_unit.child_care_subsidies[YEAR]).toBe(CHILDCARE_SUBSIDY_PROBE_SENTINEL);
+    expect(payload.household.spm_units.spm_unit.child_care_subsidies[YEAR]).toBe(PROBE_SENTINEL);
     expect(payload.household.axes).toBeUndefined();
-    const fixed = probeFetch(CHILDCARE_SUBSIDY_PROBE_SENTINEL, "https://fixed-cc.example/us/calculate");
+    const fixed = probeFetch(PROBE_SENTINEL, "https://fixed-cc.example/us/calculate");
     const old = probeFetch(0, "https://old-cc.example/us/calculate");
     try {
       process.env.HOTGAP_PE_URL = "https://fixed-cc.example/us/calculate";
@@ -478,7 +478,7 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       if (!init?.body) return new Response("{}", { status: 200 }); // a /healthz read, if the state's overrides ask for one
       const payload = JSON.parse(init.body as string);
-      if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === CHILDCARE_SUBSIDY_PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
+      if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
       curves++;
       return new Response(JSON.stringify(curveBody), { status: 200 });
     }) as unknown as typeof fetch;
@@ -504,7 +504,7 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
     process.env.HOTGAP_PE_URL = "https://fixed-cc3.example/us/calculate";
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       if (!init?.body) return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.7.0" }), { status: 200 });
-      return new Response(probeBody(CHILDCARE_SUBSIDY_PROBE_SENTINEL), { status: 200 });
+      return new Response(probeBody(PROBE_SENTINEL), { status: 200 });
     }) as unknown as typeof fetch;
     try {
       expect(await modelRecord({ fetchImpl })).toEqual({ endpoint: "fixed-cc3.example", version: "2.7.0", countsChildcareSubsidy: true });

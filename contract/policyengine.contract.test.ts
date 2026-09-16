@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { answersFor, archetypeById, buildCurvePayload, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -472,7 +472,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // the two-state check below has to AGREE with it, measured the other way.
   it("the child-care subsidy probe reads its sentinel back and answers", async () => {
     const body = (await requestPE(childcareSubsidyProbePayload(), { timeoutMs: 90_000 })) as any;
-    expect(body.result.spm_units.spm_unit.child_care_subsidies["2026"]).toBeCloseTo(CHILDCARE_SUBSIDY_PROBE_SENTINEL, -1);
+    expect(body.result.spm_units.spm_unit.child_care_subsidies["2026"]).toBeCloseTo(PROBE_SENTINEL, -1);
     expect(typeof (await probeChildcareSubsidyCounted({ timeoutMs: 90_000 }))).toBe("boolean");
   }, 120_000);
 

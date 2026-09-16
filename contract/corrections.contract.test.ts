@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { answersFor, archetypeById, buildCurvePayload, evaluateCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, modelVersion, PARENT_LIMITS_UPSTREAM_SINCE, parsePEResponse, probeMaTafdcDoubleCount, releaseAtLeast, requestPE } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, evaluateCurve, PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, modelVersion, PARENT_LIMITS_UPSTREAM_SINCE, parsePEResponse, probeMaTafdcDoubleCount, releaseAtLeast, requestPE } from "../core/src/index.js";
 
 function probe(state: string, id: string, min: number, max: number, count: number) {
   const answers = answersFor(state, archetypeById(id));
@@ -47,10 +47,10 @@ describe.skipIf(process.env.RUN_CONTRACT !== "1")("live policy corrections", () 
   it("the TAFDC double-count probe is unambiguous: the sentinel is either in household_state_benefits or absent", async () => {
     const body = await call(maTafdcProbePayload());
     const h = body.result.households.household;
-    expect(h.household_benefits["2026"]).toBeGreaterThan(MA_TAFDC_PROBE_SENTINEL / 2);
+    expect(h.household_benefits["2026"]).toBeGreaterThan(PROBE_SENTINEL / 2);
     const stateBenefits = h.household_state_benefits["2026"] as number;
-    expect(stateBenefits < 10_000 || stateBenefits > MA_TAFDC_PROBE_SENTINEL - 10_000).toBe(true);
-    expect(await probeMaTafdcDoubleCount({ timeoutMs: 90_000 })).toBe(stateBenefits > MA_TAFDC_PROBE_SENTINEL / 2);
+    expect(stateBenefits < 10_000 || stateBenefits > PROBE_SENTINEL - 10_000).toBe(true);
+    expect(await probeMaTafdcDoubleCount({ timeoutMs: 90_000 })).toBe(stateBenefits > PROBE_SENTINEL / 2);
   }, 100_000);
 
   it("supplies enough MA inputs to remove the $26–27k TANF cutoff locally", async () => {

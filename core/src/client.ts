@@ -214,9 +214,9 @@ export function buildCurvePayload(answers: HouseholdAnswers, opts: PayloadOption
   return { ...buildPEPayload(answers, opts), ...(Object.keys(policy).length ? { policy } : {}) };
 }
 
-function parseOrThrow(body: unknown, count: number, opts: FetchCurveOptions = {}): CurvePoint[] {
+function parseOrThrow(body: unknown, count: number, opts: FetchCurveOptions): CurvePoint[] {
   try {
-    return parsePEResponse(body, count, { maTafdcDoubleCounted: opts.maTafdcDoubleCounted, childcareSubsidyCounted: opts.childcareSubsidyCounted });
+    return parsePEResponse(body, count, opts);
   } catch (e) {
     if (e instanceof PEParseError) throw new PolicyEngineError("parse", e.message);
     throw e;
@@ -225,6 +225,10 @@ function parseOrThrow(body: unknown, count: number, opts: FetchCurveOptions = {}
 
 /** Above substantial gainful activity: still disabled, no SSI pathway. */
 const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
+
+/** What the payload builder needs to know of what the probes found; fetchCurve settles both on `opts` before any request. */
+const payloadOptionsOf = (opts: FetchCurveOptions): PayloadOptions =>
+  ({ statePremiumAssistance: opts.statePremiumAssistance === true, parentLimitsUpstream: opts.parentLimitsUpstream === true });
 
 /**
  * The SSDI curve, spliced at substantial gainful activity.
@@ -253,12 +257,8 @@ const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
 // California's SSP. Verified live 2026-09-15 (CA family, $21k, rent $2,903):
 // SNAP $13,214 → $8,972, other benefits $4,102 → $0. That is the rule, not a
 // side effect, and it deepens the SGA cliff for a high-rent family.
-async function fetchSplicedForSSDI(
-  answers: HouseholdAnswers,
-  axis: AxisSpec,
-  opts: FetchCurveOptions,
-  payloadOpts: PayloadOptions = {},
-): Promise<CurvePoint[]> {
+async function fetchSplicedForSSDI(answers: HouseholdAnswers, axis: AxisSpec, opts: FetchCurveOptions): Promise<CurvePoint[]> {
+  const payloadOpts = payloadOptionsOf(opts);
   const [receiving, stopped] = await Promise.all([
     requestPE(buildCurvePayload(answers, payloadOpts), opts),
     requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }, { ...payloadOpts, ...ABOVE_SGA }), opts),
@@ -268,7 +268,7 @@ async function fetchSplicedForSSDI(
   return withSSDI.map((p, i) => (p.earnings <= SGA_ANNUAL ? p : withoutSSDI[i]));
 }
 
-/** Full earnings sweep for one household, from PolicyEngine (or the cache). */
+/** In-flight limit for the Massachusetts feedback loop when the caller sets none (FetchCurveOptions.resampleConcurrency). */
 const RESAMPLE_CONCURRENCY = 8;
 
 /**
@@ -319,7 +319,44 @@ async function readModelVersion(opts: RequestOptions): Promise<string | null> {
   }
 }
 
-const variableProbeCache = new Map<string, Promise<boolean>>();
+const probeCache = new Map<string, Promise<boolean>>();
+
+/**
+ * One answer per endpoint and `question` per process. A failed probe is not
+ * an answer: its rejection leaves the cache, so the next caller asks again.
+ */
+function probeOnce(question: string, ask: () => Promise<boolean>): Promise<boolean> {
+  const key = `${question} ${peUrl()}`;
+  let pending = probeCache.get(key);
+  if (!pending) {
+    pending = ask();
+    pending.catch(() => probeCache.delete(key));
+    probeCache.set(key, pending);
+  }
+  return pending;
+}
+
+type ProbeVars = Record<string, Record<string, unknown>>;
+
+/** A one-person household in `state` with $0 of pay: the skeleton every endpoint probe forces one input onto. */
+function bareHousehold(state: string, vars: { households?: ProbeVars; tax_units?: ProbeVars; spm_units?: ProbeVars } = {}): unknown {
+  return {
+    household: {
+      people: { person: { age: { [YEAR]: 30 }, employment_income: { [YEAR]: 0 } } },
+      households: { household: { members: ["person"], state_code: { [YEAR]: state }, ...vars.households } },
+      tax_units: { tax_unit: { members: ["person"], ...vars.tax_units } },
+      spm_units: { spm_unit: { members: ["person"], ...vars.spm_units } },
+      families: { family: { members: ["person"] } },
+      marital_units: { marital_unit: { members: ["person"] } },
+    },
+  };
+}
+
+/** What the endpoint reported for `variable` on the bare household's one `entity` instance. */
+function readBack(body: unknown, entity: "households" | "spm_units", variable: string): unknown {
+  const instance = entity === "households" ? "household" : "spm_unit";
+  return (body as { result?: Record<string, Record<string, Record<string, Record<string, unknown>>>> }).result?.[entity]?.[instance]?.[variable]?.[YEAR];
+}
 
 /**
  * Whether `peUrl()` knows a tax-unit variable: a bare household asking for
@@ -329,37 +366,18 @@ const variableProbeCache = new Map<string, Promise<boolean>>();
  * variable per process; a failed probe is retried next time.
  */
 export function endpointHasTaxUnitVariable(variable: string, opts: RequestOptions = {}): Promise<boolean> {
-  const key = `${peUrl()} ${variable}`;
-  let pending = variableProbeCache.get(key);
-  if (!pending) {
-    const y = { [YEAR]: 0 };
-    const payload = {
-      household: {
-        people: { person: { age: { [YEAR]: 30 }, employment_income: y } },
-        households: { household: { members: ["person"], state_code: { [YEAR]: "CA" } } },
-        tax_units: { tax_unit: { members: ["person"], [variable]: { [YEAR]: null } } },
-        spm_units: { spm_unit: { members: ["person"] } },
-        families: { family: { members: ["person"] } },
-        marital_units: { marital_unit: { members: ["person"] } },
-      },
-    };
-    pending = requestPE(payload, opts).then(
+  return probeOnce(variable, () =>
+    requestPE(bareHousehold("CA", { tax_units: { [variable]: { [YEAR]: null } } }), opts).then(
       () => true,
       (e) => {
         if (e instanceof PolicyEngineError && e.status === 400 && /unrecognized/i.test(e.message)) return false;
         throw e;
       },
-    );
-    pending.catch(() => variableProbeCache.delete(key));
-    variableProbeCache.set(key, pending);
-  }
-  return pending;
+    ));
 }
 
-/** Forced TAFDC large enough that no other state benefit can be mistaken for it. */
-export const MA_TAFDC_PROBE_SENTINEL = 1_000_000;
-
-const maTafdcProbeCache = new Map<string, Promise<boolean>>();
+/** A forced input large enough that no real benefit can be mistaken for it when it is read back. */
+export const PROBE_SENTINEL = 1_000_000;
 
 /**
  * Does this endpoint count Massachusetts TAFDC twice (policyengine-us
@@ -373,49 +391,28 @@ const maTafdcProbeCache = new Map<string, Promise<boolean>>();
  * workaround retires itself when the API updates.
  */
 export function probeMaTafdcDoubleCount(opts: RequestOptions = {}): Promise<boolean> {
-  const endpoint = peUrl();
-  let pending = maTafdcProbeCache.get(endpoint);
-  if (!pending) {
-    pending = requestPE(maTafdcProbePayload(), opts).then((body) => {
-      const r = (body as { result?: { households?: Record<string, Record<string, Record<string, number>>> } }).result;
-      const h = r?.households?.household;
-      const stateBenefits = h?.household_state_benefits?.[YEAR];
-      const benefits = h?.household_benefits?.[YEAR];
-      if (typeof stateBenefits !== "number" || typeof benefits !== "number") {
-        throw new PolicyEngineError("parse", "probe returned no household benefit aggregates");
-      }
-      // An ignored input would look exactly like a fixed model. TANF carries
-      // ma_tafdc into household_benefits on both, so the sentinel must show
-      // there (as $999,999.94 after float32; a fixed model has it once, a
-      // double-counting one twice).
-      if (benefits < MA_TAFDC_PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced ma_tafdc did not reach household_benefits");
-      return stateBenefits > MA_TAFDC_PROBE_SENTINEL / 2;
-    });
-    // A failed probe is not an answer; let the next caller ask again.
-    pending.catch(() => maTafdcProbeCache.delete(endpoint));
-    maTafdcProbeCache.set(endpoint, pending);
-  }
-  return pending;
+  return probeOnce("ma_tafdc double count", async () => {
+    const body = await requestPE(maTafdcProbePayload(), opts);
+    const stateBenefits = readBack(body, "households", "household_state_benefits");
+    const benefits = readBack(body, "households", "household_benefits");
+    if (typeof stateBenefits !== "number" || typeof benefits !== "number") {
+      throw new PolicyEngineError("parse", "probe returned no household benefit aggregates");
+    }
+    // An ignored input would look exactly like a fixed model. TANF carries
+    // ma_tafdc into household_benefits on both, so the sentinel must show
+    // there (as $999,999.94 after float32; a fixed model has it once, a
+    // double-counting one twice).
+    if (benefits < PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced ma_tafdc did not reach household_benefits");
+    return stateBenefits > PROBE_SENTINEL / 2;
+  });
 }
 
 export function maTafdcProbePayload(): unknown {
-  const year = { [YEAR]: 0 };
-  return {
-    household: {
-      people: { person: { age: { [YEAR]: 30 }, employment_income: year } },
-      households: { household: { members: ["person"], state_code: { [YEAR]: "MA" }, household_state_benefits: { [YEAR]: null }, household_benefits: { [YEAR]: null } } },
-      tax_units: { tax_unit: { members: ["person"] } },
-      spm_units: { spm_unit: { members: ["person"], ma_tafdc: { [YEAR]: MA_TAFDC_PROBE_SENTINEL } } },
-      families: { family: { members: ["person"] } },
-      marital_units: { marital_unit: { members: ["person"] } },
-    },
-  };
+  return bareHousehold("MA", {
+    households: { household_state_benefits: { [YEAR]: null }, household_benefits: { [YEAR]: null } },
+    spm_units: { ma_tafdc: { [YEAR]: PROBE_SENTINEL } },
+  });
 }
-
-/** Forced aggregate subsidy large enough that no other state benefit can be mistaken for it. */
-export const CHILDCARE_SUBSIDY_PROBE_SENTINEL = 1_000_000;
-
-const childcareSubsidyProbeCache = new Map<string, Promise<boolean>>();
 
 /**
  * WORKAROUND — goes with stateChildcareSubsidies.ts. Does this endpoint count
@@ -430,40 +427,25 @@ const childcareSubsidyProbeCache = new Map<string, Promise<boolean>>();
  * it, so the workaround retires itself endpoint by endpoint.
  */
 export function probeChildcareSubsidyCounted(opts: RequestOptions = {}): Promise<boolean> {
-  const endpoint = peUrl();
-  let pending = childcareSubsidyProbeCache.get(endpoint);
-  if (!pending) {
-    pending = requestPE(childcareSubsidyProbePayload(), opts).then((body) => {
-      const r = (body as { result?: { households?: Record<string, Record<string, Record<string, number>>>; spm_units?: Record<string, Record<string, Record<string, number>>> } }).result;
-      const stateBenefits = r?.households?.household?.household_state_benefits?.[YEAR];
-      const aggregate = r?.spm_units?.spm_unit?.child_care_subsidies?.[YEAR];
-      if (typeof stateBenefits !== "number" || typeof aggregate !== "number") {
-        throw new PolicyEngineError("parse", "probe returned no child-care subsidy aggregates");
-      }
-      // An ignored input would look exactly like an old model, so the forced
-      // aggregate has to come back as itself before its absence means anything.
-      if (aggregate < CHILDCARE_SUBSIDY_PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced child_care_subsidies was not read back");
-      return stateBenefits > CHILDCARE_SUBSIDY_PROBE_SENTINEL / 2;
-    });
-    // A failed probe is not an answer; let the next caller ask again.
-    pending.catch(() => childcareSubsidyProbeCache.delete(endpoint));
-    childcareSubsidyProbeCache.set(endpoint, pending);
-  }
-  return pending;
+  return probeOnce("child_care_subsidies counted", async () => {
+    const body = await requestPE(childcareSubsidyProbePayload(), opts);
+    const stateBenefits = readBack(body, "households", "household_state_benefits");
+    const aggregate = readBack(body, "spm_units", "child_care_subsidies");
+    if (typeof stateBenefits !== "number" || typeof aggregate !== "number") {
+      throw new PolicyEngineError("parse", "probe returned no child-care subsidy aggregates");
+    }
+    // An ignored input would look exactly like an old model, so the forced
+    // aggregate has to come back as itself before its absence means anything.
+    if (aggregate < PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced child_care_subsidies was not read back");
+    return stateBenefits > PROBE_SENTINEL / 2;
+  });
 }
 
 export function childcareSubsidyProbePayload(): unknown {
-  const year = { [YEAR]: 0 };
-  return {
-    household: {
-      people: { person: { age: { [YEAR]: 30 }, employment_income: year } },
-      households: { household: { members: ["person"], state_code: { [YEAR]: "CT" }, household_state_benefits: { [YEAR]: null } } },
-      tax_units: { tax_unit: { members: ["person"] } },
-      spm_units: { spm_unit: { members: ["person"], child_care_subsidies: { [YEAR]: CHILDCARE_SUBSIDY_PROBE_SENTINEL } } },
-      families: { family: { members: ["person"] } },
-      marital_units: { marital_unit: { members: ["person"] } },
-    },
-  };
+  return bareHousehold("CT", {
+    households: { household_state_benefits: { [YEAR]: null } },
+    spm_units: { child_care_subsidies: { [YEAR]: PROBE_SENTINEL } },
+  });
 }
 
 /**
@@ -503,13 +485,14 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
     const aboveSga = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL;
     const base = aboveSga ? { ...answers, ssdiMonthly: 0 } : answers;
     const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
-    const pointOpts: PayloadOptions = { statePremiumAssistance: opts.statePremiumAssistance === true, parentLimitsUpstream: opts.parentLimitsUpstream === true, ...(aboveSga ? ABOVE_SGA : {}) };
+    const pointOpts: PayloadOptions = { ...payloadOptionsOf(opts), ...(aboveSga ? ABOVE_SGA : {}) };
     const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, pointOpts), opts), 2, opts);
     out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
   });
   return out;
 }
 
+/** Full earnings sweep for one household, from PolicyEngine (or the cache). */
 export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOptions = {}): Promise<CurveResponse> {
   // The parent-limit override is dropped on a model that already carries the
   // fix (one cached /healthz read per endpoint); the cache key follows the
@@ -538,11 +521,10 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (assistance && requestOpts.statePremiumAssistance === undefined) {
     requestOpts.statePremiumAssistance = await endpointHasTaxUnitVariable(assistance.variable, requestOpts);
   }
-  const payloadOpts: PayloadOptions = { statePremiumAssistance: requestOpts.statePremiumAssistance === true, parentLimitsUpstream };
   requestOpts.parentLimitsUpstream = parentLimitsUpstream;
   const swept = answers.ssdiMonthly > 0
-    ? await fetchSplicedForSSDI(answers, axis, requestOpts, payloadOpts)
-    : parseOrThrow(await requestPE(buildCurvePayload(answers, payloadOpts), requestOpts), axis.count, requestOpts);
+    ? await fetchSplicedForSSDI(answers, axis, requestOpts)
+    : parseOrThrow(await requestPE(buildCurvePayload(answers, payloadOptionsOf(requestOpts)), requestOpts), axis.count, requestOpts);
   const points = await resampleMaTafdc(answers, swept, requestOpts);
 
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, CHILDCARE_SUBSIDY_PROBE_SENTINEL, answersFor, archetypeById, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { ARCHETYPES, PROBE_SENTINEL, answersFor, archetypeById, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
 import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 import {
@@ -50,11 +50,11 @@ function isProbe(init?: RequestInit): boolean {
 const probeRejected = () => new Response(JSON.stringify({ status: "error", message: "Unrecognized calculate input(s): Unrecognized household variable" }), { status: 400 });
 /** The #9503 probe forces the aggregate subsidy; a model from before the fix reads it back and counts none of it. */
 function isChildcareProbe(init?: RequestInit): boolean {
-  return JSON.parse(init!.body as string).household.spm_units?.spm_unit?.child_care_subsidies?.["2026"] === CHILDCARE_SUBSIDY_PROBE_SENTINEL;
+  return JSON.parse(init!.body as string).household.spm_units?.spm_unit?.child_care_subsidies?.["2026"] === PROBE_SENTINEL;
 }
 const childcareProbeOld = () => new Response(JSON.stringify({ status: "ok", result: {
   households: { household: { household_state_benefits: { "2026": 0 } } },
-  spm_units: { spm_unit: { child_care_subsidies: { "2026": CHILDCARE_SUBSIDY_PROBE_SENTINEL } } },
+  spm_units: { spm_unit: { child_care_subsidies: { "2026": PROBE_SENTINEL } } },
 } }), { status: 200 });
 const fixtureBody = fixtureFor(AXIS.count, AXIS.max);
 const noopSleep = async () => {};
