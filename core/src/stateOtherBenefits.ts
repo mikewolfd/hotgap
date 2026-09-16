@@ -11,7 +11,11 @@
 // number per point — so a state's entry here is the record of a probe, not
 // something the pipeline recomputes. A state whose remainder grows past the
 // floor below without a row here is reported as unidentified, and the unit
-// test on the committed data fails until someone traces it.
+// test on the committed data fails until someone traces it. The first trace
+// (2026-09-16) found a leak rather than a benefit: PolicyEngine's HUD voucher
+// payment reaching CA and KS households that had said they have no voucher,
+// because HotGap forced the wrong variable. That is closed in translate.ts
+// (`takes_up_housing_assistance_if_eligible`), so it has no row here.
 
 export interface OtherBenefitSource {
   /** The PolicyEngine variable, as named in the household-benefit lists. */
@@ -24,29 +28,6 @@ export interface OtherBenefitSource {
 }
 
 export const OTHER_BENEFIT_SOURCES: readonly OtherBenefitSource[] = [
-  {
-    // HUD's Housing Choice Voucher payment, which PolicyEngine models for any
-    // income-eligible renter (`takes_up_housing_assistance_if_eligible`
-    // defaults to true). HotGap switches the voucher off by forcing
-    // `spm_unit_capped_housing_subsidy` to 0 (translate.ts), but the variable
-    // inside household_benefits is `housing_assistance`, which is not forced,
-    // so the modeled payment reaches net income anyway. It is small because
-    // HotGap sends the rent as `rent` (SNAP's shelter deduction), not as
-    // `pre_subsidy_rent` (HUD's gross rent), so `hud_gross_rent` is the PHA
-    // utility allowance alone and the payment is capped at that allowance
-    // minus the tenant's $25 minimum payment: LA County's $249/month
-    // zero-bedroom all-electric schedule gives $2,963 a year, Johnson County
-    // KS's $208 gives $2,471. Upstream encodes a utility allowance for LA
-    // County, four Kansas PHAs and the Texas TDHCA service area only
-    // (parameters/gov/hud/utility_allowance), so every other swept county
-    // has a $0 gross rent and a $0 payment. Verified 2026-09-16: `hud_hap`
-    // $2,963 / $2,471 with `hud_gross_rent` $2,988 / $2,496 in CA / KS, $0
-    // and $0 in TX (Harris County) and NY.
-    variable: "housing_assistance",
-    entity: "spm_units",
-    label: "HUD housing assistance payment, modeled by PolicyEngine for an eligible renter — the utility allowance only, since HotGap does not send pre_subsidy_rent",
-    states: ["CA", "KS"],
-  },
   {
     // New Jersey's ANCHOR renter benefit: a flat $450 a year for a renter
     // under 65 with income at or below $150,000 (N.J.S.A. 54:4-8.67; upstream

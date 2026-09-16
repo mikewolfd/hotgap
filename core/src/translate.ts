@@ -313,7 +313,23 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
     }
   }
   for (const v of SPM_VARS) spmVars[v] = y(null);
-  if (!a.getsHousing) spmVars.spm_unit_capped_housing_subsidy = y(0);
+  if (!a.getsHousing) {
+    spmVars.spm_unit_capped_housing_subsidy = y(0);
+    // Not the same variable: `household_benefits` reads `housing_assistance`,
+    // the HUD payment PolicyEngine makes to any income-eligible renter because
+    // `takes_up_housing_assistance_if_eligible` defaults true, and forcing the
+    // capped subsidy to 0 leaves that untouched. It leaked into otherBenefits
+    // in the sweep — $2,963/yr for a Los Angeles adult, $2,471 in Johnson
+    // County, Kansas (only where upstream encodes a PHA utility allowance,
+    // since HotGap sends the rent as SNAP's `rent`, not HUD's
+    // `pre_subsidy_rent`). Traced 2026-09-16; core/src/stateOtherBenefits.ts
+    // carried the label until this switch closed it.
+    spmVars.takes_up_housing_assistance_if_eligible = y(false);
+  } else {
+    // A voucher holder's rent is what HUD's payment standard is measured
+    // against; SNAP's `rent` is the other input and is sent regardless.
+    if (a.monthlyRent !== null) you.pre_subsidy_rent = y(a.monthlyRent * 12);
+  }
   // WORKAROUND — remove when upstream stops zeroing the credit for non-filers
   // who take APTC (policyengine-us #9479).
   // `aca_ptc` multiplies by `tax_unit_is_filer`, which PolicyEngine derives

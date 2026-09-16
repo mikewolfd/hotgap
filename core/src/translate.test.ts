@@ -258,10 +258,18 @@ describe("buildPEPayload", () => {
     expect(p.household.spm_units.spm_unit.spm_unit_capped_housing_subsidy["2026"]).toBe(0);
   });
 
-  it("omits the housing override when the family gets housing help", () => {
+  it("omits the housing override when the family gets housing help, and sends HUD's rent input", () => {
     const p = buildPEPayload({ ...base, getsHousing: true }) as any;
     // still requested as an output (null), but not forced to 0
     expect(p.household.spm_units.spm_unit.spm_unit_capped_housing_subsidy["2026"]).toBeNull();
+    expect(p.household.spm_units.spm_unit.takes_up_housing_assistance_if_eligible).toBeUndefined();
+    expect(p.household.people.you.pre_subsidy_rent).toEqual({ "2026": 1500 * 12 });
+  });
+
+  it("turns off HUD's own take-up switch when the family has no voucher — a different variable from the capped subsidy", () => {
+    const p = buildPEPayload(base) as any;
+    expect(p.household.spm_units.spm_unit.takes_up_housing_assistance_if_eligible).toEqual({ "2026": false });
+    expect(p.household.people.you.pre_subsidy_rent).toBeUndefined();
   });
 
   it("adds employer-coverage inputs on the adult when hasEmployerCoverage", () => {

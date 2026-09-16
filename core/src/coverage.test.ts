@@ -86,8 +86,8 @@ describe("stateCoverage — unmodeled and otherBenefits", () => {
   });
 
   it("labels the remainder from the traced table, reports an untraced one as such, and ignores noise", () => {
-    const ca = stateCoverage("CA", { ...curves(), "single-0": curve({ otherBenefits: 2963.4 }) }).otherBenefits;
-    expect(ca).toEqual([{ variable: "housing_assistance", label: expect.stringContaining("HUD"), maxAnnualInSweep: 2963 }]);
+    const nj = stateCoverage("NJ", { ...curves(), "single-0": curve({ otherBenefits: 450.4 }) }).otherBenefits;
+    expect(nj).toEqual([{ variable: "nj_property_tax_relief", label: expect.stringContaining("ANCHOR"), maxAnnualInSweep: 450 }]);
     expect(stateCoverage("TX", curves({ otherBenefits: 800 })).otherBenefits).toEqual([{ variable: null, label: expect.stringContaining("not yet identified"), maxAnnualInSweep: 800 }]);
     expect(stateCoverage("TX", curves({ otherBenefits: 99 })).otherBenefits).toEqual([]);
     expect(stateCoverage("CA", curves()).otherBenefits).toEqual([]);

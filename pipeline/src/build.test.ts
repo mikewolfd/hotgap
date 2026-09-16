@@ -119,16 +119,16 @@ describe("buildSummary", () => {
   });
 
   it("carries a coverage block per swept state, built from the same curves and the sweep's own model and gaps", () => {
-    const results = { ...fullResultsFor("CA"), ...fullResultsFor("TX") };
-    results.CA["single-0"] = results.CA["single-0"].map((p) => ({ ...p, otherBenefits: 2963 }));
+    const results = { ...fullResultsFor("NJ"), ...fullResultsFor("TX") };
+    results.NJ["single-0"] = results.NJ["single-0"].map((p) => ({ ...p, otherBenefits: 450 }));
     const model = { endpoint: "127.0.0.1:8099", version: "2.5.0" };
-    const summary = buildSummary("g", ["CA", "TX"], results, model);
-    expect(Object.keys(summary.coverage!).sort()).toEqual(["CA", "TX"]);
-    expect(summary.coverage!.CA).toEqual(stateCoverage("CA", results.CA, { model, childcareSubsidyUnmodeled: summary.childcareSubsidyUnmodeled }));
-    expect(summary.coverage!.CA.otherBenefits).toEqual([{ variable: "housing_assistance", label: expect.any(String), maxAnnualInSweep: 2963 }]);
-    expect(summary.coverage!.CA.vintages.model).toEqual(model);
+    const summary = buildSummary("g", ["NJ", "TX"], results, model);
+    expect(Object.keys(summary.coverage!).sort()).toEqual(["NJ", "TX"]);
+    expect(summary.coverage!.NJ).toEqual(stateCoverage("NJ", results.NJ, { model, childcareSubsidyUnmodeled: summary.childcareSubsidyUnmodeled }));
+    expect(summary.coverage!.NJ.otherBenefits).toEqual([{ variable: "nj_property_tax_relief", label: expect.any(String), maxAnnualInSweep: 450 }]);
+    expect(summary.coverage!.NJ.vintages.model).toEqual(model);
     // A linear curve pays no subsidy, so both states are flagged, and each block says so.
-    expect(summary.childcareSubsidyUnmodeled).toEqual(["CA", "TX"]);
+    expect(summary.childcareSubsidyUnmodeled).toEqual(["NJ", "TX"]);
     expect(summary.coverage!.TX.unmodeled.map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
     expect(summary.coverage!.TX.corrections.coverageGap.applies).toBe(true);
   });

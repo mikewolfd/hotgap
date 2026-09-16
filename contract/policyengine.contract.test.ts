@@ -417,23 +417,40 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         const household = payload.household as { axes: unknown[][] } & Record<string, Record<string, Record<string, unknown>>>;
         household.axes[0][0] = { name: "employment_income", min: 0, max: 1000, count: 2, period: "2026" };
         for (const instance of Object.values(household[entity])) instance[variable] = { "2026": null };
-        // The voucher HotGap switched off must stay off in the figure it forces,
-        // or the remainder would be a double count rather than a leak.
-        if (variable === "housing_assistance") household.spm_units.spm_unit.hud_hap = { "2026": null };
         const body = (await requestPE(payload, { timeoutMs: 90_000 })) as any;
         const [point] = parsePEResponse(body, 2);
         const series = Object.values(body.result[entity] as Record<string, any>)[0][variable]["2026"] as number[];
-        // Observed 2026-09-16 on policyengine-us 2.5.0: CA $2,963, KS $2,471, NJ $450.
+        // Observed 2026-09-16 on policyengine-us 2.5.0: NJ $450.
         expect(point.otherBenefits).toBeGreaterThan(100);
         expect(series[0]).toBeCloseTo(point.otherBenefits, 0);
-        if (variable === "housing_assistance") {
-          const spm = body.result.spm_units.spm_unit;
-          expect(spm.hud_hap["2026"][0]).toBeCloseTo(series[0], 0);
-          expect([spm.spm_unit_capped_housing_subsidy["2026"]].flat().every((v) => v === 0)).toBe(true);
-        }
       }, 120_000);
     }
   }
+
+  // The first remainder traced was a leak, not a benefit: HUD's voucher
+  // payment (`housing_assistance`, which household_benefits reads) reaching a
+  // household that said it has no voucher, because HotGap forced only
+  // `spm_unit_capped_housing_subsidy`. CA $2,963 and KS $2,471 a year at $0
+  // on 2.5.0 before `takes_up_housing_assistance_if_eligible: false` closed
+  // it. Pins that it stays closed, and that a voucher household still draws it.
+  it("no voucher means no HUD payment in the remainder (CA, KS); a voucher household still draws one", async () => {
+    for (const state of ["CA", "KS"] as const) {
+      const answers = answersFor(state, ARCHETYPES.find((a) => a.id === "single-0")!);
+      const at0 = async (getsHousing: boolean) => {
+        const payload = buildCurvePayload({ ...answers, getsHousing });
+        const household = payload.household as { axes: unknown[][]; spm_units: { spm_unit: Record<string, unknown> } };
+        household.axes[0][0] = { name: "employment_income", min: 0, max: 1000, count: 2, period: "2026" };
+        household.spm_units.spm_unit.housing_assistance = { "2026": null };
+        const body = (await requestPE(payload, { timeoutMs: 90_000 })) as any;
+        return { point: parsePEResponse(body, 2)[0], hud: body.result.spm_units.spm_unit.housing_assistance["2026"][0] as number };
+      };
+      const off = await at0(false);
+      expect(off.hud, state).toBe(0);
+      expect(off.point.otherBenefits, state).toBeLessThan(100);
+      const on = await at0(true);
+      expect(on.hud, state).toBeGreaterThan(1000);
+    }
+  }, 300_000);
 
   // Two states pay nothing until the provider type is named (policyengine-us
   // #9485); HotGap names it in its own payload. Pins that the enum values
