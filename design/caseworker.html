@@ -4,218 +4,160 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HotGap — the caseworker surface</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <style>
   /* Caseworker surface: dense, exact, printable. Body steps down to 15px —
-     this reader is scanning thresholds, not reading prose. */
+     this reader is scanning thresholds, not reading prose. Everything shared
+     (chips, buttons, badges, tables, panels, the chart's marks) comes from
+     tokens.css as hg-* classes (S13); what is declared here is layout that
+     belongs to this page alone. */
   body { font-size: var(--t-small); }
   .page { max-width: 76rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
   h2 { font-size: var(--t-h2); margin: var(--s6) 0 var(--s3); }
   h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
   p { max-width: var(--measure-wide); }
-
-  .bar { background: var(--surface); border-bottom: 1px solid var(--rule);
-         position: sticky; top: 0; z-index: 5; }
-  .bar-in { max-width: 76rem; margin: 0 auto; padding: var(--s3) var(--s4);
-            display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
   .wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 var(--s3) 0 0; }
-
-  .chip { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch);
-          padding: 0 var(--s3); border: 1px solid var(--rule-strong); background: var(--surface);
-          color: var(--ink); border-radius: var(--r-control); cursor: pointer; white-space: nowrap; }
-  .chip .k { color: var(--ink-3); }
-  .chip .v { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
-  .chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-  .chip.off .v { color: var(--ink-3); font-weight: var(--w-reg); }
-  .act { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
-  .act .chip { background: var(--ink); color: var(--plane); border-color: var(--ink); font-weight: var(--w-med); }
-  .act .chip.secondary { background: var(--surface); color: var(--ink); border-color: var(--rule-strong); font-weight: var(--w-reg); }
+  /* The two actions keep their full names where there is room and a short
+     one on a phone, so the sticky top row is one row at every width (S1). */
+  .short { display: none; }
+  @media (max-width: 719.98px) { .short { display: inline; } .full { display: none; } }
+  /* TODO(system): tokens.css puts `position: sticky` on .hg-scenario__top,
+     whose containing block is the header — a sticky child cannot outlive its
+     parent's box, so the row scrolled away with the inputs. Here the top row
+     is its own full-width strip and the strip is the sticky thing (S1). */
+  .topbar { position: sticky; top: 0; z-index: 5; }
+  /* TODO(system): a full-width line inside .hg-scenario__inputs for the
+     take-up toggles' response; tokens.css gives the row no slot for text. */
+  .takeup-note { flex: 1 1 100%; margin: 0; }
 
   .verdict { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-end;
              padding: var(--s5) 0 var(--s4); border-bottom: 1px solid var(--rule); }
+  .verdict > div:first-child { flex: 1 1 28rem; min-width: 0; }
   .verdict-line { font-size: var(--t-h1); font-weight: var(--w-med); line-height: var(--lh-tight);
-                  max-width: 30ch; letter-spacing: -0.01em; margin: 0; }
+                  max-width: 40ch; letter-spacing: -0.01em; margin: 0; }
+  .verdict-sub { color: var(--ink-2); margin: var(--s2) 0 0; }
   .tiles { display: flex; gap: var(--s5); flex-wrap: wrap; margin-left: auto; }
   .tile .lab { color: var(--ink-3); font-size: var(--t-micro); display: block; }
   .tile .val { font-size: var(--t-figure); font-weight: var(--w-semi); line-height: 1.1;
                letter-spacing: -0.02em; display: block; }
   .tile .sub { color: var(--ink-2); font-size: var(--t-micro); display: block; }
 
-  .cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s5); }
+  /* Coverage notice and corrections sit under the verdict, before the columns (B1, B3). */
+  .provenance { display: grid; gap: 0 var(--s6); grid-template-columns: 1fr; }
+  @media (min-width: 60rem) { .provenance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .provenance .hg-rows { margin-top: var(--s2); --col: 11rem; }
+  .provenance .hg-rows .hg-cite { margin-top: 2px; }
+  .provenance .hg-cite .hg-tag { margin-right: var(--s2); vertical-align: 1px; }
+  .provenance h2 { margin-top: var(--s5); }
+  /* TODO(system): core's notes carry identifiers (household_net_income,
+     assigned_co_premium_assistance) that cannot break; .hg-cite should allow
+     overflow-wrap: anywhere so a 358px column does not scroll sideways. */
+  .provenance .hg-cite, .assumed li { overflow-wrap: anywhere; }
+
+  .cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s4); }
   @media (min-width: 60rem) { .cols { grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); } }
   /* Grid items default to min-width:auto, which lets a wide table push the
      column past the viewport. The scroller only works if the column can shrink. */
   .cols > * { min-width: 0; }
+  .hg-scroll-x .hg-table { min-width: 30rem; }
 
-  svg.plot { display: block; width: 100%; height: auto; }
-  .chart-wrap { position: relative; }
-  .chart-wrap:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-  .readout { color: var(--ink-2); margin: var(--s2) 0 0; min-height: 2.4em; }
-  .readout b { color: var(--ink); }
-  .key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
-         padding: 0; list-style: none; font-size: var(--t-micro); color: var(--ink-2); }
-  .key li { display: flex; align-items: center; gap: var(--s2); }
-  .key svg { width: 22px; height: 12px; flex: none; }
+  /* A direct label on the chart reads over whatever it crosses: a surface halo. */
+  .halo { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 
-  table { border-collapse: collapse; width: 100%; }
-  caption { text-align: left; color: var(--ink-2); padding-bottom: var(--s2); }
-  th, td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
-           border-bottom: 1px solid var(--rule); vertical-align: top; }
-  thead th { color: var(--ink-3); font-weight: var(--w-med); font-size: var(--t-micro);
-             border-bottom-color: var(--rule-strong); }
-  td.num, th.num { text-align: right; padding-right: var(--s3); white-space: nowrap; }
-  .money { font-weight: var(--w-semi); }
-  .cite { color: var(--ink-3); font-size: var(--t-micro); display: block; }
-
-  /* The ledger: a rule per threshold, a dollar on every rule. */
-  .ledger tbody tr { cursor: default; }
   .ledger .who { color: var(--ink-2); }
-  .drops tbody tr { cursor: pointer; }
-  .drops tbody tr[aria-selected="true"] { background: var(--surface-sunk); }
-  .drops tbody tr:hover { background: var(--surface-sunk); }
-  .drops td:first-child { font-weight: var(--w-semi); }
-  .drop-btn { all: unset; display: block; min-height: var(--touch); line-height: var(--touch); }
+  .ledger .hg-badge { margin-left: var(--s1); }
+  .drops td:first-child { font-weight: var(--w-semi); white-space: nowrap; }
 
-  .later { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--r-chip);
-           border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 0 8px;
-           font-size: var(--t-micro); font-weight: var(--w-med); }
-
+  /* BreakdownBars (#9): four signed bars from a centre zero (N4). */
   .bd { margin: var(--s3) 0 0; }
-  .bd-row { display: grid; grid-template-columns: 5.5rem 1fr 5rem; gap: var(--s3);
+  .bd-row { display: grid; grid-template-columns: 5.5rem 1fr 5.5rem; gap: var(--s3);
             align-items: center; padding: var(--s1) 0; }
+  .bd-axis { color: var(--ink-3); font-size: var(--t-micro); }
+  .bd-axis .bd-track { background: none; height: auto; display: flex; justify-content: space-between; }
   .bd-track { position: relative; height: 14px; background: var(--surface-sunk); }
   .bd-zero { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--rule-strong); }
   .bd-fill { position: absolute; top: 2px; height: 10px; border-radius: 0 3px 3px 0; }
   .bd-fill.neg { border-radius: 3px 0 0 3px; }
-  .bd-val { text-align: right; font-variant-numeric: tabular-nums; }
+  .bd-val { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-  .panel { background: var(--surface); border: 1px solid var(--rule); padding: var(--s4); }
-  .panel h3 { margin-top: 0; }
-
-  .compare th:first-child { width: 12rem; }
+  .compare th:first-child { width: 13rem; }
   .compare td { font-variant-numeric: tabular-nums; }
   .compare thead .b { box-shadow: inset 0 -3px 0 0 var(--series-2); }
   .compare tbody .b { box-shadow: inset -1px 0 0 0 var(--series-2), inset 1px 0 0 0 var(--series-2); }
 
-  .scroll-x { overflow-x: auto; }
-  .scroll-x table { min-width: 30rem; }
-  /* Model coverage. Keyed off summary.childcareSubsidyUnmodeled, so it
-     disappears the day upstream starts modelling a state. */
-  .coverage { display: flex; gap: var(--s3); align-items: flex-start;
-              padding: var(--s3) 0; border-bottom: 1px solid var(--rule); }
-  .coverage .mark { width: 18px; height: 18px; flex: none; margin-top: 2px; }
-  .coverage.ok .mark { background: var(--surface-sunk);
-                       outline: 1px solid var(--rule-strong); outline-offset: -1px; }
-  .coverage.gap .mark { outline: 1px solid var(--rule-strong); outline-offset: -1px; }
-  .coverage p { margin: 0; color: var(--ink-2); }
-  .coverage.gap p strong { color: var(--caution); }
   .footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
-  .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
-               border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; }
+  .assumed { margin: 0; padding-left: var(--s5); }
+  .assumed li { margin-bottom: var(--s1); }
 
-  .skip { position: absolute; left: -9999px; }
-  .skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
-                background: var(--surface); padding: var(--s3); border: 1px solid var(--ink); }
-
-  .handout { display: none; }
   @media print {
-    .bar, .act, .theme-btn, .no-print { display: none !important; }
-    body { background: #fff; color: #000; font-size: 11pt; }
-    .handout { display: block; page-break-before: always; }
-    .cols { grid-template-columns: 1fr; }
-    a[href]::after { content: ""; }
+    body { font-size: 11pt; }
+    .cols, .provenance { grid-template-columns: 1fr; }
+    .handout { page-break-before: always; }
   }
 </style>
 </head>
 <body>
-<a class="skip" href="#ledger">Skip to the threshold ledger</a>
+<a class="hg-skip" href="#ledger">Skip to the threshold ledger</a>
 
-<div class="bar">
-  <div class="bar-in">
+<div class="hg-scenario topbar hg-no-print">
+  <div class="hg-scenario__top">
     <p class="wordmark">HotGap</p>
-    <button class="chip" type="button"><span class="k">State</span><span class="v">CO</span></button>
-    <button class="chip" type="button"><span class="k">County</span><span class="v">El Paso</span></button>
-    <button class="chip" type="button"><span class="k">Household</span><span class="v">1 adult, kids 3 &amp; 7</span></button>
-    <button class="chip" type="button"><span class="k">Earnings</span><span class="v">$38,000</span></button>
-    <button class="chip" type="button"><span class="k">Rent</span><span class="v">$1,735/mo</span></button>
-    <button class="chip" type="button"><span class="k">Childcare</span><span class="v">$1,438/mo</span></button>
-    <button class="chip" type="button" aria-pressed="true"><span class="k">CCDF subsidy</span><span class="v">on</span></button>
-    <button class="chip off" type="button" aria-pressed="false"><span class="k">Head Start</span><span class="v">off</span></button>
-    <button class="chip off" type="button" aria-pressed="false"><span class="k">Housing</span><span class="v">off</span></button>
-    <span class="act">
-      <button class="chip secondary" type="button">Add a what-if</button>
-      <button class="chip" type="button" id="printBtn">Print the client sheet</button>
-    </span>
+    <div class="hg-scenario__actions">
+      <a class="hg-button" href="#compare"><span class="full">Add a what-if</span><span class="short">What-if</span></a>
+      <button class="hg-button hg-button--primary" type="button" id="printBtn">
+        <span class="full">Print the client sheet</span><span class="short">Print</span></button>
+    </div>
   </div>
 </div>
+<header class="hg-scenario">
+  <div class="hg-scenario__summary hg-no-print">
+    <span id="summaryLine"></span>
+    <button class="hg-button hg-button--small" type="button" id="editBtn"
+            aria-expanded="false" aria-controls="inputs">Edit</button>
+  </div>
+  <div class="hg-scenario__inputs" id="inputs"></div>
+</header>
 
 <main class="page">
 
   <div class="verdict">
-    <p class="verdict-line">In a danger zone. Between $36,000 and $86,000 of earnings she
-      never gets back to the $68,348 she nets at $36,000.</p>
-    <div class="tiles">
-      <div class="tile"><span class="lab">Net, after premiums</span>
-        <span class="val hg-figure">$67,000</span>
-        <span class="sub">at $38,000 earned</span></div>
-      <div class="tile"><span class="lab">Raise to clear the zone</span>
-        <span class="val hg-figure">$48,000</span>
-        <span class="sub">to $86,000 earned</span></div>
-      <div class="tile"><span class="lab">Largest single-step drop</span>
-        <span class="val hg-figure">$9,390</span>
-        <span class="sub">at $54,000 &rarr; $55,000</span></div>
-      <div class="tile"><span class="lab">Reach at current earnings</span>
-        <span class="val hg-figure">40th</span>
-        <span class="sub">percentile, &plusmn;$8,000</span></div>
+    <div>
+      <p class="verdict-line" id="verdictLine"></p>
+      <p class="verdict-sub" id="verdictSub"></p>
     </div>
+    <div class="tiles" id="tiles"></div>
   </div>
 
-  <div class="coverage" id="coverage"></div>
+  <div class="provenance">
+    <section>
+      <h2>Model coverage in <span class="stateName"></span></h2>
+      <div id="coverage"></div>
+    </section>
+    <section>
+      <h2>Corrections applied in <span class="stateName"></span></h2>
+      <ol class="hg-rows" id="corrections"></ol>
+      <p class="hg-cite" id="correctionsRest"></p>
+    </section>
+  </div>
 
   <div class="cols">
     <section>
       <figure style="margin:0">
-        <h2 style="margin-top:var(--s5)">Net income after premiums, $0&ndash;$150,000 of earnings</h2>
-        <div class="chart-wrap" id="chartWrap" tabindex="0" role="img"
-             aria-describedby="curveCap"
-             aria-label="Net income after premiums against earnings, 0 to 150,000 dollars.
-               Flat from 36,000 to 86,000 with an 9,390 dollar step down at 54,000 where the
-               child care subsidy ends, then rising to the top of the axis.">
-          <svg class="plot" id="curve" aria-hidden="true"></svg>
+        <h2 style="margin-top:var(--s5)" id="curveTitle"></h2>
+        <div class="hg-chart" id="chartWrap" tabindex="0" role="group"
+             aria-roledescription="interactive chart" aria-describedby="curveCap">
+          <svg id="curve" aria-hidden="true"></svg>
+          <div class="hg-marks" id="marks"></div>
         </div>
-        <p class="readout" id="readout" aria-live="polite">Arrow keys, or drag, to read any point.</p>
-        <ul class="key">
-          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="1" y1="6" x2="21" y2="6"
-              stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/></svg> Net income</li>
-          <li><svg viewBox="0 0 22 12" aria-hidden="true"><rect x="1" y="1" width="20" height="10"
-              fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/>
-              <path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/></svg>
-              Danger zone</li>
-          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
-              stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5"
-              fill="var(--loss-4)"/></svg> Immediate cliff</li>
-          <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
-              stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/>
-              <circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)"
-              stroke-width="1.5"/></svg> Deferred cliff</li>
-          <li><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z"
-              fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/></svg> Current earnings</li>
-        </ul>
-        <figcaption class="hg-source" id="curveCap">
-          <span id="axisNote">The y-axis does not start at $0.</span> Deferred drops are lifted out of the plotted line,
-          which is what <code>analysis.dangerZones</code> describes; the real curve including
-          the deferred drop is the dashed ghost. Source: HotGap / PolicyEngine 2026 rules,
-          committed archetype sweep of 2026-09-15 &mdash; not this family's own live call.
-        </figcaption>
+        <p class="hg-readout" id="readout" aria-live="polite">Arrow keys, or drag, to read any point. Square brackets step between cliffs.</p>
+        <ul class="hg-key" id="key"></ul>
+        <figcaption class="hg-source" id="curveCap"></figcaption>
       </figure>
 
       <h2 id="drops">Every step down</h2>
-      <div class="scroll-x">
-      <table class="drops">
-        <caption>Select a row to see where the drop came from.</caption>
+      <div class="hg-scroll-x">
+      <table class="hg-table drops">
+        <caption>Select a row or its mark for the breakdown.</caption>
         <thead>
           <tr><th scope="col">Earnings</th><th scope="col" class="num">Drop</th>
               <th scope="col">Programs lost</th><th scope="col">Driver</th></tr>
@@ -224,352 +166,1108 @@
       </table>
       </div>
 
-      <div class="panel" style="margin-top:var(--s4)">
-        <h3 id="bdTitle">Where the $9,390 went &mdash; $54,000 to $55,000</h3>
+      <div class="hg-panel" style="margin-top:var(--s4)">
+        <h3 id="bdTitle"></h3>
         <div class="bd" id="bdBars"></div>
-        <p class="footnote" style="margin:var(--s3) 0 0">Components sum to the drop exactly.
-          A negative component offsets the loss &mdash; here, a falling tax bill.
-          Medicaid and CHIP never appear: their value is a coverage sticker price, never
-          cash, so it cannot move net income. A child losing coverage shows in
+        <p class="footnote" style="margin:var(--s3) 0 0">The four shares sum to the drop exactly.
+          A share right of zero adds to the loss; one left of it offsets the loss &mdash; here,
+          a falling tax bill. Medicaid and CHIP never appear: their value is a coverage sticker
+          price, never cash, so it cannot move net income. A child losing coverage shows in
           <em>programs lost</em> instead.</p>
       </div>
     </section>
 
     <section>
       <h2 id="ledger" style="margin-top:var(--s5)">Where each program ends</h2>
-      <table class="ledger">
-        <caption>Adults and children are reported separately &mdash; a parent usually loses
-          coverage far below a child&rsquo;s limit.</caption>
+      <table class="hg-table ledger">
+        <caption>A program ends at the first pay at which it is gone. Adults and children are
+          reported separately &mdash; a parent usually loses coverage far below a child&rsquo;s limit.</caption>
         <thead>
           <tr><th scope="col" class="num">Earnings</th><th scope="col">Program</th>
               <th scope="col">Who</th></tr>
         </thead>
-        <tbody>
-          <tr><td class="num money">$6,000</td><td>TANF cash assistance</td><td class="who">Household</td></tr>
-          <tr><td class="num money">$37,000</td><td>Medicaid
-            <span class="cite">Adult group, 138% FPL. Not §1931, so no Transitional Medical
-              Assistance &mdash; coverage ends that month.</span></td><td class="who">Adult</td></tr>
-          <tr><td class="num money">$40,000</td><td>Medicaid</td><td class="who">Children</td></tr>
-          <tr><td class="num money">$54,000</td><td>SNAP</td><td class="who">Household</td></tr>
-          <tr><td class="num money">$54,000</td><td>WIC</td><td class="who">Children</td></tr>
-          <tr><td class="num money">$54,000</td><td>CCDF child care subsidy
-            <span class="cite">Computed and reaching net income in CO. Two upstream gaps
-              exist elsewhere and are different problems: a state where the subsidy is
-              computed but dropped from net income (HotGap adds it back), and a state where
-              none is computed at all (23 of them — see the notice above).</span></td>
-            <td class="who">Household</td></tr>
-          <tr><td class="num money">$58,000</td><td>EITC</td><td class="who">Household</td></tr>
-          <tr><td class="num money">$72,000</td><td>CHIP <span class="later">Deferred</span>
-            <span class="cite">12 months continuous eligibility &mdash; 42 CFR 435.926,
-              457.342. Crossing this does not end coverage this year.</span></td>
-            <td class="who">Children</td></tr>
-          <tr><td class="num money">$106,000</td><td>Premium tax credit
-            <span class="cite">Net premium jumps $6,498 in one $1,000 step.</span></td>
-            <td class="who">Household</td></tr>
-        </tbody>
+        <tbody id="ledgerRows"></tbody>
       </table>
-      <p class="footnote">Cash benefits never end inside this axis. Child coverage ends at
-        $72,000, deferred. No coverage gap band: Colorado expanded Medicaid. No state
-        $0-premium wrap applies.</p>
+      <p class="footnote" id="ledgerNote"></p>
 
-      <h2>Compare</h2>
-      <div class="scroll-x">
-      <table class="compare">
-        <caption>Two questions asked of the same rules.</caption>
-        <thead>
-          <tr><th scope="col"></th>
-              <th scope="col" class="num">Now<br><span class="cite">1 adult, $38,000</span></th>
-              <th scope="col" class="num b">After the raise<br><span class="cite">1 adult, $55,000</span></th>
-              <th scope="col" class="num">Partner joins<br><span class="cite">2 adults, $38,000</span></th></tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">Net after premiums</th>
-              <td class="num money">$67,000</td><td class="num money b">$54,532</td><td class="num money">$74,394</td></tr>
-          <tr><th scope="row">Change from now</th>
-              <td class="num">&mdash;</td><td class="num b">&minus;$12,468</td><td class="num">+$7,394</td></tr>
-          <tr><th scope="row">In a danger zone</th>
-              <td class="num">Yes</td><td class="num b">Yes</td><td class="num">Yes</td></tr>
-          <tr><th scope="row">Zone ends at</th>
-              <td class="num">$86,000</td><td class="num b">$86,000</td><td class="num">$98,000</td></tr>
-          <tr><th scope="row">Raise still needed</th>
-              <td class="num">$48,000</td><td class="num b">$31,000</td><td class="num">$60,000</td></tr>
-          <tr><th scope="row">Adult Medicaid ends</th>
-              <td class="num">$37,000</td><td class="num b">$37,000</td><td class="num">$45,000</td></tr>
-          <tr><th scope="row">Child coverage ends</th>
-              <td class="num">$72,000</td><td class="num b">$72,000</td><td class="num">$87,000</td></tr>
-          <tr><th scope="row">Reach at these earnings</th>
-              <td class="num">40th</td><td class="num b">51st</td><td class="num">5th</td></tr>
-        </tbody>
+      <h2 id="compare">Compare</h2>
+      <div class="hg-scroll-x">
+      <table class="hg-table compare">
+        <caption>Three questions asked of the same rules.</caption>
+        <thead><tr id="compareHead"></tr></thead>
+        <tbody id="compareRows"></tbody>
       </table>
       </div>
-      <p class="footnote">Reach is the share of households of the same shape in Colorado
-        earning at or below this figure &mdash; it says how common the pay is, never the odds
-        of getting there. The married column uses the married ladder, which is why the same
-        $38,000 sits at the 5th percentile there and the 40th here.</p>
+      <p class="footnote" id="compareNote"></p>
 
-      <div class="panel" style="margin-top:var(--s5)">
+      <div class="hg-panel" style="margin-top:var(--s5)">
         <h3>What this model does not include</h3>
-        <ul style="margin:0;padding-left:var(--s5)">
-          <li>Health cost is premiums only &mdash; no deductibles, copays or other
-            out-of-pocket spending.</li>
-          <li>Immigration status, assets, and anyone aged 65 or over are not inputs.</li>
-          <li>Take-up is assumed for what is switched on above, and only that.</li>
-          <li>Annualised current-rule scenarios, not prorated calendar-year benefit totals.</li>
-        </ul>
-        <p class="hg-source" style="margin-top:var(--s3)">Estimates only &mdash; a caseworker
-          decides real benefits. Rules: 2026. Curve: committed archetype sweep, generated
-          2026-09-15. Rent: HUD FY2026 two-bedroom FMR, El Paso County. Child care price:
-          DOL National Database of Childcare Prices, carried to 2026 dollars by the BLS
-          Employment Cost Index.</p>
+        <ul class="assumed" id="assumed"></ul>
+        <p class="hg-source" id="sourceNote" style="margin-top:var(--s3)"></p>
       </div>
     </section>
   </div>
 
-  <section class="handout">
-    <h2>For the client &mdash; Colorado, one parent, two children</h2>
-    <p>You are paid $38,000 a year. You keep $67,000. More pay does not add to that until
-      you are paid about $86,000.</p>
-    <p>The biggest drop is at $55,000 of pay: child care help ends and you keep $9,390 less.
-      Food help ends at $54,000.</p>
-    <p>Your kids&rsquo; health plan ends at $72,000 of pay &mdash; but not that year. It ends
-      at their next yearly check, up to 12 months later.</p>
-    <p>These are estimates. A case worker decides real help.</p>
-    <p>Printed from HotGap. 2026 rules. Sweep of 2026-09-15.</p>
-  </section>
+  <!-- The client sheet, in the citizen register, paper only. -->
+  <section class="handout hg-print-only" id="handout"></section>
 
-  <p class="no-print" style="margin-top:var(--s7)">
-    <button class="theme-btn" id="themeBtn" type="button">Dark</button></p>
+  <p class="hg-no-print" style="margin-top:var(--s7)">
+    <button class="hg-button" id="themeBtn" type="button">Dark</button></p>
 </main>
 
 <script type="module">
-const STEP = 1000;
-const NET = [42970,44044,45118,46267,47491,48715,49939,46033,47587,49142,50696,52250,53804,55358,56912,58407,59730,60653,61973,62941,63759,64579,65008,65825,66616,67056,67486,66876,66933,67159,67386,67611,67443,67670,67894,68121,68348,68178,67000,67094,67180,67305,67015,67121,67187,67299,67359,66999,67029,67076,67098,67117,66335,66369,63922,54532,54874,54839,55175,55605,56198,55761,55955,56539,57121,57723,58300,58483,59216,59971,60726,61481,61843,61624,62197,62769,63277,63474,63778,64340,64839,65495,65696,66352,66947,67603,68198,68639,69235,69890,70486,71141,71697,72252,72748,73303,73799,74354,74850,75405,75901,76456,76952,77507,78003,78558,79118,76953,77608,78263,78918,79573,80228,80883,81539,82194,82849,83504,84159,84814,85469,86124,86779,87434,88090,88745,89400,90055,90710,91365,92017,92652,93287,93922,94558,95193,95828,96463,97098,97733,98368,99003,99638,100273,100909,101544,102179,102814,103449,104084,104719];
+/* Frozen to today's data (design/README.md: a sketch is a snapshot of one file).
+   Everything below `DATA` was produced on 2026-09-16 by
+     npm run -s hotgap -- curve --state CO --kids 3,7 --earnings 38000 --offline --json
+   (the two what-ifs by the flag variants named on each), with `coverage.CO`,
+   `generated` and `model` read from core/data/summary.json and the reach cell
+   from core/data/reach.json. `swept` is the archetype's own inputs
+   (answersFor in core/src/archetypes.ts), because on an archetype evaluation
+   the curve is that household's, not the flags the caller typed. Nothing
+   below this block is typed by hand except the program phrase table (M3) and
+   the sentence catalogs (M2), both from design/inventory.md, and the two
+   place names — the data carries only "CO" and county FIPS 08041. */
+const DATA = {
+  "command": "npm run -s hotgap -- curve --state CO --kids 3,7 --earnings 38000 --offline --json",
+  "ranOn": "2026-09-16",
+  "archetype": "single-2",
+  "county": { "fips": "08041", "name": "El Paso" },
+  "summary": {
+    "generated": "2026-09-16T16:13:51.445Z",
+    "year": "2026",
+    "model": { "endpoint": "127.0.0.1:8099", "version": "2.5.0" }
+  },
+  "coverage": {
+    "corrections": {
+      "policyOverrides": [],
+      "maTafdc": { "applies": false, "note": "Massachusetts-only; PolicyEngine's TANF as served." },
+      "premiumAssistance": { "applies": true, "source": "modeled", "program": "Colorado premium assistance", "note": "PolicyEngine's assigned_co_premium_assistance netted out of the premium (it lands in household_health_benefits, not the out-of-pocket figure HotGap reads); the local ladder stands down." },
+      "childcareSubsidy": { "applies": false, "source": "in net income", "note": "Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it." },
+      "coverageGap": { "applies": false, "note": "Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires." }
+    },
+    "unmodeled": [
+      { "program": "LIHEAP", "note": "Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income." }
+    ],
+    "otherBenefits": [],
+    "vintages": {
+      "model": { "endpoint": "127.0.0.1:8099", "version": "2.5.0" },
+      "rent": { "publisher": "HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2).", "vintage": "FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx." },
+      "county": { "publisher": "U.S. Census Bureau, Vintage 2024 county population estimates (CO-EST2024-ALLDATA), POPESTIMATE2024, SUMLEV 050.", "vintage": "Vintage 2024 (July 1, 2024 estimates)" },
+      "childcare": { "infant": "county 2015", "toddler": "county 2015", "preschool": "county 2015", "schoolAge": "county 2015" },
+      "reach": {
+        "basis": "ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI.",
+        "vintages": ["2024-1yr"],
+        "growthFactor": 1.067533
+      }
+    }
+  },
+  "unmodeledByState": {
+    "AL": ["LIHEAP"],
+    "AK": ["LIHEAP"],
+    "AZ": ["LIHEAP"],
+    "AR": ["LIHEAP"],
+    "CA": ["LIHEAP"],
+    "CO": ["LIHEAP"],
+    "CT": ["LIHEAP"],
+    "DE": ["LIHEAP"],
+    "DC": ["LIHEAP"],
+    "FL": ["LIHEAP"],
+    "GA": ["LIHEAP"],
+    "HI": ["LIHEAP"],
+    "ID": ["LIHEAP"],
+    "IL": ["LIHEAP"],
+    "IN": ["LIHEAP"],
+    "IA": ["LIHEAP"],
+    "KS": ["LIHEAP"],
+    "KY": ["LIHEAP"],
+    "LA": ["LIHEAP"],
+    "ME": ["LIHEAP"],
+    "MD": ["LIHEAP"],
+    "MA": ["LIHEAP"],
+    "MI": ["LIHEAP"],
+    "MN": ["LIHEAP"],
+    "MS": ["LIHEAP"],
+    "MO": ["LIHEAP"],
+    "MT": ["LIHEAP"],
+    "NE": ["LIHEAP"],
+    "NV": ["LIHEAP"],
+    "NH": ["LIHEAP"],
+    "NJ": ["NJ Health Plan Savings","LIHEAP"],
+    "NM": ["LIHEAP"],
+    "NY": ["LIHEAP"],
+    "NC": ["LIHEAP"],
+    "ND": ["LIHEAP"],
+    "OH": ["LIHEAP"],
+    "OK": ["LIHEAP"],
+    "OR": ["LIHEAP"],
+    "PA": ["LIHEAP"],
+    "RI": ["LIHEAP"],
+    "SC": ["LIHEAP"],
+    "SD": ["LIHEAP"],
+    "TN": ["LIHEAP"],
+    "TX": ["LIHEAP"],
+    "UT": ["LIHEAP"],
+    "VT": ["LIHEAP"],
+    "VA": ["LIHEAP"],
+    "WA": ["Cascade Care Savings","LIHEAP"],
+    "WV": ["LIHEAP"],
+    "WI": ["LIHEAP"],
+    "WY": ["LIHEAP"]
+  },
+  "reachCell": {
+    "ladder": [0,0,0,3300,8300,16800,23800,32500,37900,47700,54200,59600,67200,78000,88900,103000,108400,124600,145200,216800,757600],
+    "moe": [0,0,800,6400,6400,9400,9400,7800,8000,12400,4700,10500,14400,5900,14200,8300,9900,13400,18900,57700,0],
+    "n": 393,
+    "vintage": "2024-1yr",
+    "percentiles": [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100]
+  },
+  "evaluation": {
+    "source": "archetype",
+    "answers": {
+      "state": "CO",
+      "married": false,
+      "childAges": [3,7],
+      "annualEarnings": 38000,
+      "youStatus": "citizen",
+      "savings": 0,
+      "selfEmployed": false,
+      "youDisabled": false,
+      "hasEmployerCoverage": false,
+      "ssdiMonthly": 0,
+      "childSupportMonthly": 0,
+      "unemploymentMonthly": 0
+    },
+    "year": "2026",
+    "analysis": {
+      "currentEarnings": 38000,
+      "currentNet": 84371,
+      "verdict": "in_danger_zone",
+      "cliffs": [
+        {
+          "startEarnings": 6000,
+          "endEarnings": 7000,
+          "drop": 3903,
+          "programsLost": ["tanf"],
+          "breakdown": { "benefits": 5480, "credits": -657, "premiums": 0, "other": -920 },
+          "driver": "benefits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 26000,
+          "endEarnings": 27000,
+          "drop": 627,
+          "programsLost": [],
+          "breakdown": { "benefits": 251, "credits": 1251, "premiums": 0, "other": -875 },
+          "driver": "credits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 37000,
+          "endEarnings": 38000,
+          "drop": 220,
+          "programsLost": ["medicaid"],
+          "breakdown": { "benefits": 436, "credits": 215, "premiums": 444, "other": -875 },
+          "driver": "premiums",
+          "deferral": null
+        },
+        {
+          "startEarnings": 41000,
+          "endEarnings": 42000,
+          "drop": 305,
+          "programsLost": [],
+          "breakdown": { "benefits": 436, "credits": 620, "premiums": 125, "other": -876 },
+          "driver": "credits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 46000,
+          "endEarnings": 47000,
+          "drop": 361,
+          "programsLost": [],
+          "breakdown": { "benefits": 436, "credits": 657, "premiums": 143, "other": -875 },
+          "driver": "credits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 51000,
+          "endEarnings": 52000,
+          "drop": 780,
+          "programsLost": [],
+          "breakdown": { "benefits": 436, "credits": 1058, "premiums": 162, "other": -876 },
+          "driver": "credits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 53000,
+          "endEarnings": 54000,
+          "drop": 2444,
+          "programsLost": ["snap","wic"],
+          "breakdown": { "benefits": 2779, "credits": 383, "premiums": 157, "other": -875 },
+          "driver": "benefits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 54000,
+          "endEarnings": 55000,
+          "drop": 25449,
+          "programsLost": ["childcare"],
+          "breakdown": { "benefits": 25793, "credits": 383, "premiums": 147, "other": -874 },
+          "driver": "benefits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 60000,
+          "endEarnings": 61000,
+          "drop": 858,
+          "programsLost": [],
+          "breakdown": { "benefits": 0, "credits": 1590, "premiums": 143, "other": -875 },
+          "driver": "credits",
+          "deferral": null
+        },
+        {
+          "startEarnings": 106000,
+          "endEarnings": 107000,
+          "drop": 3821,
+          "programsLost": ["aca"],
+          "breakdown": { "benefits": 0, "credits": 0, "premiums": 4475, "other": -654 },
+          "driver": "premiums",
+          "deferral": null
+        }
+      ],
+      "dangerZones": [
+        { "startEarnings": 6000, "endEarnings": 10000, "peakNet": 66013 },
+        { "startEarnings": 26000, "endEarnings": 30000, "peakNet": 83618 },
+        { "startEarnings": 36000, "endEarnings": 45000, "peakNet": 84732 },
+        { "startEarnings": 46000, "endEarnings": 119000, "peakNet": 84807 }
+      ],
+      "nextCliff": { "startEarnings": 41000 },
+      "worstCliff": { "startEarnings": 54000, "endEarnings": 55000, "drop": 25449 }
+    },
+    "deferred": [],
+    "escape": {
+      "safeExitEarnings": 119000,
+      "leap": 73000,
+      "leapIsLowerBound": false,
+      "programEnds": { "snap": 54000, "medicaid": 40000, "chip": 72000, "eitc": 58000, "aca": 106000, "tanf": 6000, "wic": 54000, "childcare": 54000 },
+      "programEndsByAge": {
+        "adults": { "medicaid": 37000 },
+        "children": { "medicaid": 40000, "chip": 72000, "wic": 54000 }
+      },
+      "benefitsEndEarnings": null,
+      "childCoverageEndEarnings": 72000
+    },
+    "personal": {
+      "zone": { "startEarnings": 36000, "endEarnings": 45000, "peakNet": 84732 },
+      "escapeEarnings": 45000,
+      "raiseToClear": 7000,
+      "raiseIsLowerBound": false
+    },
+    "reach": { "safeExit": 83.27160493827161, "current": 40.05102040816327 },
+    "statePremiumAssistance": { "state": "CO", "variable": "assigned_co_premium_assistance", "program": "Colorado premium assistance", "maxAnnual": 1656 },
+    "curve": {
+      "earnings": [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000,31000,32000,33000,34000,35000,36000,37000,38000,39000,40000,41000,42000,43000,44000,45000,46000,47000,48000,49000,50000,51000,52000,53000,54000,55000,56000,57000,58000,59000,60000,61000,62000,63000,64000,65000,66000,67000,68000,69000,70000,71000,72000,73000,74000,75000,76000,77000,78000,79000,80000,81000,82000,83000,84000,85000,86000,87000,88000,89000,90000,91000,92000,93000,94000,95000,96000,97000,98000,99000,100000,101000,102000,103000,104000,105000,106000,107000,108000,109000,110000,111000,112000,113000,114000,115000,116000,117000,118000,119000,120000,121000,122000,123000,124000,125000,126000,127000,128000,129000,130000,131000,132000,133000,134000,135000,136000,137000,138000,139000,140000,141000,142000,143000,144000,145000,146000,147000,148000,149000,150000],
+      "net": [59032,60108,61184,62335,63561,64787,66013,62110,63666,65222,66778,68334,69890,71446,73002,74495,75821,76752,78069,79039,79855,80679,81101,81926,82712,83236,83618,82991,83138,83398,83647,83905,83754,84010,84247,84501,84732,84591,84371,84488,84569,84716,84411,84530,84605,84735,84807,84446,84475,84523,84545,84563,83783,83817,81373,55924,56265,56230,56566,56996,57590,56732,56926,57510,58092,58695,59271,59455,60187,60942,61698,62453,62814,63291,63865,64436,64945,65141,65445,66007,66506,67162,67364,68019,68615,69270,69866,70306,70902,71557,72153,72808,73364,73919,74415,74970,75466,76021,76517,77072,77568,78123,78619,79174,79670,80225,80785,76964,77619,78274,78929,79585,80240,80895,81550,82205,82860,83515,84170,84825,85480,86136,86791,87446,88101,88756,89411,90066,90721,91376,92028,92664,93299,93934,94569,95204,95839,96474,97109,97744,98379,99015,99650,100285,100920,101555,102190,102825,103460,104095,104730],
+      "statePremiumAssistance": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,1656,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      "programs": {
+        "tanf": [7440,7110,6780,6450,6120,5790,5460,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "snap": [9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9503,9440,9212,8981,8744,8513,8276,8045,7808,7577,7340,7109,6872,6641,6569,6413,6257,6101,5945,5789,5633,5477,5321,5165,5009,4853,4697,4541,4385,4229,4073,3917,3761,3605,3449,3293,3137,2981,2825,2669,713,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "wic": [724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,181,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "childcare": [33276,33256,33236,33216,33196,33176,33156,33136,33116,33096,33076,33056,33036,33016,32996,32976,32956,32936,32916,32896,32876,32856,32836,32816,32796,32776,32756,32736,32179,31899,31619,31339,31059,30779,30499,30219,29939,29659,29379,29099,28819,28539,28259,27979,27699,27419,27139,26859,26579,26299,26019,25739,25459,25179,24899,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "eitc": [0,400,800,1200,1600,2000,2400,2800,3200,3600,4000,4400,4800,5200,5600,6000,6400,6800,7200,7316,7316,7316,7316,7316,7293,7082,6872,6661,6450,6240,6029,5819,5608,5397,5187,4976,4766,4555,4344,4134,3923,3713,3502,3291,3081,2870,2660,2449,2238,2028,1817,1607,1396,1185,975,764,554,343,132,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "medicaid": [32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,32808,18835,18835,18835,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "chip": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "aca": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4293,4160,4021,3920,3796,3668,3536,3421,3282,3139,2992,2865,2711,2553,2391,2251,2094,1946,1795,1663,1507,1347,1185,1043,875,705,531,379,200,22,0,0,0,0,0,6706,6524,6341,6154,5989,5798,5605,5409,5310,5210,5111,5011,4911,4812,4712,4613,4513,4413,4314,4214,4115,4015,3915,3816,3716,3617,3517,3417,3318,3218,3119,3019,2919,2820,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      },
+      "childPrograms": {
+        "medicaid": [18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,18835,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "chip": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,4548,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "wic": [724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,724,181,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      }
+    },
+    "swept": {
+      "state": "CO",
+      "countyFips": "08041",
+      "married": false,
+      "childAges": [3,7],
+      "monthlyRent": 1735,
+      "monthlyChildcare": 2773,
+      "spouseAnnualEarnings": 0,
+      "age": 30,
+      "youStatus": "citizen",
+      "selfEmployed": false,
+      "savings": 0,
+      "getsSnap": true,
+      "getsTanf": true,
+      "getsMedicaid": true,
+      "getsWic": true,
+      "getsHeadStart": false,
+      "getsHousing": false,
+      "getsChildcareSubsidy": true,
+      "hasEmployerCoverage": false
+    }
+  },
+  "whatIfs": {
+    "raise": {
+      "command": "… --earnings 55000 --offline --json",
+      "archetype": "single-2",
+      "swept": {
+        "state": "CO",
+        "countyFips": "08041",
+        "married": false,
+        "childAges": [3,7],
+        "monthlyRent": 1735,
+        "monthlyChildcare": 2773,
+        "spouseAnnualEarnings": 0,
+        "age": 30,
+        "youStatus": "citizen",
+        "selfEmployed": false,
+        "savings": 0,
+        "getsSnap": true,
+        "getsTanf": true,
+        "getsMedicaid": true,
+        "getsWic": true,
+        "getsHeadStart": false,
+        "getsHousing": false,
+        "getsChildcareSubsidy": true,
+        "hasEmployerCoverage": false
+      },
+      "source": "archetype",
+      "answers": {
+        "state": "CO",
+        "married": false,
+        "childAges": [3,7],
+        "annualEarnings": 55000,
+        "youStatus": "citizen",
+        "savings": 0,
+        "selfEmployed": false,
+        "youDisabled": false,
+        "hasEmployerCoverage": false,
+        "ssdiMonthly": 0,
+        "childSupportMonthly": 0,
+        "unemploymentMonthly": 0
+      },
+      "year": "2026",
+      "analysis": {
+        "currentEarnings": 55000,
+        "currentNet": 55924,
+        "verdict": "in_danger_zone",
+        "nextCliff": { "startEarnings": 60000 },
+        "worstCliff": { "startEarnings": 54000, "endEarnings": 55000, "drop": 25449 }
+      },
+      "deferred": [],
+      "escape": {
+        "safeExitEarnings": 119000,
+        "leap": 73000,
+        "leapIsLowerBound": false,
+        "programEnds": { "snap": 54000, "medicaid": 40000, "chip": 72000, "eitc": 58000, "aca": 106000, "tanf": 6000, "wic": 54000, "childcare": 54000 },
+        "programEndsByAge": {
+          "adults": { "medicaid": 37000 },
+          "children": { "medicaid": 40000, "chip": 72000, "wic": 54000 }
+        },
+        "benefitsEndEarnings": null,
+        "childCoverageEndEarnings": 72000
+      },
+      "personal": {
+        "zone": { "startEarnings": 46000, "endEarnings": 119000, "peakNet": 84807 },
+        "escapeEarnings": 119000,
+        "raiseToClear": 64000,
+        "raiseIsLowerBound": false
+      },
+      "reach": { "safeExit": 83.27160493827161, "current": 50.74074074074074 },
+      "statePremiumAssistance": { "state": "CO", "variable": "assigned_co_premium_assistance", "program": "Colorado premium assistance", "maxAnnual": 1656 }
+    },
+    "partner": {
+      "command": "… --married --spouse-age 30 --kids 3,7 --earnings 38000 --offline --json",
+      "archetype": "married-2",
+      "swept": {
+        "state": "CO",
+        "countyFips": "08041",
+        "married": true,
+        "childAges": [3,7],
+        "monthlyRent": 1735,
+        "monthlyChildcare": 0,
+        "spouseAnnualEarnings": 0,
+        "age": 30,
+        "youStatus": "citizen",
+        "selfEmployed": false,
+        "savings": 0,
+        "getsSnap": true,
+        "getsTanf": true,
+        "getsMedicaid": true,
+        "getsWic": true,
+        "getsHeadStart": false,
+        "getsHousing": false,
+        "getsChildcareSubsidy": false,
+        "hasEmployerCoverage": false
+      },
+      "source": "archetype",
+      "answers": {
+        "state": "CO",
+        "married": true,
+        "childAges": [3,7],
+        "annualEarnings": 38000,
+        "youStatus": "citizen",
+        "savings": 0,
+        "selfEmployed": false,
+        "youDisabled": false,
+        "hasEmployerCoverage": false,
+        "ssdiMonthly": 0,
+        "childSupportMonthly": 0,
+        "unemploymentMonthly": 0
+      },
+      "year": "2026",
+      "analysis": {
+        "currentEarnings": 38000,
+        "currentNet": 58889,
+        "verdict": "in_danger_zone",
+        "nextCliff": { "startEarnings": 46000 },
+        "worstCliff": { "startEarnings": 128000, "endEarnings": 129000, "drop": 7575 }
+      },
+      "deferred": [],
+      "escape": {
+        "safeExitEarnings": 140000,
+        "leap": 16000,
+        "leapIsLowerBound": false,
+        "programEnds": { "snap": 59000, "medicaid": 48000, "chip": 87000, "eitc": 65000, "aca": 128000, "tanf": 7000, "wic": 61000 },
+        "programEndsByAge": {
+          "adults": { "medicaid": 45000 },
+          "children": { "medicaid": 48000, "chip": 87000, "wic": 61000 }
+        },
+        "benefitsEndEarnings": null,
+        "childCoverageEndEarnings": 87000
+      },
+      "personal": {
+        "zone": { "startEarnings": 36000, "endEarnings": 39000, "peakNet": 59139 },
+        "escapeEarnings": 39000,
+        "raiseToClear": 1000,
+        "raiseIsLowerBound": false
+      },
+      "reach": { "safeExit": 66.46875, "current": 15.06578947368421 },
+      "statePremiumAssistance": { "state": "CO", "variable": "assigned_co_premium_assistance", "program": "Colorado premium assistance", "maxAnnual": 2004 }
+    }
+  }
+};
 
-/* analysis.cliffs, verbatim. `bd` is the CliffBreakdown; the four parts sum to `drop`. */
-const CLIFFS = [
-  { at: 6000,  drop: 3906, lost: ["TANF"], driver: "benefits", bd: { benefits: 5480, credits: -655, premiums: 0, other: -919 } },
-  { at: 26000, drop: 610,  lost: [],       driver: "credits",  bd: { benefits: 254, credits: 1232, premiums: 0, other: -876 } },
-  { at: 37000, drop: 1178, lost: ["Medicaid (adult)"], driver: "premiums", bd: { benefits: 435, credits: 214, premiums: 1404, other: -875 } },
-  { at: 41000, drop: 290,  lost: [], driver: "credits",  bd: { benefits: 435, credits: 605, premiums: 125, other: -875 } },
-  { at: 46000, drop: 360,  lost: [], driver: "credits",  bd: { benefits: 435, credits: 657, premiums: 143, other: -875 } },
-  { at: 51000, drop: 782,  lost: [], driver: "credits",  bd: { benefits: 438, credits: 1058, premiums: 162, other: -876 } },
-  { at: 53000, drop: 2447, lost: ["SNAP", "WIC"], driver: "benefits", bd: { benefits: 2783, credits: 383, premiums: 157, other: -876 } },
-  { at: 54000, drop: 9390, lost: ["CCDF child care"], driver: "benefits", bd: { benefits: 9733, credits: 383, premiums: 147, other: -873 } },
-  { at: 60000, drop: 437,  lost: [], driver: "credits", bd: { benefits: 0, credits: 1170, premiums: 143, other: -876 } },
-  { at: 72000, drop: 219,  lost: ["CHIP"], driver: "premiums", deferred: "12 months continuous eligibility (42 CFR 435.926, 457.342)", bd: { benefits: 0, credits: 120, premiums: 975, other: -876 } },
-  { at: 106000, drop: 2165, lost: ["Premium tax credit"], driver: "premiums", bd: { benefits: 0, credits: 0, premiums: 2819, other: -654 } },
-];
-const HH = { state: "CO", stateName: "Colorado", hasYoungChild: true,
-             current: 38000, currentNet: 67000,
-             zone: { start: 36000, end: 86000, peak: 68348 } };
-
-/* summary.childcareSubsidyUnmodeled — read from the data file, never hardcoded
-   judgement: a state leaves this list the day PolicyEngine starts modelling it. */
-const UNMODELED = ["CA","DE","DC","ID","IL","IN","MD","MA","NE","NV","NY","NC","ND","OH",
-  "OK","OR","SD","TN","TX","UT","WA","WI","WY"];
-{
-  const gap = HH.hasYoungChild && UNMODELED.includes(HH.state);
-  const el = document.getElementById("coverage");
-  el.className = "coverage " + (gap ? "gap" : "ok");
-  el.innerHTML = `<span class="mark${gap ? " hg-hatch-grey" : ""}" aria-hidden="true"></span><p>` + (gap
-    ? `<strong>The child care subsidy is not modelled in ${HH.stateName}.</strong> ` +
-      `PolicyEngine returns none at all here, so the largest cliff a parent of a young ` +
-      `child meets is missing from this curve. Every figure on this page is a floor, not ` +
-      `a measurement. Do not read this household as better off than one in a state the ` +
-      `model can complete.`
-    : `Child care subsidy: <strong>modelled in ${HH.stateName}</strong>. PolicyEngine ` +
-      `returns none at all in ${UNMODELED.length} states; for a household in one of ` +
-      `those, this page would say so here and every figure on it would be a floor.`) +
-    `</p>`;
-}
-const DEFERRED = CLIFFS.filter(c => c.deferred);
+const E = DATA.evaluation, A = E.analysis, CLIFFS = A.cliffs, EARN = E.curve.earnings, NET = E.curve.net;
+const STEP = EARN[1] - EARN[0];
+const idx = e => Math.round((e - EARN[0]) / STEP);
+const PROG = E.curve.programs, SPA = E.curve.statePremiumAssistance;
+const DEFERRED = E.deferred;
+const IMMEDIATE = CLIFFS.filter(c => !c.deferral);
+const STATE = DATA.coverage, STATE_NAME = "Colorado";
 
 /* THE LIFT — see design/charts.md. analysis.dangerZones describe the curve with
-   deferred drops removed; analysis.points do not. Plot the lifted line. */
+   deferred drops removed; curve.points do not. Plot the lifted line. */
 const lifted = (() => { const o = NET.slice();
-  for (const d of DEFERRED) for (let k = d.at / STEP + 1; k < o.length; k++) o[k] += d.drop;
+  for (const d of DEFERRED) for (let k = idx(d.startEarnings) + 1; k < o.length; k++) o[k] += d.drop;
   return o; })();
 
+/* Program phrases (M3): one table, two registers, from design/inventory.md.
+   `name` is what the office calls it (this surface); `phrase` is citizen copy
+   and is used here only on the client sheet. Never inlined anywhere else. */
+const PROGRAMS = {
+  snap: ["food help", "SNAP"], medicaid: ["a free state health plan", "Medicaid"],
+  chip: ["a health plan for kids", "CHIP"], eitc: ["a tax break for workers", "Earned Income Tax Credit (EITC)"],
+  ctc: ["the child tax break", "Child Tax Credit"], aca: ["help paying for health insurance", "Premium tax credit"],
+  tanf: ["cash help", "TANF cash assistance"], housing: ["housing help", "Housing voucher"],
+  wic: ["food help for moms and babies", "WIC"], ssi: ["SSI cash help", "SSI"],
+  headstart: ["free early learning", "Head Start"], schoolmeals: ["free school meals", "School meals"],
+  childcare: ["child care help", "CCDF child care subsidy"],
+};
+const name = id => PROGRAMS[id][1], phrase = id => PROGRAMS[id][0];
+const COVERAGE = ["medicaid", "chip"];
+/* core/src/analyze.ts DEFERRAL_UNTIL.child_continuous_eligibility, verbatim: the
+   rule core applies to a child's coverage end whether or not it is a cliff. */
+const CHILD_CE = "the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342)";
+
 const money = n => (n < 0 ? "−$" : "$") + Math.abs(Math.round(n)).toLocaleString("en-US");
+const signed = n => (n < 0 ? "−$" : "+$") + Math.abs(Math.round(n)).toLocaleString("en-US");
+const ordinal = n => { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const day = iso => iso.slice(0, 10);
+const listOf = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
+const $ = id => document.getElementById(id);
+for (const el of document.querySelectorAll(".stateName")) el.textContent = STATE_NAME;
+
+/* ── ScenarioBar (#11, S1) — from the swept inputs. Value chips are spans:
+   no editor exists yet, and a button that does nothing is a lie. Take-up
+   chips are aria-pressed buttons; in a real build a press re-evaluates. This
+   sketch is frozen to one sweep, so a press says so instead of pretending. */
+{
+  const s = E.swept, kids = s.childAges;
+  const household = `${s.married ? "2 adults" : "1 adult"}${kids.length ? `, kid${kids.length > 1 ? "s" : ""} ${kids.join(" & ")}` : ""}`;
+  const value = (k, v) => `<span class="hg-chip"><span class="hg-chip__k">${k}</span><span class="hg-chip__v">${v}</span></span>`;
+  const toggle = (k, on) => `<button class="hg-chip" type="button" aria-pressed="${on}"><span class="hg-chip__k">${k}</span><span class="hg-chip__v">${on ? "on" : "off"}</span></button>`;
+  $("inputs").innerHTML =
+    value("State", s.state) + value("County", DATA.county.name) + value("Household", household) +
+    value("Earnings", money(A.currentEarnings)) + value("Rent", money(s.monthlyRent) + "/mo") +
+    value("Child care", money(s.monthlyChildcare) + "/mo") +
+    toggle("CCDF subsidy", s.getsChildcareSubsidy) + toggle("Head Start", s.getsHeadStart) + toggle("Housing", s.getsHousing) +
+    `<p class="takeup-note hg-source" aria-live="polite"></p>`;
+  $("summaryLine").textContent = `${s.state} · ${DATA.county.name} · ${household} · ${money(A.currentEarnings)}`;
+  for (const b of $("inputs").querySelectorAll("button")) b.addEventListener("click", () => {
+    $("inputs").querySelector(".takeup-note").textContent =
+      `Changing take-up re-runs the evaluation. This sketch is frozen to the sweep of ${day(DATA.summary.generated)}, so nothing here changed.`;
+  });
+  $("editBtn").addEventListener("click", () => {
+    const open = $("inputs").getAttribute("data-open") !== "true";
+    $("inputs").setAttribute("data-open", open); $("editBtn").setAttribute("aria-expanded", open);
+  });
+}
+
+/* ── Verdict (M2): one sentence shape per analysis.verdict, wired to
+   evaluation.personal, in the caseworker register; the citizen strings from
+   the inventory's catalog are used on the client sheet below. */
+const P = E.personal, top = EARN[EARN.length - 1];
+const slots = {
+  pay: money(A.currentEarnings), kept: money(A.currentNet), top: money(top),
+  start: money(P.zone?.startEarnings ?? 0), peak: money(P.zone?.peakNet ?? 0),
+  exit: P.escapeEarnings === null ? null : money(P.escapeEarnings), leap: money(P.raiseToClear),
+  stuck: P.raiseIsLowerBound, safe: E.escape.safeExitEarnings,
+  wage: A.nextCliff ? money(CLIFFS.find(c => c.startEarnings === A.nextCliff.startEarnings).endEarnings) : null,
+  drop: A.nextCliff ? money(CLIFFS.find(c => c.startEarnings === A.nextCliff.startEarnings).drop) : null,
+};
+const VERDICT = {
+  caseworker: {
+    always_up: s => `No danger zone. Net rises with every step of earnings on the axis.`,
+    cliff_ahead: s => `A cliff ahead: at ${s.wage} net drops ${s.drop}. Below it, more pay is more money.`,
+    in_danger_zone: s => s.stuck
+      ? `In a danger zone with no exit on the axis. From ${s.start} up to ${s.top} of earnings, net never gets back to the ${s.peak} it reaches at ${s.start}.`
+      : `In a danger zone. Between ${s.start} and ${s.exit} of earnings, net never gets back to the ${s.peak} it reaches at ${s.start}. Clear at ${s.exit}: a raise of ${s.leap}.`,
+    cliff_behind: s => `Past the cliff. The big drop is below current earnings; from here, more pay is more money.`,
+  },
+  citizen: {
+    always_up: s => `You are paid ${s.pay} a year. You keep ${s.kept}. When you earn more, you keep more. We did not find a spot where more pay leaves you with less.`,
+    cliff_ahead: s => `You are paid ${s.pay} a year. You keep ${s.kept}. Near ${s.wage}, more pay can mean less money: past it you would keep about ${s.drop} less a year. People call this a benefits cliff.`,
+    in_danger_zone: s => s.stuck
+      ? `You are paid ${s.pay} a year. You keep ${s.kept}. More pay does not add to that in the pay range we checked, up to ${s.top}. We did not find a spot where you come out ahead again.`
+      : `You are paid ${s.pay} a year. You keep ${s.kept}. More pay does not add to that until you are paid ${s.exit}: a raise of ${s.leap}.`,
+    cliff_behind: s => `You are paid ${s.pay} a year. You keep ${s.kept}. The big drop is below your pay now. From here, more pay means more for you.`,
+  },
+};
+/* When more zones lie beyond the household's, one more sentence, from the data. */
+const again = A.verdict === "in_danger_zone" && !P.raiseIsLowerBound && slots.safe !== null && slots.safe !== P.escapeEarnings
+  ? `It happens again between ${slots.exit} and ${money(slots.safe)}.` : "";
+$("verdictLine").textContent = VERDICT.caseworker[A.verdict](slots);
+$("verdictSub").textContent = again
+  ? `${again} Safe from ${money(slots.safe)}: a raise of ${money(E.escape.leap)}${E.escape.leapIsLowerBound ? " or more" : ""}.`
+  : slots.safe === null ? "The sweep never found a pay past which no zone remains." : "";
+
+/* ── StatTiles (#2). Reach's margin is the 90% MoE of the ladder point the
+   percentile sits on (core/data/reach.json), never a probability. */
+{
+  const r = DATA.reachCell, pct = E.reach.current;
+  const i = Math.max(0, r.percentiles.findIndex(p => p >= pct) - (pct % 5 ? 1 : 0));
+  const worst = A.worstCliff;
+  const tile = (lab, val, sub) => `<div class="tile"><span class="lab">${lab}</span><span class="val hg-figure">${val}</span><span class="sub">${sub}</span></div>`;
+  $("tiles").innerHTML =
+    tile("Net, after premiums", money(A.currentNet), `at ${money(A.currentEarnings)} earned`) +
+    (A.verdict === "in_danger_zone"
+      ? tile("Raise to clear the zone", (P.raiseIsLowerBound ? "> " : "") + money(P.raiseToClear),
+             P.raiseIsLowerBound ? `not found below ${money(top)}` : `to ${money(P.escapeEarnings)} earned`)
+      : "") +
+    (worst ? tile("Largest single-step drop", money(worst.drop), `at ${money(worst.startEarnings)} &rarr; ${money(worst.endEarnings)}`) : "") +
+    (pct === null ? "" : tile("Reach at current earnings", ordinal(Math.round(pct)), `percentile, &plusmn;${money(r.moe[i])} (n = ${r.n})`));
+}
+
+/* ── IncompleteMarker (#16, B1, N6): from coverage[state].unmodeled[], never a
+   list in the page. An entry counts against this household when it could
+   move its figures: a premium program always, the child-care entry only with
+   a child under 6 and paid care, LIHEAP never. The count of such states is
+   rendered from the same rule over every state's block. */
+{
+  const s = E.swept;
+  const hits = list => list.filter(p => p !== "LIHEAP" &&
+    (!/^Child-care/.test(p) || (s.childAges.some(a => a < 6) && s.monthlyChildcare > 0)));
+  const mine = hits(STATE.unmodeled.map(u => u.program));
+  const states = Object.entries(DATA.unmodeledByState).filter(([, l]) => hits(l).length).map(([k]) => k);
+  const swatch = `<span class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete" aria-hidden="true"></span>`;
+  $("coverage").innerHTML = mine.length
+    ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>Figures incomplete in ${STATE_NAME}.</strong> ` +
+      `The model cannot compute ${listOf(mine)} here, so a cliff this household would meet is missing from this curve. ` +
+      `Every figure on this page is a floor, not a measurement. Do not read this household as better off than one in a state the model can complete.</p></div>`
+    : `<div class="hg-callout"><p><strong>Figures complete for ${STATE_NAME}.</strong> Nothing this household would hold is ` +
+      `unmodelled here. In ${states.length} state${states.length === 1 ? "" : "s"} (${states.join(", ")}) this line would carry the ` +
+      `${swatch} mark and every figure on the page would be a floor.</p></div>`;
+}
+
+/* ── CorrectionsApplied (#18, B3): coverage[state].corrections, applies === true. */
+{
+  const c = STATE.corrections, rows = [], rest = [];
+  const row = (prog, source, note, href) => rows.push(`<li><span class="hg-rows__at">${esc(prog)}</span><p>` +
+    (source ? `<span class="hg-tag">${esc(source)}</span> ` : "") + `<span class="hg-cite">${esc(note)}` +
+    (href ? ` <a href="${esc(href)}">source</a>` : "") + `</span></p></li>`);
+  for (const o of c.policyOverrides) row(o.parameter, "overridden", o.note, o.source);
+  if (c.maTafdc.applies) row("TAFDC (MA)", null, c.maTafdc.note); else rest.push(["TAFDC", c.maTafdc.note]);
+  if (c.premiumAssistance.applies) row(c.premiumAssistance.program, c.premiumAssistance.source, c.premiumAssistance.note);
+  else rest.push([c.premiumAssistance.program ?? "State premium help", c.premiumAssistance.note]);
+  if (c.childcareSubsidy.applies) row(name("childcare"), c.childcareSubsidy.source, c.childcareSubsidy.note);
+  else rest.push([name("childcare"), `${c.childcareSubsidy.source}: ${c.childcareSubsidy.note}`]);
+  if (c.coverageGap.applies) row("Coverage gap", null, c.coverageGap.note); else rest.push(["Coverage gap", c.coverageGap.note]);
+  $("corrections").innerHTML = rows.join("") || `<li><span class="hg-rows__at">None</span><p class="hg-cite">No HotGap-side correction touches this state's numbers.</p></li>`;
+  $("correctionsRest").textContent = rest.length
+    ? `Checked and not applying here — ${rest.map(([p, n]) => `${p}: ${n}`).join(" ")}` : "";
+}
+
+/* ── MoneyCurve (#3) ────────────────────────────────────────────────── */
 const NS = "http://www.w3.org/2000/svg";
-const mk = (t, a) => { const n = document.createElementNS(NS, t);
-  for (const k in a) n.setAttribute(k, a[k]); return n; };
-const el = document.getElementById("curve");
-const wrap = document.getElementById("chartWrap");
-const readout = document.getElementById("readout");
-let cursor = HH.current / STEP, layer = null, cursorNodes = [];
+const mk = (t, a, text) => { const n = document.createElementNS(NS, t);
+  for (const k in a) n.setAttribute(k, a[k]); if (text !== undefined) n.textContent = text; return n; };
+const svg = $("curve"), wrap = $("chartWrap"), marksEl = $("marks"), readout = $("readout");
+let cursor = idx(A.currentEarnings), layer = null, cursorNodes = [], marks = [], drawn = false, diamond = null;
+let selected = A.worstCliff ? CLIFFS.findIndex(c => c.startEarnings === A.worstCliff.startEarnings) : null;
+
+/* Gridlines on nice values (N1): the step is range/n snapped to the nearest
+   of 1, 2, 2.5 or 5 × 10^k, stepped up while it would draw more than n+1 lines. */
+const NICE = [1, 2, 2.5, 5, 10];
+const nice = raw => { const p = 10 ** Math.floor(Math.log10(raw)), m = raw / p;
+  return NICE.reduce((b, v) => Math.abs(v - m) < Math.abs(b - m) ? v : b) * p; };
+const niceUp = s => { const p = 10 ** Math.floor(Math.log10(s) + 1e-9), m = s / p;
+  return (NICE.find(v => v > m + 1e-9) ?? 10) * p; };
+
+const zoneOf = e => A.dangerZones.find(z => e > z.startEarnings && (z.endEarnings === null || e < z.endEarnings)) ?? null;
+const isPersonal = z => z && P.zone && z.startEarnings === P.zone.startEarnings;
+const cliffSentence = c => `Cliff at ${money(c.startEarnings)} to ${money(c.endEarnings)}: ${money(-c.drop)}. ` +
+  (c.programsLost.length ? `${listOf(c.programsLost.map(name))} end${c.programsLost.length > 1 ? "" : "s"}. ` : "No program named. ") +
+  `Driver: ${c.driver}.` + (c.deferral ? ` Deferred until ${c.deferral.until}.` : "");
+const markSentence = m => m.members.length === 1 ? cliffSentence(CLIFFS[m.members[0]]) :
+  `${m.members.length} drops between ${money(CLIFFS[m.members[0]].startEarnings)} and ${money(CLIFFS[m.members[m.members.length - 1]].endEarnings)}, ` +
+  `together ${money(m.members.reduce((s, i) => s + CLIFFS[i].drop, 0))} a year.`;
 
 function draw() {
-  const W = Math.max(320, wrap.clientWidth);
-  const narrow = W < 560;
+  const W = Math.max(320, wrap.clientWidth), narrow = W < 520;
   const H = narrow ? 240 : 320;
-  const pad = { t: 24, r: 14, b: 34, l: 52 };
-  const x0 = 0, x1 = (NET.length - 1) * STEP;
-  const lo = Math.min(...lifted), hi = Math.max(...lifted);
-  const y0 = Math.floor((lo - 2000) / 1000) * 1000, y1 = Math.ceil((hi + 2000) / 1000) * 1000;
+  const pad = { t: 30, r: 14, b: 34, l: 52 };
+  const x0 = EARN[0], x1 = top;
+  /* Axis honesty (charts.md): the floor is computed, never typed, and the
+     visible range is at least 2.5× the largest plotted drop (S14). */
+  let lo = Math.min(...lifted), hi = Math.max(...lifted);
+  const maxDrop = Math.max(0, ...IMMEDIATE.map(c => c.drop)), need = 2.5 * maxDrop;
+  if (hi - lo < need) { const ext = (need - (hi - lo)) / 2; lo -= ext; hi += ext; }
+  const n = narrow ? 3 : 5;
+  let step = nice((hi - lo) / n), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
+  while ((y1 - y0) / step > n + 1) { step = niceUp(step); y0 = Math.floor(lo / step) * step; y1 = Math.ceil(hi / step) * step; }
   const px = e => pad.l + (e - x0) / (x1 - x0) * (W - pad.l - pad.r);
   const py = v => pad.t + (y1 - v) / (y1 - y0) * (H - pad.t - pad.b);
+  const plotTop = pad.t, plotBot = H - pad.b;
 
-  el.setAttribute("viewBox", `0 0 ${W} ${H}`); el.setAttribute("height", H);
-  el.textContent = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  svg.textContent = "";
   const defs = mk("defs");
-  const pat = mk("pattern", { id: "hatch2", width: 7, height: 7,
-    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  const pat = mk("pattern", { id: "hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
   pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
-  defs.append(pat); el.append(defs);
+  defs.append(pat); svg.append(defs);
 
-  const bx0 = px(HH.zone.start), bx1 = px(HH.zone.end);
-  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b, fill: "var(--loss-wash)" }));
-  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b, fill: "url(#hatch2)" }));
-
-  const n = narrow ? 3 : 5;
-  for (let i = 0; i <= n; i++) {
-    const v = y0 + (y1 - y0) * i / n;
-    el.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-    const t = mk("text", { x: pad.l - 7, y: py(v) + 4, "text-anchor": "end", fill: "var(--ink-3)", "font-size": 11 });
-    t.textContent = "$" + Math.round(v / 1000) + "k"; el.append(t);
+  /* Zones: the household's own gets the wash, the peak rule, the exit and the
+     bracket; every other zone is hatch alone (S7). */
+  for (const z of A.dangerZones) {
+    const zx0 = px(z.startEarnings), zx1 = px(z.endEarnings ?? x1);
+    if (isPersonal(z)) svg.append(mk("rect", { x: zx0, y: plotTop, width: zx1 - zx0, height: plotBot - plotTop, fill: "var(--loss-wash)" }));
+    svg.append(mk("rect", { x: zx0, y: plotTop, width: zx1 - zx0, height: plotBot - plotTop, fill: "url(#hatch)" }));
   }
-  for (const e of (narrow ? [0, 50000, 100000, 150000] : [0, 25000, 50000, 75000, 100000, 125000, 150000])) {
-    const t = mk("text", { x: px(e), y: H - 12, "text-anchor": "middle", fill: "var(--ink-3)", "font-size": 11 });
-    t.textContent = e === 0 ? "$0" : "$" + e / 1000 + "k"; el.append(t);
+
+  for (let v = y0; v <= y1 + 1; v += step) {
+    svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, "$" + Math.round(v / 1000) + "k"));
   }
-  el.append(mk("line", { x1: pad.l, y1: H - pad.b, x2: W - pad.r, y2: H - pad.b, stroke: "var(--axis)", "stroke-width": 1 }));
-  document.getElementById("axisNote").textContent =
-    `The y-axis starts at ${money(y0)}, not $0.`;
+  const xs = nice((x1 - x0) / (narrow ? 3 : 6));
+  for (let e = x0; e <= x1; e += xs)
+    svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, e === 0 ? "$0" : "$" + e / 1000 + "k"));
+  svg.append(mk("line", { x1: pad.l, y1: plotBot, x2: W - pad.r, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
-  el.append(mk("line", { x1: bx0, y1: py(HH.zone.peak), x2: bx1, y2: py(HH.zone.peak),
-    stroke: "var(--loss-3)", "stroke-width": 1 }));
-
-  /* The ghost: the real curve, deferred drop included, shown only when that drop
-     would be visible. Dashed, because it is not this year. */
-  const yRange = y1 - y0;
-  if (DEFERRED.some(d => d.drop / yRange > 0.015)) {
+  /* The ghost (S14): the real curve, drawn only when a deferred drop would be
+     visible; the caption sentence comes from the same test below. */
+  const yRange = y1 - y0, ghost = DEFERRED.some(d => d.drop / yRange > 0.015);
+  if (ghost) {
     let g = "";
-    for (let i = 0; i < NET.length; i++) g += (i ? "L" : "M") + px(i * STEP) + " " + py(NET[i]);
-    el.append(mk("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5,
-      "stroke-dasharray": "5 4" }));
+    for (let i = 0; i < NET.length; i++) g += (i ? "L" : "M") + px(EARN[i]) + " " + py(NET[i]);
+    svg.append(mk("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }));
   }
 
   let d = "";
-  for (let i = 0; i < lifted.length; i++) d += (i ? "L" : "M") + px(i * STEP) + " " + py(lifted[i]);
-  el.append(mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
-    "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  for (let i = 0; i < lifted.length; i++) d += (i ? "L" : "M") + px(EARN[i]) + " " + py(lifted[i]);
+  const line = mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
+    "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
+  if (!drawn) line.classList.add("hg-draw");   /* the one orchestrated moment, first draw only */
+  svg.append(line);
 
-  for (const c of CLIFFS) {
-    const a = c.at / STEP;
-    if (c.deferred) {
-      el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]) - 18, x2: px(c.at), y2: py(lifted[a]) - 2,
-        stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-      el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4, fill: "var(--surface)",
-        stroke: "var(--ink-3)", "stroke-width": 2 }));
+  /* Cliff marks, with the collision rule (S8): adjacent dots closer than 10px
+     merge into one mark with a count; the ledger is where they separate. */
+  marks = [];
+  CLIFFS.forEach((c, i) => {
+    const x = px(c.startEarnings);
+    const last = marks[marks.length - 1];
+    if (last && !c.deferral && !last.deferred && x - last.xLast < 10) { last.members.push(i); last.xLast = x; }
+    else marks.push({ members: [i], xLast: x, deferred: !!c.deferral });
+  });
+  for (const m of marks) {
+    const first = CLIFFS[m.members[0]], si = idx(first.startEarnings);
+    m.x = m.members.reduce((s, i) => s + px(CLIFFS[i].startEarnings), 0) / m.members.length;
+    m.y = py(lifted[si]);
+    if (m.deferred) {
+      svg.append(mk("line", { x1: m.x, y1: m.y - 18, x2: m.x, y2: m.y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+      svg.append(mk("circle", { cx: m.x, cy: m.y, r: 4, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
+      svg.append(mk("text", { class: "hg-label halo", x: m.x + 7, y: m.y - 8 }, "later"));
     } else {
-      el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]), x2: px(c.at), y2: py(lifted[a + 1]),
-        stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
-      el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4, fill: "var(--loss-4)",
-        stroke: "var(--surface)", "stroke-width": 2 }));
+      const land = Math.min(...m.members.map(i => lifted[idx(CLIFFS[i].endEarnings)]));
+      svg.append(mk("line", { x1: m.x, y1: m.y, x2: m.x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
+      svg.append(mk("circle", { cx: m.x, cy: m.y, r: m.members.length > 1 ? 6 : 4, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
     }
   }
-  /* One direct label: the extreme. The rest live in the ledger below. */
-  const w = CLIFFS.reduce((m, c) => (!c.deferred && c.drop > m.drop ? c : m), CLIFFS[0]);
-  const wt = mk("text", { x: px(w.at) + 8, y: py((lifted[w.at / STEP] + lifted[w.at / STEP + 1]) / 2) + 4,
-    fill: "var(--loss-ink)", "font-size": 12, "font-weight": 600 });
-  wt.textContent = money(-w.drop); el.append(wt);
 
-  const cx = px(HH.current), cy = py(HH.currentNet);
-  el.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1 }));
-  el.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`,
-    fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
+  /* Direct labels: the largest drop and the leap (charts.md § Direct labels). */
+  const w = A.worstCliff && CLIFFS.find(c => c.startEarnings === A.worstCliff.startEarnings);
+  if (w) {
+    const wm = marks.find(m => m.members.includes(CLIFFS.indexOf(w)));
+    const mid = (lifted[idx(w.startEarnings)] + lifted[idx(w.endEarnings)]) / 2;
+    svg.append(mk("text", { class: "hg-label halo", x: wm.x + 9, y: py(mid) + 4, style: "fill:var(--loss-ink);font-weight:600" }, money(-w.drop)));
+  }
 
-  layer = { px, py, pad, W, H };
-  paintCursor();
+  if (P.zone) {
+    const bx0 = px(P.zone.startEarnings), bx1 = px(P.zone.endEarnings ?? x1), yp = py(P.zone.peakNet);
+    svg.append(mk("line", { x1: bx0, y1: yp, x2: bx1, y2: yp, stroke: "var(--loss-3)", "stroke-width": 1 }));
+    svg.append(mk("text", { class: "hg-label halo", x: bx0 - 4, y: yp - 6, "text-anchor": "end", style: "fill:var(--loss-ink)" }, money(P.zone.peakNet)));
+    /* The leap: a bracket along the peak rule from the diamond to the exit,
+       labelled once. The label starts just right of the diamond, on the same
+       baseline as the peak dollar, so the two never overlap at any width. */
+    const lx0 = px(A.currentEarnings), lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
+    svg.append(mk("path", { d: `M${lx0} ${yp - 4} V${yp + 4} M${lx0} ${yp} H${lx1}` + (P.raiseIsLowerBound ? "" : ` M${lx1} ${yp - 4} V${yp + 4}`),
+      fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
+    /* Below 520px the merged cliff mark sits on the peak, so the label drops under the bracket. */
+    svg.append(mk("text", { class: "hg-label halo", x: lx0 + 8, y: narrow ? yp + 17 : yp - 6, style: "fill:var(--loss-ink);font-weight:600" },
+      (P.raiseIsLowerBound ? "more than +" : "+") + money(P.raiseToClear)));
+    if (!P.raiseIsLowerBound) {
+      svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
+      const both = slots.safe === P.escapeEarnings;
+      if (!narrow || both) svg.append(mk("text", { class: "hg-label halo", x: bx1 + 4, y: plotTop - 8 }, both ? "back to even, and safe from here" : "back to even"));
+    }
+  }
+  if (slots.safe !== null && slots.safe !== P.escapeEarnings) {
+    const sx = px(slots.safe);
+    svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
+    svg.append(mk("text", { class: "hg-label halo", x: sx - 4, y: plotTop - 8, "text-anchor": "end" }, "safe from here"));
+  }
+
+  const cx = px(A.currentEarnings), cy = py(lifted[idx(A.currentEarnings)]);
+  svg.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: plotBot, stroke: "var(--ink-3)", "stroke-width": 1 }));
+  diamond = mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 });
+  svg.append(diamond);
+
+  /* The marks layer: one 44px button per mark, over the SVG (M6). */
+  marksEl.textContent = "";
+  for (const m of marks) {
+    const b = document.createElement("button");
+    b.className = "hg-mark"; b.type = "button"; b.tabIndex = -1;
+    b.style.left = (m.x / W * 100) + "%"; b.style.top = (m.y / H * 100) + "%";
+    b.setAttribute("aria-label", markSentence(m));
+    if (m.members.length > 1) b.innerHTML = `<span class="hg-mark__count" aria-hidden="true">${m.members.length}</span>`;
+    b.addEventListener("click", () => select(m.members[0], { announce: markSentence(m) }));
+    m.btn = b; marksEl.append(b);
+  }
+
+  $("curveCap").innerHTML =
+    `The y-axis starts at ${money(y0)}, not $0; the visible range is ${(yRange / Math.max(1, maxDrop)).toFixed(1)}× the largest drop. ` +
+    (DEFERRED.length
+      ? `Deferred drops are lifted out of the plotted line, which is what <code>analysis.dangerZones</code> describes` +
+        (ghost ? `; the real curve including them is the dashed ghost. ` : `; here they are too small to draw. `)
+      : `No cliff on this curve is deferred. `) +
+    sourceLine();
+  layer = { px, py, pad, W, H }; drawn = true;
+  syncSelection(); paintCursor();
 }
 
 function paintCursor() {
   cursorNodes.forEach(n => n.remove()); cursorNodes = [];
   if (!layer) return;
   const { px, py, pad, H } = layer;
-  const e = cursor * STEP, v = lifted[cursor];
-  const l = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b,
-    stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
-  const dot = mk("circle", { cx: px(e), cy: py(v), r: 4, fill: "var(--series-1)",
-    stroke: "var(--surface)", "stroke-width": 2 });
-  el.append(l, dot); cursorNodes = [l, dot];
-  const z = e > HH.zone.start && e < HH.zone.end;
+  const e = EARN[cursor], v = lifted[cursor];
+  const l = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
+  const dot = mk("circle", { cx: px(e), cy: py(v), r: 4, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 });
+  svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
+  cursorNodes = [l, dot];
+  const z = zoneOf(e);
   readout.innerHTML = `Earnings <b>${money(e)}</b> &rarr; net <b>${money(v)}</b>. ` +
-    (z ? `Inside the danger zone (ends $86,000; peak ${money(HH.zone.peak)} at $36,000).`
-       : "Outside any danger zone.");
+    (!z ? "Outside any danger zone."
+     : isPersonal(z) ? `Inside the household's danger zone (ends ${money(z.endEarnings)}; peak ${money(z.peakNet)} at ${money(z.startEarnings)}).`
+     : `Inside a later zone (${money(z.startEarnings)}–${z.endEarnings === null ? "the top of the axis" : money(z.endEarnings)}).`);
 }
 
-wrap.addEventListener("pointerdown", ev => move(ev.clientX));
-wrap.addEventListener("pointermove", ev => { if (ev.buttons) move(ev.clientX); });
+wrap.addEventListener("pointerdown", ev => { if (!ev.target.closest(".hg-mark")) move(ev.clientX); });
+wrap.addEventListener("pointermove", ev => { if (ev.buttons && !ev.target.closest(".hg-mark")) move(ev.clientX); });
 function move(clientX) {
-  const r = el.getBoundingClientRect(), { pad, W } = layer;
+  const r = svg.getBoundingClientRect(), { pad, W } = layer;
   const f = (clientX - r.left - pad.l) / (W - pad.l - pad.r);
-  cursor = Math.min(NET.length - 1, Math.max(0, Math.round(f * (NET.length - 1))));
+  cursor = Math.min(EARN.length - 1, Math.max(0, Math.round(f * (EARN.length - 1))));
   paintCursor();
 }
 wrap.addEventListener("keydown", ev => {
-  const s = ev.shiftKey ? 10 : 1;
-  if (ev.key === "ArrowRight") cursor = Math.min(NET.length - 1, cursor + s);
+  const s = ev.shiftKey ? 10 : 1, onMark = ev.target.closest(".hg-mark");
+  if (ev.key === "ArrowRight") cursor = Math.min(EARN.length - 1, cursor + s);
   else if (ev.key === "ArrowLeft") cursor = Math.max(0, cursor - s);
   else if (ev.key === "Home") cursor = 0;
-  else if (ev.key === "End") cursor = NET.length - 1;
+  else if (ev.key === "End") cursor = EARN.length - 1;
+  else if (ev.key === "]" || ev.key === "[") {
+    /* Next or previous cliff mark, from the mark in focus or else from the cursor. */
+    const here = onMark ? marks.findIndex(m => m.btn === onMark) : -1;
+    const e = EARN[cursor];
+    const i = ev.key === "]"
+      ? (here >= 0 ? here + 1 : marks.findIndex(m => CLIFFS[m.members[0]].startEarnings > e))
+      : (here >= 0 ? here - 1 : marks.findLastIndex(m => CLIFFS[m.members[0]].startEarnings < e));
+    if (i < 0 || i >= marks.length) { ev.preventDefault(); return; }
+    ev.preventDefault(); marks[i].btn.focus(); cursor = idx(CLIFFS[marks[i].members[0]].startEarnings); paintCursor();
+    readout.textContent = markSentence(marks[i]); return;
+  }
+  else if (ev.key === "Escape") { close(); ev.preventDefault(); return; }
   else return;
   ev.preventDefault(); paintCursor();
 });
 
-/* Drop ledger + breakdown */
-const rows = document.getElementById("dropRows");
-let selected = CLIFFS.findIndex(c => c.drop === 9390);
-function renderRows() {
-  rows.textContent = "";
-  CLIFFS.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.setAttribute("aria-selected", i === selected);
-    tr.innerHTML =
-      `<td><button class="drop-btn" type="button">$${(c.at / 1000)}k &rarr; $${(c.at / 1000 + 1)}k</button></td>` +
-      `<td class="num money">${money(-c.drop)}</td>` +
-      `<td>${c.lost.length ? c.lost.join(", ") : "<span style='color:var(--ink-3)'>none named</span>"}` +
-      (c.deferred ? ` <span class="later">Deferred</span><span class="cite">${c.deferred}</span>` : "") + `</td>` +
-      `<td>${c.driver}</td>`;
-    tr.querySelector("button").addEventListener("click", () => { selected = i; renderRows(); renderBd(); });
-    rows.append(tr);
-  });
+/* ── One selection model (M6): a cliff mark, a DropLedger row and the
+   BreakdownBars share `selected`. The row is the card. */
+const rows = $("dropRows");
+function markOf(i) { return marks.find(m => m.members.includes(i)); }
+function select(i, { announce } = {}) {
+  selected = i; cursor = idx(CLIFFS[i].startEarnings);
+  paintCursor(); syncSelection(); renderBd();
+  readout.textContent = announce ?? cliffSentence(CLIFFS[i]);
+  rows.children[i].scrollIntoView({ block: "nearest" });
 }
+function close() {
+  if (selected === null) return;
+  const m = markOf(selected); selected = null;
+  syncSelection(); renderBd();
+  if (m) m.btn.focus();     /* focus returns to the mark when its row closes */
+}
+function syncSelection() {
+  [...rows.children].forEach((tr, i) => {
+    const b = tr.querySelector("button");
+    if (i === selected) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+  });
+  for (const m of marks) m.btn.setAttribute("aria-expanded", m.members.includes(selected));
+}
+CLIFFS.forEach((c, i) => {
+  const tr = document.createElement("tr");
+  tr.innerHTML =
+    `<td><button class="hg-row-btn" type="button">${money(c.startEarnings)} &rarr; ${money(c.endEarnings)}</button></td>` +
+    `<td class="num money">${money(-c.drop)}</td>` +
+    `<td>${c.programsLost.length ? c.programsLost.map(name).join(", ") : "<span style='color:var(--ink-3)'>none named</span>"}` +
+    (c.deferral ? ` <span class="hg-badge">Deferred</span><span class="hg-cite">until ${esc(c.deferral.until)}</span>` : "") + `</td>` +
+    `<td>${c.driver}</td>`;
+  tr.querySelector("button").addEventListener("click", () => select(i));
+  rows.append(tr);
+});
 function renderBd() {
+  const host = $("bdBars"); host.textContent = "";
+  if (selected === null) { $("bdTitle").textContent = "Where a drop went"; host.innerHTML = `<p class="footnote" style="margin:0">Select a step above, or a mark on the chart.</p>`; return; }
   const c = CLIFFS[selected];
-  document.getElementById("bdTitle").textContent =
-    `Where the $${c.drop.toLocaleString("en-US")} went — $${(c.at / 1000)}k to $${(c.at / 1000 + 1)}k`;
-  const parts = [["Benefits", c.bd.benefits], ["Credits", c.bd.credits],
-                 ["Premiums", c.bd.premiums], ["Other", c.bd.other]];
+  $("bdTitle").textContent = `Where the ${money(c.drop)} went — ${money(c.startEarnings)} to ${money(c.endEarnings)}`;
+  const parts = [["Benefits", c.breakdown.benefits], ["Credits", c.breakdown.credits], ["Premiums", c.breakdown.premiums], ["Other", c.breakdown.other]];
   const max = Math.max(...parts.map(p => Math.abs(p[1])), 1);
-  const host = document.getElementById("bdBars");
-  host.textContent = "";
-  for (const [name, v] of parts) {
+  host.innerHTML = `<div class="bd-row bd-axis" aria-hidden="true"><span></span><span class="bd-track"><span>offsets the loss</span><span>adds to the loss</span></span><span></span></div>`;
+  for (const [label, v] of parts) {
     const row = document.createElement("div"); row.className = "bd-row";
     const w = Math.abs(v) / max * 50;
-    row.innerHTML = `<span>${name}</span>` +
+    row.innerHTML = `<span>${label}</span>` +
       `<span class="bd-track"><span class="bd-zero" style="left:50%"></span>` +
-      `<span class="bd-fill${v < 0 ? " neg" : ""}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%;` +
-      `background:var(--loss-${v < 0 ? 2 : 4})"></span></span>` +
-      `<span class="bd-val">${money(v)}</span>`;
+      `<span class="bd-fill${v < 0 ? " neg" : ""}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%;background:var(--loss-${v < 0 ? 2 : 4})"></span></span>` +
+      `<span class="bd-val">${signed(v)}</span>`;
     host.append(row);
   }
-  const sum = document.createElement("p");
-  sum.className = "footnote";
-  sum.style.margin = "var(--s2) 0 0";
-  sum.textContent = `Sums to −$${c.drop.toLocaleString("en-US")}. Driver: ${c.driver}.`;
+  const sum = document.createElement("p"); sum.className = "footnote"; sum.style.margin = "var(--s2) 0 0";
+  sum.textContent = `Sums to ${money(c.drop)}, the drop. Driver: ${c.driver}.`;
   host.append(sum);
 }
-renderRows(); renderBd(); draw();
-addEventListener("resize", draw);
-document.getElementById("printBtn").addEventListener("click", () => print());
 
-const btn = document.getElementById("themeBtn");
+/* ── ThresholdLedger (#7, S5): rendered from the cliff list under the one
+   convention — a program ends at the first pay at which it is gone — so the
+   tile, the ledger and the client sheet derive the same figure. A program
+   that ends without a cliff takes escape.programEnds + one axis step. */
+const ledger = (() => {
+  const ends = E.escape, adults = ends.programEndsByAge.adults, children = ends.programEndsByAge.children;
+  const who = (id, start) => {
+    const a = adults[id], c = children[id];
+    if (a !== undefined && c === undefined) return "Adult";
+    if (c !== undefined && a === undefined) return "Children";
+    if (a === start && c !== start) return "Adult";
+    if (c === start && a !== start) return "Children";
+    return "Household";
+  };
+  const seen = new Set(), out = [];
+  for (const c of CLIFFS) for (const id of c.programsLost) {
+    const group = who(id, c.startEarnings); seen.add(id + "|" + group);
+    out.push({ at: c.endEarnings, id, group, cliff: c, deferred: c.deferral?.until ?? null });
+  }
+  for (const [group, map] of [["Adult", adults], ["Children", children]])
+    for (const [id, at] of Object.entries(map)) if (!seen.has(id + "|" + group)) {
+      seen.add(id + "|" + group);
+      out.push({ at: at + STEP, id, group, deferred: group === "Children" && COVERAGE.includes(id) ? CHILD_CE : null });
+    }
+  for (const [id, at] of Object.entries(ends.programEnds))
+    if (![...seen].some(k => k.startsWith(id + "|"))) out.push({ at: at + STEP, id, group: "Household", deferred: null });
+  return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+})();
+/* The series a row is about: the children's share of a person-level program,
+   the adult's (household minus children's), or the household total. */
+function series(r) {
+  const h = PROG[r.id], c = E.curve.childPrograms[r.id];
+  if (!h) return null;
+  if (r.group === "Children" && c) return c;
+  if (r.group === "Adult" && c) return h.map((v, k) => v - c[k]);
+  return h;
+}
+function cite(r) {
+  const i = idx(r.at), before = i - 1, p = series(r);
+  const s = [];
+  if (r.cliff) {
+    const left = p ? p[i] : 0;
+    if (left > 0) {
+      const gone = EARN[p.findIndex((v, k) => k > i && v <= 0)] ?? null;
+      s.push(`${money(left)} a year of ${name(r.id)} continues at ${money(r.at)}${gone ? `, none from ${money(gone)}` : ""}.`);
+    }
+    if (r.id === "childcare") s.push(`Worth ${money(p[before])} a year at ${money(EARN[before])}. Care priced at ${money(E.swept.monthlyChildcare)} a month for ${E.swept.childAges.length} children (${STATE.vintages.childcare.preschool} prices, carried to ${E.year} dollars by the BLS Employment Cost Index).`);
+    if (r.id === "medicaid" && !r.cliff.deferral) s.push(`Coverage ends with the raise (no deferral applies); the net premium rises ${money(r.cliff.breakdown.premiums)} in the step.`);
+    if (r.id === "aca") s.push(`Net premium rises ${money(r.cliff.breakdown.premiums)} in one step` +
+      (SPA[before] > 0 && SPA[i] === 0 && E.statePremiumAssistance ? `; ${E.statePremiumAssistance.program} (${money(SPA[before])}) ends with it.` : "."));
+  } else {
+    const kidsChip = E.curve.childPrograms.chip;
+    if (r.id === "medicaid" && r.group === "Children" && kidsChip && kidsChip[i] > 0) s.push(`The children move to CHIP: ${money(kidsChip[i])} a year of coverage from ${money(r.at)}.`);
+    if (r.id === "eitc") s.push("Phases out; no step of $200 or more, so it is not a cliff.");
+    if (r.id === "chip" && PROG.aca && PROG.aca[i] > PROG.aca[before]) s.push(`The premium tax credit rises ${money(PROG.aca[i] - PROG.aca[before])} as it ends.`);
+  }
+  if (r.deferred) s.push(`Crossing this does not end it this year: the loss lands at ${r.deferred}.`);
+  return s.join(" ");
+}
+$("ledgerRows").innerHTML = ledger.map(r =>
+  `<tr><td class="num money">${money(r.at)}</td><td>${esc(name(r.id))}` +
+  (r.deferred ? ` <span class="hg-badge">Deferred</span>` : "") +
+  (cite(r) ? `<span class="hg-cite">${esc(cite(r))}</span>` : "") + `</td><td class="who">${r.group}</td></tr>`).join("");
+{
+  const e = E.escape, c = STATE.corrections, s = [];
+  s.push(e.benefitsEndEarnings === null ? "Cash benefits never end inside this axis." : `The last cash benefit ends at ${money(e.benefitsEndEarnings + STEP)}.`);
+  if (e.childCoverageEndEarnings !== null) s.push(`Child coverage ends at ${money(e.childCoverageEndEarnings + STEP)}, deferred.`);
+  s.push(c.coverageGap.applies ? `Coverage gap band applies: ${c.coverageGap.note}` : `No coverage gap band: ${c.coverageGap.note}`);
+  s.push(c.premiumAssistance.source === "modeled"
+    ? `${c.premiumAssistance.program} is modeled: netted out of the premium, up to ${money(E.statePremiumAssistance?.maxAnnual ?? 0)} a year.`
+    : c.premiumAssistance.source === "ladder" ? `${c.premiumAssistance.program} is applied from a local ladder.`
+    : c.premiumAssistance.program ? `${c.premiumAssistance.program} exists but is not modeled on this sweep.` : "No state premium help applies.");
+  $("ledgerNote").textContent = s.join(" ");
+}
+
+/* ── CompareTable (#12): three evaluations of the same rules. */
+{
+  const cols = [["Now", E], ["After the raise", DATA.whatIfs.raise], ["Partner joins", DATA.whatIfs.partner]];
+  const sub = w => `${w.swept.married ? "2 adults" : "1 adult"}, ${money(w.analysis.currentEarnings)}`;
+  $("compareHead").innerHTML = `<th scope="col"></th>` + cols.map(([t, w], i) =>
+    `<th scope="col" class="num${i === 1 ? " b" : ""}">${t}<br><span class="hg-cite">${sub(w)}</span></th>`).join("");
+  const ends = w => w.escape.programEndsByAge.adults.medicaid;
+  const R = [
+    ["Net after premiums", w => money(w.analysis.currentNet), "money"],
+    ["Change from now", w => w === E ? "—" : signed(w.analysis.currentNet - A.currentNet)],
+    ["In a danger zone", w => w.analysis.verdict === "in_danger_zone" ? "Yes" : "No"],
+    ["Zone ends at", w => w.personal.raiseIsLowerBound ? "past the axis" : w.personal.escapeEarnings === null ? "—" : money(w.personal.escapeEarnings)],
+    ["Raise still needed", w => w.analysis.verdict !== "in_danger_zone" ? "—" : (w.personal.raiseIsLowerBound ? "> " : "") + money(w.personal.raiseToClear)],
+    ["Safe from", w => w.escape.safeExitEarnings === null ? "past the axis" : money(w.escape.safeExitEarnings)],
+    ["Largest drop", w => w.analysis.worstCliff ? money(w.analysis.worstCliff.drop) : "none"],
+    ["Adult Medicaid ends", w => ends(w) === undefined ? "—" : money(ends(w) + STEP)],
+    ["Child coverage ends", w => w.escape.childCoverageEndEarnings === null ? "past the axis" : money(w.escape.childCoverageEndEarnings + STEP)],
+    ["Reach at these earnings", w => w.reach.current === null ? "—" : ordinal(Math.round(w.reach.current))],
+  ];
+  $("compareRows").innerHTML = R.map(([label, f, cls]) => `<tr><th scope="row">${label}</th>` +
+    cols.map(([, w], i) => `<td class="num${cls ? " " + cls : ""}${i === 1 ? " b" : ""}">${f(w)}</td>`).join("") + "</tr>").join("");
+  const pr = DATA.whatIfs.partner;
+  $("compareNote").textContent = `Reach is the share of households of the same shape in ${STATE_NAME} earning at or below this figure — it says how common the pay is, never the odds of getting there. ` +
+    `The married column is the ${pr.archetype} archetype (a spouse at home, no paid care, no subsidy) on the married ladder, which is why the same ${money(A.currentEarnings)} sits at the ${ordinal(Math.round(pr.reach.current))} percentile there and the ${ordinal(Math.round(E.reach.current))} here.`;
+}
+
+/* ── What the model does not include: what was assumed, from the swept
+   inputs, and what is unmodelled here, from coverage[state].unmodeled[]. */
+{
+  const s = E.swept, on = [], off = [];
+  for (const [k, id] of [["getsSnap", "snap"], ["getsTanf", "tanf"], ["getsMedicaid", "medicaid"], ["getsWic", "wic"], ["getsChildcareSubsidy", "childcare"], ["getsHeadStart", "headstart"], ["getsHousing", "housing"]])
+    (s[k] ? on : off).push(name(id));
+  const assumed = [s.youStatus === "citizen" ? "a citizen" : `status: ${s.youStatus}`, s.savings ? `${money(s.savings)} in savings` : "no savings",
+    s.selfEmployed ? "self-employed" : "wages, not self-employment", s.hasEmployerCoverage ? "employer coverage offered" : "no employer coverage",
+    E.answers.ssdiMonthly || E.answers.childSupportMonthly || E.answers.unemploymentMonthly ? "other income as entered" : "no other income"];
+  $("assumed").innerHTML = [
+    "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+    `Assumed for this curve: ${listOf(assumed)}; aged ${s.age}.`,
+    `Take-up assumed for ${listOf(on)}; not for ${listOf(off)}.`,
+    "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+    ...STATE.unmodeled.map(u => `Not modelled in ${STATE_NAME}: ${u.program}. ${u.note}`),
+  ].map(t => `<li>${esc(t)}</li>`).join("");
+}
+
+/* ── SourceNote (#17, B3, M4, N9): every fact from `vintages` and `model`.
+   Both source states exist in markup; the one that matches `source` shows.
+   The caseworker is annual throughout (M5): the unit rule is the citizen's. */
+function sourceLine() {
+  const v = STATE.vintages, m = v.model ?? DATA.summary.model;
+  const clamped = A.currentEarnings !== E.answers.annualEarnings
+    ? ` Pay is above the modeled range — evaluated at ${money(A.currentEarnings)}, the top of the sweep.` : "";
+  return `Estimates only — a caseworker decides real benefits. Rules: ${E.year}. Curve: ` +
+    `<span data-source="archetype"${E.source === "archetype" ? "" : " hidden"}>committed archetype sweep (${DATA.archetype}), generated ${day(DATA.summary.generated)} — not this family's own live call.${clamped}</span>` +
+    `<span data-source="live"${E.source === "live" ? "" : " hidden"}>live PolicyEngine call for this household.</span> ` +
+    `Rent: ${esc(v.rent.publisher)} ${esc(v.rent.vintage)} ` +
+    `Child-care price: ${esc(v.childcare.preschool)}, carried to ${E.year} dollars by the BLS Employment Cost Index. ` +
+    `Reach: ${esc(v.reach.basis)} Vintages used: ${v.reach.vintages.join(", ")}. ` +
+    (STATE.otherBenefits.length ? `Other state benefits in the remainder: ${STATE.otherBenefits.map(o => `${o.label} (up to ${money(o.maxAnnualInSweep)})`).join("; ")}. ` : "") +
+    `Model: ${m.version ? `policyengine-us ${m.version}` : m.endpoint}.`;
+}
+$("sourceNote").innerHTML = sourceLine();
+$("curveTitle").textContent = `Net income after premiums, ${money(EARN[0])}–${money(top)} of earnings`;
+{
+  const w = A.worstCliff && CLIFFS.find(c => c.startEarnings === A.worstCliff.startEarnings);
+  wrap.setAttribute("aria-label", `Net income after premiums against earnings, ${money(EARN[0])} to ${money(top)}. ` +
+    (A.dangerZones.length ? `${A.dangerZones.length} danger zone${A.dangerZones.length > 1 ? "s" : ""}` +
+      (P.zone ? `; this household's runs from ${money(P.zone.startEarnings)} to ${P.raiseIsLowerBound ? "the top of the axis" : money(P.escapeEarnings)}` +
+        (P.raiseIsLowerBound ? "" : `, cleared by a raise of ${money(P.raiseToClear)}`) : "") + ". " : "No danger zone. ") +
+    (w ? `The largest step down is ${money(w.drop)} at ${money(w.startEarnings)}${w.programsLost.length ? ` where ${listOf(w.programsLost.map(name))} end${w.programsLost.length > 1 ? "" : "s"}` : ""}. ` : "") +
+    (slots.safe === null ? "No pay on the axis is past every zone." : `Safe from ${money(slots.safe)}.`));
+}
+
+/* ── MarkKey (#5): each entry draws the actual mark; entries follow the marks drawn. */
+{
+  const sw = (inner) => `<svg viewBox="0 0 22 12" aria-hidden="true">${inner}</svg>`;
+  const k = [
+    ["Net income", sw(`<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`)],
+    ["This household's zone", sw(`<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)],
+  ];
+  if (A.dangerZones.length > 1) k.push(["Other zones", sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
+  if (IMMEDIATE.length) k.push(["Immediate cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`)]);
+  if (DEFERRED.length) k.push(["Deferred cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`)]);
+  k.push(["Current earnings", sw(`<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`)]);
+  if (P.zone) k.push(["The leap, to the exit", sw(`<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`)]);
+  if (slots.safe !== null) k.push(["Safe from here", sw(`<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`)]);
+  $("key").innerHTML = k.map(([t, s]) => `<li>${s} ${t}</li>`).join("");
+}
+
+/* ── The client sheet (citizen register, from the same objects). */
+{
+  const w = A.worstCliff && CLIFFS.find(c => c.startEarnings === A.worstCliff.startEarnings);
+  const cc = PROG.childcare ? PROG.childcare[idx(A.currentEarnings)] : 0;
+  const kids = E.swept.childAges.length;
+  const snapEnd = ledger.find(r => r.id === "snap"), child = E.escape.childCoverageEndEarnings;
+  const p = [];
+  p.push(VERDICT.citizen[A.verdict](slots) + (again ? " " + again : ""));
+  if (cc > 0) p.push(`${money(cc)} of what you keep is ${phrase("childcare")} paid straight to your day care.`);
+  if (w) p.push(`The biggest drop is at ${money(w.endEarnings)} of pay: ${w.programsLost.length ? `${listOf(w.programsLost.map(phrase))} end${w.programsLost.length > 1 ? "" : "s"}` : "your tax break shrinks"} and you keep ${money(w.drop)} less.` +
+    (snapEnd && snapEnd.at !== w.endEarnings ? ` ${phrase("snap")[0].toUpperCase() + phrase("snap").slice(1)} ends at ${money(snapEnd.at)}.` : ""));
+  if (child !== null && kids) p.push(`Your kids' health plan ends at ${money(child + STEP)} of pay — but not that year. It ends at their next yearly check, up to 12 months later.`);
+  p.push("These are estimates. A case worker decides real help.");
+  p.push(`Printed from HotGap. ${E.year} rules. Sweep of ${day(DATA.summary.generated)}.`);
+  const count = n => ["no", "one", "two", "three"][n] ?? String(n);
+  $("handout").innerHTML = `<h2>For the client — ${STATE_NAME}, ${E.swept.married ? "two parents" : "one parent"}, ${count(kids)} ${kids === 1 ? "child" : "children"}</h2>` +
+    p.map(t => `<p>${esc(t)}</p>`).join("");
+}
+
+renderBd(); draw();
+addEventListener("resize", draw);
+$("printBtn").addEventListener("click", () => print());
+const btn = $("themeBtn");
 btn.addEventListener("click", () => {
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
   document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
-  btn.textContent = dark ? "Dark" : "Light"; draw();
+  btn.textContent = dark ? "Dark" : "Light";
 });
 </script>
 </body>
