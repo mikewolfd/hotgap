@@ -21,7 +21,7 @@ evaluates on the public PolicyEngine API's older model — still `live`.
 |---|---|---|---|
 | `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result | editor wired; result is the minimal placeholder in `src/citizen/result.ts` |
 | `places.html` | journalist | `src/places/main.ts` | being built |
-| `caseworker.html` | caseworker | `src/caseworker/main.ts` — the editor with this surface's actions, the base household in full, its what-ifs beside it | built |
+| `caseworker.html` | caseworker | `src/caseworker/main.ts` — the editor with this surface's actions and register (`copy.ts`, every string of the page), the base household in full, its what-ifs beside it | built; reviewed 2026-09-16 |
 
 Every page imports `design/tokens.css` and uses its `hg-*` classes
 (`design/inventory.md` § Class map); a page keeps only its own layout
@@ -100,14 +100,23 @@ the citizen's names the top row's two actions and can use the rest:
 ```ts
 mountEditor(root, {
   onSubmit, onChange,
-  actions: [{ label: "Add a what-if", short: "What-if", onClick() {} }, { label: "Print the client sheet", short: "Print", primary: true, onClick() {} }],
+  actions: [{ label: "Add a what-if", short: "What-if", needsAnswers: true, onClick() {} }, { label: "Print the client sheet", short: "Print", primary: true, needsAnswers: true, onClick() {} }],
   altSubmit: { label: "Add as a what-if", onSubmit(flags) {} },   // a second, validated exit from the screen; never on a first visit
   onClose() {},                                                     // the screen closed, edits and all
+  copy: { chips: { childcareSubsidy: "CCDF subsidy" }, heading: "The household", submit: "Update the household" },   // the surface's register over copy.ts, two levels deep
+  order: ["where", "household", "pay", "rent", "childcare", "childcare-subsidy"],   // chip ids first; the rest follow in the citizen order
 });
-editor.openInputs("housing");   // show the chips row (hidden behind Edit below 720px) and focus a chip
-editor.setNote(text);           // the .hg-scenario__note line a take-up toggle answers with (a live region, appended on first use); "" empties it
-editor.setCounty(zip, name);    // the county the Worker resolved, beside the place while that ZIP stands
+editor.open("pay", { lead: "alt" });   // the screen led by the alternate exit: it is the primary button and what Enter presses
+editor.openInputs("housing");          // show the chips row (hidden behind Edit below 720px) and focus a chip
+editor.setNote(textOrFragment);        // the .hg-scenario__note line, first in the row (a live region, placed on first use); "" empties it
+editor.setCounty(zip, name);           // the county the Worker resolved, beside the place while that ZIP stands
 ```
+
+A `needsAnswers` action is disabled, and the chips row hidden, until the
+flags say enough to evaluate. A value chip whose answer is still "none"
+carries `data-unset`, which the editor sets a step lighter. Below 720px
+the summary line names the place once: the county in place of the ZIP
+once one is known.
 
 **DOM the page owns** (`src/citizen/main.ts`): a visually hidden `h1`, then
 `#result`, where `mountResult` puts `[role=status]` (loading text, or the
@@ -210,7 +219,7 @@ is the shape — and none inline in render code):
     npx vitest run                     # unit tests, worker/src/index.test.ts included
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
-    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/editor.spec.ts and e2e/caseworker.spec.ts
+    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/editor.spec.ts and e2e/caseworker.spec.ts (HOTGAP_ARCHETYPE_URL=a dead-engine server runs its B1 test too)
 
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then

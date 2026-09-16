@@ -7,12 +7,13 @@
   <script type="module" src="/src/caseworker/main.ts"></script>
 </head>
 <body>
-<a class="hg-skip" href="#ledger">Skip to the threshold ledger</a>
+<!-- Every word on this page comes from src/caseworker/copy.ts (app/README.md § Languages); the skeleton holds ids. -->
+<a class="hg-skip" href="#ledger" id="skip"></a>
 <!-- The editor prepends the ScenarioBar, the four-facts screen and the one-value
      dialog to #app, so the sticky top row's containing block is the whole page (S1). -->
 <div id="app">
 <main class="page">
-  <h1 class="hg-visually-hidden">Benefits cliffs for one household, with what-ifs</h1>
+  <h1 class="hg-visually-hidden" id="pageTitle"></h1>
   <p class="hg-source" id="status" role="status"></p>
   <div class="hg-callout hg-callout--caution" id="alert" role="alert" hidden></div>
 
@@ -28,35 +29,36 @@
     <!-- Coverage notice and corrections sit under the verdict, before the columns (B1, B3). -->
     <div class="provenance">
       <section>
-        <h2>Model coverage in <span class="stateName"></span></h2>
+        <h2 id="coverageHeading"></h2>
         <div id="coverage"></div>
       </section>
       <section>
-        <h2>Corrections applied in <span class="stateName"></span></h2>
+        <h2 id="correctionsHeading"></h2>
         <ol class="hg-rows" id="corrections"></ol>
         <p class="hg-cite" id="correctionsRest"></p>
       </section>
     </div>
 
+    <!-- Four grid items: the curve with its drops, the ledger, the comparison (full width once it holds more than one what-if — B2), the assumptions. -->
     <div class="cols">
-      <section>
+      <section class="lead">
         <figure class="curve">
           <h2 id="curveTitle"></h2>
           <div class="hg-chart" id="chartWrap" tabindex="0" role="group" aria-roledescription="interactive chart" aria-describedby="curveCap">
             <svg id="curve" aria-hidden="true"></svg>
             <div class="hg-marks" id="marks"></div>
           </div>
-          <p class="hg-readout" id="readout" aria-live="polite">Arrow keys, or drag, to read any point. Square brackets step between cliffs.</p>
+          <p class="hg-readout hg-no-print" id="readout" aria-live="polite"></p>
           <ul class="hg-key" id="key"></ul>
           <figcaption class="hg-source" id="curveCap"></figcaption>
         </figure>
 
-        <h2 id="drops">Every step down</h2>
+        <h2 id="drops"></h2>
         <div class="hg-scroll-x">
           <table class="hg-table drops">
-            <caption>Select a row or its mark for the breakdown.</caption>
+            <caption class="hg-no-print" id="dropsCaption"></caption>
             <thead>
-              <tr><th scope="col">Earnings</th><th scope="col" class="num">Drop</th><th scope="col">Programs lost</th><th scope="col">Driver</th></tr>
+              <tr><th scope="col" id="colEarnings"></th><th scope="col" class="num" id="colDrop"></th><th scope="col" id="colLost"></th><th scope="col" id="colDriver"></th></tr>
             </thead>
             <tbody id="dropRows"></tbody>
           </table>
@@ -66,47 +68,48 @@
         <div class="hg-panel breakdown">
           <h3 id="bdTitle"></h3>
           <div class="bd" id="bdBars"></div>
-          <p class="footnote">The four shares sum to the drop exactly. A share right of zero adds to the loss; one left of it offsets the loss — here, a falling tax bill. Medicaid and CHIP never appear: their value is a coverage sticker price, never cash, so it cannot move net income. A child losing coverage shows in <em>programs lost</em> instead.</p>
+          <p class="footnote" id="bdFootnote"></p>
         </div>
       </section>
 
-      <section>
-        <h2 id="ledger" tabindex="-1">Where each program ends</h2>
+      <section class="ledger-section">
+        <h2 id="ledger" tabindex="-1"></h2>
         <table class="hg-table ledger">
-          <caption>A program ends at the first pay at which it is gone. Adults and children are reported separately — a parent usually loses coverage far below a child’s limit.</caption>
+          <caption id="ledgerCaption"></caption>
           <thead>
-            <tr><th scope="col" class="num">Earnings</th><th scope="col">Program</th><th scope="col">Who</th></tr>
+            <tr><th scope="col" class="num" id="lColEarnings"></th><th scope="col" id="lColProgram"></th><th scope="col" id="lColWho"></th></tr>
           </thead>
           <tbody id="ledgerRows"></tbody>
         </table>
         <p class="footnote" id="ledgerNote"></p>
+      </section>
 
-        <h2 id="compare" tabindex="-1">Compare</h2>
+      <section class="compare-section" id="compareSection">
+        <h2 id="compare" tabindex="-1"></h2>
         <div class="hg-scroll-x">
           <table class="hg-table compare">
-            <caption>The same rules asked of each what-if.</caption>
+            <caption id="compareCaption"></caption>
             <thead><tr id="compareHead"></tr></thead>
             <tbody id="compareRows"></tbody>
             <tfoot id="compareFoot" hidden></tfoot>
           </table>
         </div>
-        <p class="footnote hg-no-print" id="compareEmpty">No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.</p>
+        <p class="footnote hg-no-print" id="compareEmpty"></p>
         <p class="footnote" id="compareNote"></p>
-
-        <div class="hg-panel assumptions">
-          <h3>What this model does not include</h3>
-          <ul class="assumed" id="assumed"></ul>
-          <p class="hg-source" id="sourceNote"></p>
-          <button class="hg-button hg-button--small" type="button" id="retrySource" hidden>Try again</button>
-        </div>
       </section>
+
+      <div class="hg-panel assumptions">
+        <h3 id="assumptionsHeading"></h3>
+        <ul class="assumed" id="assumed"></ul>
+        <p class="hg-source" id="sourceNote"></p>
+        <button class="hg-button hg-button--small" type="button" id="retrySource" hidden></button>
+      </div>
     </div>
 
     <!-- The client sheet, in the citizen register, paper only. -->
     <section class="handout hg-print-only" id="handout"></section>
   </div>
 
-  <p class="theme hg-no-print"><button class="hg-button" id="themeBtn" type="button">Dark</button></p>
 </main>
 </div>
 </body>

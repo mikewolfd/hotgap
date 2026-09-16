@@ -4,9 +4,10 @@
 // mockup's audit screenshots carry and a reader can check against the file.
 import { evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
 import { describe, expect, it } from "vitest";
+import { fmt } from "./copy.js";
 import {
-  assumed, bitesHousehold, chartLabel, cite, cliffSentence, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  lifted, modeled, neg, ordinal, signed, sourceLine, tiles, unclaimedNote, verdict,
+  assumed, bitesHousehold, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
+  lifted, modeled, notInSweep, sourceLine, tiles, unclaimedNote, verdict,
 } from "./model.js";
 
 const answers = (flags: Record<string, string | boolean>) => {
@@ -19,12 +20,16 @@ const summary = loadSummary();
 const cov = summary.coverage!.CO;
 const prov = { cov, summary, county: null };
 
-describe("figures", () => {
-  it("prints a loss with a true minus and a share with its sign", () => {
-    expect(neg(25449.4)).toBe("−$25,449");
-    expect(signed(-874.6)).toBe("−$875");
-    expect(signed(383)).toBe("+$383");
-    expect([1, 2, 3, 4, 11, 12, 13, 21, 40, 51, 83, 100].map(ordinal)).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "40th", "51st", "83rd", "100th"]);
+describe("figures, through Intl in the locale", () => {
+  it("prints a loss with a true minus, a share with its sign, an ordinal, a list and a date", () => {
+    expect(fmt.loss(25449.4)).toBe("−$25,449");
+    expect(fmt.signed(-874.6)).toBe("−$875");
+    expect(fmt.signed(383)).toBe("+$383");
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 40, 51, 83, 100].map(fmt.ordinal)).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "40th", "51st", "83rd", "100th"]);
+    expect(fmt.list(["SNAP"])).toBe("SNAP");
+    expect(fmt.list(["SNAP", "WIC"])).toBe("SNAP and WIC");
+    expect(fmt.list(["SNAP", "WIC", "TANF"])).toBe("SNAP, WIC, and TANF");
+    expect(fmt.date("2026-09-16T16:13:51.445Z")).toBe("Sep 16, 2026");
   });
 });
 
@@ -115,12 +120,16 @@ describe("ThresholdLedger", () => {
     expect(cite(co, by("snap"), cov)).toBe("$713 a year of SNAP continues at $54,000, none from $55,000.");
     expect(cite(co, by("childcare"), cov)).toBe("Worth $24,899 a year at $54,000. Care priced at $2,773 a month for 2 children (county 2015 prices, carried to 2026 dollars by the BLS Employment Cost Index).");
     expect(cite(co, by("medicaid"), cov)).toBe("Coverage ends with the raise (no deferral applies); the net premium rises $444 in the step.");
+    /* S5: the premium clause only when a premium rises (Texas's coverage gap charges none). */
+    const noPremium = { ...by("medicaid"), cliff: { ...by("medicaid").cliff!, breakdown: { ...by("medicaid").cliff!.breakdown, premiums: 0 } } };
+    expect(cite(co, noPremium, cov)).toBe("Coverage ends with the raise (no deferral applies).");
     expect(cite(co, rows.find((r) => r.id === "medicaid" && r.group === "Children")!, cov)).toMatch(/^The children move to CHIP: \$4,548 a year of coverage from \$41,000\. Crossing this does not end it this year/);
     expect(cite(co, by("eitc"), cov)).toBe("Phases out; no step of $200 or more, so it is not a cliff.");
     expect(cite(co, by("aca"), cov)).toBe("Net premium rises $4,475 in one step; Colorado premium assistance ($1,656) ends with it.");
   });
-  it("footnotes cash benefits, child coverage and the state's premium help from the coverage block", () => {
-    expect(ledgerNote(co, cov)).toBe("Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.");
+  it("footnotes cash benefits, child coverage and the state's premium help from the coverage block, its note verbatim", () => {
+    expect(ledgerNote(co, cov)).toBe(`Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: ${cov.corrections.coverageGap.note} Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.`);
+    expect(cov.corrections.coverageGap.note).toMatch(/^Expansion state/);
   });
 });
 
@@ -128,6 +137,7 @@ describe("the chart's words", () => {
   it("says a cliff and the whole shape", () => {
     expect(cliffSentence(co.analysis.cliffs[7])).toBe("Cliff at $54,000 to $55,000: −$25,449. CCDF child care subsidy ends. Driver: benefits.");
     expect(chartLabel(co)).toBe("Net income after premiums against earnings, $0 to $150,000. 4 danger zones; this household's runs from $36,000 to $45,000, cleared by a raise of $7,000. The largest step down is $25,449 at $54,000 where CCDF child care subsidy ends. Safe from $119,000.");
+    expect(cliffSentence(co.analysis.cliffs[6])).toBe("Cliff at $53,000 to $54,000: −$2,444. SNAP and WIC end. Driver: benefits.");
   });
 });
 
@@ -150,17 +160,30 @@ describe("CompareTable", () => {
   });
 });
 
+describe("a what-if the sweep cannot express (B1)", () => {
+  it("is the base's own archetype curve at the same earnings; a raise or a partner is not", () => {
+    expect(notInSweep(co, co)).toBe(true);
+    expect(notInSweep(co, { ...co, source: "live" })).toBe(false);
+    const raise = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "55000" }))!;
+    expect(notInSweep(co, raise)).toBe(false);
+    const partner = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "38000", married: true }))!;
+    expect(notInSweep(co, partner)).toBe(false);
+    expect(compareNote(co, [], 1)).toMatch(/so a what-if that changes something else has no figure until the live call answers\.$/);
+    expect(compareNote(co, [], 2)).toMatch(/2 what-ifs that change something else have no figure/);
+  });
+});
+
 describe("what the model does not include, and where the numbers came from", () => {
   it("lists the swept household's assumptions on the archetype path and the state's unmodeled programs", () => {
     const lines = assumed(co, cov);
     expect(modeled(co).monthlyRent).toBe(1735);
-    expect(lines[1]).toBe("Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage and no other income; aged 30.");
-    expect(lines[2]).toBe("Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC and CCDF child care subsidy; not for Head Start and Housing voucher.");
+    expect(lines[1]).toBe("Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage, and no other income; aged 30.");
+    expect(lines[2]).toBe("Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC, and CCDF child care subsidy; not for Head Start and Housing voucher.");
     expect(lines[4]).toMatch(/^Not modelled in Colorado: LIHEAP\./);
   });
   it("says which curve, in which words, and drops the county on an archetype", () => {
     const arche = sourceLine(co, { ...prov, county: "El Paso County" });
-    expect(arche).toMatch(/Curve: committed archetype sweep \(single-2\), generated \d{4}-\d{2}-\d{2} — not this family's own live call\. Rent: HUD/);
+    expect(arche).toMatch(/Curve: committed archetype sweep \(single-2\), generated [A-Z][a-z]{2} \d{1,2}, \d{4} — not this family's own live call\. Rent: HUD/);
     expect(arche).not.toContain("El Paso");
     expect(arche).toMatch(/Child-care price: county 2015, carried to 2026 dollars/);
     expect(arche).toMatch(/Model: policyengine-us \d/);
@@ -178,7 +201,7 @@ describe("what the model does not include, and where the numbers came from", () 
 describe("the client sheet", () => {
   it("is the citizen catalog's sentence and the same thresholds in plain words", () => {
     const h = handout(co, summary);
-    expect(h.title).toBe("For the client — Colorado, one parent, two children");
+    expect(h.title).toBe("Your pay and your help — Colorado, one parent, two children");
     expect(h.paragraphs[0]).toBe("You are paid $38,000 a year. You keep about $84,400 a year. More pay does not add to that until you are paid $45,000 a year: a raise of $7,000 a year. It happens again between $45,000 and $119,000.");
     expect(h.paragraphs[1]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
     expect(h.paragraphs[2]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");

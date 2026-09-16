@@ -4,12 +4,13 @@
 // controls with the collision rule, and the keyboard model (design/charts.md
 // § 1, M6, S8, S12). One selection model: a mark and its DropLedger row
 // share `selected`, which main.ts owns; this module reports presses and
-// mirrors the selection onto the marks.
+// mirrors the selection onto the marks. Every word is copy.ts's.
 //
-// A draw is O(points + cliffs + zones); a resize redraws once.
+// A draw is O(points + cliffs + zones); a resize redraws once per frame;
+// print redraws synchronously at a fixed width (review N6).
 import type { Cliff, HouseholdEvaluation } from "@hotgap/core";
-import { money } from "../lib/format.js";
-import { cliffAt, cliffSentence, indexOf, lifted as liftedOf, neg } from "./model.js";
+import { copy, fmt } from "./copy.js";
+import { cliffAt, cliffSentence, indexOf, lifted as liftedOf } from "./model.js";
 
 export interface ChartHost { wrap: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
 
@@ -25,6 +26,13 @@ export interface Chart {
 
 interface Mark { members: number[]; xLast: number; deferred: boolean; x: number; y: number; btn: HTMLButtonElement }
 interface Layer { px: (e: number) => number; py: (v: number) => number; pad: { t: number; r: number; b: number; l: number }; W: number; H: number }
+
+/** The width the curve is drawn at on paper, whatever the screen was (review N6): 42rem at 16px. */
+const PRINT_WIDTH = 672;
+/** A mark's ring, the box a direct label must clear (review S4). */
+const RING = 10;
+/** One line of a 13px label, the step a colliding label is lifted by. */
+const LINE = 14;
 
 const NS = "http://www.w3.org/2000/svg";
 const mk = <K extends keyof SVGElementTagNameMap>(t: K, a: Record<string, string | number> = {}, text?: string): SVGElementTagNameMap[K] => {
@@ -42,6 +50,7 @@ const niceUp = (s: number): number => { const p = 10 ** Math.floor(Math.log10(s)
 
 export function mountChart(host: ChartHost, on: { select(i: number, announce?: string): void; close(): void }): Chart {
   const { wrap, svg, marks: marksEl, readout } = host;
+  const K = copy.chart;
   let ev: HouseholdEvaluation | null = null;
   let source = "";
   let lifted: number[] = [], earn: number[] = [];
@@ -50,8 +59,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
 
   const cliffs = (): Cliff[] => ev!.analysis.cliffs;
   const markSentence = (m: Mark): string => m.members.length === 1 ? cliffSentence(cliffs()[m.members[0]])
-    : `${m.members.length} drops between ${money(cliffs()[m.members[0]].startEarnings)} and ${money(cliffs()[m.members[m.members.length - 1]].endEarnings)}, ` +
-      `together ${money(m.members.reduce((s, i) => s + cliffs()[i].drop, 0))} a year.`;
+    : K.merged(m.members.length, cliffs()[m.members[0]].startEarnings, cliffs()[m.members[m.members.length - 1]].endEarnings, m.members.reduce((s, i) => s + cliffs()[i].drop, 0));
   const zoneOf = (e: number) => ev!.analysis.dangerZones.find((z) => e > z.startEarnings && (z.endEarnings === null || e < z.endEarnings)) ?? null;
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
   const label = (x: number, y: number, text: string, extra: Record<string, string | number> = {}, cls = "") =>
@@ -61,12 +69,25 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(lifted.length - 2, Math.floor(f)));
     return lifted[i] + (lifted[i + 1] - lifted[i]) * Math.max(0, Math.min(1, f - i));
   };
+  /**
+   * A direct label must not sit on a mark's ring (review S4): once it is in
+   * the tree its box is measured, and while it crosses a ring it is lifted
+   * a line — the same test the marks run against each other.
+   */
+  const clearRings = (el: SVGTextElement, rings: { x: number; y: number }[]): void => {
+    for (let tries = 0; tries < 3; tries++) {
+      const b = el.getBBox();
+      const hit = rings.some((r) => b.x < r.x + RING && b.x + b.width > r.x - RING && b.y < r.y + RING && b.y + b.height > r.y - RING);
+      if (!hit) return;
+      el.setAttribute("y", String(Number(el.getAttribute("y")) - LINE));
+    }
+  };
 
-  function draw(): void {
+  function draw(width = Math.max(320, wrap.clientWidth)): void {
     if (!ev) return;
     const A = ev.analysis, P = ev.personal, DEFERRED = ev.deferred, IMMEDIATE = cliffs().filter((c) => !c.deferral);
     const net = ev.curve.points.map((p) => p.netIncome), safe = ev.escape.safeExitEarnings;
-    const W = Math.max(320, wrap.clientWidth), narrow = W < 520;
+    const W = width, narrow = W < 520;
     const H = narrow ? 240 : 320;
     const pad = { t: 30, r: 14, b: 34, l: 52 };
     const x0 = earn[0], x1 = earn[earn.length - 1];
@@ -98,10 +119,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     }
     for (let v = y0; v <= y1 + 1; v += step) {
       svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-      svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, `$${Math.round(v / 1000)}k`));
+      svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, fmt.tick(v)));
     }
     const xs = nice((x1 - x0) / (narrow ? 3 : 6));
-    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, e === 0 ? "$0" : `$${e / 1000}k`));
+    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, fmt.tick(e)));
     svg.append(mk("line", { x1: pad.l, y1: plotBot, x2: W - pad.r, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* The ghost (S14): the real curve, drawn only when a deferred drop would be
@@ -134,7 +155,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       if (m.deferred) {
         svg.append(mk("line", { x1: x, y1: y - 18, x2: x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
         svg.append(mk("circle", { cx: x, cy: y, r: 4, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
-        svg.append(label(x + 7, y - 8, "later"));
+        svg.append(label(x + 7, y - 8, K.later));
       } else {
         const land = Math.min(...m.members.map((i) => lifted[indexOf(ev!, cliffs()[i].endEarnings)]));
         svg.append(mk("line", { x1: x, y1: y, x2: x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
@@ -151,34 +172,37 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       marksEl.append(btn);
       marks.push(mark);
     }
+    const rings = marks.map((m) => ({ x: m.x, y: m.y }));
 
-    /* Direct labels: the largest drop and the leap (charts.md § Direct labels). */
+    /* Direct labels: the largest drop and the leap (charts.md § Direct labels), lifted off any ring they cross. */
     const w = cliffAt(ev, A.worstCliff);
     if (w) {
       const wm = marks.find((m) => m.members.includes(cliffs().indexOf(w)))!;
       const mid = (lifted[indexOf(ev, w.startEarnings)] + lifted[indexOf(ev, w.endEarnings)]) / 2;
-      svg.append(label(wm.x + 9, py(mid) + 4, neg(w.drop), {}, "hg-label--loss cw-label--strong"));
+      const t = label(wm.x + 9, py(mid) + 4, fmt.loss(w.drop), {}, "hg-label--loss cw-label--strong");
+      svg.append(t); clearRings(t, rings);
     }
     if (P.zone) {
       const bx0 = px(P.zone.startEarnings), bx1 = px(P.zone.endEarnings ?? x1), yp = py(P.zone.peakNet);
       svg.append(mk("line", { x1: bx0, y1: yp, x2: bx1, y2: yp, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      svg.append(label(bx0 - 4, yp - 6, money(P.zone.peakNet), { "text-anchor": "end" }, "hg-label--loss"));
-      /* The leap: a bracket along the peak rule from the diamond to the exit,
-         labelled once, just right of the diamond on the peak dollar's baseline. */
+      const peak = label(bx0 - 4, yp - 6, fmt.money(P.zone.peakNet), { "text-anchor": "end" }, "hg-label--loss");
+      svg.append(peak); clearRings(peak, rings);
+      /* The leap: a bracket along the peak rule from the diamond to the exit, labelled once. */
       const lx0 = px(A.currentEarnings), lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
       svg.append(mk("path", { d: `M${lx0} ${yp - 4} V${yp + 4} M${lx0} ${yp} H${lx1}${P.raiseIsLowerBound ? "" : ` M${lx1} ${yp - 4} V${yp + 4}`}`, fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
-      /* Below 520px the merged cliff mark sits on the peak, so the label drops under the bracket. */
-      svg.append(label(lx0 + 8, narrow ? yp + 17 : yp - 6, `${P.raiseIsLowerBound ? "more than +" : "+"}${money(P.raiseToClear ?? 0)}`, {}, "hg-label--loss cw-label--strong"));
+      /* Below 520px the merged cliff mark sits on the peak, so the label starts under the bracket; either way it clears every ring. */
+      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, K.leap(P.raiseToClear ?? 0, P.raiseIsLowerBound), {}, "hg-label--loss cw-label--strong");
+      svg.append(leap); clearRings(leap, rings);
       if (!P.raiseIsLowerBound) {
         svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
         const both = safe === P.escapeEarnings;
-        if (!narrow || both) svg.append(label(bx1 + 4, plotTop - 8, both ? "back to even, and safe from here" : "back to even"));
+        if (!narrow || both) svg.append(label(bx1 + 4, plotTop - 8, both ? K.backToEvenAndSafe : K.backToEven));
       }
     }
     if (safe !== null && safe !== P.escapeEarnings) {
       const sx = px(safe);
       svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      svg.append(label(sx - 4, plotTop - 8, "safe from here", { "text-anchor": "end" }));
+      svg.append(label(sx - 4, plotTop - 8, K.safeFromHere, { "text-anchor": "end" }));
     }
     /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
     const cx = px(A.currentEarnings), cy = py(liftedAt(A.currentEarnings));
@@ -186,11 +210,12 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     diamond = mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 });
     svg.append(diamond);
 
-    host.cap.textContent =
-      `The y-axis starts at ${money(y0)}, not $0; the visible range is ${(yRange / Math.max(1, maxDrop)).toFixed(1)}× the largest drop. ` +
-      (DEFERRED.length
-        ? `Deferred drops are lifted out of the plotted line, which is what analysis.dangerZones describes${ghost ? "; the real curve including them is the dashed ghost. " : "; here they are too small to draw. "}`
-        : "No cliff on this curve is deferred. ") + source;
+    /* The caption's clauses each come from their condition (review S5). */
+    host.cap.textContent = [
+      K.axis(y0, (yRange / Math.max(1, maxDrop)).toFixed(1)),
+      DEFERRED.length ? (ghost ? K.liftedGhost : K.liftedNoGhost) : K.noneDeferred,
+      source,
+    ].join(" ");
     renderKey(A.dangerZones.length > (P.zone ? 1 : 0), IMMEDIATE.length > 0, DEFERRED.length > 0, !!P.zone, safe !== null);
     layer = { px, py, pad, W, H }; drawn = true;
     syncMarks(); paintCursor();
@@ -200,15 +225,15 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   function renderKey(otherZones: boolean, immediate: boolean, deferred: boolean, zone: boolean, safe: boolean): void {
     const sw = (inner: string) => `<svg viewBox="0 0 22 12" aria-hidden="true">${inner}</svg>`;
     const k: [string, string][] = [
-      ["Net income", sw(`<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`)],
+      [K.key.net, sw(`<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`)],
     ];
-    if (zone) k.push(["This household's zone", sw(`<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
-    if (otherZones) k.push([zone ? "Other zones" : "Danger zones", sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
-    if (immediate) k.push(["Immediate cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`)]);
-    if (deferred) k.push(["Deferred cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`)]);
-    k.push(["Current earnings", sw(`<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`)]);
-    if (zone) k.push(["The leap, to the exit", sw(`<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`)]);
-    if (safe) k.push(["Safe from here", sw(`<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`)]);
+    if (zone) k.push([K.key.ownZone, sw(`<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
+    if (otherZones) k.push([zone ? K.key.otherZones : K.key.zones, sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
+    if (immediate) k.push([K.key.immediate, sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`)]);
+    if (deferred) k.push([K.key.deferred, sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`)]);
+    k.push([K.key.current, sw(`<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`)]);
+    if (zone) k.push([K.key.leap, sw(`<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`)]);
+    if (safe) k.push([K.key.safe, sw(`<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`)]);
     host.key.innerHTML = k.map(([t, s]) => `<li>${s} ${t}</li>`).join("");
   }
 
@@ -222,10 +247,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
     cursorNodes = [l, dot];
     const z = zoneOf(e);
-    readout.innerHTML = `Earnings <b>${money(e)}</b> → net <b>${money(v)}</b>. ` +
-      (!z ? "Outside any danger zone."
-        : isPersonal(z) ? `Inside the household's danger zone (ends ${z.endEarnings === null ? "past the axis" : money(z.endEarnings)}; peak ${money(z.peakNet)} at ${money(z.startEarnings)}).`
-        : `Inside a later zone (${money(z.startEarnings)}–${z.endEarnings === null ? "the top of the axis" : money(z.endEarnings)}).`);
+    readout.textContent = K.readout(e, v, z ? { own: isPersonal(z), end: z.endEarnings, peak: z.peakNet, start: z.startEarnings } : null);
   }
 
   function syncMarks(): void {
@@ -249,13 +271,16 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     else if (e.key === "Home") cursor = 0;
     else if (e.key === "End") cursor = earn.length - 1;
     else if (e.key === "]" || e.key === "[") {
-      /* Next or previous cliff mark, from the mark in focus or else from the cursor. */
+      /* Next or previous mark, from the mark in focus or else from the cursor —
+         a merged mark counts by any member, so one holding the cursor's own
+         cliff is the next stop, not skipped (review N4). */
       const here = onMark ? marks.findIndex((m) => m.btn === onMark) : -1;
       const at = earn[cursor];
-      const before = marks.filter((m) => cliffs()[m.members[0]].startEarnings < at).length;   /* marks are in axis order */
+      const startsAfter = (m: Mark) => m.members.some((i) => cliffs()[i].startEarnings > at);
+      const startsBefore = (m: Mark) => m.members.some((i) => cliffs()[i].startEarnings < at);
       const i = e.key === "]"
-        ? (here >= 0 ? here + 1 : marks.findIndex((m) => cliffs()[m.members[0]].startEarnings > at))
-        : (here >= 0 ? here - 1 : before - 1);
+        ? (here >= 0 ? here + 1 : marks.findIndex(startsAfter))
+        : (here >= 0 ? here - 1 : marks.filter(startsBefore).length - 1);   /* marks are in axis order */
       e.preventDefault();
       if (i < 0 || i >= marks.length) return;
       marks[i].btn.focus(); cursor = indexOf(ev, cliffs()[marks[i].members[0]].startEarnings); paintCursor();
@@ -276,6 +301,9 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       if (focused >= 0) marks[focused]?.btn.focus();
     });
   });
+  /* Paper: print layout does not wait for a frame, so the curve is redrawn now, at one width, and back afterwards. */
+  addEventListener("beforeprint", () => draw(PRINT_WIDTH));
+  addEventListener("afterprint", () => draw());
 
   return {
     render(next, src) {

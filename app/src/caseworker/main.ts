@@ -15,30 +15,20 @@ import { axisSpec, countyName, pickArchetypeId, provideData, rawAnswersFromFlags
 import { evaluate, type EvaluateResult } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
-import { chartLabel, curveTitle, sourceLine, unclaimedNote, type Provenance } from "./model.js";
-import { $, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderVerdict, syncDrops, type Column } from "./render.js";
+import { copy } from "./copy.js";
+import { chartLabel, curveTitle, notInSweep, sourceLine, unclaimedNote, type Provenance } from "./model.js";
+import { $, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderStatic, renderVerdict, syncDrops, type Column } from "./render.js";
 import { applyDiff, diffFlags, sameDiff, whatIfLabel, type Diff } from "./scenarios.js";
 import { pageQuery, parsePage } from "./url.js";
 
-const text = {
-  loading: (count: number) => `Evaluating… net income is checked at ${count} pay levels. A household not seen before takes a few seconds.`,
-  errorTitle: "The evaluation did not come back.",
-  errors: {
-    rate_limited: "Too many evaluations in a minute. Wait a minute and try again.",
-    busy: "The engine is busy. Try again in a few seconds.",
-    other: "The engine did not reply. Nothing was saved. Try again in a minute.",
-  },
-  tryAgain: "Try again",
-  whatIfHint: "Press a take-up chip, or change a value, to add a what-if beside the base household.",
-  added: (label: string) => `What-if added: ${label}. It is evaluated beside the base under Compare; the chips show the base.`,
-  already: (label: string) => `${label} is already compared.`,
-  computing: "computing",
-};
+const text = copy.status, W = copy.whatIf;
 
-interface WhatIf { diff: Diff; ev: HouseholdEvaluation | null; pending: string; seq: number }
+/** A what-if column's state: the diff, and either its evaluation or why there is none. */
+interface WhatIf { diff: Diff; ev: HouseholdEvaluation | null; state: "computing" | "ok" | "failed" | "unanswered"; reason: string; seq: number }
+const fresh = (diff: Diff): WhatIf => ({ diff, ev: null, state: "computing", reason: "", seq: 0 });
 
 const errorText = (r: Extract<EvaluateResult, { ok: false }>): string =>
-  r.error === "bad_input" && r.detail ? `not a household: ${r.detail}` : r.error === "rate_limited" ? text.errors.rate_limited : r.error === "busy" ? text.errors.busy : text.errors.other;
+  r.error === "bad_input" && r.detail ? text.errors.badInput(r.detail) : r.error === "rate_limited" ? text.errors.rate_limited : r.error === "busy" ? text.errors.busy : text.errors.other;
 
 // ── Data the page reads beside the evaluation ──────────────────────────
 const fetchJson = async <T>(url: string): Promise<T | null> => {
@@ -65,20 +55,21 @@ let latest = 0;
 /* True while the base's evaluation is in flight; a what-if added then waits for it. */
 let baseInFlight = false;
 
+renderStatic();
 const editor = mountEditor($("app"), {
   onSubmit: (flags) => void runBase(flags, { submitted: true, push: true }),
   onChange: (flags) => { if (baseFlags) addWhatIf(flags); },
   /* The screen's other exit: the household it holds becomes a what-if of the base (or the base, when there is none yet). */
-  altSubmit: { label: "Add as a what-if", onSubmit: (flags) => { if (baseFlags) { addWhatIf(flags); editor.close(); } else void runBase(flags, { submitted: true, push: true }); } },
+  altSubmit: { label: copy.actions.addAsWhatIf, onSubmit: (flags) => { if (baseFlags) { addWhatIf(flags); editor.close(); } else void runBase(flags, { submitted: true, push: true }); } },
   /* Edits left on the screen are not a base: the chips always show the base, so a press is one change from it. */
   onClose: () => { if (baseFlags) editor.setFlags(baseFlags); },
+  /* The caseworker register, and the counselor's order: facts, the take-up toggles, then the rest (review S1, S2). */
+  copy: copy.editor,
+  order: copy.chipOrder,
   actions: [
-    { label: "Add a what-if", short: "What-if", onClick: () => {
-      if (!baseFlags) { editor.open(); return; }   /* the screen itself asks for the household */
-      editor.setNote(text.whatIfHint);
-      editor.openInputs();
-    } },
-    { label: "Print the client sheet", short: "Print", primary: true, onClick: () => window.print() },
+    /* "Add a what-if" opens the screen led by "Add as a what-if", so it always ends in a what-if (review S3). */
+    { label: copy.actions.whatIf, short: copy.actions.whatIfShort, needsAnswers: true, onClick: () => editor.open("pay", { lead: "alt" }) },
+    { label: copy.actions.print, short: copy.actions.printShort, primary: true, needsAnswers: true, onClick: () => window.print() },
   ],
 });
 const chart = mountChart(
@@ -125,10 +116,11 @@ function showError(r: Extract<EvaluateResult, { ok: false }>): void {
 
 /**
  * Evaluate the base household and render everything; then re-ask every
- * what-if of it. `submitted` closes the screen and moves focus to the
- * verdict; `push` adds a history entry (a submit does, a landing or a retry
- * replaces — the query is re-serialized in flag order, so a landing URL
- * rarely equals its own rewrite).
+ * what-if of it. `submitted` closes the screen and, on a submit, moves
+ * focus to the verdict — a landing leaves focus where the page starts
+ * (review N1); `push` adds a history entry (a submit does, a landing or a
+ * retry replaces — the query is re-serialized in flag order, so a landing
+ * URL rarely equals its own rewrite).
  */
 async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: boolean; push: boolean }): Promise<void> {
   const v = validateAnswers(rawAnswersFromFlags(flags));
@@ -150,7 +142,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   }
   if (!(await renderAll(r.evaluation, flags, id))) return;
   status.textContent = "";
-  if (submitted) { editor.close(); $("verdictLine").focus(); }
+  if (submitted) { editor.close(); if (push) $("verdictLine").focus(); }
   for (let i = 0; i < whatIfs.length; i++) void runWhatIf(i);
 }
 
@@ -192,9 +184,14 @@ function addWhatIf(flags: HouseholdFlags): void {
   editor.setFlags(baseFlags!);
   if (Object.keys(diff).length === 0) return;
   const label = whatIfLabel(diff, flags);
-  if (whatIfs.some((w) => sameDiff(w.diff, diff))) { editor.setNote(text.already(label)); return; }
-  whatIfs.push({ diff, ev: null, pending: text.computing, seq: 0 });
-  editor.setNote(`${text.added(label)} ${baseEv ? unclaimedNote(baseEv) : ""}`.trim());
+  if (whatIfs.some((w) => sameDiff(w.diff, diff))) { editor.setNote(W.already(label)); return; }
+  whatIfs.push(fresh(diff));
+  /* The reply says where the column went and takes the reader there (the mockup's own link to #compare). */
+  const note = document.createDocumentFragment();
+  const link = document.createElement("a");
+  link.href = "#compare"; link.textContent = W.compareLink;
+  note.append(`${W.added(label)} `, link, W.addedAfterLink, baseEv ? ` ${unclaimedNote(baseEv)}` : "");
+  editor.setNote(note);
   writeUrl(false);
   renderCompareTable();
   /* With the base still computing, runBase asks every what-if once it lands. */
@@ -205,18 +202,21 @@ async function runWhatIf(i: number): Promise<void> {
   const w = whatIfs[i];
   if (!w || !baseFlags) return;
   const seq = ++w.seq;
-  w.ev = null; w.pending = text.computing;
+  w.ev = null; w.state = "computing"; w.reason = "";
   renderCompareTable();
   const flags = applyDiff(baseFlags, w.diff);
   const v = validateAnswers(rawAnswersFromFlags(flags));
   const r: EvaluateResult = v.ok ? await evaluate(flags) : { ok: false, error: "bad_input", detail: v.detail };
   if (w.seq !== seq || !whatIfs.includes(w)) return;
-  if (r.ok) { w.ev = r.evaluation; w.pending = ""; } else w.pending = errorText(r);
+  if (!r.ok) { w.state = "failed"; w.reason = errorText(r); }
+  else if (baseEv && notInSweep(baseEv, r.evaluation)) { w.state = "unanswered"; w.reason = W.notInSweep; }   /* B1: the fallback's curve is the base's own */
+  else { w.ev = r.evaluation; w.state = "ok"; }
   renderCompareTable();
 }
 
 function removeWhatIf(i: number): void {
-  whatIfs.splice(i, 1);
+  const [w] = whatIfs.splice(i, 1);
+  editor.setNote(W.removed(whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff))));
   writeUrl(false);
   renderCompareTable();
   $("compare").focus();
@@ -225,27 +225,21 @@ function removeWhatIf(i: number): void {
 function renderCompareTable(): void {
   if (!baseEv || !baseFlags) return;
   const cols: Column[] = [
-    { title: "Now", ev: baseEv },
-    ...whatIfs.map((w, i) => ({ title: whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff)), ev: w.ev, pending: w.pending, index: i })),
+    { title: W.now, ev: baseEv, state: "ok", reason: "" },
+    ...whatIfs.map((w, i) => ({ title: whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff)), ev: w.ev, state: w.state, reason: w.reason, index: i })),
   ];
   renderCompare(baseEv, cols, { remove: removeWhatIf, retry: (i) => void runWhatIf(i) });
 }
 
 // ── Start ───────────────────────────────────────────────────────────────
 $("retrySource").addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false, push: false }); });
-const theme = $<HTMLButtonElement>("themeBtn");
-theme.addEventListener("click", () => {
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
-  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
-  theme.textContent = dark ? "Dark" : "Light";
-});
 
 function start(): void {
   latest++;   /* whatever was in flight belongs to the URL we left */
   baseInFlight = false;
   const page = parsePage(location.search);
   editor.setFlags(page.base);
-  whatIfs = page.whatIfs.map((diff) => ({ diff, ev: null, pending: text.computing, seq: 0 }));
+  whatIfs = page.whatIfs.map(fresh);
   if (hasAnswers(editor.flags)) void runBase(editor.flags, { submitted: true, push: false });
   else { baseFlags = null; baseEv = null; content.hidden = true; status.textContent = ""; editor.open(); }
 }

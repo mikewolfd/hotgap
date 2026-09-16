@@ -4,8 +4,8 @@
 // column is named after; the what-if's own flags are always rebuilt from
 // the base, so changing the base re-asks every what-if of the new one.
 import { HOUSEHOLD_FLAGS, PAY_UNITS, type HouseholdFlagName, type HouseholdFlags, type PayUnit } from "@hotgap/core";
-import { copy } from "../editor/copy.js";
-import { money, unitPhrase } from "../lib/format.js";
+import { copy as citizen } from "../editor/copy.js";
+import { copy } from "./copy.js";
 
 /** The answers a what-if changes; null removes the base's answer (a toggle off, a figure cleared). */
 export type Diff = { [K in HouseholdFlagName]?: HouseholdFlags[K] | null };
@@ -36,45 +36,52 @@ export const sameDiff = (a: Diff, b: Diff): boolean => {
   return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k as HouseholdFlagName] === b[k as HouseholdFlagName]);
 };
 
-/* The caseworker register for a changed answer (design/inventory.md M3
-   names; the citizen chip labels live in editor/copy.ts). A take-up flag
-   reads "{name} on/off"; an inverted one ("no-snap") reads the program. */
-const TOGGLE: Partial<Record<HouseholdFlagName, string>> = {
-  "childcare-subsidy": "CCDF subsidy", "head-start": "Head Start", housing: "Housing voucher", "employer-coverage": "Employer coverage",
-  "self-employed": "Self-employed", disabled: "Disabled", "spouse-disabled": "Spouse disabled",
+/* One name per control (review S1): a what-if column is named by the chip
+   it came from, so the chip, the note and the column agree. */
+type ChipKey = keyof typeof copy.editor.chips;
+const CHIP_OF: Partial<Record<HouseholdFlagName, ChipKey>> = {
+  zip: "where", state: "where", county: "where", kids: "household", "kids-disabled": "kidsDisabled",
+  age: "age", "spouse-age": "spouseAge", "spouse-earnings": "spousePay", rent: "rent", childcare: "childcare",
+  ssdi: "ssdi", "child-support": "childSupport", unemployment: "unemployment", savings: "savings",
+  status: "status", "spouse-status": "spouseStatus",
+  "childcare-subsidy": "childcareSubsidy", "head-start": "headStart", housing: "housing", "employer-coverage": "employerCoverage",
+  "self-employed": "selfEmployed", disabled: "disabled", "spouse-disabled": "spouseDisabled",
+  "no-snap": "snap", "no-tanf": "tanf", "no-medicaid": "medicaid", "no-wic": "wic",
 };
-const INVERTED: Partial<Record<HouseholdFlagName, string>> = { "no-snap": "SNAP", "no-tanf": "TANF", "no-medicaid": "Medicaid", "no-wic": "WIC" };
-const VALUE: Partial<Record<HouseholdFlagName, string>> = {
-  zip: "ZIP", state: "State", county: "County", age: "Age", "spouse-age": "Spouse's age", kids: "Children", "kids-disabled": "Kids with a disability",
-  rent: "Rent", childcare: "Child care", earnings: "Earnings", pay: "Pay", unit: "Pay unit", hours: "Hours a week", "spouse-earnings": "Spouse's pay",
-  ssdi: "SSDI", "child-support": "Child support", unemployment: "Unemployment pay", savings: "Savings", status: "Status", "spouse-status": "Spouse's status",
-  "years-in-us": "Years in the US", "spouse-years-in-us": "Spouse's years in the US",
-};
+const TOGGLES = new Set<HouseholdFlagName>(["childcare-subsidy", "head-start", "housing", "employer-coverage", "self-employed", "disabled", "spouse-disabled"]);
+const INVERTED = new Set<HouseholdFlagName>(["no-snap", "no-tanf", "no-medicaid", "no-wic"]);
 const MONTHLY = new Set<HouseholdFlagName>(["rent", "childcare", "ssdi", "child-support", "unemployment"]);
-const YEARLY = new Set<HouseholdFlagName>(["earnings", "spouse-earnings", "savings"]);
+const YEARLY = new Set<HouseholdFlagName>(["earnings", "spouse-earnings"]);
+
+/** The control's name for a flag: its chip's, else the copy's name for a dialog field. */
+export const flagName = (f: HouseholdFlagName): string => {
+  const key = CHIP_OF[f];
+  return (key ? copy.editor.chips[key] : undefined) ?? copy.whatIf.names[f] ?? f;
+};
 
 /** A what-if's name from its diff, against the flags it was applied to: "CCDF subsidy on", "Pay $55,000 a year", "Married". */
 export function whatIfLabel(diff: Diff, flags: HouseholdFlags): string {
-  const parts: string[] = [];
+  const W = copy.whatIf, parts: string[] = [];
   /* The screen swaps a ZIP for a state (or back): one move, one part. */
   const moved = diff.state ?? diff.zip;
-  if (moved) parts.push(`Place ${moved.toUpperCase()}`);
+  if (moved) parts.push(W.place(moved.toUpperCase()));
   for (const [f, v] of Object.entries(diff) as [HouseholdFlagName, string | boolean | null][]) {
-    if (f === "zip" || f === "state") { if (!moved) parts.push(`${VALUE[f]} cleared`); continue; }
-    if (f === "married") { parts.push(v === true ? "Married" : "Single"); continue; }
-    if (TOGGLE[f]) { parts.push(`${TOGGLE[f]} ${v === true ? "on" : "off"}`); continue; }
-    if (INVERTED[f]) { parts.push(`${INVERTED[f]} ${v === true ? "off" : "on"}`); continue; }
-    const label = VALUE[f] ?? f;
-    if (v === null || v === false) { parts.push(`${label} cleared`); continue; }
+    if (f === "zip" || f === "state") { if (!moved) parts.push(W.cleared(flagName(f))); continue; }
+    if (f === "married") { parts.push(v === true ? W.married : W.single); continue; }
+    if (TOGGLES.has(f)) { parts.push(W.toggled(flagName(f), v === true)); continue; }
+    if (INVERTED.has(f)) { parts.push(W.toggled(flagName(f), v !== true)); continue; }
+    const label = flagName(f);
+    if (v === null || v === false) { parts.push(W.cleared(label)); continue; }
     const s = String(v);
     if (f === "pay") {
       const unit = (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
-      parts.push(`Pay ${unit === "hour" ? `$${Number(s).toFixed(2)}` : money(Number(s))} ${unitPhrase(unit)}`);
-    } else if (MONTHLY.has(f)) parts.push(`${label} ${money(Number(s))} a month`);
-    else if (YEARLY.has(f)) parts.push(`${label} ${money(Number(s))}${f === "savings" ? "" : " a year"}`);
-    else if (f === "kids") parts.push(`Children ${s.split(",").join(" & ")}`);
-    else if (f === "status" || f === "spouse-status") parts.push(`${label} ${copy.status[s] ?? s}`);
-    else parts.push(`${label} ${s}`);
+      parts.push(W.payOf(Number(s), unit));
+    } else if (MONTHLY.has(f)) parts.push(W.monthly(label, Number(s)));
+    else if (YEARLY.has(f)) parts.push(W.yearly(label, Number(s)));
+    else if (f === "savings") parts.push(W.figure(label, Number(s)));
+    else if (f === "kids") parts.push(W.children(s.split(",")));
+    else if (f === "status" || f === "spouse-status") parts.push(W.valued(label, citizen.status[s] ?? s));
+    else parts.push(W.valued(label, s));
   }
   return parts.join(", ");
 }

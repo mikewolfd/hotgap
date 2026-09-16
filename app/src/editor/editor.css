@@ -62,3 +62,8 @@
    display:none keeps the hidden span out of the button's accessible name. */
 .editor-action__short { display: none; }
 @media (max-width: 719.98px) { .editor-action__short { display: inline; } .editor-action__full { display: none; } }
+
+/* A value chip whose answer is still "none" reads a step lighter than an
+   answer, the way an off toggle does (caseworker review S2) — until the
+   system names the state, this is the editor's own marker. */
+.hg-chip[data-unset] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
