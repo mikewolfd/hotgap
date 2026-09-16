@@ -288,6 +288,18 @@ with the PRD's will read a 3× discrepancy that is a units mismatch.
 
 ### 5. SNAP's gross test uses the wrong poverty-guideline vintage — $808 / $1,340 / $2,060 of threshold. *PolicyEngine's.*
 
+**RETRACTED 2026-09-16 (policyengine-us #9483 closed by us).** The model
+blends fiscal years by month: `snap_fpg` takes the guideline in force on
+October 1, so January–September 2026 run on the 2025 guidelines and
+October–December on the 2026 ones. The "survival to $35,000" below is that
+three-month tail — TX single parent + child: $291/yr at $34,000, **$75** at
+$35,000 (three months of the $24 minimum), $0 at $36,000, identical on the
+public API and on 2.5.0 — and the 0.56% allotment excess is the same blend,
+three months of a projected FY2027 COLA. The PRD applies one rule year to
+the whole calendar year; PolicyEngine applies two, correctly. The original
+finding is kept below as written so the reasoning that misled us stays
+visible.
+
 FY2026 SNAP (1 Oct 2025 – 30 Sep 2026) is set against the **2025** guidelines.
 PRD BBCE gross limits: TX 165% × $21,150 = **$34,897.50**; CO 200% × $26,650 =
 **$53,300**; MA 200% × $37,650 = **$75,300**.
