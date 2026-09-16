@@ -1,4 +1,4 @@
-import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, type CurvePoint, type ModelRecord, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -71,6 +71,11 @@ export function buildSummary(generated: string, states: string[], results: Resul
     return buysCare.some((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
   });
 
+  // Derived last, from the same curves and the tables that shaped them, so
+  // it describes this sweep and not a hand-kept idea of it (coverage.ts).
+  const coverage: Record<string, StateCoverage> = {};
+  for (const state of states) coverage[state] = stateCoverage(state, results[state], { model, childcareSubsidyUnmodeled: unmodeled });
+
   return {
     generated,
     year: YEAR,
@@ -78,6 +83,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
     ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
     archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
     states: summaryStates,
+    coverage,
   };
 }
 

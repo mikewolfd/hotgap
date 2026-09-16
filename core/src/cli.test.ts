@@ -124,4 +124,13 @@ describe("CLI correction notices", () => {
     expect(await main(["summary", "--state", "MA"])).toBe(0);
     expect(log.mock.calls.flat()).toContain(ev.maTafdc!.message);
   });
+
+  it("ships the picked states' coverage blocks with the summary JSON", async () => {
+    const row = { biggestLoss: 0, dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false };
+    const coverage = { CA: { otherBenefits: [{ variable: "housing_assistance" }] }, TX: { otherBenefits: [] } };
+    vi.mocked(loadSummary).mockReturnValue({ generated: "g", year: "2026", archetypes: [], states: { CA: { "single-0": row }, TX: { "single-0": row } }, coverage } as never);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    expect(await main(["summary", "--state", "CA", "--json"])).toBe(0);
+    expect(JSON.parse(log.mock.calls[0][0] as string).coverage).toEqual({ CA: coverage.CA });
+  });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, correctMaTafdc, evaluateCurve, type CurvePoint } from "@hotgap/core";
+import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -116,6 +116,21 @@ describe("buildSummary", () => {
     const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
     expect(summary.states.CA["single-2"]).toEqual(stateMetrics(evaluateCurve(answersFor("CA", single2), { year: "2026", currentEarnings: 0, points: linearCurve(10000, countFor("CA", "single-2")) }, "archetype")));
     expect(Object.keys(summary.states.CA)).toEqual(ARCHETYPES.map((a) => a.id));
+  });
+
+  it("carries a coverage block per swept state, built from the same curves and the sweep's own model and gaps", () => {
+    const results = { ...fullResultsFor("CA"), ...fullResultsFor("TX") };
+    results.CA["single-0"] = results.CA["single-0"].map((p) => ({ ...p, otherBenefits: 2963 }));
+    const model = { endpoint: "127.0.0.1:8099", version: "2.5.0" };
+    const summary = buildSummary("g", ["CA", "TX"], results, model);
+    expect(Object.keys(summary.coverage!).sort()).toEqual(["CA", "TX"]);
+    expect(summary.coverage!.CA).toEqual(stateCoverage("CA", results.CA, { model, childcareSubsidyUnmodeled: summary.childcareSubsidyUnmodeled }));
+    expect(summary.coverage!.CA.otherBenefits).toEqual([{ variable: "housing_assistance", label: expect.any(String), maxAnnualInSweep: 2963 }]);
+    expect(summary.coverage!.CA.vintages.model).toEqual(model);
+    // A linear curve pays no subsidy, so both states are flagged, and each block says so.
+    expect(summary.childcareSubsidyUnmodeled).toEqual(["CA", "TX"]);
+    expect(summary.coverage!.TX.unmodeled.map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
+    expect(summary.coverage!.TX.corrections.coverageGap.applies).toBe(true);
   });
 
   // Fixture-driven: feed the real CA fixture's points under an archetype id
