@@ -17,6 +17,16 @@ export interface EscapeAnalysis {
   safeExitEarnings: number | null;
   leap: number;
   leapIsLowerBound: boolean;
+  /**
+   * Per program, the LAST earnings at which it is still received (over
+   * PROGRAM_END_MIN) — the same `lastAbove` rule as every other threshold here,
+   * so a program "ending at $54,000" is still paid at $54,000 and gone at the
+   * next point of the axis ($55,000 on a $1,000 sweep). A surface that wants
+   * to say where it is gone adds one axis step; the cliff that removes it has
+   * `startEarnings` equal to this figure. (The design audit of 2026-09-16 read
+   * a ledger on one convention and a tile on the other as an asymmetry in
+   * core; core is consistent, the display rule was unstated.)
+   */
   programEnds: Partial<Record<ProgramId, number>>;
   /**
    * The person-level programs split by who loses them. Household totals hide
