@@ -1,14 +1,20 @@
 // Which states' child-care subsidy reaches PolicyEngine's net income, and
-// which is computed and then dropped on the floor.
+// which is computed and then dropped on the floor — on a model that predates
+// policyengine-us #9503. WORKAROUND: delete this module, parse.ts's
+// `childcareSubsidyCounted` and client.ts's probeChildcareSubsidyCounted once
+// every endpoint HotGap calls carries #9503.
 //
 // PolicyEngine models a CCDF-funded child-care subsidy per state
 // (`<st>_child_care_subsidies`, SPM unit, all 51 summed by the aggregate
-// `child_care_subsidies`). Only the states listed in the parameter
+// `child_care_subsidies`). Before #9503 only the states listed in the parameter
 // `gov.household.household_state_benefits` flow into `household_state_benefits`
 // → `household_benefits` → `household_net_income`. For every other state the
 // subsidy is computed correctly and then never counted, so PolicyEngine's net
 // income is missing the largest single benefit a parent of a young child
-// receives — policyengine-us #9405.
+// receives — policyengine-us #9405. #9503 puts the aggregate itself on the
+// list, in every period, so a model that carries it counts the subsidy in all
+// 51 states; client.ts asks each endpoint which kind it is, once, and this
+// table only decides on the old kind.
 //
 // Worse than missing: in an omitted state the modeled subsidy makes the
 // household look POORER. `childcare_expenses` is defined as
@@ -48,8 +54,8 @@ export const CHILDCARE_SUBSIDY_STATES: ReadonlySet<string> = new Set([
  * States whose subsidy is inside `household_state_benefits`, and therefore
  * already inside `household_net_income`. In these states HotGap must NOT add
  * it again; it only moves it out of the untracked `otherBenefits` remainder so
- * it can be named. Everywhere else, `evaluate.ts` adds it (a WORKAROUND marked
- * there, retired by policyengine-us #9405).
+ * it can be named. Everywhere else, `parse.ts` adds it (a WORKAROUND marked
+ * there, retired by policyengine-us #9503).
  *
  * This is the 23-state list from policyengine-us `main`, not the 18 the
  * deployed 2026 block currently carries. The five extras — DC, NC, NY, OH, OK
@@ -65,6 +71,11 @@ export const CHILDCARE_SUBSIDY_IN_NET_INCOME: ReadonlySet<string> = new Set([
   "NC", "NE", "NV", "NY", "OH", "OK", "SC", "VA", "WA", "WV",
 ]);
 
-/** Whether this state's child-care subsidy is already inside net income. */
-export const childcareSubsidyInNetIncome = (state: string): boolean =>
-  CHILDCARE_SUBSIDY_IN_NET_INCOME.has(state.toUpperCase());
+/**
+ * Whether this state's child-care subsidy is already inside net income.
+ * `countedEverywhere` is the endpoint's answer to the #9503 probe (a model
+ * record's `countsChildcareSubsidy`); on a model that predates the fix the
+ * table decides.
+ */
+export const childcareSubsidyInNetIncome = (state: string, countedEverywhere = false): boolean =>
+  countedEverywhere || CHILDCARE_SUBSIDY_IN_NET_INCOME.has(state.toUpperCase());

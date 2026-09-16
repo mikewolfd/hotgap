@@ -122,11 +122,21 @@ describe("buildSummary", () => {
     const results = { ...fullResultsFor("NJ"), ...fullResultsFor("TX") };
     results.NJ["single-0"] = results.NJ["single-0"].map((p) => ({ ...p, otherBenefits: 450 }));
     const model = { endpoint: "127.0.0.1:8099", version: "2.5.0" };
-    const summary = buildSummary("g", ["NJ", "TX"], results, model);
+    const summary = buildSummary("g", ["NJ", "TX"], results, { NJ: model, TX: model });
+    expect(summary.model).toEqual(model);
     expect(Object.keys(summary.coverage!).sort()).toEqual(["NJ", "TX"]);
     expect(summary.coverage!.NJ).toEqual(stateCoverage("NJ", results.NJ, { model, childcareSubsidyUnmodeled: summary.childcareSubsidyUnmodeled }));
     expect(summary.coverage!.NJ.otherBenefits).toEqual([{ variable: "nj_property_tax_relief", label: expect.any(String), maxAnnualInSweep: 450 }]);
     expect(summary.coverage!.NJ.vintages.model).toEqual(model);
+    // A partial re-sweep leaves states on different models: each block keeps its own, the summary names none.
+    const newer = { endpoint: "127.0.0.1:8099", version: "2.7.0", countsChildcareSubsidy: true };
+    const mixed = buildSummary("g", ["NJ", "TX"], results, { NJ: model, TX: newer });
+    expect(mixed.model).toBeUndefined();
+    expect(mixed.coverage!.NJ.vintages.model).toEqual(model);
+    expect(mixed.coverage!.TX.vintages.model).toEqual(newer);
+    expect(mixed.coverage!.TX.corrections.childcareSubsidy.source).toBe("in net income");
+    expect(mixed.coverage!.NJ.corrections.childcareSubsidy.source).toBe("added by HotGap");
+    expect(buildSummary("g", ["NJ"], results).model).toBeUndefined();
     // A linear curve pays no subsidy, so both states are flagged, and each block says so.
     expect(summary.childcareSubsidyUnmodeled).toEqual(["NJ", "TX"]);
     expect(summary.coverage!.TX.unmodeled.map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);

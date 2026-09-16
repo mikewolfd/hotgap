@@ -68,10 +68,20 @@ export interface ParseOptions {
    * public API still double-counted as of 2026-09 — and passes its answer.
    */
   maTafdcDoubleCounted?: boolean;
+  /**
+   * Whether the model that produced `body` counts the aggregate
+   * `child_care_subsidies` in `household_state_benefits` for every state
+   * (policyengine-us #9503, the fix for #9405). Default false: every stored
+   * fixture predates it, and then the pre-#9503 table in
+   * stateChildcareSubsidies.ts decides state by state. client.ts probes the
+   * live endpoint (probeChildcareSubsidyCounted) and passes its answer.
+   */
+  childcareSubsidyCounted?: boolean;
 }
 
 export function parsePEResponse(body: unknown, expectedCount: number, opts: ParseOptions = {}): CurvePoint[] {
   const maTafdcDoubleCounted = opts.maTafdcDoubleCounted ?? false;
+  const childcareSubsidyCounted = opts.childcareSubsidyCounted ?? false;
   const b = body as { status?: string; result?: Record<string, unknown> };
   if (b?.status !== "ok" || !b.result) {
     throw new PEParseError(`PolicyEngine error: ${(b as { message?: string })?.message ?? "unknown"}`);
@@ -139,15 +149,34 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   const benefits = "household_benefits" in household
     ? series(household, "household_benefits", expectedCount)
     : null;
-  // `otherBenefits` is household_benefits minus what we name. The child-care
-  // subsidy is only inside household_benefits in the 23 states listed in
-  // `gov.household.household_state_benefits` (policyengine-us #9405); taking
-  // it out anywhere else would eat an equal amount of some OTHER untracked
-  // benefit — or floor the remainder at 0 and hide it.
+  // WORKAROUND — remove when every endpoint HotGap calls carries
+  // policyengine-us #9503 (then `childcareSubsidyCounted` is always true;
+  // delete it, the probe, and `stateChildcareSubsidies.ts`).
+  //
+  // Before #9503 the child-care subsidy is inside household_benefits — and so
+  // inside household_net_income — only in the 23 states whose variable
+  // `gov.household.household_state_benefits` lists (policyengine-us #9405).
+  // Everywhere else PolicyEngine computes it and drops it, and the household
+  // is left looking POORER for having it: net-of-subsidy `childcare_expenses`
+  // shrinks SNAP's dependent-care deduction and the CDCC, so the deduction
+  // leaves and the benefit never arrives. Verified live 2026-09-15 on a
+  // Connecticut single parent with a 3-year-old and a $9,600 bill: at $25,000
+  // of pay the subsidy is $8,850 and net income is $34,121, against $38,102
+  // with `ct_child_care_subsidies` forced to 0 — $3,981 WORSE off for holding
+  // an $8,850 benefit. Colorado's same household shows household_state_benefits
+  // $8,913 = the subsidy to the dollar (docs/upstream/evidence/childcare-*).
+  //
+  // So where the model dropped it, the subsidy is added to net income here,
+  // once, and held out of the `otherBenefits` remainder: taking it out of
+  // household_benefits where it never went in would eat an equal amount of
+  // some OTHER untracked benefit, or floor the remainder at 0 and hide it.
+  // The stored sweep therefore carries net income WITH the subsidy in every
+  // state, whichever model produced it.
   // `stateOf` is only consulted when there IS a subsidy to place, so a body
   // that never asked for one — every synthetic fixture, every curve swept
   // before this — does not have to carry a state to parse.
-  const subsidyIsCounted = programSeries.has("childcare") && childcareSubsidyInNetIncome(stateOf(household));
+  const subsidyIsCounted = programSeries.has("childcare") && (childcareSubsidyCounted || childcareSubsidyInNetIncome(stateOf(household)));
+  const droppedSubsidy = (i: number) => (subsidyIsCounted ? 0 : (programSeries.get("childcare")?.[i] ?? 0));
   const trackedCash = (i: number) =>
     CASH_PROGRAMS.reduce(
       (sum, id) => (id === "childcare" && !subsidyIsCounted ? sum : sum + (programSeries.get(id)?.[i] ?? 0)),
@@ -233,7 +262,7 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   return net.map((n, i) => ({
     ...(maTafdc ? { maTafdc: maTafdc[i] } : {}),
     earnings: axis.min + step * i,
-    netIncome: n,
+    netIncome: n + droppedSubsidy(i),
     medicalOOP: moop[i],
     ...(stateAssistance ? { statePremiumAssistance: stateAssistance[i] } : {}),
     programs: at(programSeries, i) as Record<ProgramId, number>,

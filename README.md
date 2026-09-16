@@ -409,9 +409,11 @@ received), `--offline`, `--json`.
   the CDCC while the benefit never arrives (Connecticut, single parent with a
   3-year-old, $25,000 of pay: $34,121 against $38,102 with the subsidy forced
   off, for an $8,850 benefit). HotGap adds it back in those states — a
-  WORKAROUND (`applyChildcareSubsidy` in `core/src/evaluate.ts`, with the
-  table in `core/src/stateChildcareSubsidies.ts`) until policyengine-us #9405
-  routes every state's subsidy into household benefits. Four of the 38 states
+  WORKAROUND (in `core/src/parse.ts`, with the table in
+  `core/src/stateChildcareSubsidies.ts`) on a model that predates
+  policyengine-us PR #9503, which routes every state's subsidy into household
+  benefits; the client probes each endpoint for which kind it is and stands
+  the addition down where it is no longer needed. Four of the 38 states
   whose variable is deployed today still return $0 for a plainly eligible
   household — California, Massachusetts, Maryland and Nebraska — and HotGap
   reports no subsidy there rather than inventing one; see

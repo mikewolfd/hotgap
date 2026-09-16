@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, PolicyEngineError, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -412,5 +412,108 @@ describe("Massachusetts TAFDC feedback loop", () => {
     const curve = await fetchCurve(maAnswers, { fetchImpl, maTafdcDoubleCounted: false });
     expect(probes).toBe(0);
     expect(curve.points.every((p) => p.maTafdc!.duplicatedTanf === 0)).toBe(true);
+  });
+});
+
+describe("the child-care subsidy probe (policyengine-us #9503)", () => {
+  const YEAR = "2026";
+  /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits` and the forced aggregate reads back as `aggregate`. */
+  const probeBody = (stateBenefits: number, aggregate = CHILDCARE_SUBSIDY_PROBE_SENTINEL) => JSON.stringify({
+    status: "ok", message: null,
+    result: {
+      households: { household: { household_state_benefits: { [YEAR]: stateBenefits } } },
+      spm_units: { spm_unit: { child_care_subsidies: { [YEAR]: aggregate } } },
+    },
+  });
+  function probeFetch(stateBenefits: number, endpoint: string, aggregate?: number) {
+    process.env.HOTGAP_PE_URL = endpoint;
+    let calls = 0;
+    const fetchImpl = (async () => { calls++; return new Response(probeBody(stateBenefits, aggregate), { status: 200 }); }) as unknown as typeof fetch;
+    return { fetchImpl, calls: () => calls };
+  }
+
+  it("forces the aggregate on a bare Connecticut household — a state no pre-#9503 list names — and reads household_state_benefits back", async () => {
+    const payload = childcareSubsidyProbePayload() as any;
+    expect(payload.household.households.household.state_code[YEAR]).toBe("CT");
+    expect(payload.household.spm_units.spm_unit.child_care_subsidies[YEAR]).toBe(CHILDCARE_SUBSIDY_PROBE_SENTINEL);
+    expect(payload.household.axes).toBeUndefined();
+    const fixed = probeFetch(CHILDCARE_SUBSIDY_PROBE_SENTINEL, "https://fixed-cc.example/us/calculate");
+    const old = probeFetch(0, "https://old-cc.example/us/calculate");
+    try {
+      process.env.HOTGAP_PE_URL = "https://fixed-cc.example/us/calculate";
+      expect(await probeChildcareSubsidyCounted({ fetchImpl: fixed.fetchImpl })).toBe(true);
+      expect(await probeChildcareSubsidyCounted({ fetchImpl: fixed.fetchImpl })).toBe(true);
+      expect(fixed.calls()).toBe(1); // cached per endpoint
+      process.env.HOTGAP_PE_URL = "https://old-cc.example/us/calculate";
+      expect(await probeChildcareSubsidyCounted({ fetchImpl: old.fetchImpl })).toBe(false);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("an ignored input is an error, not an old model, and a failed probe is not cached", async () => {
+    process.env.HOTGAP_PE_URL = "https://flaky-cc.example/us/calculate";
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls++;
+      if (calls === 1) return new Response("{}", { status: 200 });
+      return new Response(probeBody(0, 0), { status: 200 }); // the sentinel never came back
+    }) as unknown as typeof fetch;
+    try {
+      await expect(probeChildcareSubsidyCounted({ fetchImpl })).rejects.toThrow(/no child-care subsidy aggregates/);
+      await expect(probeChildcareSubsidyCounted({ fetchImpl })).rejects.toThrow(/was not read back/);
+      expect(calls).toBe(2);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("fetchCurve probes once for a household with a child-care bill, never for one without, and parses with the answer", async () => {
+    process.env.HOTGAP_PE_URL = "https://old-cc2.example/us/calculate";
+    const withCare = validateAnswers({ ...raw, state: "CT", childAges: [3], monthlyChildcare: 800 });
+    if (!withCare.ok) throw new Error(withCare.detail);
+    const spec = axisSpec(withCare.value);
+    const all = (v: number) => ({ [YEAR]: new Array(spec.count).fill(v) });
+    // A CT body carrying an $8,850 subsidy the old model dropped from net income.
+    const curveBody = JSON.parse(peBody(spec));
+    curveBody.result.households.h.state_name = { [YEAR]: "CT" };
+    curveBody.result.spm_units.s.child_care_subsidies = all(8850);
+    let probes = 0, curves = 0;
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      if (!init?.body) return new Response("{}", { status: 200 }); // a /healthz read, if the state's overrides ask for one
+      const payload = JSON.parse(init.body as string);
+      if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === CHILDCARE_SUBSIDY_PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
+      curves++;
+      return new Response(JSON.stringify(curveBody), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      const curve = await fetchCurve(withCare.value, { fetchImpl });
+      await fetchCurve(withCare.value, { fetchImpl });
+      expect(probes).toBe(1);
+      expect(curves).toBe(2);
+      expect(curve.points[0].netIncome).toBe(20000 + 8850);
+      // Told the answer, it asks nothing.
+      const told = await fetchCurve(withCare.value, { fetchImpl, childcareSubsidyCounted: true });
+      expect(probes).toBe(1);
+      expect(told.points[0].netIncome).toBe(20000);
+      // No bill, no subsidy to place, no probe.
+      await fetchCurve(answers, { fetchImpl: respond(() => new Response(body, { status: 200 })) });
+      expect(probes).toBe(1);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("modelRecord names the release and what the probe found", async () => {
+    process.env.HOTGAP_PE_URL = "https://fixed-cc3.example/us/calculate";
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      if (!init?.body) return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.7.0" }), { status: 200 });
+      return new Response(probeBody(CHILDCARE_SUBSIDY_PROBE_SENTINEL), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      expect(await modelRecord({ fetchImpl })).toEqual({ endpoint: "fixed-cc3.example", version: "2.7.0", countsChildcareSubsidy: true });
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
   });
 });

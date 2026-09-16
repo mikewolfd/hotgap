@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { ARCHETYPES, answersFor, buildCurvePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, requestPE } from "../core/src/index.js";
+import { ARCHETYPES, answersFor, buildCurvePayload, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -466,16 +466,30 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     }, 100_000);
   }
 
+  // Pins the #9503 probe against the model it runs on: the forced aggregate
+  // comes back as itself (an ignored input would read as an old model), and
+  // the answer is a plain boolean. Which boolean is the endpoint's business —
+  // the two-state check below has to AGREE with it, measured the other way.
+  it("the child-care subsidy probe reads its sentinel back and answers", async () => {
+    const body = (await requestPE(childcareSubsidyProbePayload(), { timeoutMs: 90_000 })) as any;
+    expect(body.result.spm_units.spm_unit.child_care_subsidies["2026"]).toBeCloseTo(CHILDCARE_SUBSIDY_PROBE_SENTINEL, -1);
+    expect(typeof (await probeChildcareSubsidyCounted({ timeoutMs: 90_000 }))).toBe("boolean");
+  }, 120_000);
+
   // Pins four things at once — the per-state variable names, the aggregate
   // `child_care_subsidies` that HotGap actually requests, the fact that
   // `spm_unit_pre_subsidy_childcare_expenses` (not `childcare_expenses`) is the
   // input the formulas read, and the inclusion table itself. If any of them
   // moves, `core/src/stateChildcareSubsidies.ts` has to be re-derived.
-  for (const [state, variable, inNetIncome] of [
+  // Connecticut is the state the table leaves out, so on a model that carries
+  // policyengine-us #9503 (the probe says so) its subsidy IS counted — and a
+  // probe that said otherwise here would be lying.
+  for (const [state, variable, listed] of [
     ["CO", "co_child_care_subsidies", true],
     ["CT", "ct_child_care_subsidies", false],
   ] as const) {
-    it(`${state}: ${variable} is computed, and ${inNetIncome ? "IS" : "is NOT"} inside household_state_benefits`, async () => {
+    it(`${state}: ${variable} is computed, and is inside household_state_benefits ${listed ? "always" : "only on a model with #9503"}`, async () => {
+      const inNetIncome = listed || await probeChildcareSubsidyCounted({ timeoutMs: 90_000 });
       const y = (v: unknown) => ({ "2026": v });
       const household = (forced: number | null) => ({
         household: {

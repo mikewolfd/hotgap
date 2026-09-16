@@ -1,8 +1,18 @@
+import { isDeepStrictEqual } from "node:util";
 import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
 export type ResultsByStateArchetype = Record<string, Record<string, CurvePoint[]>>;
+// state -> the model that swept it. One sweep has one model; a --from-data
+// rebuild reads each state file's own, and they differ after a partial re-sweep.
+export type ModelsByState = Partial<Record<string, ModelRecord>>;
+
+/** The one model behind every state, or undefined when a mix of models has no single name. */
+export function sharedModel(states: string[], models: ModelsByState): ModelRecord | undefined {
+  const first = models[states[0]];
+  return first && states.every((s) => isDeepStrictEqual(models[s], first)) ? first : undefined;
+}
 
 export interface ValidationGap { state: string; archetypeId: string; reason: string }
 export interface ValidationResult { ok: boolean; gaps: ValidationGap[] }
@@ -39,7 +49,8 @@ export function validateResults(states: string[], results: ResultsByStateArchety
   return { ok: gaps.length === 0, gaps };
 }
 
-export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, model?: ModelRecord): SummaryJson {
+export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, models: ModelsByState = {}): SummaryJson {
+  const model = sharedModel(states, models);
   const summaryStates: Record<string, Record<string, StateMetrics>> = {};
   for (const state of states) {
     summaryStates[state] = {};
@@ -74,7 +85,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
   // Derived last, from the same curves and the tables that shaped them, so
   // it describes this sweep and not a hand-kept idea of it (coverage.ts).
   const coverage: Record<string, StateCoverage> = {};
-  for (const state of states) coverage[state] = stateCoverage(state, results[state], { model, childcareSubsidyUnmodeled: unmodeled });
+  for (const state of states) coverage[state] = stateCoverage(state, results[state], { model: models[state], childcareSubsidyUnmodeled: unmodeled });
 
   return {
     generated,

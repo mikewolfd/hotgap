@@ -26,7 +26,7 @@ files and sources").
 | State $0-premium marketplace tiers (CT, MA, NM, CA) modeled locally | `core/src/statePremiumWraps.ts`, `core/src/evaluate.ts` `applyPremiumWrap` | the endpoint serves the state's own amount. Since 2026-09-16 the client probes each endpoint for the state's tax-unit variable (`core/src/statePremiumAssistance.ts`: CA, NM, MD, CO, VT) and, where served, nets PolicyEngine's amount out of the premium and stands the ladder down for that state — the engine (2.5.0) serves all five, the hosted API (1.764.6) none. Compared on 2.5.0: CA within $4 of the ladder; NM's upstream model keeps paying 250–400% FPL where the ladder stopped. CT and MA have no upstream model (issue #9481); their ladders stay everywhere. |
 | `tax_unit_is_filer: true` sent on every request (no `WORKAROUND` comment — see note above) | `core/src/translate.ts` | policyengine-us #9479 derives filer status from APTC eligibility rather than the ordinary filing thresholds |
 | A real county sent for every archetype and every resolved ZIP/county (no `WORKAROUND` comment) | `core/src/stateDefaults.ts`, `core/src/archetypes.ts` `answersFor` | policyengine-us #9480 fixes the default rating area — but sending a real county is correct regardless of that fix, so only the DEFECT this sidesteps retires; the input itself should stay |
-| State child-care subsidy added to net income in the states upstream omits | `core/src/evaluate.ts` `applyChildcareSubsidy`, `core/src/stateChildcareSubsidies.ts` | policyengine-us #9405 adds every `child_care_subsidy_programs` entry to `gov.household.household_state_benefits` (or replaces the per-state entries with the aggregate) |
+| State child-care subsidy added to net income in the states upstream omits | `core/src/parse.ts` (`childcareSubsidyCounted`), `core/src/client.ts` `probeChildcareSubsidyCounted`, `core/src/stateChildcareSubsidies.ts` | nothing to do once every endpoint carries PR #9503 (issue #9405), which replaces the per-state entries in `gov.household.household_state_benefits` with the aggregate `child_care_subsidies` in every period. Since 2026-09-16 the client probes each endpoint once — forces the aggregate to $1,000,000 on a bare Connecticut household and reads `household_state_benefits` back — and adds the subsidy only where the model dropped it, so the sweep's `model.countsChildcareSubsidy` says which kind produced it. Verified both ways in Python on 2026-09-16: upstream `main` (a29f1b1) returns $0, the #9503 branch (ec8dbf8) returns the sentinel, in CT and CO alike. Delete the probe, the option and the table once the public API is on a release with #9503. |
 | SSDI recipient modeled as on Medicare (Part B charged; no marketplace premium or credit) — no `WORKAROUND` comment | `core/src/evaluate.ts` `applyMedicare` | upstream models Medicare enrollment/entitlement for an SSDI beneficiary directly; no issue is filed for this because HotGap has not found any evidence PolicyEngine tracks Medicare entitlement at all |
 
 **Upstream-only, nothing to retire here:** policyengine-us #9482 (Alaska and
@@ -74,7 +74,10 @@ with `ct_child_care_subsidies` forced to 0, for an $8,850 benefit
 (`evidence/childcare-ct-full.json`, `evidence/childcare-ct-forced-zero.json`).
 Colorado's identical household moves the other way — its
 `household_state_benefits` equals the subsidy to the dollar — which is why
-`applyChildcareSubsidy` adds nothing there.
+`parse.ts` adds nothing there. PR #9503 (opened 2026-09-16 by a third party;
+HotGap's evidence is on it) puts the aggregate itself on the list, so a model
+that carries it counts the subsidy in all 51 states; the client's probe
+(`probeChildcareSubsidyCounted`) tells the two kinds apart per endpoint.
 
 **3. Two lists, read from the DEPLOYED model, not the repository.** On
 2026-09-15 `https://api.policyengine.org/us/metadata` served policyengine-us

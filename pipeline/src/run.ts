@@ -8,12 +8,10 @@ import {
   answersFor,
   buildCurvePayload,
   fetchCurve,
-  modelVersion,
-  peUrl,
+  modelRecord,
   runQueue,
   sleep,
   type CurvePoint,
-  type ModelRecord,
   type StateFileJson,
   type SummaryJson,
 } from "@hotgap/core";
@@ -22,6 +20,7 @@ import {
   buildSummary,
   roundPoint,
   validateResults,
+  type ModelsByState,
   type ResultsByStateArchetype,
   type ValidationGap,
 } from "./build.js";
@@ -108,8 +107,8 @@ export async function runPipeline(
   if (!validation.ok) return { ok: false, dryRun: false, gaps: validation.gaps };
 
   const generated = new Date().toISOString();
-  const model: ModelRecord = { endpoint: new URL(peUrl()).host, version: await modelVersion({ fetchImpl }) };
-  const summary = buildSummary(generated, opts.states, results, model);
+  const model = await modelRecord({ fetchImpl });
+  const summary = buildSummary(generated, opts.states, results, Object.fromEntries(opts.states.map((s) => [s, model])));
   const stateFiles: Record<string, StateFileJson> = {};
   for (const state of opts.states) stateFiles[state] = buildStateFile(generated, state, results, model);
 
@@ -138,13 +137,13 @@ export function defaultReadStateFile(statesDir: string): ReadStateFileFn {
 
 export async function runFromData(states: string[], readStateFile: ReadStateFileFn): Promise<RunResult> {
   const results: ResultsByStateArchetype = {};
-  const models: (ModelRecord | undefined)[] = [];
+  const models: ModelsByState = {};
   for (const state of states) {
     try {
       const raw = await readStateFile(state);
       const file = JSON.parse(raw) as StateFileJson;
       results[state] = resultsFromStateFile(file);
-      models.push(file.model);
+      models[state] = file.model;
     } catch (e) {
       // Missing/unreadable/corrupt file: leave the state absent from `results`
       // so validateResults reports it as a normal "missing" gap below.
@@ -155,11 +154,11 @@ export async function runFromData(states: string[], readStateFile: ReadStateFile
   const validation = validateResults(states, results);
   if (!validation.ok) return { ok: false, dryRun: false, gaps: validation.gaps };
 
-  // The summary's provenance is the state files' — when they agree. A mix of
-  // models (partial re-sweeps against different endpoints) has no single name.
-  const model = models[0] && models.every((m) => isDeepStrictEqual(m, models[0])) ? models[0] : undefined;
+  // Each state's numbers are read with the model that swept them (a partial
+  // re-sweep leaves a mix); the summary's own provenance is the one they
+  // share, when they do (sharedModel).
   const generated = new Date().toISOString();
-  const summary = buildSummary(generated, states, results, model);
+  const summary = buildSummary(generated, states, results, models);
   return { ok: true, dryRun: false, gaps: [], summary };
 }
 

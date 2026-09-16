@@ -36,6 +36,11 @@ describe("state child-care subsidy table", () => {
     expect(ahead.sort()).toEqual(["DC", "NC", "NY", "OH", "OK"]);
   });
 
+  it("says yes everywhere on a model that carries policyengine-us #9503", () => {
+    expect(childcareSubsidyInNetIncome("CT", true)).toBe(true);
+    expect(childcareSubsidyInNetIncome("CT", false)).toBe(false);
+  });
+
   it("reads inclusion case-insensitively, and says no for a state that is not listed", () => {
     expect(childcareSubsidyInNetIncome("co")).toBe(true);
     expect(childcareSubsidyInNetIncome("CT")).toBe(false);

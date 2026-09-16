@@ -82,10 +82,13 @@ function premiumAssistance(state: string, curves: Record<string, CurvePoint[]>):
   };
 }
 
-function childcareSubsidy(state: string): StateCorrections["childcareSubsidy"] {
+function childcareSubsidy(state: string, model?: ModelRecord): StateCorrections["childcareSubsidy"] {
+  if (model?.countsChildcareSubsidy) {
+    return { applies: false, source: "in net income", note: "Already inside household_net_income: this model counts the aggregate child_care_subsidies in every state (policyengine-us #9503); HotGap only names it." };
+  }
   return childcareSubsidyInNetIncome(state)
     ? { applies: false, source: "in net income", note: "Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it." }
-    : { applies: true, source: "added by HotGap", note: "Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (evaluate.ts applyChildcareSubsidy) — WORKAROUND until policyengine-us #9405." };
+    : { applies: true, source: "added by HotGap", note: "Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405)." };
 }
 
 function coverageGap(state: string): CorrectionNote {
@@ -128,7 +131,7 @@ export function stateCoverage(state: string, curves: Record<string, CurvePoint[]
       policyOverrides: policyOverrideRecords(state),
       maTafdc: maTafdcNote(state),
       premiumAssistance: premium,
-      childcareSubsidy: childcareSubsidy(state),
+      childcareSubsidy: childcareSubsidy(state, ctx.model),
       coverageGap: coverageGap(state),
     },
     unmodeled: unmodeled(state, premium, ctx),

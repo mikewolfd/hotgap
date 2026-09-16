@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, answersFor, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { ARCHETYPES, CHILDCARE_SUBSIDY_PROBE_SENTINEL, answersFor, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
 import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 import {
@@ -48,6 +48,14 @@ function isProbe(init?: RequestInit): boolean {
   return !JSON.parse(init!.body as string).household.axes;
 }
 const probeRejected = () => new Response(JSON.stringify({ status: "error", message: "Unrecognized calculate input(s): Unrecognized household variable" }), { status: 400 });
+/** The #9503 probe forces the aggregate subsidy; a model from before the fix reads it back and counts none of it. */
+function isChildcareProbe(init?: RequestInit): boolean {
+  return JSON.parse(init!.body as string).household.spm_units?.spm_unit?.child_care_subsidies?.["2026"] === CHILDCARE_SUBSIDY_PROBE_SENTINEL;
+}
+const childcareProbeOld = () => new Response(JSON.stringify({ status: "ok", result: {
+  households: { household: { household_state_benefits: { "2026": 0 } } },
+  spm_units: { spm_unit: { child_care_subsidies: { "2026": CHILDCARE_SUBSIDY_PROBE_SENTINEL } } },
+} }), { status: 200 });
 const fixtureBody = fixtureFor(AXIS.count, AXIS.max);
 const noopSleep = async () => {};
 
@@ -95,9 +103,11 @@ describe("runPipeline", () => {
     let callCount = 0;
     let healthChecks = 0;
     let probes = 0;
+    let childcareProbes = 0;
     const fetchImpl = (async (url: unknown, init?: RequestInit) => {
       // The one GET is the engine's /healthz, which names the model; the public API has no such route.
       if (!init?.body) { healthChecks++; return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.5.0" }), { status: 200 }); }
+      if (isChildcareProbe(init)) { childcareProbes++; return childcareProbeOld(); }
       if (isProbe(init)) { probes++; return probeRejected(); } // Vermont's premium assistance
       callCount++;
       return new Response(fixtureForRequest(init), { status: 200 });
@@ -108,10 +118,11 @@ describe("runPipeline", () => {
     expect(callCount).toBe(2 * ARCHETYPES.length); // 2 states × every archetype, no retries needed
     expect(healthChecks).toBe(1);
     expect(probes).toBe(1); // once per endpoint and variable, however many Vermont curves follow
+    expect(childcareProbes).toBe(1); // once per endpoint, however many households buy care
     expect(result.ok).toBe(true);
     expect(result.gaps).toEqual([]);
     expect(result.summary).toBeDefined();
-    expect(result.summary!.model).toEqual({ endpoint: "api.policyengine.org", version: "2.5.0" });
+    expect(result.summary!.model).toEqual({ endpoint: "api.policyengine.org", version: "2.5.0", countsChildcareSubsidy: false });
     expect(result.stateFiles!.WY.model).toEqual(result.summary!.model);
     expect(result.stateFiles).toBeDefined();
 

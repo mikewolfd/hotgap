@@ -16,7 +16,6 @@ import { clampFallbackEarnings, loadArchetypeCurve, pickArchetypeId } from "./fa
 import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_B_ANNUAL, NON_EXPANSION_STATES, fpl2026 } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
-import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
 import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
@@ -515,35 +514,6 @@ function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: 
   return { points: out, wrap };
 }
 
-// WORKAROUND — remove when upstream adds the missing states to
-// `gov.household.household_state_benefits` (policyengine-us #9405). Then the
-// subsidy is inside household_net_income everywhere, parse.ts stops holding it
-// out of `otherBenefits`, and this function and
-// `stateChildcareSubsidies.ts` both go.
-//
-// PolicyEngine computes a state child-care subsidy in every state but routes
-// only 23 of them into household_state_benefits → household_benefits →
-// household_net_income. In the rest the money is calculated and dropped, and
-// the household is left looking POORER for having the subsidy: net-of-subsidy
-// `childcare_expenses` shrinks SNAP's dependent-care deduction and the CDCC,
-// so the deduction leaves and the benefit never arrives. Verified live
-// 2026-09-15 on a Connecticut single parent with a 3-year-old and a $9,600
-// bill: at $25,000 of pay the subsidy is $8,850 and net income is $34,121,
-// against $38,102 with `ct_child_care_subsidies` forced to 0 — $3,981 WORSE
-// off for holding an $8,850 benefit.
-//
-// Added exactly once, and never where PolicyEngine already counted it:
-// Colorado's same household at $25,000 shows household_state_benefits $8,913 =
-// the subsidy to the dollar, and its net income moves by the subsidy when the
-// variable is forced to 0.
-function applyChildcareSubsidy(points: CurvePoint[], state: string): CurvePoint[] {
-  if (childcareSubsidyInNetIncome(state)) return points;
-  return points.map((p) => {
-    const subsidy = p.programs.childcare ?? 0;
-    return subsidy === 0 ? p : { ...p, netIncome: p.netIncome + subsidy };
-  });
-}
-
 function coverageGapSummary(points: CurvePoint[]): CoverageGapSummary | null {
   // The first contiguous band only: the summary must never span points that
   // are not in the gap.
@@ -650,11 +620,10 @@ export function evaluateCurve(
   const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
     ARCHETYPES.find((a) => a.id === pickArchetypeId(answers))!);
   const tafdc = correctMaTafdc(modeledAnswers, raw);
-  // The child-care subsidy correction is a property of the STATE and the
-  // curve's own numbers, so it runs on both paths — a no-op on the archetype
-  // sweep, whose households report no childcare and therefore no subsidy.
-  const withChildcare = applyChildcareSubsidy(tafdc.points, answers.state);
-  const corrected = source === "live" ? applyHeadStart(applyEmployerCoverage(withChildcare, answers), answers) : withChildcare;
+  // The child-care subsidy needs no step here: parse.ts already put it in net
+  // income wherever the model dropped it (policyengine-us #9405), so a stored
+  // curve and a live one both arrive with it counted once.
+  const corrected = source === "live" ? applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers) : tafdc.points;
   // The archetype path measures the swept household, not the caller's: its
   // spouse pay, SSDI, unemployment and size decide the poverty-line tests.
   const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeledAnswers) : corrected;

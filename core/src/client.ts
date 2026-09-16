@@ -9,6 +9,7 @@ import { SGA_ANNUAL } from "./policyYear.js";
 import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
 import { PARENT_LIMITS_UPSTREAM_SINCE, parentMedicaidLimit, policyOverridesFor, releaseAtLeast, type PolicyOverrides } from "./policyOverrides.js";
 import { axisSpec, buildPEPayload, earningsVariable, type AxisSpec, type PayloadOptions } from "./translate.js";
+import type { ModelRecord } from "./data.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
@@ -70,6 +71,13 @@ export interface FetchCurveOptions extends RequestOptions {
    * (see probeMaTafdcDoubleCount); tests and fixtures set it explicitly.
    */
   maTafdcDoubleCounted?: boolean;
+  /**
+   * Whether the endpoint counts the aggregate child-care subsidy in every
+   * state (policyengine-us #9503). Left unset, a household with a child-care
+   * bill triggers one cached probe of the endpoint (see
+   * probeChildcareSubsidyCounted); tests and fixtures set it explicitly.
+   */
+  childcareSubsidyCounted?: boolean;
   /**
    * Whether to ask the endpoint for the state's modeled premium assistance
    * (statePremiumAssistance.ts). Left unset, a household in one of those
@@ -175,7 +183,7 @@ export function buildCurvePayload(answers: HouseholdAnswers, opts: PayloadOption
 
 function parseOrThrow(body: unknown, count: number, opts: FetchCurveOptions = {}): CurvePoint[] {
   try {
-    return parsePEResponse(body, count, { maTafdcDoubleCounted: opts.maTafdcDoubleCounted });
+    return parsePEResponse(body, count, { maTafdcDoubleCounted: opts.maTafdcDoubleCounted, childcareSubsidyCounted: opts.childcareSubsidyCounted });
   } catch (e) {
     if (e instanceof PEParseError) throw new PolicyEngineError("parse", e.message);
     throw e;
@@ -371,6 +379,72 @@ export function maTafdcProbePayload(): unknown {
   };
 }
 
+/** Forced aggregate subsidy large enough that no other state benefit can be mistaken for it. */
+export const CHILDCARE_SUBSIDY_PROBE_SENTINEL = 1_000_000;
+
+const childcareSubsidyProbeCache = new Map<string, Promise<boolean>>();
+
+/**
+ * WORKAROUND — goes with stateChildcareSubsidies.ts. Does this endpoint count
+ * the aggregate `child_care_subsidies` in `household_state_benefits` for every
+ * state (policyengine-us #9503, the fix for #9405)? Read from the model rather
+ * than a version number, because the public API has none to read: force the
+ * aggregate to the sentinel on a bare Connecticut household — a state no
+ * pre-#9503 list ever named — and see whether household_state_benefits absorbs
+ * it. A fixed model returns the sentinel; an old one returns the other state
+ * benefits, a few thousand at most. One request per endpoint per process;
+ * parse.ts then adds the subsidy to net income only where the model dropped
+ * it, so the workaround retires itself endpoint by endpoint.
+ */
+export function probeChildcareSubsidyCounted(opts: RequestOptions = {}): Promise<boolean> {
+  const endpoint = peUrl();
+  let pending = childcareSubsidyProbeCache.get(endpoint);
+  if (!pending) {
+    pending = requestPE(childcareSubsidyProbePayload(), opts).then((body) => {
+      const r = (body as { result?: { households?: Record<string, Record<string, Record<string, number>>>; spm_units?: Record<string, Record<string, Record<string, number>>> } }).result;
+      const stateBenefits = r?.households?.household?.household_state_benefits?.[YEAR];
+      const aggregate = r?.spm_units?.spm_unit?.child_care_subsidies?.[YEAR];
+      if (typeof stateBenefits !== "number" || typeof aggregate !== "number") {
+        throw new PolicyEngineError("parse", "probe returned no child-care subsidy aggregates");
+      }
+      // An ignored input would look exactly like an old model, so the forced
+      // aggregate has to come back as itself before its absence means anything.
+      if (aggregate < CHILDCARE_SUBSIDY_PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced child_care_subsidies was not read back");
+      return stateBenefits > CHILDCARE_SUBSIDY_PROBE_SENTINEL / 2;
+    });
+    // A failed probe is not an answer; let the next caller ask again.
+    pending.catch(() => childcareSubsidyProbeCache.delete(endpoint));
+    childcareSubsidyProbeCache.set(endpoint, pending);
+  }
+  return pending;
+}
+
+export function childcareSubsidyProbePayload(): unknown {
+  const year = { [YEAR]: 0 };
+  return {
+    household: {
+      people: { person: { age: { [YEAR]: 30 }, employment_income: year } },
+      households: { household: { members: ["person"], state_code: { [YEAR]: "CT" }, household_state_benefits: { [YEAR]: null } } },
+      tax_units: { tax_unit: { members: ["person"] } },
+      spm_units: { spm_unit: { members: ["person"], child_care_subsidies: { [YEAR]: CHILDCARE_SUBSIDY_PROBE_SENTINEL } } },
+      families: { family: { members: ["person"] } },
+      marital_units: { marital_unit: { members: ["person"] } },
+    },
+  };
+}
+
+/**
+ * The model behind `peUrl()` as a sweep records it (data.ts ModelRecord):
+ * its release from /healthz, and what the probes found there.
+ */
+export async function modelRecord(opts: RequestOptions = {}): Promise<ModelRecord> {
+  return {
+    endpoint: new URL(peUrl()).host,
+    version: await modelVersion(opts),
+    countsChildcareSubsidy: await probeChildcareSubsidyCounted(opts),
+  };
+}
+
 /**
  * WORKAROUND — remove when policyengine-us #9477 merges (then the corrected
  * grant equals the engine's own and this loop makes zero requests; delete
@@ -421,6 +495,11 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   };
   if (answers.state === "MA" && requestOpts.maTafdcDoubleCounted === undefined) {
     requestOpts.maTafdcDoubleCounted = await probeMaTafdcDoubleCount(requestOpts);
+  }
+  // Only a household with a child-care bill can draw the subsidy, so only it
+  // needs to know whether the model counts it.
+  if ((answers.monthlyChildcare ?? 0) > 0 && requestOpts.childcareSubsidyCounted === undefined) {
+    requestOpts.childcareSubsidyCounted = await probeChildcareSubsidyCounted(requestOpts);
   }
   const assistance = statePremiumAssistanceFor(answers.state);
   if (assistance && requestOpts.statePremiumAssistance === undefined) {

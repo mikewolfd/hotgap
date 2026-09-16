@@ -45,3 +45,9 @@ value checked (`docs/upstream/2026-09-14-policyengine-issues.md`). Its
 request is `docs/upstream/evidence/local-ma-tafdc.request.json`; the same
 body is there as `local-ma-tafdc.response.json`, evidence for the upstream
 issue reports.
+
+Every fixture predates policyengine-us PR #9503 (the aggregate child-care
+subsidy on the household-benefit list), so `parsePEResponse`'s
+`childcareSubsidyCounted` default of `false` is right for all of them; a
+fixture recorded on a release that carries it must be parsed with
+`childcareSubsidyCounted: true`, or its subsidy is counted twice.

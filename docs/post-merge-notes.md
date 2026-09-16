@@ -459,11 +459,14 @@ of the 38 states whose variable is deployed from $0 into a real subsidy.
   the `otherBenefits` remainder except where `household_benefits` really
   carried it; `stateOf` reads the state off the response so parsing stays a
   pure function of the body, and is consulted only when there is a subsidy to
-  place.
-- `core/src/evaluate.ts`'s `applyChildcareSubsidy` is the WORKAROUND
-  (policyengine-us #9405): it adds the subsidy to `netIncome` in the states
-  upstream omits from `household_state_benefits`, and adds nothing in the
-  states that already counted it.
+  place. The same step is the WORKAROUND (policyengine-us #9405): it adds
+  the subsidy to `netIncome` where the model dropped it, so a stored curve
+  carries it counted once. Which models drop it: every one before PR #9503;
+  `core/src/client.ts` `probeChildcareSubsidyCounted` asks each endpoint,
+  and the answer rides on the sweep's `model.countsChildcareSubsidy`
+  (2026-09-16; the evaluate-time `applyChildcareSubsidy` it replaced was
+  moved, not changed — the committed curves were migrated by the same
+  arithmetic and `--from-data` reproduced every metric).
 - `core/src/stateChildcareSubsidies.ts` holds the two lists, read from the
   deployed model's own metadata; a live contract test pins the per-state
   variable names, the aggregate, the pre-subsidy input and the inclusion table

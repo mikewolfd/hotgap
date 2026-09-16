@@ -43,7 +43,8 @@ describe("sourced PolicyEngine overrides", () => {
       payloads.push(JSON.parse(init.body as string));
       return new Response("{}", { status: 400 });
     }) as typeof fetch;
-    await expect(fetchCurve(a, { fetchImpl })).rejects.toThrow();
+    // The archetype buys care; told the #9503 answer, fetchCurve sends no probe first.
+    await expect(fetchCurve(a, { fetchImpl, childcareSubsidyCounted: false })).rejects.toThrow();
     expect(payloads).toHaveLength(2);
     for (const payload of payloads) expect(payload.policy).toEqual(policyOverridesFor(a));
   });
@@ -66,9 +67,9 @@ describe("sourced PolicyEngine overrides", () => {
     }) as typeof fetch;
     process.env.HOTGAP_PE_URL = "https://fixed-model.example/us/calculate"; // its own version cache
     try {
-      await expect(fetchCurve(single("SC"), { fetchImpl })).rejects.toThrow();
+      await expect(fetchCurve(single("SC"), { fetchImpl, childcareSubsidyCounted: false })).rejects.toThrow();
       expect(payloads[0].policy).toBeUndefined();
-      await expect(fetchCurve(single("NY"), { fetchImpl })).rejects.toThrow();
+      await expect(fetchCurve(single("NY"), { fetchImpl, childcareSubsidyCounted: false })).rejects.toThrow();
       expect(Object.keys(payloads[1].policy)).toEqual([BHP_EXPANDED_STATES]);
       // The cache key follows the policy actually sent.
       expect(curveCacheKey(single("SC"), {})).not.toBe(curveCacheKey(single("SC")));

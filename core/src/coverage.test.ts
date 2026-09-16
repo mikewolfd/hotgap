@@ -72,6 +72,10 @@ describe("stateCoverage — corrections", () => {
   it("follows the child-care inclusion list and the expansion list", () => {
     expect(stateCoverage("CO", curves()).corrections.childcareSubsidy).toMatchObject({ applies: false, source: "in net income" });
     expect(stateCoverage("CT", curves()).corrections.childcareSubsidy).toMatchObject({ applies: true, source: "added by HotGap", note: expect.stringContaining("#9405") });
+    // A sweep on a model that carries #9503 counted it everywhere; the list no longer decides.
+    const fixed = { ...model, countsChildcareSubsidy: true };
+    expect(stateCoverage("CT", curves(), { model: fixed }).corrections.childcareSubsidy).toMatchObject({ applies: false, source: "in net income", note: expect.stringContaining("#9503") });
+    expect(stateCoverage("CT", curves(), { model: { ...model, countsChildcareSubsidy: false } }).corrections.childcareSubsidy.applies).toBe(true);
     expect(stateCoverage("TX", curves()).corrections.coverageGap).toMatchObject({ applies: true, note: expect.stringContaining("#9472") });
     expect(stateCoverage("CA", curves()).corrections.coverageGap.applies).toBe(false);
   });

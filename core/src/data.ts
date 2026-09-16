@@ -61,6 +61,14 @@ export interface SummaryJson {
 export interface ModelRecord {
   endpoint: string;
   version: string | null;
+  /**
+   * Whether `household_state_benefits` carries the aggregate
+   * `child_care_subsidies` in every state (policyengine-us #9503), read off
+   * the endpoint by client.ts probeChildcareSubsidyCounted. Absent on records
+   * written before the probe existed, which all predate the fix. WORKAROUND
+   * field: goes with stateChildcareSubsidies.ts.
+   */
+  countsChildcareSubsidy?: boolean;
 }
 
 /**

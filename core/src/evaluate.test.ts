@@ -718,21 +718,17 @@ describe("transitional medical assistance is a §1931 rule", () => {
 });
 
 describe("the state child-care subsidy (policyengine-us #9405)", () => {
-  // The live Connecticut and Colorado probes of 2026-09-15: the same household
-  // (single parent, 3-year-old, $9,600 bill) gets ~$8,900 of subsidy in both
-  // states, but only Colorado's reaches household_net_income.
+  // The live Connecticut probe of 2026-09-15 (single parent, 3-year-old,
+  // $9,600 bill): $8,850 of subsidy at $25,000. Whether the model counted it
+  // in net income is parse.ts's business (its test); the points arrive here
+  // with it counted once, and evaluate must neither add nor remove it.
   const subsidised = (state: string, subsidy: number) =>
     evaluateOn(answersWith({ state, childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 }),
-      [pt(25000, 34121, { programs: { childcare: subsidy } }), pt(45000, 42953, { programs: { childcare: 0 } })], 25000);
+      [pt(25000, 34121 + subsidy, { programs: { childcare: subsidy } }), pt(45000, 42953, { programs: { childcare: 0 } })], 25000);
 
-  it("adds the money in a state PolicyEngine leaves it out of", () => {
-    const ct = subsidised("CT", 8850);
-    expect(ct.curve.points[0].netIncome).toBe(34121 + 8850);
-    expect(ct.curve.points[1].netIncome).toBe(42953);
-  });
-
-  it("does NOT add it again where household_state_benefits already carried it", () => {
-    expect(subsidised("CO", 8913).curve.points[0].netIncome).toBe(34121);
+  it("leaves net income as parsed, in a state of either kind", () => {
+    expect(subsidised("CT", 8850).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8850, 42953]);
+    expect(subsidised("CO", 8913).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8913, 42953]);
   });
 
   it("names the subsidy on the cliff its end causes, and reports where it ends", () => {
@@ -740,14 +736,9 @@ describe("the state child-care subsidy (policyengine-us #9405)", () => {
     // $42,971 → $42,953: the subsidy's whole $8,850 leaves over one step.
     expect(ct.analysis.cliffs).toHaveLength(0); // the $20,000 step out-earns it
     const steep = evaluateOn(answersWith({ state: "CT", childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 }),
-      [pt(25000, 34121, { programs: { childcare: 8850 } }), pt(26000, 34500, { programs: { childcare: 0 } })], 25000);
+      [pt(25000, 34121 + 8850, { programs: { childcare: 8850 } }), pt(26000, 34500, { programs: { childcare: 0 } })], 25000);
     expect(steep.analysis.cliffs[0].programsLost).toContain("childcare");
     expect(steep.analysis.cliffs[0].breakdown.benefits).toBeCloseTo(8850, 6);
     expect(steep.escape.programEnds.childcare).toBe(25000);
-  });
-
-  it("is a no-op on a curve with no subsidy on it — every archetype", () => {
-    const plain = evaluateOn(answersWith({ state: "CT" }), [pt(0, 20000), pt(30000, 40000)]);
-    expect(plain.curve.points.map((p) => p.netIncome)).toEqual([20000, 40000]);
   });
 });

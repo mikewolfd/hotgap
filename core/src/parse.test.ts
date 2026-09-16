@@ -243,6 +243,20 @@ describe("the state child-care subsidy", () => {
     expect(parsePEResponse(body("CT", [8850, 0], [4553, 0]), 2)[0].otherBenefits).toBe(3000);
   });
 
+  it("adds the money to net income in a state the model leaves it out of, and does not add it again where it was counted", () => {
+    // Net income is the model's $45,226 less the $0 premium at $25,000; CT's
+    // subsidy was dropped from it, CO's was already inside.
+    expect(parsePEResponse(body("CT", [8850, 0], [2577, 0]), 2).map((p) => p.netIncome)).toEqual([45226 + 8850, 45928 - 3169]);
+    expect(parsePEResponse(body("CO", [8913, 0], [10466, 0]), 2).map((p) => p.netIncome)).toEqual([45226, 45928 - 3169]);
+  });
+
+  it("on a model that carries policyengine-us #9503, counts it everywhere: no addition, and the remainder treats it as tracked", () => {
+    const ct = parsePEResponse(body("CT", [8850, 0], [1553 + 8850, 0]), 2, { childcareSubsidyCounted: true });
+    expect(ct[0].netIncome).toBe(45226);
+    expect(ct[0].otherBenefits).toBe(0);
+    expect(ct[0].programs.childcare).toBe(8850);
+  });
+
   it("is simply absent — not an error — on a curve that never asked for it", () => {
     const b = body("CT", [0, 0], [2577, 0]);
     delete (b.result.spm_units.s as Record<string, unknown>).child_care_subsidies;
