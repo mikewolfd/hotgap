@@ -58,15 +58,14 @@
 //   PUMS_CACHE=<dir>  where the downloaded zips are kept (default: a stable
 //                     directory under the OS temp dir, so re-runs skip the
 //                     ~700 MB download entirely).
-import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { spawn, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 // The one state list (plain node strips the types; Node 22.18+).
 import { STATE_CODES } from "../core/src/states.ts";
+import { fetchToFile, outputPath, parseArgs, unzipEntry, writeStamped } from "./lib/builder.mjs";
 import { ECI_SERIES, average, calendarYear, projectCy2026, quarterlyValues } from "./lib/eci.mjs";
 
 const PUMS_YEAR = "2024";
@@ -166,13 +165,9 @@ const num = (v) => {
 
 /** Streams one CSV out of a zip, line by line: O(rows), bounded memory. */
 async function streamCsv(zipPath, entry, onHeader, onRow) {
-  const child = spawn("unzip", ["-p", zipPath, entry], { stdio: ["ignore", "pipe", "inherit"] });
-  const closed = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`unzip -p ${entry} exited ${code}`))));
-  });
+  const { stdout, closed } = unzipEntry(zipPath, entry);
   let maxIdx = -1;
-  for await (const line of createInterface({ input: child.stdout, crlfDelay: Infinity })) {
+  for await (const line of createInterface({ input: stdout, crlfDelay: Infinity })) {
     if (!line) continue;
     if (maxIdx < 0) { maxIdx = onHeader(splitAll(line)); continue; }
     onRow(splitLine(line, maxIdx));
@@ -193,9 +188,7 @@ async function fetchZip(kind, st, fiveYear) {
   const part = `${dest}.part`;
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await fetch(url, { redirect: "follow" });
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-      await pipeline(Readable.fromWeb(res.body), createWriteStream(part));
+      await fetchToFile(url, part);
       renameSync(part, dest);
       return dest;
     } catch (err) {
@@ -449,9 +442,9 @@ function growthFactor(eci) {
 
 // ---------------------------------------------------------------------- main
 
-const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=")));
+const argv = parseArgs();
 const stateList = argv.states ? argv.states.split(",") : STATE_CODES;
-const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new URL("../core/data/reach.json", import.meta.url);
+const outPath = outputPath(argv, new URL("../core/data/reach.json", import.meta.url));
 
 const growth = growthFactor(await fetchEci());
 const adjincUsed = {};
@@ -524,12 +517,7 @@ const body = {
   states,
 };
 
-// Stamp the sweep that last CHANGED the numbers, matching summary.json's
-// convention: an unchanged rebuild leaves the file, and this stamp, alone, so a
-// re-run is not a diff.
-const { generated: priorStamp, ...priorBody } = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
-const unchanged = priorStamp !== undefined && JSON.stringify(priorBody) === JSON.stringify(body);
-writeFileSync(outPath, JSON.stringify({ generated: unchanged ? priorStamp : new Date().toISOString(), ...body }));
+writeStamped(outPath, "generated", new Date().toISOString(), body);
 const cellCount = Object.values(states).flatMap((s) => Object.values(s)).filter(Boolean).length;
 const fromFive = Object.values(states).flatMap((s) => Object.values(s)).filter((c) => c && c.vintage === VINTAGE_5YR).length;
 console.log(

@@ -5,12 +5,13 @@
 // lookup. Note: ZCTAs approximate USPS ZIPs; dominance is by area, not population.
 // Usage: node scripts/build-zip-county.mjs
 import { writeFileSync } from "node:fs";
-import { execSync } from "node:child_process";
 
 const SOURCE_URL =
   "https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_county20_natl.txt";
 
-const raw = execSync(`curl -sSL "${SOURCE_URL}" --max-time 120`, { maxBuffer: 64 * 1024 * 1024 }).toString("utf8");
+const res = await fetch(SOURCE_URL, { signal: AbortSignal.timeout(120_000) });
+if (!res.ok) throw new Error(`HTTP ${res.status} for ${SOURCE_URL}`);
+const raw = await res.text();
 const lines = raw.split("\n");
 const header = lines[0].replace(/^﻿/, "").split("|");
 const iZcta = header.indexOf("GEOID_ZCTA5_20");

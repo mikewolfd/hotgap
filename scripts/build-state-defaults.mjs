@@ -37,14 +37,13 @@
 //   ZYTE_TOKEN=<token>  huduser.gov answers a plain request with an empty
 //                     HTTP 202 bot challenge. The other two publishers serve
 //                     the file directly and never touch Zyte.
-import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { spawn, spawnSync } from "node:child_process";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 // The one state list (plain node strips the types; Node 22.18+).
 import { FIPS_TO_USPS, STATE_CODES } from "../core/src/states.ts";
+import { fetchToFile, outputPath, parseArgs, unzipEntry, writeStamped } from "./lib/builder.mjs";
 import { ECI_SERIES, average, calendarYear, projectCy2026, quarterlyValues } from "./lib/eci.mjs";
 
 const SOURCE = {
@@ -79,9 +78,7 @@ async function download(url, name, { zipped = false } = {}) {
   const ok = (p) => statSync(p).size > 0 && (!zipped || magic(p) === "PK");
 
   try {
-    const res = await fetch(url, { redirect: "follow" });
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-    await pipeline(Readable.fromWeb(res.body), createWriteStream(part));
+    const res = await fetchToFile(url, part);
     if (!ok(part)) throw new Error(`HTTP ${res.status} with no usable body (bot challenge?)`);
     renameSync(part, dest);
     process.stderr.write(`  fetched ${name}  (${(statSync(dest).size / 1e6).toFixed(1)} MB)\n`);
@@ -161,15 +158,11 @@ function cells(row, strings, want) {
 
 /** Streams a worksheet row by row. `onHeader` receives row 1 and returns the columns to keep. */
 async function streamSheet(file, sheet, strings, onHeader, onRow) {
-  const child = spawn("unzip", ["-p", file, sheet], { stdio: ["ignore", "pipe", "inherit"] });
-  const closed = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`unzip -p ${sheet} exited ${code}`))));
-  });
-  child.stdout.setEncoding("utf8");
+  const { stdout, closed } = unzipEntry(file, sheet);
+  stdout.setEncoding("utf8");
   let buf = "";
   let want = null;
-  for await (const chunk of child.stdout) {
+  for await (const chunk of stdout) {
     buf += chunk;
     let i;
     while ((i = buf.indexOf("</row>")) >= 0) {
@@ -417,8 +410,8 @@ const usd = (v) => `$${Math.round(v).toLocaleString("en-US")}`;
 
 // ---------------------------------------------------------------------- main
 
-const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=")));
-const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new URL("../core/data/state-defaults.json", import.meta.url);
+const argv = parseArgs();
+const outPath = outputPath(argv, new URL("../core/data/state-defaults.json", import.meta.url));
 const started = Date.now();
 
 const { factor, meta: eciMeta } = eciFactors(await fetchEci());
@@ -571,12 +564,7 @@ const body = {
   states,
 };
 
-// Stamp the sweep that last CHANGED the numbers, matching reach.json's and
-// summary.json's convention: an unchanged rebuild leaves the file, and this
-// stamp, alone, so a re-run is not a diff.
-const { read: priorStamp, ...priorBody } = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
-const unchanged = priorStamp !== undefined && JSON.stringify(priorBody) === JSON.stringify(body);
-writeFileSync(outPath, JSON.stringify({ read: unchanged ? priorStamp : new Date().toISOString().slice(0, 10), ...body }, null, 1));
+const priorBody = writeStamped(outPath, "read", new Date().toISOString().slice(0, 10), body, 1);
 
 const changed = Object.keys(states).filter((s) => JSON.stringify(priorBody.states?.[s]) !== JSON.stringify(states[s]));
 for (const s of changed) {

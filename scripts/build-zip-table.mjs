@@ -1,9 +1,12 @@
 // Regenerates core/data/zip3-state.json from GeoNames (CC BY 4.0).
 // Usage: node scripts/build-zip-table.mjs
 import { writeFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 // The one state list (plain node strips the types; Node 22.18+).
 import { STATE_CODES } from "../core/src/states.ts";
+import { fetchToFile } from "./lib/builder.mjs";
 
 // The 51 codes this app supports (50 states + DC). GeoNames' US export
 // includes territory rows (e.g. Guam ZIPs tagged "MH", the Marshall Islands
@@ -15,9 +18,11 @@ import { STATE_CODES } from "../core/src/states.ts";
 const VALID_STATES = new Set(STATE_CODES);
 
 const url = "https://download.geonames.org/export/zip/US.zip";
-execSync(`curl -sSL ${url} -o /tmp/geonames-us.zip && cd /tmp && unzip -o geonames-us.zip US.txt`, { stdio: "inherit" });
-const rows = execSync("cat /tmp/US.txt", { maxBuffer: 64 * 1024 * 1024 })
-  .toString("utf8")
+const zip = join(tmpdir(), "geonames-us.zip");
+await fetchToFile(url, zip);
+const listing = spawnSync("unzip", ["-p", zip, "US.txt"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+if (listing.status !== 0) throw new Error(`cannot read US.txt from ${zip}: ${listing.stderr}`);
+const rows = listing.stdout
   .split("\n")
   .filter(Boolean)
   .map((line) => line.split("\t"))
