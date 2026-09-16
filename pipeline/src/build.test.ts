@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { ARCHETYPES, answersFor, archetypeById, axisSpec, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
+import { NO_PROGRAMS, point } from "../../core/src/testing.js";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -13,13 +14,7 @@ const AXIS_COUNT = axisSpec(answersFor("CA", ARCHETYPES[0])).count;
 const countFor = (state: string, archetypeId: string) => axisSpec(answersFor(state, archetypeById(archetypeId))).count;
 
 function linearCurve(netIncomeStart = 10000, length = AXIS_COUNT): CurvePoint[] {
-  return Array.from({ length }, (_, i) => ({
-    earnings: i * 1000,
-    netIncome: netIncomeStart + i * 100,
-    medicalOOP: 0,
-    programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
-    childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-  }));
+  return Array.from({ length }, (_, i) => point(i * 1000, netIncomeStart + i * 100));
 }
 
 function fullResultsFor(state: string): ResultsByStateArchetype {
@@ -176,9 +171,8 @@ describe("buildStateFile", () => {
   });
 
   it("roundPoint rounds netIncome, medicalOOP, and program values to whole dollars", () => {
-    const programs = { snap: 123.6, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-    const p = roundPoint({ earnings: 0, netIncome: 10000.4, medicalOOP: 12.5, programs, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5, stateCredits: 0, totalCtc: 0, coverageGap: false });
-    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...programs, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100, stateCredits: 0, totalCtc: 0 });
+    const p = roundPoint(point(0, 10000.4, { medicalOOP: 12.5, programs: { snap: 123.6 }, childPrograms: { medicaid: 3210.7 }, otherBenefits: 99.5 }));
+    expect(p).toEqual({ earnings: 0, netIncome: 10000, medicalOOP: 13, programs: { ...NO_PROGRAMS, snap: 124 }, childPrograms: { medicaid: 3211 }, otherBenefits: 100, stateCredits: 0, totalCtc: 0 });
     // The state's modeled premium assistance survives rounding when served, and is absent, not 0, otherwise.
     expect(roundPoint({ ...p, statePremiumAssistance: 907.4 }).statePremiumAssistance).toBe(907);
     expect("statePremiumAssistance" in roundPoint(p)).toBe(false);
