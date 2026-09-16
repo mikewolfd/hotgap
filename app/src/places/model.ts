@@ -57,10 +57,17 @@ export function archLabel(a: Archetype): string {
   return `${adults}, ${n === 0 ? "no children" : `${n} ${n === 1 ? "child" : "children"} (${ages})`}`;
 }
 
+/* core's CHILDCARE_MAX_AGE (stateDefaults.ts): the sweep prices care for every
+   child through 12 — school-age care included — and that module reaches
+   node:fs, so the number is repeated here and pinned in model.test.ts. */
+export const CHILDCARE_MAX_AGE = 12;
+
 /* A missing child-care subsidy can only move a household that pays for care:
-   a child under 6 and every parent working (a single parent, or a dual-earner
-   couple; the single-earner couple has a parent at home and no bill). */
-export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age < 6) && (!a.married || worksBoth(a));
+   a child of child-care age and every parent working (a single parent, or a
+   dual-earner couple; the single-earner couple has a parent at home and no
+   bill). The same test the pipeline uses to flag a state's subsidy as
+   unmodeled (build.ts: the archetypes whose monthlyChildcare is > 0). */
+export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || worksBoth(a));
 
 /* IncompleteMarker (B1): keyed off coverage[state].unmodeled[], never a list
    kept here. LIHEAP never reaches net income and is not a reason to hatch; the

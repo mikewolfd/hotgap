@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { StateCoverage, StateMetrics, SummaryJson } from "@hotgap/core";
-import { ARCHETYPES, DEFAULT_ARCHETYPE, STATE_CODES } from "@hotgap/core";
+import { ARCHETYPES, CHILDCARE_MAX_AGE as CORE_CHILDCARE_MAX_AGE, DEFAULT_ARCHETYPE, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, word } from "./format.js";
-import { archLabel, bins, correctionRows, group, incompleteFor, MEASURES, measureByKey, paysForCare, PREFERRED_HOUSEHOLD, rowsFor, tableRows } from "./model.js";
+import { archLabel, bins, CHILDCARE_MAX_AGE, correctionRows, group, incompleteFor, MEASURES, measureByKey, paysForCare, PREFERRED_HOUSEHOLD, rowsFor, tableRows } from "./model.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -52,7 +52,12 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
     expect(labels["married-3"]).toBe("2 adults, one working, 3 children (1, 4, 9)");
     expect(labels["married-dual-1"]).toBe("2 adults, both working, 1 child (3)");
     expect(new Set(Object.values(labels)).size).toBe(ARCHETYPES.length);
-    for (const a of ARCHETYPES) expect(paysForCare(a)).toBe(a.childAges.some((age) => age < 6) && (!a.married || a.spouseWorks));
+    // The pipeline's own test for a household that buys care: a positive
+    // child-care bill under the state's defaults, i.e. any child through 12.
+    for (const a of ARCHETYPES) expect(paysForCare(a)).toBe((answersFor("CA", a).monthlyChildcare ?? 0) > 0);
+    expect(CHILDCARE_MAX_AGE).toBe(CORE_CHILDCARE_MAX_AGE);
+    expect(paysForCare({ id: "x", married: false, childAges: [12] })).toBe(true);
+    expect(paysForCare({ id: "x", married: false, childAges: [13] })).toBe(false);
   });
   it("prefers the household core prefers — the one id repeated on this side of the browser seam", () => {
     expect(PREFERRED_HOUSEHOLD).toBe(DEFAULT_ARCHETYPE);
