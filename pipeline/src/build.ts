@@ -90,6 +90,8 @@ export function roundPoint(p: CurvePoint): CurvePoint {
     earnings: p.earnings,
     netIncome: Math.round(p.netIncome),
     medicalOOP: Math.round(p.medicalOOP),
+    // The state's modeled premium assistance, only where the endpoint served it (statePremiumAssistance.ts).
+    ...(p.statePremiumAssistance !== undefined ? { statePremiumAssistance: Math.round(p.statePremiumAssistance) } : {}),
     programs: Object.fromEntries(
       Object.entries(p.programs).map(([id, v]) => [id, Math.round(v)]),
     ) as Record<ProgramId, number>,

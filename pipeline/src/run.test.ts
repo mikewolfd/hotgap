@@ -42,6 +42,11 @@ function fixtureForRequest(init?: RequestInit): string {
   const axis = JSON.parse(init!.body as string).household.axes[0][0] as { max: number; count: number };
   return fixtureFor(axis.count, axis.max);
 }
+/** A payload with no axes is a capability probe; the hosted API answers 400 for a variable it lacks. */
+function isProbe(init?: RequestInit): boolean {
+  return !JSON.parse(init!.body as string).household.axes;
+}
+const probeRejected = () => new Response(JSON.stringify({ status: "error", message: "Unrecognized calculate input(s): Unrecognized household variable" }), { status: 400 });
 const fixtureBody = fixtureFor(AXIS.count, AXIS.max);
 const noopSleep = async () => {};
 
@@ -88,9 +93,11 @@ describe("runPipeline", () => {
   it("fetches 2 fake states × every archetype from an injected fetch and builds correct summary + state files, with zero real network", async () => {
     let callCount = 0;
     let healthChecks = 0;
+    let probes = 0;
     const fetchImpl = (async (url: unknown, init?: RequestInit) => {
       // The one GET is the engine's /healthz, which names the model; the public API has no such route.
       if (!init?.body) { healthChecks++; return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.5.0" }), { status: 200 }); }
+      if (isProbe(init)) { probes++; return probeRejected(); } // Vermont's premium assistance
       callCount++;
       return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
@@ -99,6 +106,7 @@ describe("runPipeline", () => {
 
     expect(callCount).toBe(2 * ARCHETYPES.length); // 2 states × every archetype, no retries needed
     expect(healthChecks).toBe(1);
+    expect(probes).toBe(1); // once per endpoint and variable, however many Vermont curves follow
     expect(result.ok).toBe(true);
     expect(result.gaps).toEqual([]);
     expect(result.summary).toBeDefined();
@@ -137,6 +145,7 @@ describe("runPipeline", () => {
 
   it("leaves a gap (not a throw) when an archetype exhausts retries, and skips writing summary/state files", async () => {
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      if (isProbe(init)) return probeRejected(); // California's premium assistance
       const payload = JSON.parse(init!.body as string);
       const peopleCount = Object.keys(payload.household.people).length;
       // The 5-person households (you, spouse, 3 kids) — married-3 and its
