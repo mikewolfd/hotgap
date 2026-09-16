@@ -14,16 +14,16 @@ const request = RUN
     )
   : null;
 
+/** POST `body` to the endpoint under test as the client would, and hand back the status and the parsed JSON. */
+async function post(body: unknown): Promise<{ status: number; body: any }> {
+  const res = await fetch(peUrl(), { method: "POST", headers: peHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
+  return { status: res.status, body: await res.json() };
+}
+
 describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   it("computes a 101-point axes sweep with every variable we display", async () => {
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(request);
+    expect(status).toBe(200);
     expect(body.status).toBe("ok");
     const r = body.result;
     const arr = (x: unknown) => {
@@ -53,13 +53,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } },
       },
     };
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(probe),
-      signal: AbortSignal.timeout(60_000),
-    });
-    const body = (await res.json()) as any;
+    const { body } = await post(probe);
     expect(body.status).toBe("ok");
   }, 90_000);
 
@@ -78,14 +72,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } },
       },
     };
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(probe),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(probe);
+    expect(status).toBe(400);
     expect(body.status).toBe("error");
     expect(typeof body.message).toBe("string");
     expect(body.message.length).toBeGreaterThan(0);
@@ -115,14 +103,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         households: { h: { members: ["you"], state_name: { "2026": "CA" } } },
       },
     };
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(probe),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(probe);
+    expect(status).toBe(200);
     expect(body.status).toBe("ok");
     const ssi = body.result.people["you"].ssi["2026"];
     expect(ssi).toBeGreaterThan(0);
@@ -132,12 +114,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const withHS = { household: { people: { you: { age: { "2026": 30 }, employment_income: { "2026": 20000 } }, kid: { age: { "2026": 5 }, head_start: { "2026": null } } }, families: { f: { members: ["you", "kid"] } }, marital_units: { m: { members: ["you"] } }, tax_units: { t: { members: ["you", "kid"] } }, spm_units: { s: { members: ["you", "kid"] } }, households: { h: { members: ["you", "kid"], state_name: { "2026": "CA" }, household_net_income: { "2026": null } } } } };
     const off = JSON.parse(JSON.stringify(withHS));
     off.household.people.kid.head_start = { "2026": 0 };
-    const call = async (body: unknown) => {
-      const res = await fetch(peUrl(), { method: "POST", headers: peHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
-      return (await res.json()) as any;
-    };
-    const on = await call(withHS);
-    const offR = await call(off);
+    const on = (await post(withHS)).body;
+    const offR = (await post(off)).body;
     const onNet = on.result.households.h.household_net_income["2026"];
     const offNet = offR.result.households.h.household_net_income["2026"];
     expect(onNet - offNet).toBeGreaterThan(15000); // Head Start value removed
@@ -168,17 +146,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   });
 
   it("county_fips shifts the ACA rating area: SF vs LA yield different premium_tax_credit at the same CA income", async () => {
-    const call = async (body: unknown) => {
-      const res = await fetch(peUrl(), {
-        method: "POST",
-        headers: peHeaders(),
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(60_000),
-      });
-      return { status: res.status, body: (await res.json()) as any };
-    };
-    const sf = await call(singleAdultHousehold("06075")); // San Francisco County
-    const la = await call(singleAdultHousehold("06037")); // Los Angeles County
+    const sf = await post(singleAdultHousehold("06075")); // San Francisco County
+    const la = await post(singleAdultHousehold("06037")); // Los Angeles County
     expect(sf.status).toBe(200);
     expect(sf.body.status).toBe("ok");
     expect(la.status).toBe(200);
@@ -222,14 +191,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         axes: [[{ name: "employment_income", min: 40000, max: 80000, count: 3, period: "2026" }]],
       },
     };
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(probe),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(probe);
+    expect(status).toBe(200);
     expect(body.status).toBe("ok");
     const h = body.result.households.h;
     const t = body.result.tax_units.t;
@@ -279,14 +242,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         },
       },
     };
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(probe),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(probe);
+    expect(status).toBe(200);
     expect(body.status).toBe("ok");
     const person = body.result.people["you"];
     expect(person.child_support_received["2026"]).toBe(4800);
@@ -300,14 +257,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   }, 90_000);
 
   it("still computes ok with no county_fips at all (state-only fallback)", async () => {
-    const res = await fetch(peUrl(), {
-      method: "POST",
-      headers: peHeaders(),
-      body: JSON.stringify(singleAdultHousehold()),
-      signal: AbortSignal.timeout(60_000),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const { status, body } = await post(singleAdultHousehold());
+    expect(status).toBe(200);
     expect(body.status).toBe("ok");
     expect(body.result.tax_units.t.premium_tax_credit["2026"]).toBeGreaterThan(0);
   }, 90_000);
@@ -522,12 +473,8 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
         },
       });
       const call = async (forced: number | null) => {
-        const res = await fetch(peUrl(), {
-          method: "POST", headers: peHeaders(),
-          body: JSON.stringify(household(forced)), signal: AbortSignal.timeout(60_000),
-        });
-        expect(res.status).toBe(200);
-        const body = (await res.json()) as any;
+        const { status, body } = await post(household(forced));
+        expect(status).toBe(200);
         expect(body.status).toBe("ok");
         return {
           subsidy: body.result.spm_units.s[variable]["2026"] as number,
