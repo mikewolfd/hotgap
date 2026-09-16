@@ -12,16 +12,22 @@ concurrency: { group: places-data, cancel-in-progress: false }
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    # A full sweep is ~20 min locally (56 reform requests at 35–40 s each plus
-    # the Massachusetts feedback loops); give a slower runner ample room.
-    timeout-minutes: 90
+    # The sweep runs on the self-hosted engine at the release pinned in
+    # engine/requirements.txt — the latest model, all 51 states' child-care
+    # variables, and per-request policy overrides in seconds rather than the
+    # public API's 35–40 s. 561 curves took ~35 min locally at concurrency 4
+    # on four engine workers; give a slower runner room.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
         with: { token: "${{ github.token }}" }
       - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npx tsx pipeline/src/run.ts --concurrency 3
+      - id: engine
+        uses: ./.github/actions/start-engine
+      - run: npx tsx pipeline/src/run.ts --concurrency 4
+        env: { HOTGAP_PE_URL: "${{ steps.engine.outputs.url }}" }
       # Pushing with the default GITHUB_TOKEN does NOT trigger other workflows'
       # `push` events, so a semantically-degenerate sweep (e.g. every state
       # collapsing to a flat curve, or a schema drift the app can't read)

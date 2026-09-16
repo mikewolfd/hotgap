@@ -1,4 +1,4 @@
-import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, type CurvePoint, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, type CurvePoint, type ModelRecord, type ProgramId, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -39,7 +39,7 @@ export function validateResults(states: string[], results: ResultsByStateArchety
   return { ok: gaps.length === 0, gaps };
 }
 
-export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype): SummaryJson {
+export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, model?: ModelRecord): SummaryJson {
   const summaryStates: Record<string, Record<string, StateMetrics>> = {};
   for (const state of states) {
     summaryStates[state] = {};
@@ -74,6 +74,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
   return {
     generated,
     year: YEAR,
+    ...(model ? { model } : {}),
     ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
     archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
     states: summaryStates,
@@ -103,10 +104,10 @@ export function roundPoint(p: CurvePoint): CurvePoint {
   } as CurvePoint;
 }
 
-export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype): StateFileJson {
+export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype, model?: ModelRecord): StateFileJson {
   const archetypes: Record<string, { points: CurvePoint[] }> = {};
   for (const a of ARCHETYPES) {
     archetypes[a.id] = { points: results[state][a.id] };
   }
-  return { generated, year: YEAR, state, archetypes };
+  return { generated, year: YEAR, state, ...(model ? { model } : {}), archetypes };
 }

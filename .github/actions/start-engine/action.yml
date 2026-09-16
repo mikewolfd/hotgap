@@ -1,0 +1,34 @@
+name: Start the PolicyEngine engine
+description: >-
+  Installs engine/requirements.txt (the pinned policyengine-us release) and
+  serves engine/ on localhost under gunicorn, so the job can point
+  HOTGAP_PE_URL at the latest model rather than the public API.
+outputs:
+  url:
+    description: The /us/calculate URL to put in HOTGAP_PE_URL
+    value: ${{ steps.serve.outputs.url }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+        cache: pip
+        cache-dependency-path: engine/requirements.txt
+    - run: pip install -r engine/requirements.txt
+      shell: bash
+    - id: serve
+      shell: bash
+      run: |
+        # --preload builds the tax-benefit system once and forks the workers
+        # from it (engine/Dockerfile says why). Four workers for the four
+        # vCPUs an ubuntu-latest runner has; a simulation cannot share a
+        # process, so parallelism is processes.
+        gunicorn --bind 127.0.0.1:8099 --workers 4 --threads 1 --timeout 120 --preload engine.app:app \
+          > engine.log 2>&1 &
+        for i in $(seq 1 90); do
+          curl -sf http://127.0.0.1:8099/healthz && break
+          sleep 2
+        done
+        curl -sf http://127.0.0.1:8099/healthz || { echo "engine did not come up"; cat engine.log; exit 1; }
+        echo "url=http://127.0.0.1:8099/us/calculate" >> "$GITHUB_OUTPUT"

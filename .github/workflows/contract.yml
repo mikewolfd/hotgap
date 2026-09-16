@@ -1,3 +1,7 @@
+# The public API is the fallback endpoint (no HOTGAP_PE_URL); this watches it
+# daily so a model update there — the TAFDC probe flipping, a variable going
+# away — is noticed before a user hits it. CI's engine-contract job covers the
+# engine the sweep actually runs on.
 name: API contract
 on:
   schedule: [{ cron: "17 6 * * *" }]

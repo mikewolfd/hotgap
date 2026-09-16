@@ -12,3 +12,18 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+  # The live contract suite against the engine at the pinned release: the
+  # gate a Dependabot bump of engine/requirements.txt has to pass, and the
+  # proof that the sweep's model still honours every assumption core/ makes.
+  engine-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - id: engine
+        uses: ./.github/actions/start-engine
+      - run: RUN_CONTRACT=1 npx vitest run contract
+        env: { HOTGAP_PE_URL: "${{ steps.engine.outputs.url }}" }

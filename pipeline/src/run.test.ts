@@ -87,7 +87,10 @@ describe("runPipeline", () => {
 
   it("fetches 2 fake states × every archetype from an injected fetch and builds correct summary + state files, with zero real network", async () => {
     let callCount = 0;
-    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+    let healthChecks = 0;
+    const fetchImpl = (async (url: unknown, init?: RequestInit) => {
+      // The one GET is the engine's /healthz, which names the model; the public API has no such route.
+      if (!init?.body) { healthChecks++; return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.5.0" }), { status: 200 }); }
       callCount++;
       return new Response(fixtureForRequest(init), { status: 200 });
     }) as unknown as typeof fetch;
@@ -95,9 +98,12 @@ describe("runPipeline", () => {
     const result = await runPipeline({ states: ["WY", "VT"], concurrency: 3, dryRun: false, fromData: false }, fetchImpl, noopSleep);
 
     expect(callCount).toBe(2 * ARCHETYPES.length); // 2 states × every archetype, no retries needed
+    expect(healthChecks).toBe(1);
     expect(result.ok).toBe(true);
     expect(result.gaps).toEqual([]);
     expect(result.summary).toBeDefined();
+    expect(result.summary!.model).toEqual({ endpoint: "api.policyengine.org", version: "2.5.0" });
+    expect(result.stateFiles!.WY.model).toEqual(result.summary!.model);
     expect(result.stateFiles).toBeDefined();
 
     // Every archetype for both fake states resolves to the same fixture-derived

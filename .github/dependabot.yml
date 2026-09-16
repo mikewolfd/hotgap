@@ -1,0 +1,12 @@
+# Keep the engine on the latest policyengine-us. Each bump is a PR that CI's
+# engine-contract job runs the live contract suite against, so a release that
+# breaks an assumption core/ makes fails there rather than in the Monday sweep.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /engine
+    schedule: { interval: daily }
+    labels: [engine]
+    groups:
+      model:
+        patterns: [policyengine-us, policyengine-core, spm-calculator]

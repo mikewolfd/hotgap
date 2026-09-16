@@ -76,6 +76,14 @@ npm run contract          # the live contract suite, against this service
 to the public API, so the CLI, the pipeline and the contract suite all follow
 one switch and nothing changes for anyone who does not set it.
 
+This is where the weekly sweep runs. `.github/actions/start-engine` installs
+`requirements.txt` and serves this under gunicorn on the runner;
+`places-data.yml` points the pipeline at it, and CI's `engine-contract` job
+runs the live contract suite against it on every push. Dependabot keeps the
+pin on the latest release, so a bump is a PR that has to pass that job.
+`core/src/client.ts` also reads `/healthz` once per sweep and writes the
+release into `summary.json` and each state file as `model`.
+
 ## Which model produced a number
 
 `GET /healthz` and an `X-PolicyEngine-Version` header on every response:
@@ -87,7 +95,10 @@ $ curl -s localhost:8080/healthz
 ```
 
 The version lives in the header rather than the JSON body so the body stays
-byte-comparable with the public API's.
+byte-comparable with the public API's. Two things the client reads from the
+model rather than the version: whether Massachusetts TAFDC is counted twice
+(a sentinel probe, `probeMaTafdcDoubleCount`), and Head Start's place in net
+income (the `include_head_start_benefits_in_net_income` contract test).
 
 ## What it deliberately does not implement
 

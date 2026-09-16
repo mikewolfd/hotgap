@@ -45,14 +45,27 @@ export interface SummaryJson {
   // unchanged re-sweep leaves the file, and this stamp, alone).
   generated: string;
   year: string;
+  /** The PolicyEngine that produced these numbers; absent on files written before it was recorded. */
+  model?: ModelRecord;
   archetypes: { id: string; married: boolean; childAges: number[] }[];
   states: Record<string, Record<string, StateMetrics>>;
+}
+
+/**
+ * Which model a sweep ran on. The self-hosted engine (engine/) names its
+ * policyengine-us release; the public API does not expose one cheaply, so
+ * `version` is null there and the endpoint host is the provenance.
+ */
+export interface ModelRecord {
+  endpoint: string;
+  version: string | null;
 }
 
 export interface StateFileJson {
   generated: string;
   year: string;
   state: string;
+  model?: ModelRecord;
   archetypes: Record<string, { points: CurvePoint[] }>;
 }
 

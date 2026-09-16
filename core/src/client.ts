@@ -223,6 +223,26 @@ function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Recor
   return payload;
 }
 
+/**
+ * The policyengine-us release `peUrl()` serves, from the engine's /healthz
+ * (engine/app.py), or null when the endpoint does not say: the public API
+ * has no cheap version route (its metadata document is ~70 MB).
+ */
+export async function modelVersion(opts: RequestOptions = {}): Promise<string | null> {
+  const { fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
+  const health = new URL(peUrl());
+  health.pathname = "/healthz";
+  health.search = "";
+  try {
+    const res = await fetchImpl(health, { signal: AbortSignal.timeout(timeoutMs) });
+    if (res.status !== 200) return null;
+    const body = (await res.json()) as { model?: string; version?: string };
+    return body.model === "policyengine-us" && typeof body.version === "string" ? body.version : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Forced TAFDC large enough that no other state benefit can be mistaken for it. */
 export const MA_TAFDC_PROBE_SENTINEL = 1_000_000;
 

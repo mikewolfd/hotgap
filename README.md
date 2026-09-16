@@ -209,7 +209,7 @@ a plan, and the 2026 Medicare Part B standard premium ($202.90/month, CMS,
 
 All under `core/data/`:
 
-- `summary.json`, `states/{ST}.json` — the weekly 51-state × 8-archetype
+- `summary.json`, `states/{ST}.json` — the weekly 51-state × 11-archetype
   PolicyEngine sweep, each archetype now a typical renter in the state's
   most populous county (see `state-defaults.json`, below) rather than a
   household with no rent and no county at all. Each curve's axis runs past
@@ -393,14 +393,31 @@ received), `--offline`, `--json`.
 
     npm test                # unit tests
     npm run typecheck       # tsc -b core pipeline
-    npm run contract        # live PolicyEngine API contract check
-    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~25 min; 51 states x 11 archetypes, axis sized per household)
+    npm run contract        # live PolicyEngine contract check (public API, or HOTGAP_PE_URL)
+    npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~35 min on the engine; 51 states x 11 archetypes)
 
 `npm run pipeline` also takes `--from-data` (recompute summary/state metrics
 from already-fetched curves, no PolicyEngine calls) and `--dry-run` (build every request payload
 without calling PolicyEngine or writing files).
 
-`.github/workflows/places-data.yml` runs the sweep automatically every
+**Which PolicyEngine.** Every request goes to `HOTGAP_PE_URL` when it is set,
+else to the public API. The public API runs an older model (policyengine-us
+1.764.6 in September 2026, against a 2.5.0 release) that lacks 13 states'
+child-care subsidies and takes 35–40 s per policy-override request, so the
+sweep — and anything else that can — runs on `engine/`, HotGap's own copy of
+the one endpoint it calls, pinned to the latest release in
+`engine/requirements.txt`. Dependabot bumps that pin; CI's `engine-contract`
+job runs the live contract suite against the engine on every push, so a
+release that breaks an assumption `core/` makes fails there. `summary.json`
+and each state file record the model that produced them (`model`). The
+public API stays the fallback for a `hotgap` run with no engine, and
+`.github/workflows/contract.yml` watches it daily.
+
+    pip install -r engine/requirements.txt
+    gunicorn --bind 127.0.0.1:8099 --workers 4 --preload engine.app:app &
+    HOTGAP_PE_URL=http://127.0.0.1:8099/us/calculate npm run pipeline
+
+`.github/workflows/places-data.yml` runs the sweep on the engine every
 Monday at 07:00 UTC (and on manual dispatch), running the test suite and
 typecheck before committing. Data commits only when the swept numbers
 changed — `generated` in `summary.json` and each state file is the stamp of
