@@ -10,3 +10,13 @@ updates:
     groups:
       model:
         patterns: [policyengine-us, policyengine-core, spm-calculator]
+  # The Node tooling, one PR a week across the workspaces (the root lockfile
+  # covers them). Added 2026-09-16 with `npm audit` reporting five advisories
+  # on the pinned vitest 2 / vite 5 / esbuild 0.21 chain that nothing was
+  # watching; CI's test and typecheck jobs are the gate.
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      node:
+        patterns: ["*"]
