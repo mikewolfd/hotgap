@@ -19,7 +19,7 @@ evaluates on the public PolicyEngine API's older model — still `live`.
 
 | Page | Surface | Module | State |
 |---|---|---|---|
-| `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result | editor wired; result is the minimal placeholder in `src/citizen/result.ts` |
+| `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result (`src/citizen/result.ts`; the pure modules beside it render every component `design/inventory.md` assigns to the surface, from one `HouseholdEvaluation`) | built; proofs `e2e/citizen.spec.ts` |
 | `places.html` | journalist | `src/places/main.ts` | being built |
 | `caseworker.html` | caseworker | `src/caseworker/main.ts` | scaffold |
 
@@ -95,13 +95,19 @@ rewrites a hand-typed `earnings=` as `pay=&unit=year`.
 **DOM the page owns** (`src/citizen/main.ts`): a visually hidden `h1`, then
 `#result`, where `mountResult` puts `[role=status]` (loading text, or the
 new sentence after a chip change), `#answer` (`tabindex="-1"`; focus lands
-here after a submit), `#source[data-source="live"|"archetype"]` with *Try
+here after a person's own submit, never on a page load), `#chart` (the
+MoneyCurve's one tab stop, with `.hg-mark[data-key]` buttons that open
+`#step-{key}` rows), `#source[data-source="live"|"archetype"]` with *Try
 again* in the archetype state, and a `[role=alert]` callout for failures.
 The editor's own hooks are `#editor` (the screen, `hidden` when closed),
 `#inputs` (the chips row) and `[data-chip="{id}"]` on every chip. The
-citizen page proper replaces `result.ts` behind the same `Result` seam —
-`clear()`, `loading(count)`, `render(evaluation, flags, { announce })`,
-`error(result)` — and keeps these ids, which the proofs assert.
+`Result` seam is `clear()`, `loading(count)`, `render(evaluation, flags,
+{ announce })`, `error(result)`; a render rebuilds the whole result from
+the one evaluation. The result also fetches `/data/summary.json` once, for
+the SourceNote's vintages and the incomplete-state notice, and renders
+without it until it arrives. Every string it shows is in
+`src/citizen/copy.ts` (`t()` throws on an unfilled slot), which
+`npm run readability` grades.
 
 **URL state** is the CLI's flags (`core/src/flags.ts`, `HOUSEHOLD_FLAGS`):
 `/?zip=94110&kids=3,7&pay=30000&unit=year&married=1&housing=1`. A boolean
@@ -126,9 +132,10 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 - `toAnnual`, `fromAnnual`, `PAY_UNITS`, `DEFAULT_HOURS`, `axisSpec`
 - `STATE_NAMES`, `STATE_CODES`, `FIPS_TO_USPS`, `IMMIGRATION_STATUSES`, `PROGRAM_IDS`, `CASH_PROGRAMS`
 - `stateDefaults`, `childcareMonthlyFor`, `CHILDCARE_MAX_AGE`, `stateDefaultsProvenance`
+- `ARCHETYPES`, `answersFor`, `pickArchetypeId` (the swept household an archetype evaluation describes), `PROGRAM_END_MIN`
 - `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
 
-The citizen bundle today is 61 KB (18.8 KB gzip) with the two small tables inlined.
+The citizen bundle today is 98 KB (31 KB gzip) with the two small tables inlined.
 
 ## Proofs
 
@@ -136,7 +143,8 @@ The citizen bundle today is 61 KB (18.8 KB gzip) with the two small tables inlin
     npx vitest run                     # unit tests, worker/src/index.test.ts included
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
-    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/editor.spec.ts
+    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts (screenshots to design/audit/app/)
+    npm run readability                # Flesch–Kincaid over app/src/*/copy.ts (design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
 
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then
