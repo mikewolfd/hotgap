@@ -5,8 +5,8 @@ import { evaluateCurve, evaluateOffline } from "./evaluate.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
 import { parsePEResponse } from "./parse.js";
 import { readFileSync } from "node:fs";
+import { point as pt } from "./testing.js";
 import { validateAnswers } from "./validate.js";
-import type { CurvePoint, ProgramId } from "./types.js";
 
 vi.mock("./evaluate.js", async (original) => ({ ...await original<object>(), evaluateOffline: vi.fn() }));
 vi.mock("./data.js", async (original) => ({ ...await original<object>(), loadSummary: vi.fn() }));
@@ -49,13 +49,6 @@ describe("CLI correction notices", () => {
   });
 
   it("prints deferred cliffs in their own block, and labels the refundable CTC", async () => {
-    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-    type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
-    const pt = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
-      earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0,
-      stateCredits: 0, totalCtc: 0, coverageGap: false, ...over,
-      programs: { ...ZERO, ...(over.programs ?? {}) },
-    });
     const hs = { programs: { headstart: 12000, ctc: 1500 }, childPrograms: { headstart: 12000 }, totalCtc: 6600 };
     const ca = validateAnswers({
       state: "CA", married: false, age: 30, spouseAge: null, childAges: [4], childDisabled: [false],
@@ -90,18 +83,14 @@ describe("CLI correction notices", () => {
   });
 
   it("passes --childcare-subsidy through and prints the subsidy like any other program", async () => {
-    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-    const pt = (earnings: number, netIncome: number, childcare: number): CurvePoint => ({
-      earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0,
-      stateCredits: 0, totalCtc: 0, coverageGap: false, programs: { ...ZERO, childcare },
-    });
     const ct = validateAnswers({
       state: "CT", married: false, age: 30, spouseAge: null, childAges: [3], childDisabled: [false],
       youDisabled: false, spouseDisabled: false, monthlyRent: null, monthlyChildcare: 800,
       annualEarnings: 25000, spouseAnnualEarnings: 0, getsChildcareSubsidy: true,
     });
     if (!ct.ok) throw new Error(ct.detail);
-    const points = [pt(24000, 33000, 8850), pt(25000, 34121, 8850), pt(26000, 34500, 0), pt(27000, 45000, 0)];
+    const subsidized = (earnings: number, netIncome: number, childcare: number) => pt(earnings, netIncome, { programs: { childcare } });
+    const points = [subsidized(24000, 33000, 8850), subsidized(25000, 34121, 8850), subsidized(26000, 34500, 0), subsidized(27000, 45000, 0)];
     vi.mocked(evaluateOffline).mockReturnValue(
       evaluateCurve(ct.value, { year: "2026", currentEarnings: 25000, points }, "live"),
     );

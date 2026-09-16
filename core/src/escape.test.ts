@@ -2,20 +2,14 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parsePEResponse } from "./parse.js";
 import { escapeAnalysis } from "./escape.js";
-import type { CurvePoint, ProgramId } from "./types.js";
+import { point, type PointOver } from "./testing.js";
+import type { CurvePoint } from "./types.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
 );
 const fixturePoints = parsePEResponse(fixture, 101);
 
-const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings,
-  netIncome,
-  medicalOOP: 0,
-  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
-  childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-});
 
 describe("escapeAnalysis on the real CA fixture", () => {
   it("computes verified safe exit, leap, and program thresholds", () => {
@@ -38,13 +32,8 @@ describe("escapeAnalysis on the real CA fixture", () => {
   });
 });
 
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-// `programs` arrives as a sparse patch over ZERO, so it cannot be the full
-// Record the CurvePoint field is.
-type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
-const pt = (earnings: number, over: PointOver = {}): CurvePoint => ({
-  ...flat(earnings, 10000 + earnings), ...over, programs: { ...ZERO, ...(over.programs ?? {}) },
-});
+/** A rising point — $10,000 plus the earnings — with whatever `over` says. */
+const pt = (earnings: number, over: PointOver = {}): CurvePoint => point(earnings, 10000 + earnings, over);
 
 describe("per-age program ends", () => {
   // A parent and a child on the same program at different limits — CA cuts
@@ -126,7 +115,7 @@ describe("benefitsEndEarnings counts money only", () => {
 
 describe("escapeAnalysis on synthetic curves", () => {
   it("returns safeExit 0 and leap 0 for a no-zones curve", () => {
-    const pts = [flat(0, 10000), flat(10000, 15000), flat(20000, 21000)];
+    const pts = [point(0, 10000), point(10000, 15000), point(20000, 21000)];
     const esc = escapeAnalysis(pts);
     expect(esc.safeExitEarnings).toBe(0);
     expect(esc.leap).toBe(0);
@@ -135,7 +124,7 @@ describe("escapeAnalysis on synthetic curves", () => {
 
   it("returns safeExit null with leapIsLowerBound true for a single unrecovered zone", () => {
     // A curve with a single danger zone that doesn't recover
-    const pts = [flat(0, 20000), flat(10000, 30000), flat(20000, 22000), flat(30000, 25000), flat(40000, 26000)];
+    const pts = [point(0, 20000), point(10000, 30000), point(20000, 22000), point(30000, 25000), point(40000, 26000)];
     const esc = escapeAnalysis(pts);
     expect(esc.safeExitEarnings).toBeNull();
     expect(esc.leapIsLowerBound).toBe(true);
@@ -156,7 +145,7 @@ describe("escapeAnalysis on synthetic curves", () => {
 
   it("returns benefitsEndEarnings null for an all-zero programs curve", () => {
     // A curve where all programs are zero throughout
-    const pts = [flat(0, 10000), flat(10000, 15000), flat(20000, 21000)];
+    const pts = [point(0, 10000), point(10000, 15000), point(20000, 21000)];
     const esc = escapeAnalysis(pts);
     expect(esc.benefitsEndEarnings).toBeNull();
   });

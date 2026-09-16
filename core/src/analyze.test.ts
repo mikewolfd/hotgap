@@ -2,22 +2,16 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parsePEResponse } from "./parse.js";
 import { analyzeCurve } from "./analyze.js";
-import type { CurvePoint, ProgramId } from "./types.js";
+import { point as pt, type PointOver } from "./testing.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
 );
 const fixturePoints = parsePEResponse(fixture, 101);
 
-const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, medicalOOP: 0,
-  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
-  childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-});
-
 describe("analyzeCurve on synthetic curves", () => {
   it("finds no cliffs on a monotonic curve", () => {
-    const pts = [flat(0, 10000), flat(10000, 15000), flat(20000, 21000)];
+    const pts = [pt(0, 10000), pt(10000, 15000), pt(20000, 21000)];
     const a = analyzeCurve(pts, 5000);
     expect(a.cliffs).toHaveLength(0);
     expect(a.dangerZones).toHaveLength(0);
@@ -25,7 +19,7 @@ describe("analyzeCurve on synthetic curves", () => {
   });
 
   it("detects a cliff, its danger zone, and recovery point", () => {
-    const pts = [flat(0, 20000), flat(10000, 30000), flat(20000, 22000), flat(30000, 28000), flat(40000, 34000)];
+    const pts = [pt(0, 20000), pt(10000, 30000), pt(20000, 22000), pt(30000, 28000), pt(40000, 34000)];
     const a = analyzeCurve(pts, 5000);
     expect(a.cliffs).toHaveLength(1);
     expect(a.cliffs[0]).toMatchObject({ startEarnings: 10000, endEarnings: 20000, drop: 8000 });
@@ -37,39 +31,31 @@ describe("analyzeCurve on synthetic curves", () => {
   });
 
   it("reports in_danger_zone with escape earnings when current sits underwater", () => {
-    const pts = [flat(0, 20000), flat(10000, 30000), flat(20000, 22000), flat(30000, 28000), flat(40000, 34000)];
+    const pts = [pt(0, 20000), pt(10000, 30000), pt(20000, 22000), pt(30000, 28000), pt(40000, 34000)];
     const a = analyzeCurve(pts, 25000);
     expect(a.verdict).toBe("in_danger_zone");
     expect(a.escapeEarnings).toBe(40000);
   });
 
   it("reports cliff_behind when all cliffs are below current earnings", () => {
-    const pts = [flat(0, 20000), flat(10000, 30000), flat(20000, 22000), flat(30000, 40000), flat(40000, 46000)];
+    const pts = [pt(0, 20000), pt(10000, 30000), pt(20000, 22000), pt(30000, 40000), pt(40000, 46000)];
     const a = analyzeCurve(pts, 35000);
     expect(a.verdict).toBe("cliff_behind");
   });
 
   it("interpolates currentNet linearly between points", () => {
-    const pts = [flat(0, 0), flat(10000, 10000)];
+    const pts = [pt(0, 0), pt(10000, 10000)];
     expect(analyzeCurve(pts, 5000).currentNet).toBe(5000);
   });
 
   it("reports in_danger_zone for cumulative erosion even when no single step is a cliff", () => {
     // Each step drops < CLIFF_MIN (no cliffs), but the cumulative drop from the
     // running max exceeds CLIFF_MIN, opening a zone that never recovers.
-    const pts = [flat(0, 30000), flat(10000, 29900), flat(20000, 29850), flat(30000, 29750), flat(40000, 29600)];
+    const pts = [pt(0, 30000), pt(10000, 29900), pt(20000, 29850), pt(30000, 29750), pt(40000, 29600)];
     const a = analyzeCurve(pts, 25000);
     expect(a.cliffs).toHaveLength(0);
     expect(a.verdict).toBe("in_danger_zone");
   });
-});
-
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-// `programs` arrives as a sparse patch over ZERO, so it cannot be the full
-// Record the CurvePoint field is.
-type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
-const pt = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
-  ...flat(earnings, netIncome), ...over, programs: { ...ZERO, ...(over.programs ?? {}) },
 });
 
 describe("cliff attribution", () => {

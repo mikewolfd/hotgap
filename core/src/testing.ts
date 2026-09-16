@@ -1,6 +1,7 @@
 // Test-only helpers shared by the core and worker suites. Not exported from
 // index.ts: nothing here is part of the library.
 import type { AxisSpec } from "./translate.js";
+import { PROGRAM_IDS, type CurvePoint, type ProgramId } from "./types.js";
 
 /** A California single parent, 30, with a 5-year-old, $1,500 rent, $30,000 a year — the suites' stock household. */
 export const CA_SINGLE_ONE_KID = {
@@ -8,6 +9,19 @@ export const CA_SINGLE_ONE_KID = {
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
 };
+
+/** Every program at $0: the `programs` record of a point with no benefit. */
+export const NO_PROGRAMS = Object.fromEntries(PROGRAM_IDS.map((id) => [id, 0])) as Record<ProgramId, number>;
+
+/** `programs` arrives as a sparse patch over NO_PROGRAMS, so it cannot be the full Record the CurvePoint field is. */
+export type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
+
+/** A synthetic curve point: no premium, no program, nothing else, except what `over` says. */
+export const point = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
+  earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
+  ...over,
+  programs: { ...NO_PROGRAMS, ...(over.programs ?? {}) },
+});
 
 /** A fetch whose every call answers with `fn()`. */
 export const respond = (fn: () => Response | Promise<Response>): typeof fetch => (async () => fn()) as unknown as typeof fetch;

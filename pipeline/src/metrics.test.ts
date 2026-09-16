@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { ARCHETYPES, answersFor, evaluateCurve, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { point as flat } from "../../core/src/testing.js";
 import { stateMetrics } from "./metrics.js";
 
 const fixture = JSON.parse(
@@ -10,12 +11,6 @@ const fixturePoints = parsePEResponse(fixture, 101);
 const single1 = ARCHETYPES.find((a) => a.id === "single-1")!;
 const evaluated = (points: CurvePoint[], state = "CA") =>
   evaluateCurve(answersFor(state, single1), { year: "2026", currentEarnings: 0, points }, "archetype");
-
-const flat = (earnings: number, netIncome: number): CurvePoint => ({
-  earnings, netIncome, medicalOOP: 0,
-  programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
-  childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-});
 
 describe("stateMetrics on the committed CA fixture", () => {
   // The CA single-parent-one-kid fixture, evaluated as the CA single-1

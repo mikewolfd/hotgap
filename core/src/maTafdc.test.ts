@@ -2,17 +2,14 @@ import { describe, it, expect } from "vitest";
 import { maTafdcGrant, correctMaTafdc, type MaTafdcInputs } from "./maTafdc.js";
 import { answersFor, ARCHETYPES } from "./archetypes.js";
 import { evaluateCurve } from "./evaluate.js";
-import type { CurvePoint } from "./types.js";
+import { point as pt } from "./testing.js";
 
 const inputs: MaTafdcInputs = {
   paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
   dependentCareDeduction: 0, clothingAllowance: 0, infantBenefit: 0, duplicatedTanf: 0, engineUsedCorrectedGrant: false,
 };
 const answers = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
-const point = (earnings: number, tanf: number): CurvePoint => ({
-  earnings, netIncome: earnings + tanf, programs: { tanf, snap: 1000 } as CurvePoint["programs"],
-  childPrograms: {}, medicalOOP: 0, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false, maTafdc: inputs,
-});
+const point = (earnings: number, tanf: number) => pt(earnings, earnings + tanf, { programs: { tanf, snap: 1000 }, maTafdc: inputs });
 
 describe("Massachusetts ongoing-recipient TAFDC", () => {
   it("uses the published five-person standard and a 50% taper after one earner's $200 deduction", () => {
