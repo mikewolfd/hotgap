@@ -1,0 +1,417 @@
+{
+ "S4-labels-390-light": [
+  {
+   "t": "−$25,449",
+   "hit": 0
+  },
+  {
+   "t": "$84,732",
+   "hit": 0
+  },
+  {
+   "t": "+$7,000",
+   "hit": 0
+  },
+  {
+   "t": "safe from here",
+   "hit": 0
+  }
+ ],
+ "N9-summary-light": {
+  "text": "CO · El Paso · 1 adult, kids 3 & 7 · $38,000 a year",
+  "h": 46.5
+ },
+ "S7-breakdown-light": {
+  "track": 324,
+  "axisH": 20.140625
+ },
+ "S9-cite-light": 358,
+ "B2-compare-390-now-light": {
+  "tableW": 358,
+  "scrollerW": 358,
+  "scrollerRight": 374,
+  "scrollW": 358,
+  "cols": [
+   {
+    "w": 128,
+    "right": 144
+   },
+   {
+    "w": 230,
+    "right": 374
+   }
+  ],
+  "wide": false
+ },
+ "S4-labels-390-dark": [
+  {
+   "t": "−$25,449",
+   "hit": 0
+  },
+  {
+   "t": "$84,732",
+   "hit": 0
+  },
+  {
+   "t": "+$7,000",
+   "hit": 0
+  },
+  {
+   "t": "safe from here",
+   "hit": 0
+  }
+ ],
+ "N9-summary-dark": {
+  "text": "CO · El Paso · 1 adult, kids 3 & 7 · $38,000 a year",
+  "h": 46.5
+ },
+ "S7-breakdown-dark": {
+  "track": 324,
+  "axisH": 20.140625
+ },
+ "S9-cite-dark": 358,
+ "B2-compare-390-now-dark": {
+  "tableW": 358,
+  "scrollerW": 358,
+  "scrollerRight": 374,
+  "scrollW": 358,
+  "cols": [
+   {
+    "w": 128,
+    "right": 144
+   },
+   {
+    "w": 230,
+    "right": 374
+   }
+  ],
+  "wide": false
+ },
+ "S4-labels-1280-light": [
+  {
+   "t": "−$25,449",
+   "hit": 0
+  },
+  {
+   "t": "$84,732",
+   "hit": 0
+  },
+  {
+   "t": "+$7,000",
+   "hit": 0
+  },
+  {
+   "t": "back to even",
+   "hit": 0
+  },
+  {
+   "t": "safe from here",
+   "hit": 0
+  }
+ ],
+ "S2-chips-1280": [
+  {
+   "id": "where",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "household",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "pay",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "rent",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "childcare",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "childcare-subsidy",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "head-start",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "housing",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "employer-coverage",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "no-snap",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "no-tanf",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "no-medicaid",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "no-wic",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "self-employed",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "disabled",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "age",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "ssdi",
+   "unset": true,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "child-support",
+   "unset": true,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "unemployment",
+   "unset": true,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "savings",
+   "unset": true,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "status",
+   "unset": false,
+   "weight": "600",
+   "color": "rgb(18, 23, 28)"
+  },
+  {
+   "id": "kids-disabled",
+   "unset": true,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  }
+ ],
+ "S7-breakdown-1280": {
+  "h": 31.25,
+  "track": 427.78125
+ },
+ "S4-labels-1280-dark": [
+  {
+   "t": "−$25,449",
+   "hit": 0
+  },
+  {
+   "t": "$84,732",
+   "hit": 0
+  },
+  {
+   "t": "+$7,000",
+   "hit": 0
+  },
+  {
+   "t": "back to even",
+   "hit": 0
+  },
+  {
+   "t": "safe from here",
+   "hit": 0
+  }
+ ],
+ "S3-N2-note-390": {
+  "w": 358,
+  "maxWidth": "none"
+ },
+ "B2-compare-390-2-whatifs": {
+  "tableW": 469,
+  "scrollerW": 358,
+  "scrollerRight": 374,
+  "scrollW": 469,
+  "cols": [
+   {
+    "w": 128,
+    "right": 144
+   },
+   {
+    "w": 104,
+    "right": 248
+   },
+   {
+    "w": 123,
+    "right": 371
+   },
+   {
+    "w": 114,
+    "right": 485
+   }
+  ],
+  "wide": true
+ },
+ "B2-compare-390-1-whatif": {
+  "tableW": 358,
+  "scrollerW": 358,
+  "scrollerRight": 374,
+  "scrollW": 358,
+  "cols": [
+   {
+    "w": 128,
+    "right": 144
+   },
+   {
+    "w": 106,
+    "right": 250
+   },
+   {
+    "w": 125,
+    "right": 374
+   }
+  ],
+  "wide": false
+ },
+ "B2-compare-1280-3-whatifs": {
+  "tableW": 1184,
+  "scrollerW": 1184,
+  "scrollerRight": 1232,
+  "scrollW": 1184,
+  "cols": [
+   {
+    "w": 176,
+    "right": 224
+   },
+   {
+    "w": 223,
+    "right": 447
+   },
+   {
+    "w": 244,
+    "right": 692
+   },
+   {
+    "w": 277,
+    "right": 969
+   },
+   {
+    "w": 263,
+    "right": 1232
+   }
+  ],
+  "wide": true
+ },
+ "N7-cell-shadow": "rgb(210, 97, 31) 1px 0px 0px 0px inset",
+ "S6-compare-1280-failed": {
+  "tableW": 1184,
+  "scrollerW": 1184,
+  "scrollerRight": 1232,
+  "scrollW": 1184,
+  "cols": [
+   {
+    "w": 176,
+    "right": 224
+   },
+   {
+    "w": 141,
+    "right": 365
+   },
+   {
+    "w": 154,
+    "right": 518
+   },
+   {
+    "w": 174,
+    "right": 693
+   },
+   {
+    "w": 166,
+    "right": 858
+   },
+   {
+    "w": 374,
+    "right": 1232
+   }
+  ],
+  "wide": true
+ },
+ "N4-mark1-390": "6 drops between $37,000 and $55,000, together $29,558 a year.",
+ "S5-TX-caption": "The y-axis starts at $0; the visible range is 23.3× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+ "S5-TX-ledger": [
+  "$5,000MedicaidAdult",
+  "$12,000TANF cash assistanceHousehold",
+  "$41,000Medicaid DeferredThe children move to CHIP: $2,913 a year of coverage from $41,000. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342).Children",
+  "$44,000SNAP$1,943 a year of SNAP continues at $44,000, none from $46,000.Household",
+  "$46,000SNAPHousehold",
+  "$51,000School mealsHousehold",
+  "$51,000WICChildren",
+  "$57,000CHIP DeferredThe premium tax credit rises $8,843 as it ends. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342).Children",
+  "$59,000Earned Income Tax Credit (EITC)Phases out; no step of $200 or more, so it is not a cliff.Household",
+  "$107,000Premium tax creditNet premium rises $5,077 in one step.Household"
+ ],
+ "print": {
+  "sticky": "none",
+  "bar": "none",
+  "buttons": 0,
+  "caption": "none",
+  "readout": "none",
+  "handout": "block",
+  "handoutSize": "17.3333px",
+  "handoutMeasure": "476.397px",
+  "body": "rgb(255, 255, 255)",
+  "ink": "rgb(18, 23, 28)",
+  "curveWidth": "672",
+  "pageOverride": false
+ },
+ "B1-archetype-1280": {
+  "head": "\tNow\n\n1 adult, $38,000 (archetype)\n\tHousing voucher on\n\nnot in the sweep — needs the live call\n\tPay $55,000 a year\n\n1 adult, $55,000 (archetype)",
+  "change": "Change from now\t—\t—\t−$28,447"
+ }
+}

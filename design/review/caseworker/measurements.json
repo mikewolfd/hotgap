@@ -1,0 +1,6143 @@
+{
+  "390-light": {
+    "type": {
+      "wordmark": {
+        "fs": "17px",
+        "lh": "26.35px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "verdict": {
+        "fs": "24px",
+        "lh": "31.2px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "verdictSub": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileLab": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileVal": {
+        "fs": "30px",
+        "lh": "33px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileSub": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "h2": {
+        "fs": "19px",
+        "lh": "24.7px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "h3": {
+        "fs": "17px",
+        "lh": "22.1px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "callout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "corrAt": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tag": {
+        "fs": "13px",
+        "lh": "20.8px",
+        "w": "500",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "cite": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "readout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "key": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "cap": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "th": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "td": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "rowBtn": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "bdLabel": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "bdAxis": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "footnote": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "assumed": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "source": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chip": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chipK": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chipV": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "summary": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "summaryBtn": {
+        "fs": "13px",
+        "lh": "15.6px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "button": {
+        "fs": "15px",
+        "lh": "18px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "note": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "compareTh": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "compareSub": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "compareRowTh": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "700",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tick": {
+        "fs": "12px",
+        "lh": "18.6px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "label": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "markCount": {
+        "fs": "12px",
+        "lh": "normal",
+        "w": "600",
+        "color": "rgb(250, 251, 252)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "status": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      }
+    },
+    "ll": {
+      ".verdict-line": {
+        "chars": 153,
+        "lines": 6,
+        "cpl": 26,
+        "widthPx": 358,
+        "maxWidth": "550.833px"
+      },
+      ".verdict-sub": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 358,
+        "maxWidth": "652.881px"
+      },
+      "#coverage p": {
+        "chars": 184,
+        "lines": 4,
+        "cpl": 46,
+        "widthPx": 339,
+        "maxWidth": "652.881px"
+      },
+      "#correctionsRest": {
+        "chars": 367,
+        "lines": 7,
+        "cpl": 52,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#corrections .hg-cite": {
+        "chars": 185,
+        "lines": 8,
+        "cpl": 23,
+        "widthPx": 170,
+        "maxWidth": "none"
+      },
+      "#curveCap": {
+        "chars": 857,
+        "lines": 15,
+        "cpl": 57,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      ".hg-readout": {
+        "chars": 107,
+        "lines": 3,
+        "cpl": 36,
+        "widthPx": 358,
+        "maxWidth": "515.433px"
+      },
+      ".ledger caption": {
+        "chars": 157,
+        "lines": 3,
+        "cpl": 52,
+        "widthPx": 358,
+        "maxWidth": "none"
+      },
+      ".drops caption": {
+        "chars": 43,
+        "lines": 1,
+        "cpl": 43,
+        "widthPx": 480,
+        "maxWidth": "none"
+      },
+      "#ledgerNote": {
+        "chars": 290,
+        "lines": 5,
+        "cpl": 58,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#compareNote": {
+        "chars": 160,
+        "lines": 3,
+        "cpl": 53,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#compareEmpty": {
+        "chars": 101,
+        "lines": 2,
+        "cpl": 51,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      ".assumed li": {
+        "chars": 86,
+        "lines": 3,
+        "cpl": 29,
+        "widthPx": 300,
+        "maxWidth": "none"
+      },
+      "#sourceNote": {
+        "chars": 739,
+        "lines": 15,
+        "cpl": 49,
+        "widthPx": 324,
+        "maxWidth": "565.831px"
+      },
+      ".breakdown > .footnote": {
+        "chars": 311,
+        "lines": 6,
+        "cpl": 52,
+        "widthPx": 324,
+        "maxWidth": "565.831px"
+      },
+      ".compare caption": {
+        "chars": 37,
+        "lines": 1,
+        "cpl": 37,
+        "widthPx": 480,
+        "maxWidth": "none"
+      }
+    },
+    "spacing": {
+      "sticky": {
+        "top": 0,
+        "h": 69,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "top": {
+        "top": 0,
+        "h": 68,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "12px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "inputs": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "summary": {
+        "top": 69,
+        "h": 59,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "verdict": {
+        "top": 145,
+        "h": 477,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "24px",
+        "pb": "16px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "tiles": {
+        "top": 434,
+        "h": 171,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provenance": {
+        "top": 622,
+        "h": 608,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provH2": {
+        "top": 646,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "cols": {
+        "top": 1246,
+        "h": 4752,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "curveH2": {
+        "top": 1270,
+        "h": 49,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "chart": {
+        "top": 1331,
+        "h": 240,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "drops": {
+        "top": 2088,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "breakdown": {
+        "top": 2821,
+        "h": 424,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "ledgerH2": {
+        "top": 3310,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "compareH2": {
+        "top": 4584,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "assumptions": {
+        "top": 5251,
+        "h": 747,
+        "mt": "24px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "theme": {
+        "top": 6046,
+        "h": 44,
+        "mt": "48px",
+        "mb": "16px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "handout": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "status": {
+        "top": 145,
+        "h": 0,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "content": {
+        "top": 145,
+        "h": 5853,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      }
+    },
+    "chips": 22,
+    "chipRows": 1,
+    "chipsDetail": [
+      {
+        "id": "where",
+        "text": "Where80903, CO, El Paso County",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "household",
+        "text": "Home1 adult, kids 3 & 7",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "pay",
+        "text": "Pay$38,000 a year",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "rent",
+        "text": "Rent$1,735 a month",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "childcare",
+        "text": "Child care$2,773 a month",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "age",
+        "text": "Your age30",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "ssdi",
+        "text": "SSDInone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "child-support",
+        "text": "Child supportnone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "unemployment",
+        "text": "Unemployment paynone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "savings",
+        "text": "Savingsnone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "status",
+        "text": "Your statusUS citizen",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "kids-disabled",
+        "text": "Kids with a disabilitynone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "childcare-subsidy",
+        "text": "Child care helpon",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "head-start",
+        "text": "Head Startoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "housing",
+        "text": "Housing helpoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "employer-coverage",
+        "text": "Health plan from a joboff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "self-employed",
+        "text": "Self-employedoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "disabled",
+        "text": "You have a disabilityoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-snap",
+        "text": "Gets food help (SNAP)yes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-tanf",
+        "text": "Gets cash help (TANF)yes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-medicaid",
+        "text": "Gets Medicaidyes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-wic",
+        "text": "Gets WICyes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      }
+    ],
+    "targets": {
+      "chips": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "marks": [
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ]
+      ],
+      "rowBtns": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "buttons": [
+        {
+          "t": "Add a what-ifWhat-if",
+          "h": 44,
+          "w": 82
+        },
+        {
+          "t": "Print the client sheetPrint",
+          "h": 44,
+          "w": 66
+        },
+        {
+          "t": "Edit",
+          "h": 32,
+          "w": 49
+        },
+        {
+          "t": "Dark",
+          "h": 44,
+          "w": 66
+        }
+      ]
+    },
+    "marks": [
+      {
+        "left": "17.7877%",
+        "top": "61.9876%",
+        "label": "Cliff at $6,000 to $7,000: −$3,904. TANF cash assistance ends. Driver: benefits.",
+        "count": null
+      },
+      {
+        "left": "28.6629%",
+        "top": "45.8499%",
+        "label": "Cliff at $26,000 to $27,000: −$627. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "40.0819%",
+        "top": "44.9586%",
+        "label": "6 drops between $37,000 and $55,000, together $29,558 a year.",
+        "count": "6"
+      },
+      {
+        "left": "47.1508%",
+        "top": "69.7096%",
+        "label": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "72.1639%",
+        "top": "48.4472%",
+        "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+        "count": null
+      }
+    ],
+    "labels": [
+      {
+        "text": "−$25,449",
+        "x": 152,
+        "y": 136,
+        "w": 57,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "$84,732",
+        "x": 71,
+        "y": 91,
+        "w": 47,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "+$7,000",
+        "x": 134,
+        "y": 114,
+        "w": 48,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "safe from here",
+        "x": 198,
+        "y": 11,
+        "w": 82,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(65, 75, 85)"
+      }
+    ],
+    "ticks": [
+      {
+        "text": "$40k",
+        "fs": "12px"
+      },
+      {
+        "text": "$60k",
+        "fs": "12px"
+      },
+      {
+        "text": "$80k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$120k",
+        "fs": "12px"
+      },
+      {
+        "text": "$0",
+        "fs": "12px"
+      },
+      {
+        "text": "$50k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$150k",
+        "fs": "12px"
+      }
+    ],
+    "circles": [
+      {
+        "cx": 64,
+        "cy": 149,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 103,
+        "cy": 110,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 143,
+        "cy": 108,
+        "r": 6,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 169,
+        "cy": 167,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 258,
+        "cy": 116,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 126,
+        "cy": 108,
+        "r": 4,
+        "fill": "var(--series-1)"
+      }
+    ],
+    "scroll": {
+      "sw": 390,
+      "iw": 390,
+      "sh": 6170
+    },
+    "tilesRow": [
+      {
+        "lab": "Net, after premiums",
+        "top": 434,
+        "left": 16,
+        "w": 113
+      },
+      {
+        "lab": "Raise to clear the zone",
+        "top": 434,
+        "left": 153,
+        "w": 130
+      },
+      {
+        "lab": "Largest single-step drop",
+        "top": 531,
+        "left": 16,
+        "w": 138
+      },
+      {
+        "lab": "Reach at current earnings",
+        "top": 531,
+        "left": 178,
+        "w": 166
+      }
+    ],
+    "verdictW": 358,
+    "focusNow": {
+      "tag": "P",
+      "id": "verdictLine",
+      "cls": "verdict-line",
+      "outline": "solid",
+      "matchesFV": true
+    },
+    "compare": {
+      "tableW": 480,
+      "scrollerW": 358,
+      "scrollW": 480,
+      "cols": [
+        {
+          "t": "",
+          "w": 208
+        },
+        {
+          "t": "Now1 adult, $38,000",
+          "w": 272
+        }
+      ],
+      "hasB": false
+    },
+    "drops": {
+      "tableW": 480,
+      "scrollerW": 358,
+      "scrollW": 480,
+      "rows": 10,
+      "rowH": [
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        64,
+        61,
+        61
+      ]
+    },
+    "ledger": {
+      "tableW": 358,
+      "rows": 9,
+      "rowH": [
+        40,
+        97,
+        173,
+        78,
+        78,
+        153,
+        101,
+        173,
+        97
+      ],
+      "who": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ]
+    },
+    "openRowBg": "rgb(241, 243, 246)",
+    "panelBg": "rgb(250, 251, 252)",
+    "planeBg": "rgb(232, 235, 238)",
+    "motion": {
+      "durDraw": ".7s",
+      "lineAnim": "no .hg-draw"
+    },
+    "headings": [
+      "H1 Benefits cliffs for one household, with what-ifs",
+      "H2 Model coverage in Colorado",
+      "H2 Corrections applied in Colorado",
+      "H2 Net income after premiums, $0–$150,000 of earnings",
+      "H2 Every step down",
+      "H3 Where the $25,449 went — $54,000 to $55,000",
+      "H2 Where each program ends",
+      "H2 Compare",
+      "H3 What this model does not include"
+    ],
+    "tabStops": 16,
+    "themeTop": 6046,
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrRest": "Checked and not applying here — TAFDC: Massachusetts-only; PolicyEngine's TANF as served. CCDF child care subsidy: in net income: Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it. Coverage gap: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires.",
+    "tileTexts": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "verdictText": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "subText": "It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.",
+    "capText": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "sourceText": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
+    "ledgerNote": "Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.",
+    "summaryText": "80903 · CO · El Paso County · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chipLabels": [
+      "Where80903, CO, El Paso County",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "contrast": {
+      "verdict": "15.06",
+      "verdictSub": "7.43",
+      "tileLab": "4.75",
+      "tileSub": "7.43",
+      "cite": "4.75",
+      "footnote": "4.75",
+      "source": "5.49",
+      "chipK": "5.49",
+      "chipV": "17.40",
+      "th": "4.75",
+      "td": "15.06",
+      "readout": "7.43",
+      "key": "7.43",
+      "cap": "4.75",
+      "tag": "7.43",
+      "compareSub": "4.75",
+      "summary": "8.58",
+      "note": "5.49",
+      "chipOffValue": "5.49",
+      "chipEdge": "3.49",
+      "openRowOnPlane": "1.08",
+      "panelOnPlane": "1.16",
+      "labelFills": [
+        "−$25,449: rgb(113, 51, 102)",
+        "$84,732: rgb(113, 51, 102)",
+        "+$7,000: rgb(113, 51, 102)",
+        "safe from here: rgb(65, 75, 85)"
+      ]
+    },
+    "chipNone": {
+      "text": "SSDInone",
+      "vColor": "rgb(18, 23, 28)",
+      "vWeight": "600"
+    },
+    "chipOff": {
+      "text": "Head Startoff",
+      "vColor": "rgb(94, 104, 113)",
+      "vWeight": "400"
+    },
+    "consoleErrors": [],
+    "stickyAfter600": {
+      "stickyTop": 0,
+      "stickyH": 69,
+      "summaryTop": -531,
+      "inputsTop": 0
+    },
+    "chipsOpenH": 740
+  },
+  "390-dark": {
+    "type": {
+      "wordmark": {
+        "fs": "17px",
+        "lh": "26.35px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "verdict": {
+        "fs": "24px",
+        "lh": "31.2px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "verdictSub": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileLab": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileVal": {
+        "fs": "30px",
+        "lh": "33px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileSub": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "h2": {
+        "fs": "19px",
+        "lh": "24.7px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "h3": {
+        "fs": "17px",
+        "lh": "22.1px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "callout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "corrAt": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tag": {
+        "fs": "13px",
+        "lh": "20.8px",
+        "w": "500",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "cite": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "readout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "key": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "cap": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "th": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "td": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "rowBtn": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "bdLabel": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "bdAxis": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "footnote": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "assumed": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "source": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chip": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chipK": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chipV": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "summary": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "summaryBtn": {
+        "fs": "13px",
+        "lh": "15.6px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "button": {
+        "fs": "15px",
+        "lh": "18px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "note": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "compareTh": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "compareSub": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "compareRowTh": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "700",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tick": {
+        "fs": "12px",
+        "lh": "18.6px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "label": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "markCount": {
+        "fs": "12px",
+        "lh": "normal",
+        "w": "600",
+        "color": "rgb(22, 27, 32)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "status": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      }
+    },
+    "ll": {
+      ".verdict-line": {
+        "chars": 153,
+        "lines": 6,
+        "cpl": 26,
+        "widthPx": 358,
+        "maxWidth": "550.833px"
+      },
+      ".verdict-sub": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 358,
+        "maxWidth": "652.881px"
+      },
+      "#coverage p": {
+        "chars": 184,
+        "lines": 4,
+        "cpl": 46,
+        "widthPx": 339,
+        "maxWidth": "652.881px"
+      },
+      "#correctionsRest": {
+        "chars": 367,
+        "lines": 7,
+        "cpl": 52,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#corrections .hg-cite": {
+        "chars": 185,
+        "lines": 8,
+        "cpl": 23,
+        "widthPx": 170,
+        "maxWidth": "none"
+      },
+      "#curveCap": {
+        "chars": 857,
+        "lines": 15,
+        "cpl": 57,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      ".hg-readout": {
+        "chars": 107,
+        "lines": 3,
+        "cpl": 36,
+        "widthPx": 358,
+        "maxWidth": "515.433px"
+      },
+      ".ledger caption": {
+        "chars": 157,
+        "lines": 3,
+        "cpl": 52,
+        "widthPx": 358,
+        "maxWidth": "none"
+      },
+      ".drops caption": {
+        "chars": 43,
+        "lines": 1,
+        "cpl": 43,
+        "widthPx": 480,
+        "maxWidth": "none"
+      },
+      "#ledgerNote": {
+        "chars": 290,
+        "lines": 5,
+        "cpl": 58,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#compareNote": {
+        "chars": 160,
+        "lines": 3,
+        "cpl": 53,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      "#compareEmpty": {
+        "chars": 101,
+        "lines": 2,
+        "cpl": 51,
+        "widthPx": 358,
+        "maxWidth": "565.831px"
+      },
+      ".assumed li": {
+        "chars": 86,
+        "lines": 3,
+        "cpl": 29,
+        "widthPx": 300,
+        "maxWidth": "none"
+      },
+      "#sourceNote": {
+        "chars": 739,
+        "lines": 15,
+        "cpl": 49,
+        "widthPx": 324,
+        "maxWidth": "565.831px"
+      },
+      ".breakdown > .footnote": {
+        "chars": 311,
+        "lines": 6,
+        "cpl": 52,
+        "widthPx": 324,
+        "maxWidth": "565.831px"
+      },
+      ".compare caption": {
+        "chars": 37,
+        "lines": 1,
+        "cpl": 37,
+        "widthPx": 480,
+        "maxWidth": "none"
+      }
+    },
+    "spacing": {
+      "sticky": {
+        "top": 0,
+        "h": 69,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "top": {
+        "top": 0,
+        "h": 68,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "12px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "inputs": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "summary": {
+        "top": 69,
+        "h": 59,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "verdict": {
+        "top": 145,
+        "h": 477,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "24px",
+        "pb": "16px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "tiles": {
+        "top": 434,
+        "h": 171,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provenance": {
+        "top": 622,
+        "h": 608,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provH2": {
+        "top": 646,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "cols": {
+        "top": 1246,
+        "h": 4752,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "curveH2": {
+        "top": 1270,
+        "h": 49,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "chart": {
+        "top": 1331,
+        "h": 240,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "drops": {
+        "top": 2088,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "breakdown": {
+        "top": 2821,
+        "h": 424,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "ledgerH2": {
+        "top": 3310,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "compareH2": {
+        "top": 4584,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "assumptions": {
+        "top": 5251,
+        "h": 747,
+        "mt": "24px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "theme": {
+        "top": 6046,
+        "h": 44,
+        "mt": "48px",
+        "mb": "16px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "handout": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "status": {
+        "top": 145,
+        "h": 0,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "content": {
+        "top": 145,
+        "h": 5853,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      }
+    },
+    "chips": 22,
+    "chipRows": 1,
+    "chipsDetail": [
+      {
+        "id": "where",
+        "text": "Where80903, CO, El Paso County",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "household",
+        "text": "Home1 adult, kids 3 & 7",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "pay",
+        "text": "Pay$38,000 a year",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "rent",
+        "text": "Rent$1,735 a month",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "childcare",
+        "text": "Child care$2,773 a month",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "age",
+        "text": "Your age30",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "ssdi",
+        "text": "SSDInone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "child-support",
+        "text": "Child supportnone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "unemployment",
+        "text": "Unemployment paynone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "savings",
+        "text": "Savingsnone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "status",
+        "text": "Your statusUS citizen",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "kids-disabled",
+        "text": "Kids with a disabilitynone",
+        "h": 0,
+        "w": 0,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "childcare-subsidy",
+        "text": "Child care helpon",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "head-start",
+        "text": "Head Startoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "housing",
+        "text": "Housing helpoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "employer-coverage",
+        "text": "Health plan from a joboff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "self-employed",
+        "text": "Self-employedoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "disabled",
+        "text": "You have a disabilityoff",
+        "h": 0,
+        "w": 0,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-snap",
+        "text": "Gets food help (SNAP)yes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-tanf",
+        "text": "Gets cash help (TANF)yes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-medicaid",
+        "text": "Gets Medicaidyes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-wic",
+        "text": "Gets WICyes",
+        "h": 0,
+        "w": 0,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      }
+    ],
+    "targets": {
+      "chips": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "marks": [
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ]
+      ],
+      "rowBtns": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "buttons": [
+        {
+          "t": "Add a what-ifWhat-if",
+          "h": 44,
+          "w": 82
+        },
+        {
+          "t": "Print the client sheetPrint",
+          "h": 44,
+          "w": 66
+        },
+        {
+          "t": "Edit",
+          "h": 32,
+          "w": 49
+        },
+        {
+          "t": "Dark",
+          "h": 44,
+          "w": 66
+        }
+      ]
+    },
+    "marks": [
+      {
+        "left": "17.7877%",
+        "top": "61.9876%",
+        "label": "Cliff at $6,000 to $7,000: −$3,904. TANF cash assistance ends. Driver: benefits.",
+        "count": null
+      },
+      {
+        "left": "28.6629%",
+        "top": "45.8499%",
+        "label": "Cliff at $26,000 to $27,000: −$627. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "40.0819%",
+        "top": "44.9586%",
+        "label": "6 drops between $37,000 and $55,000, together $29,558 a year.",
+        "count": "6"
+      },
+      {
+        "left": "47.1508%",
+        "top": "69.7096%",
+        "label": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "72.1639%",
+        "top": "48.4472%",
+        "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+        "count": null
+      }
+    ],
+    "labels": [
+      {
+        "text": "−$25,449",
+        "x": 152,
+        "y": 136,
+        "w": 57,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "$84,732",
+        "x": 71,
+        "y": 91,
+        "w": 47,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "+$7,000",
+        "x": 134,
+        "y": 114,
+        "w": 48,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "safe from here",
+        "x": 198,
+        "y": 11,
+        "w": 82,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(194, 203, 211)"
+      }
+    ],
+    "ticks": [
+      {
+        "text": "$40k",
+        "fs": "12px"
+      },
+      {
+        "text": "$60k",
+        "fs": "12px"
+      },
+      {
+        "text": "$80k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$120k",
+        "fs": "12px"
+      },
+      {
+        "text": "$0",
+        "fs": "12px"
+      },
+      {
+        "text": "$50k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$150k",
+        "fs": "12px"
+      }
+    ],
+    "circles": [
+      {
+        "cx": 64,
+        "cy": 149,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 103,
+        "cy": 110,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 143,
+        "cy": 108,
+        "r": 6,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 169,
+        "cy": 167,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 258,
+        "cy": 116,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 126,
+        "cy": 108,
+        "r": 4,
+        "fill": "var(--series-1)"
+      }
+    ],
+    "scroll": {
+      "sw": 390,
+      "iw": 390,
+      "sh": 6170
+    },
+    "tilesRow": [
+      {
+        "lab": "Net, after premiums",
+        "top": 434,
+        "left": 16,
+        "w": 113
+      },
+      {
+        "lab": "Raise to clear the zone",
+        "top": 434,
+        "left": 153,
+        "w": 130
+      },
+      {
+        "lab": "Largest single-step drop",
+        "top": 531,
+        "left": 16,
+        "w": 138
+      },
+      {
+        "lab": "Reach at current earnings",
+        "top": 531,
+        "left": 178,
+        "w": 166
+      }
+    ],
+    "verdictW": 358,
+    "focusNow": {
+      "tag": "P",
+      "id": "verdictLine",
+      "cls": "verdict-line",
+      "outline": "solid",
+      "matchesFV": true
+    },
+    "compare": {
+      "tableW": 480,
+      "scrollerW": 358,
+      "scrollW": 480,
+      "cols": [
+        {
+          "t": "",
+          "w": 208
+        },
+        {
+          "t": "Now1 adult, $38,000",
+          "w": 272
+        }
+      ],
+      "hasB": false
+    },
+    "drops": {
+      "tableW": 480,
+      "scrollerW": 358,
+      "scrollW": 480,
+      "rows": 10,
+      "rowH": [
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        64,
+        61,
+        61
+      ]
+    },
+    "ledger": {
+      "tableW": 358,
+      "rows": 9,
+      "rowH": [
+        40,
+        97,
+        173,
+        78,
+        78,
+        153,
+        101,
+        173,
+        97
+      ],
+      "who": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ]
+    },
+    "openRowBg": "rgb(29, 36, 42)",
+    "panelBg": "rgb(22, 27, 32)",
+    "planeBg": "rgb(13, 17, 20)",
+    "motion": {
+      "durDraw": ".7s",
+      "lineAnim": "no .hg-draw"
+    },
+    "headings": [
+      "H1 Benefits cliffs for one household, with what-ifs",
+      "H2 Model coverage in Colorado",
+      "H2 Corrections applied in Colorado",
+      "H2 Net income after premiums, $0–$150,000 of earnings",
+      "H2 Every step down",
+      "H3 Where the $25,449 went — $54,000 to $55,000",
+      "H2 Where each program ends",
+      "H2 Compare",
+      "H3 What this model does not include"
+    ],
+    "tabStops": 16,
+    "themeTop": 6046,
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrRest": "Checked and not applying here — TAFDC: Massachusetts-only; PolicyEngine's TANF as served. CCDF child care subsidy: in net income: Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it. Coverage gap: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires.",
+    "tileTexts": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "verdictText": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "subText": "It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.",
+    "capText": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "sourceText": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
+    "ledgerNote": "Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.",
+    "summaryText": "80903 · CO · El Paso County · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chipLabels": [
+      "Where80903, CO, El Paso County",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "contrast": {
+      "verdict": "17.32",
+      "verdictSub": "11.54",
+      "tileLab": "7.22",
+      "tileSub": "11.54",
+      "cite": "7.22",
+      "footnote": "7.22",
+      "source": "6.60",
+      "chipK": "6.60",
+      "chipV": "15.83",
+      "th": "7.22",
+      "td": "17.32",
+      "readout": "11.54",
+      "key": "11.54",
+      "cap": "7.22",
+      "tag": "11.54",
+      "compareSub": "7.22",
+      "summary": "10.54",
+      "note": "6.60",
+      "chipOffValue": "6.60",
+      "chipEdge": "3.74",
+      "openRowOnPlane": "1.21",
+      "panelOnPlane": "1.09",
+      "labelFills": [
+        "−$25,449: rgb(217, 162, 201)",
+        "$84,732: rgb(217, 162, 201)",
+        "+$7,000: rgb(217, 162, 201)",
+        "safe from here: rgb(194, 203, 211)"
+      ]
+    },
+    "chipNone": {
+      "text": "SSDInone",
+      "vColor": "rgb(242, 245, 247)",
+      "vWeight": "600"
+    },
+    "chipOff": {
+      "text": "Head Startoff",
+      "vColor": "rgb(151, 161, 170)",
+      "vWeight": "400"
+    },
+    "consoleErrors": [],
+    "stickyAfter600": {
+      "stickyTop": 0,
+      "stickyH": 69,
+      "summaryTop": -531,
+      "inputsTop": 0
+    },
+    "chipsOpenH": 740
+  },
+  "1280-light": {
+    "type": {
+      "wordmark": {
+        "fs": "17px",
+        "lh": "26.35px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "verdict": {
+        "fs": "24px",
+        "lh": "31.2px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "verdictSub": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileLab": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileVal": {
+        "fs": "30px",
+        "lh": "33px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tileSub": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "h2": {
+        "fs": "19px",
+        "lh": "24.7px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "h3": {
+        "fs": "17px",
+        "lh": "22.1px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "callout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "corrAt": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tag": {
+        "fs": "13px",
+        "lh": "20.8px",
+        "w": "500",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "cite": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "readout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "key": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(65, 75, 85)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "cap": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "th": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "td": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "rowBtn": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "bdLabel": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "bdAxis": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "footnote": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "assumed": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "source": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chip": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chipK": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "chipV": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "summary": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "summaryBtn": {
+        "fs": "13px",
+        "lh": "15.6px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "button": {
+        "fs": "15px",
+        "lh": "18px",
+        "w": "500",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "note": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      "compareTh": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "compareSub": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "compareRowTh": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "700",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "tick": {
+        "fs": "12px",
+        "lh": "18.6px",
+        "w": "400",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "label": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "600",
+        "color": "rgb(18, 23, 28)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "markCount": {
+        "fs": "12px",
+        "lh": "normal",
+        "w": "600",
+        "color": "rgb(250, 251, 252)",
+        "bg": "rgb(232, 235, 238)"
+      },
+      "status": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(94, 104, 113)",
+        "bg": "rgb(232, 235, 238)"
+      }
+    },
+    "ll": {
+      ".verdict-line": {
+        "chars": 153,
+        "lines": 4,
+        "cpl": 38,
+        "widthPx": 541,
+        "maxWidth": "550.833px"
+      },
+      ".verdict-sub": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 541,
+        "maxWidth": "652.881px"
+      },
+      "#coverage p": {
+        "chars": 184,
+        "lines": 3,
+        "cpl": 61,
+        "widthPx": 557,
+        "maxWidth": "652.881px"
+      },
+      "#correctionsRest": {
+        "chars": 367,
+        "lines": 5,
+        "cpl": 73,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      "#corrections .hg-cite": {
+        "chars": 185,
+        "lines": 3,
+        "cpl": 62,
+        "widthPx": 388,
+        "maxWidth": "none"
+      },
+      "#curveCap": {
+        "chars": 857,
+        "lines": 10,
+        "cpl": 86,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      ".hg-readout": {
+        "chars": 107,
+        "lines": 2,
+        "cpl": 54,
+        "widthPx": 515,
+        "maxWidth": "515.433px"
+      },
+      ".ledger caption": {
+        "chars": 157,
+        "lines": 3,
+        "cpl": 52,
+        "widthPx": 490,
+        "maxWidth": "none"
+      },
+      ".drops caption": {
+        "chars": 43,
+        "lines": 1,
+        "cpl": 43,
+        "widthPx": 662,
+        "maxWidth": "none"
+      },
+      "#ledgerNote": {
+        "chars": 290,
+        "lines": 4,
+        "cpl": 73,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      "#compareNote": {
+        "chars": 160,
+        "lines": 2,
+        "cpl": 80,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      "#compareEmpty": {
+        "chars": 101,
+        "lines": 2,
+        "cpl": 51,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      ".assumed li": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 432,
+        "maxWidth": "none"
+      },
+      "#sourceNote": {
+        "chars": 739,
+        "lines": 10,
+        "cpl": 74,
+        "widthPx": 456,
+        "maxWidth": "565.831px"
+      },
+      ".breakdown > .footnote": {
+        "chars": 311,
+        "lines": 4,
+        "cpl": 78,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      ".compare caption": {
+        "chars": 37,
+        "lines": 1,
+        "cpl": 37,
+        "widthPx": 490,
+        "maxWidth": "none"
+      }
+    },
+    "spacing": {
+      "sticky": {
+        "top": 0,
+        "h": 69,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "top": {
+        "top": 0,
+        "h": 68,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "12px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "inputs": {
+        "top": 69,
+        "h": 212,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "summary": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "verdict": {
+        "top": 298,
+        "h": 220,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "24px",
+        "pb": "16px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "tiles": {
+        "top": 428,
+        "h": 73,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provenance": {
+        "top": 518,
+        "h": 278,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provH2": {
+        "top": 542,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "cols": {
+        "top": 812,
+        "h": 2266,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "curveH2": {
+        "top": 836,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "chart": {
+        "top": 873,
+        "h": 320,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "drops": {
+        "top": 1536,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "breakdown": {
+        "top": 2267,
+        "h": 342,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "ledgerH2": {
+        "top": 844,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "compareH2": {
+        "top": 1849,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "assumptions": {
+        "top": 2496,
+        "h": 583,
+        "mt": "24px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "theme": {
+        "top": 3127,
+        "h": 44,
+        "mt": "48px",
+        "mb": "16px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "handout": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "status": {
+        "top": 298,
+        "h": 0,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "content": {
+        "top": 298,
+        "h": 2781,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      }
+    },
+    "chips": 22,
+    "chipRows": 4,
+    "chipsDetail": [
+      {
+        "id": "where",
+        "text": "Where80903, CO, El Paso County",
+        "h": 44,
+        "w": 263,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "household",
+        "text": "Home1 adult, kids 3 & 7",
+        "h": 44,
+        "w": 195,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "pay",
+        "text": "Pay$38,000 a year",
+        "h": 44,
+        "w": 160,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "rent",
+        "text": "Rent$1,735 a month",
+        "h": 44,
+        "w": 172,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "childcare",
+        "text": "Child care$2,773 a month",
+        "h": 44,
+        "w": 207,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "age",
+        "text": "Your age30",
+        "h": 44,
+        "w": 109,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "ssdi",
+        "text": "SSDInone",
+        "h": 44,
+        "w": 104,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "child-support",
+        "text": "Child supportnone",
+        "h": 44,
+        "w": 158,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "unemployment",
+        "text": "Unemployment paynone",
+        "h": 44,
+        "w": 199,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "savings",
+        "text": "Savingsnone",
+        "h": 44,
+        "w": 123,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "status",
+        "text": "Your statusUS citizen",
+        "h": 44,
+        "w": 177,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "kids-disabled",
+        "text": "Kids with a disabilitynone",
+        "h": 44,
+        "w": 201,
+        "pressed": null,
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "childcare-subsidy",
+        "text": "Child care helpon",
+        "h": 44,
+        "w": 150,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "head-start",
+        "text": "Head Startoff",
+        "h": 44,
+        "w": 122,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "housing",
+        "text": "Housing helpoff",
+        "h": 44,
+        "w": 138,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "employer-coverage",
+        "text": "Health plan from a joboff",
+        "h": 44,
+        "w": 194,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "self-employed",
+        "text": "Self-employedoff",
+        "h": 44,
+        "w": 147,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "disabled",
+        "text": "You have a disabilityoff",
+        "h": 44,
+        "w": 184,
+        "pressed": "false",
+        "vColor": "rgb(94, 104, 113)",
+        "vWeight": "400",
+        "edge": "rgb(124, 136, 148)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-snap",
+        "text": "Gets food help (SNAP)yes",
+        "h": 44,
+        "w": 210,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-tanf",
+        "text": "Gets cash help (TANF)yes",
+        "h": 44,
+        "w": 210,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-medicaid",
+        "text": "Gets Medicaidyes",
+        "h": 44,
+        "w": 155,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      },
+      {
+        "id": "no-wic",
+        "text": "Gets WICyes",
+        "h": 44,
+        "w": 123,
+        "pressed": "true",
+        "vColor": "rgb(18, 23, 28)",
+        "vWeight": "600",
+        "edge": "rgb(18, 23, 28)",
+        "bg": "rgb(250, 251, 252)"
+      }
+    ],
+    "targets": {
+      "chips": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "marks": [
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ]
+      ],
+      "rowBtns": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "buttons": [
+        {
+          "t": "Add a what-ifWhat-if",
+          "h": 44,
+          "w": 122
+        },
+        {
+          "t": "Print the client sheetPrint",
+          "h": 44,
+          "w": 171
+        },
+        {
+          "t": "Dark",
+          "h": 44,
+          "w": 66
+        }
+      ]
+    },
+    "marks": [
+      {
+        "left": "11.4562%",
+        "top": "63.3615%",
+        "label": "Cliff at $6,000 to $7,000: −$3,904. TANF cash assistance ends. Driver: benefits.",
+        "count": null
+      },
+      {
+        "left": "23.4602%",
+        "top": "45.7567%",
+        "label": "Cliff at $26,000 to $27,000: −$627. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "30.0624%",
+        "top": "44.7844%",
+        "label": "Cliff at $37,000 to $38,000: −$219. Medicaid ends. Driver: premiums.",
+        "count": null
+      },
+      {
+        "left": "32.4632%",
+        "top": "44.6587%",
+        "label": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "35.4642%",
+        "top": "44.5681%",
+        "label": "Cliff at $46,000 to $47,000: −$361. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "39.4656%",
+        "top": "44.8122%",
+        "label": "3 drops between $51,000 and $55,000, together $28,673 a year.",
+        "count": "3"
+      },
+      {
+        "left": "43.8671%",
+        "top": "71.7855%",
+        "label": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "71.4763%",
+        "top": "48.5902%",
+        "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+        "count": null
+      }
+    ],
+    "labels": [
+      {
+        "text": "−$25,449",
+        "x": 270,
+        "y": 187,
+        "w": 57,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "$84,732",
+        "x": 144,
+        "y": 126,
+        "w": 47,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "+$7,000",
+        "x": 211,
+        "y": 126,
+        "w": 48,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(113, 51, 102)"
+      },
+      {
+        "text": "back to even",
+        "x": 235,
+        "y": 11,
+        "w": 72,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(65, 75, 85)"
+      },
+      {
+        "text": "safe from here",
+        "x": 439,
+        "y": 11,
+        "w": 82,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(65, 75, 85)"
+      }
+    ],
+    "ticks": [
+      {
+        "text": "$40k",
+        "fs": "12px"
+      },
+      {
+        "text": "$60k",
+        "fs": "12px"
+      },
+      {
+        "text": "$80k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$120k",
+        "fs": "12px"
+      },
+      {
+        "text": "$0",
+        "fs": "12px"
+      },
+      {
+        "text": "$25k",
+        "fs": "12px"
+      },
+      {
+        "text": "$50k",
+        "fs": "12px"
+      },
+      {
+        "text": "$75k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$125k",
+        "fs": "12px"
+      },
+      {
+        "text": "$150k",
+        "fs": "12px"
+      }
+    ],
+    "circles": [
+      {
+        "cx": 76,
+        "cy": 203,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 155,
+        "cy": 146,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 199,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 215,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 235,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 261,
+        "cy": 143,
+        "r": 6,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 290,
+        "cy": 230,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 473,
+        "cy": 155,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 203,
+        "cy": 144,
+        "r": 4,
+        "fill": "var(--series-1)"
+      }
+    ],
+    "scroll": {
+      "sw": 1280,
+      "iw": 1280,
+      "sh": 3251
+    },
+    "tilesRow": [
+      {
+        "lab": "Net, after premiums",
+        "top": 428,
+        "left": 613,
+        "w": 113
+      },
+      {
+        "lab": "Raise to clear the zone",
+        "top": 428,
+        "left": 750,
+        "w": 130
+      },
+      {
+        "lab": "Largest single-step drop",
+        "top": 428,
+        "left": 903,
+        "w": 138
+      },
+      {
+        "lab": "Reach at current earnings",
+        "top": 428,
+        "left": 1066,
+        "w": 166
+      }
+    ],
+    "verdictW": 541,
+    "focusNow": {
+      "tag": "P",
+      "id": "verdictLine",
+      "cls": "verdict-line",
+      "outline": "solid",
+      "matchesFV": true
+    },
+    "compare": {
+      "tableW": 490,
+      "scrollerW": 490,
+      "scrollW": 490,
+      "cols": [
+        {
+          "t": "",
+          "w": 208
+        },
+        {
+          "t": "Now1 adult, $38,000",
+          "w": 282
+        }
+      ],
+      "hasB": false
+    },
+    "drops": {
+      "tableW": 662,
+      "scrollerW": 662,
+      "scrollW": 662,
+      "rows": 10,
+      "rowH": [
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61
+      ]
+    },
+    "ledger": {
+      "tableW": 490,
+      "rows": 9,
+      "rowH": [
+        40,
+        78,
+        116,
+        78,
+        78,
+        97,
+        59,
+        116,
+        78
+      ],
+      "who": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ]
+    },
+    "openRowBg": "rgb(241, 243, 246)",
+    "panelBg": "rgb(250, 251, 252)",
+    "planeBg": "rgb(232, 235, 238)",
+    "motion": {
+      "durDraw": ".7s",
+      "lineAnim": "no .hg-draw"
+    },
+    "headings": [
+      "H1 Benefits cliffs for one household, with what-ifs",
+      "H2 Model coverage in Colorado",
+      "H2 Corrections applied in Colorado",
+      "H2 Net income after premiums, $0–$150,000 of earnings",
+      "H2 Every step down",
+      "H3 Where the $25,449 went — $54,000 to $55,000",
+      "H2 Where each program ends",
+      "H2 Compare",
+      "H3 What this model does not include"
+    ],
+    "tabStops": 37,
+    "themeTop": 3127,
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrRest": "Checked and not applying here — TAFDC: Massachusetts-only; PolicyEngine's TANF as served. CCDF child care subsidy: in net income: Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it. Coverage gap: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires.",
+    "tileTexts": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "verdictText": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "subText": "It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.",
+    "capText": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "sourceText": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
+    "ledgerNote": "Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.",
+    "summaryText": "80903 · CO · El Paso County · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chipLabels": [
+      "Where80903, CO, El Paso County",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "contrast": {
+      "verdict": "15.06",
+      "verdictSub": "7.43",
+      "tileLab": "4.75",
+      "tileSub": "7.43",
+      "cite": "4.75",
+      "footnote": "4.75",
+      "source": "5.49",
+      "chipK": "5.49",
+      "chipV": "17.40",
+      "th": "4.75",
+      "td": "15.06",
+      "readout": "7.43",
+      "key": "7.43",
+      "cap": "4.75",
+      "tag": "7.43",
+      "compareSub": "4.75",
+      "summary": "17.40",
+      "note": "5.49",
+      "chipOffValue": "5.49",
+      "chipEdge": "3.49",
+      "openRowOnPlane": "1.08",
+      "panelOnPlane": "1.16",
+      "labelFills": [
+        "−$25,449: rgb(113, 51, 102)",
+        "$84,732: rgb(113, 51, 102)",
+        "+$7,000: rgb(113, 51, 102)",
+        "back to even: rgb(65, 75, 85)",
+        "safe from here: rgb(65, 75, 85)"
+      ]
+    },
+    "chipNone": {
+      "text": "SSDInone",
+      "vColor": "rgb(18, 23, 28)",
+      "vWeight": "600"
+    },
+    "chipOff": {
+      "text": "Head Startoff",
+      "vColor": "rgb(94, 104, 113)",
+      "vWeight": "400"
+    },
+    "consoleErrors": [],
+    "stickyAfter600": {
+      "stickyTop": 0,
+      "stickyH": 69,
+      "summaryTop": 0,
+      "inputsTop": -531
+    }
+  },
+  "1280-dark": {
+    "type": {
+      "wordmark": {
+        "fs": "17px",
+        "lh": "26.35px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "verdict": {
+        "fs": "24px",
+        "lh": "31.2px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "verdictSub": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileLab": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileVal": {
+        "fs": "30px",
+        "lh": "33px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tileSub": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "h2": {
+        "fs": "19px",
+        "lh": "24.7px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "h3": {
+        "fs": "17px",
+        "lh": "22.1px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "callout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "corrAt": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tag": {
+        "fs": "13px",
+        "lh": "20.8px",
+        "w": "500",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "cite": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "readout": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "key": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(194, 203, 211)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "cap": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "th": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "td": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "rowBtn": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "bdLabel": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "bdAxis": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "footnote": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "assumed": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "source": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chip": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chipK": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "chipV": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "summary": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "summaryBtn": {
+        "fs": "13px",
+        "lh": "15.6px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "button": {
+        "fs": "15px",
+        "lh": "18px",
+        "w": "500",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "note": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      "compareTh": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "500",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "compareSub": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "compareRowTh": {
+        "fs": "15px",
+        "lh": "23.25px",
+        "w": "700",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "tick": {
+        "fs": "12px",
+        "lh": "18.6px",
+        "w": "400",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "label": {
+        "fs": "13px",
+        "lh": "20.15px",
+        "w": "600",
+        "color": "rgb(242, 245, 247)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "markCount": {
+        "fs": "12px",
+        "lh": "normal",
+        "w": "600",
+        "color": "rgb(22, 27, 32)",
+        "bg": "rgb(13, 17, 20)"
+      },
+      "status": {
+        "fs": "13px",
+        "lh": "18.85px",
+        "w": "400",
+        "color": "rgb(151, 161, 170)",
+        "bg": "rgb(13, 17, 20)"
+      }
+    },
+    "ll": {
+      ".verdict-line": {
+        "chars": 153,
+        "lines": 4,
+        "cpl": 38,
+        "widthPx": 541,
+        "maxWidth": "550.833px"
+      },
+      ".verdict-sub": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 541,
+        "maxWidth": "652.881px"
+      },
+      "#coverage p": {
+        "chars": 184,
+        "lines": 3,
+        "cpl": 61,
+        "widthPx": 557,
+        "maxWidth": "652.881px"
+      },
+      "#correctionsRest": {
+        "chars": 367,
+        "lines": 5,
+        "cpl": 73,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      "#corrections .hg-cite": {
+        "chars": 185,
+        "lines": 3,
+        "cpl": 62,
+        "widthPx": 388,
+        "maxWidth": "none"
+      },
+      "#curveCap": {
+        "chars": 857,
+        "lines": 10,
+        "cpl": 86,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      ".hg-readout": {
+        "chars": 107,
+        "lines": 2,
+        "cpl": 54,
+        "widthPx": 515,
+        "maxWidth": "515.433px"
+      },
+      ".ledger caption": {
+        "chars": 157,
+        "lines": 3,
+        "cpl": 52,
+        "widthPx": 490,
+        "maxWidth": "none"
+      },
+      ".drops caption": {
+        "chars": 43,
+        "lines": 1,
+        "cpl": 43,
+        "widthPx": 662,
+        "maxWidth": "none"
+      },
+      "#ledgerNote": {
+        "chars": 290,
+        "lines": 4,
+        "cpl": 73,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      "#compareNote": {
+        "chars": 160,
+        "lines": 2,
+        "cpl": 80,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      "#compareEmpty": {
+        "chars": 101,
+        "lines": 2,
+        "cpl": 51,
+        "widthPx": 490,
+        "maxWidth": "565.831px"
+      },
+      ".assumed li": {
+        "chars": 86,
+        "lines": 2,
+        "cpl": 43,
+        "widthPx": 432,
+        "maxWidth": "none"
+      },
+      "#sourceNote": {
+        "chars": 739,
+        "lines": 10,
+        "cpl": 74,
+        "widthPx": 456,
+        "maxWidth": "565.831px"
+      },
+      ".breakdown > .footnote": {
+        "chars": 311,
+        "lines": 4,
+        "cpl": 78,
+        "widthPx": 566,
+        "maxWidth": "565.831px"
+      },
+      ".compare caption": {
+        "chars": 37,
+        "lines": 1,
+        "cpl": 37,
+        "widthPx": 490,
+        "maxWidth": "none"
+      }
+    },
+    "spacing": {
+      "sticky": {
+        "top": 0,
+        "h": 69,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "top": {
+        "top": 0,
+        "h": 68,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "12px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "inputs": {
+        "top": 69,
+        "h": 212,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "12px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "summary": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "verdict": {
+        "top": 298,
+        "h": 220,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "24px",
+        "pb": "16px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "tiles": {
+        "top": 428,
+        "h": 73,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provenance": {
+        "top": 518,
+        "h": 278,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "provH2": {
+        "top": 542,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "cols": {
+        "top": 812,
+        "h": 2266,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "curveH2": {
+        "top": 836,
+        "h": 25,
+        "mt": "24px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "chart": {
+        "top": 873,
+        "h": 320,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "drops": {
+        "top": 1536,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "breakdown": {
+        "top": 2267,
+        "h": 342,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "ledgerH2": {
+        "top": 844,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "compareH2": {
+        "top": 1849,
+        "h": 25,
+        "mt": "32px",
+        "mb": "12px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "assumptions": {
+        "top": 2496,
+        "h": 583,
+        "mt": "24px",
+        "mb": "0px",
+        "pt": "16px",
+        "pb": "16px",
+        "pl": "16px",
+        "pr": "16px"
+      },
+      "theme": {
+        "top": 3127,
+        "h": 44,
+        "mt": "48px",
+        "mb": "16px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "handout": {
+        "top": 0,
+        "h": 0,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "status": {
+        "top": 298,
+        "h": 0,
+        "mt": "16px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      },
+      "content": {
+        "top": 298,
+        "h": 2781,
+        "mt": "0px",
+        "mb": "0px",
+        "pt": "0px",
+        "pb": "0px",
+        "pl": "0px",
+        "pr": "0px"
+      }
+    },
+    "chips": 22,
+    "chipRows": 4,
+    "chipsDetail": [
+      {
+        "id": "where",
+        "text": "Where80903, CO, El Paso County",
+        "h": 44,
+        "w": 263,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "household",
+        "text": "Home1 adult, kids 3 & 7",
+        "h": 44,
+        "w": 195,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "pay",
+        "text": "Pay$38,000 a year",
+        "h": 44,
+        "w": 160,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "rent",
+        "text": "Rent$1,735 a month",
+        "h": 44,
+        "w": 172,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "childcare",
+        "text": "Child care$2,773 a month",
+        "h": 44,
+        "w": 207,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "age",
+        "text": "Your age30",
+        "h": 44,
+        "w": 109,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "ssdi",
+        "text": "SSDInone",
+        "h": 44,
+        "w": 104,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "child-support",
+        "text": "Child supportnone",
+        "h": 44,
+        "w": 158,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "unemployment",
+        "text": "Unemployment paynone",
+        "h": 44,
+        "w": 199,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "savings",
+        "text": "Savingsnone",
+        "h": 44,
+        "w": 123,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "status",
+        "text": "Your statusUS citizen",
+        "h": 44,
+        "w": 177,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "kids-disabled",
+        "text": "Kids with a disabilitynone",
+        "h": 44,
+        "w": 201,
+        "pressed": null,
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "childcare-subsidy",
+        "text": "Child care helpon",
+        "h": 44,
+        "w": 150,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "head-start",
+        "text": "Head Startoff",
+        "h": 44,
+        "w": 122,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "housing",
+        "text": "Housing helpoff",
+        "h": 44,
+        "w": 138,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "employer-coverage",
+        "text": "Health plan from a joboff",
+        "h": 44,
+        "w": 194,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "self-employed",
+        "text": "Self-employedoff",
+        "h": 44,
+        "w": 147,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "disabled",
+        "text": "You have a disabilityoff",
+        "h": 44,
+        "w": 184,
+        "pressed": "false",
+        "vColor": "rgb(151, 161, 170)",
+        "vWeight": "400",
+        "edge": "rgb(107, 118, 128)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-snap",
+        "text": "Gets food help (SNAP)yes",
+        "h": 44,
+        "w": 210,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-tanf",
+        "text": "Gets cash help (TANF)yes",
+        "h": 44,
+        "w": 210,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-medicaid",
+        "text": "Gets Medicaidyes",
+        "h": 44,
+        "w": 155,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      },
+      {
+        "id": "no-wic",
+        "text": "Gets WICyes",
+        "h": 44,
+        "w": 123,
+        "pressed": "true",
+        "vColor": "rgb(242, 245, 247)",
+        "vWeight": "600",
+        "edge": "rgb(242, 245, 247)",
+        "bg": "rgb(22, 27, 32)"
+      }
+    ],
+    "targets": {
+      "chips": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "marks": [
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          44,
+          44
+        ]
+      ],
+      "rowBtns": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "buttons": [
+        {
+          "t": "Add a what-ifWhat-if",
+          "h": 44,
+          "w": 122
+        },
+        {
+          "t": "Print the client sheetPrint",
+          "h": 44,
+          "w": 171
+        },
+        {
+          "t": "Dark",
+          "h": 44,
+          "w": 66
+        }
+      ]
+    },
+    "marks": [
+      {
+        "left": "11.4562%",
+        "top": "63.3615%",
+        "label": "Cliff at $6,000 to $7,000: −$3,904. TANF cash assistance ends. Driver: benefits.",
+        "count": null
+      },
+      {
+        "left": "23.4602%",
+        "top": "45.7567%",
+        "label": "Cliff at $26,000 to $27,000: −$627. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "30.0624%",
+        "top": "44.7844%",
+        "label": "Cliff at $37,000 to $38,000: −$219. Medicaid ends. Driver: premiums.",
+        "count": null
+      },
+      {
+        "left": "32.4632%",
+        "top": "44.6587%",
+        "label": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "35.4642%",
+        "top": "44.5681%",
+        "label": "Cliff at $46,000 to $47,000: −$361. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "39.4656%",
+        "top": "44.8122%",
+        "label": "3 drops between $51,000 and $55,000, together $28,673 a year.",
+        "count": "3"
+      },
+      {
+        "left": "43.8671%",
+        "top": "71.7855%",
+        "label": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+        "count": null
+      },
+      {
+        "left": "71.4763%",
+        "top": "48.5902%",
+        "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+        "count": null
+      }
+    ],
+    "labels": [
+      {
+        "text": "−$25,449",
+        "x": 270,
+        "y": 187,
+        "w": 57,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "$84,732",
+        "x": 144,
+        "y": 126,
+        "w": 47,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "+$7,000",
+        "x": 211,
+        "y": 126,
+        "w": 48,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(217, 162, 201)"
+      },
+      {
+        "text": "back to even",
+        "x": 235,
+        "y": 11,
+        "w": 72,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(194, 203, 211)"
+      },
+      {
+        "text": "safe from here",
+        "x": 439,
+        "y": 11,
+        "w": 82,
+        "h": 14,
+        "fs": "13px",
+        "fill": "rgb(194, 203, 211)"
+      }
+    ],
+    "ticks": [
+      {
+        "text": "$40k",
+        "fs": "12px"
+      },
+      {
+        "text": "$60k",
+        "fs": "12px"
+      },
+      {
+        "text": "$80k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$120k",
+        "fs": "12px"
+      },
+      {
+        "text": "$0",
+        "fs": "12px"
+      },
+      {
+        "text": "$25k",
+        "fs": "12px"
+      },
+      {
+        "text": "$50k",
+        "fs": "12px"
+      },
+      {
+        "text": "$75k",
+        "fs": "12px"
+      },
+      {
+        "text": "$100k",
+        "fs": "12px"
+      },
+      {
+        "text": "$125k",
+        "fs": "12px"
+      },
+      {
+        "text": "$150k",
+        "fs": "12px"
+      }
+    ],
+    "circles": [
+      {
+        "cx": 76,
+        "cy": 203,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 155,
+        "cy": 146,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 199,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 215,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 235,
+        "cy": 143,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 261,
+        "cy": 143,
+        "r": 6,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 290,
+        "cy": 230,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 473,
+        "cy": 155,
+        "r": 4,
+        "fill": "var(--loss-4)"
+      },
+      {
+        "cx": 203,
+        "cy": 144,
+        "r": 4,
+        "fill": "var(--series-1)"
+      }
+    ],
+    "scroll": {
+      "sw": 1280,
+      "iw": 1280,
+      "sh": 3251
+    },
+    "tilesRow": [
+      {
+        "lab": "Net, after premiums",
+        "top": 428,
+        "left": 613,
+        "w": 113
+      },
+      {
+        "lab": "Raise to clear the zone",
+        "top": 428,
+        "left": 750,
+        "w": 130
+      },
+      {
+        "lab": "Largest single-step drop",
+        "top": 428,
+        "left": 903,
+        "w": 138
+      },
+      {
+        "lab": "Reach at current earnings",
+        "top": 428,
+        "left": 1066,
+        "w": 166
+      }
+    ],
+    "verdictW": 541,
+    "focusNow": {
+      "tag": "P",
+      "id": "verdictLine",
+      "cls": "verdict-line",
+      "outline": "solid",
+      "matchesFV": true
+    },
+    "compare": {
+      "tableW": 490,
+      "scrollerW": 490,
+      "scrollW": 490,
+      "cols": [
+        {
+          "t": "",
+          "w": 208
+        },
+        {
+          "t": "Now1 adult, $38,000",
+          "w": 282
+        }
+      ],
+      "hasB": false
+    },
+    "drops": {
+      "tableW": 662,
+      "scrollerW": 662,
+      "scrollW": 662,
+      "rows": 10,
+      "rowH": [
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61,
+        61
+      ]
+    },
+    "ledger": {
+      "tableW": 490,
+      "rows": 9,
+      "rowH": [
+        40,
+        78,
+        116,
+        78,
+        78,
+        97,
+        59,
+        116,
+        78
+      ],
+      "who": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ]
+    },
+    "openRowBg": "rgb(29, 36, 42)",
+    "panelBg": "rgb(22, 27, 32)",
+    "planeBg": "rgb(13, 17, 20)",
+    "motion": {
+      "durDraw": ".7s",
+      "lineAnim": "no .hg-draw"
+    },
+    "headings": [
+      "H1 Benefits cliffs for one household, with what-ifs",
+      "H2 Model coverage in Colorado",
+      "H2 Corrections applied in Colorado",
+      "H2 Net income after premiums, $0–$150,000 of earnings",
+      "H2 Every step down",
+      "H3 Where the $25,449 went — $54,000 to $55,000",
+      "H2 Where each program ends",
+      "H2 Compare",
+      "H3 What this model does not include"
+    ],
+    "tabStops": 37,
+    "themeTop": 3127,
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrRest": "Checked and not applying here — TAFDC: Massachusetts-only; PolicyEngine's TANF as served. CCDF child care subsidy: in net income: Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it. Coverage gap: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires.",
+    "tileTexts": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "verdictText": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "subText": "It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.",
+    "capText": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "sourceText": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
+    "ledgerNote": "Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.",
+    "summaryText": "80903 · CO · El Paso County · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chipLabels": [
+      "Where80903, CO, El Paso County",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "contrast": {
+      "verdict": "17.32",
+      "verdictSub": "11.54",
+      "tileLab": "7.22",
+      "tileSub": "11.54",
+      "cite": "7.22",
+      "footnote": "7.22",
+      "source": "6.60",
+      "chipK": "6.60",
+      "chipV": "15.83",
+      "th": "7.22",
+      "td": "17.32",
+      "readout": "11.54",
+      "key": "11.54",
+      "cap": "7.22",
+      "tag": "11.54",
+      "compareSub": "7.22",
+      "summary": "15.83",
+      "note": "6.60",
+      "chipOffValue": "6.60",
+      "chipEdge": "3.74",
+      "openRowOnPlane": "1.21",
+      "panelOnPlane": "1.09",
+      "labelFills": [
+        "−$25,449: rgb(217, 162, 201)",
+        "$84,732: rgb(217, 162, 201)",
+        "+$7,000: rgb(217, 162, 201)",
+        "back to even: rgb(194, 203, 211)",
+        "safe from here: rgb(194, 203, 211)"
+      ]
+    },
+    "chipNone": {
+      "text": "SSDInone",
+      "vColor": "rgb(242, 245, 247)",
+      "vWeight": "600"
+    },
+    "chipOff": {
+      "text": "Head Startoff",
+      "vColor": "rgb(151, 161, 170)",
+      "vWeight": "400"
+    },
+    "consoleErrors": [],
+    "stickyAfter600": {
+      "stickyTop": 0,
+      "stickyH": 69,
+      "summaryTop": 0,
+      "inputsTop": -531
+    }
+  },
+  "reducedMotion": {
+    "durDraw": "0s",
+    "lineAnim": "0s",
+    "matchMediaInPage": false
+  },
+  "landing-390": {
+    "editorVisible": true,
+    "contentHidden": true,
+    "summary": "Tell us about your home to see your answer.",
+    "active": "f-zip",
+    "actions": [
+      "Add a what-ifWhat-if",
+      "Print the client sheetPrint"
+    ],
+    "heading": "If your pay goes up, do you keep more?",
+    "lead": "Answer four things. We check your help at every pay level and tell you what happens.",
+    "privacy": "We do not save what you type. No sign up. No tracking.",
+    "chipsShown": "none",
+    "chipCount": 18,
+    "submit": "See my answer",
+    "closeHidden": [
+      "See my answer:false",
+      "Add as a what-if:true",
+      "Close:true"
+    ]
+  },
+  "landing-1280": {
+    "editorVisible": true,
+    "contentHidden": true,
+    "summary": "Tell us about your home to see your answer.",
+    "active": "f-zip",
+    "actions": [
+      "Add a what-ifWhat-if",
+      "Print the client sheetPrint"
+    ],
+    "heading": "If your pay goes up, do you keep more?",
+    "lead": "Answer four things. We check your help at every pay level and tell you what happens.",
+    "privacy": "We do not save what you type. No sign up. No tracking.",
+    "chipsShown": "flex",
+    "chipCount": 18,
+    "submit": "See my answer",
+    "closeHidden": [
+      "See my answer:false",
+      "Add as a what-if:true",
+      "Close:true"
+    ]
+  },
+  "whatif-390-note-after-press": "What-if added: CCDF subsidy off. It is evaluated beside the base under Compare; the chips show the base.",
+  "whatif-390-url-1": "http://localhost:8792/caseworker?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D",
+  "whatif-390-url-3": "http://localhost:8792/caseworker?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=pay%3D55000",
+  "compare-390-3": {
+    "tableW": 551,
+    "scrollerW": 358,
+    "scrollW": 551,
+    "overflow": true,
+    "cols": [
+      {
+        "t": "",
+        "w": 81,
+        "h": 55
+      },
+      {
+        "t": "Now1 adult, $38,000",
+        "w": 104,
+        "h": 55
+      },
+      {
+        "t": "CCDF subsidy off1 adult, $38,000",
+        "w": 114,
+        "h": 55
+      },
+      {
+        "t": "Housing voucher on1 adult, $38,000",
+        "w": 129,
+        "h": 55
+      },
+      {
+        "t": "Pay $55,000 a year1 adult, $55,000",
+        "w": 123,
+        "h": 55
+      }
+    ],
+    "foot": [
+      {
+        "t": "This what-if",
+        "w": 81
+      },
+      {
+        "t": "",
+        "w": 104
+      },
+      {
+        "t": "Remove",
+        "w": 114
+      },
+      {
+        "t": "Remove",
+        "w": 129
+      },
+      {
+        "t": "Remove",
+        "w": 123
+      }
+    ],
+    "footBtns": [
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if CCDF subsidy off"
+      },
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if Housing voucher on"
+      },
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if Pay $55,000 a year"
+      }
+    ],
+    "rows": [
+      [
+        "Net after premiums",
+        "$84,371",
+        "$60,045",
+        "$88,792",
+        "$55,924"
+      ],
+      [
+        "Change from now",
+        "—",
+        "−$24,326",
+        "+$4,421",
+        "−$28,448"
+      ],
+      [
+        "In a danger zone",
+        "Yes",
+        "No",
+        "Yes",
+        "Yes"
+      ],
+      [
+        "Zone ends at",
+        "$45,000",
+        "—",
+        "$128,000",
+        "$119,000"
+      ],
+      [
+        "Raise still needed",
+        "$7,000",
+        "—",
+        "$90,000",
+        "$64,000"
+      ],
+      [
+        "Safe from",
+        "$119,000",
+        "$113,000",
+        "$128,000",
+        "$119,000"
+      ],
+      [
+        "Largest drop",
+        "$25,449",
+        "$7,272",
+        "$18,280",
+        "$25,449"
+      ],
+      [
+        "Adult Medicaid ends",
+        "$38,000",
+        "$38,000",
+        "$38,000",
+        "$38,000"
+      ],
+      [
+        "Child coverage ends",
+        "$73,000",
+        "$73,000",
+        "$73,000",
+        "$73,000"
+      ],
+      [
+        "Reach at these earnings",
+        "40th",
+        "40th",
+        "40th",
+        "51st"
+      ]
+    ],
+    "note": "Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there.",
+    "emptyHidden": true,
+    "bShadow": "rgb(210, 97, 31) 0px -3px 0px 0px inset",
+    "bodyShadow": "rgb(210, 97, 31) -1px 0px 0px 0px inset, rgb(210, 97, 31) 1px 0px 0px 0px inset",
+    "chartsNote": "What-if added: Pay $55,000 a year. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "remove-390": {
+    "active": "compare",
+    "activeText": "Compare",
+    "fv": false,
+    "outline": "none",
+    "cols": 4,
+    "url": "?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=pay%3D55000",
+    "note": "What-if added: Pay $55,000 a year. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "whatif-390-errors": [],
+  "whatif-1280-note-after-press": "What-if added: CCDF subsidy off. It is evaluated beside the base under Compare; the chips show the base.",
+  "whatif-1280-url-1": "http://localhost:8792/caseworker?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D",
+  "whatif-1280-url-3": "http://localhost:8792/caseworker?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=pay%3D55000",
+  "compare-1280-3": {
+    "tableW": 551,
+    "scrollerW": 490,
+    "scrollW": 551,
+    "overflow": true,
+    "cols": [
+      {
+        "t": "",
+        "w": 81,
+        "h": 55
+      },
+      {
+        "t": "Now1 adult, $38,000",
+        "w": 104,
+        "h": 55
+      },
+      {
+        "t": "CCDF subsidy off1 adult, $38,000",
+        "w": 114,
+        "h": 55
+      },
+      {
+        "t": "Housing voucher on1 adult, $38,000",
+        "w": 129,
+        "h": 55
+      },
+      {
+        "t": "Pay $55,000 a year1 adult, $55,000",
+        "w": 123,
+        "h": 55
+      }
+    ],
+    "foot": [
+      {
+        "t": "This what-if",
+        "w": 81
+      },
+      {
+        "t": "",
+        "w": 104
+      },
+      {
+        "t": "Remove",
+        "w": 114
+      },
+      {
+        "t": "Remove",
+        "w": 129
+      },
+      {
+        "t": "Remove",
+        "w": 123
+      }
+    ],
+    "footBtns": [
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if CCDF subsidy off"
+      },
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if Housing voucher on"
+      },
+      {
+        "t": "Remove",
+        "h": 32,
+        "w": 75,
+        "label": "Remove the what-if Pay $55,000 a year"
+      }
+    ],
+    "rows": [
+      [
+        "Net after premiums",
+        "$84,371",
+        "$60,045",
+        "$88,792",
+        "$55,924"
+      ],
+      [
+        "Change from now",
+        "—",
+        "−$24,326",
+        "+$4,421",
+        "−$28,448"
+      ],
+      [
+        "In a danger zone",
+        "Yes",
+        "No",
+        "Yes",
+        "Yes"
+      ],
+      [
+        "Zone ends at",
+        "$45,000",
+        "—",
+        "$128,000",
+        "$119,000"
+      ],
+      [
+        "Raise still needed",
+        "$7,000",
+        "—",
+        "$90,000",
+        "$64,000"
+      ],
+      [
+        "Safe from",
+        "$119,000",
+        "$113,000",
+        "$128,000",
+        "$119,000"
+      ],
+      [
+        "Largest drop",
+        "$25,449",
+        "$7,272",
+        "$18,280",
+        "$25,449"
+      ],
+      [
+        "Adult Medicaid ends",
+        "$38,000",
+        "$38,000",
+        "$38,000",
+        "$38,000"
+      ],
+      [
+        "Child coverage ends",
+        "$73,000",
+        "$73,000",
+        "$73,000",
+        "$73,000"
+      ],
+      [
+        "Reach at these earnings",
+        "40th",
+        "40th",
+        "40th",
+        "51st"
+      ]
+    ],
+    "note": "Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there.",
+    "emptyHidden": true,
+    "bShadow": "rgb(210, 97, 31) 0px -3px 0px 0px inset",
+    "bodyShadow": "rgb(210, 97, 31) -1px 0px 0px 0px inset, rgb(210, 97, 31) 1px 0px 0px 0px inset",
+    "chartsNote": "What-if added: Pay $55,000 a year. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "remove-1280": {
+    "active": "compare",
+    "activeText": "Compare",
+    "fv": false,
+    "outline": "none",
+    "cols": 4,
+    "url": "?zip=80903&kids=3%2C7&rent=1735&childcare=2773&pay=38000&unit=year&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=pay%3D55000",
+    "note": "What-if added: Pay $55,000 a year. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "whatif-1280-errors": [],
+  "MA-ms": 68099,
+  "MA": {
+    "verdict": "A cliff ahead: at $40,000 net drops $432. Below it, more pay is more money.",
+    "sub": "",
+    "coverage": "Figures complete for Massachusetts. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrections": [
+      "TANF cash assistanceTAFDC grant recomputed under the ongoing-recipient rules (106 CMR 704.281: $200 a month per earner, then a 50% disregard; https://www.mass.gov/doc/106-cmr-704-transitional-cash-assistance-program-financial-eligibility/download) and fed back to the engine point by point so SNAP follows it (policyengine-us #9469, fix in PR #9477); programs.tanf is the ongoing grant, the September clothing allowance rides in otherBenefits, and the six-month full disregard is not modeled.",
+      "ConnectorCare Plan Type 2Aladder $0-premium tier to 150% FPL and the published reduced-premium tiers above it, applied locally from https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans (read 2026-09-15) — WORKAROUND until upstream models the wrap (policyengine-us #9481).",
+      "CCDF child care subsidyadded by HotGap Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405)."
+    ],
+    "corrRest": "Checked and not applying here — Coverage gap: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires.",
+    "corrRows": 3,
+    "ledgerNote": "Cash benefits never end inside this axis. Child coverage ends at $84,000, deferred. No coverage gap band: Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires. ConnectorCare Plan Type 2A is applied from a local ladder.",
+    "ledgerRows": [
+      "$24,000TANF cash assistanceHousehold",
+      "$38,000MedicaidAdult",
+      "$43,000Medicaid DeferredThe children move to CHIP: $8,043 a year of coverage from $43,000. Crossing this does not end it this year: the loss lands at the child'",
+      "$43,000SNAPHousehold",
+      "$51,000WICChildren",
+      "$59,000Earned Income Tax Credit (EITC)Phases out; no step of $200 or more, so it is not a cliff.Household",
+      "$84,000CHIP DeferredThe premium tax credit rises $3,488 as it ends. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, ",
+      "$107,000Premium tax creditHousehold"
+    ],
+    "source": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Suffolk County, Massachusetts. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "dataSource": "live",
+    "tiles": [
+      "Net, after premiums$46,832at $38,000 earned",
+      "Largest single-step drop$8,385at $106,000 → $107,000",
+      "Reach at current earnings39thpercentile, ±$6,300 (n = 490)"
+    ],
+    "cap": "The y-axis starts at $20,000, not $0; the visible range is 11.9× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Suffolk County, Massachusetts. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "marks": 3,
+    "assumed": [
+      "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage and no other income; aged 30.",
+      "Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC and CCDF child care subsidy; not for Head Start and Housing voucher.",
+      "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+      "Not modelled in Massachusetts: LIHEAP. Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income."
+    ],
+    "county": "02108, MA, Suffolk County",
+    "cites": [
+      {
+        "text": "TAFDC grant recomputed under the ongoing-recipient rules (106 CMR 704.281: $200 a month per earner, then a 50% disregard; https://www.mass.gov/doc/106-cmr-704-transitional-cash-assistance-program-financial-eligibility/download) and fed back to the engine point by point so SNAP follows it (policyengine-us #9469, fix in PR #9477); programs.tanf is the ongoing grant, the September clothing allowance rides in otherBenefits, and the six-month full disregard is not modeled.",
+        "w": 388,
+        "lines": 8
+      },
+      {
+        "text": "$0-premium tier to 150% FPL and the published reduced-premium tiers above it, applied locally from https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans (read 2026-09-15) — WORKAROUND until upstream models the wrap (policyengine-us #9481).",
+        "w": 388,
+        "lines": 6
+      },
+      {
+        "text": "Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405).",
+        "w": 388,
+        "lines": 4
+      }
+    ],
+    "drops": 3,
+    "sh": 3201
+  },
+  "MA-errors": [],
+  "TX-ms": 4744,
+  "TX": {
+    "verdict": "A cliff ahead: at $51,000 net drops $956. Below it, more pay is more money.",
+    "sub": "",
+    "coverage": "Figures complete for Texas. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "corrections": [
+      "Medicaid — parent income limitoverridden Parent Medicaid limit sent as a request parameter from the state's published limit for the household's size, as a 2026 poverty-line fraction inclusive of the MAGI disregard; PolicyEngine's is five years stale (policyengine-us #9474, fix in PR #9475). source",
+      "CCDF child care subsidyadded by HotGap Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405).",
+      "Premium tax credit — coverage gapNon-expansion state: an adult with no Medicaid and no premium credit under 100% FPL is charged no marketplace premium, and flagged (evaluate.ts applyCoverageGap) — WORKAROUND until upstream gates take-up on subsidy eligibility (policyengine-us #9472)."
+    ],
+    "corrRest": "Checked and not applying here — TAFDC: Massachusetts-only; PolicyEngine's TANF as served. State premium help: No state premium help served by the endpoint, and no ladder or known program for this state.",
+    "corrRows": 3,
+    "ledgerNote": "The last cash benefit ends at $107,000. Child coverage ends at $57,000, deferred. Coverage gap band applies: Non-expansion state: an adult with no Medicaid and no premium credit under 100% FPL is charged no marketplace premium, and flagged (evaluate.ts applyCoverageGap) — WORKAROUND until upstream gates take-up on subsidy eligibility (policyengine-us #9472). No state premium help applies.",
+    "ledgerRows": [
+      "$5,000MedicaidCoverage ends with the raise (no deferral applies); the net premium rises $0 in the step.Adult",
+      "$5,000TANF cash assistanceHousehold",
+      "$41,000Medicaid DeferredThe children move to CHIP: $2,913 a year of coverage from $41,000. Crossing this does not end it this year: the loss lands at the child'",
+      "$43,000SNAPHousehold",
+      "$51,000School mealsHousehold",
+      "$51,000WICChildren",
+      "$57,000CHIP DeferredThe premium tax credit rises $8,843 as it ends. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, ",
+      "$59,000Earned Income Tax Credit (EITC)Phases out; no step of $200 or more, so it is not a cliff.Household",
+      "$107,000Premium tax creditNet premium rises $5,077 in one step.Household"
+    ],
+    "source": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "dataSource": "live",
+    "tiles": [
+      "Net, after premiums$44,047at $38,000 earned",
+      "Largest single-step drop$4,374at $106,000 → $107,000",
+      "Reach at current earnings48thpercentile, ±$1,900 (n = 2228)"
+    ],
+    "cap": "The y-axis starts at $0, not $0; the visible range is 27.4× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "marks": 3,
+    "assumed": [
+      "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage and no other income; aged 30.",
+      "Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC and CCDF child care subsidy; not for Head Start and Housing voucher.",
+      "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+      "Not modelled in Texas: LIHEAP. Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income."
+    ],
+    "county": "78701, TX, Travis County",
+    "cites": [
+      {
+        "text": "Parent Medicaid limit sent as a request parameter from the state's published limit for the household's size, as a 2026 poverty-line fraction inclusive of the MAGI disregard; PolicyEngine's is five years stale (policyengine-us #9474, fix in PR #9475). source",
+        "w": 388,
+        "lines": 4
+      },
+      {
+        "text": "Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405).",
+        "w": 388,
+        "lines": 4
+      },
+      {
+        "text": "Non-expansion state: an adult with no Medicaid and no premium credit under 100% FPL is charged no marketplace premium, and flagged (evaluate.ts applyCoverageGap) — WORKAROUND until upstream gates take-up on subsidy eligibility (policyengine-us #9472).",
+        "w": 388,
+        "lines": 5
+      }
+    ],
+    "drops": 3,
+    "sh": 3243
+  },
+  "TX-errors": [],
+  "focus-landing-1280": {
+    "id": "verdictLine",
+    "fv": true,
+    "outline": "rgb(18, 23, 28) solid 2px"
+  },
+  "tabStopsToChart-1280": [
+    "DIV#chartWrap.hg-chart:Net income after premiums ag"
+  ],
+  "mark1-1280": {
+    "label": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
+    "readout": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "outlineOffset": "-6px"
+  },
+  "mark7-1280": {
+    "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+    "readout": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums."
+  },
+  "mark7-open-1280": {
+    "expanded": "true",
+    "row": "$106,000 → $107,000",
+    "bd": "Where the $3,821 went — $106,000 to $107,000",
+    "readout": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+    "rowInView": true,
+    "scrollY": 1351
+  },
+  "mark7-closed-1280": {
+    "active": "hg-mark",
+    "label": "Cliff at $106,000 to $107,000: −$3,821. ",
+    "rows": 0,
+    "bd": "Where a drop went"
+  },
+  "rowBtnFocus-1280": {
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "offset": "2px",
+    "rect": {
+      "x": 48,
+      "y": 503.359375,
+      "width": 205.640625,
+      "height": 44,
+      "top": 503.359375,
+      "right": 253.640625,
+      "bottom": 547.359375,
+      "left": 48
+    },
+    "scrollerClip": {
+      "left": 0,
+      "top": 503.390625,
+      "bottom": 131
+    }
+  },
+  "dialog-1280": {
+    "open": true,
+    "title": "Savings",
+    "w": 448,
+    "h": 250,
+    "active": "d-savings-0",
+    "buttons": [
+      "Cancel",
+      "Save"
+    ],
+    "field": "Savings",
+    "hint": null,
+    "edge": "rgb(174, 183, 192)",
+    "backdrop": "rgba(18, 23, 28, 0.4)",
+    "padding": "24px"
+  },
+  "dialog-1280-after-escape": {
+    "active": "savings",
+    "whatifs": []
+  },
+  "dialog-1280-saved": {
+    "active": "savings",
+    "savingsChip": "Savingsnone",
+    "whatifs": [
+      "savings=5000"
+    ],
+    "note": "What-if added: Savings $5,000. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "dialog-1280-savedCol": [
+    "",
+    "Now1 adult, $38,000",
+    "Savings $5,0001 adult, $38,000"
+  ],
+  "fail-390": {
+    "alert": "The evaluation did not come back. The engine is busy. Try again in a few seconds. Try again",
+    "alertHidden": false,
+    "status": "",
+    "contentHidden": true,
+    "editorHidden": true,
+    "active": "BODY.",
+    "summary": "80903 · CO · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chips": "none",
+    "retryBtn": true,
+    "retryH": 32,
+    "sh": 844,
+    "alertTop": 144.5
+  },
+  "loading-390": {
+    "status": "Evaluating… net income is checked at 151 pay levels. A household not seen before takes a few seconds.",
+    "contentHidden": true,
+    "editorHidden": true,
+    "sh": 844
+  },
+  "whatif-fail-390": {
+    "head": [
+      "",
+      "Now1 adult, $38,000",
+      "Housing voucher onToo many evaluations in a minute. Wait a minute and try again."
+    ],
+    "foot": [
+      "Try again",
+      "Remove"
+    ],
+    "cells": [
+      [
+        "Net after premiums",
+        "$84,371",
+        "—"
+      ],
+      [
+        "Change from now",
+        "—",
+        "—"
+      ]
+    ],
+    "note": "What-if added: Housing voucher on. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "fail-1280": {
+    "alert": "The evaluation did not come back. The engine is busy. Try again in a few seconds. Try again",
+    "alertHidden": false,
+    "status": "",
+    "contentHidden": true,
+    "editorHidden": true,
+    "active": "BODY.",
+    "summary": "80903 · CO · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chips": "flex",
+    "retryBtn": true,
+    "retryH": 32,
+    "sh": 900,
+    "alertTop": 298
+  },
+  "loading-1280": {
+    "status": "Evaluating… net income is checked at 151 pay levels. A household not seen before takes a few seconds.",
+    "contentHidden": true,
+    "editorHidden": true,
+    "sh": 900
+  },
+  "whatif-fail-1280": {
+    "head": [
+      "",
+      "Now1 adult, $38,000",
+      "Housing voucher onToo many evaluations in a minute. Wait a minute and try again."
+    ],
+    "foot": [
+      "Try again",
+      "Remove"
+    ],
+    "cells": [
+      [
+        "Net after premiums",
+        "$84,371",
+        "—"
+      ],
+      [
+        "Change from now",
+        "—",
+        "—"
+      ]
+    ],
+    "note": "What-if added: Housing voucher on. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "focus-landing-390": {
+    "id": "verdictLine",
+    "fv": true,
+    "outline": "rgb(18, 23, 28) solid 2px"
+  },
+  "tabStopsToChart-390": [
+    "DIV#chartWrap.hg-chart:Net income after premiums ag"
+  ],
+  "mark1-390": {
+    "label": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+    "readout": "Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.",
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "outlineOffset": "-6px"
+  },
+  "mark7-390": {
+    "label": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+    "readout": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums."
+  },
+  "mark7-open-390": {
+    "expanded": "true",
+    "row": "$106,000 → $107,000",
+    "bd": "Where the $3,821 went — $106,000 to $107,000",
+    "readout": "Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.",
+    "rowInView": true,
+    "scrollY": 2678
+  },
+  "mark7-closed-390": {
+    "active": "hg-mark",
+    "label": "Cliff at $106,000 to $107,000: −$3,821. ",
+    "rows": 0,
+    "bd": "Where a drop went"
+  },
+  "rowBtnFocus-390": {
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "offset": "2px",
+    "rect": {
+      "x": 16,
+      "y": 504.9375,
+      "width": 150.453125,
+      "height": 44,
+      "top": 504.9375,
+      "right": 166.453125,
+      "bottom": 548.9375,
+      "left": 16
+    },
+    "scrollerClip": {
+      "left": 0,
+      "top": 504.640625,
+      "bottom": 132.25
+    }
+  },
+  "dialog-390": {
+    "open": true,
+    "title": "Savings",
+    "w": 354,
+    "h": 250,
+    "active": "d-savings-0",
+    "buttons": [
+      "Cancel",
+      "Save"
+    ],
+    "field": "Savings",
+    "hint": null,
+    "edge": "rgb(174, 183, 192)",
+    "backdrop": "rgba(18, 23, 28, 0.4)",
+    "padding": "24px"
+  },
+  "dialog-390-after-escape": {
+    "active": "savings",
+    "whatifs": []
+  },
+  "dialog-390-saved": {
+    "active": "savings",
+    "savingsChip": "Savingsnone",
+    "whatifs": [
+      "savings=5000"
+    ],
+    "note": "What-if added: Savings $5,000. It is evaluated beside the base under Compare; the chips show the base."
+  },
+  "dialog-390-savedCol": [
+    "",
+    "Now1 adult, $38,000",
+    "Savings $5,0001 adult, $38,000"
+  ],
+  "print": {
+    "body": "rgb(255, 255, 255)",
+    "ink": "rgb(18, 23, 28)",
+    "fontSize": "14.6667px",
+    "handout": "block",
+    "handoutH2": "For the client — Colorado, one parent, two children",
+    "handoutPs": [
+      "You are paid $38,000 a year. You keep about $84,400 a year. More pay does not add to that until you are paid $45,000 a year: a raise of $7,000 a year. It happens again between $45,000 and $119,000.",
+      "$29,379 of what you keep is child care help paid straight to your day care.",
+      "The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.",
+      "Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.",
+      "These are estimates. A case worker decides real help.",
+      "Printed from HotGap. 2026 rules. Sweep of 2026-09-16."
+    ],
+    "sticky": "none",
+    "chips": "flex",
+    "summary": "none",
+    "header": "block",
+    "headerH": 213,
+    "marksDisplay": "block",
+    "compareFoot": "none",
+    "compareEmpty": "none",
+    "readout": "block",
+    "readoutText": "Earnings $38,000 → net $84,371. Inside the household's danger zone (ends $45,000; peak $84,732 at $36,000).",
+    "dropsCaption": "table-caption",
+    "dropsCaptionText": "Select a row or its mark for the breakdown.",
+    "theme": "none",
+    "colsGrid": "1184px",
+    "rowBtnMinH": "44px",
+    "openRowBg": "rgb(241, 243, 246)",
+    "hatchSwatch": true,
+    "status": "",
+    "bdFill": [
+      "rgb(113, 51, 102)",
+      "rgb(113, 51, 102)",
+      "rgb(113, 51, 102)",
+      "rgb(178, 118, 163)"
+    ],
+    "lineStroke": "rgb(42, 111, 208)",
+    "skip": "none",
+    "sh": 4844
+  },
+  "archetype-390": {
+    "dataSource": "archetype",
+    "source": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: committed archetype sweep (single-2), generated 2026-09-16 — not this family's own live call. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "retryHidden": false,
+    "retryText": "Try again",
+    "where": "80903, CO",
+    "summary": "80903 · CO · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chips": [
+      "Where80903, CO",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "assumed": [
+      "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage and no other income; aged 30.",
+      "Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC and CCDF child care subsidy; not for Head Start and Housing voucher.",
+      "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+      "Not modelled in Colorado: LIHEAP. Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income."
+    ],
+    "cap": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: committed archetype sweep (single-2), generated 2026-09-16 — not this family's own live call. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "verdict": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "tiles": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "compareHead": [
+      "",
+      "Now1 adult, $38,000 · archetype",
+      "CCDF subsidy off1 adult, $38,000 · archetype"
+    ],
+    "compareNote": "Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there. A column marked archetype is the committed sweep for a household of that shape in this state, not this family's own live call.",
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "ledger5": "$55,000CCDF child care subsidyWorth $24,899 a year at $54,000. Care priced at $2,773 a month for 2 children (county 2015 prices, carried to 2026 dollars by the BLS Employment Cost Index).Household",
+    "handout": [
+      "For the client — Colorado, one parent, two children",
+      "You are paid $38,000 a year. You keep about $84,400 a year. More pay does not add to that until you are paid $45,000 a year: a raise of $7,000 a year. It happens again between $45,000 and $119,000.",
+      "$29,379 of what you keep is child care help paid straight to your day care.",
+      "The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.",
+      "Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.",
+      "These are estimates. A case worker decides real help.",
+      "Printed from HotGap. 2026 rules. Sweep of 2026-09-16."
+    ],
+    "status": "",
+    "note": ""
+  },
+  "archetype-390-errors": [],
+  "archetype-1280": {
+    "dataSource": "archetype",
+    "source": "Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: committed archetype sweep (single-2), generated 2026-09-16 — not this family's own live call. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "retryHidden": false,
+    "retryText": "Try again",
+    "where": "80903, CO",
+    "summary": "80903 · CO · 1 adult, kids 3 & 7 · $38,000 a year",
+    "chips": [
+      "Where80903, CO",
+      "Home1 adult, kids 3 & 7",
+      "Pay$38,000 a year",
+      "Rent$1,735 a month",
+      "Child care$2,773 a month",
+      "Your age30",
+      "SSDInone",
+      "Child supportnone",
+      "Unemployment paynone",
+      "Savingsnone",
+      "Your statusUS citizen",
+      "Kids with a disabilitynone",
+      "Child care helpon",
+      "Head Startoff",
+      "Housing helpoff",
+      "Health plan from a joboff",
+      "Self-employedoff",
+      "You have a disabilityoff",
+      "Gets food help (SNAP)yes",
+      "Gets cash help (TANF)yes",
+      "Gets Medicaidyes",
+      "Gets WICyes"
+    ],
+    "assumed": [
+      "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage and no other income; aged 30.",
+      "Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC and CCDF child care subsidy; not for Head Start and Housing voucher.",
+      "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+      "Not modelled in Colorado: LIHEAP. Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income."
+    ],
+    "cap": "The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: committed archetype sweep (single-2), generated 2026-09-16 — not this family's own live call. Rent: HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2). FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx. Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+    "verdict": "In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.",
+    "tiles": [
+      "Net, after premiums$84,371at $38,000 earned",
+      "Raise to clear the zone$7,000to $45,000 earned",
+      "Largest single-step drop$25,449at $54,000 → $55,000",
+      "Reach at current earnings40thpercentile, ±$8,000 (n = 393)"
+    ],
+    "compareHead": [
+      "",
+      "Now1 adult, $38,000 · archetype",
+      "CCDF subsidy off1 adult, $38,000 · archetype"
+    ],
+    "compareNote": "Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there. A column marked archetype is the committed sweep for a household of that shape in this state, not this family's own live call.",
+    "coverage": "Figures complete for Colorado. Nothing this household would hold is unmodelled here. In 2 states (NJ, WA) this line would carry the  mark and every figure on the page would be a floor.",
+    "ledger5": "$55,000CCDF child care subsidyWorth $24,899 a year at $54,000. Care priced at $2,773 a month for 2 children (county 2015 prices, carried to 2026 dollars by the BLS Employment Cost Index).Household",
+    "handout": [
+      "For the client — Colorado, one parent, two children",
+      "You are paid $38,000 a year. You keep about $84,400 a year. More pay does not add to that until you are paid $45,000 a year: a raise of $7,000 a year. It happens again between $45,000 and $119,000.",
+      "$29,379 of what you keep is child care help paid straight to your day care.",
+      "The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.",
+      "Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.",
+      "These are estimates. A case worker decides real help.",
+      "Printed from HotGap. 2026 rules. Sweep of 2026-09-16."
+    ],
+    "status": "",
+    "note": ""
+  },
+  "archetype-1280-errors": [],
+  "probe": {
+    "first": {
+      "hgDraw": true,
+      "anim": "0.7s"
+    },
+    "note": {
+      "left": 341,
+      "top": 225,
+      "w": 566,
+      "h": 44,
+      "maxWidth": "565.831px",
+      "flexBasis": "100%",
+      "lastChipRight": 333,
+      "lastChipTop": 225,
+      "rowLeft": 32,
+      "rowW": 1216,
+      "text": "Press a take-up chip, or change a value, to add a what-if beside the base household.",
+      "active": "childcare-subsidy",
+      "fv": false
+    },
+    "dist": {
+      "chipsBottom": 281,
+      "compareTop": 1849,
+      "compareTableTop": 1886,
+      "viewportH": 900
+    },
+    "thw": {
+      "rowTh": "700",
+      "rowThFamily": "Archivo, \"Helvetica ",
+      "fontSynthesis": "weight style small-caps"
+    },
+    "narrow": {
+      "driverLeft": 417,
+      "driverRight": 496,
+      "scrollerRight": 374,
+      "nowLeft": 224,
+      "nowRight": 496,
+      "compareScrollerRight": 374,
+      "summaryLines": 2,
+      "bdTrack": 124,
+      "bdAxisLines": 2,
+      "corrCiteW": 170,
+      "corrAtW": 176
+    }
+  }
+}

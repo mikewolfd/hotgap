@@ -1,5 +1,7 @@
 // The input editor: the ScenarioBar (design/inventory.md #11) made real for
-// the citizen page, plus the one screen behind its value chips.
+// the citizen and caseworker pages, plus the one screen behind its value
+// chips. A surface names the top row's two actions (`actions`); the citizen
+// defaults stand otherwise.
 //
 // One screen holds the four facts the bar's summary line shows — place,
 // household, pay, rent and child care. Everything else the calculation
@@ -31,29 +33,81 @@ import {
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
 import { money, unitPhrase } from "../lib/format.js";
-import { copy } from "./copy.js";
+import { copy as defaultCopy } from "./copy.js";
 
 // The two small tables the editor reads through core: a state's typical rent
 // and child-care prices for the prefill, and ZIP → state for the place line.
 // ZIP → county (528 KB) stays on the Worker, which resolves it on evaluate.
 provideData({ "state-defaults.json": stateDefaultsJson, "zip3-state.json": zip3State });
 
+/** One of the sticky top row's two actions (design/inventory.md § ScenarioBar). */
+export interface EditorAction {
+  label: string;
+  /** A shorter name below 720px, so the sticky top row stays one row at every width (design/caseworker.html, S1). */
+  short?: string;
+  /** The one action the surface leads with (.hg-button--primary). */
+  primary?: boolean;
+  /** Disabled until the flags say enough to evaluate — nothing to what-if or print before a household stands. */
+  needsAnswers?: boolean;
+  onClick(): void;
+}
+
+/** A surface's own words for the editor: any part of copy.ts, merged over the citizen defaults two levels deep. */
+export type CopyOverride = { [K in keyof Copy]?: Copy[K] extends object ? Partial<Copy[K]> : Copy[K] };
+
 export interface EditorOptions {
   /** The four-facts screen was submitted and core accepted the household. */
   onSubmit(flags: HouseholdFlags): void;
   /** A chip changed one answer. The page decides whether that re-evaluates. */
   onChange(flags: HouseholdFlags): void;
+  /** The top row's actions. Default: "Change my answers" (opens the screen) and "Print" — the citizen surface's. */
+  actions?: EditorAction[];
+  /**
+   * A second way to leave the four-facts screen: the same validated household
+   * handed to the page without becoming its answer (the caseworker's "Add as
+   * a what-if"). Shown beside Close, so never on a first visit.
+   */
+  altSubmit?: { label: string; onSubmit(flags: HouseholdFlags): void };
+  /** The screen closed, by Close or by the page; the flags may hold edits that were never submitted. */
+  onClose?(): void;
+  /** The surface's register: chip names, the screen's heading and labels, its submit. Default: the citizen's (copy.ts). */
+  copy?: CopyOverride;
+  /** Chip ids in the order the surface wants them first; the rest follow in the citizen order. */
+  order?: readonly string[];
 }
 
 export interface Editor {
   readonly flags: HouseholdFlags;
   /** Replace every answer (a URL was read); nothing is submitted. */
   setFlags(flags: HouseholdFlags): void;
-  /** Show the four-facts screen, focused on a field's flag when given. */
-  open(field?: HouseholdFlagName): void;
+  /**
+   * Show the four-facts screen, focused on a field's flag when given. With
+   * `lead: "alt"` the alternate submit is the screen's primary button and
+   * what Enter presses — "Add a what-if" then always ends in a what-if.
+   */
+  open(field?: HouseholdFlagName, opts?: { lead?: "submit" | "alt" }): void;
   close(): void;
   /** Show a validation detail — core's, from the page or the API — beside the field it names. */
   showError(detail: string): void;
+  /** Show the chips row (it hides behind Edit below 720px) and focus one chip — a given id, else the first take-up toggle. */
+  openInputs(chip?: string): void;
+  /** The full-width line, first in the chips row, that a press answers with (§ ScenarioBar): text or a fragment with a link; "" empties it. */
+  setNote(content: string | Node): void;
+  /** The county the evaluation resolved for a ZIP, shown beside the place while that ZIP stands; undefined clears it. */
+  setCounty(zip: string, name: string | undefined): void;
+}
+
+type Copy = typeof defaultCopy;
+
+/** The citizen copy with a surface's words laid over it, two levels deep (a table like `chips`, a function like `kidAge`). */
+function mergeCopy(over: CopyOverride | undefined): Copy {
+  if (!over) return defaultCopy;
+  const out = { ...defaultCopy } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(over)) {
+    const base = out[k];
+    out[k] = v && typeof v === "object" && base && typeof base === "object" ? { ...base, ...v } : v;
+  }
+  return out as Copy;
 }
 
 const DEFAULT_KID_AGE = 5;
@@ -112,6 +166,11 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   let editorOpen = false;
   // What opened the screen, so closing it can hand focus back.
   let opener: HTMLElement | null = null;
+  // The county the page learned for a ZIP (the Worker resolves it): shown only while that ZIP stands.
+  let county: { zip: string; name: string } | null = null;
+  const copy = mergeCopy(opts.copy);
+  // Which button the screen leads with and Enter presses: the submit, or the surface's alternate.
+  let lead: "submit" | "alt" = "submit";
 
   // ── Derived readings of the flags ───────────────────────────────────
   const married = () => flags.married === true;
@@ -126,7 +185,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     return `${married() ? "2 adults" : "1 adult"}${k.length ? `, kid${k.length > 1 ? "s" : ""} ${k.join(" & ")}` : ""}`;
   };
   const payLabel = () => (flags.pay ? `${unit() === "hour" ? `$${Number(flags.pay).toFixed(2)}` : money(Number(flags.pay))} ${unitPhrase(unit())}` : copy.chips.none);
-  const placeLabel = () => [flags.zip, state()].filter(Boolean).join(", ") || copy.chips.none;
+  const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
+  const placeLabel = () => [flags.zip, state(), countyLabel()].filter(Boolean).join(", ") || copy.chips.none;
 
   // ── The chips, in row order ──────────────────────────────────────────
   const monthlyField = (flag: HouseholdFlagName, label: string): DialogField => ({ flag, label, kind: "number", min: 0, max: 20000, step: 1, hint: copy.dialog.monthly });
@@ -162,13 +222,35 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     { kind: "toggle", id: "no-medicaid", label: copy.chips.medicaid, inverted: true },
     { kind: "toggle", id: "no-wic", label: copy.chips.wic, inverted: true },
   ];
+  // A surface's order first (facts, then the take-up toggles a counselor what-ifs), the rest in the citizen order.
+  if (opts.order) {
+    const rank = new Map(opts.order.map((id, i) => [id, i]));
+    chips.sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity));
+  }
 
   // ── Skeleton ─────────────────────────────────────────────────────────
   const changeBtn = h("button", { type: "button", class: "hg-button", "aria-expanded": "false", "aria-controls": "editor" }, copy.actions.change);
   const printBtn = h("button", { type: "button", class: "hg-button" }, copy.actions.print);
+  // A surface's own actions replace the two defaults; a short name shows below 720px (display:none keeps the other out of the accessible name).
+  const actionBtn = (a: EditorAction) => {
+    const b = h("button", { type: "button", class: `hg-button${a.primary ? " hg-button--primary" : ""}` },
+      ...(a.short ? [h("span", { class: "editor-action__full" }, a.label), h("span", { class: "editor-action__short" }, a.short)] : [a.label]));
+    b.addEventListener("click", a.onClick);
+    return b;
+  };
+  const actions = opts.actions ? opts.actions.map(actionBtn) : [changeBtn, printBtn];
+  /* An action that needs a household is disabled until the flags say enough to evaluate (caseworker review S10). */
+  const gated = (opts.actions ?? []).flatMap((a, i) => (a.needsAnswers ? [actions[i]] : []));
   const summaryText = h("span");
   const inputsBtn = h("button", { type: "button", class: "hg-button hg-button--small", "aria-expanded": "false", "aria-controls": "inputs" }, copy.summary.edit);
   const inputsRow = h("div", { class: "hg-scenario__inputs", id: "inputs" });
+  // The line a press answers with, first in the row so it is read before the
+  // chips it explains (caseworker review S2). Placed empty on the first
+  // setNote and filled a frame later, so it is a live region in the tree
+  // before it first speaks (a hidden element is not); a page that never
+  // sets one has no note in its DOM.
+  const note = h("p", { class: "hg-scenario__note hg-source", "aria-live": "polite" });
+  let noteContent: string | Node = "";
   const dialog = h("dialog", { class: "editor__dialog", "aria-labelledby": "dialog-title" });
 
   const zipInput = h("input", { id: "f-zip", name: "zip", class: "editor__input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
@@ -188,6 +270,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const childcareField = h("div", { class: "editor__field" }, h("label", { for: "f-childcare" }, copy.costs.childcare), childcareInput, childcareHint);
   const errorLine = h("p", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
   const closeBtn = h("button", { type: "button", class: "hg-button", hidden: true }, copy.close);
+  const altBtn = opts.altSubmit ? h("button", { type: "button", class: "hg-button", hidden: true }, opts.altSubmit.label) : null;
+  const submitBtn = h("button", { type: "submit", class: "hg-button hg-button--primary" }, copy.submit);
+  const actionsRow = h("div", { class: "editor__actions" }, submitBtn, altBtn, closeBtn);
   const field = (id: string, label: string, control: HTMLElement, hint?: HTMLElement) =>
     h("div", { class: "editor__field" }, h("label", { for: id }, label), control, hint);
 
@@ -208,15 +293,18 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     h("fieldset", { class: "editor__group" }, h("legend", {}, copy.costs.legend),
       h("div", { class: "editor__pair" }, field("f-rent", copy.costs.rent, rentInput, rentHint), childcareField)),
     errorLine,
-    h("div", { class: "editor__actions" }, h("button", { type: "submit", class: "hg-button hg-button--primary" }, copy.submit), closeBtn),
+    actionsRow,
     h("p", { class: "editor__privacy hg-source" }, copy.privacy),
   );
   const editorSection = h("section", { class: "editor", id: "editor", hidden: true }, form);
 
-  root.append(
+  // Prepended, not appended: a page may keep its own content in `root`, and
+  // the sticky top row's containing block is then the whole page (a sticky
+  // child cannot outlive its parent's box — S1). An empty root sees no difference.
+  root.prepend(
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
       h("div", { class: "hg-scenario__top" }, h("p", { class: "editor-wordmark" }, copy.wordmark),
-        h("div", { class: "hg-scenario__actions" }, changeBtn, printBtn))),
+        h("div", { class: "hg-scenario__actions" }, ...actions))),
     h("header", { class: "hg-scenario" },
       h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),
     editorSection,
@@ -294,16 +382,28 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
 
   function renderChips(): void {
     const focused = (document.activeElement as HTMLElement | null)?.dataset.chip;
-    inputsRow.replaceChildren(...chips.flatMap((c) => {
+    /* An unanswered value is marked, so it can be set lighter than an answer (caseworker review S2). */
+    const valueChip = (c: Extract<ChipSpec, { kind: "fact" | "value" }>, attrs: Attrs) => {
+      const v = c.value();
+      return chip(c.id, c.label, v, { ...attrs, "data-unset": v === copy.chips.none });
+    };
+    inputsRow.replaceChildren(...(note.isConnected ? [note] : []), ...chips.flatMap((c) => {
       if (c.when && !c.when()) return [];
-      if (c.kind === "fact") return [chip(c.id, c.label, c.value(), { "aria-expanded": String(editorOpen), "aria-controls": "editor" })];
-      if (c.kind === "value") return [chip(c.id, c.label, c.value(), { "aria-haspopup": "dialog", "aria-expanded": "false" })];
+      if (c.kind === "fact") return [valueChip(c, { "aria-expanded": String(editorOpen), "aria-controls": "editor" })];
+      if (c.kind === "value") return [valueChip(c, { "aria-haspopup": "dialog", "aria-expanded": "false" })];
       const on = flags[c.id] === true;
       const shown = c.inverted ? !on : on;
       return [chip(c.id, c.label, c.inverted ? (shown ? copy.chips.yes : copy.chips.no) : shown ? copy.chips.on : copy.chips.off, { "aria-pressed": String(shown) })];
     }));
     if (focused) inputsRow.querySelector<HTMLElement>(`[data-chip="${focused}"]`)?.focus();
-    summaryText.textContent = hasAnswers(flags) ? [flags.zip, state(), householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
+    const answered = hasAnswers(flags);
+    /* No household, no chips: a row of controls for answers that do not exist yet (caseworker review S10). */
+    inputsRow.hidden = !answered;
+    for (const b of gated) b.disabled = !answered;
+    /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9). */
+    const c = countyLabel();
+    const place = c ? [state(), c.replace(/ County$/, "")] : [flags.zip, state()];
+    summaryText.textContent = answered ? [...place, householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
   }
 
   function render(): void {
@@ -362,13 +462,32 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     // the age-gated chips move with it.
     if ((e.target as HTMLInputElement).name.startsWith("kid-")) afterChange();
   });
+  /** The screen's household, once the form and core both accept it; null (with the error shown) otherwise. */
+  const accepted = (): HouseholdFlags | null => {
+    if (!form.reportValidity()) return null;
+    const v = validateAnswers(rawAnswersFromFlags(flags));
+    if (!v.ok) { showError(v.detail); return null; }
+    clearError();
+    return { ...flags };
+  };
+  /* The lead is the screen's one type="submit" button, so Enter's implicit
+     submission presses it; the other exit is a plain button with its own
+     handler. The form's submit dispatches by `lead`. */
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!form.reportValidity()) return;
-    const v = validateAnswers(rawAnswersFromFlags(flags));
-    if (!v.ok) { showError(v.detail); return; }
-    clearError();
-    opts.onSubmit({ ...flags });
+    const f = accepted();
+    if (!f) return;
+    if (lead === "alt" && opts.altSubmit) opts.altSubmit.onSubmit(f); else opts.onSubmit(f);
+  });
+  altBtn?.addEventListener("click", () => {
+    if (altBtn.type === "submit") return;   /* the form's submit handler has it */
+    const f = accepted();
+    if (f) opts.altSubmit!.onSubmit(f);
+  });
+  submitBtn.addEventListener("click", () => {
+    if (submitBtn.type === "submit") return;
+    const f = accepted();
+    if (f) opts.onSubmit(f);
   });
 
   function showError(detail: string): void {
@@ -461,17 +580,24 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   changeBtn.addEventListener("click", () => open(undefined, changeBtn));
   closeBtn.addEventListener("click", () => close());
   printBtn.addEventListener("click", () => window.print());
-  inputsBtn.addEventListener("click", () => {
-    const opening = inputsRow.getAttribute("data-open") !== "true";
-    inputsRow.setAttribute("data-open", String(opening));
-    inputsBtn.setAttribute("aria-expanded", String(opening));
-  });
+  const showInputs = (open: boolean) => {
+    inputsRow.setAttribute("data-open", String(open));
+    inputsBtn.setAttribute("aria-expanded", String(open));
+  };
+  inputsBtn.addEventListener("click", () => showInputs(inputsRow.getAttribute("data-open") !== "true"));
 
-  function open(fieldFlag?: HouseholdFlagName, by: HTMLElement | null = null): void {
+  function open(fieldFlag?: HouseholdFlagName, by: HTMLElement | null = null, leadWith: "submit" | "alt" = "submit"): void {
     editorOpen = true;
     opener = by;
-    // Opened from the page itself (a first visit), there is nothing to go back to.
+    // Opened from the page itself (a first visit), there is nothing to go back to — and nothing to compare against.
     closeBtn.hidden = by === null;
+    if (altBtn) altBtn.hidden = by === null;
+    // The lead button is the primary one and what Enter presses (caseworker review S3).
+    lead = altBtn && !altBtn.hidden ? leadWith : "submit";
+    submitBtn.classList.toggle("hg-button--primary", lead === "submit");
+    submitBtn.type = lead === "submit" ? "submit" : "button";
+    if (altBtn) { altBtn.classList.toggle("hg-button--primary", lead === "alt"); altBtn.type = lead === "alt" ? "submit" : "button"; }
+    actionsRow.prepend(lead === "alt" ? altBtn! : submitBtn);   /* the lead button comes first */
     editorSection.hidden = false;
     changeBtn.setAttribute("aria-expanded", "true");
     renderChips();
@@ -483,6 +609,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     editorOpen = false;
     editorSection.hidden = true;
     changeBtn.setAttribute("aria-expanded", "false");
+    opts.onClose?.();
     renderChips();
     // The opener may have been re-rendered as a chip; find it again by id.
     const id = opener?.dataset.chip;
@@ -506,8 +633,24 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       clearError();
       render();
     },
-    open,
+    /* A plain open is a first visit (no Close); one led by the alternate exit was asked for by a control, which gets focus back. */
+    open(field, o = {}) { open(field, o.lead === "alt" && document.activeElement instanceof HTMLElement ? document.activeElement : null, o.lead); },
     close,
     showError,
+    openInputs(id) {
+      showInputs(true);
+      (inputsRow.querySelector<HTMLElement>(id ? `[data-chip="${id}"]` : "[aria-pressed]") ?? inputsBtn).focus();
+    },
+    setNote(content) {
+      noteContent = content;
+      const fill = () => note.replaceChildren(noteContent);
+      if (note.isConnected) { fill(); return; }
+      inputsRow.prepend(note);
+      requestAnimationFrame(fill);
+    },
+    setCounty(zip, name) {
+      county = name === undefined ? null : { zip, name };
+      renderChips();
+    },
   };
 }

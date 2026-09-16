@@ -1,0 +1,136 @@
+/* Caseworker surface: dense, exact, printable (design/caseworker.html is the
+   brief). Body steps down to 15px — this reader is scanning thresholds, not
+   reading prose. Everything shared (chips, buttons, badges, tables, panels,
+   the chart's marks, the scenario bar) comes from design/tokens.css as an
+   hg-* class and the editor's from app/src/editor/editor.css; what is
+   declared here is layout that belongs to this page alone. Logical
+   properties throughout (app/README.md § Languages). */
+body { font-size: var(--t-small); }
+.page { max-width: 76rem; margin-inline: auto; padding: 0 var(--s4) var(--s8); }
+h2 { font-size: var(--t-h2); margin: var(--s6) 0 var(--s3); }
+h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
+p { max-width: var(--measure-wide); }
+#status { margin: var(--s4) 0 0; }
+#alert { margin-block-start: var(--s4); }
+
+.verdict { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-end;
+           padding: var(--s5) 0 var(--s4); border-block-end: 1px solid var(--rule); }
+.verdict > div:first-child { flex: 1 1 28rem; min-width: 0; }
+.verdict-line { font-size: var(--t-h1); font-weight: var(--w-med); line-height: var(--lh-tight);
+                max-width: 40ch; letter-spacing: -0.01em; margin: 0; }
+.verdict-sub { color: var(--ink-2); margin: var(--s2) 0 0; }
+.tiles { display: flex; gap: var(--s5); flex-wrap: wrap; margin-inline-start: auto; }
+.tile .lab { color: var(--ink-3); font-size: var(--t-micro); display: block; }
+.tile .val { font-size: var(--t-figure); font-weight: var(--w-semi); line-height: 1.1;
+             letter-spacing: -0.02em; display: block; }
+.tile .sub { color: var(--ink-2); font-size: var(--t-micro); display: block; }
+
+/* Coverage notice and corrections sit under the verdict, before the columns (B1, B3). */
+.provenance { display: grid; gap: 0 var(--s6); grid-template-columns: 1fr; }
+@media (min-width: 60rem) { .provenance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.provenance .hg-rows { margin-block-start: var(--s2); --col: 11rem; }
+.provenance .hg-rows .hg-cite { margin-block-start: 2px; }
+.provenance .hg-cite .hg-tag { margin-inline-end: var(--s2); vertical-align: 1px; }
+.provenance h2 { margin-block-start: var(--s5); }
+/* Page-side part of the review's S9 (TODO(system) 13): below 520px the
+   row's two columns stack, so a cite has the whole line, not 170px. */
+@media (max-width: 519.98px) {
+  .provenance .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); }
+}
+/* Page-side part of the review's N2 (TODO(system) 12): the note is the
+   full-width line the inventory describes, not capped at .hg-source's measure. */
+.hg-scenario__note { max-width: none; }
+
+/* Four grid items (B2): the curve with its drops leads and spans the right
+   column's three rows; the ledger, the comparison and the assumptions stack
+   beside it. With more than one what-if the comparison takes the whole
+   width below both, where three or four scenarios fit without a scroll. */
+.cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-block-start: var(--s4); }
+@media (min-width: 60rem) {
+  .cols { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; }
+  .cols > .lead { grid-column: 1; grid-row: 1 / span 3; }
+  .cols > .ledger-section { grid-column: 2; grid-row: 1; }
+  .cols > .compare-section { grid-column: 2; grid-row: 2; }
+  .cols > .assumptions { grid-column: 2; grid-row: 3; align-self: start; }
+  .cols > .compare-section[data-wide] { grid-column: 1 / -1; grid-row: 4; }
+  .cols > .compare-section[data-wide] ~ .assumptions { grid-row: 2; }
+}
+/* Grid items default to min-width:auto, which lets a wide table push the
+   column past the viewport. The scroller only works if the column can shrink. */
+.cols > * { min-width: 0; }
+.lead .hg-scroll-x .hg-table { min-width: 30rem; }   /* the drops table's four columns; the compare table sets its own */
+.curve { margin: 0; }
+.curve h2 { margin-block-start: var(--s5); }
+.ledger-section h2, .compare-section h2 { margin-block-start: var(--s5); }
+/* A direct label's weight (the largest drop and the leap); its ink and halo are the hg-label modifiers. */
+.cw-label--strong { font-weight: var(--w-semi); }
+
+.ledger .who { color: var(--ink-2); }
+.ledger .hg-badge { margin-inline-start: var(--s1); }
+.drops td:first-child { font-weight: var(--w-semi); white-space: nowrap; }
+.drops .unnamed { color: var(--ink-3); }
+
+/* BreakdownBars (#9): four signed bars from a centre zero (N4). Label, value
+   and track are three grid items: side by side where there is room, and
+   below 520px the label and value on one line above a full-width track
+   (review S7), which gives the bar the panel's width. */
+.breakdown { margin-block-start: var(--s4); }
+.bd { margin: var(--s3) 0 0; }
+.bd-row { display: grid; grid-template-columns: 5.5rem 1fr 5.5rem; gap: var(--s1) var(--s3); align-items: center; padding: var(--s1) 0; }
+/* Placed by row as well as column: the value comes before the track in the
+   DOM (it heads the track's line on a phone), and auto-placement never
+   walks back to column 2 once column 3 is filled. */
+.bd-label { grid-column: 1; grid-row: 1; }
+.bd-row > .bd-track { grid-column: 2; grid-row: 1; }
+.bd-val { grid-column: 3; grid-row: 1; text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bd-axis { color: var(--ink-3); font-size: var(--t-micro); }
+.bd-axis .bd-track { background: none; height: auto; display: flex; justify-content: space-between; }
+.bd-track { position: relative; height: 14px; background: var(--surface-sunk); }
+.bd-zero { position: absolute; inset-inline-start: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--rule-strong); }
+.bd-fill { position: absolute; top: 2px; height: 10px; border-radius: 0 3px 3px 0; }
+.bd-fill.neg { border-radius: 3px 0 0 3px; }
+@media (max-width: 519.98px) {
+  .bd-row { grid-template-columns: 1fr auto; }
+  .bd-label { grid-column: 1; grid-row: 1; }
+  .bd-val { grid-column: 2; grid-row: 1; }
+  .bd-row > .bd-track { grid-column: 1 / -1; grid-row: 2; }
+}
+.bd .footnote { margin: 0; }
+.bd .bd-sum { margin-block-start: var(--s2); }
+.breakdown > .footnote { margin: var(--s3) 0 0; }
+
+/* CompareTable (#12, B2). No width floor: the row-name column keeps 11rem
+   and sticks to the start edge inside the scroller, so scenarios scroll
+   under the names. A what-if column is marked by the 3px series-2 rule
+   under its header and a 1px rule on its start side — one line between
+   neighbours, identity by rule, never by text (review N7). */
+.compare th:first-child { min-width: 11rem; width: 11rem; position: sticky; inset-inline-start: 0; background: var(--plane); z-index: 1; }
+.compare tbody th { font-weight: var(--w-semi); }
+.compare td { font-variant-numeric: tabular-nums; }
+.compare thead .b { box-shadow: inset 0 -3px 0 0 var(--series-2); }
+.compare tbody .b, .compare tfoot .b { box-shadow: inset 1px 0 0 0 var(--series-2); }
+.compare tfoot td, .compare tfoot th { border-block-end: 0; vertical-align: top; }
+.compare .col-actions { display: flex; gap: var(--s2); justify-content: flex-end; flex-wrap: wrap; }
+.compare tfoot .hg-cite { margin-block-end: var(--s2); white-space: normal; text-align: start; }
+/* Below 520px the names take 8rem and a column's head may wrap, so the base and one what-if sit inside a 358px scroller (B2). */
+@media (max-width: 519.98px) {
+  .compare th:first-child { min-width: 8rem; width: 8rem; }
+  .compare thead th { white-space: normal; }
+}
+
+.footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
+.assumptions .hg-source { margin-block-start: var(--s3); }
+.assumptions .hg-button { margin-block-start: var(--s2); }
+.assumed { margin: 0; padding-inline-start: var(--s5); }
+.assumed li { margin-block-end: var(--s1); overflow-wrap: anywhere; }
+
+@media print {
+  body { font-size: 11pt; }
+  .cols, .provenance { grid-template-columns: 1fr; }
+  .cols > * { grid-column: auto !important; grid-row: auto !important; }
+  /* Paper carries no chrome (review N5): the bar and its chips stay on the screen; the assumed list states the inputs. */
+  .hg-scenario { display: none; }
+  /* The client sheet is citizen copy and takes the citizen's size and measure (review S8). */
+  .handout { page-break-before: always; font-size: 13pt; }
+  .handout p { max-width: var(--measure); }
+}
