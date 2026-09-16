@@ -30,16 +30,16 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
       expect(Array.isArray(x)).toBe(true);
       expect((x as number[]).length).toBe(101);
     };
-    arr(r.households["your household"].household_net_income["2026"]);
-    arr(r.spm_units["your spm_unit"].snap["2026"]);
-    arr(r.spm_units["your spm_unit"].tanf["2026"]);
-    arr(r.spm_units["your spm_unit"].spm_unit_capped_housing_subsidy["2026"]);
-    arr(r.tax_units["your tax unit"].eitc["2026"]);
-    arr(r.tax_units["your tax unit"].refundable_ctc["2026"]);
-    arr(r.tax_units["your tax unit"].premium_tax_credit["2026"]);
-    for (const v of ["medicaid", "ssi", "wic", "chip"]) arr(r.people["you"][v]["2026"]);
-    for (const v of ["head_start", "early_head_start"]) arr(r.people["your first dependent"][v]["2026"]);
-    for (const v of ["free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"]) arr(r.spm_units["your spm_unit"][v]["2026"]);
+    arr(r.households.household.household_net_income["2026"]);
+    arr(r.spm_units.spm_unit.snap["2026"]);
+    arr(r.spm_units.spm_unit.tanf["2026"]);
+    arr(r.spm_units.spm_unit.spm_unit_capped_housing_subsidy["2026"]);
+    arr(r.tax_units.tax_unit.eitc["2026"]);
+    arr(r.tax_units.tax_unit.refundable_ctc["2026"]);
+    arr(r.tax_units.tax_unit.premium_tax_credit["2026"]);
+    for (const v of ["medicaid", "ssi", "wic", "chip"]) arr(r.people.you[v]["2026"]);
+    for (const v of ["head_start", "early_head_start"]) arr(r.people.child1[v]["2026"]);
+    for (const v of ["free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"]) arr(r.spm_units.spm_unit[v]["2026"]);
   }, 90_000);
 
   it("accepts rent on people and childcare_expenses on spm_units", async () => {

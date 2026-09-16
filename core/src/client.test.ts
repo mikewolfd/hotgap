@@ -184,9 +184,13 @@ describe("requestPE retries", () => {
 });
 
 describe("Massachusetts TAFDC feedback loop", () => {
-  // A real 11-point PolicyEngine response ($24k–$34k) for a married couple with
-  // children aged 1, 4 and 9 in private housing, carrying every ma_tafdc_* input.
-  const maFixture = JSON.parse(readFileSync(new URL("../../fixtures/pe-ma-married-3kids-11.json", import.meta.url), "utf8"));
+  // A real 11-point response ($24k–$34k) for a one-earner couple with children
+  // aged 1, 4 and 9, carrying every ma_tafdc_* input: policyengine-us 2.5.0
+  // from the self-hosted engine, and the same household from the public API's
+  // 1.764.6, which still double-counted TAFDC (fixtures/README.md).
+  const loadMa = (name: string) => JSON.parse(readFileSync(new URL(`../../fixtures/${name}`, import.meta.url), "utf8"));
+  const maFixture = loadMa("pe-ma-married-3kids-11.json");
+  const maDoubled = loadMa("pe-ma-married-3kids-11.public-1.764.6.json");
   const maAnswers = (() => {
     const v = validateAnswers({
       state: "MA", married: true, age: 30, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false],
@@ -378,8 +382,10 @@ describe("Massachusetts TAFDC feedback loop", () => {
   });
 
   it("a fixed model leaves no duplicate to remove, and an explicit option skips the probe", async () => {
-    const withDuplicate = parsePEResponse(maFixture, 11);
-    const without = parsePEResponse(maFixture, 11, { maTafdcDoubleCounted: false });
+    // The double-counting body parsed both ways: the probe's answer decides
+    // whether the overlap is taken out.
+    const withDuplicate = parsePEResponse(maDoubled, 11, { maTafdcDoubleCounted: true });
+    const without = parsePEResponse(maDoubled, 11, { maTafdcDoubleCounted: false });
     expect(withDuplicate.some((p) => p.maTafdc!.duplicatedTanf > 0)).toBe(true);
     expect(without.every((p) => p.maTafdc!.duplicatedTanf === 0)).toBe(true);
     // The correction then leaves net income + otherBenefits higher by exactly the duplicate it no longer removes.
@@ -389,6 +395,9 @@ describe("Massachusetts TAFDC feedback loop", () => {
       expect(b[i].netIncome - a[i].netIncome).toBeCloseTo(withDuplicate[i].maTafdc!.duplicatedTanf, 6);
       expect(b[i].programs.tanf).toBe(a[i].programs.tanf);
     }
+    // On the fixed model nothing fills household_state_benefits for this
+    // household, so even a wrong "true" would find no overlap to take.
+    expect(parsePEResponse(maFixture, 11, { maTafdcDoubleCounted: true }).every((p) => p.maTafdc!.duplicatedTanf === 0)).toBe(true);
     // With the option set, fetchCurve asks no probe; the sweep and its feedback points parse with duplicatedTanf 0.
     let probes = 0;
     const axis = axisSpec(maAnswers);

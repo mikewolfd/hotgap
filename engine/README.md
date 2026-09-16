@@ -251,5 +251,6 @@ about; the rest are cosmetic or are the point of the exercise.
   wrong-entity rejection and an unknown-variable rejection: identical
   everywhere except that the unknown-variable rejection lists one name fewer,
   because `ny_child_care_subsidies` exists here and not there.
-* The two recorded responses in `fixtures/` were used as an older witness of
-  the same wire format.
+* The public API's two responses then recorded in `fixtures/` were used as an
+  older witness of the same wire format (`fixtures/` has since been
+  re-recorded from this engine; `fixtures/README.md`).

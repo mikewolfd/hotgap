@@ -3,12 +3,15 @@ import { readFileSync } from "node:fs";
 import { parsePEResponse, PEParseError, PERSON_LEVEL_PROGRAMS } from "./parse.js";
 import { CASH_PROGRAMS } from "./types.js";
 
+// Recorded from policyengine-us 2.5.0 (fixtures/README.md). The household is
+// a CA single parent of a 5-year-old on a 101-point axis to $100k.
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
 );
+const loadMa = (name: string) => JSON.parse(readFileSync(new URL(`../../fixtures/${name}`, import.meta.url), "utf8"));
 
 describe("parsePEResponse", () => {
-  const maFixture = JSON.parse(readFileSync(new URL("../../docs/upstream/evidence/local-ma-tafdc.response.json", import.meta.url), "utf8"));
+  const maFixture = loadMa("pe-ma-married-3kids-11.json");
 
   it("retains Massachusetts calculation inputs from a recorded live sweep", () => {
     const points = parsePEResponse(maFixture, 11);
@@ -16,11 +19,22 @@ describe("parsePEResponse", () => {
     expect(points[2].maTafdc).toEqual({
       paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
       dependentCareDeduction: 0, clothingAllowance: 1500, infantBenefit: 0,
-      duplicatedTanf: 9880, engineUsedCorrectedGrant: false
+      duplicatedTanf: 0, engineUsedCorrectedGrant: false
     });
     expect(points[3].programs.tanf).toBe(0);
     // Inputs survive even where upstream's faulty financial test ends TANF.
     expect(points[3].maTafdc?.nonFinancialEligible).toBe(true);
+  });
+
+  it("retains the double-counted TAFDC only when told the model counts it twice", () => {
+    // The same household from the public API's 1.764.6, which still carried
+    // ma_tafdc inside household_state_benefits (policyengine-us #9470).
+    const doubled = loadMa("pe-ma-married-3kids-11.public-1.764.6.json");
+    expect(parsePEResponse(doubled, 11, { maTafdcDoubleCounted: true })[2].maTafdc?.duplicatedTanf).toBe(9880);
+    // Off by default: the overlap is a floor over whatever fills
+    // household_state_benefits, not a detection, so it is only taken when
+    // the caller knows (client.ts probes).
+    expect(parsePEResponse(doubled, 11)[2].maTafdc?.duplicatedTanf).toBe(0);
   });
 
   it("rejects incomplete, non-finite or malformed Massachusetts inputs", () => {
@@ -45,10 +59,10 @@ describe("parsePEResponse", () => {
 
   it("net income is PolicyEngine's net minus medical out-of-pocket, with the ACA subsidy left in", () => {
     const points = parsePEResponse(fixture, 101);
-    const raw = Object.values(fixture.result.households as Record<string, Record<string, Record<string, number[]>>>)[0].household_net_income["2026"];
+    const raw = fixture.result.households.household.household_net_income["2026"];
     expect(points[30].netIncome + points[30].medicalOOP).toBeCloseTo(raw[30], 6);
-    expect(points[30].netIncome).toBeCloseTo(55660.81, 1);
-    expect(points[31].netIncome).toBeCloseTo(33572.16, 1);
+    expect(points[30].netIncome).toBeCloseTo(55684.94, 1);
+    expect(points[31].netIncome).toBeCloseTo(33582.22, 1);
     // The premium tax credit is reported as the `aca` program, never subtracted.
     expect(points[30].programs.aca).toBeGreaterThan(6000);
     expect(points[0].programs.snap).toBeGreaterThan(0);
@@ -58,29 +72,31 @@ describe("parsePEResponse", () => {
   it("sums person-level programs across people", () => {
     const points = parsePEResponse(fixture, 101);
     const raw = fixture.result.people;
-    const youMed = raw["you"].medicaid["2026"][0];
-    const kidMed = raw["your first dependent"].medicaid["2026"][0];
+    const youMed = raw.you.medicaid["2026"][0];
+    const kidMed = raw.child1.medicaid["2026"][0];
     expect(points[0].programs.medicaid).toBeCloseTo(youMed + kidMed, 1);
   });
 
   it("subtracts MOOP only — the premium tax credit is not in household_net_income, so it must not be subtracted again", () => {
     const pts = parsePEResponse(fixture, 101);
-    const raw = fixture.result.households["your household"].household_net_income["2026"];
-    const moop = fixture.result.spm_units["your spm_unit"].spm_unit_medical_out_of_pocket_expenses["2026"];
-    const ptc = fixture.result.tax_units["your tax unit"].premium_tax_credit["2026"];
+    const raw = fixture.result.households.household.household_net_income["2026"];
+    const moop = fixture.result.spm_units.spm_unit.spm_unit_medical_out_of_pocket_expenses["2026"];
+    const ptc = fixture.result.tax_units.tax_unit.premium_tax_credit["2026"];
     const i = 50;
     expect(ptc[i]).toBeGreaterThan(1000); // only meaningful where a subsidy exists
     expect(pts[i].netIncome).toBeCloseTo(raw[i] - moop[i], 2);
   });
 
   it("splits person-level programs into the children's share by AGE, not by key name", () => {
-    const points = parsePEResponse(fixture, 101);
-    const raw = fixture.result.people;
-    // The recorded payload names the child "your first dependent"; translate.ts
-    // names it "child1". Neither name is what the split is keyed on.
-    expect(Object.keys(raw)).toContain("your first dependent");
-    const youMed = raw["you"].medicaid["2026"][0];
-    const kidMed = raw["your first dependent"].medicaid["2026"][0];
+    // translate.ts names the child "child1"; PolicyEngine's own web app (and
+    // the July 2026 fixture) name it "your first dependent". Neither name is
+    // what the split is keyed on.
+    const body = JSON.parse(JSON.stringify(fixture));
+    body.result.people["your first dependent"] = body.result.people.child1;
+    delete body.result.people.child1;
+    const points = parsePEResponse(body, 101);
+    const youMed = fixture.result.people.you.medicaid["2026"][0];
+    const kidMed = fixture.result.people.child1.medicaid["2026"][0];
     expect(points[0].childPrograms.medicaid).toBeCloseTo(kidMed, 1);
     expect(points[0].programs.medicaid - (points[0].childPrograms.medicaid ?? 0)).toBeCloseTo(youMed, 1);
     // Head Start belongs entirely to the child, so the household total and the
@@ -90,9 +106,10 @@ describe("parsePEResponse", () => {
     expect(PERSON_LEVEL_PROGRAMS).toEqual(["medicaid", "chip", "wic", "ssi", "headstart"]);
   });
 
-  it("reports no untracked benefits when household_benefits is absent (the July fixture predates it)", () => {
-    expect(fixture.result.households["your household"].household_benefits).toBeUndefined();
-    const points = parsePEResponse(fixture, 101);
+  it("reports no untracked benefits when household_benefits is absent (curves swept before it was asked for)", () => {
+    const body = JSON.parse(JSON.stringify(fixture));
+    delete body.result.households.household.household_benefits;
+    const points = parsePEResponse(body, 101);
     expect(points.every((p) => p.otherBenefits === 0)).toBe(true);
     expect(points.every((p) => p.coverageGap === false)).toBe(true);
   });
@@ -101,9 +118,12 @@ describe("parsePEResponse", () => {
     const tracked = parsePEResponse(fixture, 101).map((p) =>
       CASH_PROGRAMS.reduce((sum, id) => sum + (p.programs[id] ?? 0), 0),
     );
+    // This household's only benefits are the tracked ones, so the recorded
+    // remainder is float noise (under a fifth of a cent either way).
+    expect(parsePEResponse(fixture, 101).every((p) => p.otherBenefits < 0.01)).toBe(true);
     const withBenefits = (values: number[]) => {
       const body = JSON.parse(JSON.stringify(fixture));
-      body.result.households["your household"].household_benefits = { "2026": values };
+      body.result.households.household.household_benefits = { "2026": values };
       return parsePEResponse(body, 101);
     };
     expect(withBenefits(tracked.map((c) => c + 3000)).every((p) => Math.abs(p.otherBenefits - 3000) < 1e-6)).toBe(true);
@@ -114,14 +134,20 @@ describe("parsePEResponse", () => {
   });
 
   it("computes stateCredits as the refundable credits the federal EITC and CTC do not explain", () => {
+    // California's own credits (CalEITC and the Young Child Tax Credit) on
+    // the recorded curve: $1,216 at $0 of earnings, a $3,239 peak, gone by
+    // $40,000.
+    const base = parsePEResponse(fixture, 101);
+    expect(base[0].stateCredits).toBeCloseTo(1215.95, 1);
+    expect(Math.max(...base.map((p) => p.stateCredits))).toBeCloseTo(3238.95, 1);
+    expect(base.slice(40).every((p) => p.stateCredits === 0)).toBe(true);
     // Verified live 2026-09-15 against a Colorado single parent of three: at
     // $25,000, household_refundable_tax_credits $21,648 less eitc $7,997 and
     // refundable_ctc $3,375 is $10,276 of Colorado credits. The shape is
     // reproduced here on the committed CA fixture so the test needs no network.
-    const base = parsePEResponse(fixture, 101);
     const withState = (extra: number) => {
       const body = JSON.parse(JSON.stringify(fixture));
-      body.result.households["your household"].household_refundable_tax_credits = {
+      body.result.households.household.household_refundable_tax_credits = {
         "2026": base.map((p) => p.programs.eitc + p.programs.ctc + extra),
       };
       return parsePEResponse(body, 101);
@@ -130,22 +156,23 @@ describe("parsePEResponse", () => {
     // Float noise around a difference that is zero in most states floors at 0
     // rather than becoming a negative credit.
     expect(withState(-1e-9).every((p) => p.stateCredits === 0)).toBe(true);
-    // Absent from the July fixture, which never asked for the variable.
-    expect(fixture.result.households["your household"].household_refundable_tax_credits).toBeUndefined();
-    expect(base.every((p) => p.stateCredits === 0)).toBe(true);
+    // A curve swept before the variable was asked for reports none.
+    const body = JSON.parse(JSON.stringify(fixture));
+    delete body.result.households.household.household_refundable_tax_credits;
+    expect(parsePEResponse(body, 101).every((p) => p.stateCredits === 0)).toBe(true);
   });
 
   it("keeps the whole child tax credit apart from the refundable part, and falls back to it", () => {
+    // One child: the whole $2,200 credit at every point, while the refund
+    // shrinks with the tax bill and is gone by $46,000.
+    const pts = parsePEResponse(fixture, 101);
+    expect(pts.every((p) => p.totalCtc === 2200)).toBe(true);
+    expect(pts[20].programs.ctc).toBe(1700);
+    expect(pts.slice(46).every((p) => p.programs.ctc === 0)).toBe(true);
+    // A curve swept before `ctc` was asked for knows only the refundable series.
     const body = JSON.parse(JSON.stringify(fixture));
-    const refundable = body.result.tax_units["your tax unit"].refundable_ctc["2026"] as number[];
-    body.result.tax_units["your tax unit"].ctc = { "2026": refundable.map(() => 6600) };
-    const pts = parsePEResponse(body, 101);
-    expect(pts.every((p) => p.totalCtc === 6600)).toBe(true);
-    expect(pts[60].programs.ctc).toBeLessThan(6600);
-    // The July fixture predates the request; the refundable series is all it knows.
-    expect(fixture.result.tax_units["your tax unit"].ctc).toBeUndefined();
-    const old = parsePEResponse(fixture, 101);
-    expect(old.every((p) => p.totalCtc === p.programs.ctc)).toBe(true);
+    delete body.result.tax_units.tax_unit.ctc;
+    expect(parsePEResponse(body, 101).every((p) => p.totalCtc === p.programs.ctc)).toBe(true);
   });
 
   it("throws PEParseError on an error-status body", () => {
@@ -160,7 +187,7 @@ describe("parsePEResponse", () => {
     // A take-up override (e.g. head_start:0) comes back from PolicyEngine as a
     // scalar, not a per-axis array; parse must hold it constant across points.
     const body: any = JSON.parse(JSON.stringify(fixture));
-    body.result.spm_units["your spm_unit"].spm_unit_capped_housing_subsidy = { "2026": 0 };
+    body.result.spm_units.spm_unit.spm_unit_capped_housing_subsidy = { "2026": 0 };
     const pts = parsePEResponse(body, 101);
     expect(pts).toHaveLength(101);
     expect(pts.every((p) => p.programs.housing === 0)).toBe(true);

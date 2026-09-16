@@ -93,7 +93,7 @@ describe("buildSummary", () => {
   });
 
   it("corrects Massachusetts rankings from retained raw points and reports the approximation", () => {
-    const raw = JSON.parse(readFileSync(new URL("../../docs/upstream/evidence/local-ma-tafdc.response.json", import.meta.url), "utf8"));
+    const raw = JSON.parse(readFileSync(new URL("../../fixtures/pe-ma-married-3kids-11.json", import.meta.url), "utf8"));
     const points = parsePEResponse(raw, 11).map(roundPoint);
     const results = fullResultsFor("MA");
     results.MA["married-3"] = points;
@@ -120,13 +120,12 @@ describe("buildSummary", () => {
 
   // Fixture-driven: feed the real CA fixture's points under an archetype id
   // (the fixture household isn't one of the archetypes — it only pins the
-  // math, per the established metrics.test.ts pattern). Verified pins post
-  // PTC double-count fix (Plan 6): safeExit 81000, leap 52000.
+  // math, per the established metrics.test.ts pattern).
   it("carries safeExit and leap through from escapeAnalysis, per the verified CA fixture pins", () => {
     const results = fullResultsFor("CA");
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
-    // The $22,089 Head Start loss at $30k is deferred to the next program
+    // The $22,103 Head Start loss at $30k is deferred to the next program
     // year, so the biggest immediate loss is the 400%-FPL subsidy end and the
     // leap is the zone that end opens, not the Head Start one.
     expect(summary.states.CA["single-1"]).toEqual({

@@ -27,7 +27,9 @@ describe("escapeAnalysis on the real CA fixture", () => {
     expect(esc.programEnds.tanf).toBe(23000);
     expect(esc.programEnds.snap).toBe(29000);
     expect(esc.programEnds.headstart).toBe(30000);
-    expect(esc.programEnds.ctc).toBe(44000);
+    // The refund is gone by $46k, but the whole $2,200 credit is held at
+    // every point of the axis, and the credit's end is the whole credit's.
+    expect(esc.programEnds.ctc).toBeUndefined();
     expect(esc.programEnds.eitc).toBe(50000);
     expect(esc.programEnds.medicaid).toBe(57000);
     expect(esc.programEnds.aca).toBe(84000);

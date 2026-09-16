@@ -120,7 +120,7 @@ describe("runPipeline", () => {
       expect(Object.keys(result.summary!.states[state])).toEqual(ARCHETYPES.map((a) => a.id));
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
       // Pinned literally (not re-derived from the code under test): the CA
-      // fixture's $22,089 Head Start loss at $30k is deferred, so the biggest
+      // fixture's $22,103 Head Start loss at $30k is deferred, so the biggest
       // immediate loss is the $3,868 subsidy end at $84k and the leap is that
       // zone's width; same under WY and VT answers since neither the wrap nor
       // the coverage gap touches this fixture.

@@ -2,8 +2,9 @@
 
 The public `POST https://api.policyengine.org/us/calculate` is not documented
 as a contract anywhere, so every rule below was read off the live service on
-2026-09-15 with the probes described next to it, and the two recorded
-responses in `fixtures/` were used as a second, older witness. `engine/README.md`
+2026-09-15 with the probes described next to it, and the public API's two
+responses then recorded in `fixtures/` (since re-recorded from this engine;
+`fixtures/README.md`) were used as a second, older witness. `engine/README.md`
 lists what is deliberately not implemented.
 
 The response is the REQUEST's `household` object, deep-copied, with values

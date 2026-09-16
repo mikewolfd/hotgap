@@ -41,6 +41,7 @@ that leap lands among real households' incomes.
 - `contract/` — a live PolicyEngine API contract test (schedule-only; not
   part of the default test run)
 - `fixtures/` — recorded PolicyEngine request/response payloads used by tests
+  (`fixtures/README.md` says which model answered each, and how to re-record)
 - `docs/` — methodology reviews, upstream PolicyEngine issue reports, and
   planning history
 

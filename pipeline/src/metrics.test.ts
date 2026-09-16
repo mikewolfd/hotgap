@@ -19,7 +19,7 @@ const flat = (earnings: number, netIncome: number): CurvePoint => ({
 
 describe("stateMetrics on the committed CA fixture", () => {
   // The CA single-parent-one-kid fixture, evaluated as the CA single-1
-  // archetype: its $22,089 Head Start loss at $30k is deferred to the next
+  // archetype: its $22,103 Head Start loss at $30k is deferred to the next
   // program year, so the biggest immediate loss is the 400%-FPL subsidy end
   // ($3,868 at $84k) and the leap is that zone's width. safeExit is unchanged.
   // This fixture isn't one of the archetypes — it only pins the math.

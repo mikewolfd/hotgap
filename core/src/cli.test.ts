@@ -12,7 +12,7 @@ vi.mock("./evaluate.js", async (original) => ({ ...await original<object>(), eva
 vi.mock("./data.js", async (original) => ({ ...await original<object>(), loadSummary: vi.fn() }));
 
 const a = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
-const raw = JSON.parse(readFileSync(new URL("../../docs/upstream/evidence/local-ma-tafdc.response.json", import.meta.url), "utf8"));
+const raw = JSON.parse(readFileSync(new URL("../../fixtures/pe-ma-married-3kids-11.json", import.meta.url), "utf8"));
 const ev = evaluateCurve(a, { year: "2026", currentEarnings: 26000, points: parsePEResponse(raw, 11) }, "archetype");
 
 afterEach(() => vi.restoreAllMocks());

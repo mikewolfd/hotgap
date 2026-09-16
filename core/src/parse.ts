@@ -61,15 +61,17 @@ export interface ParseOptions {
   /**
    * Whether the model that produced `body` counts Massachusetts TAFDC twice
    * (in `household_benefits` via TANF and again in `household_state_benefits`;
-   * policyengine-us #9470, fixed in 2.4.4). Default true: every stored
-   * fixture and the public API as of 2026-09 do. client.ts probes the live
-   * endpoint instead of assuming.
+   * policyengine-us #9470, fixed in 2.4.4). Default false: every stored
+   * fixture is from a fixed model (fixtures/README.md), and the removal
+   * would otherwise eat an equal amount of whatever else fills
+   * `household_state_benefits`. client.ts probes the live endpoint — the
+   * public API still double-counted as of 2026-09 — and passes its answer.
    */
   maTafdcDoubleCounted?: boolean;
 }
 
 export function parsePEResponse(body: unknown, expectedCount: number, opts: ParseOptions = {}): CurvePoint[] {
-  const maTafdcDoubleCounted = opts.maTafdcDoubleCounted ?? true;
+  const maTafdcDoubleCounted = opts.maTafdcDoubleCounted ?? false;
   const b = body as { status?: string; result?: Record<string, unknown> };
   if (b?.status !== "ok" || !b.result) {
     throw new PEParseError(`PolicyEngine error: ${(b as { message?: string })?.message ?? "unknown"}`);
@@ -114,8 +116,8 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   for (const person of Object.values(people)) {
     // Who is a child comes from the person's own `age`, never from the key:
     // PolicyEngine echoes back whatever names the caller used, which is
-    // "child1…" from translate.ts but "your first dependent" in the July
-    // fixture and in anything built by PolicyEngine's own web app.
+    // "child1…" from translate.ts but "your first dependent" in anything
+    // built by PolicyEngine's own web app.
     const isChild = series(person, "age", expectedCount)[0] < 18;
     for (const [variable, id] of Object.entries(PERSON_PROGRAMS)) {
       if (!person[variable]) continue;
@@ -133,7 +135,7 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // support and unemployment compensation when those are inputs — a household
   // with those therefore carries a constant floor here, which cancels in any
   // step-to-step difference. Absent from curves fetched before we asked for
-  // it (the July fixture), in which case the remainder is simply 0.
+  // it, in which case the remainder is simply 0.
   const benefits = "household_benefits" in household
     ? series(household, "household_benefits", expectedCount)
     : null;
