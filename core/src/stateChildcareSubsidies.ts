@@ -30,10 +30,6 @@
 // (`GET https://api.policyengine.org/us/metadata`, policyengine-us 1.764.6),
 // not from the repository, because the deployed model is what HotGap calls.
 
-/** PolicyEngine's per-state variable name. Mechanical for all 51. */
-export const childcareSubsidyVariable = (state: string): string =>
-  `${state.toLowerCase()}_child_care_subsidies`;
-
 /**
  * States whose subsidy variable exists in the DEPLOYED model (38 of 51).
  * The other 13 — DC, IL, NC, NY, OH, OK, OR, SD, TN, TX, UT, WI, WY — are
@@ -42,7 +38,7 @@ export const childcareSubsidyVariable = (state: string): string =>
  * docs/upstream/evidence/childcare-ny-base.json). HotGap therefore asks for
  * the AGGREGATE `child_care_subsidies` instead, which is one name in every
  * state and is already the variable `childcare_expenses` itself subtracts.
- * This set is documentation and contract-test material, not a request key.
+ * This set is documentation, held to by its unit test; it is not a request key.
  */
 export const CHILDCARE_SUBSIDY_STATES: ReadonlySet<string> = new Set([
   "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "IA", "ID",
