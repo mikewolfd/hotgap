@@ -105,7 +105,7 @@ mountEditor(root, {
   onClose() {},                                                     // the screen closed, edits and all
 });
 editor.openInputs("housing");   // show the chips row (hidden behind Edit below 720px) and focus a chip
-editor.setNote(text);           // the .hg-scenario__note line a take-up toggle answers with; "" hides it
+editor.setNote(text);           // the .hg-scenario__note line a take-up toggle answers with (a live region, appended on first use); "" empties it
 editor.setCounty(zip, name);    // the county the Worker resolved, beside the place while that ZIP stands
 ```
 

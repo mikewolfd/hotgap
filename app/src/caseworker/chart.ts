@@ -56,6 +56,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
   const label = (x: number, y: number, text: string, extra: Record<string, string | number> = {}, cls = "") =>
     mk("text", { class: `hg-label hg-label--halo${cls ? ` ${cls}` : ""}`, x, y, ...extra }, text);
+  /** The lifted line's value at any earnings, interpolated between the two axis points around it. */
+  const liftedAt = (e: number): number => {
+    const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(lifted.length - 2, Math.floor(f)));
+    return lifted[i] + (lifted[i + 1] - lifted[i]) * Math.max(0, Math.min(1, f - i));
+  };
 
   function draw(): void {
     if (!ev) return;
@@ -175,7 +180,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
       svg.append(label(sx - 4, plotTop - 8, "safe from here", { "text-anchor": "end" }));
     }
-    const cx = px(A.currentEarnings), cy = py(lifted[indexOf(ev, A.currentEarnings)]);
+    /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
+    const cx = px(A.currentEarnings), cy = py(liftedAt(A.currentEarnings));
     svg.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: plotBot, stroke: "var(--ink-3)", "stroke-width": 1 }));
     diamond = mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 });
     svg.append(diamond);
@@ -185,7 +191,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       (DEFERRED.length
         ? `Deferred drops are lifted out of the plotted line, which is what analysis.dangerZones describes${ghost ? "; the real curve including them is the dashed ghost. " : "; here they are too small to draw. "}`
         : "No cliff on this curve is deferred. ") + source;
-    renderKey(A.dangerZones.length > 1, IMMEDIATE.length > 0, DEFERRED.length > 0, !!P.zone, safe !== null);
+    renderKey(A.dangerZones.length > (P.zone ? 1 : 0), IMMEDIATE.length > 0, DEFERRED.length > 0, !!P.zone, safe !== null);
     layer = { px, py, pad, W, H }; drawn = true;
     syncMarks(); paintCursor();
   }
@@ -197,7 +203,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       ["Net income", sw(`<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`)],
     ];
     if (zone) k.push(["This household's zone", sw(`<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
-    if (otherZones || !zone) k.push([zone ? "Other zones" : "Danger zones", sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
+    if (otherZones) k.push([zone ? "Other zones" : "Danger zones", sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
     if (immediate) k.push(["Immediate cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`)]);
     if (deferred) k.push(["Deferred cliff", sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`)]);
     k.push(["Current earnings", sw(`<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`)]);
@@ -260,7 +266,16 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     else return;
     e.preventDefault(); paintCursor();
   });
-  addEventListener("resize", () => draw());
+  /* A resize redraws once per frame, and a mark that had focus keeps it across the rebuild. */
+  let raf = 0;
+  addEventListener("resize", () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const focused = marks.findIndex((m) => m.btn === document.activeElement);
+      draw();
+      if (focused >= 0) marks[focused]?.btn.focus();
+    });
+  });
 
   return {
     render(next, src) {

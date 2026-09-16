@@ -208,8 +208,12 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const summaryText = h("span");
   const inputsBtn = h("button", { type: "button", class: "hg-button hg-button--small", "aria-expanded": "false", "aria-controls": "inputs" }, copy.summary.edit);
   const inputsRow = h("div", { class: "hg-scenario__inputs", id: "inputs" });
-  // The line a take-up toggle answers with: in the DOM from the start (hidden), so it is a live region before it first speaks.
-  const note = h("p", { class: "hg-scenario__note hg-source", "aria-live": "polite", hidden: true });
+  // The line a take-up toggle answers with. Appended empty on the first
+  // setNote and filled a frame later, so it is a live region in the tree
+  // before it first speaks (a hidden element is not); a page that never
+  // sets one has no note in its DOM.
+  const note = h("p", { class: "hg-scenario__note hg-source", "aria-live": "polite" });
+  let noteText = "";
   const dialog = h("dialog", { class: "editor__dialog", "aria-labelledby": "dialog-title" });
 
   const zipInput = h("input", { id: "f-zip", name: "zip", class: "editor__input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
@@ -346,7 +350,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       const on = flags[c.id] === true;
       const shown = c.inverted ? !on : on;
       return [chip(c.id, c.label, c.inverted ? (shown ? copy.chips.yes : copy.chips.no) : shown ? copy.chips.on : copy.chips.off, { "aria-pressed": String(shown) })];
-    }), note);
+    }), ...(note.isConnected ? [note] : []));
     if (focused) inputsRow.querySelector<HTMLElement>(`[data-chip="${focused}"]`)?.focus();
     summaryText.textContent = hasAnswers(flags) ? [flags.zip, state(), countyLabel(), householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
   }
@@ -570,8 +574,10 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       (inputsRow.querySelector<HTMLElement>(id ? `[data-chip="${id}"]` : "[aria-pressed]") ?? inputsBtn).focus();
     },
     setNote(text) {
-      note.textContent = text;
-      note.hidden = text === "";
+      noteText = text;
+      if (note.isConnected) { note.textContent = text; return; }
+      inputsRow.append(note);
+      requestAnimationFrame(() => { note.textContent = noteText; });
     },
     setCounty(zip, name) {
       county = name === undefined ? null : { zip, name };

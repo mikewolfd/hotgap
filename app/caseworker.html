@@ -61,7 +61,7 @@
             <tbody id="dropRows"></tbody>
           </table>
         </div>
-        <p class="footnote" id="dropsEmpty" hidden>No step down of $200 or more anywhere on this curve.</p>
+        <p class="footnote" id="dropsEmpty" hidden></p>
 
         <div class="hg-panel breakdown">
           <h3 id="bdTitle"></h3>
@@ -71,7 +71,7 @@
       </section>
 
       <section>
-        <h2 id="ledger">Where each program ends</h2>
+        <h2 id="ledger" tabindex="-1">Where each program ends</h2>
         <table class="hg-table ledger">
           <caption>A program ends at the first pay at which it is gone. Adults and children are reported separately — a parent usually loses coverage far below a child’s limit.</caption>
           <thead>
@@ -87,6 +87,7 @@
             <caption>The same rules asked of each what-if.</caption>
             <thead><tr id="compareHead"></tr></thead>
             <tbody id="compareRows"></tbody>
+            <tfoot id="compareFoot" hidden></tfoot>
           </table>
         </div>
         <p class="footnote hg-no-print" id="compareEmpty">No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.</p>

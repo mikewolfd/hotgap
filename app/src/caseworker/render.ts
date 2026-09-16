@@ -3,14 +3,14 @@
 // the CompareTable, the assumed list with the SourceNote, and the client
 // sheet. Every string comes from the evaluation or the coverage block
 // through model.ts; nothing is typed. Each function is O(its rows).
-import type { HouseholdEvaluation, ReachLadder, StateCoverage, SummaryJson } from "@hotgap/core";
+import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { money } from "../lib/format.js";
 import { programName } from "../lib/programs.js";
 import { esc, list } from "../places/format.js";
 import { correctionRows } from "../places/model.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  neg, signed, sourceLine, stateName, tiles, verdict, type Provenance,
+  modeled, neg, signed, sourceLine, stateName, tiles, verdict, type Provenance,
 } from "./model.js";
 
 export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -34,8 +34,10 @@ export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | und
         : "The weekly sweep's summary did not load, so nothing here can say what the model leaves out. Reload to try again.") + `</p></div>`;
     return;
   }
-  const mine = incompleteHere(cov, ev.answers);
-  const states = summary ? incompleteStates(summary, ev.answers) : [];
+  /* Against the household the curve models (an archetype curve is the swept renter, not the flags typed). */
+  const h = modeled(ev);
+  const mine = incompleteHere(cov, h);
+  const states = summary ? incompleteStates(summary, h) : [];
   $("coverage").innerHTML = mine.length
     ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>Figures incomplete in ${esc(st)}.</strong> ` +
       `The model cannot compute ${esc(list(mine))} here, so a cliff this household would meet is missing from this curve. ` +
@@ -73,6 +75,7 @@ export function renderDrops(ev: HouseholdEvaluation, onSelect: (i: number) => vo
     (c.deferral ? ` <span class="hg-badge">Deferred</span><span class="hg-cite">until ${esc(c.deferral.until)}</span>` : "") + `</td>` +
     `<td>${c.driver}</td></tr>`).join("");
   rows.querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => b.addEventListener("click", () => onSelect(i)));
+  $("dropsEmpty").textContent = `No step down of ${money(CLIFF_MIN)} or more anywhere on this curve.`;
   $("dropsEmpty").hidden = ev.analysis.cliffs.length > 0;
 }
 
@@ -128,20 +131,25 @@ export interface Column {
 }
 
 export function renderCompare(base: HouseholdEvaluation, cols: Column[], on: { remove(i: number): void; retry(i: number): void }): void {
-  const head = $("compareHead");
-  head.innerHTML = `<th scope="col"></th>` + cols.map((c) => {
-    const what = c.index !== undefined;
+  const what = (c: Column) => c.index !== undefined;
+  const cls = (c: Column, more = "") => `class="num${more}${what(c) ? " b" : ""}"`;
+  $("compareHead").innerHTML = `<th scope="col"></th>` + cols.map((c) => {
     const sub = c.ev ? columnSub(c.ev) + (c.ev.source === "archetype" ? " · archetype" : "") : c.pending ?? "";
-    return `<th scope="col" class="num${what ? " b" : ""}">${esc(c.title)}<br><span class="hg-cite">${esc(sub)}</span>` +
-      (what ? `<span class="col-actions hg-no-print">` +
-        (c.ev === null && c.pending !== "computing" ? `<button type="button" class="hg-button hg-button--small" data-retry="${c.index}">Try again</button>` : "") +
-        `<button type="button" class="hg-button hg-button--small" data-remove="${c.index}" aria-label="Remove the what-if ${esc(c.title)}">Remove</button></span>` : "") + `</th>`;
+    return `<th scope="col" ${cls(c)}>${esc(c.title)}<br><span class="hg-cite">${esc(sub)}</span></th>`;
   }).join("");
-  head.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => on.remove(Number(b.dataset.remove))));
-  head.querySelectorAll<HTMLButtonElement>("[data-retry]").forEach((b) => b.addEventListener("click", () => on.retry(Number(b.dataset.retry))));
   $("compareRows").innerHTML = compareRows(base).map((r) =>
     `<tr><th scope="row">${esc(r.label)}</th>` + cols.map((c) =>
-      `<td class="num${r.money ? " money" : ""}${c.index !== undefined ? " b" : ""}">${c.ev ? esc(r.cell(c.ev)) : c.pending === "computing" ? "…" : "—"}</td>`).join("") + "</tr>").join("");
+      `<td ${cls(c, r.money ? " money" : "")}>${c.ev ? esc(r.cell(c.ev)) : c.pending === "computing" ? "…" : "—"}</td>`).join("") + "</tr>").join("");
+  /* A what-if's controls live in a footer row, not its header, so a column's announced name stays its name. */
+  const foot = $("compareFoot");
+  foot.hidden = !cols.some(what);
+  foot.innerHTML = foot.hidden ? "" : `<tr class="hg-no-print"><th scope="row">This what-if</th>` + cols.map((c) => `<td ${cls(c)}>` + (what(c)
+    ? `<span class="col-actions">` +
+      (c.ev === null && c.pending !== "computing" ? `<button type="button" class="hg-button hg-button--small" data-retry="${c.index}">Try again</button>` : "") +
+      `<button type="button" class="hg-button hg-button--small" data-remove="${c.index}" aria-label="Remove the what-if ${esc(c.title)}">Remove</button></span>`
+    : "") + `</td>`).join("") + "</tr>";
+  foot.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => on.remove(Number(b.dataset.remove))));
+  foot.querySelectorAll<HTMLButtonElement>("[data-retry]").forEach((b) => b.addEventListener("click", () => on.retry(Number(b.dataset.retry))));
   $("compareNote").textContent = compareNote(base, cols.flatMap((c) => (c.ev && c.ev !== base ? [c.ev] : [])));
   $("compareEmpty").hidden = cols.length > 1;
 }

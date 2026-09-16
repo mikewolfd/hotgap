@@ -62,7 +62,6 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     await expect(page.locator('#dropRows [aria-current="true"]')).toHaveText("$54,000 → $55,000");
     await expect(page.locator("#bdTitle")).toHaveText("Where the $25,449 went — $54,000 to $55,000");
     await expect(page.locator("#bdBars")).toContainText("Sums to $25,449, the drop. Driver: benefits.");
-    await expect(page.locator("#marks .hg-mark")).toHaveCount(await page.locator("#marks .hg-mark").count());
     expect(await page.locator("#marks .hg-mark").count()).toBeGreaterThan(0);
     await expect(page.locator("#chartWrap")).toHaveAttribute("aria-label", /The largest step down is \$25,449 at \$54,000 where CCDF child care subsidy ends/);
     await expect(page.locator("#curveCap")).toContainText(/The y-axis starts at \$[\d,]+, not \$0; the visible range is [\d.]+× the largest drop\. No cliff on this curve is deferred\. Estimates only/);
@@ -130,7 +129,9 @@ test("390px: a take-up chip adds a what-if, evaluated live, and the URL carries 
   await page.evaluate(() => document.getElementById("compare")!.scrollIntoView());
   await page.screenshot({ path: shot("390-light-compare") });
   // Removing it clears the column and the URL.
-  await page.getByRole("button", { name: /Remove the what-if/ }).click();
+  // The controls live in the footer row, so the column header stays the column's name.
+  await expect(page.locator("#compareHead")).not.toContainText("Remove");
+  await page.locator("#compareFoot").getByRole("button", { name: /Remove the what-if/ }).click();
   await expect(page.locator("#compareHead th")).toHaveCount(2);
   expect(new URL(page.url()).searchParams.getAll("whatif")).toEqual([]);
   await noOverflow(page);
@@ -190,6 +191,9 @@ test("1280px: landing on a shared comparison evaluates the base and its what-ifs
   await page.locator("#chartWrap").focus();
   await page.keyboard.press("Home");
   await expect(page.locator("#readout")).toContainText("Earnings $0 →");
+  // Landing and what-ifs replaced the history entry rather than pushing: one Back leaves the page.
+  await page.goBack();
+  expect(page.url()).toBe("about:blank");
   await noOverflow(page);
   expect(errors).toEqual([]);
 });

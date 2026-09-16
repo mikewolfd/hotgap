@@ -30,7 +30,6 @@ const text = {
   },
   tryAgain: "Try again",
   whatIfHint: "Press a take-up chip, or change a value, to add a what-if beside the base household.",
-  needBase: "Enter the household first; what-ifs compare against it.",
   added: (label: string) => `What-if added: ${label}. It is evaluated beside the base under Compare; the chips show the base.`,
   already: (label: string) => `${label} is already compared.`,
   computing: "computing",
@@ -61,18 +60,21 @@ let baseFlags: HouseholdFlags | null = null;
 let baseEv: HouseholdEvaluation | null = null;
 let whatIfs: WhatIf[] = [];
 let selected: number | null = null;
+/* The base evaluation that may render: bumped by every run and by a landing, so a stale one never lands. */
 let latest = 0;
+/* True while the base's evaluation is in flight; a what-if added then waits for it. */
+let baseInFlight = false;
 
 const editor = mountEditor($("app"), {
-  onSubmit: (flags) => void runBase(flags, { submitted: true }),
+  onSubmit: (flags) => void runBase(flags, { submitted: true, push: true }),
   onChange: (flags) => { if (baseFlags) addWhatIf(flags); },
   /* The screen's other exit: the household it holds becomes a what-if of the base (or the base, when there is none yet). */
-  altSubmit: { label: "Add as a what-if", onSubmit: (flags) => { if (baseFlags) { addWhatIf(flags); editor.close(); } else void runBase(flags, { submitted: true }); } },
+  altSubmit: { label: "Add as a what-if", onSubmit: (flags) => { if (baseFlags) { addWhatIf(flags); editor.close(); } else void runBase(flags, { submitted: true, push: true }); } },
   /* Edits left on the screen are not a base: the chips always show the base, so a press is one change from it. */
   onClose: () => { if (baseFlags) editor.setFlags(baseFlags); },
   actions: [
     { label: "Add a what-if", short: "What-if", onClick: () => {
-      if (!baseFlags) { editor.setNote(text.needBase); editor.open(); return; }
+      if (!baseFlags) { editor.open(); return; }   /* the screen itself asks for the household */
       editor.setNote(text.whatIfHint);
       editor.openInputs();
     } },
@@ -116,35 +118,47 @@ function showError(r: Extract<EvaluateResult, { ok: false }>): void {
   strong.textContent = text.errorTitle;
   const retry = document.createElement("button");
   retry.type = "button"; retry.className = "hg-button hg-button--small"; retry.textContent = text.tryAgain;
-  retry.addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false }); });
+  retry.addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false, push: false }); });
   alert.replaceChildren(strong, " ", errorText(r), " ", retry);
   alert.hidden = false;
 }
 
-/** Evaluate the base household and render everything; then re-ask every what-if of it. */
-async function runBase(flags: HouseholdFlags, { submitted }: { submitted: boolean }): Promise<void> {
+/**
+ * Evaluate the base household and render everything; then re-ask every
+ * what-if of it. `submitted` closes the screen and moves focus to the
+ * verdict; `push` adds a history entry (a submit does, a landing or a retry
+ * replaces — the query is re-serialized in flag order, so a landing URL
+ * rarely equals its own rewrite).
+ */
+async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: boolean; push: boolean }): Promise<void> {
   const v = validateAnswers(rawAnswersFromFlags(flags));
   if (!v.ok) { editor.showError(v.detail); return; }
   baseFlags = flags;
-  writeUrl(submitted);
+  writeUrl(push);
   const id = ++latest;
+  baseInFlight = true;
   alert.hidden = true;
   status.textContent = text.loading(axisSpec(v.value).count);
   const r = await evaluate(flags);
   if (id !== latest) return;
+  baseInFlight = false;
   if (!r.ok) {
+    /* The page is the new household's or nothing's: what was rendered belonged to the old one. */
+    baseEv = null; content.hidden = true;
     if (r.error === "bad_input" && r.detail) editor.showError(r.detail); else showError(r);
     return;
   }
-  baseEv = r.evaluation;
+  if (!(await renderAll(r.evaluation, flags, id))) return;
   status.textContent = "";
-  await renderAll(r.evaluation, flags);
   if (submitted) { editor.close(); $("verdictLine").focus(); }
   for (let i = 0; i < whatIfs.length; i++) void runWhatIf(i);
 }
 
-async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags): Promise<void> {
+/** Render one evaluation once the data beside it is in; false when a newer base overtook it meanwhile. */
+async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags, id: number): Promise<boolean> {
   const [summary, , county] = await Promise.all([summaryP, reachP, countyNameFor(ev.source === "live" ? ev.answers.countyFips : null)]);
+  if (id !== latest) return false;
+  baseEv = ev;
   const cov = summary?.coverage?.[ev.answers.state];
   const prov: Provenance = { cov, summary, county };
   content.hidden = false;
@@ -168,6 +182,7 @@ async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags): Promis
   renderHandout(ev, summary);
   if (flags.zip) editor.setCounty(flags.zip, county ?? undefined);
   editor.setNote(unclaimedNote(ev));
+  return true;
 }
 
 // ── What-ifs ────────────────────────────────────────────────────────────
@@ -183,7 +198,7 @@ function addWhatIf(flags: HouseholdFlags): void {
   writeUrl(false);
   renderCompareTable();
   /* With the base still computing, runBase asks every what-if once it lands. */
-  if (baseEv) void runWhatIf(whatIfs.length - 1);
+  if (baseEv && !baseInFlight) void runWhatIf(whatIfs.length - 1);
 }
 
 async function runWhatIf(i: number): Promise<void> {
@@ -217,7 +232,7 @@ function renderCompareTable(): void {
 }
 
 // ── Start ───────────────────────────────────────────────────────────────
-$("retrySource").addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false }); });
+$("retrySource").addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false, push: false }); });
 const theme = $<HTMLButtonElement>("themeBtn");
 theme.addEventListener("click", () => {
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -226,10 +241,12 @@ theme.addEventListener("click", () => {
 });
 
 function start(): void {
+  latest++;   /* whatever was in flight belongs to the URL we left */
+  baseInFlight = false;
   const page = parsePage(location.search);
   editor.setFlags(page.base);
   whatIfs = page.whatIfs.map((diff) => ({ diff, ev: null, pending: text.computing, seq: 0 }));
-  if (hasAnswers(editor.flags)) void runBase(editor.flags, { submitted: true });
+  if (hasAnswers(editor.flags)) void runBase(editor.flags, { submitted: true, push: false });
   else { baseFlags = null; baseEv = null; content.hidden = true; status.textContent = ""; editor.open(); }
 }
 addEventListener("popstate", start);

@@ -10,6 +10,8 @@ import {
   ARCHETYPES,
   answersFor,
   CHILDCARE_MAX_AGE,
+  CLIFF_MIN,
+  REACH_PERCENTILES,
   COVERAGE_PROGRAMS,
   DEFERRAL_UNTIL,
   pickArchetypeId,
@@ -23,7 +25,7 @@ import {
   type SummaryJson,
   type UnmodeledProgram,
 } from "@hotgap/core";
-import { dateOf, list, modelLine, reachWord } from "../places/format.js";
+import { capitalize, dateOf, list, modelLine, reachWord } from "../places/format.js";
 import { money } from "../lib/format.js";
 import { programName, programPhrase } from "../lib/programs.js";
 import { verdictSentence } from "../lib/verdict.js";
@@ -105,7 +107,9 @@ export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[]
   if (a.worstCliff) out.push({ label: "Largest single-step drop", value: money(a.worstCliff.drop), sub: `at ${money(a.worstCliff.startEarnings)} → ${money(a.worstCliff.endEarnings)}` });
   const pct = ev.reach.current;
   if (pct !== null && cell) {
-    const steps = cell.ladder.length - 1, i = Math.min(steps, Math.floor((pct / 100) * steps));
+    /* The ladder point at or below the percentile: the ladder is sampled at REACH_PERCENTILES. */
+    const above = REACH_PERCENTILES.findIndex((p) => p > pct);
+    const i = above < 0 ? REACH_PERCENTILES.length - 1 : Math.max(0, above - 1);
     out.push({ label: "Reach at current earnings", value: ordinal(Math.round(pct)), sub: `percentile, ±${money(cell.moe[i])} (n = ${cell.n})` });
   }
   return out;
@@ -204,7 +208,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
   } else {
     const kidsChip = pts[i].childPrograms.chip ?? 0;
     if (r.id === "medicaid" && r.group === "Children" && kidsChip > 0) s.push(`The children move to CHIP: ${money(kidsChip)} a year of coverage from ${money(r.at)}.`);
-    if (r.id === "eitc") s.push("Phases out; no step of $200 or more, so it is not a cliff.");
+    if (r.id === "eitc") s.push(`Phases out; no step of ${money(CLIFF_MIN)} or more, so it is not a cliff.`);
     if (r.id === "chip" && pts[i].programs.aca > pts[before].programs.aca) s.push(`The premium tax credit rises ${money(pts[i].programs.aca - pts[before].programs.aca)} as it ends.`);
   }
   if (r.deferred) s.push(`Crossing this does not end it this year: the loss lands at ${r.deferred}.`);
@@ -250,9 +254,8 @@ export function chartLabel(ev: HouseholdEvaluation): string {
 // ── CompareTable (#12) ──────────────────────────────────────────────────
 export interface CompareRow { label: string; cell: (ev: HouseholdEvaluation) => string; money?: boolean }
 
-/** The rows every scenario answers; `base` is the column "Change from now" is measured against. */
+/** The rows every scenario answers; `base` is the column "Change from now" is measured against. A threshold takes its own curve's step (a wider axis has a wider one). */
 export function compareRows(base: HouseholdEvaluation): CompareRow[] {
-  const step = stepOf(base);
   const adultMedicaid = (ev: HouseholdEvaluation) => ev.escape.programEndsByAge.adults.medicaid;
   return [
     { label: "Net after premiums", cell: (ev) => money(ev.analysis.currentNet), money: true },
@@ -262,8 +265,8 @@ export function compareRows(base: HouseholdEvaluation): CompareRow[] {
     { label: "Raise still needed", cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? "—" : `${ev.personal.raiseIsLowerBound ? "> " : ""}${money(ev.personal.raiseToClear ?? 0)}`) },
     { label: "Safe from", cell: (ev) => (ev.escape.safeExitEarnings === null ? "past the axis" : money(ev.escape.safeExitEarnings)) },
     { label: "Largest drop", cell: (ev) => (ev.analysis.worstCliff ? money(ev.analysis.worstCliff.drop) : "none") },
-    { label: "Adult Medicaid ends", cell: (ev) => { const at = adultMedicaid(ev); return at === undefined ? "—" : money(at + step); } },
-    { label: "Child coverage ends", cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? "past the axis" : money(ev.escape.childCoverageEndEarnings + step)) },
+    { label: "Adult Medicaid ends", cell: (ev) => { const at = adultMedicaid(ev); return at === undefined ? "—" : money(at + stepOf(ev)); } },
+    { label: "Child coverage ends", cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? "past the axis" : money(ev.escape.childCoverageEndEarnings + stepOf(ev))) },
     { label: "Reach at these earnings", cell: (ev) => (ev.reach.current === null ? "—" : ordinal(Math.round(ev.reach.current))) },
   ];
 }
@@ -340,7 +343,6 @@ export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): {
   return { title: `For the client — ${stateName(ev.answers.state)}, ${h.married ? "two parents" : "one parent"}, ${count(kids)} ${kids === 1 ? "child" : "children"}`, paragraphs: p };
 }
 
-const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 /** What a take-up state means for this household: the programs turned off that would pay at current earnings (evaluation.unclaimed). */
 export function unclaimedNote(ev: HouseholdEvaluation): string {
