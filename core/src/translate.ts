@@ -169,10 +169,43 @@ function childcareProviderType(state: string, age: number): Vars {
   }
 }
 
+/** The person-level variable the curve varies: wages, or self-employment income when the earner said so. */
+export function earningsVariable(a: Pick<HouseholdAnswers, "selfEmployed">): "employment_income" | "self_employment_income" {
+  return a.selfEmployed ? "self_employment_income" : "employment_income";
+}
+
+/**
+ * Citizenship as PolicyEngine sees it: `immigration_status` for the benefit
+ * rules and `ssn_card_type` for the tax credits' identification tests, which
+ * PolicyEngine does not derive from each other. An SSN valid for work comes
+ * with lawful permanent residence and the humanitarian statuses; DACA and
+ * TPS carry one only alongside a work permit; an undocumented person has
+ * none, so no EITC (26 U.S.C. 32(m)) and, from 2025, no refundable child tax
+ * credit. Omitted for a citizen so the payload stays byte-identical.
+ */
+function applyImmigration(person: Vars, status: HouseholdAnswers["youStatus"], yearsInUs: number | null): void {
+  if (status === "citizen") return;
+  const pe: Record<Exclude<HouseholdAnswers["youStatus"], "citizen">, string> = {
+    lpr: "LEGAL_PERMANENT_RESIDENT", refugee: "REFUGEE", asylee: "ASYLEE", deportation_withheld: "DEPORTATION_WITHHELD",
+    cuban_haitian_entrant: "CUBAN_HAITIAN_ENTRANT", conditional_entrant: "CONDITIONAL_ENTRANT", paroled_one_year: "PAROLED_ONE_YEAR",
+    daca: "DACA", tps: "TPS", undocumented: "UNDOCUMENTED",
+  };
+  person.immigration_status = y(pe[status]);
+  person.ssn_card_type = y(status === "undocumented" ? "NONE" : status === "daca" || status === "tps" ? "NON_CITIZEN_VALID_EAD" : "CITIZEN");
+  if (yearsInUs !== null) person.years_since_us_entry = y(yearsInUs);
+}
+
 export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): { household: object } {
   const ssiPathway = opts.ssiPathway ?? true;
   const you: Vars = { age: y(a.age) };
   for (const v of PERSON_VARS) you[v] = y(null);
+  applyImmigration(you, a.youStatus, a.youYearsInUs);
+  // Liquid assets on the householder; SNAP sums them over the unit. Omitted
+  // when zero so the payload, and the cache key built from it, stay canonical.
+  if (a.savings > 0) you.bank_account_assets = y(a.savings);
+  // A self-employed earner's wages are zero by construction; the axis below
+  // then varies self_employment_income instead.
+  if (a.selfEmployed) you.employment_income = y(0);
   if (a.monthlyRent !== null) you.rent = y(a.monthlyRent * 12);
   // Hours are an ASSUMPTION when unasked: full time. `weekly_hours_worked_before_lsr`
   // defaults to 0 when unsent, and from policyengine-us 2.5.0 that zero is
@@ -210,11 +243,19 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
     you.offered_aca_disqualifying_esi = y(true);
     you.employer_sponsored_insurance_premiums = y(esiPremium);
   }
+  // The plan reaches the spouse and children too (evaluate.ts charges the
+  // plus-one and family tiers), so the ACA firewall applies to them as well:
+  // without these flags PolicyEngine kept computing a premium credit for the
+  // rest of the family, and "ACA ends" could appear on a household that was
+  // never on the marketplace. Medicaid and CHIP for the children are
+  // untouched by the flags (verified 2026-09-16, both endpoints).
+  const esiFlags: Vars = a.hasEmployerCoverage ? { has_esi: y(true), offered_aca_disqualifying_esi: y(true) } : {};
 
   const people: Record<string, Vars> = { you };
   if (a.married) {
-    people.spouse = { age: y(a.spouseAge), employment_income: y(a.spouseAnnualEarnings) };
+    people.spouse = { age: y(a.spouseAge), employment_income: y(a.spouseAnnualEarnings), ...esiFlags };
     for (const v of PERSON_VARS) people.spouse[v] = y(null);
+    applyImmigration(people.spouse, a.spouseStatus, a.spouseYearsInUs);
     // Only a spouse with earnings works the hours; a stay-at-home spouse at 40
     // hours a week would be a different household.
     if (a.spouseAnnualEarnings > 0) people.spouse.weekly_hours_worked_before_lsr = y(a.hoursPerWeek ?? DEFAULT_HOURS);
@@ -226,14 +267,24 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   // live 2026-07-11).
   const hsValue = a.getsHeadStart ? null : 0;
   a.childAges.forEach((age, i) => {
-    const child: Vars = { age: y(age), early_head_start: y(hsValue), head_start: y(hsValue) };
+    const child: Vars = { age: y(age), early_head_start: y(hsValue), head_start: y(hsValue), ...esiFlags };
     for (const v of PERSON_VARS) child[v] = y(null);
+    // WIC has no take-up switch upstream; like Head Start, "off" forces the value.
+    if (!a.getsWic) child.wic = y(0);
     applyDisability(child, a.childDisabled[i] ?? false, ssiPathway);
     people[`child${i + 1}`] = child;
   });
+  // The entitlements a household says it does not get. PolicyEngine's own
+  // take-up switches, so everything downstream — SNAP's dependent-care
+  // deduction, the premium credit a Medicaid-eligible adult cannot have —
+  // follows. Omitted when on (the default) so nothing changes for anyone
+  // else; verified on both endpoints 2026-09-16.
+  if (!a.getsMedicaid) for (const person of Object.values(people)) person.takes_up_medicaid_if_eligible = y(false);
 
   const members = Object.keys(people);
   const spmVars: Vars = {};
+  if (!a.getsSnap) spmVars.takes_up_snap_if_eligible = y(false);
+  if (!a.getsTanf) spmVars.takes_up_tanf_if_eligible = y(false);
   applyChildcareSubsidy(spmVars, people, a);
   if (a.state === "MA" && a.childAges.length > 0) {
     for (const v of ["ma_tafdc", "ma_tafdc_payment_standard", "ma_tafdc_non_financial_eligible", "ma_tafdc_countable_unearned_income", "ma_tafdc_dependent_care_deduction"]) spmVars[v] = y(null);
@@ -291,7 +342,7 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
       households: {
         household: householdVars,
       },
-      axes: [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]],
+      axes: [[{ name: earningsVariable(a), min: 0, max: axis.max, count: axis.count, period: YEAR }]],
     },
   };
 }

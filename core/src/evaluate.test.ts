@@ -5,6 +5,7 @@ import { PolicyEngineError } from "./client.js";
 import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
 import { validateAnswers } from "./validate.js";
+import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
@@ -96,6 +97,37 @@ describe("evaluateOffline", () => {
     // Bypasses validateAnswers on purpose: "ZZ" is exactly what it rejects, and
     // evaluateOffline must still refuse rather than throw.
     expect(evaluateOffline({ ...answers, state: "ZZ" })).toBeNull();
+  });
+});
+
+describe("unclaimed entitlements", () => {
+  it("asks for a second curve only when something is off, and reports what the off programs would pay at today's pay", async () => {
+    let requests = 0;
+    const axis = axisSpec(answers);
+    // The 101-point fixture stretched to the household's axis by repeating its last point.
+    const stretch = (v: unknown): unknown =>
+      Array.isArray(v) && v.length === 101 ? Array.from({ length: axis.count }, (_, i) => v[Math.min(i, 100)]) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, stretch(b)])) : v;
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      requests++;
+      const payload = JSON.parse(init!.body as string);
+      // The all-take-up request carries no switch; the household's own request does.
+      const off = payload.household.spm_units.spm_unit.takes_up_snap_if_eligible?.["2026"] === false;
+      const body = stretch(JSON.parse(fixture)) as any;
+      body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: "2026" }]];
+      if (off) for (const k of Object.keys(body.result.spm_units)) body.result.spm_units[k].snap["2026"] = body.result.spm_units[k].snap["2026"].map(() => 0);
+      return new Response(JSON.stringify(body), { status: 200 });
+    }) as unknown as typeof fetch;
+    const on = await evaluateHousehold(answers, { fetchImpl, fallback: false });
+    expect(requests).toBe(1);
+    expect(on.unclaimed).toEqual([]);
+    const off = await evaluateHousehold(answersWith({ annualEarnings: 15000, getsSnap: false, getsWic: false }), { fetchImpl, fallback: false });
+    expect(requests).toBe(3);
+    // SNAP is off and the fixture pays it at $15k, so it is listed; WIC is off but pays nothing for a 5-year-old.
+    const snapAt15k = Math.round(fixturePoints.find((p) => p.earnings === 15000)!.programs.snap ?? 0);
+    expect(snapAt15k).toBeGreaterThan(1000);
+    expect(off.unclaimed).toEqual([{ program: "snap", annual: snapAt15k }]);
+    expect(off.curve.points.every((p) => (p.programs.snap ?? 0) === 0)).toBe(true);
+    expect(evaluateOffline(answersWith({ getsSnap: false }))?.unclaimed).toBeNull();
   });
 });
 

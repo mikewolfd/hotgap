@@ -43,6 +43,20 @@ describe("validateAnswers", () => {
     expect(shapeless.ok && shapeless.value.countyFips).toBeNull();
   });
 
+  it("defaults the new inputs — citizen, wages, no savings, every entitlement taken up — and checks them when given", () => {
+    const v = validateAnswers(good);
+    expect(v.ok && v.value).toMatchObject({ youStatus: "citizen", spouseStatus: "citizen", youYearsInUs: null, selfEmployed: false, savings: 0, getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true });
+    expect(validateAnswers({ ...good, youStatus: "martian" })).toEqual({ ok: false, detail: "youStatus" });
+    expect(validateAnswers({ ...good, youStatus: "lpr", youYearsInUs: 2.5 })).toEqual({ ok: false, detail: "youYearsInUs" });
+    expect(validateAnswers({ ...good, savings: -1 })).toEqual({ ok: false, detail: "savings" });
+    expect(validateAnswers({ ...good, getsSnap: "no" })).toEqual({ ok: false, detail: "getsSnap" });
+    const lpr = validateAnswers({ ...good, youStatus: "lpr", youYearsInUs: 3, selfEmployed: true, savings: 25000, getsSnap: false });
+    expect(lpr.ok && lpr.value).toMatchObject({ youStatus: "lpr", youYearsInUs: 3, selfEmployed: true, savings: 25000, getsSnap: false, getsTanf: true });
+    // Years in the US mean nothing for a citizen, so they are dropped; a spouse's status is dropped when unmarried.
+    const citizenYears = validateAnswers({ ...good, youYearsInUs: 3, spouseStatus: "undocumented" });
+    expect(citizenYears.ok && citizenYears.value).toMatchObject({ youYearsInUs: null, spouseStatus: "citizen" });
+  });
+
   it("zeroes spouse earnings when unmarried", () => {
     const r = validateAnswers({ ...good, spouseAnnualEarnings: 50000 });
     if (r.ok) expect(r.value.spouseAnnualEarnings).toBe(0);

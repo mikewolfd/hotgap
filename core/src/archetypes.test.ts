@@ -55,6 +55,9 @@ describe("answersFor", () => {
       spouseAge: null,
       youDisabled: false,
       spouseDisabled: false,
+      youStatus: "citizen", spouseStatus: "citizen", youYearsInUs: null, spouseYearsInUs: null,
+      selfEmployed: false, savings: 0,
+      getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true,
       getsHeadStart: false,
       getsHousing: false,
       getsChildcareSubsidy: true,   // on for the sweep, off for a personal evaluation

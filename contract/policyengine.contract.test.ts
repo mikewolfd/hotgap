@@ -317,6 +317,71 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // force the state's variable to 0 and see whether household_state_benefits
   // and net income move with it.
   //
+  // The personal-path inputs added 2026-09-16, each through HotGap's own
+  // payload: the model must read them, on both endpoints.
+  const twoPoints = (over: Partial<ReturnType<typeof answersFor>>, min: number, state = "TX") => {
+    const answers = { ...answersFor(state, ARCHETYPES.find((a) => a.id === "single-1")!), childAges: [3], childDisabled: [false], annualEarnings: min, ...over };
+    const payload = buildCurvePayload(answers);
+    (payload.household as { axes: unknown[][] }).axes[0][0] = { name: answers.selfEmployed ? "self_employment_income" : "employment_income", min, max: min + 1000, count: 2, period: "2026" };
+    return requestPE(payload, { timeoutMs: 90_000 }).then((body) => parsePEResponse(body, 2)[0]);
+  };
+
+  it("immigration status: an undocumented parent loses the EITC and their share of SNAP; a permanent resident under the five-year bar loses Medicaid, not SNAP", async () => {
+    // Pennsylvania: an expansion state that does not cover new residents with
+    // its own money (California does), so the bar shows in the adult's Medicaid.
+    const citizen = await twoPoints({}, 12000, "PA");
+    const undocumented = await twoPoints({ youStatus: "undocumented" }, 12000, "PA");
+    const newLpr = await twoPoints({ youStatus: "lpr", youYearsInUs: 2 }, 12000, "PA");
+    const settledLpr = await twoPoints({ youStatus: "lpr", youYearsInUs: 6 }, 12000, "PA");
+    const adultMedicaid = (p: { programs: Record<string, number>; childPrograms: Partial<Record<string, number>> }) => p.programs.medicaid - (p.childPrograms.medicaid ?? 0);
+    expect(citizen.programs.eitc).toBeGreaterThan(3000);
+    expect(undocumented.programs.eitc).toBe(0);
+    expect(undocumented.programs.snap).toBeLessThan(citizen.programs.snap! - 1000);
+    expect(adultMedicaid(undocumented)).toBe(0);
+    expect(adultMedicaid(citizen)).toBeGreaterThan(5000);
+    expect(adultMedicaid(newLpr)).toBe(0);
+    expect(adultMedicaid(settledLpr)).toBe(adultMedicaid(citizen));
+    // The model applies no five-year bar to SNAP (its rule is a status list;
+    // upstream simplification, noted in the README): SNAP is unchanged.
+    expect(newLpr.programs.snap).toBe(citizen.programs.snap);
+    // The children are modeled as citizens throughout.
+    expect(undocumented.childPrograms.medicaid).toBe(citizen.childPrograms.medicaid);
+  }, 300_000);
+
+  it("savings: $5,000 in the bank ends SNAP in a state without broad-based categorical eligibility", async () => {
+    const ms = { ...answersFor("MS", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 10000 };
+    const run = (savings: number) => {
+      const payload = buildCurvePayload({ ...ms, savings });
+      (payload.household as { axes: unknown[][] }).axes[0][0] = { name: "employment_income", min: 10000, max: 11000, count: 2, period: "2026" };
+      return requestPE(payload, { timeoutMs: 90_000 }).then((body) => parsePEResponse(body, 2)[0]);
+    };
+    expect((await run(0)).programs.snap).toBeGreaterThan(1000);
+    expect((await run(5000)).programs.snap).toBe(0);
+  }, 200_000);
+
+  it("self-employment: the axis on self_employment_income is accepted and earns the EITC like wages", async () => {
+    const self = await twoPoints({ selfEmployed: true }, 20000);
+    expect(self.programs.eitc).toBeGreaterThan(3000);
+    expect(self.programs.snap).toBeGreaterThan(0);
+  }, 200_000);
+
+  it("take-up: SNAP and Medicaid switched off pay nothing, WIC forced to zero", async () => {
+    const off = await twoPoints({ getsSnap: false, getsMedicaid: false, getsWic: false }, 12000);
+    expect(off.programs.snap).toBe(0);
+    expect(off.programs.medicaid).toBe(0);
+    expect(off.childPrograms.medicaid ?? 0).toBe(0);
+    expect(off.programs.wic ?? 0).toBe(0);
+    const on = await twoPoints({}, 12000);
+    expect(on.childPrograms.medicaid).toBeGreaterThan(0);
+  }, 200_000);
+
+  it("employer coverage: the ACA firewall reaches the spouse and children, so no premium credit is computed for anyone", async () => {
+    const family = await twoPoints({ married: true, spouseAge: 30, childAges: [3, 8], childDisabled: [false, false], hasEmployerCoverage: true }, 60000);
+    expect(family.programs.aca ?? 0).toBe(0);
+    const marketplace = await twoPoints({ married: true, spouseAge: 30, childAges: [3, 8], childDisabled: [false, false] }, 60000);
+    expect(marketplace.programs.aca).toBeGreaterThan(5000);
+  }, 200_000);
+
   // Two states pay nothing until the provider type is named (policyengine-us
   // #9485); HotGap names it in its own payload. Pins that the enum values
   // exist on the endpoint and that they turn the award on.

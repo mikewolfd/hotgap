@@ -1,5 +1,5 @@
 import { FIPS_TO_USPS, STATE_CODES } from "./states.js";
-import type { HouseholdAnswers } from "./types.js";
+import { IMMIGRATION_STATUSES, type HouseholdAnswers, type ImmigrationStatus } from "./types.js";
 
 const STATES = new Set(STATE_CODES);
 
@@ -55,6 +55,25 @@ export function validateAnswers(input: unknown): Validation {
     return { ok: false, detail: "hoursPerWeek" };
   }
 
+  // Immigration status: citizen unless said otherwise; years in the US only
+  // for a present, whole, plausible number.
+  const status = (v: unknown, field: string): ImmigrationStatus | string =>
+    v === undefined ? "citizen" : (IMMIGRATION_STATUSES as readonly unknown[]).includes(v) ? (v as ImmigrationStatus) : field;
+  const youStatus = status(a.youStatus, "youStatus");
+  const spouseStatus = a.married ? status(a.spouseStatus, "spouseStatus") : "citizen";
+  if (!(IMMIGRATION_STATUSES as readonly string[]).includes(youStatus)) return { ok: false, detail: "youStatus" };
+  if (!(IMMIGRATION_STATUSES as readonly string[]).includes(spouseStatus)) return { ok: false, detail: "spouseStatus" };
+  const years = (v: unknown): number | null | false =>
+    v === undefined || v === null ? null : typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 100 ? v : false;
+  const youYearsInUs = years(a.youYearsInUs);
+  const spouseYearsInUs = a.married ? years(a.spouseYearsInUs) : null;
+  if (youYearsInUs === false) return { ok: false, detail: "youYearsInUs" };
+  if (spouseYearsInUs === false) return { ok: false, detail: "spouseYearsInUs" };
+  if (a.selfEmployed !== undefined && typeof a.selfEmployed !== "boolean") return { ok: false, detail: "selfEmployed" };
+  if (a.savings !== undefined && !money(a.savings)) return { ok: false, detail: "savings" };
+  for (const flag of ["getsSnap", "getsTanf", "getsMedicaid", "getsWic"] as const) {
+    if (a[flag] !== undefined && typeof a[flag] !== "boolean") return { ok: false, detail: flag };
+  }
   // A county FIPS starts with its state's two digits; a county in another
   // state would put PolicyEngine's ACA rating area in the wrong state.
   const countyFips = typeof a.countyFips === "string" && /^\d{5}$/.test(a.countyFips) ? a.countyFips : null;
@@ -74,6 +93,10 @@ export function validateAnswers(input: unknown): Validation {
       married: a.married,
       age: a.age as number,
       spouseAge: a.married ? (a.spouseAge as number) : null,
+      youStatus: youStatus as ImmigrationStatus,
+      spouseStatus: spouseStatus as ImmigrationStatus,
+      youYearsInUs: youStatus === "citizen" ? null : youYearsInUs,
+      spouseYearsInUs: spouseStatus === "citizen" ? null : spouseYearsInUs,
       childAges: sortedPairs.map(([age]) => age),
       youDisabled: a.youDisabled,
       spouseDisabled: a.married ? (a.spouseDisabled as boolean) : false,
@@ -82,10 +105,16 @@ export function validateAnswers(input: unknown): Validation {
       monthlyChildcare: a.monthlyChildcare === null ? null : clamp(a.monthlyChildcare as number, 0, 8000),
       annualEarnings: clamp(a.annualEarnings as number, 0, 500000),
       spouseAnnualEarnings: a.married ? clamp(a.spouseAnnualEarnings as number, 0, 500000) : 0,
+      selfEmployed: a.selfEmployed === true,
+      savings: a.savings === undefined ? 0 : clamp(a.savings as number, 0, 10_000_000),
       hoursPerWeek: (a.hoursPerWeek as number | null | undefined) ?? null,
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
       getsChildcareSubsidy: a.getsChildcareSubsidy === true,
+      getsSnap: a.getsSnap !== false,
+      getsTanf: a.getsTanf !== false,
+      getsMedicaid: a.getsMedicaid !== false,
+      getsWic: a.getsWic !== false,
       hasEmployerCoverage: a.hasEmployerCoverage === true,
       countyFips,
       ssdiMonthly,

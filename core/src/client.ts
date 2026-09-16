@@ -7,7 +7,7 @@ import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
 import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
-import { axisSpec, buildPEPayload, type AxisSpec, type PayloadOptions } from "./translate.js";
+import { axisSpec, buildPEPayload, earningsVariable, type AxisSpec, type PayloadOptions } from "./translate.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
@@ -218,7 +218,7 @@ const RESAMPLE_CONCURRENCY = 8;
 function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Record<string, number>, opts: PayloadOptions = {}) {
   const payload = buildCurvePayload({ ...answers, annualEarnings: earnings }, opts);
   const h = payload.household as { spm_units: Record<string, Record<string, unknown>>; axes: unknown };
-  h.axes = [[{ name: "employment_income", min: earnings, max: earnings + 1000, count: 2, period: YEAR }]];
+  h.axes = [[{ name: earningsVariable(answers), min: earnings, max: earnings + 1000, count: 2, period: YEAR }]];
   for (const [name, value] of Object.entries(forced)) h.spm_units.spm_unit[name] = { [YEAR]: value };
   return payload;
 }

@@ -28,9 +28,17 @@ const USAGE = `hotgap <command> [options]
     --hours 40                    hours a week worked; also converts an hourly --pay
     --spouse-earnings 0
     --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
+    --self-employed               pay is self-employment income, not wages
+    --savings 2000                household bank balances (SNAP's asset test)
+    --status lpr  --spouse-status undocumented    citizen unless given: lpr, refugee,
+                                  asylee, daca, tps, undocumented, deportation_withheld,
+                                  cuban_haitian_entrant, conditional_entrant, paroled_one_year
+    --years-in-us 3  --spouse-years-in-us 3       for a non-citizen (the five-year bar)
     --head-start  --housing  --employer-coverage  take-up (default: not received)
     --childcare-subsidy           take-up of the state's CCDF child-care subsidy
                                   (default: not received; needs --childcare)
+    --no-snap  --no-tanf  --no-medicaid  --no-wic   not currently received (default: received);
+                                  the report then shows what each would pay
     --offline                     use the committed archetype curve
     --json                        print the full evaluation as JSON
 
@@ -47,6 +55,10 @@ const OPTIONS = {
   "child-support": { type: "string" }, unemployment: { type: "string" },
   "head-start": { type: "boolean" }, housing: { type: "boolean" },
   "childcare-subsidy": { type: "boolean" },
+  "self-employed": { type: "boolean" }, savings: { type: "string" },
+  status: { type: "string" }, "spouse-status": { type: "string" },
+  "years-in-us": { type: "string" }, "spouse-years-in-us": { type: "string" },
+  "no-snap": { type: "boolean" }, "no-tanf": { type: "boolean" }, "no-medicaid": { type: "boolean" }, "no-wic": { type: "boolean" },
   "employer-coverage": { type: "boolean" }, offline: { type: "boolean" }, json: { type: "boolean" },
   help: { type: "boolean" },
 } as const;
@@ -139,6 +151,16 @@ function householdFrom(f: Flags): HouseholdAnswers {
     getsHousing: f.housing === true,
     getsChildcareSubsidy: f["childcare-subsidy"] === true,
     hasEmployerCoverage: f["employer-coverage"] === true,
+    selfEmployed: f["self-employed"] === true,
+    savings: num(f.savings) ?? 0,
+    youStatus: f.status ?? "citizen",
+    spouseStatus: f["spouse-status"] ?? "citizen",
+    youYearsInUs: num(f["years-in-us"]) ?? null,
+    spouseYearsInUs: num(f["spouse-years-in-us"]) ?? null,
+    getsSnap: f["no-snap"] !== true,
+    getsTanf: f["no-tanf"] !== true,
+    getsMedicaid: f["no-medicaid"] !== true,
+    getsWic: f["no-wic"] !== true,
   });
   return v.ok ? v.value : fail(2, `bad input: ${v.detail}`);
 }
@@ -258,7 +280,7 @@ function report(ev: HouseholdEvaluation): string {
   if (ev.coverageGap) {
     out.push(
       "",
-      `no coverage help exists between ${money(ev.coverageGap.fromEarnings)} and ${money(ev.coverageGap.toEarnings)} in ${a.state}${analysis.currentEarnings >= ev.coverageGap.fromEarnings && analysis.currentEarnings <= ev.coverageGap.toEarnings ? " — your pay is in that band" : ""} — too much for ${a.state} Medicaid, too little for a marketplace subsidy (which starts at the poverty line). Shown with no premium, because nobody in that band is buying that plan.`,
+      `no coverage help exists between ${money(ev.coverageGap.fromEarnings)} and ${money(ev.coverageGap.toEarnings)} in ${a.state}${analysis.currentEarnings >= ev.coverageGap.fromEarnings && analysis.currentEarnings <= ev.coverageGap.toEarnings ? " — your pay is in that band" : ""} — ${a.youStatus === "citizen" && a.spouseStatus === "citizen" ? `too much for ${a.state} Medicaid, too little for a marketplace subsidy (which starts at the poverty line)` : `Medicaid is barred by immigration status (the five-year bar for permanent residents, 8 U.S.C. 1613), and since 2026 a lawfully present adult under the poverty line no longer qualifies for a marketplace subsidy either (P.L. 119-21 repealed 26 U.S.C. 36B(c)(1)(B))`}. Shown with no premium, because nobody in that band is buying that plan.`,
     );
   }
   if (ev.headStart) {
@@ -279,6 +301,19 @@ function report(ev: HouseholdEvaluation): string {
       ev.esi.tier === null
         ? `employer coverage: nothing charged at ${money(analysis.currentEarnings)} — at this pay the plan holder is on Medicaid${a.hoursPerWeek !== null && a.hoursPerWeek < 30 ? `, or works under 30 hours a week (26 U.S.C. 4980H(c)(4)), so no employer owes them a plan` : ""}.`
         : `employer coverage: counted at ${money(ev.esi.annualContribution)}/yr, the average ${TIER_NAME[ev.esi.tier]} employee contribution (AHRQ MEPS-IC 2024), in place of the marketplace premium PolicyEngine would otherwise charge you. The tier follows who the plan has to cover at your pay, so it can change along the curve as children move on and off Medicaid.`,
+    );
+  }
+  if (a.hoursPerWeek === null) {
+    out.push("", "hours: assumed full time (40 a week) because --hours was not given. SNAP's work rules for adults without young children, and some states' child-care activity tests, read this; pass --hours if you work less.");
+  }
+  const off = (["getsSnap", "getsTanf", "getsMedicaid", "getsWic"] as const).filter((k) => !a[k]).map((k) => k.slice(4).toLowerCase());
+  if (off.length) {
+    const NAME = { snap: "SNAP", tanf: "TANF", medicaid: "Medicaid", wic: "WIC" } as const;
+    const claims = (ev.unclaimed ?? []).map((u) => `${NAME[u.program]} about ${money(u.annual)}/yr`);
+    out.push(
+      "",
+      `not received: ${off.map((k) => NAME[k as keyof typeof NAME]).join(", ")} — the curve above is the money you live on without ${off.length > 1 ? "them" : "it"}.` +
+        (ev.unclaimed === null ? " Whether you would qualify is not checked on the offline curve." : claims.length ? ` At ${money(analysis.currentEarnings)} you appear to qualify for ${claims.join(", ")}; a caseworker decides.` : ` At ${money(analysis.currentEarnings)} you would not qualify for ${off.length > 1 ? "them" : "it"} anyway.`),
     );
   }
   if (a.ssdiMonthly > 0 && !a.hasEmployerCoverage) {

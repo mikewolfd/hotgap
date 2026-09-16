@@ -309,13 +309,20 @@ received), `--offline`, `--json`.
 - Health cost is premiums only: the money line subtracts health-insurance
   premiums net of subsidy, not deductibles, copays, or other out-of-pocket
   spending.
-- Everyone is a citizen with no savings and wage income only. PolicyEngine
-  2.5.0 models all three and HotGap never asks: an undocumented parent's
-  share of SNAP is prorated out (TX, $12k, one child: $4,480 → $2,918), a
-  $5,000 bank balance ends SNAP in a state without broad-based categorical
-  eligibility (MS: $1,961 → $0), and self-employment pays SE tax rather than
-  the employee half of FICA. Work hours are full time unless `--hours` says
-  otherwise. Checked 2026-09-16 against the engine.
+- Immigration status, savings and self-employment are asked (`--status`,
+  `--years-in-us`, `--savings`, `--self-employed`; citizen, none and wages
+  by default) and sent to the model, which gates on them: an undocumented
+  parent loses the EITC and their share of SNAP, a permanent resident under
+  the five-year bar loses Medicaid — and since 2026 a marketplace subsidy
+  below the poverty line too (P.L. 119-21) — and $5,000 in the bank ends
+  SNAP where there is no broad-based categorical eligibility. Children are
+  modeled as citizens; the model applies no five-year bar to SNAP (its rule
+  is a status list); work hours are full time unless `--hours` says
+  otherwise. The archetype sweep is unchanged by any of this.
+- The entitlements — SNAP, TANF, Medicaid, WIC — are taken up unless the
+  household says otherwise (`--no-snap` etc.). Then the curve is the money
+  it lives on without them, and the report says what each would pay at
+  today's earnings, from a second curve with everything claimed.
 - Minimum-wage framing (`minWageContext`, the "~hrs/wk" column) is context,
   not eligibility — nothing in the calculation depends on it.
 - Reach is cross-sectional only: "N% of similar households earn at or below

@@ -35,11 +35,31 @@ export const CREDIT_PROGRAMS: ProgramId[] = ["eitc", "ctc", "aca"];
 export const NET_INCOME_CREDITS: ProgramId[] = ["eitc", "ctc"];
 export const COVERAGE_PROGRAMS: ProgramId[] = ["medicaid", "chip"];
 
+/**
+ * PolicyEngine's `immigration_status` values, lower-cased. Benefits gate on
+ * it (SNAP prorates an undocumented parent's share out; Medicaid and the
+ * premium tax credit are barred), and the EITC's SSN test follows from it —
+ * see translate.ts. Children are modeled as citizens; HotGap does not ask.
+ */
+export const IMMIGRATION_STATUSES = [
+  "citizen", "lpr", "refugee", "asylee", "deportation_withheld", "cuban_haitian_entrant",
+  "conditional_entrant", "paroled_one_year", "daca", "tps", "undocumented",
+] as const;
+export type ImmigrationStatus = (typeof IMMIGRATION_STATUSES)[number];
+
 export interface HouseholdAnswers {
   state: string;
   married: boolean;
   age: number;
   spouseAge: number | null;
+  // Citizen unless said otherwise. `yearsInUs` matters only to a non-citizen
+  // (the five-year bar on SNAP, and on Medicaid in most states, for lawful
+  // permanent residents); null means not asked, and PolicyEngine then
+  // assumes the bar is met.
+  youStatus: ImmigrationStatus;
+  spouseStatus: ImmigrationStatus;
+  youYearsInUs: number | null;
+  spouseYearsInUs: number | null;
   childAges: number[];
   youDisabled: boolean;
   spouseDisabled: boolean;
@@ -48,6 +68,15 @@ export interface HouseholdAnswers {
   monthlyChildcare: number | null;
   annualEarnings: number;
   spouseAnnualEarnings: number;
+  // The earner's pay is from self-employment rather than wages: the curve's
+  // axis becomes `self_employment_income`, so the self-employment tax and the
+  // deductions that follow from it apply instead of the employee half of FICA.
+  // Benefit rules treat both as earned income.
+  selfEmployed: boolean;
+  // Liquid savings — bank balances — for the whole household, 0 when none.
+  // SNAP's asset test binds in the states without broad-based categorical
+  // eligibility ($3,000 in 2026; $5,000 ends SNAP in Mississippi).
+  savings: number;
   // Hours a week actually worked, null when not asked. Sent to PolicyEngine as
   // `weekly_hours_worked_before_lsr`, which Massachusetts' TAFDC dependent-care
   // deduction scales by; it is not used to derive earnings (the CLI does that
@@ -60,6 +89,14 @@ export interface HouseholdAnswers {
   // children, and most states run a waiting list. Turning it on also changes
   // what PolicyEngine is asked for the childcare bill — see translate.ts.
   getsChildcareSubsidy: boolean;
+  // The entitlements, on by default: a household that does not currently
+  // get one of these turns it off, and the curve is then the money it
+  // actually lives on. evaluate.ts reports what an off program would pay
+  // at today's earnings as `unclaimed`.
+  getsSnap: boolean;
+  getsTanf: boolean;
+  getsMedicaid: boolean;
+  getsWic: boolean;
   hasEmployerCoverage: boolean;
   countyFips: string | null;
   // Monthly non-wage income, 0 when there is none. SSDI is modeled as ending

@@ -109,6 +109,39 @@ export interface HouseholdEvaluation {
   maTafdc: MaTafdcCorrection | null;
   /** The state $0-premium tier this household's curve fell inside, if any. */
   premiumWrap: PremiumWrap | null;
+  /**
+   * What each entitlement the household said it does not get would pay at
+   * its current earnings, from a second curve with every take-up on. Empty
+   * when nothing is off or nothing off would pay; null on the offline path,
+   * which has no second curve to ask for.
+   */
+  unclaimed: UnclaimedBenefit[] | null;
+}
+
+export interface UnclaimedBenefit {
+  program: "snap" | "tanf" | "medicaid" | "wic";
+  annual: number;
+}
+
+const TAKE_UP: { program: UnclaimedBenefit["program"]; flag: keyof Pick<HouseholdAnswers, "getsSnap" | "getsTanf" | "getsMedicaid" | "getsWic"> }[] = [
+  { program: "snap", flag: "getsSnap" }, { program: "tanf", flag: "getsTanf" },
+  { program: "medicaid", flag: "getsMedicaid" }, { program: "wic", flag: "getsWic" },
+];
+
+/** The same household with every entitlement taken up, or null when nothing is off. */
+export function withEveryEntitlement(a: HouseholdAnswers): HouseholdAnswers | null {
+  if (TAKE_UP.every(({ flag }) => a[flag])) return null;
+  return { ...a, getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true };
+}
+
+/** Programs that are off for `a` and pay something at its earnings on the all-take-up evaluation. */
+export function unclaimedFrom(a: HouseholdAnswers, allTakeUp: HouseholdEvaluation): UnclaimedBenefit[] {
+  const points = allTakeUp.curve.points;
+  const at = points.filter((p) => p.earnings <= a.annualEarnings).pop() ?? points[0];
+  return TAKE_UP
+    .filter(({ flag }) => !a[flag])
+    .map(({ program }) => ({ program, annual: Math.round(at.programs[program] ?? 0) }))
+    .filter(({ annual }) => annual > PROGRAM_END_MIN);
 }
 
 function minWageSummary(state: string, cliffs: Cliff[]): MinWageSummary | null {
@@ -662,6 +695,7 @@ export function evaluateCurve(
     esi: source === "live" ? esiSummary(answers, points, curve.currentEarnings) : null,
     maTafdc: tafdc.correction,
     premiumWrap,
+    unclaimed: null,
   };
 }
 
@@ -696,7 +730,13 @@ export async function evaluateHousehold(
   opts: EvaluateOptions = {},
 ): Promise<HouseholdEvaluation> {
   try {
-    return evaluateCurve(answers, await fetchCurve(answers, opts), "live");
+    const ev = evaluateCurve(answers, await fetchCurve(answers, opts), "live");
+    const everything = withEveryEntitlement(answers);
+    if (!everything) return { ...ev, unclaimed: [] };
+    // A second curve, corrections and all, so the figure is the one the
+    // household would see if it did claim.
+    const claimed = evaluateCurve(everything, await fetchCurve(everything, opts), "live");
+    return { ...ev, unclaimed: unclaimedFrom(answers, claimed) };
   } catch (e) {
     // Only PolicyEngine's own failures earn the fallback. A bug in our analysis
     // must surface as itself rather than be papered over with a baseline curve.

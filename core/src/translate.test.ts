@@ -8,7 +8,10 @@ const base: HouseholdAnswers = {
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null,
   annualEarnings: 30000, spouseAnnualEarnings: 0, hoursPerWeek: null,
+  youStatus: "citizen", spouseStatus: "citizen", youYearsInUs: null, spouseYearsInUs: null,
+  selfEmployed: false, savings: 0,
   getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, hasEmployerCoverage: false,
+  getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true,
   countyFips: null,
   ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
 };
@@ -135,6 +138,61 @@ describe("buildPEPayload", () => {
     // A spouse with no earnings works no hours.
     const idleSpouse = buildPEPayload({ ...base, hoursPerWeek: 35, married: true, spouseAge: 30, spouseAnnualEarnings: 0 }) as any;
     expect(idleSpouse.household.people.spouse.weekly_hours_worked_before_lsr).toBeUndefined();
+  });
+
+  it("sends immigration status and the matching SSN card type for non-citizens only", () => {
+    const citizen = buildPEPayload(base) as any;
+    expect(citizen.household.people.you.immigration_status).toBeUndefined();
+    expect(citizen.household.people.you.ssn_card_type).toBeUndefined();
+    const lpr = buildPEPayload({ ...base, youStatus: "lpr", youYearsInUs: 3 }) as any;
+    expect(lpr.household.people.you.immigration_status).toEqual({ "2026": "LEGAL_PERMANENT_RESIDENT" });
+    expect(lpr.household.people.you.ssn_card_type).toEqual({ "2026": "CITIZEN" }); // an SSN valid for work
+    expect(lpr.household.people.you.years_since_us_entry).toEqual({ "2026": 3 });
+    const daca = buildPEPayload({ ...base, youStatus: "daca" }) as any;
+    expect(daca.household.people.you.ssn_card_type).toEqual({ "2026": "NON_CITIZEN_VALID_EAD" });
+    expect(daca.household.people.you.years_since_us_entry).toBeUndefined();
+    const mixed = buildPEPayload({ ...base, married: true, spouseAge: 30, spouseStatus: "undocumented" }) as any;
+    expect(mixed.household.people.you.immigration_status).toBeUndefined();
+    expect(mixed.household.people.spouse.immigration_status).toEqual({ "2026": "UNDOCUMENTED" });
+    expect(mixed.household.people.spouse.ssn_card_type).toEqual({ "2026": "NONE" });
+    expect(mixed.household.people.child1.immigration_status).toBeUndefined(); // children modeled as citizens
+  });
+
+  it("sends savings as the householder's bank assets, only when there are any", () => {
+    expect((buildPEPayload(base) as any).household.people.you.bank_account_assets).toBeUndefined();
+    expect((buildPEPayload({ ...base, savings: 5000 }) as any).household.people.you.bank_account_assets).toEqual({ "2026": 5000 });
+  });
+
+  it("varies self_employment_income instead of wages for a self-employed earner", () => {
+    const wage = buildPEPayload(base) as any;
+    expect(wage.household.axes[0][0].name).toBe("employment_income");
+    expect(wage.household.people.you.employment_income).toBeUndefined();
+    const self = buildPEPayload({ ...base, selfEmployed: true }) as any;
+    expect(self.household.axes[0][0].name).toBe("self_employment_income");
+    expect(self.household.people.you.employment_income).toEqual({ "2026": 0 });
+  });
+
+  it("turns an entitlement off with PolicyEngine's own take-up switch, and says nothing when it is on", () => {
+    const on = buildPEPayload({ ...base, married: true, spouseAge: 30 }) as any;
+    expect(on.household.spm_units.spm_unit.takes_up_snap_if_eligible).toBeUndefined();
+    expect(on.household.people.you.takes_up_medicaid_if_eligible).toBeUndefined();
+    expect(on.household.people.child1.wic).toEqual({ "2026": null });
+    const off = buildPEPayload({ ...base, married: true, spouseAge: 30, getsSnap: false, getsTanf: false, getsMedicaid: false, getsWic: false }) as any;
+    expect(off.household.spm_units.spm_unit.takes_up_snap_if_eligible).toEqual({ "2026": false });
+    expect(off.household.spm_units.spm_unit.takes_up_tanf_if_eligible).toEqual({ "2026": false });
+    for (const who of ["you", "spouse", "child1"]) expect(off.household.people[who].takes_up_medicaid_if_eligible, who).toEqual({ "2026": false });
+    expect(off.household.people.child1.wic).toEqual({ "2026": 0 });
+  });
+
+  it("puts the employer plan's ACA firewall on every covered member, not just the plan holder", () => {
+    const p = buildPEPayload({ ...base, married: true, spouseAge: 30, hasEmployerCoverage: true }) as any;
+    for (const who of ["you", "spouse", "child1"]) {
+      expect(p.household.people[who].has_esi, who).toEqual({ "2026": true });
+      expect(p.household.people[who].offered_aca_disqualifying_esi, who).toEqual({ "2026": true });
+    }
+    expect(p.household.people.spouse.employer_sponsored_insurance_premiums).toBeUndefined();
+    const none = buildPEPayload({ ...base, married: true, spouseAge: 30 }) as any;
+    expect(none.household.people.spouse.has_esi).toBeUndefined();
   });
 
   it("drops only is_ssi_disabled when the SSI pathway is closed", () => {
