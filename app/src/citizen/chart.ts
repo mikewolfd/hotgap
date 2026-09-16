@@ -9,9 +9,10 @@
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import type { Cliff } from "@hotgap/core";
 import { h, svg } from "../lib/dom.js";
+import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
 import { worstPhrase } from "./facts.js";
-import { layout, tickLabel, type Cluster, type Layout } from "./geometry.js";
+import { layout, type Cluster, type Layout } from "./geometry.js";
 import type { Scene } from "./model.js";
 
 export interface ChartHooks {
@@ -134,9 +135,9 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     /* Gridlines on nice values; ticks take .hg-tick (S13). */
     for (const v of L.yTicks) {
       if (v > y0 && v < y1) picture.append(svg("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-      picture.append(svg("text", { x: pad.l - 8, y: py(v) + 4, "text-anchor": "end", class: "hg-tick" }, tickLabel(v, "year")));
+      picture.append(svg("text", { x: pad.l - 8, y: py(v) + 4, "text-anchor": "end", class: "hg-tick" }, tickMoney(v, "year")));
     }
-    for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickLabel(tick.value, s.pay.unit)));
+    for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
     picture.append(svg("line", { x1: pad.l, y1: bottom, x2: W - pad.r, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* The peak of the household's zone: a rule across the band, labelled with the dollar (N2). */
@@ -209,7 +210,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
         const tall = py(land) - y >= 24;
         const above = y - 9;
         const clash = bracket && Math.abs(above - (by - 5)) < 16;
-        picture.append(svg("text", { x: cl.x + 9, y: tall ? (y + py(land)) / 2 + 4 : clash ? py(land) + 14 : above, class: LOSS_LABEL, "font-weight": 600 }, "−" + m.money(L.labelled.drop)));
+        picture.append(svg("text", { x: cl.x + 9, y: tall ? (y + py(land)) / 2 + 4 : clash ? py(land) + 14 : above, class: LOSS_LABEL, "font-weight": 600 }, t("chart.labels.drop", { drop: m.money(L.labelled.drop) })));
       }
     }
 

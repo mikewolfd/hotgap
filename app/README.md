@@ -135,7 +135,7 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 - `ARCHETYPES`, `answersFor`, `pickArchetypeId` (the swept household an archetype evaluation describes), `PROGRAM_END_MIN`
 - `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
 
-The citizen bundle today is 98 KB (31 KB gzip) with the two small tables inlined.
+The citizen bundle today is 99 KB (31 KB gzip) with the two small tables inlined.
 
 ## Languages
 

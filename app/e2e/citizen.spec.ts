@@ -8,8 +8,9 @@
 // HOTGAP_EXPECT_SOURCE=archetype runs the archetype assertions instead
 // (start wrangler with a dead HOTGAP_PE_URL first; the README says how).
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
@@ -32,10 +33,22 @@ const contrast = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)]
 const rgb = (s: string) => (s.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
 
 interface Ev {
-  analysis: { cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown }[]; currentEarnings: number; currentNet: number };
+  analysis: {
+    cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown }[];
+    dangerZones: { startEarnings: number; endEarnings: number | null }[];
+    currentEarnings: number; currentNet: number;
+  };
   curve: { points: { earnings: number; netIncome: number }[] };
   personal: { zone: { startEarnings: number; peakNet: number } | null; escapeEarnings: number | null };
+  escape: { safeExitEarnings: number | null };
 }
+
+/** The plotted curve: the real points with each deferred drop added back above its step — charts.md's lift, done again here so the table is checked against a second implementation of it. */
+const plotted = (ev: Ev): Map<number, number> => {
+  const deferred = ev.analysis.cliffs.filter((c) => c.deferral !== null);
+  return new Map(ev.curve.points.map((p) => [p.earnings, p.netIncome + deferred.filter((d) => d.startEarnings < p.earnings).reduce((sum, d) => sum + d.drop, 0)]));
+};
+const dollars = (text: string) => [...text.matchAll(/\$([\d,]+)/g)].map((m) => Number(m[1].replace(/,/g, "")));
 
 /** Land on the household and keep the evaluation the page rendered: the measure for the marks and the table. */
 async function loaded(page: Page): Promise<Ev> {
@@ -57,11 +70,19 @@ for (const scheme of ["light", "dark"] as const) {
       const ev = await loaded(page);
       await expect(page.locator("#source")).toHaveAttribute("data-source", "live");
 
-      /* The verdict is the danger-zone shape, keyed to the marks. */
+      /* The verdict is the danger-zone shape, keyed to the marks, and its figures are the evaluation's. */
       const answer = page.locator("#answer");
       await expect(answer).toContainText("More pay does not add to that until you are paid");
       await expect(answer.locator(".amt-keep")).toHaveCount(1);
       await expect(answer.locator(".amt-gap")).toHaveCount(2);
+      expect(dollars((await answer.textContent())!)).toEqual([ev.analysis.currentEarnings, Math.round(ev.analysis.currentNet), ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
+      /* "It happens again from A to B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
+      const again = await page.locator("#result .band .answer-sub").first().textContent();
+      const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
+      if (beyond.length) {
+        expect(again).toMatch(/^It happens/);
+        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
+      } else expect(again).not.toMatch(/^It happens/);
 
       expect(ev.analysis.cliffs.length).toBeGreaterThan(0);
 
@@ -73,21 +94,37 @@ for (const scheme of ["light", "dark"] as const) {
       expect(spoken).toMatch(/^A line of the money this household keeps as pay rises from \$/);
       const [lo, hi] = (spoken!.match(/from \$([\d,]+) a year to \$([\d,]+) a year/)!.slice(1).map((x) => Number(x.replace(/,/g, ""))));
       const inWindow = ev.analysis.cliffs.filter((c) => c.startEarnings >= lo && c.endEarnings <= hi);
-      // A merged mark carries its first cliff's key; every key is a cliff in the window and every unmerged cliff has a mark.
+      // A merged mark carries its first cliff's key and a count; the counts add up to every cliff in the window.
       for (const k of markKeys) expect(inWindow.some((c) => c.endEarnings === k)).toBe(true);
-      expect(markKeys.length).toBeLessThanOrEqual(inWindow.length);
       expect(markKeys.length).toBeGreaterThan(0);
+      let covered = 0;
       for (const b of await marks.all()) {
         expect(await b.getAttribute("aria-label")).toMatch(/drop/);
         const box = (await b.boundingBox())!;
         expect(box.width).toBeGreaterThanOrEqual(44);
         expect(box.height).toBeGreaterThanOrEqual(44);
+        const badge = b.locator(".hg-mark__count");
+        covered += (await badge.count()) ? Number(await badge.textContent()) : 1;
       }
+      expect(covered).toBe(inWindow.length);
       /* The diamond, the band and the line are drawn; the line animated once (.hg-draw on the first path only). */
       expect(await page.locator("#chart svg path.hg-draw").count()).toBe(1);
       await expect(page.locator("#chart svg rect[fill='var(--loss-wash)']")).toHaveCount(ev.personal.zone ? 1 : 0);
-      const yratio = Number(await page.locator("#chart").getAttribute("data-yratio"));
-      expect(yratio).toBeGreaterThanOrEqual(2.5);
+      /* Axis honesty, re-derived from the tick labels the reader sees, not the page's own data-yratio: the y-range is at least 2.5× the biggest drop in the window. */
+      const yTicks = (await page.locator('#chart svg text.hg-tick[text-anchor="end"]').allTextContents()).map((x) => Number(x.replace(/[$k]/g, "")) * 1000);
+      expect(yTicks.length).toBeGreaterThanOrEqual(3);
+      const maxDrop = Math.max(...inWindow.map((c) => c.drop));
+      expect((Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop).toBeGreaterThanOrEqual(2.5);
+      expect(Number(await page.locator("#chart").getAttribute("data-yratio"))).toBeCloseTo((Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop, 1);
+      /* The one drop label is the curve's biggest drop, and it agrees with the row that says so; if the biggest drop is out of the picture, the caption says where it is. */
+      const worst = ev.analysis.cliffs.filter((c) => c.deferral === null).reduce((a, b) => (b.drop > a.drop ? b : a));
+      const biggestRow = page.locator(".hg-rows__loss", { hasText: "This is the biggest drop." });
+      await expect(biggestRow).toHaveCount(1);
+      expect(dollars((await page.locator(`#step-${worst.endEarnings} .hg-rows__loss`).textContent())!)[0]).toBe(Math.round(worst.drop / 100) * 100);
+      const labels = await page.locator("#chart svg text.hg-label--loss").allTextContents();
+      const dropLabel = labels.find((x) => x.startsWith("−"));
+      if (inWindow.includes(worst)) expect(dollars(dropLabel!)).toEqual([Math.round(worst.drop)]);
+      else { expect(dropLabel).toBeUndefined(); await expect(page.locator("#curveCaption")).toContainText("is outside the picture"); }
 
       /* Type floors (design/inventory.md § Type floors), measured on every SVG text. */
       const texts = await page.locator("#chart svg text").evaluateAll((els) => els.map((el) => ({
@@ -140,11 +177,10 @@ for (const scheme of ["light", "dark"] as const) {
         return { at: n(at), keep: n(keep), drop: drop ? n(drop) : null, mark };
       }));
       expect(rows.length).toBeGreaterThanOrEqual(3);
-      const at = (e: number) => ev.curve.points.find((p) => p.earnings === e);
+      const line = plotted(ev);
       for (const r of rows) {
-        const p = at(r.at);
-        expect(p, `row at ${r.at} is a curve point`).toBeDefined();
-        const expected = r.mark === "You now" ? ev.analysis.currentNet : r.mark === "The top of your flat stretch" ? ev.personal.zone!.peakNet : p!.netIncome;
+        expect(line.has(r.at), `row at ${r.at} is a curve point`).toBe(true);
+        const expected = r.mark === "You now" ? ev.analysis.currentNet : r.mark === "The top of your flat stretch" ? ev.personal.zone!.peakNet : line.get(r.at)!;
         expect(Math.abs(r.keep - expected), `${r.mark} at ${r.at}`).toBeLessThanOrEqual(1);
       }
       expect(rows.filter((r) => r.drop !== null).map((r) => r.at)).toEqual(inWindow.map((c) => c.endEarnings));
@@ -198,21 +234,32 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   // A fresh line was drawn for the new household, once.
   await expect(page.locator("#chart svg path.hg-draw")).toHaveCount(1);
   await expect(page.locator("#source")).toContainText("These are your own numbers");
-  await expect(page.locator("#source")).toContainText("Money kept is what is left after taxes");
+  // The sweep's summary is what names the reach data's vintage; without it the line is bare.
+  await expect(page.locator("#result .hg-source", { hasText: "Census" })).toContainText(/survey data, ACS \d{4}.*Grown to \d{4} dollars/);
   expect(errors).toEqual([]);
 });
 
-test("print: the numbers open, the buttons go, the ink is light on white", async ({ page }) => {
+test("print from OS dark: the numbers open, the buttons go, and the PDF's text is in the light scheme's ink", async ({ page }) => {
   test.skip(EXPECT_SOURCE !== "live", "the live proof");
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.emulateMedia({ colorScheme: "dark" });
   await loaded(page);
+  const darkInk = await page.evaluate(() => getComputedStyle(document.body).color);
+  /* The PDF path first (page.pdf fires beforeprint itself), then the print raster. */
+  const pdf = await page.pdf({ format: "Letter", printBackground: true });
+  writeFileSync(resolve(OUT, "citizen-letter-from-dark.pdf"), pdf);
   await page.evaluate(() => dispatchEvent(new Event("beforeprint")));
   await page.emulateMedia({ media: "print" });
   expect(await page.locator("details.hg-disclosure").evaluate((d) => (d as HTMLDetailsElement).open)).toBe(true);
-  await expect(page.locator("#themeBtn")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Print" })).toBeHidden();
   const ink = await page.evaluate(() => [getComputedStyle(document.body).color, getComputedStyle(document.body).backgroundColor]);
   expect(contrast(rgb(ink[0]), rgb(ink[1]))).toBeGreaterThanOrEqual(7);
+  const objects = pdfObjects(pdf);
+  const pages = pdfPages(objects);
+  const inks = pages.flatMap((p) => textInks(pageContent(objects, p)));
+  expect(pages.length).toBeGreaterThanOrEqual(2);
+  expect(inks).toContain(rgb(ink[0]).join());
+  expect(inks).not.toContain(rgb(darkInk).join());
   await page.screenshot({ path: resolve(OUT, "citizen-1280-print-from-dark.png"), fullPage: true });
 });
 
@@ -226,7 +273,7 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   await expect(source).toContainText("We could not get your exact numbers right now. These are numbers for a family like yours in your state.");
   await expect(source.getByRole("button", { name: "Try again" })).toBeVisible();
   // The sweep's own model and stamp are what produced these numbers.
-  await expect(source).toContainText(/Sweep of \d{4}-\d{2}-\d{2}/);
+  await expect(source).toContainText(/Sweep of [A-Z][a-z]{2} \d{1,2}, \d{4}/);
   await expect(source).toContainText(/from policyengine-us [\d.]+ with 2026 rules/);
   // The assumed list describes the swept household, not the person's echoed answers.
   await expect(page.locator(".assumed")).toContainText("The usual rent in California");

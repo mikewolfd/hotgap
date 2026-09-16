@@ -8,7 +8,8 @@ import {
   childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson,
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
-import { capitalize, dateOf, list, modelLine, reachWord } from "../places/format.js";
+import { dateWords, listOf, unitFigure } from "../lib/format.js";
+import { capitalize, modelLine, reachWord } from "../places/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { NONCASH, phrase, phraseAndName } from "./programs.js";
@@ -54,8 +55,8 @@ export function assumedRows(s: Scene): Fact[] {
 
   const on = TAKE_UP.filter(([k]) => A[k]).map(([, id]) => phraseAndName(id));
   const off = TAKE_UP.filter(([k]) => !A[k]).map(([, id]) => phraseAndName(id));
-  if (on.length) rows.push({ label: L.help, text: t("assumed.help", { list: capitalize(list(on)) }) });
-  if (off.length) rows.push({ label: L.notCounted, text: t("assumed.notCounted", { list: capitalize(list(off)) }) });
+  if (on.length) rows.push({ label: L.help, text: t("assumed.help", { list: capitalize(listOf(on)) }) });
+  if (off.length) rows.push({ label: L.notCounted, text: t("assumed.notCounted", { list: capitalize(listOf(off)) }) });
 
   let disability = "";
   if (A.youDisabled) disability += copy.assumed.youDisabled;
@@ -70,7 +71,7 @@ export function assumedRows(s: Scene): Fact[] {
   const monthly = ([["ssdi", A.ssdiMonthly], ["childSupport", A.childSupportMonthly], ["unemployment", A.unemploymentMonthly]] as const)
     .filter(([, v]) => v > 0).map(([k, v]) => fill(copy.assumed.monthly[k], { amount: m.money(v) }));
   rows.push({ label: L.money, text: t("assumed.savings", { savings: A.savings > 0 ? m.money(A.savings) : copy.assumed.none })
-    + (monthly.length ? t("assumed.otherMoney", { list: capitalize(list(monthly)) }) : copy.assumed.noOtherMoney) });
+    + (monthly.length ? monthly.join("") : copy.assumed.noOtherMoney) });
   rows.push({ label: L.hours, text: A.hoursPerWeek === null ? t("assumed.hoursNone") : t("assumed.hours", { hours: A.hoursPerWeek }) });
   if (A.selfEmployed) rows.push({ label: L.work, text: t("assumed.selfEmployed") });
 
@@ -82,7 +83,7 @@ export function assumedRows(s: Scene): Fact[] {
   else if (ev.premiumWrap) rows.push({ label: L.premiumHelp, text: t("assumed.premiumHelp", { program: ev.premiumWrap.program, state }) });
   if (ev.maTafdc?.status === "applied") rows.push({ label: L.maTafdc, text: t("assumed.maTafdc") });
   if (ev.unclaimed?.length) rows.push({ label: L.unclaimed, text: t("assumed.unclaimed", {
-    list: list(ev.unclaimed.map((u) => phraseAndName(u.program))), amount: m.about(ev.unclaimed.reduce((sum, u) => sum + u.annual, 0)) }) });
+    list: listOf(ev.unclaimed.map((u) => phraseAndName(u.program))), amount: m.about(ev.unclaimed.reduce((sum, u) => sum + u.annual, 0)) }) });
   return rows.filter((r): r is Fact => r !== null);
 }
 
@@ -98,10 +99,11 @@ export function provenanceText(s: Scene, sweep: Sweep | null): string {
   // On the archetype path the sweep's own model and stamp are what produced
   // the numbers (N9); the live evaluation does not carry its engine's version.
   let out = s.ev.source === "live" ? t("source.live", { year })
-    : sweep ? t("source.sweep", { model: modelLine(sweep.coverage?.vintages.model ?? sweep.summary.model), year, date: dateOf(sweep.summary.generated) })
+    : sweep ? t("source.sweep", { model: modelLine(sweep.coverage?.vintages.model ?? sweep.summary.model), year, date: dateWords(sweep.summary.generated) })
     : t("source.sweepBare", { year });
   // The rent and child-care vintages apply when the household's figures are the state's typical ones.
-  if (sweep?.coverage && A.monthlyRent === d.monthlyRent) out += t("source.rent", { rent: sweep.coverage.vintages.rent.vintage.split(" (")[0] });
+  // core's vintage is written for the reader who will quote it; it is printed whole.
+  if (sweep?.coverage && A.monthlyRent === d.monthlyRent) out += t("source.rent", { rent: sweep.coverage.vintages.rent.vintage });
   const typicalCare = A.childAges.reduce((sum, age) => sum + childcareMonthlyFor(d, age), 0);
   if (sweep?.coverage && typicalCare > 0 && A.monthlyChildcare === typicalCare) out += t("source.childcare", { childcare: sweep.coverage.vintages.childcare.preschool, year });
   return out + t("source.money");
@@ -116,7 +118,7 @@ export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
   const unmodeled = (sweep?.coverage?.unmodeled ?? []).filter((u) => u.program !== "LIHEAP").filter((u) =>
     !/child.?care/i.test(u.program) || (s.modeled.childAges.some((age) => age < 6) && (s.modeled.monthlyChildcare ?? 0) > 0));
   if (!unmodeled.length) return null;
-  return t("incomplete.body", { state: s.stateName, program: list(unmodeled.map((u) => u.program)) });
+  return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map((u) => u.program)) });
 }
 
 export function reachText(s: Scene): string | null {
@@ -132,13 +134,13 @@ export function reachText(s: Scene): string | null {
 
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {
   const v = sweep?.coverage?.vintages.reach.vintages;
-  return v?.length ? t("reach.source", { vintages: list(v.map(reachWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
+  return v?.length ? t("reach.source", { vintages: listOf(v.map(reachWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
 }
 
 export function hoursText(s: Scene): string | null {
   const w = s.ev.minWage;
   if (!w) return null;
-  return t("hours.body", { state: s.stateName, wage: `$${w.wage.toFixed(2)}`, fullTime: s.m.money(Math.round(w.fullTimeEarnings / 500) * 500) });
+  return t("hours.body", { state: s.stateName, wage: unitFigure(w.wage, "hour"), fullTime: s.m.money(Math.round(w.fullTimeEarnings / 500) * 500) });
 }
 
 /** The phrase for a cliff's first named program, for the chart's spoken label. */

@@ -39,8 +39,8 @@ describe("what we assumed", () => {
     expect(assumedRows(sceneOf(makeEvaluation(), year)).map((r) => `${r.label}: ${r.text}`)).toEqual([
       "Rent: $1,735 a month. The usual rent in Colorado.",
       "Child care: None. Nobody in the home pays for day care.",
-      "Help you get: Food help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid) and food help for moms and babies (WIC). We count each as if you get it.",
-      "Not counted: Child care help (CCDF child care subsidy), housing help (Housing voucher) and free early learning (Head Start). We count them as if you do not get them.",
+      "Help you get: Food help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), and food help for moms and babies (WIC). We count each as if you get it.",
+      "Not counted: Child care help (CCDF child care subsidy), housing help (Housing voucher), and free early learning (Head Start). We count them as if you do not get them.",
       "You: Age 30. A U.S. citizen. No one in the home has a disability.",
       "Other money: Savings: None. No child support, SSDI or unemployment pay.",
       "Hours: Not given. We assume full time.",
@@ -87,7 +87,7 @@ const summary = {
   generated: "2026-09-16T20:15:49.275Z", year: "2026", model: { endpoint: "engine", version: "2.6.2" }, archetypes: [], states: {},
   coverage: { CO: {
     corrections: {} as never, unmodeled: [{ program: "LIHEAP", note: "" }, { program: "Colorado Premium Help", note: "" }], otherBenefits: [],
-    vintages: { model: { endpoint: "engine", version: "2.6.2" }, rent: { publisher: "HUD", vintage: "FY2026 (effective 2025-10-01), revised schedule" },
+    vintages: { model: { endpoint: "engine", version: "2.6.2" }, rent: { publisher: "HUD", vintage: "FY2026 revised schedule (effective 2025-10-01)" },
       county: { publisher: "", vintage: "" }, childcare: { preschool: "county 2018" }, reach: { basis: "", vintages: ["2024-1yr"], growthFactor: 1.07 } },
   } },
 } as unknown as SummaryJson;
@@ -96,13 +96,13 @@ describe("SourceNote", () => {
   test("live: the household's own numbers; the rent vintage only when the rent is the state's typical one", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Money kept is what is left after taxes and health-plan premiums.");
-    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Rent: HUD Fair Market Rents, FY2026. Money kept is what is left after taxes and health-plan premiums.");
+    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Money kept is what is left after taxes and health-plan premiums.");
     const own = sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, monthlyRent: 1200 } }), year);
     expect(provenanceText(own, sweepFor(summary, "CO"))).not.toMatch(/Rent:/);
   });
   test("archetype: the sweep's model and stamp produced the numbers, and the child-care price vintage applies", () => {
     const s = sceneOf(makeEvaluation({ source: "archetype" }), year);
-    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of 2026-09-16. Rent: HUD Fair Market Rents, FY2026. Child care price: county 2018, grown to 2026 dollars. Money kept is what is left after taxes and health-plan premiums.");
+    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what is left after taxes and health-plan premiums.");
     expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine. Rules for 2026. Money kept is what is left after taxes and health-plan premiums.");
   });
   test("the incomplete notice names every unmodeled program but LIHEAP, and nothing without the sweep", () => {

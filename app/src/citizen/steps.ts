@@ -4,6 +4,7 @@
 // cliff.endEarnings, or programEnds[id] + one axis step. A row is the card
 // a cliff mark opens (M6). Pure: rows and sentences, no DOM.
 import { COVERAGE_PROGRAMS, type Cliff, type ProgramId } from "@hotgap/core";
+import { listOf } from "../lib/format.js";
 import { capitalize } from "../places/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
@@ -86,7 +87,7 @@ export function stepSentence(s: Scene, r: StepRow): string {
   // A split program's remainder is the other group's row.
   const rem = r.cliff ? s.remains(r.cliff).filter((x) => !split(x.id)) : [];
   if (rem.length) {
-    out += t("steps.remains", { until: s.m.pay(rem[0].until), list: rem.map((x) => t("steps.remainsItem", { amount: s.m.money(x.amount), phrase: phrase(x.id) })).join(" and ") });
+    out += t("steps.remains", { until: s.m.pay(rem[0].until), list: listOf(rem.map((x) => t("steps.remainsItem", { amount: s.m.money(x.amount), phrase: phrase(x.id) }))) });
   }
   return out.trim();
 }

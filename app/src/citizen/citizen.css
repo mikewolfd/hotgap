@@ -48,11 +48,3 @@
    its count cannot be --surface ink as .hg-mark__count is; tokens.css has
    no modifier for it. */
 .hg-mark__count--later { color: var(--ink-3); }
-
-/* TODO(system): design/tokens.css's print block reasserts light with
-   `:root, :root[data-theme]` (0,1,0 / 0,2,0), which the OS-dark rule
-   `:root:not([data-theme="light"])` (0,2,0) beats when no theme button was
-   pressed — so a print from OS dark stayed dark (measured 1.09:1 body ink on
-   white). The one declaration below is the token file's own mechanism at the
-   specificity it missed; it belongs in tokens.css and carries no colour. */
-@media print { :root:not([data-theme="light"]) { color-scheme: light; } }

@@ -34,3 +34,15 @@ export const payPhrase = (annual: number, unit: PayUnit, hoursPerWeek: number = 
 
 /** A drop in the citizen "about" grain: whole hundreds. */
 export const moneyAbout = (n: number): string => usd.format(Math.round(n / 100) * 100);
+
+/** A chart tick: "$40k" by the year, "$2,500" by the month or week, "$20" or "$17.50" by the hour. */
+export const tickMoney = (v: number, unit: PayUnit): string =>
+  unit === "year" && v >= 1000 ? `${usd.format(v / 1000)}k` : unit === "hour" && !Number.isInteger(v) ? usdCents.format(v) : usd.format(v);
+
+const conjunction = new Intl.ListFormat("en-US", { style: "long", type: "conjunction" });
+/** "a", "a and b", "a, b, and c" — the locale's list, not a hand-joined one. */
+export const listOf = (items: string[]): string => conjunction.format(items);
+
+const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
+/** An ISO stamp as a date in words, "Sep 16, 2026". */
+export const dateWords = (iso: string): string => mediumDate.format(new Date(iso));

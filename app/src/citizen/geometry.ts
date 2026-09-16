@@ -2,7 +2,7 @@
 // honours the 2.5× rule, ticks on nice values in the display unit, and the
 // cliff clusters. O(points in the window) per layout; a layout is computed
 // once per draw (a new evaluation or a resize), never per pointer event.
-import { fromAnnual, toAnnual, type Cliff, type PayUnit } from "@hotgap/core";
+import { fromAnnual, toAnnual, type Cliff } from "@hotgap/core";
 import type { Scene } from "./model.js";
 
 /** range / n snapped to the nearest of 1, 2, 2.5 or 5 × 10^k (N1). */
@@ -17,13 +17,6 @@ export function niceTicks(lo: number, hi: number, step: number): number[] {
   const out: number[] = [];
   for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
   return out;
-}
-
-/** A tick's label: "$40k" by the year, "$2,500" by the month or week, "$17.50" by the hour. */
-export function tickLabel(v: number, unit: PayUnit): string {
-  if (unit === "year") return v >= 1000 ? `$${+(v / 1000).toFixed(1)}k` : `$${v}`;
-  if (unit === "hour") return `$${Number.isInteger(v) ? v : v.toFixed(2)}`;
-  return `$${v.toLocaleString("en-US")}`;
 }
 
 /**

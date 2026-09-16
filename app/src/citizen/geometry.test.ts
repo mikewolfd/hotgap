@@ -3,7 +3,8 @@
 // colliding marks.
 import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
-import { clusterCliffs, layout, niceStep, niceTicks, tickLabel, xTicks, yRange } from "./geometry.js";
+import { tickMoney } from "../lib/format.js";
+import { clusterCliffs, layout, niceStep, niceTicks, xTicks, yRange } from "./geometry.js";
 import { liftDeferred, sceneOf, windowFor } from "./model.js";
 
 const year = { unit: "year" };
@@ -84,10 +85,10 @@ describe("ticks", () => {
       expect(tk.value % 0.5).toBe(0);                               // a round hourly figure…
       expect(tk.annual).toBeCloseTo(tk.value * 40 * 52, 6);         // …placed at exactly its annual pay
     }
-    expect(tickLabel(17.5, "hour")).toBe("$17.50");
-    expect(tickLabel(20, "hour")).toBe("$20");
-    expect(tickLabel(40_000, "year")).toBe("$40k");
-    expect(tickLabel(2500, "month")).toBe("$2,500");
+    expect(tickMoney(17.5, "hour")).toBe("$17.50");
+    expect(tickMoney(20, "hour")).toBe("$20");
+    expect(tickMoney(40_000, "year")).toBe("$40k");
+    expect(tickMoney(2500, "month")).toBe("$2,500");
   });
 });
 

@@ -67,8 +67,8 @@ export const copy = {
     ghost: " The dashed line is what happens if the later change happens.",
     ghostNow: " The dashed line is where you are now: the later change has already landed for you.",
     estimates: " These are estimates. They use the rules for {year} in {state}.",
-    aria: "A line of the money this household keeps as pay rises from {from} to {to}. It is flat from {zoneFrom} to {zoneTo}{more}.{worst} The household sits at {pay}, inside a flat stretch.",
-    ariaMore: ", and again from {from} to {to}",
+    aria: "A line of the money this household keeps as pay rises from {from} to {to}. It is flat from {zoneFrom} to {zoneTo}.{more}{worst} The household sits at {pay}, inside a flat stretch.",
+    ariaMore: " It is flat again from {from} to {to}.",
     ariaWorst: " The biggest drop is at {at}, where {what} ends.",
     ariaNoZone: "A line of the money this household keeps as pay rises from {from} to {to}.{worst} The household sits at {pay}.",
     someHelp: "some help",
@@ -80,6 +80,7 @@ export const copy = {
       safe: "safe from here",
       leap: "+{leap}",
       leapMore: "more than +{leap}",
+      drop: "−{drop}",
     },
   },
   key: {
@@ -109,6 +110,7 @@ export const copy = {
     pay: "Your pay",
     keep: "You keep",
     drop: "Drop",
+    dropCell: "−{drop}",
     mark: "On the picture",
     marks: { peak: "The top of your flat stretch", you: "You now", exit: "Back to even", drop: "A drop", later: "A drop that waits", safe: "Safe from here" },
   },
@@ -186,7 +188,6 @@ export const copy = {
     kidsDisabled: " You said {n} of your kids have a disability.",
     savings: "Savings: {savings}.",
     noOtherMoney: " No child support, SSDI or unemployment pay.",
-    otherMoney: " {list} a month.",
     hours: "{hours} hours a week.",
     hoursNone: "Not given. We assume full time.",
     selfEmployed: "You work for yourself, not for a boss.",
@@ -204,7 +205,7 @@ export const copy = {
       coverageGap: "No health plan", premiumHelp: "Health plan help", maTafdc: "Cash help (TANF)", unclaimed: "Help you could get",
     },
     kids: { one: "one kid", two: "two kids", three: "three kids", many: "{n} kids" },
-    monthly: { ssdi: "SSDI {amount}", childSupport: "child support {amount}", unemployment: "unemployment pay {amount}" },
+    monthly: { ssdi: " SSDI: {amount} a month.", childSupport: " Child support: {amount} a month.", unemployment: " Unemployment pay: {amount} a month." },
     none: "None",
   },
 
@@ -236,7 +237,6 @@ export const copy = {
     assumed: "We use {year} rules. The list above says what we assumed. If any of it is wrong for you, these numbers are off too. We did not ask about anyone in the home aged 65 or more.",
     noAdvice: "We do not tell you what to do.",
   },
-  theme: { dark: "Dark", light: "Light" },
 
   // M3: the plain phrase for each program (design/inventory.md § Program phrases).
   program: {

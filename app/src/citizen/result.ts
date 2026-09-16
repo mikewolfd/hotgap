@@ -155,7 +155,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         h("thead", {}, h("tr", {}, h("th", { scope: "col", class: "num" }, t("table.pay")), h("th", { scope: "col", class: "num" }, t("table.keep")),
           h("th", { scope: "col", class: "num" }, t("table.drop")), h("th", { scope: "col" }, t("table.mark")))),
         h("tbody", {}, ...rows.map((r) => h("tr", {}, h("td", { class: "num" }, m.money(r.at)), h("td", { class: "num money" }, m.money(r.keep)),
-          h("td", { class: "num" }, r.drop ? "−" + m.money(r.drop) : ""), h("td", {}, r.mark)))));
+          h("td", { class: "num" }, r.drop ? t("table.dropCell", { drop: m.money(r.drop) }) : ""), h("td", {}, r.mark)))));
       const numbers = h("details", { class: "hg-disclosure" }, h("summary", {}, t("table.show")), h("div", { class: "hg-scroll-x" }, table));
 
       /* StepList (#6): one row per threshold; a row is the card a mark opens (M6). */
@@ -177,11 +177,6 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       const reach = reachText(s);
       const reachSource = h("p", { class: "hg-source" });
       const hours = hoursText(s);
-      const theme = h("button", { type: "button", class: "hg-button hg-no-print", id: "themeBtn" });
-      const isDark = () => getComputedStyle(document.documentElement).colorScheme.includes("dark");
-      const nameTheme = () => { theme.textContent = isDark() ? t("theme.light") : t("theme.dark"); };
-      nameTheme();
-      theme.addEventListener("click", () => { document.documentElement.setAttribute("data-theme", isDark() ? "light" : "dark"); nameTheme(); });
 
       body.append(...([
         figure, numbers,
@@ -193,8 +188,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         h("footer", {},
           h("p", {}, h("strong", {}, t("footer.estimates")), t("footer.caseworker")),
           h("p", {}, t("footer.assumed", { year: ev.curve.year })),
-          h("p", {}, t("footer.noAdvice")),
-          h("p", { class: "hg-no-print" }, theme)),
+          h("p", {}, t("footer.noAdvice"))),
       ] as (Node | null)[]).filter((n): n is Node => n !== null));
       provenance = { source: sourceText, reach: reachSource, incomplete };
       renderProvenance();
