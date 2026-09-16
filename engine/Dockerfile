@@ -27,4 +27,7 @@ HEALTHCHECK --interval=30s --start-period=90s --timeout=10s \
 # WEB_CONCURRENCY is gunicorn's own name for the worker count.
 # --timeout 120 covers the ~7 s it takes to build a tax-benefit system the
 # first time a given `policy` object is seen.
-CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2} --threads 1 --timeout 120 --preload engine.app:app"]
+# --max-requests: a worker's memory grows across a long run of simulations
+# rather than plateauing (glibc keeps the arenas); recycling every ~100
+# requests re-forks a warm worker from the preloaded master in about a second.
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2} --threads 1 --timeout 120 --preload --max-requests ${GUNICORN_MAX_REQUESTS:-100} --max-requests-jitter 20 engine.app:app"]

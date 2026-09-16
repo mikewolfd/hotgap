@@ -27,7 +27,13 @@ runs:
         # ~2.75 GB (engine/calculate.py, _POLICY_CACHE_SIZE), and four at that
         # plus node crossed the line — the runner dies and the job reports
         # only "The operation was canceled".
-        gunicorn --bind 127.0.0.1:8099 --workers 3 --threads 1 --timeout 120 --preload engine.app:app \
+        # --max-requests recycles a worker every ~100 requests (jittered so the
+        # three never restart together): on this runner a worker's memory did
+        # not plateau — 2.5 → 12.3 GB used over a ten-minute sweep, still
+        # climbing at the end — and a re-fork from the preloaded master costs
+        # about a second plus one rebuild of the policy system it was holding.
+        gunicorn --bind 127.0.0.1:8099 --workers 3 --threads 1 --timeout 120 --preload \
+          --max-requests 100 --max-requests-jitter 20 engine.app:app \
           > engine.log 2>&1 &
         for i in $(seq 1 90); do
           curl -sf http://127.0.0.1:8099/healthz && break

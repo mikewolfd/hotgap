@@ -37,7 +37,7 @@ development server — one request at a time, which is what `calculate.py` wants
 anyway. For anything beyond one caller, run it the way the image does:
 
 ```sh
-engine/.venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 4 --threads 1 \
+engine/.venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 4 --threads 1 --max-requests 100 \
   --timeout 120 --preload engine.app:app
 ```
 
@@ -69,6 +69,11 @@ Each worker holds its own copy-on-write view of a roughly 1 GB model, so size
   rebuild work across a sweep, once per worker per state, in the sweep's
   state-major order. Requests with no `policy` never touch this cache: the
   baseline overrides (Head Start) are baked into the preloaded system.
+* A worker's memory does not plateau over a long run of simulations (the
+  GitHub runner's `free` trace climbed 2.5 → 12.3 GB across a ten-minute
+  sweep), so run gunicorn with `--max-requests 100 --max-requests-jitter 20`:
+  a recycled worker re-forks from the preloaded master in about a second and
+  rebuilds at most the one policy system it was holding.
 
 ## Point HotGap at it
 
