@@ -1,7 +1,8 @@
 export type PayUnit = "hour" | "month" | "year";
 export interface Pay { amount: number; unit: PayUnit; hoursPerWeek?: number }
 
-const DEFAULT_HOURS = 40;
+/** Full-time: what an hourly wage is annualized over, and what an earner is assumed to work when unasked. */
+export const DEFAULT_HOURS = 40;
 
 export function toAnnual(pay: Pay): number {
   switch (pay.unit) {

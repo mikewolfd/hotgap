@@ -1,3 +1,4 @@
+import { DEFAULT_HOURS } from "./income.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
 import { householdSize, YEAR, type HouseholdAnswers } from "./types.js";
 
@@ -129,6 +130,33 @@ function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: H
     person.childcare_hours_per_day = y(8);
     person.childcare_days_per_week = y(5);
     person.childcare_attending_days_per_month = y(20);
+    Object.assign(person, childcareProviderType(a.state, (person.age as Record<string, number>)[YEAR]));
+  }
+}
+
+// Massachusetts treats a child as school age from this birthday
+// (gov.states.ma.eec.ccfa.age_threshold.school_age).
+const MA_CCFA_SCHOOL_AGE = 5;
+
+/**
+ * The provider-type input two states need before they pay anything
+ * (policyengine-us #9485). Every state's rate table is keyed by a provider
+ * type, and 49 default it to a licensed center — the care the bill prices.
+ * Maryland's defaults to NONE, and Massachusetts's to the school-age center
+ * rate, a $0 rate for a child under 5 even though the model derives the
+ * child's age category itself. Verified 2026-09-15 on the public API and on
+ * policyengine-us 2.5.0: a 3-year-old's $12,000 bill draws $0 → $12,000 in
+ * Massachusetts and $0 → $10,556 in Maryland; a school-age child in
+ * Massachusetts is unchanged. Remove a state here once its default pays.
+ */
+function childcareProviderType(state: string, age: number): Vars {
+  switch (state) {
+    case "MA":
+      return { ma_ccfa_care_provider_type: y(age < MA_CCFA_SCHOOL_AGE ? "CENTER_BASED_CARE_EARLY_EDUCATION" : "CENTER_BASED_CARE_SCHOOL_AGE") };
+    case "MD":
+      return { md_ccs_provider_type: y("LICENSED_CENTER") };
+    default:
+      return {};
   }
 }
 
@@ -137,10 +165,18 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   const you: Vars = { age: y(a.age) };
   for (const v of PERSON_VARS) you[v] = y(null);
   if (a.monthlyRent !== null) you.rent = y(a.monthlyRent * 12);
-  // Massachusetts scales its TAFDC dependent-care deduction by
-  // `weekly_hours_worked_before_lsr`, which defaults to 0 when nobody sends
-  // it, so the deduction was always zero for every household.
-  if (a.hoursPerWeek !== null) you.weekly_hours_worked_before_lsr = y(a.hoursPerWeek);
+  // Hours are an ASSUMPTION when unasked: full time. `weekly_hours_worked_before_lsr`
+  // defaults to 0 when unsent, and from policyengine-us 2.5.0 that zero is
+  // read as "not working": SNAP's ABAWD rule (ages 18–64 and parents whose
+  // youngest is 14+, after P.L. 119-21) pays $0 at every point of the curve,
+  // and Maryland's and Massachusetts's child-care activity tests fail. The
+  // hosted 1.764.6 model read the same zero leniently, which hid all of it
+  // (verified 2026-09-15: TX childless adult at $12k, SNAP $1,473 hosted vs
+  // $0 on 2.5.0 with hours unsent, $1,478 with 30). The curve is about pay
+  // from work, so its earner works; the $0-pay point carries the same
+  // boundary assumption rent and the child-care bill already do. Massachusetts
+  // also scales its TAFDC dependent-care deduction by these hours.
+  you.weekly_hours_worked_before_lsr = y(a.hoursPerWeek ?? DEFAULT_HOURS);
   applyDisability(you, a.youDisabled, ssiPathway);
   // Non-wage income, annualized onto the householder. All three names verified
   // live 2026-09-14; all three land inside household_benefits, so they also
@@ -172,7 +208,7 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
     for (const v of PERSON_VARS) people.spouse[v] = y(null);
     // Only a spouse with earnings works the hours; a stay-at-home spouse at 40
     // hours a week would be a different household.
-    if (a.hoursPerWeek !== null && a.spouseAnnualEarnings > 0) people.spouse.weekly_hours_worked_before_lsr = y(a.hoursPerWeek);
+    if (a.spouseAnnualEarnings > 0) people.spouse.weekly_hours_worked_before_lsr = y(a.hoursPerWeek ?? DEFAULT_HOURS);
     applyDisability(people.spouse, a.spouseDisabled, ssiPathway);
   }
   // Enrollment flags like `is_enrolled_in_head_start` do NOT work in

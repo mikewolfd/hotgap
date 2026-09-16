@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { peUrl } from "../core/src/index.js";
+import { ARCHETYPES, answersFor, buildCurvePayload, parsePEResponse, peUrl, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -317,6 +317,20 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // force the state's variable to 0 and see whether household_state_benefits
   // and net income move with it.
   //
+  // Two states pay nothing until the provider type is named (policyengine-us
+  // #9485); HotGap names it in its own payload. Pins that the enum values
+  // exist on the endpoint and that they turn the award on.
+  for (const state of ["MA", "MD"] as const) {
+    it(`${state}: a 3-year-old's bill draws a subsidy through HotGap's payload (provider type named)`, async () => {
+      const answers = { ...answersFor(state, ARCHETYPES.find((a) => a.id === "single-1")!), childAges: [3], childDisabled: [false], monthlyChildcare: 1000, getsChildcareSubsidy: true };
+      const payload = buildCurvePayload(answers);
+      const household = payload.household as { axes: unknown[][] };
+      household.axes[0][0] = { name: "employment_income", min: 20000, max: 21000, count: 2, period: "2026" };
+      const [point] = parsePEResponse(await requestPE(payload, { timeoutMs: 90_000 }), 2);
+      expect(point.programs.childcare).toBeGreaterThan(5000);
+    }, 100_000);
+  }
+
   // Pins four things at once — the per-state variable names, the aggregate
   // `child_care_subsidies` that HotGap actually requests, the fact that
   // `spm_unit_pre_subsidy_childcare_expenses` (not `childcare_expenses`) is the

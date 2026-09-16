@@ -118,17 +118,20 @@ describe("buildPEPayload", () => {
     expect(couple.household.tax_units.tax_unit.tax_unit_is_filer["2026"]).toBe(true);
   });
 
-  it("sends weekly hours for the earners only, and omits them when unknown", () => {
-    // PolicyEngine's Massachusetts dependent-care deduction scales by
-    // weekly_hours_worked_before_lsr, which defaults to 0 when unsent.
+  it("sends weekly hours for the earners only, full time when unknown", () => {
+    // weekly_hours_worked_before_lsr defaults to 0 when unsent, which
+    // policyengine-us 2.5.0 reads as "not working": SNAP's ABAWD rule and two
+    // states' child-care activity tests then pay $0 across the whole curve.
     const none = buildPEPayload(base) as any;
-    expect(none.household.people.you.weekly_hours_worked_before_lsr).toBeUndefined();
+    expect(none.household.people.you.weekly_hours_worked_before_lsr["2026"]).toBe(40);
 
     const solo = buildPEPayload({ ...base, hoursPerWeek: 35 }) as any;
     expect(solo.household.people.you.weekly_hours_worked_before_lsr["2026"]).toBe(35);
 
     const earningSpouse = buildPEPayload({ ...base, hoursPerWeek: 35, married: true, spouseAge: 30, spouseAnnualEarnings: 20000 }) as any;
     expect(earningSpouse.household.people.spouse.weekly_hours_worked_before_lsr["2026"]).toBe(35);
+    const unaskedSpouse = buildPEPayload({ ...base, married: true, spouseAge: 30, spouseAnnualEarnings: 20000 }) as any;
+    expect(unaskedSpouse.household.people.spouse.weekly_hours_worked_before_lsr["2026"]).toBe(40);
     // A spouse with no earnings works no hours.
     const idleSpouse = buildPEPayload({ ...base, hoursPerWeek: 35, married: true, spouseAge: 30, spouseAnnualEarnings: 0 }) as any;
     expect(idleSpouse.household.people.spouse.weekly_hours_worked_before_lsr).toBeUndefined();
@@ -285,6 +288,20 @@ describe("the child-care subsidy take-up toggle", () => {
     }
     expect(people.you.childcare_days_per_week).toBeUndefined();
     expect(people.spouse.childcare_days_per_week).toBeUndefined();
+  });
+
+  it("names the provider type where the state's default pays nothing: MA by age, MD a licensed center", () => {
+    const ma = peopleOf({ ...withKids, state: "MA", getsChildcareSubsidy: true });
+    expect(ma.child1.ma_ccfa_care_provider_type).toEqual({ "2026": "CENTER_BASED_CARE_EARLY_EDUCATION" }); // age 3
+    expect(ma.child2.ma_ccfa_care_provider_type).toEqual({ "2026": "CENTER_BASED_CARE_SCHOOL_AGE" }); // age 8
+    expect(ma.you.ma_ccfa_care_provider_type).toBeUndefined();
+    const md = peopleOf({ ...withKids, state: "MD", getsChildcareSubsidy: true });
+    expect(md.child1.md_ccs_provider_type).toEqual({ "2026": "LICENSED_CENTER" });
+    expect(md.child2.md_ccs_provider_type).toEqual({ "2026": "LICENSED_CENTER" });
+    // Nothing for a state whose default already pays, and nothing at all without take-up.
+    const co = peopleOf({ ...withKids, state: "CO", getsChildcareSubsidy: true });
+    expect(Object.keys(co.child1).filter((k) => k.includes("provider_type"))).toEqual([]);
+    expect(peopleOf({ ...withKids, state: "MA" }).child1.ma_ccfa_care_provider_type).toBeUndefined();
   });
 
   it("still sends $0 as the pre-subsidy bill for a household that reports no childcare", () => {
