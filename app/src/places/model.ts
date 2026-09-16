@@ -110,28 +110,56 @@ export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): S
   return rows;
 }
 
+export interface BinClass {
+  /** The ramp step (0–4) this class is drawn with. */
+  ramp: number;
+  lo: number;
+  hi: number;
+}
+
 export interface Bins {
   lo: number;
   hi: number;
-  bounds: number[];
+  /** "steps": five equal-width steps of a dollar measure, labelled by their bounds. "classes": runs of whole numbers, labelled by what each holds. */
+  kind: "steps" | "classes";
+  /** One entry per swatch on the scale, lightest first. */
+  classes: BinClass[];
+  /** The ramp step (0–4) a comparable value is drawn with. */
   index: (v: number) => number;
 }
 
-/* Five equal-width bins across the OBSERVED range of the COMPARABLE states.
-   Binning from 0 would spend four of five bins on empty space for a measure
-   whose floor is $53,000; binning over incomplete states would move the bounds
-   using numbers that are known to be wrong; binning over a no-cliff state
-   would put a measurement of zero at the bottom of a scale of losses (B4).
-   Both bounds are always printed. */
-export function bins(values: number[]): Bins {
-  if (!values.length) return { lo: 0, hi: 0, bounds: [0, 0, 0, 0, 0], index: () => 0 };
+/* Bins across the OBSERVED range of the COMPARABLE states. Binning from 0
+   would spend four of five bins on empty space for a measure whose floor is
+   $53,000; binning over incomplete states would move the bounds using
+   numbers that are known to be wrong; binning over a no-cliff state would
+   put a measurement of zero at the bottom of a scale of losses (B4). Both
+   bounds are always printed.
+
+   A dollar measure takes five equal-width steps. A count takes classes of
+   whole numbers (S5): five steps over a range of 0 to 1 printed the scale
+   "0 0 0 1 1 1", which is not a sentence. The class width is the smallest
+   whole number that fits the range in five classes or fewer, the classes
+   that exist are the swatches, and they are spread over the ramp so the
+   two ends of any scale are the ramp's two ends (charts.md § 2). */
+export function bins(values: number[], unit: Measure["unit"]): Bins {
   let lo = Infinity, hi = -Infinity;
   for (const v of values) { if (v < lo) lo = v; if (v > hi) hi = v; }
-  const step = (hi - lo) / 5 || 1;
+  if (!values.length) lo = hi = 0;
+  if (unit === "$") {
+    const step = (hi - lo) / 5;
+    return {
+      lo, hi, kind: "steps",
+      classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, lo: Math.round(lo + step * i), hi: Math.round(lo + step * (i + 1)) })),
+      index: (v) => (step ? Math.min(4, Math.max(0, Math.floor((v - lo) / step))) : 0),
+    };
+  }
+  const width = Math.max(1, Math.ceil((hi - lo + 1) / 5));
+  const n = Math.ceil((hi - lo + 1) / width);
+  const ramp = (i: number) => (n === 1 ? 0 : Math.round((i * 4) / (n - 1)));
   return {
-    lo, hi,
-    bounds: Array.from({ length: 5 }, (_, i) => Math.round(lo + step * (i + 1))),
-    index: (v) => Math.min(4, Math.max(0, Math.floor((v - lo) / step))),
+    lo, hi, kind: "classes",
+    classes: Array.from({ length: n }, (_, i) => ({ ramp: ramp(i), lo: lo + i * width, hi: Math.min(hi, lo + (i + 1) * width - 1) })),
+    index: (v) => ramp(Math.min(n - 1, Math.max(0, Math.floor((v - lo) / width)))),
   };
 }
 
@@ -147,13 +175,13 @@ export interface Grouped {
 }
 
 /** Split the rows into the ranking and the three lifted-out groups, and bin the comparable values. O(states log states). */
-export function group(rows: StateRow[]): Grouped {
+export function group(rows: StateRow[], measure: Measure): Grouped {
   const by = (kind: TileKind) => rows.filter((r) => r.kind === kind);
   const shaded = by("shaded"), past = by("past"), none = by("none"), incomplete = by("incomplete");
   const ranked = shaded.slice().sort((a, z) => (z.value as number) - (a.value as number));
   return {
     ranked, past, none, incomplete,
-    bins: bins(shaded.map((r) => r.value as number)),
+    bins: bins(shaded.map((r) => r.value as number), measure.unit),
     programs: [...new Set(incomplete.flatMap((r) => r.incomplete.map((u) => u.program)))],
   };
 }
@@ -189,12 +217,15 @@ export interface CorrectionRow {
 }
 
 /* CorrectionsApplied (B3): coverage[state].corrections kept to applies === true,
-   in one order for the detail block and the CSV. */
+   in one order for the detail block and the CSV. The note is printed as core
+   wrote it; the published source it was read from (an override's `source`,
+   another correction's `cite`) is the cite's link; core's `code` pointer is
+   not a reader's fact and is not shown. */
 export function correctionRows(c: StateCorrections | undefined): CorrectionRow[] {
   if (!c) return [];
   const rows: CorrectionRow[] = c.policyOverrides.map((o) => ({ program: overrideProgram(o.parameter), source: "overridden", note: o.note, href: o.source }));
-  if (c.maTafdc.applies) rows.push({ program: PROGRAM_NAME.tanf, source: null, note: c.maTafdc.note });
-  if (c.premiumAssistance.applies) rows.push({ program: c.premiumAssistance.program ?? "State premium help", source: c.premiumAssistance.source, note: c.premiumAssistance.note });
+  if (c.maTafdc.applies) rows.push({ program: PROGRAM_NAME.tanf, source: null, note: c.maTafdc.note, href: c.maTafdc.cite });
+  if (c.premiumAssistance.applies) rows.push({ program: c.premiumAssistance.program ?? "State premium help", source: c.premiumAssistance.source, note: c.premiumAssistance.note, href: c.premiumAssistance.cite });
   if (c.childcareSubsidy.applies) rows.push({ program: PROGRAM_NAME.childcare, source: c.childcareSubsidy.source, note: c.childcareSubsidy.note });
   if (c.coverageGap.applies) rows.push({ program: `${PROGRAM_NAME.aca} — coverage gap`, source: null, note: c.coverageGap.note });
   return rows;

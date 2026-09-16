@@ -546,11 +546,15 @@ const body = {
     },
     monthlyRent: {
       what: "Two-bedroom Fair Market Rent for that county, in whole dollars per month.",
-      publisher: "HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2).",
+      // publisher and vintage are printed verbatim in every SourceNote
+      // (summary.json coverage[state].vintages.rent), so they are the
+      // reader's words; the file and column read are in the note (S9).
+      publisher: "HUD Office of Policy Development and Research, Fair Market Rents",
       url: SOURCE.fmr,
       index: SOURCE.fmrIndex,
-      vintage: "FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx.",
+      vintage: "FY2026 revised schedule (effective 2025-10-01)",
       note:
+        "The revised schedule supersedes HUD's first FY2026 file (FY26_FMRs.xlsx); the column read is the two-bedroom rent, fmr_2. " +
         "In the six New England states HUD publishes FMRs by town, not by county, and a county can span two or three FMR areas. " +
         "Those counties take the population-weighted mean of their town rows using HUD's own pop2023 column, rounded to the dollar: " +
         varied.map((c) => `${c.state} ${c.countyFips} (${[...new Set(c.rows.map((r) => r.fmr2))].sort((a, b) => a - b).map(usd).join("/")} across ${c.rows.length} town rows -> ${c.rent})`).join(", ") +

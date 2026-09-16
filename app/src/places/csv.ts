@@ -50,4 +50,6 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
   return "﻿" + lines.join("\r\n") + "\r\n";
 }
 
-export const csvName = (a: Archetype, generated: string): string => `hotgap-${a.id}-${dateOf(generated)}.csv`;
+/** Named by the household as the reader knows it, not by the archetype id (N7): "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv". */
+export const csvName = (a: Archetype, generated: string): string =>
+  `hotgap-${archLabel(a).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${dateOf(generated)}.csv`;

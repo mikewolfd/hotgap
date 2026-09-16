@@ -18,15 +18,15 @@ surface renders the component, not that it could.
 | 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Dashed everywhere, always. One declaration: `.hg-badge`. | ● | ● | |
 | 11 | **ScenarioBar** | The household's inputs as chips — state, county, shape, earnings, rent, childcare, and the take-up toggles — plus *add a what-if* and *print*. Phone behaviour and chip semantics in § ScenarioBar. | | ● | |
 | 12 | **CompareTable** | Two or three scenarios in columns against the same rows. Column identity is a rule under the header, never coloured text. | | ● | |
-| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, five printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). | | | ● |
-| 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*. States with no cliff and states the model cannot complete are each lifted out into their own labelled block, never left at the bottom of the order. | | | ● |
+| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. | | | ● |
+| 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*, with the axis bounds above the list. Each row is a `.hg-row-btn` that opens its state: the 44px control beside the map that a tile sized to its square cannot be (`charts.md` § 2). States with no cliff and states the model cannot complete are each lifted out into their own labelled block, never left at the bottom of the order. | | | ● |
 | 15 | **DataTable** | The text equivalent and the thing a reporter copies: every row, every measure, in its own horizontal scroller, with a CSV export carrying its own provenance columns. A no-cliff cell prints *none*, never `$0`. | ● | ● | ● |
 | 16 | **IncompleteMarker** | The 45° hatch (`.hg-hatch-incomplete`) and its companions — the legend entry that says *figures incomplete, not low*, the not-ranked block, the flag column, the caseworker's one-line state notice. Rendered from `coverage[state].unmodeled[]` on every pass (§ IncompleteMarker). | | ● | ● |
 | 17 | **SourceNote** | The provenance line that closes every figure and table: publisher, vintages, model version, date read, policy year, and *estimates only* — all from the data. Has an *archetype* state (§ SourceNote). | ● | ● | ● |
 | 18 | **CorrectionsApplied** | The HotGap-side corrections behind this state's numbers, from `coverage[state].corrections` (§ CorrectionsApplied). | | ● | ● |
 | 19 | **Callout** | One shape for an aside about the data: a 3px left rule, `--note` or `--caution` or neutral, always led by a word. `.hg-callout`. Never a banner, toast or modal. | ● | ● | ● |
-| 20 | **Button** | One declaration, `.hg-button`; `--primary` for the one action a surface leads with; `--small` inside a source line. The theme toggle, the CSV download and *Try again* are the base. | ● | ● | ● |
-| 21 | **FilterRow** | One row of `<select>`s above everything it scopes, plus the row's end slot for a download. `.hg-filters`. Never a filter inside a chart card. | | | ● |
+| 20 | **Button** | One declaration, `.hg-button`; `--primary` for the one action a surface leads with; `--small` inside a source line. The CSV download and *Try again* are the base. The sketches' theme toggle is a demo control and no built surface carries one: `prefers-color-scheme` rules, and print is always light. | ● | ● | ● |
+| 21 | **FilterRow** | One row of `<select>`s above everything it scopes, plus the row's end slot for a download. `.hg-filters`. A control that scopes one component sits with that component in its own row — the table's order control under the table's heading — never in the shared row (places review S7). Never a filter inside a chart card. | | | ● |
 | 22 | **SkipLink** | The first focusable thing on the page, to the answer, the ledger or the table. `.hg-skip`. | ● | ● | ● |
 
 ## Class map
@@ -42,18 +42,18 @@ layout that is genuinely its own (its column grid, its masthead).
 | MarkKey | `.hg-key` |
 | CurveReadout | `.hg-readout` |
 | MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch), `.hg-draw` |
-| StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete`; `.hg-swatch` with the same modifiers |
+| StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete` (an SVG mask on a pseudo-element, so it prints — B1 of the places review); `.hg-swatch` with the same modifiers |
 | Callout | `.hg-callout`, `--note`, `--caution` |
 | Button | `.hg-button`, `--primary`, `--small` |
 | ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row), `__top`, `__actions`, `__inputs`, `__note`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
 | FilterRow | `.hg-filters`, `.hg-filters__end`, `.hg-select` (or a bare `<select>` inside the row) |
 | SkipLink | `.hg-skip` |
-| DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control; `.hg-scroll-x` around a wide table; `details.hg-disclosure` around a table that opens on demand |
+| DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control (44px on screen, its own rhythm on paper); `.hg-scroll-x` around a wide table; `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print` |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
-Three rules that go with the map:
+Four rules that go with the map:
 
 - **Motion** reads `--dur-draw` and `--ease` — through `.hg-draw` for the
   curve, or `getComputedStyle` for anything scripted. A page never calls
@@ -66,16 +66,25 @@ Three rules that go with the map:
   15px base, where 16px is one line-height, so the block sits on the same
   rhythm as the rules around it. The journalist *figure box* is not a panel
   and keeps its own padding (`charts.md` § 2).
+- **A selected or open row is never marked by ground alone.**
+  `--surface-sunk` measures 1.07:1 on `--surface` and 1.08:1 on `--plane`
+  (1.10 / 1.21 dark), below any threshold, so `tokens.css` pairs it with a
+  3px ink bar wherever `[aria-current="true"]` marks a row — the `.hg-rows`
+  row, the `.hg-table` row's first cell — and a page's row control does the
+  same (places review S3). Selection and focus are two marks in two places:
+  the system focus ring outside, the selection mark inside (S4).
 
 ## `--control-edge`
 
 The boundary of anything a person can press or change (S11): `.hg-chip`,
-`.hg-select`, `.hg-button` and the filter row's `<select>`. It measures
-3.49:1 on `--surface` and 3.02:1 on `--plane` in light, 3.74:1 and 4.09:1 in
-dark, so it clears WCAG 1.4.11 as a control's only visible edge. Nothing
-non-interactive uses it: table hairlines stay `--rule`, the map's unshaded
-tiles stay `--rule-strong`, because a stronger edge on a thing that cannot
-be pressed would promise a control that is not there.
+`.hg-select`, `.hg-button`, the filter row's `<select>`, and the map's three
+outlined tile states, which are buttons (places review N10; the legend
+swatches share the class and come along). It measures 3.49:1 on
+`--surface` and 3.02:1 on `--plane` in light, 3.74:1 and 4.09:1 in dark, so
+it clears WCAG 1.4.11 as a control's only visible edge. Nothing
+non-interactive uses it: table hairlines stay `--rule`, because a stronger
+edge on a thing that cannot be pressed would promise a control that is not
+there.
 
 ## ScenarioBar
 
@@ -153,7 +162,7 @@ to the entries whose `applies === true`. Each row is a `.hg-rows` row with
 |---|---|---|
 | program | the key (`premiumAssistance`, `childcareSubsidy`, `coverageGap`, `maTafdc`) or, for each `policyOverrides[]` record, its `parameter`'s program (the parent Medicaid limit; the BHP list) | `.hg-rows__at` |
 | source | `corrections.premiumAssistance.source` (*modeled* or *ladder*), `corrections.childcareSubsidy.source` (*added by HotGap*); a `policyOverrides[]` record reads *overridden*, since its `source` is a URL; `coverageGap` and `maTafdc` carry no source word and show no chip | `.hg-tag` |
-| note | `note` — one sentence, written by core, never retyped; for an override the `source` URL is the cite's link | `.hg-cite`, the same shape as ThresholdLedger's cite |
+| note | `note` — one sentence, written by core for the reader who will quote it (what HotGap did, why, and the upstream issue as the cite; places review S9), never retyped; the code pointer is core's `code` field and is not printed; for an override the `source` URL, and for another correction its `cite`, is the cite's link | `.hg-cite`, the same shape as ThresholdLedger's cite |
 
 Rules:
 
@@ -176,7 +185,14 @@ Rules:
 Takes `vintages` and `model` (`coverage[state].vintages`, whose `model` is
 `summary.model` or the state file's) and renders, from the data:
 
-> Estimates only. Rules: {year}. Rent: {vintages.rent.publisher}, {vintages.rent.vintage}. Child-care price: {vintages.childcare.preschool}, carried to {year} dollars by the BLS Employment Cost Index. Reach: {vintages.reach.vintages joined}. Model: policyengine-us {model.version}. Sweep generated {generated}.
+> Estimates only. Rules: {year}. Rent: {vintages.rent.publisher}; {vintages.rent.vintage}. Child-care price: {vintages.childcare.preschool}, carried to {year} dollars by the BLS Employment Cost Index. Reach: {vintages.reach.vintages joined}. Model: policyengine-us {model.version}. Sweep generated {generated}.
+
+The publisher and vintage strings are printed verbatim, so they are written
+for the reader at their source (`scripts/build-state-defaults.mjs` →
+`state-defaults.json` `sources`): "HUD Office of Policy Development and
+Research, Fair Market Rents; FY2026 revised schedule (effective
+2025-10-01)". The file and column read live in the source's `note`, which
+no surface prints (places review S9).
 
 Colorado today: "child-care price: county 2015 · ACS 2024 1-yr ·
 policyengine-us 2.5.0" — the 2015 price and the model version are facts a
@@ -214,8 +230,11 @@ optional field returns, so keying here covers it and also covers the two
 states whose own premium program is unmodeled (NJ Health Plan Savings,
 Cascade Care Savings). The rule: a state is *incomplete* for a household
 when any `unmodeled[]` entry other than LIHEAP could move that household's
-figures — the child-care entry only where a child is under 6 and paid care
-is assumed, the premium entries for every household. The count of such
+figures — the child-care entry only where a child is of child-care age
+(through 12: core's `CHILDCARE_MAX_AGE`, the CCDF ceiling, which the sweep
+prices care to) and every parent works, the premium entries for every
+household. That is the one rule; the page's `paysForCare` and the proof's
+`expectIncompleteFor` both derive from the constant (places review N8). The count of such
 states is **rendered** into the legend, the caption and the caseworker
 notice; it is never typed. LIHEAP is listed for all 51 states and is not a
 reason to hatch: it never reaches net income for anyone.

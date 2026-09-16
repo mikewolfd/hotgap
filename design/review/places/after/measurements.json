@@ -1,0 +1,542 @@
+{
+  "390.filtersHeight": 237.28125,
+  "390.firstTileTop": 693.125,
+  "390.scale.cliffCount": {
+    "labels": [
+      "4\u20137",
+      "8\u201311",
+      "12\u201315",
+      "16\u201319"
+    ],
+    "swatches": 4,
+    "caption": "Bins: four classes from 4 to 19 over the 48 states with a comparable figure; 1 with no cliff found"
+  },
+  "390.scale.deferredCliffCount": {
+    "labels": [
+      "0",
+      "1"
+    ],
+    "swatches": 2,
+    "caption": "Bins: two classes from 0 to 1 over the 48 states with a comparable figure; 1 with no cliff found"
+  },
+  "390.rankRow": {
+    "tag": "BUTTON",
+    "height": 44,
+    "top": 3462.96875,
+    "boxShadow": "rgb(18, 23, 28) 3px 0px 0px 0px inset",
+    "bg": "rgb(241, 243, 246)",
+    "ink": "rgb(18, 23, 28)",
+    "barContrast": 16.21
+  },
+  "390.rankAxisTop": 2223.828125,
+  "390.rankListTop": 2247.96875,
+  "390.selRow": {
+    "boxShadow": "rgb(18, 23, 28) 3px 0px 0px 0px inset",
+    "rowBg": "rgb(241, 243, 246)",
+    "height": 45
+  },
+  "390.incompleteRowHeight": 45,
+  "390.tableToDetail": {
+    "scrolledFrom": 4191,
+    "scrolledTo": 1229,
+    "headingTop": 47.796875,
+    "focused": true,
+    "focusedText": "Corrections applied in Colorado (1)"
+  },
+  "390.focus.tile.b5": {
+    "NY": {
+      "outline": "rgb(18, 23, 28) solid 2px",
+      "boxShadow": "none"
+    },
+    "CO": {
+      "outline": "rgb(250, 251, 252) none 3px",
+      "boxShadow": "rgb(250, 251, 252) 0px 0px 0px 2px inset"
+    }
+  },
+  "390.dark.noneEdge": [
+    "rgb(107, 118, 128)",
+    "rgb(22, 27, 32)"
+  ],
+  "390.dark.noneEdgeContrast": 3.74,
+  "390.light.noneEdge": [
+    "rgb(124, 136, 148)",
+    "rgb(250, 251, 252)"
+  ],
+  "390.light.noneEdgeContrast": 3.49,
+  "390.lineLength": {
+    "lede#0": {
+      "chars": 228,
+      "lines": 5,
+      "cpl": 46,
+      "widthPx": 390
+    },
+    "figSrc#1": {
+      "chars": 433,
+      "lines": 8,
+      "cpl": 54,
+      "widthPx": 366
+    },
+    "stateSub#2": {
+      "chars": 122,
+      "lines": 3,
+      "cpl": 41,
+      "widthPx": 358
+    },
+    "hg-source#3": {
+      "chars": 384,
+      "lines": 6,
+      "cpl": 64,
+      "widthPx": 358
+    },
+    "li#4": {
+      "chars": 255,
+      "lines": 6,
+      "cpl": 43,
+      "widthPx": 300
+    },
+    "li#5": {
+      "chars": 213,
+      "lines": 5,
+      "cpl": 43,
+      "widthPx": 300
+    },
+    "li#6": {
+      "chars": 480,
+      "lines": 11,
+      "cpl": 44,
+      "widthPx": 300
+    },
+    "li#7": {
+      "chars": 224,
+      "lines": 5,
+      "cpl": 45,
+      "widthPx": 300
+    },
+    "li#8": {
+      "chars": 363,
+      "lines": 8,
+      "cpl": 45,
+      "widthPx": 300
+    },
+    "li#9": {
+      "chars": 380,
+      "lines": 8,
+      "cpl": 48,
+      "widthPx": 300
+    },
+    "li#10": {
+      "chars": 81,
+      "lines": 2,
+      "cpl": 41,
+      "widthPx": 300
+    },
+    "li#11": {
+      "chars": 269,
+      "lines": 6,
+      "cpl": 45,
+      "widthPx": 300
+    },
+    "unmodSummary#12": {
+      "chars": 257,
+      "lines": 6,
+      "cpl": 43,
+      "widthPx": 300
+    },
+    "hatchCaution#13": {
+      "chars": 457,
+      "lines": 11,
+      "cpl": 42,
+      "widthPx": 324
+    }
+  },
+  "390.tabOrder": [
+    "a",
+    "select#arch",
+    "select#metric",
+    "button#csvBtn",
+    "button[AK]",
+    "button[MD]",
+    "select#sort",
+    "button[AK]",
+    "a",
+    "body"
+  ],
+  "390.targets": {
+    "tile": 28.671875,
+    "rankRow": 44,
+    "tableRow": 44
+  },
+  "390.csvName": "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv",
+  "390.loading": {
+    "status": "Loading the weekly sweep\u2026",
+    "mainHidden": true,
+    "lede": "Each figure is the worst single $1,000 step of earnings in that state\u2019s curve for that\n    household \u2014 how much net income falls when pay goes up by a thousand dollars.",
+    "bodyHeight": 335
+  },
+  "1280.filtersHeight": 97.140625,
+  "1280.firstTileTop": 538.640625,
+  "1280.scale.cliffCount": {
+    "labels": [
+      "4\u20137",
+      "8\u201311",
+      "12\u201315",
+      "16\u201319"
+    ],
+    "swatches": 4,
+    "caption": "Bins: four classes from 4 to 19 over the 48 states with a comparable figure; 1 with no cliff found"
+  },
+  "1280.scale.deferredCliffCount": {
+    "labels": [
+      "0",
+      "1"
+    ],
+    "swatches": 2,
+    "caption": "Bins: two classes from 0 to 1 over the 48 states with a comparable figure; 1 with no cliff found"
+  },
+  "1280.rankRow": {
+    "tag": "BUTTON",
+    "height": 26,
+    "top": 1204.28125,
+    "boxShadow": "rgb(18, 23, 28) 3px 0px 0px 0px inset",
+    "bg": "rgb(241, 243, 246)",
+    "ink": "rgb(18, 23, 28)",
+    "barContrast": 16.21
+  },
+  "1280.rankAxisTop": 451.140625,
+  "1280.rankListTop": 475.28125,
+  "1280.selRow": {
+    "boxShadow": "rgb(18, 23, 28) 3px 0px 0px 0px inset",
+    "rowBg": "rgb(241, 243, 246)",
+    "height": 45
+  },
+  "1280.incompleteRowHeight": 45,
+  "1280.tableToDetail": {
+    "scrolledFrom": 2215,
+    "scrolledTo": 1155,
+    "headingTop": 48.34375,
+    "focused": true,
+    "focusedText": "Corrections applied in Colorado (1)"
+  },
+  "1280.focus.tile.b5": {
+    "NY": {
+      "outline": "rgb(18, 23, 28) solid 2px",
+      "boxShadow": "none"
+    },
+    "CO": {
+      "outline": "rgb(250, 251, 252) none 3px",
+      "boxShadow": "rgb(250, 251, 252) 0px 0px 0px 2px inset"
+    }
+  },
+  "1280.dark.noneEdge": [
+    "rgb(107, 118, 128)",
+    "rgb(22, 27, 32)"
+  ],
+  "1280.dark.noneEdgeContrast": 3.74,
+  "1280.light.noneEdge": [
+    "rgb(124, 136, 148)",
+    "rgb(250, 251, 252)"
+  ],
+  "1280.light.noneEdgeContrast": 3.49,
+  "1280.lineLength": {
+    "lede#0": {
+      "chars": 228,
+      "lines": 4,
+      "cpl": 57,
+      "widthPx": 467
+    },
+    "figSrc#1": {
+      "chars": 433,
+      "lines": 7,
+      "cpl": 62,
+      "widthPx": 432
+    },
+    "stateSub#2": {
+      "chars": 122,
+      "lines": 2,
+      "cpl": 61,
+      "widthPx": 498
+    },
+    "hg-source#3": {
+      "chars": 384,
+      "lines": 6,
+      "cpl": 64,
+      "widthPx": 432
+    },
+    "li#4": {
+      "chars": 255,
+      "lines": 4,
+      "cpl": 64,
+      "widthPx": 474
+    },
+    "li#5": {
+      "chars": 213,
+      "lines": 3,
+      "cpl": 71,
+      "widthPx": 474
+    },
+    "li#6": {
+      "chars": 480,
+      "lines": 7,
+      "cpl": 69,
+      "widthPx": 474
+    },
+    "li#7": {
+      "chars": 224,
+      "lines": 4,
+      "cpl": 56,
+      "widthPx": 474
+    },
+    "li#8": {
+      "chars": 363,
+      "lines": 5,
+      "cpl": 73,
+      "widthPx": 474
+    },
+    "li#9": {
+      "chars": 380,
+      "lines": 5,
+      "cpl": 76,
+      "widthPx": 474
+    },
+    "li#10": {
+      "chars": 81,
+      "lines": 2,
+      "cpl": 41,
+      "widthPx": 474
+    },
+    "li#11": {
+      "chars": 269,
+      "lines": 4,
+      "cpl": 67,
+      "widthPx": 474
+    },
+    "unmodSummary#12": {
+      "chars": 257,
+      "lines": 4,
+      "cpl": 64,
+      "widthPx": 474
+    },
+    "hatchCaution#13": {
+      "chars": 457,
+      "lines": 7,
+      "cpl": 65,
+      "widthPx": 498
+    }
+  },
+  "1280.stickyHeader": {
+    "position": "sticky",
+    "top": 0
+  },
+  "1280.tabOrder": [
+    "a",
+    "select#arch",
+    "select#metric",
+    "button#csvBtn",
+    "button[AK]",
+    "button[MD]",
+    "select#sort",
+    "button[AK]",
+    "a",
+    "body"
+  ],
+  "1280.targets": {
+    "tile": 39.65625,
+    "rankRow": 26,
+    "tableRow": 44
+  },
+  "1280.csvName": "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv",
+  "1280.loading": {
+    "status": "Loading the weekly sweep\u2026",
+    "mainHidden": true,
+    "lede": "Each figure is the worst single $1,000 step of earnings in that state\u2019s curve for that\n    household \u2014 how much net income falls when pay goes up by a thousand dollars.",
+    "bodyHeight": 308
+  },
+  "1280.error": {
+    "alert": "We could not load the weekly sweep: the data file answered HTTP 404. Reload to try again.",
+    "role": "alert",
+    "mainHidden": true
+  },
+  "1280.pdfBytes": 361502,
+  "1280.pdfPages": 6,
+  "1280.pdf.WA.drawingsIntersecting": [
+    {
+      "type": "f",
+      "fill": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rect": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.9804,
+        0.9843,
+        0.9882
+      ],
+      "rect": [
+        12.0,
+        243.0,
+        313.5,
+        747.0
+      ]
+    },
+    {
+      "type": "s",
+      "fill": null,
+      "rect": [
+        12.4,
+        243.4,
+        313.1,
+        746.6
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.9451,
+        0.9529,
+        0.9647
+      ],
+      "rect": [
+        30.8,
+        375.8,
+        51.8,
+        396.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rect": [
+        30.7,
+        374.9,
+        51.8,
+        397.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.3686,
+        0.4078,
+        0.4431
+      ],
+      "rect": [
+        30.8,
+        375.8,
+        51.8,
+        396.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.3686,
+        0.4078,
+        0.4431
+      ],
+      "rect": [
+        30.8,
+        375.8,
+        51.8,
+        396.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.9451,
+        0.9529,
+        0.9647
+      ],
+      "rect": [
+        30.9,
+        379.4,
+        51.2,
+        391.4
+      ]
+    },
+    {
+      "type": "s",
+      "fill": null,
+      "rect": [
+        31.1,
+        376.1,
+        51.4,
+        395.6
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.698,
+        0.4627,
+        0.6392
+      ],
+      "rect": [
+        53.2,
+        375.8,
+        73.5,
+        396.0
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.4431,
+        0.2,
+        0.4
+      ],
+      "rect": [
+        30.8,
+        397.5,
+        51.8,
+        418.5
+      ]
+    },
+    {
+      "type": "f",
+      "fill": [
+        0.698,
+        0.4627,
+        0.6392
+      ],
+      "rect": [
+        53.2,
+        397.5,
+        73.5,
+        418.5
+      ]
+    }
+  ],
+  "1280.pdf.WA.imagesPlaced": [
+    {
+      "bbox": [
+        30.7,
+        374.9,
+        51.8,
+        397.0
+      ]
+    },
+    {
+      "bbox": [
+        30.7,
+        397.0,
+        51.8,
+        397.0
+      ]
+    }
+  ],
+  "1280.pdf.page1.textInk": null
+}

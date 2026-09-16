@@ -103,9 +103,19 @@ export interface StateCorrections {
   coverageGap: CorrectionNote;
 }
 
+/**
+ * A correction as a reader meets it: `note` is the sentence a surface prints
+ * verbatim (inventory.md § CorrectionsApplied) — what HotGap did, why, and
+ * the upstream issue as the cite — so it is written for the reporter who
+ * will quote it, never for a log. The engineering pointers ride beside it:
+ * `code`, where the correction lives in core, and `cite`, the published
+ * source it was read from, when there is one.
+ */
 export interface CorrectionNote {
   applies: boolean;
   note: string;
+  code?: string;
+  cite?: string;
 }
 
 export interface PolicyOverrideRecord {
