@@ -17,9 +17,20 @@ const PHRASE: Record<PayUnit, string> = { hour: "an hour", week: "a week", month
 /** "an hour", "a week", "a month", "a year". */
 export const unitPhrase = (unit: PayUnit): string => PHRASE[unit];
 
+/** The unit's own rounding: an annual figure to the step that unit is spoken in, still in that unit. */
+export const payRounded = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): number =>
+  Math.round(fromAnnual(annual, unit, hoursPerWeek) / STEP[unit]) * STEP[unit];
+
+/** A figure already in the unit, printed as that unit is: cents by the hour, whole dollars otherwise. */
+export const unitFigure = (inUnit: number, unit: PayUnit): string => (unit === "hour" ? usdCents.format(inUnit) : usd.format(inUnit));
+
+/** An annual figure in the person's own unit, rounded, without the unit phrase: "$14.50", "$30,000". */
+export const payFigure = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
+  unitFigure(payRounded(annual, unit, hoursPerWeek), unit);
+
 /** An annual figure in the person's own unit, rounded to that unit's step: "$14.50 an hour", "$30,000 a year". */
-export function payPhrase(annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string {
-  const inUnit = fromAnnual(annual, unit, hoursPerWeek);
-  const rounded = Math.round(inUnit / STEP[unit]) * STEP[unit];
-  return `${unit === "hour" ? usdCents.format(rounded) : usd.format(rounded)} ${PHRASE[unit]}`;
-}
+export const payPhrase = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
+  `${payFigure(annual, unit, hoursPerWeek)} ${PHRASE[unit]}`;
+
+/** A drop in the citizen "about" grain: whole hundreds. */
+export const moneyAbout = (n: number): string => usd.format(Math.round(n / 100) * 100);
