@@ -17,7 +17,6 @@ export function sharedModel(states: string[], models: ModelsByState): ModelRecor
 export interface ValidationGap { state: string; archetypeId: string; reason: string }
 export interface ValidationResult { ok: boolean; gaps: ValidationGap[] }
 
-
 function pointsAreFinite(points: CurvePoint[]): boolean {
   return points.every(
     (p) =>
@@ -124,9 +123,6 @@ export function roundPoint(p: CurvePoint): CurvePoint {
 }
 
 export function buildStateFile(generated: string, state: string, results: ResultsByStateArchetype, model?: ModelRecord): StateFileJson {
-  const archetypes: Record<string, { points: CurvePoint[] }> = {};
-  for (const a of ARCHETYPES) {
-    archetypes[a.id] = { points: results[state][a.id] };
-  }
+  const archetypes = Object.fromEntries(ARCHETYPES.map((a) => [a.id, { points: results[state][a.id] }]));
   return { generated, year: YEAR, state, ...(model ? { model } : {}), archetypes };
 }
