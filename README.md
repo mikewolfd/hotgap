@@ -302,11 +302,12 @@ received), `--offline`, `--json`.
 
 ## Honesty
 
-- Archetype (`--offline`) curves still ignore childcare, age, disability,
-  every take-up toggle (Head Start, housing, the childcare subsidy, employer
-  coverage), and SSDI —
-  they're the honest baseline for a household shaped like this in this
-  state, not this family's own numbers. Rent and county are no longer part
+- Archetype (`--offline`) curves are the state's typical working household
+  of that shape — every parent working, each child priced for care by age
+  band with the state subsidy claimed — and ignore age, disability, Head
+  Start, housing, employer coverage, SSDI, immigration status, savings and
+  self-employment. They're the honest baseline for a household shaped like
+  this in this state, not this family's own numbers. Rent and county are no longer part
   of that ignore list: since 2026-09-15 every archetype uses the state's
   own typical renter (HUD FY2026 two-bedroom Fair Market Rent, Census
   Vintage 2024 most populous county — see `state-defaults.json`), not a
