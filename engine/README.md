@@ -34,11 +34,12 @@ PORT=8080 engine/.venv/bin/python -m engine.app
 The first import builds the whole tax-benefit system and takes about 10 s;
 after that the process is ready. `python -m engine.app` is the Flask
 development server — one request at a time, which is what `calculate.py` wants
-anyway. For anything beyond one caller, run it the way the image does:
+anyway. For anything beyond one caller, run it the way the image does —
+`engine/gunicorn.conf.py` holds the settings and why, and a flag on the
+command line overrides one:
 
 ```sh
-engine/.venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 4 --threads 1 --max-requests 100 \
-  --timeout 120 --preload engine.app:app
+engine/.venv/bin/gunicorn -c engine/gunicorn.conf.py --bind 127.0.0.1:8080 --workers 4 engine.app:app
 ```
 
 ## Run it under Docker
@@ -71,9 +72,10 @@ Each worker holds its own copy-on-write view of a roughly 1 GB model, so size
   baseline overrides (Head Start) are baked into the preloaded system.
 * A worker's memory does not plateau over a long run of simulations (the
   GitHub runner's `free` trace climbed 2.5 → 12.3 GB across a ten-minute
-  sweep), so run gunicorn with `--max-requests 100 --max-requests-jitter 20`:
-  a recycled worker re-forks from the preloaded master in about a second and
-  rebuilds at most the one policy system it was holding.
+  sweep), so `gunicorn.conf.py` recycles a worker every ~100 requests
+  (`max_requests`, jittered by 20): a recycled worker re-forks from the
+  preloaded master in about a second and rebuilds at most the one policy
+  system it was holding.
 
 ## Point HotGap at it
 

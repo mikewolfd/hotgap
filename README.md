@@ -485,7 +485,7 @@ public API stays the fallback for a `hotgap` run with no engine, and
 `.github/workflows/contract.yml` watches it daily.
 
     pip install -r engine/requirements.txt
-    gunicorn --bind 127.0.0.1:8099 --workers 4 --preload engine.app:app &
+    gunicorn -c engine/gunicorn.conf.py --bind 127.0.0.1:8099 --workers 4 engine.app:app &
     HOTGAP_PE_URL=http://127.0.0.1:8099/us/calculate npm run pipeline
 
 A hosted copy runs on a DigitalOcean droplet for the personal path

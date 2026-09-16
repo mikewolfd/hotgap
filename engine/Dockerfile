@@ -22,14 +22,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=60s --start-period=120s --timeout=120s --retries=3 \
   CMD python -c "import os,sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ['PORT']+'/healthz', timeout=5).status == 200 else 1)"
 
-# --preload builds the tax-benefit system once in the master (~10 s, ~1 GB) and
-# forks, so the workers share it copy-on-write and no request pays for the
-# import. --threads 1 because a simulation is not safe to interleave with
-# another in the same process (engine/calculate.py): parallelism is processes.
-# WEB_CONCURRENCY is gunicorn's own name for the worker count.
-# --timeout 120 covers the ~7 s it takes to build a tax-benefit system the
-# first time a given `policy` object is seen.
-# --max-requests: a worker's memory grows across a long run of simulations
-# rather than plateauing (glibc keeps the arenas); recycling every ~100
-# requests re-forks a warm worker from the preloaded master in about a second.
-CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2} --threads 1 --timeout 120 --preload --max-requests ${GUNICORN_MAX_REQUESTS:-100} --max-requests-jitter 20 engine.app:app"]
+# Workers, threads, timeout, preload and recycling are engine/gunicorn.conf.py,
+# the one place they are set; the bind is gunicorn's own default for PORT.
+CMD ["gunicorn", "-c", "engine/gunicorn.conf.py", "engine.app:app"]
