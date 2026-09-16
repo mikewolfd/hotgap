@@ -1,5 +1,5 @@
 import { ARCHETYPES, DEFAULT_ARCHETYPE } from "./archetypes.js";
-import { loadStateFile, type StateFileJson } from "./data.js";
+import type { StateFileJson } from "./data.js";
 import type { CurvePoint, HouseholdAnswers } from "./types.js";
 
 // The most kids any pipeline archetype models — households with more kids
@@ -46,25 +46,22 @@ export function pickArchetypeId(h: ArchetypeMatch): string {
   return match?.id ?? DEFAULT_ARCHETYPE;
 }
 
-/** The matching archetype's curve out of a state file; null when absent or degenerate. */
+/**
+ * The matching archetype's curve out of a state file — the precomputed curve
+ * used when a live PolicyEngine call fails. Archetype curves ignore county,
+ * rent, age, disability, and take-up toggles — they are the honest baseline
+ * for "a family shaped like this in this state".
+ *
+ * Null when the file is missing or the sweep has no curve for the matched
+ * archetype (or a degenerate one), which is what a dual-earner household gets
+ * until the next sweep runs. Substituting the single-earner twin's curve would
+ * be worse than no answer: it models a spouse with no pay and no childcare
+ * bill, so it would show this household a cliff pattern that is not theirs
+ * and label it their own baseline.
+ */
 export function archetypeCurveFrom(file: StateFileJson | null, h: ArchetypeMatch): CurvePoint[] | null {
   const points = file?.archetypes?.[pickArchetypeId(h)]?.points;
   return points && points.length >= 2 ? points : null;
-}
-
-/**
- * The precomputed archetype curve used when a live PolicyEngine call fails.
- * Archetype curves ignore county, rent, age, disability, and take-up toggles —
- * they are the honest baseline for "a family shaped like this in this state".
- *
- * Null when the committed sweep has no curve for the matched archetype, which
- * is what a dual-earner household gets until the next sweep runs. Substituting
- * the single-earner twin's curve would be worse than no answer: it models a
- * spouse with no pay and no childcare bill, so it would show this household a
- * cliff pattern that is not theirs and label it their own baseline.
- */
-export function loadArchetypeCurve(state: string, h: ArchetypeMatch): CurvePoint[] | null {
-  return archetypeCurveFrom(loadStateFile(state), h);
 }
 
 // Archetype curves are only sampled up to the pipeline's axis (axisSpec's

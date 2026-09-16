@@ -1,3 +1,4 @@
+import { zipToCounty } from "./county.js";
 import { readData } from "./data.js";
 import { STATE_CODES } from "./states.js";
 
@@ -20,4 +21,28 @@ export function zipToState(zip: string): string | null {
 
 export function isTerritoryZip(zip: string): boolean {
   return /^\d{5}$/.test(zip) && TERRITORY_PREFIXES.has(zip.slice(0, 3));
+}
+
+export interface PlaceInput {
+  zip?: string;
+  state?: string;
+  countyFips?: string | null;
+}
+
+export type Place = { ok: true; state: string | undefined; countyFips: string | null } | { ok: false; detail: string };
+
+/**
+ * A ZIP resolved to the state and county every caller sends PolicyEngine —
+ * the one rule for the CLI's `--zip`, an API body's `zip` and a page's ZIP
+ * field. A given state must agree with the ZIP's; a given county wins over
+ * the ZIP's. Without a ZIP the state and county pass through untouched, and
+ * validateAnswers judges them.
+ */
+export function resolvePlace({ zip, state, countyFips }: PlaceInput): Place {
+  if (zip === undefined) return { ok: true, state, countyFips: countyFips ?? null };
+  if (isTerritoryZip(zip)) return { ok: false, detail: "HotGap does not model US territories yet" };
+  const zipState = zipToState(zip);
+  if (zipState === null) return { ok: false, detail: `no state for ZIP ${zip}` };
+  if (state !== undefined && state !== zipState) return { ok: false, detail: `ZIP ${zip} is in ${zipState}, not ${state}` };
+  return { ok: true, state: zipState, countyFips: countyFips ?? zipToCounty(zip, zipState) };
 }

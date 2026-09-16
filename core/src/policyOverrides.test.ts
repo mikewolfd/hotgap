@@ -26,14 +26,14 @@ describe("sourced PolicyEngine overrides", () => {
     expect(buildCurvePayload(single("CA"))).not.toHaveProperty("policy");
   });
 
-  it("invalidates cached curves when a parameter or list changes", () => {
+  it("invalidates cached curves when a parameter or list changes", async () => {
     const a = single("SC");
     const policy = policyOverridesFor(a);
-    expect(curveCacheKey(a)).toBe(curveCacheKey(a, policy));
-    expect(curveCacheKey(a, {})).not.toBe(curveCacheKey(a));
+    expect(await curveCacheKey(a)).toBe(await curveCacheKey(a, policy));
+    expect(await curveCacheKey(a, {})).not.toBe(await curveCacheKey(a));
     const key = Object.keys(policy)[0];
-    expect(curveCacheKey(a, { [key]: { "2026-01-01.2026-12-31": 1 } })).not.toBe(curveCacheKey(a));
-    expect(curveCacheKey(single("NY"), { [BHP_EXPANDED_STATES]: { "2026-01-01.2026-12-31": ["NY"] } })).not.toBe(curveCacheKey(single("NY")));
+    expect(await curveCacheKey(a, { [key]: { "2026-01-01.2026-12-31": 1 } })).not.toBe(await curveCacheKey(a));
+    expect(await curveCacheKey(single("NY"), { [BHP_EXPANDED_STATES]: { "2026-01-01.2026-12-31": ["NY"] } })).not.toBe(await curveCacheKey(single("NY")));
   });
 
   it("sends the overrides on both sides of the SSDI splice", async () => {
@@ -72,7 +72,7 @@ describe("sourced PolicyEngine overrides", () => {
       await expect(fetchCurve(single("NY"), { fetchImpl, childcareSubsidyCounted: false })).rejects.toThrow();
       expect(Object.keys(payloads[1].policy)).toEqual([BHP_EXPANDED_STATES]);
       // The cache key follows the policy actually sent.
-      expect(curveCacheKey(single("SC"), {})).not.toBe(curveCacheKey(single("SC")));
+      expect(await curveCacheKey(single("SC"), {})).not.toBe(await curveCacheKey(single("SC")));
     } finally {
       delete process.env.HOTGAP_PE_URL;
     }

@@ -12,7 +12,8 @@
 import { analyzeCurve, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
 import { fetchCurve, PolicyEngineError, type FetchCurveOptions } from "./client.js";
 import { escapeAnalysis, type EscapeAnalysis } from "./escape.js";
-import { clampFallbackEarnings, loadArchetypeCurve, pickArchetypeId } from "./fallback.js";
+import { loadStateFile, type StateFileJson } from "./data.js";
+import { archetypeCurveFrom, clampFallbackEarnings, pickArchetypeId } from "./fallback.js";
 import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_B_ANNUAL, NON_EXPANSION_STATES, fpl2026 } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
@@ -709,9 +710,12 @@ export function evaluateCurve(
  * toggles: it is the honest baseline for "a family shaped like this in this
  * state", not this family's own numbers. Earnings are clamped to the sweep's
  * last sampled point so no verdict claims anything past the data.
+ *
+ * `file` is the state's sweep file: the committed one from disk by default,
+ * or whatever the caller fetched where there is no disk (see EvaluateOptions).
  */
-export function evaluateOffline(answers: HouseholdAnswers): HouseholdEvaluation | null {
-  const points = loadArchetypeCurve(answers.state, answers);
+export function evaluateOffline(answers: HouseholdAnswers, file: StateFileJson | null = loadStateFile(answers.state)): HouseholdEvaluation | null {
+  const points = archetypeCurveFrom(file, answers);
   if (!points) return null;
   const curve: CurveResponse = {
     year: YEAR,
@@ -724,6 +728,13 @@ export function evaluateOffline(answers: HouseholdAnswers): HouseholdEvaluation 
 export interface EvaluateOptions extends FetchCurveOptions {
   /** Fall back to the archetype curve when PolicyEngine fails. Default true. */
   fallback?: boolean;
+  /**
+   * Where the fallback's sweep file comes from. Default: the committed file
+   * on disk. A Worker, which has no disk and must not hold every state's
+   * 600 KB in memory, fetches it from its static assets — and only when the
+   * fallback actually runs, which is why this is a loader and not a value.
+   */
+  loadStateFile?: (state: string) => Promise<StateFileJson | null>;
 }
 
 /** The whole calculation: a live curve when we can get one, the archetype baseline when we can't. */
@@ -743,7 +754,7 @@ export async function evaluateHousehold(
     // Only PolicyEngine's own failures earn the fallback. A bug in our analysis
     // must surface as itself rather than be papered over with a baseline curve.
     if (opts.fallback === false || !(e instanceof PolicyEngineError)) throw e;
-    const offline = evaluateOffline(answers);
+    const offline = evaluateOffline(answers, opts.loadStateFile ? await opts.loadStateFile(answers.state) : undefined);
     // Rethrow the ORIGINAL error, not "no archetype": the live failure is the
     // thing the caller has to act on.
     if (!offline) throw e;

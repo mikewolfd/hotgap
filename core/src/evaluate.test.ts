@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { analyzeCurve } from "./analyze.js";
 import { PolicyEngineError } from "./client.js";
+import { loadStateFile as loadStateFile_ } from "./data.js";
 import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
 import { validateAnswers } from "./validate.js";
@@ -166,6 +167,22 @@ describe("evaluateHousehold", () => {
     await expect(
       evaluateHousehold(answers, { fallback: false, fetchImpl: respond(() => new Response("boom", { status: 500 })) }),
     ).rejects.toBeInstanceOf(PolicyEngineError);
+  });
+
+  it("takes the fallback's sweep file from the caller's loader, and only asks for it on the fallback path", async () => {
+    const fail = respond(() => new Response("boom", { status: 500 }));
+    const asked: string[] = [];
+    const loadStateFile = async (state: string) => { asked.push(state); return loadStateFile_(state); };
+    const ev = await evaluateHousehold(answers, { fetchImpl: fail, loadStateFile });
+    expect(ev.source).toBe("archetype");
+    expect(asked).toEqual(["CA"]);
+    // A loader with nothing to give is "no archetype": the live failure surfaces.
+    await expect(evaluateHousehold(answers, { fetchImpl: fail, loadStateFile: async () => null })).rejects.toBeInstanceOf(PolicyEngineError);
+    // The live path never asks.
+    const cached: CurveResponse = { year: "2026", currentEarnings: 30000, points: fixturePoints };
+    asked.length = 0;
+    await evaluateHousehold(answers, { cache: { get: () => cached, set: () => {} }, fetchImpl: fail, loadStateFile });
+    expect(asked).toEqual([]);
   });
 
   it("uses the live curve, untouched by archetype data, when the call succeeds", async () => {

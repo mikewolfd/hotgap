@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
-import { CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { afterEach, describe, it, expect } from "vitest";
+import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { axisSpec, type AxisSpec } from "./translate.js";
+import { axisSpec, buildPEPayload, type AxisSpec } from "./translate.js";
 import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
@@ -141,10 +141,36 @@ describe("fetchCurve", () => {
 });
 
 describe("curveCacheKey", () => {
-  it("ignores key order and changes with any answer", () => {
+  it("ignores key order and changes with any answer", async () => {
     const reordered = Object.fromEntries(Object.entries(answers).reverse()) as typeof answers;
-    expect(curveCacheKey(reordered)).toBe(curveCacheKey(answers));
-    expect(curveCacheKey({ ...answers, annualEarnings: 30001 })).not.toBe(curveCacheKey(answers));
+    expect(await curveCacheKey(reordered)).toBe(await curveCacheKey(answers));
+    expect(await curveCacheKey({ ...answers, annualEarnings: 30001 })).not.toBe(await curveCacheKey(answers));
+  });
+  it("is a SHA-256 hex digest, the same one node:crypto would give", async () => {
+    const { createHash } = await import("node:crypto");
+    const text = canonical({ answers, payload: buildPEPayload(answers), policy: {} });
+    expect(await curveCacheKey(answers, {})).toBe(createHash("sha256").update(text).digest("hex"));
+  });
+});
+
+describe("configurePolicyEngine", () => {
+  afterEach(() => configurePolicyEngine({}));
+  it("wins over the environment, and an empty value defers to it", () => {
+    process.env.HOTGAP_PE_URL = "https://env.example/us/calculate";
+    process.env.HOTGAP_PE_TOKEN = "from-env";
+    try {
+      configurePolicyEngine({ url: "https://set.example/us/calculate", token: "from-config" });
+      expect(peUrl()).toBe("https://set.example/us/calculate");
+      expect(peHeaders().Authorization).toBe("Bearer from-config");
+      configurePolicyEngine({ url: "", token: " " });
+      expect(peUrl()).toBe("https://env.example/us/calculate");
+      expect(peHeaders().Authorization).toBe("Bearer from-env");
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+      delete process.env.HOTGAP_PE_TOKEN;
+    }
+    expect(peUrl()).toBe(PE_URL);
+    expect(peHeaders()).toEqual({ "Content-Type": "application/json" });
   });
 });
 

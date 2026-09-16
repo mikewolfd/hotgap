@@ -1,11 +1,11 @@
-// Committed data files under data/, read lazily from disk and memoized.
+// Committed data files under data/, read lazily from disk and memoized — or
+// provided by the environment where there is no disk (provideData, below).
 //
 //   summary.json        weekly sweep: per state × archetype cliff metrics
 //   states/{ST}.json    weekly sweep: the full curve per archetype (151–231 points, see axisSpec)
 //   reach.json          ACS PUMS household-earnings percentile ladders
 //   zip3-state.json     ZIP prefix → state (GeoNames)
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
-import { existsSync, readFileSync } from "node:fs";
 import type { MaTafdcCorrection } from "./maTafdc.js";
 import type { CurvePoint } from "./types.js";
 
@@ -153,17 +153,43 @@ export interface StateFileJson {
   archetypes: Record<string, { points: CurvePoint[] }>;
 }
 
-const DATA_DIR = new URL("../data/", import.meta.url);
-
 const cache = new Map<string, unknown>();
 
-/** Parse `data/<relPath>` once; null when the file does not exist or the path escapes data/. */
+/**
+ * Hand this module a file's parsed contents instead of letting it read disk:
+ * the seam that runs core where there is no disk. A Worker or a page bundles
+ * (or fetches) the small tables and provides them once at start-up; every
+ * loader below then works unchanged, synchronously, from the cache. An entry
+ * provided here wins over the file on disk, so a test can substitute a table.
+ */
+export function provideData(entries: Record<string, unknown>): void {
+  for (const [relPath, value] of Object.entries(entries)) cache.set(relPath, value);
+}
+
+// Disk is Node's business. process.getBuiltinModule (Node ≥ 22.3, and the
+// Workers runtime's node:process) loads a builtin without a static `node:fs`
+// import, so this module also bundles for a browser — where `process` is
+// undefined, the branch is skipped, and only provided entries exist.
+const fs = typeof process !== "undefined" && typeof process.getBuiltinModule === "function"
+  ? (process.getBuiltinModule("node:fs") as typeof import("node:fs") | undefined)
+  : undefined;
+// The second argument is deliberately not the literal `import.meta.url`:
+// Vite rewrites `new URL(<string>, import.meta.url)` into an asset reference
+// at build time, and data/ is a directory, not an asset.
+const here = import.meta.url;
+const DATA_DIR = new URL("../data/", here);
+
+/** Read `data/<relPath>` from disk; null off Node, or when the file does not exist or the path escapes data/. */
+function readDisk(relPath: string): unknown {
+  if (!fs) return null;
+  const url = new URL(relPath, DATA_DIR);
+  const inside = url.href.startsWith(DATA_DIR.href);
+  return inside && fs.existsSync(url) ? JSON.parse(fs.readFileSync(url, "utf8")) : null;
+}
+
+/** Parse `data/<relPath>` once — a provided entry first, else the file on disk. */
 export function readData<T>(relPath: string): T | null {
-  if (!cache.has(relPath)) {
-    const url = new URL(relPath, DATA_DIR);
-    const inside = url.href.startsWith(DATA_DIR.href);
-    cache.set(relPath, inside && existsSync(url) ? (JSON.parse(readFileSync(url, "utf8")) as T) : null);
-  }
+  if (!cache.has(relPath)) cache.set(relPath, readDisk(relPath));
   return cache.get(relPath) as T | null;
 }
 

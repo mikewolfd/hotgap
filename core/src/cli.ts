@@ -4,7 +4,6 @@
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { PolicyEngineError } from "./client.js";
-import { zipToCounty } from "./county.js";
 import { loadSummary } from "./data.js";
 import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
 import { toAnnual, type PayUnit } from "./income.js";
@@ -12,7 +11,6 @@ import { MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import type { Cliff } from "./analyze.js";
 import { type HouseholdAnswers, type ProgramId } from "./types.js";
 import { validateAnswers } from "./validate.js";
-import { isTerritoryZip, zipToState } from "./zip.js";
 
 const USAGE = `hotgap <command> [options]
 
@@ -107,16 +105,7 @@ const breakdownOf = (c: Cliff): string => {
 const list = (v: string | undefined): string[] => (v ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
 function householdFrom(f: Flags): HouseholdAnswers {
-  let state = f.state?.toUpperCase();
-  let county = f.county ?? null;
-  if (f.zip !== undefined) {
-    if (isTerritoryZip(f.zip)) fail(2, "HotGap does not model US territories yet");
-    const zipState = zipToState(f.zip) ?? fail(2, `no state for ZIP ${f.zip}`);
-    if (state !== undefined && state !== zipState) fail(2, `ZIP ${f.zip} is in ${zipState}, not ${state}`);
-    state = zipState;
-    county = county ?? zipToCounty(f.zip, state);
-  }
-  if (state === undefined) fail(2, "--state or --zip is required");
+  if (f.state === undefined && f.zip === undefined) fail(2, "--state or --zip is required");
   if (f.unit !== undefined && !["hour", "month", "year"].includes(f.unit)) fail(2, "--unit must be hour, month, or year");
   if (f.earnings === undefined && f.pay === undefined) fail(2, "--earnings or --pay is required");
 
@@ -126,9 +115,11 @@ function householdFrom(f: Flags): HouseholdAnswers {
     ? toAnnual({ amount: Number(f.pay), unit: (f.unit ?? "hour") as PayUnit, hoursPerWeek: num(f.hours) })
     : num(f.earnings);
 
+  // A ZIP resolves the state and county inside validateAnswers (zip.ts).
   const v = validateAnswers({
-    state,
-    countyFips: county,
+    zip: f.zip,
+    state: f.state?.toUpperCase(),
+    countyFips: f.county ?? null,
     married: f.married === true,
     age: num(f.age) ?? 30,
     spouseAge: f.married === true ? num(f["spouse-age"]) ?? 30 : null,
