@@ -40,7 +40,7 @@ const spec = () => ({
     http_port: 8080,
     health_check: { http_path: "/healthz", initial_delay_seconds: 120, period_seconds: 30, timeout_seconds: 10, failure_threshold: 6, success_threshold: 1 },
     envs: [
-      { key: "WEB_CONCURRENCY", value: "2", scope: "RUN_TIME" },
+      { key: "WEB_CONCURRENCY", value: "1", scope: "RUN_TIME" },
       { key: "GUNICORN_MAX_REQUESTS", value: "100", scope: "RUN_TIME" },
       { key: "HOTGAP_ENGINE_TOKEN", value: need("HOTGAP_PE_TOKEN"), scope: "RUN_TIME", type: "SECRET" },
     ],
