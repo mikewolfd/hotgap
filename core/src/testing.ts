@@ -2,6 +2,16 @@
 // index.ts: nothing here is part of the library.
 import type { AxisSpec } from "./translate.js";
 
+/** A California single parent, 30, with a 5-year-old, $1,500 rent, $30,000 a year — the suites' stock household. */
+export const CA_SINGLE_ONE_KID = {
+  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
+  youDisabled: false, spouseDisabled: false, childDisabled: [false],
+  monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
+};
+
+/** A fetch whose every call answers with `fn()`. */
+export const respond = (fn: () => Response | Promise<Response>): typeof fetch => (async () => fn()) as unknown as typeof fetch;
+
 /**
  * A minimal well-formed PolicyEngine response at whatever axis the answers
  * ask for: flat $20,000 of net income and no program anywhere. The recorded

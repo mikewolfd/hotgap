@@ -4,23 +4,18 @@ import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePaylo
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { peBody } from "./testing.js";
+import { CA_SINGLE_ONE_KID, peBody, respond } from "./testing.js";
 import { axisSpec, buildPEPayload } from "./translate.js";
 import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
 const noopSleep = async () => {};
 
-const raw = {
-  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
-  youDisabled: false, spouseDisabled: false, childDisabled: [false],
-  monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
-};
+const raw = CA_SINGLE_ONE_KID;
 const v = validateAnswers(raw);
 if (!v.ok) throw new Error(v.detail);
 const answers = v.value;
 
-const respond = (fn: () => Response | Promise<Response>) => (async () => fn()) as unknown as typeof fetch;
 const axis = axisSpec(answers);
 const body = peBody(axis);
 

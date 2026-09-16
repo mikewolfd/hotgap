@@ -23,7 +23,15 @@ export async function evaluate(flags: HouseholdFlags, fetchImpl: typeof fetch = 
   } catch (e) {
     return { ok: false, error: (e as Error).name === "TimeoutError" ? "timeout" : "network" };
   }
-  if (res.ok) return { ok: true, evaluation: (await res.json()) as HouseholdEvaluation };
-  const body: ApiErrorBody = await res.json().then((b) => b as ApiErrorBody, () => ({ error: "internal" }));
-  return { ok: false, error: body.error, detail: body.detail };
+  // A body that is not JSON (a captive portal's page, a truncated reply) is a
+  // network failure, not a crash.
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    return { ok: false, error: res.ok ? "network" : "internal" };
+  }
+  if (res.ok) return { ok: true, evaluation: body as HouseholdEvaluation };
+  const { error, detail } = body as ApiErrorBody;
+  return { ok: false, error, detail };
 }

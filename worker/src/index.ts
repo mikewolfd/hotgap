@@ -12,6 +12,7 @@
 import {
   configurePolicyEngine,
   evaluateHousehold,
+  modelVersion,
   peUrl,
   PolicyEngineError,
   provideData,
@@ -127,23 +128,28 @@ export async function handleRequest(req: Request, deps: Deps): Promise<Response>
 /**
  * A synthetic URL the Cache API can key on; the host is never fetched. Core's
  * key covers the household, the request and the policy but not the engine,
- * so the engine's host goes in the path: a curve from one model is never
- * served for another after the endpoint secret changes.
+ * so the engine's host and its policyengine-us release go in the path: a
+ * curve from one model is never served for another, whether the endpoint
+ * secret changed or the droplet was upgraded in place. The release is one
+ * memoized /healthz read per isolate (core's modelVersion); the public API
+ * has none and keys under "null".
  */
-const cacheUrl = (key: string) => `https://cache.hotgap.invalid/curve/${new URL(peUrl()).host}/${key}`;
+async function cacheUrl(key: string, fetchImpl: typeof fetch): Promise<string> {
+  return `https://cache.hotgap.invalid/curve/${new URL(peUrl()).host}/${await modelVersion({ fetchImpl })}/${key}`;
+}
 
 /** Core's CurveCache over the Cache API: a stored curve is a JSON response with the TTL as its max-age. */
-export function curveCache(cache: Cache, waitUntil: (p: Promise<unknown>) => void): CurveCache {
+export function curveCache(cache: Cache, waitUntil: (p: Promise<unknown>) => void, fetchImpl: typeof fetch): CurveCache {
   return {
     async get(key) {
-      const hit = await cache.match(cacheUrl(key));
+      const hit = await cache.match(await cacheUrl(key, fetchImpl));
       return hit ? ((await hit.json()) as CurveResponse) : undefined;
     },
-    set(key, curve) {
+    async set(key, curve) {
       const stored = new Response(JSON.stringify(curve), {
         headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL_S}` },
       });
-      waitUntil(cache.put(cacheUrl(key), stored));
+      waitUntil(cache.put(await cacheUrl(key, fetchImpl), stored));
     },
   };
 }
@@ -177,11 +183,12 @@ export default {
   async fetch(req: Request, env: Env & Secrets, ctx: ExecutionContext): Promise<Response> {
     // Secrets are bindings, not config; an unset pair leaves core on the public API.
     configurePolicyEngine({ url: env.HOTGAP_PE_URL, token: env.HOTGAP_PE_TOKEN });
+    // Bound, because workerd's fetch checks its receiver and a bare reference
+    // invoked later throws "Illegal invocation".
+    const fetchImpl = fetch.bind(globalThis);
     return handleRequest(req, {
-      // Bound, because workerd's fetch checks its receiver and a bare reference
-      // invoked later throws "Illegal invocation".
-      fetchImpl: fetch.bind(globalThis),
-      cache: curveCache(caches.default, (p) => ctx.waitUntil(p)),
+      fetchImpl,
+      cache: curveCache(caches.default, (p) => ctx.waitUntil(p), fetchImpl),
       loadStateFile: async (state) => {
         const res = await env.ASSETS.fetch(new URL(`/data/states/${state}.json`, req.url));
         return res.ok ? ((await res.json()) as StateFileJson) : null;

@@ -10,36 +10,50 @@ import "../../../design/tokens.css";
 import "./citizen.css";
 import { axisSpec, flagsFromSearchParams, rawAnswersFromFlags, searchParamsFromFlags, validateAnswers, type HouseholdFlags } from "@hotgap/core";
 import { evaluate } from "../editor/api.js";
-import { mountEditor } from "../editor/index.js";
+import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountResult } from "./result.js";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 const editor = mountEditor(app, {
-  onSubmit: (flags) => run(flags, { push: true }),
+  onSubmit: (flags) => run(flags, { submitted: true }),
   // A chip changed one answer: with a result on the page, that is a new
   // household to evaluate; before one, it is just an answer for later.
-  onChange: (flags) => { if (hasAnswers(flags)) run(flags, { push: false }); },
+  onChange: (flags) => { if (hasAnswers(flags)) run(flags, { submitted: false }); },
 });
 const resultRoot = document.createElement("div");
 resultRoot.className = "page result";
 resultRoot.id = "result";
-app.append(resultRoot);
-const result = mountResult(resultRoot, () => run(editor.flags, { push: false }));
+const h1 = document.createElement("h1");
+h1.className = "hg-visually-hidden";
+h1.textContent = "If your pay goes up, do you keep more?";
+app.append(h1, resultRoot);
+const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false }));
 
-const hasAnswers = (flags: HouseholdFlags): boolean => Boolean((flags.zip || flags.state) && (flags.pay || flags.earnings));
+// Evaluations are answered out of order (a fresh curve takes seconds, a
+// cached one milliseconds); only the latest request may render.
+let latest = 0;
 
-async function run(flags: HouseholdFlags, { push }: { push: boolean }): Promise<void> {
+/**
+ * Evaluate a household and render it. A submit closes the screen and moves
+ * focus to the answer; a chip change re-evaluates in place, leaving focus on
+ * the chip (the toggle's whole behaviour, design/inventory.md § ScenarioBar).
+ */
+async function run(flags: HouseholdFlags, { submitted }: { submitted: boolean }): Promise<void> {
   const url = `?${searchParamsFromFlags(flags)}`;
-  if (push) history.pushState(null, "", url);
+  if (submitted && url !== location.search) history.pushState(null, "", url);
   else history.replaceState(null, "", url);
   const v = validateAnswers(rawAnswersFromFlags(flags));
   if (!v.ok) { editor.showError(v.detail); return; }
+  const id = ++latest;
   result.loading(axisSpec(v.value).count);
   const r = await evaluate(flags);
+  if (id !== latest) return;
   if (r.ok) {
-    editor.close();
-    result.render(r.evaluation, flags);
-    document.querySelector<HTMLElement>("#answer")?.focus();
+    result.render(r.evaluation, flags, { announce: !submitted });
+    if (submitted) {
+      editor.close();
+      document.querySelector<HTMLElement>("#answer")?.focus();
+    }
   } else if (r.error === "bad_input" && r.detail) {
     editor.showError(r.detail);
   } else {
@@ -50,7 +64,7 @@ async function run(flags: HouseholdFlags, { push }: { push: boolean }): Promise<
 function start(): void {
   const flags = flagsFromSearchParams(new URLSearchParams(location.search));
   editor.setFlags(flags);
-  if (hasAnswers(flags)) void run(editor.flags, { push: false });
+  if (hasAnswers(editor.flags)) void run(editor.flags, { submitted: true });
   else { result.clear(); editor.open(); }
 }
 window.addEventListener("popstate", start);

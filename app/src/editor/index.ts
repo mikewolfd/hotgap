@@ -60,6 +60,15 @@ const DEFAULT_KID_AGE = 5;
 const MAX_KIDS = 6;
 const HEAD_START_MAX_AGE = 5;
 
+/** The modeled state a flag set names — through its ZIP or its state — or undefined; never a code core does not know. */
+export function stateOf(flags: HouseholdFlags): string | undefined {
+  const p = resolvePlace({ zip: flags.zip, state: flags.state?.toUpperCase() });
+  return p.ok && p.state !== undefined && p.state in STATE_NAMES ? p.state : undefined;
+}
+
+/** Whether a flag set says enough to evaluate: a place core knows and a pay. */
+export const hasAnswers = (flags: HouseholdFlags): boolean => stateOf(flags) !== undefined && Boolean(flags.pay || flags.earnings);
+
 /** Which control a validateAnswers detail points at. */
 const FIELD_OF: Record<string, string> = {
   zip: "zip", state: "zip", annualEarnings: "pay", hoursPerWeek: "hours", childAges: "kids",
@@ -107,8 +116,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   // ── Derived readings of the flags ───────────────────────────────────
   const married = () => flags.married === true;
   const kids = () => flagList(flags.kids).map(Number);
-  const place = () => resolvePlace({ zip: flags.zip, state: flags.state });
-  const state = (): string | undefined => { const p = place(); return p.ok ? p.state : undefined; };
+  const place = () => resolvePlace({ zip: flags.zip, state: flags.state?.toUpperCase() });
+  const state = (): string | undefined => stateOf(flags);
   const unit = (): PayUnit => (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
   const monthly = (v: string | undefined) => (v ? `${money(Number(v))} ${copy.chips.aMonth}` : copy.chips.none);
   const yearly = (v: string | undefined) => (v ? `${money(Number(v))} ${copy.chips.aYear}` : copy.chips.none);
@@ -183,7 +192,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     h("div", { class: "editor__field" }, h("label", { for: id }, label), control, hint);
 
   const form = h("form", { class: "editor__form" },
-    h("h1", { class: "editor__heading" }, copy.heading),
+    // An h2: the page owns its h1 (which stays when this screen hides).
+    h("h2", { class: "editor__heading" }, copy.heading),
     h("p", { class: "editor__lead" }, copy.lead),
     h("fieldset", { class: "editor__group" }, h("legend", {}, copy.place.legend),
       h("div", { class: "editor__pair" }, field("f-zip", copy.place.zip, zipInput, zipHint), field("f-state", copy.place.or, stateSelect))),
@@ -293,9 +303,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       return [chip(c.id, c.label, c.inverted ? (shown ? copy.chips.yes : copy.chips.no) : shown ? copy.chips.on : copy.chips.off, { "aria-pressed": String(shown) })];
     }));
     if (focused) inputsRow.querySelector<HTMLElement>(`[data-chip="${focused}"]`)?.focus();
-    const st = state();
-    const hasAnswers = Boolean(st && flags.pay);
-    summaryText.textContent = hasAnswers ? [flags.zip, st, householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
+    summaryText.textContent = hasAnswers(flags) ? [flags.zip, state(), householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
   }
 
   function render(): void {
@@ -326,6 +334,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
         renderChips();
         return;
       case "kids-count": {
+        // A cleared field is mid-edit, not "no kids": the ages stay until a number arrives.
+        if (t.value === "") return;
         const n = Math.max(0, Math.min(MAX_KIDS, Number(t.value) || 0));
         const ages = kids().slice(0, n);
         while (ages.length < n) ages.push(DEFAULT_KID_AGE);
@@ -340,7 +350,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       case "rent": set("rent", t.value); renderChips(); return;
       case "childcare": set("childcare", t.value); renderChips(); return;
     }
-    if (t.name.startsWith("kid-")) {
+    if (t.name.startsWith("kid-") && t.value !== "") {
       const ages = kids();
       ages[Number(t.name.slice(4))] = Number(t.value);
       set("kids", ages.join(","));
@@ -369,7 +379,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     const fieldId = FIELD_OF[detail] ?? (/ZIP|territor/i.test(detail) ? "zip" : null);
     const control = fieldId ? form.querySelector<HTMLElement>(`#f-${fieldId}`) : null;
     control?.setAttribute("aria-invalid", "true");
-    open();
+    // An error from the API arrives with the screen closed; one from the
+    // screen's own submit must not reset who opened it.
+    if (!editorOpen) open();
     (control ?? errorLine).focus();
   }
   function clearError(): void {
@@ -420,10 +432,13 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       }
       return field(id, f.label, control, f.hint ? h("p", { class: "editor__hint" }, f.hint) : undefined);
     });
+    const cancelBtn = h("button", { type: "button", class: "hg-button" }, copy.dialog.cancel);
     const dialogForm = h("form", { method: "dialog" }, h("h2", { id: "dialog-title" }, spec.label), ...body,
       h("div", { class: "editor__dialog-actions" },
-        h("button", { type: "submit", class: "hg-button", value: "cancel", formnovalidate: true }, copy.dialog.cancel),
+        // Cancel is not a submit button: the form's first submit is what Enter presses, and that must be Save.
+        cancelBtn,
         h("button", { type: "submit", class: "hg-button hg-button--primary", value: "save" }, copy.dialog.save)));
+    cancelBtn.addEventListener("click", () => dialog.close(""));
     dialog.replaceChildren(dialogForm);
     // returnValue survives a close: an Escape after an earlier Save must not read as Save.
     dialog.returnValue = "";

@@ -10,24 +10,19 @@ import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
+import { CA_SINGLE_ONE_KID, respond } from "./testing.js";
 import type { CurvePoint, CurveResponse, HouseholdAnswers, ProgramId } from "./types.js";
 
 const fixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 const fixturePoints = parsePEResponse(JSON.parse(fixture), 101);
 
 function answersWith(over: Partial<Record<string, unknown>> = {}): HouseholdAnswers {
-  const v = validateAnswers({
-    state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
-    youDisabled: false, spouseDisabled: false, childDisabled: [false],
-    monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
-    ...over,
-  });
+  const v = validateAnswers({ ...CA_SINGLE_ONE_KID, ...over });
   if (!v.ok) throw new Error(v.detail);
   return v.value;
 }
 
 const answers = answersWith();
-const respond = (fn: () => Response) => (async () => fn()) as unknown as typeof fetch;
 
 describe("evaluateCurve", () => {
   const curve: CurveResponse = { year: "2026", currentEarnings: 30000, points: fixturePoints };

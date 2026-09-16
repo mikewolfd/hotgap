@@ -15,6 +15,10 @@ async function fillFourFacts(page: Page): Promise<void> {
   await page.getByLabel("How old is kid 1?").fill("3");
   await page.getByLabel("How old is kid 2?").fill("7");
   await page.getByLabel("How old is kid 2?").blur();
+  // Clearing the count mid-edit keeps the ages.
+  await page.getByLabel("How many kids live with you?").fill("");
+  await page.getByLabel("How many kids live with you?").fill("2");
+  await expect(page.getByLabel("How old is kid 2?")).toHaveValue("7");
   await page.getByLabel("Your pay, before taxes").fill("30000");
   await page.getByLabel("Per").selectOption("year");
   // Rent and child care were prefilled from the state's typical figures.
@@ -52,6 +56,22 @@ test("landing on a shared link evaluates at once", async ({ page }) => {
   await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
   await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
   await expect(page.locator("#editor")).toBeHidden();
+});
+
+test("a hand-typed link with a lower-case state and a yearly earnings figure still works, chips included", async ({ page }) => {
+  const errors = consoleErrors(page);
+  await page.goto("/?state=tx&kids=3&earnings=30000");
+  await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
+  // `earnings` was rewritten as pay in years; the state is the code core knows.
+  const url = new URL(page.url());
+  expect([url.searchParams.get("pay"), url.searchParams.get("unit"), url.searchParams.get("earnings")]).toEqual(["30000", "year", null]);
+  await expect(page.locator('[data-chip="where"] .hg-chip__v')).toHaveText("TX");
+  await page.locator('[data-chip="where"]').click();
+  await expect(page.getByLabel("Or pick your state")).toHaveValue("TX");
+  await expect(page.getByLabel("Rent or house payment")).toHaveValue("");
+  await page.getByLabel("How many kids live with you?").fill("2");
+  await expect(page.getByLabel("How old is kid 2?")).toHaveValue("5");
+  expect(errors).toEqual([]);
 });
 
 test("a bad ZIP shows core's own error text", async ({ page }) => {
@@ -104,11 +124,11 @@ for (const width of [390, 1280]) {
     await expect(page.locator("#editor")).toBeHidden();
     await expect(pay).toBeFocused();
     await expect(pay).toHaveAttribute("aria-expanded", "false");
-    // Saving a value from the dialog re-evaluates and keeps the URL current.
+    // Saving a value from the dialog with Enter re-evaluates and keeps the URL current.
     await age.click();
     await page.locator("dialog").getByLabel("Your age").fill("45");
     const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
-    await page.locator("dialog").getByRole("button", { name: "Save" }).click();
+    await page.keyboard.press("Enter");
     await expect(age).toBeFocused();
     await expect(age.locator(".hg-chip__v")).toHaveText("45");
     expect(new URL(page.url()).searchParams.get("age")).toBe("45");
@@ -119,16 +139,18 @@ for (const width of [390, 1280]) {
     await page.keyboard.press("Escape");
     await expect(age.locator(".hg-chip__v")).toHaveText("45");
     expect(new URL(page.url()).searchParams.get("age")).toBe("45");
-    // A toggle flips, re-evaluates, and keeps focus.
+    // A toggle flips and re-evaluates in place: focus stays on the chip after
+    // the answer arrives, the editor stays as it was, and the new sentence is
+    // read out through the status region rather than by moving focus.
     const housing = page.locator('[data-chip="housing"]');
     await expect(housing).toHaveAttribute("aria-pressed", "false");
     const evaluatedAgain = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
     await housing.click();
     await expect(housing).toHaveAttribute("aria-pressed", "true");
-    await expect(housing).toBeFocused();
     expect(new URL(page.url()).searchParams.get("housing")).toBe("1");
     expect((await evaluatedAgain).status()).toBe(200);
-    await expect(page.locator("#result [role=status]")).toHaveText("");
+    await expect(page.locator("#result [role=status]")).toContainText("You are paid");
+    await expect(housing).toBeFocused();
     await expect(page.locator("#answer")).toContainText("You are paid");
     expect(errors).toEqual([]);
   });

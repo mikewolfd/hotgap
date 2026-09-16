@@ -60,13 +60,15 @@ Response `200`: a `HouseholdEvaluation` (`core/src/evaluate.ts`), `source`
 | 429 | `rate_limited` | `Retry-After: 60` — 20 evaluations a minute per client IP |
 | 503 | `busy` | `Retry-After: 5` — four live evaluations already in flight in this isolate |
 | 504 / 502 | `upstream_timeout` / `upstream_error` | PolicyEngine failed **and** no archetype curve exists for this household's shape; core's message |
+| 500 | `internal` | anything else; the answers are never logged |
 | 405 / 404 | `method_not_allowed` / `not_found` | |
 
 `GET /api/health` → `{ "ok": true }`.
 
 Live curves are cached for 7 days by core's own key under the engine's
-host; a fallback is never cached. Live: a fresh household 5.4 s, a repeat
-17 ms (measured under `wrangler dev` against the droplet).
+host and policyengine-us release; a fallback is never cached. Live: a fresh
+household 5.4 s, a repeat 17 ms (measured under `wrangler dev` against the
+droplet).
 
 ## The editor
 
@@ -75,15 +77,31 @@ host; a fallback is never cached. Live: a fresh household 5.4 s, a repeat
 ```ts
 const editor = mountEditor(root, { onSubmit(flags) {}, onChange(flags) {} });
 editor.setFlags(flags); editor.open("pay"); editor.close(); editor.showError(detail);
-editor.flags;   // a copy
+editor.flags;             // a copy
+hasAnswers(flags);        // a place core knows and a pay: enough to evaluate
+stateOf(flags);           // the resolved, upper-cased state code, or undefined
 ```
 
 It renders the ScenarioBar (sticky top row, summary line, inputs row of
 chips) and the four-facts screen into `root`. `onSubmit` fires when the
 screen is submitted and core accepts the household; `onChange` when a chip
 changes one answer — the page decides whether that re-evaluates
-(`src/citizen/main.ts`: yes when the page already has answers). The result
-mounts after the editor's elements; `#result` is where `main.ts` puts it.
+(`src/citizen/main.ts`: yes when the page already has answers, in place,
+without moving focus). `open(field)` focuses one of the screen's controls:
+`zip`, `state`, `kids`, `pay`, `unit`, `hours`, `rent`, `childcare`
+(`#f-{field}`); any other flag opens the screen on the ZIP. `setFlags`
+rewrites a hand-typed `earnings=` as `pay=&unit=year`.
+
+**DOM the page owns** (`src/citizen/main.ts`): a visually hidden `h1`, then
+`#result`, where `mountResult` puts `[role=status]` (loading text, or the
+new sentence after a chip change), `#answer` (`tabindex="-1"`; focus lands
+here after a submit), `#source[data-source="live"|"archetype"]` with *Try
+again* in the archetype state, and a `[role=alert]` callout for failures.
+The editor's own hooks are `#editor` (the screen, `hidden` when closed),
+`#inputs` (the chips row) and `[data-chip="{id}"]` on every chip. The
+citizen page proper replaces `result.ts` behind the same `Result` seam —
+`clear()`, `loading(count)`, `render(evaluation, flags, { announce })`,
+`error(result)` — and keeps these ids, which the proofs assert.
 
 **URL state** is the CLI's flags (`core/src/flags.ts`, `HOUSEHOLD_FLAGS`):
 `/?zip=94110&kids=3,7&pay=30000&unit=year&married=1&housing=1`. A boolean

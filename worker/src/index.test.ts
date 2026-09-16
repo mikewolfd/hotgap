@@ -1,18 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { axisSpec, configurePolicyEngine, loadStateFile, validateAnswers, type ApiErrorBody, type CurveCache, type CurveResponse, type HouseholdEvaluation } from "@hotgap/core";
-import { peBody } from "../../core/src/testing.js";
+import { CA_SINGLE_ONE_KID as raw, peBody, respond } from "../../core/src/testing.js";
 import { curveCache, handleRequest, localRateLimiter, type Deps } from "./index.js";
 
-const raw = {
-  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
-  youDisabled: false, spouseDisabled: false, childDisabled: [false],
-  monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
-};
 const v = validateAnswers(raw);
 if (!v.ok) throw new Error(v.detail);
 const body = peBody(axisSpec(v.value));
 
-const respond = (fn: () => Response | Promise<Response>) => (async () => fn()) as unknown as typeof fetch;
 const ok = respond(() => new Response(body, { status: 200 }));
 const down = respond(() => new Response("boom", { status: 500 }));
 const slow = respond(() => { throw new DOMException("timeout", "TimeoutError"); });
@@ -170,12 +164,14 @@ describe("curveCache over the Cache API", () => {
       put: async (url: string, res: Response) => { store.set(url, res); },
     } as unknown as Cache;
     const waited: Promise<unknown>[] = [];
-    const cache = curveCache(fake, (p) => waited.push(p));
+    // /healthz names the release; the key carries it.
+    const healthz = respond(() => new Response(JSON.stringify({ model: "policyengine-us", version: "2.6.2" })));
+    const cache = curveCache(fake, (p) => waited.push(p), healthz);
     const curve: CurveResponse = { year: "2026", currentEarnings: 1, points: [] };
     expect(await cache.get("k")).toBeUndefined();
     await cache.set("k", curve);
     await Promise.all(waited);
-    expect(store.get("https://cache.hotgap.invalid/curve/worker-test.example/k")?.headers.get("cache-control")).toBe("public, max-age=604800");
+    expect(store.get("https://cache.hotgap.invalid/curve/worker-test.example/2.6.2/k")?.headers.get("cache-control")).toBe("public, max-age=604800");
     expect(await cache.get("k")).toEqual(curve);
     // Another engine's curve is another entry: a changed endpoint never serves the old model's numbers.
     configurePolicyEngine({ url: "https://other.example/us/calculate" });

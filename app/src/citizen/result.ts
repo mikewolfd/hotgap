@@ -11,7 +11,6 @@ const text = {
   loading: (count: number) => `Doing the math… We check your help at ${count} pay levels. This can take a few seconds.`,
   errorTitle: "We could not get your answer.",
   errors: {
-    timeout: "The math service did not reply. Your answers were not saved. Please try again in a minute.",
     rate_limited: "You have asked a few times in a row. Please wait a minute and try again.",
     busy: "The math service is busy right now. Please try again in a few seconds.",
     other: "The math service did not reply. Your answers were not saved. Please try again in a minute.",
@@ -35,6 +34,8 @@ const VERDICT = {
 export function verdictSentence(ev: HouseholdEvaluation, unit: PayUnit, hoursPerWeek = DEFAULT_HOURS): string {
   const a = ev.analysis;
   const inUnit = (annual: number) => payPhrase(annual, unit, hoursPerWeek);
+  // The threshold is the step's landing point (design/inventory.md § Where a
+  // program ends), read off the real cliff list by the step nextCliff names.
   const next = a.nextCliff ? a.cliffs.find((c) => c.startEarnings === a.nextCliff!.startEarnings) ?? a.nextCliff : null;
   const slots: Slots = {
     pay: inUnit(a.currentEarnings),
@@ -53,7 +54,8 @@ export interface Result {
   /** Nothing to show: the page went back to a bare URL. */
   clear(): void;
   loading(count: number): void;
-  render(ev: HouseholdEvaluation, flags: HouseholdFlags): void;
+  /** Render an evaluation; `announce` reads the new sentence to the status region for a change made without moving focus. */
+  render(ev: HouseholdEvaluation, flags: HouseholdFlags, opts?: { announce?: boolean }): void;
   error(result: Extract<EvaluateResult, { ok: false }>): void;
 }
 
@@ -91,11 +93,11 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       alert.hidden = true;
       status.textContent = text.loading(count);
     },
-    render(ev, flags) {
-      status.textContent = "";
+    render(ev, flags, { announce = false } = {}) {
       alert.hidden = true;
       const unit = (flags.unit ?? "hour") as PayUnit;
       answer.textContent = verdictSentence(ev, unit, flags.hours ? Number(flags.hours) : undefined);
+      status.textContent = announce ? answer.textContent : "";
       const clamped = ev.analysis.currentEarnings !== ev.answers.annualEarnings;
       source.replaceChildren(
         ev.source === "live" ? text.sourceLive : text.sourceArchetype,
@@ -106,8 +108,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
     },
     error(result) {
       status.textContent = "";
-      const body = result.error === "timeout" ? text.errors.timeout
-        : result.error === "rate_limited" ? text.errors.rate_limited
+      const body = result.error === "rate_limited" ? text.errors.rate_limited
         : result.error === "busy" ? text.errors.busy : text.errors.other;
       const strong = document.createElement("strong");
       strong.textContent = text.errorTitle;
