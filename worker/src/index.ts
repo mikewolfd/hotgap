@@ -63,8 +63,8 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers },
   });
 
-const error = (status: number, error: ApiErrorCode, detail?: string, headers?: Record<string, string>): Response =>
-  json(status, { error, ...(detail === undefined ? {} : { detail }) } satisfies ApiErrorBody, headers);
+const error = (status: number, code: ApiErrorCode, detail?: string, headers?: Record<string, string>): Response =>
+  json(status, { error: code, ...(detail === undefined ? {} : { detail }) } satisfies ApiErrorBody, headers);
 
 // Live evaluations this isolate is running. A per-isolate bound, not a
 // global one — Cloudflare runs many isolates — so it caps what one isolate
