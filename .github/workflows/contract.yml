@@ -14,4 +14,4 @@ jobs:
       - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: RUN_CONTRACT=1 npx vitest run contract --no-file-parallelism
+      - run: npm run contract
