@@ -45,6 +45,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 // The one state list (plain node strips the types; Node 22.18+).
 import { FIPS_TO_USPS, STATE_CODES } from "../core/src/states.ts";
+import { ECI_SERIES, average, calendarYear, projectCy2026, quarterlyValues } from "./lib/eci.mjs";
 
 const SOURCE = {
   countyPop: "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv",
@@ -299,8 +300,6 @@ async function childcarePrices(xlsxPath) {
 
 // --------------------------------------------------- study year -> 2026 dollars
 
-const ECI_SERIES = "CIU2020000000000I"; // ECI, wages and salaries, private industry workers, index NSA
-
 // Quarterly values fetched from api.bls.gov on 2026-09-15, kept so an offline
 // or rate-limited run still produces a sourced factor rather than a guess.
 const ECI_FALLBACK = {
@@ -344,10 +343,7 @@ async function fetchEci() {
       });
       const json = await res.json();
       if (json.status !== "REQUEST_SUCCEEDED") throw new Error(`${json.status} ${(json.message || []).join("; ")}`);
-      for (const d of json.Results.series[0].data) {
-        const q = /^Q0([1-4])$/.exec(d.period);
-        if (q) values[`${d.year}-${q[1]}`] = Number(d.value);
-      }
+      Object.assign(values, quarterlyValues(json.Results.series[0]));
     }
     if (Object.keys(values).length < 40) throw new Error("too few quarters returned");
     return { values, live: true };
@@ -359,30 +355,13 @@ async function fetchEci() {
 
 /**
  * Calendar-year average of the four quarterly index values, study year ->
- * CY2026. Quarters 2026 has not published yet are extrapolated from the same
- * quarter of 2025 at the latest published 12-month rate, which is how BLS
- * itself frames the series' headline number — the same arithmetic
- * scripts/build-reach.mjs uses to carry the reach ladders to 2026 dollars.
+ * CY2026 — the arithmetic in scripts/lib/eci.mjs, which build-reach.mjs also
+ * uses to carry the reach ladders to 2026 dollars.
  */
 function eciFactors(eci) {
   const v = eci.values;
-  const cyAverage = (year) => {
-    const qs = [1, 2, 3, 4].map((q) => v[`${year}-${q}`]);
-    if (qs.some((x) => x === undefined)) throw new Error(`ECI: CY${year} is incomplete`);
-    return qs.reduce((s, x) => s + x, 0) / 4;
-  };
-
-  let latest = null;
-  for (const y of [2026, 2025]) for (const q of [4, 3, 2, 1]) if (latest === null && v[`${y}-${q}`] !== undefined) latest = { y, q };
-  const prior = v[`${latest.y - 1}-${latest.q}`];
-  if (prior === undefined) throw new Error("ECI: no year-earlier quarter for the 12-month rate");
-  const yoy = v[`${latest.y}-${latest.q}`] / prior;
-
-  const target = [1, 2, 3, 4].map((q) => {
-    const actual = v[`2026-${q}`];
-    return actual !== undefined ? { q, value: actual, projected: false } : { q, value: v[`2025-${q}`] * yoy, projected: true };
-  });
-  const to = target.reduce((s, t) => s + t.value, 0) / 4;
+  const cyAverage = (year) => average(calendarYear(v, year));
+  const { latest, prior, yoy, target, to } = projectCy2026(v);
 
   process.stderr.write(
     `ECI ${ECI_SERIES} (${eci.live ? "live, api.bls.gov v2" : "offline fallback, fetched 2026-09-15"})\n` +
