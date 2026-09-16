@@ -1,15 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-unit="year">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HotGap — the citizen surface</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Archivo is self-hosted through tokens.css (N8): no font <link>, no preconnect. -->
 <link rel="stylesheet" href="tokens.css">
 <style>
-  /* Citizen surface: one column, phone first, nothing to decide. */
+  /* Citizen surface: one column, phone first, nothing to decide. Everything a
+     page may share lives in tokens.css as an hg-* class (S13); what is left
+     here is this page's own layout and the few marks the system does not
+     carry yet, each flagged TODO(system). */
   .page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
   .band { background: var(--surface); border-block: 1px solid var(--rule); }
   .band > .page { padding-block: var(--s6); }
@@ -19,99 +20,108 @@
   .wordmark { font-size: var(--t-h3); font-weight: var(--w-semi); letter-spacing: -0.01em; margin: 0; }
   .who { color: var(--ink-2); font-size: var(--t-small); margin: 0; max-width: none; }
 
-  /* The answer. The sentence IS the design: the two numbers carry a rule in
-     the colour of the mark they name, so the sentence doubles as the key. */
+  /* The answer. The sentence IS the design: each dollar figure carries a rule
+     in the colour of the mark it names, so the sentence doubles as the key. */
   .answer { font-size: var(--t-answer); line-height: var(--lh-answer);
             font-weight: var(--w-med); letter-spacing: -0.015em;
             margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
   .answer .amt { font-weight: var(--w-semi); white-space: nowrap;
                  box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
-  .amt-keep { --keyed: var(--series-1); }
-  .amt-gap  { --keyed: var(--loss-3); }
+  .amt-keep  { --keyed: var(--series-1); }   /* the line */
+  .amt-gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
+  .amt-cliff { --keyed: var(--loss-4); }     /* a cliff dot */
   .answer-sub { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+  @media (min-width: 40rem) { .answer { max-width: 26ch; } }
 
   /* Figure */
   figure { margin: 0; }
   .chart-head { display: flex; justify-content: space-between; align-items: baseline;
                 gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
   .chart-title { font-size: var(--t-h3); font-weight: var(--w-semi); }
-  .chart-wrap { position: relative; }
-  .chart-wrap:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-  svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
-
-  .readout { font-size: var(--t-small); color: var(--ink-2); margin: var(--s2) 0 0;
-             min-height: 2.6em; max-width: var(--measure); }
-  .readout b { color: var(--ink); font-weight: var(--w-semi); }
-
-  .key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
-         padding: 0; list-style: none; font-size: var(--t-micro); color: var(--ink-2); }
-  .key li { display: flex; align-items: center; gap: var(--s2); }
-  .key svg { width: 22px; height: 12px; flex: none; }
-
+  .chart-unit { font-size: var(--t-micro); color: var(--ink-3); }
   figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
                max-width: var(--measure); }
 
+  /* TODO(system): an SVG word label in a mark's own ink. .hg-label fixes the
+     size floor and the neutral ink; a direct label on a plum rule or the
+     "you" label in --ink has no modifier yet, and a class wins over a fill
+     attribute, so these two are needed. The halo is a 3px surface stroke
+     painted under the glyphs so a label over the hatch stays legible. */
+  .label-loss { fill: var(--loss-ink); }
+  .label-ink  { fill: var(--ink); }
+  .label-halo { stroke: var(--surface); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
+
+  /* TODO(system): a key entry that describes a mark not on this chart is
+     hidden from the data; .hg-key li's display:flex would win over the
+     hidden attribute without this. */
+  [hidden] { display: none !important; }
+
+  /* Disclosure (S4). `display: flex` on a summary drops the ::marker in
+     Chromium; list-item keeps it. TODO(system): tokens.css has no rule for
+     details/summary; this is the one the DataTable's "Show the numbers" wants. */
   details { border-top: 1px solid var(--rule); margin-top: var(--s4); }
-  summary { cursor: pointer; padding: var(--s3) 0; font-weight: var(--w-med);
-            display: flex; align-items: center; gap: var(--s2); }
+  summary { display: list-item; cursor: pointer; padding: var(--s3) 0 var(--s3) var(--s1);
+            font-weight: var(--w-med); list-style-position: inside; }
   summary::marker { color: var(--ink-3); }
+  details > .hg-scroll-x { margin-bottom: var(--s3); }
 
-  table { border-collapse: collapse; width: 100%; font-size: var(--t-small); }
-  caption { text-align: left; color: var(--ink-2); font-size: var(--t-small);
-            padding-bottom: var(--s2); }
-  th, td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
-           border-bottom: 1px solid var(--rule); vertical-align: top; }
-  th { font-weight: var(--w-semi); color: var(--ink-2); }
-  td.num, th.num { text-align: right; padding-right: 0; }
+  /* StepList: the loss line under a row's sentence, in the text-safe plum.
+     TODO(system): inventory.md maps StepList to .hg-rows and .hg-rows__at only. */
+  .loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
+  .hg-rows .hg-button--small { margin-top: var(--s2); }
+  .assumed { --col: 7rem; }
 
-  /* The threshold list: each row is a rule with a dollar on it. The rule is
-     the information, not decoration. */
-  .steps { list-style: none; margin: var(--s4) 0 0; padding: 0; }
-  .steps li { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--s3);
-              padding: var(--s3) 0; border-top: 1px solid var(--rule); align-items: start; }
-  .steps .at { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
-  .steps .what { margin: 0; max-width: none; }
-  .steps .loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
-
-  .later { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-chip);
-           border: 1px dashed var(--ink-3); color: var(--ink-2); padding: 1px 9px;
-           font-size: var(--t-micro); font-weight: var(--w-med); line-height: 1.6; }
-
-  .note { border-left: 3px solid var(--note); padding: var(--s1) 0 var(--s1) var(--s4);
-          margin: var(--s5) 0; color: var(--ink-2); }
-  .note p:last-child { margin-bottom: 0; }
-  .note strong { color: var(--ink); }
-
-  footer { color: var(--ink-3); font-size: var(--t-small); }
+  section > h2 { margin-top: var(--s7); }
+  footer { color: var(--ink-3); font-size: var(--t-small); margin-top: var(--s7);
+           border-top: 1px solid var(--rule); padding-top: var(--s5); }
   footer p { max-width: var(--measure); }
-  .theme-btn { background: none; border: 1px solid var(--rule-strong); color: var(--ink-2);
-               border-radius: var(--r-control); padding: 0 var(--s3); cursor: pointer; }
-
-  .skip { position: absolute; left: -9999px; }
-  .skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
-                background: var(--surface); padding: var(--s3); border: 1px solid var(--ink); }
-
-  @media (min-width: 40rem) { .answer { max-width: 26ch; } }
 </style>
 </head>
 <body>
-<a class="skip" href="#answer">Skip to the answer</a>
+<a class="hg-skip" href="#answer">Skip to the answer</a>
 
 <div class="page masthead">
   <p class="wordmark">HotGap</p>
-  <p class="who">A parent with two kids, ages 3 and 7, in El Paso County, Colorado</p>
+  <p class="who" id="who"></p>
 </div>
 
 <main>
 <section class="band">
   <div class="page">
     <h1 class="hg-visually-hidden">If your pay goes up, do you keep more?</h1>
-    <p class="answer" id="answer">You are paid <span class="amt">$38,000</span> a year.
-      You keep <span class="amt amt-keep">$67,000</span>.
+    <p class="answer" id="answer"></p>
+
+    <!-- M2: the verdict catalog. One sentence per curve shape (inventory.md
+         § Verdict catalog); the page fills the one that matches
+         analysis.verdict — and, for in_danger_zone, personal.raiseIsLowerBound —
+         and leaves the rest here so a UI can switch shapes without new copy.
+         Slots in braces are rendered from the evaluation; {pay}, {wage}, {exit}
+         and {leap} are in the person's own unit (M5). -->
+    <template data-verdict="always_up">You are paid <span class="amt">{pay}</span>.
+      You keep <span class="amt amt-keep">{kept}</span>.
+      When you earn more, you keep more. We did not find a spot where more pay leaves you with less.</template>
+    <template data-verdict="cliff_ahead">You are paid <span class="amt">{pay}</span>.
+      You keep <span class="amt amt-keep">{kept}</span>.
+      Near <span class="amt amt-cliff">{wage}</span>, more pay can mean less money: past it you would
+      keep about {drop} less a year. People call this a benefits cliff.</template>
+    <template data-verdict="in_danger_zone">You are paid <span class="amt">{pay}</span>.
+      You keep <span class="amt amt-keep">{kept}</span>.
       More pay does not add to that until you are paid
-      <span class="amt amt-gap">$86,000</span>.</p>
-    <p class="answer-sub">You keep more than your pay because help and tax money are part of
-      it. This number is your pay, plus help, less what you pay for a health plan.</p>
+      <span class="amt amt-gap">{exit}</span>: a raise of <span class="amt amt-gap">{leap}</span>.</template>
+    <template data-verdict="in_danger_zone:stuck">You are paid <span class="amt">{pay}</span>.
+      You keep <span class="amt amt-keep">{kept}</span>.
+      More pay does not add to that in the pay range we checked, up to {top}.
+      We did not find a spot where you come out ahead again.</template>
+    <template data-verdict="cliff_behind">You are paid <span class="amt">{pay}</span>.
+      You keep <span class="amt amt-keep">{kept}</span>.
+      The big drop is below your pay now. From here, more pay means more for you.</template>
+
+    <p class="answer-sub" id="answerAgain" hidden></p>
+    <p class="answer-sub" id="answerSub"></p>
+    <!-- M5, shown to nobody: the same verdict rendered as if the person had
+         given their pay by the hour (`--pay 18.27 --unit hour`, 40 hours),
+         so the unit rule is exercised on every load, not only described. -->
+    <p class="answer-sub" id="answerHourly" hidden></p>
   </div>
 </section>
 
@@ -119,34 +129,35 @@
 
   <figure>
     <div class="chart-head">
-      <span class="chart-title">Money you keep in a year, as your pay goes up</span>
+      <span class="chart-title" id="chartTitle"></span>
+      <span class="chart-unit" id="chartUnit"></span>
     </div>
 
-    <div class="chart-wrap" id="chartWrap" tabindex="0" role="img"
-         aria-describedby="curveCaption"
-         aria-label="A line of the money this household keeps as pay rises from $24,000 to
-           $96,000. The line is flat from $36,000 to $86,000 and drops sharply at $54,000,
-           where child care help ends. The household sits at $38,000 of pay, inside that flat
-           stretch.">
+    <!-- S12/M6: a group with keys, not an image. The SVG is hidden from the
+         accessibility tree; the marks layer over it is not. -->
+    <div class="hg-chart" id="chart" tabindex="0" role="group"
+         aria-roledescription="interactive chart" aria-describedby="curveCaption">
       <svg id="curve" aria-hidden="true"></svg>
+      <div class="hg-marks" id="marks"></div>
     </div>
 
-    <p class="readout" id="readout" aria-live="polite">
-      Move along the line with your finger, your mouse, or the left and right arrow keys.
-    </p>
+    <p class="hg-readout" id="readout" aria-live="polite"></p>
 
-    <ul class="key">
+    <ul class="hg-key" id="key">
       <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="1" y1="6" x2="21" y2="6"
           stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/></svg>
         Money you keep</li>
-      <li><svg viewBox="0 0 22 12" aria-hidden="true"><rect x="1" y="1" width="20" height="10"
+      <li id="keyBand"><svg viewBox="0 0 22 12" aria-hidden="true"><rect x="1" y="1" width="20" height="10"
           fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/>
           <path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/></svg>
-        The flat stretch</li>
+        Your flat stretch</li>
+      <li id="keyOther" hidden><svg viewBox="0 0 22 12" aria-hidden="true">
+          <path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/></svg>
+        Other flat stretches</li>
       <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
           stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5"
           fill="var(--loss-4)"/></svg> A drop this year</li>
-      <li><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
+      <li id="keyLater" hidden><svg viewBox="0 0 22 12" aria-hidden="true"><line x1="11" y1="1" x2="11" y2="11"
           stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/>
           <circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)"
           stroke-width="1.5"/></svg> A drop that waits</li>
@@ -154,301 +165,785 @@
           fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/></svg> You now</li>
     </ul>
 
-    <figcaption id="curveCaption">
-      <span id="axisNote">The side numbers do not start at $0, so the drops are easy to see.</span>
-      These are estimates. They use the rules for 2026 in Colorado.
-    </figcaption>
+    <figcaption id="curveCaption"></figcaption>
+    <!-- SourceNote (#17). M4: when EV.source is "archetype" the line takes the
+         archetype sentence and gains Try again; the provenance sentence
+         follows in both states, rendered from coverage[state].vintages. -->
+    <p class="hg-source" id="sourceNote"></p>
   </figure>
 
+  <!-- DataTable (#15), the chart's table twin: the points the picture marks,
+       as numbers (N3). The words for each threshold live once, in the list
+       below; here a row says only which mark it is. -->
   <details>
     <summary>Show the numbers</summary>
-    <table>
-      <caption>What changes, and at what pay</caption>
-      <thead>
-        <tr><th scope="col">Your pay</th><th scope="col">You keep</th><th scope="col">What changed</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>$36,000</td><td>$68,348</td><td>The most you keep before the flat stretch</td></tr>
-        <tr><td>$37,000</td><td>$68,178</td><td>Your own free state health plan (Medicaid) ends. You start paying for a plan.</td></tr>
-        <tr><td>$38,000</td><td>$67,000</td><td>Where you are now</td></tr>
-        <tr><td>$40,000</td><td>$67,180</td><td>Your kids move off Medicaid</td></tr>
-        <tr><td>$54,000</td><td>$63,922</td><td>Food help (called SNAP) and food help for young kids (called WIC) end</td></tr>
-        <tr><td>$55,000</td><td>$54,532</td><td>Child care help ends. You keep $9,390 less.</td></tr>
-        <tr><td>$72,000</td><td>$61,843</td><td>Your kids&rsquo; health plan (called CHIP) ends — but later, not that year</td></tr>
-        <tr><td>$86,000</td><td>$68,198</td><td>You are back to where you were at $36,000</td></tr>
-      </tbody>
-    </table>
-    <p class="hg-source">Source: HotGap, from PolicyEngine 2026 rules, weekly sweep of
-      2026-09-15. Money kept is household net income less health-plan premiums.</p>
+    <div class="hg-scroll-x">
+      <table class="hg-table" id="numbers">
+        <caption id="numbersCaption"></caption>
+        <thead>
+          <tr><th scope="col" class="num">Your pay</th><th scope="col" class="num">You keep</th>
+              <th scope="col" class="num">Drop</th><th scope="col">On the picture</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </details>
 
-  <h2 style="margin-top:var(--s7)">What ends, and when</h2>
-  <ul class="steps">
-    <li><span class="at">$37,000</span>
-      <p class="what">Your own free state health plan ends. It is called Medicaid.
-        <span class="loss">You start paying for a plan.</span></p></li>
-    <li><span class="at">$40,000</span>
-      <p class="what">Your kids move off Medicaid. They move to a plan for kids.</p></li>
-    <li><span class="at">$54,000</span>
-      <p class="what">Food help ends. It is called SNAP. Food help for young kids ends too.
-        It is called WIC. <span class="loss">You keep $2,447 less.</span></p></li>
-    <li><span class="at">$55,000</span>
-      <p class="what">Child care help ends. The state stops paying part of your day care bill.
-        <span class="loss">You keep $9,390 less. This is the biggest drop.</span></p></li>
-    <li><span class="at">$72,000</span>
-      <p class="what"><span class="later">Waits</span> Your kids&rsquo; health plan ends.
-        It is called CHIP. It does not end that day.</p></li>
-  </ul>
+  <section>
+    <h2>What ends, and when</h2>
+    <!-- StepList (#6), rendered from the cliff list and escape.programEnds
+         under the one convention (S5, inventory.md § Where a program ends):
+         a program ends at the first pay at which it is gone — cliff.endEarnings,
+         or programEnds[id] + one axis step. A row is the card a cliff mark
+         opens (M6): aria-current="true", scrolled into view, a Close that
+         returns focus to the mark. -->
+    <ul class="hg-rows" id="steps"></ul>
+    <div class="hg-callout hg-callout--note" id="waits" hidden></div>
+  </section>
 
-  <div class="note">
-    <h2>One change waits</h2>
-    <p>At <strong>$72,000</strong> your kids stop being able to get CHIP, their health plan.
-      But the law lets kids keep it for a full year at a time. So it ends at their next
-      yearly check, up to 12 months later.</p>
-    <p>We do not draw it as a drop today, because it is not one.</p>
-  </div>
+  <section>
+    <h2>What we assumed about you</h2>
+    <!-- S6: the household the curve was computed for. On the archetype path
+         that is core's answersFor(state, archetype) — the swept household —
+         not the CLI's echoed answers, whose rent, child care and county are
+         null because the person did not give them. -->
+    <ul class="hg-rows assumed" id="assumed"></ul>
+  </section>
 
-  <h2 style="margin-top:var(--s7)">How common is this pay?</h2>
-  <p>About <strong>4 in 10</strong> parents like you in Colorado are paid $38,000 a year or
-    less. The count could be off by a few thousand dollars either way.</p>
-  <p>This says how common the pay is. It does not say what you will earn.</p>
-  <p class="hg-source">From U.S. Census Bureau ACS 2024 1-Year public-use microdata, grown to
-    2026 dollars. 393 households in this cell; the margin at this point is about $8,000.</p>
+  <section>
+    <h2>How common is this pay?</h2>
+    <p id="reach"></p>
+    <p>This says how common the pay is. It does not say what you will earn.</p>
+    <p class="hg-source" id="reachSource"></p>
+  </section>
 
-  <h2 style="margin-top:var(--s7)">Hours</h2>
-  <p>Colorado&rsquo;s lowest legal pay is <strong>$15.16</strong> an hour. Full-time work at
-    that pay is about <strong>$31,500</strong> a year.</p>
+  <section>
+    <h2>Hours</h2>
+    <p id="hours"></p>
+  </section>
 
-  <footer style="margin-top:var(--s7);border-top:1px solid var(--rule);padding-top:var(--s5)">
+  <footer>
     <p><strong>These are estimates.</strong> A case worker decides real help.</p>
-    <p>We use 2026 rules. We do not ask about where you were born, what you own, or anyone
-      in the home aged 65 or more. None of those are part of this.</p>
+    <p id="footerAssumed"></p>
     <p>We do not tell you what to do.</p>
-    <p style="margin-top:var(--s5)"><button class="theme-btn" id="themeBtn" type="button">Dark</button></p>
+    <p style="margin-top:var(--s5)"><button class="hg-button" id="themeBtn" type="button">Dark</button></p>
   </footer>
 </div>
 </main>
 
 <script type="module">
-/* ── The evaluation. Real output of:
-   npx tsx core/src/cli.ts curve --state CO --kids 3,7 --earnings 38000 --offline --json ── */
-const STEP = 1000;                       // the curve's own earnings step
-const NET = [42970,44044,45118,46267,47491,48715,49939,46033,47587,49142,50696,52250,53804,55358,56912,58407,59730,60653,61973,62941,63759,64579,65008,65825,66616,67056,67486,66876,66933,67159,67386,67611,67443,67670,67894,68121,68348,68178,67000,67094,67180,67305,67015,67121,67187,67299,67359,66999,67029,67076,67098,67117,66335,66369,63922,54532,54874,54839,55175,55605,56198,55761,55955,56539,57121,57723,58300,58483,59216,59971,60726,61481,61843,61624,62197,62769,63277,63474,63778,64340,64839,65495,65696,66352,66947,67603,68198,68639,69235,69890,70486,71141,71697,72252,72748,73303,73799,74354,74850,75405,75901,76456,76952,77507,78003,78558,79118,76953,77608,78263,78918,79573,80228,80883,81539,82194,82849,83504,84159,84814,85469,86124,86779,87434,88090,88745,89400,90055,90710,91365,92017,92652,93287,93922,94558,95193,95828,96463,97098,97733,98368,99003,99638,100273,100909,101544,102179,102814,103449,104084,104719];
+/* ── The evaluation. Real output of
+     npm run -s hotgap -- curve --state CO --kids 3,7 --earnings 38000 --offline --json
+   run 2026-09-16 through the project's own runner, plus coverage.CO and model
+   from core/data/summary.json (generated 2026-09-16T16:13:51.445Z). Nothing
+   below was typed: `net` is analysis.points[].netIncome (the REAL curve, see
+   THE LIFT), `at` is curve.points[38], `modeled` is core's
+   answersFor("CO", single-2) — the household the offline curve was swept for —
+   and `starts`/`remains` are read off curve.points[].programs (the first pay
+   at which a program appears; what is left of a "lost" program at the cliff's
+   landing point). The offline CLI is the archetype path by definition, so
+   EV.source is "archetype" and the page renders that state (M4). ── */
+const EV = {
+  source: "archetype", archetype: "single-2", year: "2026",
+  answers: {"state":"CO","married":false,"age":30,"spouseAge":null,"youStatus":"citizen","spouseStatus":"citizen","youYearsInUs":null,"spouseYearsInUs":null,"childAges":[3,7],"youDisabled":false,"spouseDisabled":false,"childDisabled":[false,false],"monthlyRent":null,"monthlyChildcare":null,"annualEarnings":38000,"spouseAnnualEarnings":0,"selfEmployed":false,"savings":0,"hoursPerWeek":null,"getsHeadStart":false,"getsHousing":false,"getsChildcareSubsidy":false,"getsSnap":true,"getsTanf":true,"getsMedicaid":true,"getsWic":true,"hasEmployerCoverage":false,"countyFips":null,"ssdiMonthly":0,"childSupportMonthly":0,"unemploymentMonthly":0},
+  modeled: {"state":"CO","countyFips":"08041","married":false,"childAges":[3,7],"childDisabled":[false,false],"monthlyRent":1735,"monthlyChildcare":2773,"annualEarnings":0,"spouseAnnualEarnings":0,"hoursPerWeek":null,"age":30,"spouseAge":null,"youDisabled":false,"spouseDisabled":false,"youStatus":"citizen","spouseStatus":"citizen","youYearsInUs":null,"spouseYearsInUs":null,"selfEmployed":false,"savings":0,"getsSnap":true,"getsTanf":true,"getsMedicaid":true,"getsWic":true,"getsHeadStart":false,"getsHousing":false,"getsChildcareSubsidy":true,"hasEmployerCoverage":false,"ssdiMonthly":0,"childSupportMonthly":0,"unemploymentMonthly":0},
+  curve: {
+    step: 1000,
+    net: [59032,60108,61184,62335,63561,64787,66013,62110,63666,65222,66778,68334,69890,71446,73002,74495,75821,76752,78069,79039,79855,80679,81101,81926,82712,83236,83618,82991,83138,83398,83647,83905,83754,84010,84247,84501,84732,84591,84371,84488,84569,84716,84411,84530,84605,84735,84807,84446,84475,84523,84545,84563,83783,83817,81373,55924,56265,56230,56566,56996,57590,56732,56926,57510,58092,58695,59271,59455,60187,60942,61698,62453,62814,63291,63865,64436,64945,65141,65445,66007,66506,67162,67364,68019,68615,69270,69866,70306,70902,71557,72153,72808,73364,73919,74415,74970,75466,76021,76517,77072,77568,78123,78619,79174,79670,80225,80785,76964,77619,78274,78929,79585,80240,80895,81550,82205,82860,83515,84170,84825,85480,86136,86791,87446,88101,88756,89411,90066,90721,91376,92028,92664,93299,93934,94569,95204,95839,96474,97109,97744,98379,99015,99650,100285,100920,101555,102190,102825,103460,104095,104730],
+    at: {"earnings":38000,"programs":{"snap":5009,"tanf":0,"housing":0,"schoolmeals":1142,"childcare":29379,"eitc":4344,"ctc":3400,"aca":4293,"medicaid":18835,"chip":0,"wic":724,"ssi":0,"headstart":0},"medicalOOP":444},
+    starts: {"eitc":[1000],"ctc":[3000],"aca":[38000,73000],"chip":[41000]} },
+  analysis: {
+    currentEarnings: 38000, currentNet: 84371, verdict: "in_danger_zone",
+    cliffs: [
+      {"startEarnings":6000,"endEarnings":7000,"drop":3903,"programsLost":["tanf"],"driver":"benefits","deferral":null,"remains":[]},
+      {"startEarnings":26000,"endEarnings":27000,"drop":627,"programsLost":[],"driver":"credits","deferral":null,"remains":[]},
+      {"startEarnings":37000,"endEarnings":38000,"drop":220,"programsLost":["medicaid"],"driver":"premiums","deferral":null,"remains":[{"id":"medicaid","amount":18835,"until":41000}]},
+      {"startEarnings":41000,"endEarnings":42000,"drop":305,"programsLost":[],"driver":"credits","deferral":null,"remains":[]},
+      {"startEarnings":46000,"endEarnings":47000,"drop":361,"programsLost":[],"driver":"credits","deferral":null,"remains":[]},
+      {"startEarnings":51000,"endEarnings":52000,"drop":780,"programsLost":[],"driver":"credits","deferral":null,"remains":[]},
+      {"startEarnings":53000,"endEarnings":54000,"drop":2444,"programsLost":["snap","wic"],"driver":"benefits","deferral":null,"remains":[{"id":"snap","amount":713,"until":55000},{"id":"wic","amount":181,"until":55000}]},
+      {"startEarnings":54000,"endEarnings":55000,"drop":25449,"programsLost":["childcare"],"driver":"benefits","deferral":null,"remains":[]},
+      {"startEarnings":60000,"endEarnings":61000,"drop":858,"programsLost":[],"driver":"credits","deferral":null,"remains":[]},
+      {"startEarnings":106000,"endEarnings":107000,"drop":3821,"programsLost":["aca"],"driver":"premiums","deferral":null,"remains":[]},
+    ],
+    dangerZones: [{"startEarnings":6000,"endEarnings":10000,"peakNet":66013},{"startEarnings":26000,"endEarnings":30000,"peakNet":83618},{"startEarnings":36000,"endEarnings":45000,"peakNet":84732},{"startEarnings":46000,"endEarnings":119000,"peakNet":84807}],
+    nextCliff: {"startEarnings":41000,"endEarnings":42000,"drop":305} },
+  deferred: [],
+  escape: {"safeExitEarnings":119000,"leap":73000,"leapIsLowerBound":false,"programEnds":{"snap":54000,"medicaid":40000,"chip":72000,"eitc":58000,"aca":106000,"tanf":6000,"wic":54000,"childcare":54000},"programEndsByAge":{"adults":{"medicaid":37000},"children":{"medicaid":40000,"chip":72000,"wic":54000}},"benefitsEndEarnings":null,"childCoverageEndEarnings":72000},
+  personal: {"zone":{"startEarnings":36000,"endEarnings":45000,"peakNet":84732},"escapeEarnings":45000,"raiseToClear":7000,"raiseIsLowerBound":false},
+  reach: {"current":40.05102040816327,"safeExit":83.27160493827161,"cell":{"n":393,"households":47103,"vintage":"2024-1yr","ladderPoint":37900,"moe":8000}},
+  minWage: {"wage":15.16,"fullTimeEarnings":31532.8,"cliffs":[{"startEarnings":6000,"hoursPerWeek":8},{"startEarnings":26000,"hoursPerWeek":33},{"startEarnings":37000,"hoursPerWeek":null},{"startEarnings":41000,"hoursPerWeek":null},{"startEarnings":46000,"hoursPerWeek":null},{"startEarnings":51000,"hoursPerWeek":null},{"startEarnings":53000,"hoursPerWeek":null},{"startEarnings":54000,"hoursPerWeek":null},{"startEarnings":60000,"hoursPerWeek":null},{"startEarnings":106000,"hoursPerWeek":null}]},
+  coverageGap: null,
+};
+/* summary.json coverage.CO (unmodeled, vintages) and model, same sweep. */
+const COVERAGE = {
+  unmodeled: [{"program":"LIHEAP","note":"Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income."}],
+  vintages: {
+    model: {"endpoint":"127.0.0.1:8099","version":"2.5.0"},
+    rent: {"publisher":"HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2).","vintage":"FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx."},
+    county: {"publisher":"U.S. Census Bureau, Vintage 2024 county population estimates (CO-EST2024-ALLDATA), POPESTIMATE2024, SUMLEV 050.","vintage":"Vintage 2024 (July 1, 2024 estimates)"},
+    childcare: {"infant":"county 2015","toddler":"county 2015","preschool":"county 2015","schoolAge":"county 2015"},
+    reach: {"basis":"ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI.","vintages":["2024-1yr"],"growthFactor":1.067533} } };
+const MODEL = {"endpoint":"127.0.0.1:8099","version":"2.5.0"}, GENERATED = "2026-09-16T16:13:51.445Z";
+/* core/src/states.ts STATE_NAMES carries all 51; the sketch needs one. Core
+   has no FIPS→county-name table, so the county name is the one typed word. */
+const STATE_NAME = { CO: "Colorado" };
+const COUNTY_NAME = { "08041": "El Paso County" };
 
-const HH = {
-  current: 38000, currentNet: 67000,
-  zone: { start: 36000, end: 86000, peak: 68348 },
-  cliffs: [                                   // analysis.cliffs, immediate only
-    { at: 53000, drop: 2447 },
-    { at: 54000, drop: 9390, label: "−$9,390" },
-  ],
-  deferred: [{ at: 72000, drop: 219 }],       // evaluation.deferred
-  window: [24000, 96000],
+/* ── The program phrase table (M3), citizen register — inventory.md § Program
+   phrases. `phrase` is gated copy, `name` is what the office calls it; a
+   sentence is composed from these and never inlined. ── */
+const PROGRAM = {
+  snap:        { phrase: "food help",                        name: "SNAP" },
+  medicaid:    { phrase: "a free state health plan",         name: "Medicaid" },
+  chip:        { phrase: "a health plan for kids",           name: "CHIP" },
+  eitc:        { phrase: "a tax break for workers",          name: "Earned Income Tax Credit (EITC)", the: true },
+  ctc:         { phrase: "the child tax break",              name: "Child Tax Credit", the: true },
+  aca:         { phrase: "help paying for health insurance", name: "Premium tax credit", the: true },
+  tanf:        { phrase: "cash help",                        name: "TANF cash assistance" },
+  housing:     { phrase: "housing help",                     name: "Housing voucher", the: true },
+  wic:         { phrase: "food help for moms and babies",    name: "WIC" },
+  ssi:         { phrase: "SSI cash help",                    name: "SSI" },
+  headstart:   { phrase: "free early learning",              name: "Head Start" },
+  schoolmeals: { phrase: "free school meals",                name: "School meals" },
+  childcare:   { phrase: "child care help",                  name: "CCDF child care subsidy", the: true },
+};
+/* "It is called {name}": a name that is a title, not a proper noun, takes "the". */
+const called = (id) => (PROGRAM[id].the ? "the " : "") + PROGRAM[id].name;
+/* Help that is in "money you keep" but never passes through the household as
+   cash (S6). Medicaid, CHIP and the premium credit are NOT candidates: they
+   are not in netIncome (PolicyEngine files them under household_health_benefits,
+   which HotGap does not read), so naming them here would double-count. */
+const NONCASH = {
+  childcare:   "{amount} of this is child care help. It goes to your day care, not to you.",
+  schoolmeals: "{amount} of this is free school meals. It is not cash.",
+  headstart:   "{amount} of this is free early learning. It is not cash.",
 };
 
-/* THE LIFT. `analysis.dangerZones` describe the curve with deferred drops taken
-   out, but `analysis.points` are the REAL curve. Plotting one against the other
-   draws two different curves, so the UI lifts the points itself — the same
-   arithmetic as immediateCurve() in core/src/evaluate.ts. */
+/* ── The copy catalog (M1). Every sentence the page composes is here, with
+   its slots, so the readability gate has one place to read and a slot can
+   never be left unfilled: t() throws on a missing key, an unknown param or a
+   leftover {slot}, as the archive's t.ts did. ── */
+const T = {
+  who: "{adults} with {kids}, in {place}", whoNoKids: "{adults} with no kids, in {place}",
+  adults: { one: "A parent", two: "Two parents", oneNoKids: "An adult", twoNoKids: "A couple" },
+  kidsOne: "one kid, age {ages}", kidsMany: "{n} kids, ages {ages}",
+  chartTitle: "Money you keep in a year, as your pay goes up",
+  unitLine: { year: "Pay is by the year.", month: "Pay is by the month.", hour: "Pay is by the hour, at {hours} hours a week." },
+  again: "It happens again between {from} and {to}.",
+  sub: "You keep more than your pay because help and tax money are part of it.",
+  hourlyDemo: "If you had given your pay by the hour: {sentence}",
+  readoutHint: "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  readout: "Paid {pay}, you keep {kept}.",
+  inYourZone: " This pay is inside your flat stretch.",
+  inZone: " This pay is inside a flat stretch.",
+  outZone: " Here, more pay means more money.",
+  markWould: "A drop near {pay}. You would keep about {drop} less a year here.",
+  markPast: "A drop near {pay}. You keep about {drop} less a year here.",
+  markMerged: "{n} drops between {from} and {to}, together about {sum} a year.",
+  axisNote: "The side numbers start at {floor}, not at $0, so the drops are easy to see.",
+  safeBeyond: " From {safe} up, more pay always adds to what you keep.",
+  safeNever: " In the pay range we checked, up to {top}, we did not find a spot past all the flat stretches.",
+  ghost: " The dashed line is what happens if the later change happens.",
+  estimates: " These are estimates. They use the rules for {year} in {state}.",
+  ariaChart: "A line of the money this household keeps as pay rises from {from} to {to}. It is flat from {zoneFrom} to {zoneTo}{more}. The biggest drop is at {worstAt}, where {worstWhat} ends. The household sits at {pay}, inside a flat stretch.",
+  ariaMore: ", and again from {from} to {to}",
+  ariaNoZone: "A line of the money this household keeps as pay rises from {from} to {to}. The household sits at {pay}.",
+  sourceLive: "Source: HotGap, from PolicyEngine {version} with {year} rules. Rent: HUD Fair Market Rents, {rent}. Child care price: {childcare}, grown to {year} dollars. Sweep of {date}. Money kept is what is left after taxes and health-plan premiums.",
+  sourceArchetype: "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
+  tryAgain: "Try again",
+  clamped: " Your pay is above the range we checked. These numbers are for {top}, the top of that range.",
+  ends: "{Phrase} ends. It is called {name}.",
+  wouldEnd: "{Phrase} would end. It is called {name}.",
+  endsGroup: { adults: "Your own {noun} ends. It is called {name}.", children: "Your kids' {noun} ends. It is called {name}." },
+  wouldEndGroup: { adults: "Your own {noun} would end. It is called {name}.", children: "Your kids' {noun} would end. It is called {name}." },
+  starts: " Then {phrase} starts. It is called {name}.",
+  wouldStart: " Then {phrase} would start. It is called {name}.",
+  remains: " Some goes on until {until}: {list}.",
+  remainsItem: "{amount} of {phrase}",
+  smaller: { benefits: "Some help gets smaller here.", credits: "Your tax breaks get smaller here.", premiums: "Your health plan costs more here.", other: "Other money gets smaller here." },
+  wouldSmaller: { benefits: "Some help would get smaller here.", credits: "Your tax breaks would get smaller here.", premiums: "Your health plan would cost more here.", other: "Other money would get smaller here." },
+  loss: "You keep about {drop} less.", wouldLoss: "You would keep about {drop} less.", biggest: " This is the biggest drop.",
+  waitsBadge: "Waits", waitsTail: " It does not end that day.",
+  waitsHead: "One change waits", waitsHeadMany: "{n} changes wait",
+  waits: {
+    child_continuous_eligibility: "At {at} your kids stop being able to get {phrase}. But the law lets kids keep it for a full year at a time. So it ends at their next yearly check, up to 12 months later.",
+    head_start_program_year: "At {at} your kids stop being able to get {phrase}. But a child in it stays to the end of the next program year.",
+    transitional_medical_assistance: "At {at} you stop being able to get {phrase}. But the law lets you keep it for 6 to 12 more months.",
+  },
+  waitsFoot: "We do not draw it as a drop today, because it is not one.",
+  close: "Close",
+  tableCaption: "The points the picture marks, in dollars a year",
+  mark: { peak: "The top of your flat stretch", you: "You now", exit: "Back to even", drop: "A drop", safe: "Safe from here" },
+  assumed: {
+    rent: ["Rent", "{amount} a month. The usual rent in {county}, the county we use for {state}."],
+    childcare: ["Child care", "{amount} a month for {kids}. The usual price of day care there."],
+    childcareNone: ["Child care", "None. Nobody in the home pays for day care."],
+    help: ["Help you get", "{list}. We count each as if you get it."],
+    notCounted: ["Not counted", "{list}. We count them as if you do not get them."],
+    you: ["You", "Age {age}. A U.S. citizen. No one in the home has a disability."],
+    youNotCitizen: ["You", "Age {age}. Not a U.S. citizen. No one in the home has a disability."],
+    money: ["Savings", "{savings}. No child support, SSDI or unemployment pay."],
+    hoursYear: ["Hours", "Not used. You gave your pay by the year."],
+    hours: ["Hours", "{hours} hours a week."],
+  },
+  savingsNone: "None", kidsCount: { 1: "one kid", 2: "two kids", 3: "three kids" },
+  reach: "About {n} in 10 parents like you in {state} are paid {pay} or less. The count could be off by a few thousand dollars either way.",
+  reachSource: "From U.S. Census Bureau ACS {vintage} public-use microdata, grown to {year} dollars. {n} households in this cell; the margin at this point is about {moe}.",
+  hours: "{state}'s lowest legal pay is {wage} an hour. Full-time work at that pay is about {fullTime} a year.",
+  footer: "We use {year} rules. The list above says what we assumed. If any of it is wrong for you, these numbers are off too. We did not ask about anyone in the home aged 65 or more.",
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function fill(text, params = {}) {
+  const out = text.replace(/\{([A-Za-z]+)\}/g, (_, k) => {
+    if (!(k in params)) throw new Error(`missing param {${k}} in "${text}"`);
+    return String(params[k]);
+  });
+  for (const k in params) if (!text.includes(`{${k}}`)) throw new Error(`unknown param ${k} for "${text}"`);
+  return out;
+}
+const t = (key, params) => { const s = key.split(".").reduce((o, k) => o?.[k], T);
+  if (typeof s !== "string") throw new Error(`missing string ${key}`); return fill(s, params); };
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const noun = (id) => PROGRAM[id].phrase.replace(/^(a|an|the) /, "");
+
+/* ── Money, and pay in the person's unit (M5). `PAY.unit` is what the person
+   gave (core/src/income.ts Pay.unit); the household gave $38,000 a year, so
+   the page is annual, and <html data-unit> says so. Conversion is core's
+   fromAnnual/toAnnual; rounding follows the archive — $0.25 an hour, $50 a
+   month, $500 a year — and every pay figure on this surface goes through it.
+   Money KEPT stays a yearly figure: it is what the y-axis plots. ── */
+const HOURS_DEFAULT = 40;               // core's DEFAULT_HOURS
+const PAY = { unit: document.documentElement.dataset.unit || "year",
+              hoursPerWeek: EV.modeled.hoursPerWeek ?? HOURS_DEFAULT };
+const GRAIN = { hour: 0.25, month: 50, year: 500 };
+const PER = { hour: "an hour", month: "a month", year: "a year" };
+const fromAnnual = (a, u = PAY.unit, h = PAY.hoursPerWeek) => u === "hour" ? a / (h * 52) : u === "month" ? a / 12 : a;
+const toAnnual = (v, u = PAY.unit, h = PAY.hoursPerWeek) => u === "hour" ? v * h * 52 : u === "month" ? v * 12 : v;
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+const about = (n) => money(Math.round(n / 100) * 100);       // the citizen "about" grain for a drop
+const fmtUnit = (v, u) => "$" + v.toLocaleString("en-US", u === "hour" ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : {});
+const payRound = (a, u = PAY.unit) => Math.round(fromAnnual(a, u) / GRAIN[u]) * GRAIN[u];
+/* A pay figure in the person's unit; the unit phrase rides along unless the
+   page is annual, where "a year" is said once per sentence. */
+const pay = (a, u = PAY.unit, withUnit = u !== "year") => fmtUnit(payRound(a, u), u) + (withUnit ? " " + PER[u] : "");
+const payUnit = (a, u = PAY.unit) => pay(a, u, true);
+
+/* THE LIFT. `analysis.dangerZones`, `.verdict`, `.escape` and `.personal`
+   describe the curve with deferred drops taken out, but `analysis.points` is
+   the REAL curve. Plotting one against the other draws two different curves,
+   so the UI lifts the points itself — the same arithmetic as immediateCurve()
+   in core/src/evaluate.ts. Today's Colorado curve has no deferred drop, so
+   `lifted` equals `net`; the code path is what the rule requires. */
+const STEP = EV.curve.step, NET = EV.curve.net;
+const idx = (e) => Math.round(e / STEP);
 const lifted = (() => {
   const out = NET.slice();
-  for (const d of HH.deferred) {
-    const i = d.at / STEP;
-    for (let k = i + 1; k < out.length; k++) out[k] += d.drop;
-  }
+  for (const d of EV.deferred) for (let k = idx(d.startEarnings) + 1; k < out.length; k++) out[k] += d.drop;
   return out;
 })();
+const TOP = (NET.length - 1) * STEP;                 // the last swept pay
+const HH = EV.analysis, P = EV.personal, ESC = EV.escape;
+const zone = P.zone;                                 // null when the household is not in a zone
+const stuck = !!zone && P.raiseIsLowerBound;
+const state = STATE_NAME[EV.answers.state];
+const clamped = HH.currentEarnings !== EV.answers.annualEarnings;
+/* The M4 county rule: an archetype curve was not run for the person's county,
+   so the county phrase leaves the masthead and every sentence. */
+const county = EV.source === "live" && EV.answers.countyFips ? COUNTY_NAME[EV.answers.countyFips] : null;
+const cliffs = HH.cliffs;
+const worst = cliffs.reduce((a, c) => (c.drop > a.drop ? c : a), cliffs[0]);
+const otherZones = HH.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings);
 
-const money = n => "$" + Math.round(n).toLocaleString("en-US");
-const el = document.getElementById("curve");
-const wrap = document.getElementById("chartWrap");
+/* ── Masthead ── */
+const ages = EV.answers.childAges, place = county ? `${county}, ${state}` : state;
+document.getElementById("who").textContent = ages.length === 0
+  ? t("whoNoKids", { adults: T.adults[EV.answers.married ? "twoNoKids" : "oneNoKids"], place })
+  : t("who", { adults: T.adults[EV.answers.married ? "two" : "one"], place,
+      kids: ages.length === 1 ? t("kidsOne", { ages: ages[0] })
+        : t("kidsMany", { n: ["", "one", "two", "three", "four"][ages.length] ?? ages.length, ages: ages.slice(0, -1).join(", ") + " and " + ages.at(-1) }) });
+
+/* ── AnswerSentence (M2), from the catalog in the markup ── */
+function verdictKey() {
+  if (HH.verdict === "in_danger_zone") return stuck ? "in_danger_zone:stuck" : "in_danger_zone";
+  return HH.verdict;
+}
+function verdictHTML(unit) {
+  const tpl = document.querySelector(`template[data-verdict="${verdictKey()}"]`);
+  const slots = { pay: esc(payUnit(HH.currentEarnings, unit)), kept: esc(money(HH.currentNet)) };
+  if (verdictKey() === "cliff_ahead") { slots.wage = esc(pay(HH.nextCliff.endEarnings, unit)); slots.drop = esc(about(HH.nextCliff.drop)); }
+  if (verdictKey() === "in_danger_zone") {
+    /* The leap is the difference of the two rounded figures the sentence
+       names, so the sentence adds up in every unit (annual: $45,000 − $38,000
+       = $7,000 = personal.raiseToClear exactly). */
+    slots.exit = esc(pay(P.escapeEarnings, unit));
+    slots.leap = esc(fmtUnit(payRound(P.escapeEarnings, unit) - payRound(HH.currentEarnings, unit), unit) + (unit !== "year" ? " " + PER[unit] : ""));
+  }
+  if (verdictKey() === "in_danger_zone:stuck") slots.top = esc(pay(TOP, unit));
+  return fill(tpl.innerHTML.replace(/\s+/g, " ").trim(), slots);
+}
+document.getElementById("answer").innerHTML = verdictHTML(PAY.unit);
+document.getElementById("answerHourly").textContent = t("hourlyDemo", {
+  sentence: (() => { const d = document.createElement("div"); d.innerHTML = verdictHTML("hour"); return d.textContent; })() });
+
+/* More zones beyond the household's (charts.md § 1 rule 2): said from the data. */
+const again = document.getElementById("answerAgain");
+if (!stuck && ESC.safeExitEarnings !== null && ESC.safeExitEarnings !== P.escapeEarnings) {
+  again.textContent = t("again", { from: pay(P.escapeEarnings), to: pay(ESC.safeExitEarnings) });
+  again.hidden = false;
+}
+/* S6: the largest non-cash component of "you keep", from curve.points[i].programs. */
+const noncash = Object.keys(NONCASH).map((id) => [id, EV.curve.at.programs[id] ?? 0]).sort((a, b) => b[1] - a[1])[0];
+document.getElementById("answerSub").textContent =
+  t("sub") + (noncash && noncash[1] > 0 ? " " + fill(NONCASH[noncash[0]], { amount: money(noncash[1]) }) : "");
+
+/* ── The chart ── */
+const svg = document.getElementById("curve");
+const chart = document.getElementById("chart");
+const marksLayer = document.getElementById("marks");
 const readout = document.getElementById("readout");
 const NS = "http://www.w3.org/2000/svg";
-const mk = (t, a) => { const n = document.createElementNS(NS, t);
-  for (const k in a) n.setAttribute(k, a[k]); return n; };
+const mk = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+const text = (attrs, content) => { const n = mk("text", attrs); n.textContent = content; return n; };
 
-let cursor = HH.current / STEP;
+document.getElementById("chartTitle").textContent = t("chartTitle");
+document.getElementById("chartUnit").textContent = fill(T.unitLine[PAY.unit], PAY.unit === "hour" ? { hours: PAY.hoursPerWeek } : {});
+
+/* The citizen window (charts.md § Phone): it must contain the diamond and the
+   household's exit. $20,000–$100,000 holds both, the biggest drop, and the
+   climb back; safe-from-here ($119,000) is outside it and the caption says so. */
+const WINDOW = [20000, 100000];
+const [x0, x1] = WINDOW, i0 = idx(x0), i1 = idx(x1);
+const inWindow = cliffs.filter((c) => c.startEarnings >= x0 && c.endEarnings <= x1);
+
+/* Nice steps (N1): range / n snapped to 1, 2, 2.5 or 5 × 10^k; ticks are the
+   multiples inside the range. Runs on both axes, the x one in the display unit. */
+function niceStep(range, n) {
+  const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  return [1, 2, 2.5, 5, 10].map((m) => m * p).reduce((b, s) => (Math.abs(s - raw) < Math.abs(b - raw) ? s : b));
+}
+function niceTicks(lo, hi, step) {
+  const out = []; for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6)); return out;
+}
+const tickLabel = (v, u = PAY.unit) => u === "year" ? (v >= 1000 ? "$" + +(v / 1000).toFixed(1) + "k" : "$" + v)
+  : u === "month" ? "$" + v.toLocaleString("en-US") : "$" + (Number.isInteger(v) ? v : v.toFixed(2));
+
+let cursor = idx(HH.currentEarnings);
+let layer = null, cursorNodes = [], firstDraw = true;
+let clusters = [], open = null;                       // M6 selection: the open cliff's endEarnings
 
 function draw() {
-  const W = Math.max(300, wrap.clientWidth);
+  const W = Math.max(300, chart.clientWidth);
   const narrow = W < 520;
   const H = narrow ? 260 : 300;
-  const pad = { t: 26, r: narrow ? 12 : 16, b: 38, l: narrow ? 48 : 58 };
+  const pad = { t: 26, r: narrow ? 22 : 28, b: 38, l: narrow ? 48 : 58 };   // r fits half of the last x tick
 
-  const [x0, x1] = HH.window;
-  const i0 = x0 / STEP, i1 = x1 / STEP;
+  /* Axis honesty (charts.md): the visible y-range must be at least 2.5× the
+     largest plotted drop. The window slice spans $28,883 and 14% padding gives
+     $36,970 against a need of 2.5 × $25,449 = $63,622, so it is the PADDING,
+     not the window, that satisfies the rule: floor and ceiling are extended
+     by $13,326 each, then snapped outward to the $20,000 gridline step. A
+     wider window would not help — the full sweep spans $48,806. The ratio the
+     crop achieves is written to data-yratio for the audit to read. */
   const slice = lifted.slice(i0, i1 + 1);
-  const lo = Math.min(...slice), hi = Math.max(...slice);
+  const maxDrop = Math.max(...inWindow.map((c) => c.drop), 0);
+  const need = 2.5 * maxDrop;
+  let lo = Math.min(...slice), hi = Math.max(...slice);
   const padY = (hi - lo) * 0.14;
-  const y0 = Math.floor((lo - padY) / 1000) * 1000, y1 = Math.ceil((hi + padY) / 1000) * 1000;
+  let y0 = lo - padY, y1 = hi + padY;
+  if (y1 - y0 < need) { const ext = (need - (y1 - y0)) / 2; y0 -= ext; y1 += ext; }
+  const stepY = niceStep(y1 - y0, narrow ? 3 : 4);
+  y0 = Math.floor(y0 / stepY) * stepY; y1 = Math.ceil(y1 / stepY) * stepY;
+  chart.dataset.yratio = maxDrop ? ((y1 - y0) / maxDrop).toFixed(2) : "";
 
-  const px = e => pad.l + (e - x0) / (x1 - x0) * (W - pad.l - pad.r);
-  const py = v => pad.t + (y1 - v) / (y1 - y0) * (H - pad.t - pad.b);
+  const px = (e) => pad.l + (e - x0) / (x1 - x0) * (W - pad.l - pad.r);
+  const py = (v) => pad.t + (y1 - v) / (y1 - y0) * (H - pad.t - pad.b);
+  const top = pad.t, bottom = H - pad.b;
 
-  el.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  el.setAttribute("width", W); el.setAttribute("height", H);
-  el.textContent = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.textContent = "";
 
   const defs = mk("defs");
-  const pat = mk("pattern", { id: "hatch", width: 7, height: 7,
-    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
-  pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7,
-    stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
-  defs.append(pat); el.append(defs);
+  const pat = mk("pattern", { id: "hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
+  defs.append(pat); svg.append(defs);
 
-  /* Danger band: a wash plus a 45° hatch, so the stretch reads without colour. */
-  const bx0 = px(Math.max(HH.zone.start, x0)), bx1 = px(Math.min(HH.zone.end, x1));
-  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b,
-    fill: "var(--loss-wash)" }));
-  el.append(mk("rect", { x: bx0, y: pad.t, width: bx1 - bx0, height: H - pad.t - pad.b,
-    fill: "url(#hatch)" }));
-
-  /* Gridlines: solid hairlines, one step off the surface, never dashed. */
-  const ticks = [];
-  const stepY = (y1 - y0) / (narrow ? 3 : 4);
-  for (let v = y0; v <= y1 + 1; v += stepY) ticks.push(Math.round(v));
-  for (const v of ticks) {
-    el.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v),
-      stroke: "var(--grid)", "stroke-width": 1 }));
-    const t = mk("text", { x: pad.l - 8, y: py(v) + 4, "text-anchor": "end",
-      fill: "var(--ink-3)", "font-size": 12 });
-    t.textContent = "$" + Math.round(v / 1000) + "k"; el.append(t);
+  /* Zones. Only the household's (personal.zone) gets the wash; every other
+     zone in the window is hatch alone (S7, charts.md § 1 rule 1). */
+  const clip = (z) => [px(Math.max(z.startEarnings, x0)), px(Math.min(z.endEarnings ?? x1, x1))];
+  for (const z of otherZones) {
+    if ((z.endEarnings ?? Infinity) < x0 || z.startEarnings > x1) continue;
+    const [a, b] = clip(z);
+    svg.append(mk("rect", { x: a, y: top, width: b - a, height: bottom - top, fill: "url(#hatch)" }));
+  }
+  const [bx0, bx1] = zone ? clip({ startEarnings: zone.startEarnings, endEarnings: stuck ? x1 : zone.endEarnings }) : [0, 0];
+  if (zone) {
+    svg.append(mk("rect", { x: bx0, y: top, width: bx1 - bx0, height: bottom - top, fill: "var(--loss-wash)" }));
+    svg.append(mk("rect", { x: bx0, y: top, width: bx1 - bx0, height: bottom - top, fill: "url(#hatch)" }));
   }
 
-  /* The reference line: the most this household had before the flat stretch. */
-  el.append(mk("line", { x1: bx0, y1: py(HH.zone.peak), x2: bx1, y2: py(HH.zone.peak),
-    stroke: "var(--loss-3)", "stroke-width": 1 }));
-  const rl = mk("text", { x: bx0 + 6, y: py(HH.zone.peak) - 6, fill: "var(--loss-ink)",
-    "font-size": 12, "font-weight": 500 });
-  rl.textContent = narrow ? money(HH.zone.peak) : money(HH.zone.peak) + " — what you had at $36,000";
-  el.append(rl);
-
-  /* x ticks */
-  const xt = narrow ? [30000, 54000, 72000, 96000] : [24000, 38000, 54000, 72000, 86000, 96000];
-  for (const e of xt) {
-    const t = mk("text", { x: px(e), y: H - 14, "text-anchor": "middle",
-      fill: "var(--ink-3)", "font-size": 12 });
-    t.textContent = "$" + e / 1000 + "k"; el.append(t);
+  /* Gridlines on nice values (N1); ticks take .hg-tick (S13). */
+  for (const v of niceTicks(y0, y1, stepY)) {
+    if (v > y0 && v < y1) svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    svg.append(text({ x: pad.l - 8, y: py(v) + 4, "text-anchor": "end", class: "hg-tick" }, tickLabel(v, "year")));
   }
-  el.append(mk("line", { x1: pad.l, y1: H - pad.b, x2: W - pad.r, y2: H - pad.b,
-    stroke: "var(--axis)", "stroke-width": 1 }));
+  /* x ticks: generated in the display unit, mapped back to annual for position (M5). */
+  const dx0 = fromAnnual(x0), dx1 = fromAnnual(x1);
+  for (const v of niceTicks(dx0, dx1, niceStep(dx1 - dx0, narrow ? 4 : 5)))
+    svg.append(text({ x: px(toAnnual(v)), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickLabel(v)));
+  svg.append(mk("line", { x1: pad.l, y1: bottom, x2: W - pad.r, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
 
-  /* The line: one series, 2px, round caps, no area fill. */
+  /* The peak of the household's zone: a rule across the band only, labelled
+     with the dollar. The label sits above-left of the rule's start, outside
+     the band, where the curve is still climbing — the one place the diamond,
+     the bracket and the line cannot reach (N2). */
+  const yPeak = zone ? py(zone.peakNet) : NaN;
+  if (zone) {
+    svg.append(mk("line", { x1: bx0, y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
+    svg.append(text({ x: bx0 - 6, y: yPeak - 9, "text-anchor": "end", class: "hg-label label-loss label-halo", "font-weight": 500 }, money(zone.peakNet)));
+  }
+
+  /* The exit: the band's right edge carried up, labelled back to even. When
+     safe-from-here is the same pay the one rule carries both words. */
+  const exitInWindow = !!zone && !stuck && P.escapeEarnings <= x1;
+  if (exitInWindow) {
+    const ex = px(P.escapeEarnings);
+    svg.append(mk("line", { x1: ex, y1: top, x2: ex, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
+    if (!narrow) svg.append(text({ x: ex + 6, y: top + 12, class: "hg-label label-loss label-halo", "font-weight": 500 },
+      ESC.safeExitEarnings === P.escapeEarnings ? "back to even, and safe from here" : "back to even"));
+  }
+  const safeInWindow = ESC.safeExitEarnings !== null && ESC.safeExitEarnings !== P.escapeEarnings
+    && ESC.safeExitEarnings >= x0 && ESC.safeExitEarnings <= x1;
+  if (safeInWindow) {
+    const sx = px(ESC.safeExitEarnings);
+    svg.append(mk("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
+    if (!narrow) svg.append(text({ x: sx + 6, y: top + 12, class: "hg-label label-loss label-halo", "font-weight": 500 }, "safe from here"));
+  }
+
+  /* The line: one series, 2px, round caps, no area fill. .hg-draw on the
+     first draw only — a redraw for a resize or a theme change must not animate. */
   let d = "";
   for (let i = i0; i <= i1; i++) d += (i === i0 ? "M" : "L") + px(i * STEP) + " " + py(lifted[i]);
-  el.append(mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
-    "stroke-linejoin": "round", "stroke-linecap": "round",
-    class: "draw", "pathLength": 1 }));
+  svg.append(mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2,
+    "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1, class: firstDraw ? "hg-draw" : "" }));
 
-  /* Immediate drops: filled dot at the top of the step, 2px surface ring,
-     solid connector down to where the line lands. */
-  for (const c of HH.cliffs) {
-    const a = c.at / STEP;
-    el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]), x2: px(c.at), y2: py(lifted[a + 1]),
-      stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
-    el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4.5, fill: "var(--loss-4)",
-      stroke: "var(--surface)", "stroke-width": 2 }));
-    if (c.label) {
-      const t = mk("text", { x: px(c.at) + 9, y: py((lifted[a] + lifted[a + 1]) / 2) + 4,
-        fill: "var(--loss-ink)", "font-size": 13, "font-weight": 600 });
-      t.textContent = c.label; el.append(t);
-    }
+  /* The ghost: the real curve, drawn only when a deferred drop exceeds 1.5%
+     of the y-range; the caption sentence is rendered from the same test (S14). */
+  const ghost = EV.deferred.some((c) => c.drop > 0.015 * (y1 - y0));
+  if (ghost) {
+    let g = "";
+    for (let i = i0; i <= i1; i++) g += (i === i0 ? "M" : "L") + px(i * STEP) + " " + py(NET[i]);
+    svg.append(mk("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }));
   }
 
-  /* Deferred drops: hollow dot, dashed connector, never a break in the line. */
-  for (const c of HH.deferred) {
-    const a = c.at / STEP;
-    el.append(mk("line", { x1: px(c.at), y1: py(lifted[a]) - 22, x2: px(c.at), y2: py(lifted[a]) - 2,
-      stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-    el.append(mk("circle", { cx: px(c.at), cy: py(lifted[a]), r: 4.5, fill: "var(--surface)",
-      stroke: "var(--ink-3)", "stroke-width": 2 }));
-    const t = mk("text", { x: px(c.at), y: py(lifted[a]) - 28, "text-anchor": "middle",
-      fill: "var(--ink-2)", "font-size": 12, "font-weight": 500 });
-    t.textContent = "later"; el.append(t);
+  /* Cliff marks (S8): dots closer than 10px merge into one mark with a count.
+     A cluster is drawn as one --loss-4 dot (r6 when merged) at the first
+     cliff's top, one connector to the lowest landing. */
+  clusters = [];
+  for (const c of inWindow) {
+    const last = clusters.at(-1);
+    if (last && px(c.startEarnings) - px(last.cliffs.at(-1).startEarnings) < 10) last.cliffs.push(c);
+    else clusters.push({ cliffs: [c] });
+  }
+  for (const cl of clusters) {
+    const first = cl.cliffs[0], n = cl.cliffs.length;
+    const xs = cl.cliffs.map((c) => px(c.startEarnings));
+    cl.x = xs.reduce((a, b) => a + b) / n;
+    cl.y = py(lifted[idx(first.startEarnings)]);
+    const land = Math.min(...cl.cliffs.map((c) => lifted[idx(c.endEarnings)]));
+    svg.append(mk("line", { x1: cl.x, y1: cl.y, x2: cl.x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
+    svg.append(mk("circle", { cx: cl.x, cy: cl.y, r: n > 1 ? 6 : 4.5, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
+    /* Exactly two direct labels on this chart: the largest drop and the leap. */
+    if (cl.cliffs.includes(worst))
+      svg.append(text({ x: cl.x + 9, y: (cl.y + py(land)) / 2 + 4, class: "hg-label label-loss label-halo", "font-weight": 600 }, "−" + money(worst.drop)));
+  }
+
+  /* Deferred drops: hollow dot, dashed stub, the word later. Never a break in the line. */
+  for (const c of EV.deferred) {
+    if (c.startEarnings < x0 || c.startEarnings > x1) continue;
+    const a = idx(c.startEarnings), x = px(c.startEarnings), y = py(lifted[a]);
+    svg.append(mk("line", { x1: x, y1: y - 22, x2: x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+    svg.append(mk("circle", { cx: x, cy: y, r: 4.5, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
+    svg.append(text({ x, y: y - 28, "text-anchor": "middle", class: "hg-label", "font-weight": 500 }, "later"));
+  }
+
+  /* The leap (S7): a bracket parallel to the peak rule, 20px above it so it
+     clears the diamond's ring and its label sits a row above the peak label,
+     from the diamond's x to the exit, 4px end ticks, labelled once with a
+     plus sign in the person's unit. A stuck zone runs the bracket to the
+     plot's edge with no end tick and "more than". */
+  const cx = px(HH.currentEarnings), cy = py(HH.currentNet);
+  const bx = stuck ? W - pad.r : px(P.escapeEarnings), by = yPeak - 20;
+  if (stuck || exitInWindow) {
+    svg.append(mk("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
+    const leap = stuck ? TOP - HH.currentEarnings : P.escapeEarnings - HH.currentEarnings;
+    const leapText = (stuck ? "more than +" : "+") + fmtUnit(payRound(leap), PAY.unit) + (PAY.unit !== "year" ? " " + PER[PAY.unit] : "");
+    svg.append(text({ x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: "hg-label label-loss label-halo", "font-weight": 600 }, leapText));
   }
 
   /* You are here: a diamond, not a dot — shape carries it when colour cannot. */
-  const cx = px(HH.current), cy = py(HH.currentNet);
-  el.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: H - pad.b,
-    stroke: "var(--ink-3)", "stroke-width": 1 }));
-  el.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`,
-    fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
-  const yl = mk("text", { x: cx, y: pad.t - 8, "text-anchor": "middle", fill: "var(--ink)",
-    "font-size": 13, "font-weight": 600 });
-  yl.textContent = "you"; el.append(yl);
+  svg.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1 }));
+  svg.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
+  svg.append(text({ x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label label-ink", "font-weight": 600 }, "you"));
 
-  /* Where the flat stretch ends. */
-  if (HH.zone.end <= x1) {
-    const ex = px(HH.zone.end);
-    el.append(mk("line", { x1: ex, y1: pad.t, x2: ex, y2: H - pad.b,
-      stroke: "var(--loss-3)", "stroke-width": 1 }));
-    if (!narrow) {
-      const t = mk("text", { x: ex - 6, y: pad.t + 12, "text-anchor": "end",
-        fill: "var(--loss-ink)", "font-size": 12, "font-weight": 500 });
-      t.textContent = "back to even"; el.append(t);
-    }
-  }
+  /* Caption, from the values just computed (never typed). */
+  let cap = t("axisNote", { floor: money(y0) });
+  if (ESC.safeExitEarnings === null) cap += t("safeNever", { top: pay(TOP) });
+  else if (ESC.safeExitEarnings > x1) cap += t("safeBeyond", { safe: pay(ESC.safeExitEarnings) });
+  if (ghost) cap += t("ghost");
+  cap += t("estimates", { year: EV.year, state });
+  document.getElementById("curveCaption").textContent = cap;
 
-  document.getElementById("axisNote").textContent =
-    `The side numbers start at ${money(y0)}, not at $0, so the drops are easy to see.`;
-  cursorLayer = { px, py, pad, W, H, i0, i1 };
+  layer = { px, py, pad, W, H };
+  firstDraw = false;
+  paintMarks();
   paintCursor();
 }
 
-let cursorLayer = null, cursorNodes = [];
+/* ── Cliff marks as controls (M6): 44px buttons over the SVG, one per cluster ── */
+function markLabel(cl) {
+  if (cl.cliffs.length > 1) {
+    const from = cl.cliffs[0].startEarnings, to = cl.cliffs.at(-1).endEarnings;
+    return t("markMerged", { n: cl.cliffs.length, from: pay(from), to: payUnit(to), sum: about(cl.cliffs.reduce((s, c) => s + c.drop, 0)) });
+  }
+  const c = cl.cliffs[0];
+  return t(c.endEarnings > HH.currentEarnings ? "markWould" : "markPast", { pay: payUnit(c.endEarnings), drop: about(c.drop) });
+}
+function paintMarks() {
+  marksLayer.textContent = "";
+  for (const cl of clusters) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "hg-mark"; b.tabIndex = -1;
+    b.dataset.key = cl.cliffs[0].endEarnings;
+    b.style.left = (cl.x / layer.W * 100) + "%"; b.style.top = (cl.y / layer.H * 100) + "%";
+    b.setAttribute("aria-label", markLabel(cl));
+    b.setAttribute("aria-controls", "step-" + cl.cliffs[0].endEarnings);
+    b.setAttribute("aria-expanded", String(open === cl.cliffs[0].endEarnings));
+    if (cl.cliffs.length > 1) { const n = document.createElement("span"); n.className = "hg-mark__count"; n.setAttribute("aria-hidden", "true"); n.textContent = cl.cliffs.length; b.append(n); }
+    b.addEventListener("click", () => activate(cl));
+    marksLayer.append(b);
+  }
+}
+const markFor = (key) => marksLayer.querySelector(`.hg-mark[data-key="${key}"]`);
+function activate(cl) {
+  const first = cl.cliffs[0];
+  close(false);
+  open = first.endEarnings;
+  cursor = idx(first.startEarnings);
+  paintCursor();
+  readout.textContent = markLabel(cl);
+  markFor(open)?.setAttribute("aria-expanded", "true");
+  const row = document.getElementById("step-" + open);
+  if (row) {
+    row.setAttribute("aria-current", "true");
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "hg-button hg-button--small"; btn.textContent = t("close");
+    btn.addEventListener("click", () => close(true));
+    row.querySelector("p").append(btn);
+    row.scrollIntoView({ block: "nearest" });
+  }
+}
+/* Closing returns focus to the mark (M6). A recompute that no longer has the
+   open cliff would clear `open` here too; this surface has no controls that
+   recompute, so the theme redraw simply re-applies it. */
+function close(refocus) {
+  if (open === null) return;
+  const row = document.getElementById("step-" + open);
+  row?.removeAttribute("aria-current"); row?.querySelector(".hg-button")?.remove();
+  const m = markFor(open); m?.setAttribute("aria-expanded", "false");
+  open = null;
+  if (refocus) (m ?? chart).focus();
+}
+
+/* ── CurveReadout (#4): the same line for hover, keyboard caret and a mark ── */
 function paintCursor() {
-  cursorNodes.forEach(n => n.remove()); cursorNodes = [];
-  if (!cursorLayer) return;
-  const { px, py, pad, H } = cursorLayer;
+  cursorNodes.forEach((n) => n.remove()); cursorNodes = [];
+  if (!layer) return;
+  const { px, py, pad, H } = layer;
   const e = cursor * STEP, v = lifted[cursor];
-  if (e !== HH.current) {          // the diamond already marks where they are
-    const line = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b,
-      stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
-    const dot = mk("circle", { cx: px(e), cy: py(v), r: 4.5, fill: "var(--series-1)",
-      stroke: "var(--surface)", "stroke-width": 2 });
-    el.append(line, dot); cursorNodes = [line, dot];
+  if (e !== HH.currentEarnings) {
+    const line = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
+    const dot = mk("circle", { cx: px(e), cy: py(v), r: 4.5, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 });
+    svg.append(line, dot); cursorNodes = [line, dot];
   }
-  const inZone = e > HH.zone.start && e < HH.zone.end;
-  readout.innerHTML = `Paid <b>${money(e)}</b> a year, you keep <b>${money(v)}</b>.` +
-    (inZone ? " This pay is inside the flat stretch." : " This pay is outside the flat stretch.");
+  const inYours = !!zone && e > zone.startEarnings && e < (stuck ? Infinity : zone.endEarnings);
+  const inAny = HH.dangerZones.some((z) => e > z.startEarnings && e < (z.endEarnings ?? Infinity));
+  readout.innerHTML = `Paid <b>${esc(payUnit(e))}</b>, you keep <b>${esc(money(v))}</b>.` +
+    t(inYours ? "inYourZone" : inAny ? "inZone" : "outZone");
 }
-
 function moveTo(clientX) {
-  if (!cursorLayer) return;
-  const r = el.getBoundingClientRect();
-  const { pad, W, i0, i1 } = cursorLayer;
-  const f = (clientX - r.left - pad.l) / (W - pad.l - pad.r);
-  cursor = Math.min(i1, Math.max(i0, Math.round(i0 + f * (i1 - i0))));
+  if (!layer) return;
+  const r = svg.getBoundingClientRect(), { pad, W } = layer;
+  const f = (clientX - r.left) / r.width * W;
+  cursor = Math.min(i1, Math.max(i0, Math.round(i0 + (f - pad.l) / (W - pad.l - pad.r) * (i1 - i0))));
   paintCursor();
 }
-
-wrap.addEventListener("pointermove", ev => moveTo(ev.clientX));
-wrap.addEventListener("pointerdown", ev => moveTo(ev.clientX));
-wrap.addEventListener("keydown", ev => {
+chart.addEventListener("pointermove", (ev) => moveTo(ev.clientX));
+chart.addEventListener("pointerdown", (ev) => moveTo(ev.clientX));
+chart.addEventListener("keydown", (ev) => {
   const step = ev.shiftKey ? 5 : 1;
-  if (ev.key === "ArrowRight") { cursor = Math.min(cursorLayer.i1, cursor + step); }
-  else if (ev.key === "ArrowLeft") { cursor = Math.max(cursorLayer.i0, cursor - step); }
-  else if (ev.key === "Home") { cursor = cursorLayer.i0; }
-  else if (ev.key === "End") { cursor = cursorLayer.i1; }
+  if (ev.key === "ArrowRight") cursor = Math.min(i1, cursor + step);
+  else if (ev.key === "ArrowLeft") cursor = Math.max(i0, cursor - step);
+  else if (ev.key === "Home") cursor = i0;
+  else if (ev.key === "End") cursor = i1;
+  else if (ev.key === "]" || ev.key === "[") {
+    /* Next or previous cliff mark, from the mark that has focus or from the
+       wrapper: ] goes to the first, [ to the last. */
+    const marks = [...marksLayer.querySelectorAll(".hg-mark")];
+    if (!marks.length) return;
+    const at = marks.indexOf(document.activeElement);
+    const next = ev.key === "]" ? (at < 0 ? 0 : Math.min(marks.length - 1, at + 1)) : (at < 0 ? marks.length - 1 : Math.max(0, at - 1));
+    marks[next].focus(); ev.preventDefault(); return;
+  }
+  else if (ev.key === "Escape") { close(true); ev.preventDefault(); return; }
   else return;
   ev.preventDefault(); paintCursor();
 });
+readout.textContent = t("readoutHint");
+
+/* aria-label states the shape in words, from the data. */
+chart.setAttribute("aria-label", !zone
+  ? t("ariaNoZone", { from: payUnit(x0), to: payUnit(x1), pay: payUnit(HH.currentEarnings) })
+  : t("ariaChart", { from: payUnit(x0), to: payUnit(x1), zoneFrom: pay(zone.startEarnings), zoneTo: stuck ? pay(TOP) : pay(zone.endEarnings),
+      more: otherZones.filter((z) => z.startEarnings > zone.startEarnings).map((z) => t("ariaMore", { from: pay(z.startEarnings), to: z.endEarnings === null ? pay(TOP) : pay(z.endEarnings) })).join(""),
+      worstAt: payUnit(worst.endEarnings), worstWhat: worst.programsLost.length ? PROGRAM[worst.programsLost[0]].phrase : "some help",
+      pay: payUnit(HH.currentEarnings) }));
+
+/* Key entries that describe a mark not on this chart are dropped. */
+document.getElementById("keyOther").hidden = !otherZones.some((z) => (z.endEarnings ?? Infinity) >= x0 && z.startEarnings <= x1);
+document.getElementById("keyLater").hidden = EV.deferred.length === 0;
+
+/* ── SourceNote (#17), with the archetype state (M4) ── */
+{
+  const src = document.getElementById("sourceNote");
+  const prov = t("sourceLive", { version: MODEL.version ?? MODEL.endpoint, year: EV.year,
+    rent: COVERAGE.vintages.rent.vintage.split(" (")[0], childcare: COVERAGE.vintages.childcare.preschool, date: GENERATED.slice(0, 10) });
+  if (EV.source === "archetype") {
+    src.append(t("sourceArchetype"));
+    const b = document.createElement("button"); b.type = "button"; b.className = "hg-button hg-button--small"; b.textContent = t("tryAgain");
+    b.addEventListener("click", () => { /* the live build re-runs evaluateHousehold(answers) here */ });
+    src.append(b);
+    if (clamped) src.append(t("clamped", { top: payUnit(HH.currentEarnings) }));
+    src.append(document.createElement("br"), prov);
+  } else src.textContent = prov;
+}
+
+/* ── StepList (#6): one row per threshold, from the cliff list and programEnds ── */
+const byAge = ESC.programEndsByAge;
+const groupOf = (id, at) => ["adults", "children"].filter((g) => byAge[g]?.[id] !== undefined && byAge[g][id] + STEP === at);
+const split = (id) => byAge.adults?.[id] !== undefined && byAge.children?.[id] !== undefined;   // one program, two endings
+const rows = new Map();     // at → { at, cliff, programs: [{id, group}] }
+const rowAt = (at) => rows.get(at) ?? rows.set(at, { at, cliff: null, programs: [] }).get(at);
+for (const c of cliffs) { const r = rowAt(c.endEarnings); r.cliff = c;
+  for (const id of c.programsLost) r.programs.push({ id, group: split(id) ? groupOf(id, c.endEarnings)[0] ?? null : null }); }
+const placed = new Set(cliffs.flatMap((c) => c.programsLost));
+for (const [id, last] of Object.entries(ESC.programEnds)) {
+  if (split(id)) {           // each group's own ending, unless a cliff already names it
+    for (const g of ["adults", "children"]) { const at = byAge[g][id] + STEP;
+      if (!rowAt(at).programs.some((p) => p.id === id)) rowAt(at).programs.push({ id, group: g }); }
+  } else if (!placed.has(id)) rowAt(last + STEP).programs.push({ id, group: null });
+}
+const stepsEl = document.getElementById("steps");
+for (const r of [...rows.values()].sort((a, b) => a.at - b.at)) {
+  const future = r.at > HH.currentEarnings;          // W1: above current pay is "would"
+  const li = document.createElement("li"); li.id = "step-" + r.at;
+  const at = document.createElement("span"); at.className = "hg-rows__at"; at.textContent = pay(r.at);
+  const p = document.createElement("p");
+  let s = "";
+  if (r.cliff?.deferral) { const b = document.createElement("span"); b.className = "hg-badge"; b.textContent = t("waitsBadge"); p.append(b, " "); }
+  for (const { id, group } of r.programs) {
+    const tpl = group ? T[future ? "wouldEndGroup" : "endsGroup"][group] : T[future ? "wouldEnd" : "ends"];
+    s += (s ? " " : "") + fill(tpl, group ? { noun: noun(id), name: called(id) } : { Phrase: cap(PROGRAM[id].phrase), name: called(id) });
+  }
+  if (!r.programs.length && r.cliff) s += T[future ? "wouldSmaller" : "smaller"][r.cliff.driver];
+  for (const [id, ats] of Object.entries(EV.curve.starts)) if (ats.includes(r.at) && !r.programs.some((p) => p.id === id))
+    s += t(future ? "wouldStart" : "starts", { phrase: PROGRAM[id].phrase, name: called(id) });
+  const rem = (r.cliff?.remains ?? []).filter((x) => !split(x.id));   // a split program's remainder is the other group's row
+  if (rem.length) s += t("remains", { until: pay(rem[0].until), list: rem.map((x) => t("remainsItem", { amount: money(x.amount), phrase: PROGRAM[x.id].phrase })).join(" and ") });
+  if (r.cliff?.deferral) s += t("waitsTail");
+  p.append(s);
+  if (r.cliff && !r.cliff.deferral) {
+    const loss = document.createElement("span"); loss.className = "loss";
+    loss.textContent = t(future ? "wouldLoss" : "loss", { drop: about(r.cliff.drop) }) + (r.cliff === worst ? t("biggest") : "");
+    p.append(" ", loss);
+  }
+  li.append(at, p); stepsEl.append(li);
+}
+
+/* The deferred callout, rendered only when a change waits (S14's rule applied
+   to copy: a sentence about a mark exists only when the mark does). */
+{
+  const w = document.getElementById("waits");
+  if (EV.deferred.length) {
+    const h = document.createElement("h2"); h.textContent = EV.deferred.length > 1 ? t("waitsHeadMany", { n: EV.deferred.length }) : t("waitsHead");
+    w.append(h);
+    for (const c of EV.deferred) { const p = document.createElement("p");
+      p.textContent = fill(T.waits[c.deferral.reason], { at: payUnit(c.endEarnings), phrase: PROGRAM[c.programsLost[0]]?.phrase ?? "this help" }); w.append(p); }
+    const f = document.createElement("p"); f.textContent = t("waitsFoot"); w.append(f);
+    w.hidden = false;
+  }
+}
+
+/* ── DataTable (#15): the marks as numbers ── */
+{
+  const tb = document.querySelector("#numbers tbody");
+  document.getElementById("numbersCaption").textContent = t("tableCaption");
+  const list = [];
+  if (zone) list.push({ at: zone.startEarnings, keep: zone.peakNet, mark: t("mark.peak") });
+  list.push({ at: HH.currentEarnings, keep: HH.currentNet, mark: t("mark.you") });
+  if (zone && !stuck) list.push({ at: P.escapeEarnings, keep: lifted[idx(P.escapeEarnings)], mark: t("mark.exit") });
+  /* Every cliff in the window on its own row: a merged mark separates here. */
+  for (const c of inWindow) list.push({ at: c.endEarnings, keep: lifted[idx(c.endEarnings)], drop: c.drop, mark: t("mark.drop") });
+  if (ESC.safeExitEarnings !== null && ESC.safeExitEarnings !== P.escapeEarnings) list.push({ at: ESC.safeExitEarnings, keep: lifted[idx(ESC.safeExitEarnings)], mark: t("mark.safe") });
+  for (const r of list.sort((a, b) => a.at - b.at || (a.drop ? 1 : -1))) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="num">${esc(money(r.at))}</td><td class="num money">${esc(money(r.keep))}</td>` +
+      `<td class="num">${r.drop ? "−" + esc(money(r.drop)) : ""}</td><td>${esc(r.mark)}</td>`;
+    tb.append(tr);
+  }
+}
+
+/* ── What we assumed about you (S6), from the household the curve was run for ── */
+{
+  const A = EV.modeled, ul = document.getElementById("assumed");
+  const pair = (key, params) => { const [k, v] = T.assumed[key]; return [k, fill(v, params)]; };
+  const kidsWord = T.kidsCount[A.childAges.length] ?? A.childAges.length + " kids";
+  const takeUp = [["getsSnap", "snap"], ["getsTanf", "tanf"], ["getsMedicaid", "medicaid"], ["getsWic", "wic"], ["getsChildcareSubsidy", "childcare"], ["getsHousing", "housing"], ["getsHeadStart", "headstart"]];
+  const name = (id) => `${PROGRAM[id].phrase} (${PROGRAM[id].name})`;
+  const on = takeUp.filter(([k]) => A[k]).map(([, id]) => name(id)), off = takeUp.filter(([k]) => !A[k]).map(([, id]) => name(id));
+  const join = (xs) => xs.length > 1 ? xs.slice(0, -1).join(", ") + " and " + xs.at(-1) : xs[0] ?? "";
+  const items = [
+    pair("rent", { amount: money(A.monthlyRent ?? 0), county: COUNTY_NAME[A.countyFips] ?? "the state's largest county", state }),
+    A.monthlyChildcare > 0 ? pair("childcare", { amount: money(A.monthlyChildcare), kids: kidsWord }) : pair("childcareNone", {}),
+    pair("help", { list: cap(join(on)) }),
+    off.length ? pair("notCounted", { list: cap(join(off)) }) : null,
+    pair(A.youStatus === "citizen" ? "you" : "youNotCitizen", { age: A.age }),
+    pair("money", { savings: A.savings > 0 ? money(A.savings) : t("savingsNone") }),
+    PAY.unit === "hour" ? pair("hours", { hours: PAY.hoursPerWeek }) : pair("hoursYear", {}),
+  ].filter(Boolean);
+  for (const [k, v] of items) { const li = document.createElement("li");
+    const a = document.createElement("span"); a.className = "hg-rows__at"; a.textContent = k;
+    const p = document.createElement("p"); p.textContent = v; li.append(a, p); ul.append(li); }
+  document.getElementById("footerAssumed").textContent = t("footer", { year: EV.year });
+}
+
+/* ── Reach, hours ── */
+document.getElementById("reach").innerHTML = t("reach", { n: `<strong>${Math.round(EV.reach.current / 10)}</strong>`, state, pay: esc(payUnit(HH.currentEarnings)) });
+document.getElementById("reachSource").textContent = t("reachSource", { vintage: EV.reach.cell.vintage.replace("-1yr", " 1-Year"), year: EV.year, n: EV.reach.cell.n, moe: money(EV.reach.cell.moe) });
+document.getElementById("hours").innerHTML = t("hours", { state, wage: `<strong>$${EV.minWage.wage.toFixed(2)}</strong>`, fullTime: `<strong>${money(Math.round(EV.minWage.fullTimeEarnings / 500) * 500)}</strong>` });
 
 draw();
 addEventListener("resize", draw);
 
-/* The one orchestrated moment: the line draws once, left to right. */
-if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const p = el.querySelector(".draw");
-  if (p) p.animate([{ strokeDasharray: "0 1" }, { strokeDasharray: "1 0" }],
-    { duration: 700, easing: "cubic-bezier(.2,.6,.2,1)" });
-}
-
+/* The theme button names the theme it will switch TO, read from the
+   computed color-scheme, so an OS-dark first load does not offer "Dark". */
 const btn = document.getElementById("themeBtn");
+const isDark = () => getComputedStyle(document.documentElement).colorScheme.includes("dark");
+btn.textContent = isDark() ? "Light" : "Dark";
 btn.addEventListener("click", () => {
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
-  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
-  btn.textContent = dark ? "Dark" : "Light";
+  document.documentElement.setAttribute("data-theme", isDark() ? "light" : "dark");
+  btn.textContent = isDark() ? "Light" : "Dark";
   draw();
 });
 </script>
