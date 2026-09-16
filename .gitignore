@@ -2,7 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .superpowers/
-
+.env
 # engine/ — the local PolicyEngine service's virtualenv and bytecode
 __pycache__/
 *.pyc
