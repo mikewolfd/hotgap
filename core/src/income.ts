@@ -1,4 +1,5 @@
 export type PayUnit = "hour" | "month" | "year";
+export const PAY_UNITS: readonly PayUnit[] = ["hour", "month", "year"];
 export interface Pay { amount: number; unit: PayUnit; hoursPerWeek?: number }
 
 /** Full-time: what an hourly wage is annualized over, and what an earner is assumed to work when unasked. */
