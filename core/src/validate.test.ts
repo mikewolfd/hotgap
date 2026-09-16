@@ -34,6 +34,17 @@ describe("validateAnswers", () => {
     expect(validateAnswers({}).ok).toBe(false);
     expect(validateAnswers({ ...good, annualEarnings: "lots" }).ok).toBe(false);
   });
+  it("resolves a ZIP to the state and county, and reports a ZIP it cannot place in core's own words", () => {
+    const { state: _state, ...noState } = good;
+    const sf = validateAnswers({ ...noState, zip: "94110" });
+    expect(sf.ok && [sf.value.state, sf.value.countyFips]).toEqual(["CA", "06075"]);
+    // A given county wins over the ZIP's; a given state must agree with it.
+    const la = validateAnswers({ ...good, zip: "94110", countyFips: "06037" });
+    expect(la.ok && la.value.countyFips).toBe("06037");
+    expect(validateAnswers({ ...good, state: "NY", zip: "94110" })).toEqual({ ok: false, detail: "ZIP 94110 is in CA, not NY" });
+    expect(validateAnswers({ ...noState, zip: "00000" })).toEqual({ ok: false, detail: "no state for ZIP 00000" });
+    expect(validateAnswers({ ...good, zip: 94110 })).toEqual({ ok: false, detail: "zip" });
+  });
   it("keeps a county in the household's state and rejects one from another state", () => {
     const base = { state: "CA", married: false, age: 30, spouseAge: null, childAges: [], youDisabled: false, spouseDisabled: false, childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 1, spouseAnnualEarnings: 0 };
     const la = validateAnswers({ ...base, countyFips: "06037" });

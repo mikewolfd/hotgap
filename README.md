@@ -36,6 +36,10 @@ that leap lands among real households' incomes.
   comparison of households rather than of state rules.
   through the same PolicyEngine API and `@hotgap/core` math, producing the
   committed summary and per-state curve data
+- `app/` — the site: three Vite pages on one design system (`design/`),
+  and the input editor. `app/README.md` is the contract a surface builds on
+- `worker/` — the Cloudflare Worker that serves `app/dist` and answers
+  `/api/evaluate` with core against the hosted engine (`app/README.md`)
 - `scripts/` — one-off builders for the ZIP→state, ZIP→county, and reach
   (ACS earnings) data files
 - `contract/` — a live PolicyEngine API contract test (schedule-only; not
@@ -49,7 +53,10 @@ that leap lands among real households' incomes.
 
 - `validateAnswers(input)` — `unknown` → `HouseholdAnswers` (or a reason);
   also validates the four extra inputs below: three non-wage-income ones
-  (each optional, default 0) and `hoursPerWeek` (optional, 1–80 when given)
+  (each optional, default 0) and `hoursPerWeek` (optional, 1–80 when given).
+  An optional `zip` resolves the state and county (`resolvePlace`, the one
+  rule the CLI's `--zip`, the site's API and its ZIP field share): a given
+  state must agree with the ZIP's, a given county wins over the ZIP's
 - `buildPEPayload(answers)` — `HouseholdAnswers` → PolicyEngine request
 - `buildCurvePayload(answers)` — the request with sourced per-household
   parameter overrides; used by `fetchCurve` and the weekly sweep
@@ -132,6 +139,24 @@ that leap lands among real households' incomes.
     household's curve fell inside, if any (Connecticut, Massachusetts, New
     Mexico, California — see Honesty, below)
 - `loadSummary` / `loadStateFile` — read the committed weekly-sweep data
+
+### Running outside Node
+
+Nothing in the library imports a Node builtin statically, so the same
+modules bundle for a Cloudflare Worker (`worker/`) or a page (`app/`). Three
+seams cover what the environment has to supply:
+
+- **Data.** `readData` serves the in-memory cache first and reads
+  `core/data/` from disk only where `process.getBuiltinModule("node:fs")`
+  exists (Node ≥ 22.3). Anywhere else, `provideData({ "reach.json": … })`
+  hands it the parsed tables — a Worker bundles the four small ones and
+  fetches a state file from its static assets on demand
+  (`EvaluateOptions.loadStateFile`, called only on the fallback path).
+- **Endpoint.** `configurePolicyEngine({ url, token })` sets what
+  `HOTGAP_PE_URL` / `HOTGAP_PE_TOKEN` set on Node; a set value wins, an empty
+  one defers to the environment.
+- **Hashing.** `curveCacheKey` is async and uses Web Crypto (`sha256Hex`),
+  the same digest on every runtime.
 
 ### Inputs to PolicyEngine
 
@@ -478,10 +503,11 @@ Estimates only — a caseworker decides real benefits.
 
 ## History
 
-The site UI, design system, and Cloudflare Worker were split out of this
-repo and live at git tag `ui-archive`; the deployed site at
-hotgap.hotgap.workers.dev is unchanged. `docs/superpowers/` specs and plans
-predate that split and cite paths (`app/`, `worker/`, `shared/`) that no
-longer exist.
+The first site UI, design system, and Cloudflare Worker were split out of
+this repo and live at git tag `ui-archive`; the deployed site at
+hotgap.hotgap.workers.dev still runs that July core until the new `app/` and
+`worker/` are deployed. `docs/superpowers/` specs and plans predate that
+split and cite paths (`app/`, `worker/`, `shared/`) that have since been
+re-founded on the current core.
 
 License: AGPL-3.0-only.

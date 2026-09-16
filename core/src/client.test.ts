@@ -1,51 +1,21 @@
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
-import { CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { afterEach, describe, it, expect } from "vitest";
+import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { axisSpec, type AxisSpec } from "./translate.js";
+import { CA_SINGLE_ONE_KID, peBody, respond } from "./testing.js";
+import { axisSpec, buildPEPayload } from "./translate.js";
 import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
 const noopSleep = async () => {};
 
-// A minimal well-formed PolicyEngine response at whatever axis the answers ask
-// for. The recorded fixture is pinned to the retired 101-point / $100k axis, so
-// it can no longer stand in for a live body; parse.ts's own tests still use it.
-function peBody(spec: AxisSpec, ssdi = 0): string {
-  const all = (v: number) => ({ "2026": new Array(spec.count).fill(v) });
-  return JSON.stringify({
-    status: "ok",
-    result: {
-      axes: [[{ min: 0, max: spec.max, count: spec.count }]],
-      households: { h: { household_net_income: all(20000 + ssdi), household_benefits: all(ssdi) } },
-      spm_units: {
-        s: {
-          snap: all(0), tanf: all(0), spm_unit_capped_housing_subsidy: all(0),
-          free_school_meals: all(0), reduced_price_school_meals: all(0),
-          spm_unit_medical_out_of_pocket_expenses: all(0),
-        },
-      },
-      tax_units: { t: { eitc: all(0), refundable_ctc: all(0), premium_tax_credit: all(0) } },
-      people: {
-        you: { age: { "2026": 30 }, medicaid: all(0), chip: all(0), wic: all(0), ssi: all(0) },
-        child1: { age: { "2026": 5 }, medicaid: all(0), chip: all(0) },
-      },
-    },
-  });
-}
-
-const raw = {
-  state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
-  youDisabled: false, spouseDisabled: false, childDisabled: [false],
-  monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
-};
+const raw = CA_SINGLE_ONE_KID;
 const v = validateAnswers(raw);
 if (!v.ok) throw new Error(v.detail);
 const answers = v.value;
 
-const respond = (fn: () => Response | Promise<Response>) => (async () => fn()) as unknown as typeof fetch;
 const axis = axisSpec(answers);
 const body = peBody(axis);
 
@@ -141,10 +111,36 @@ describe("fetchCurve", () => {
 });
 
 describe("curveCacheKey", () => {
-  it("ignores key order and changes with any answer", () => {
+  it("ignores key order and changes with any answer", async () => {
     const reordered = Object.fromEntries(Object.entries(answers).reverse()) as typeof answers;
-    expect(curveCacheKey(reordered)).toBe(curveCacheKey(answers));
-    expect(curveCacheKey({ ...answers, annualEarnings: 30001 })).not.toBe(curveCacheKey(answers));
+    expect(await curveCacheKey(reordered)).toBe(await curveCacheKey(answers));
+    expect(await curveCacheKey({ ...answers, annualEarnings: 30001 })).not.toBe(await curveCacheKey(answers));
+  });
+  it("is a SHA-256 hex digest, the same one node:crypto would give", async () => {
+    const { createHash } = await import("node:crypto");
+    const text = canonical({ answers, payload: buildPEPayload(answers), policy: {} });
+    expect(await curveCacheKey(answers, {})).toBe(createHash("sha256").update(text).digest("hex"));
+  });
+});
+
+describe("configurePolicyEngine", () => {
+  afterEach(() => configurePolicyEngine({}));
+  it("wins over the environment, and an empty value defers to it", () => {
+    process.env.HOTGAP_PE_URL = "https://env.example/us/calculate";
+    process.env.HOTGAP_PE_TOKEN = "from-env";
+    try {
+      configurePolicyEngine({ url: "https://set.example/us/calculate", token: "from-config" });
+      expect(peUrl()).toBe("https://set.example/us/calculate");
+      expect(peHeaders().Authorization).toBe("Bearer from-config");
+      configurePolicyEngine({ url: "", token: " " });
+      expect(peUrl()).toBe("https://env.example/us/calculate");
+      expect(peHeaders().Authorization).toBe("Bearer from-env");
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+      delete process.env.HOTGAP_PE_TOKEN;
+    }
+    expect(peUrl()).toBe(PE_URL);
+    expect(peHeaders()).toEqual({ "Content-Type": "application/json" });
   });
 });
 

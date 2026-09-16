@@ -2,7 +2,10 @@
 // POST /us/calculate — the public API, or whatever `HOTGAP_PE_URL` names —
 // with a timeout, optional retries, error classification, and an optional
 // result cache keyed on the household, request and overrides.
-import { createHash } from "node:crypto";
+//
+// Nothing here imports a Node builtin: the hash is Web Crypto and the
+// endpoint comes from configurePolicyEngine or, on Node, the environment, so
+// the same module runs in a Worker and could run in a page.
 import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -14,11 +17,34 @@ import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from
 
 export const PE_URL = "https://api.policyengine.org/us/calculate";
 
+export interface PolicyEngineConfig {
+  /** The POST /us/calculate endpoint; empty means "not set". */
+  url?: string;
+  /** The bearer token a hosted engine may require; empty means none. */
+  token?: string;
+}
+
+let configured: PolicyEngineConfig = {};
+
 /**
- * The endpoint every request goes to: `HOTGAP_PE_URL` when it is set to a
- * non-empty value, the public API otherwise — so nothing changes for anyone
- * who does not set it, and the CLI, the pipeline and the contract suite all
- * follow one switch because all three call through here.
+ * Point every request at an engine from code rather than the environment —
+ * a Worker reads its bindings and calls this once. A set value wins over
+ * `HOTGAP_PE_URL` / `HOTGAP_PE_TOKEN`; an empty one defers to them.
+ */
+export function configurePolicyEngine(config: PolicyEngineConfig): void {
+  configured = { ...config };
+}
+
+/** An environment variable on Node (or a runtime that populates process.env); undefined anywhere else. */
+const envVar = (name: string): string | undefined =>
+  typeof process !== "undefined" ? process.env?.[name]?.trim() || undefined : undefined;
+
+/**
+ * The endpoint every request goes to: the configured one, else `HOTGAP_PE_URL`
+ * when it is set to a non-empty value, else the public API — so nothing
+ * changes for anyone who sets neither, and the CLI, the pipeline, the Worker
+ * and the contract suite all follow one switch because all four call through
+ * here.
  *
  * `engine/` is a self-hosted stand-in for this endpoint; it runs a newer
  * policyengine-us than the hosted service, which is the point of setting the
@@ -27,12 +53,12 @@ export const PE_URL = "https://api.policyengine.org/us/calculate";
  * set it before the first request.
  */
 export function peUrl(): string {
-  return process.env.HOTGAP_PE_URL?.trim() || PE_URL;
+  return configured.url?.trim() || envVar("HOTGAP_PE_URL") || PE_URL;
 }
 
 /** Headers every request carries: JSON, plus the bearer token a hosted engine may require (HOTGAP_PE_TOKEN). */
 export function peHeaders(): Record<string, string> {
-  const token = process.env.HOTGAP_PE_TOKEN?.trim();
+  const token = configured.token?.trim() || envVar("HOTGAP_PE_TOKEN");
   return token ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` } : { "Content-Type": "application/json" };
 }
 
@@ -161,7 +187,8 @@ export async function requestPE(payload: unknown, opts: RequestOptions = {}): Pr
   throw lastError;
 }
 
-function canonical(value: unknown): string {
+/** JSON with object keys sorted at every depth, so equal values serialize equally. */
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : 1));
@@ -170,9 +197,15 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/** SHA-256 of a string as lower-case hex, through Web Crypto — the same digest on Node, in a Worker and in a page. */
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 /** Stable key including the exact request, year, axis and effective overrides. */
-export function curveCacheKey(answers: HouseholdAnswers, policy: PolicyOverrides = policyOverridesFor(answers)): string {
-  return createHash("sha256").update(canonical({ answers, payload: buildPEPayload(answers), policy })).digest("hex");
+export function curveCacheKey(answers: HouseholdAnswers, policy: PolicyOverrides = policyOverridesFor(answers)): Promise<string> {
+  return sha256Hex(canonical({ answers, payload: buildPEPayload(answers), policy }));
 }
 
 /** Household request with HotGap's sourced parameter corrections. */
@@ -484,7 +517,7 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   const parentLimitsUpstream = opts.parentLimitsUpstream
     ?? (parentMedicaidLimit(answers) !== null && releaseAtLeast(await modelVersion(opts), PARENT_LIMITS_UPSTREAM_SINCE));
   const policy = policyOverridesFor(answers, { parentLimitsUpstream });
-  const key = curveCacheKey(answers, policy);
+  const key = await curveCacheKey(answers, policy);
   const hit = await opts.cache?.get(key);
   if (hit) return hit;
 

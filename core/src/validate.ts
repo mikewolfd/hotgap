@@ -1,5 +1,6 @@
 import { FIPS_TO_USPS, STATE_CODES } from "./states.js";
 import { IMMIGRATION_STATUSES, type HouseholdAnswers, type ImmigrationStatus } from "./types.js";
+import { resolvePlace } from "./zip.js";
 
 const STATES = new Set(STATE_CODES);
 
@@ -14,7 +15,13 @@ export function validateAnswers(input: unknown): Validation {
   if (typeof input !== "object" || input === null) return { ok: false, detail: "body must be an object" };
   const a = input as Record<string, unknown>;
 
-  if (typeof a.state !== "string" || !STATES.has(a.state)) return { ok: false, detail: "state" };
+  // A ZIP, when given, decides the state and the county (zip.ts resolvePlace);
+  // the CLI, the API and a page all say "where" the same way.
+  if (a.zip !== undefined && typeof a.zip !== "string") return { ok: false, detail: "zip" };
+  const place = resolvePlace({ zip: a.zip, state: typeof a.state === "string" ? a.state : undefined, countyFips: typeof a.countyFips === "string" ? a.countyFips : null });
+  if (!place.ok) return place;
+  const state = place.state;
+  if (state === undefined || !STATES.has(state)) return { ok: false, detail: "state" };
   if (typeof a.married !== "boolean") return { ok: false, detail: "married" };
   if (!age16to110(a.age)) return { ok: false, detail: "age" };
   if (a.married && !age16to110(a.spouseAge)) return { ok: false, detail: "spouseAge" };
@@ -76,8 +83,8 @@ export function validateAnswers(input: unknown): Validation {
   }
   // A county FIPS starts with its state's two digits; a county in another
   // state would put PolicyEngine's ACA rating area in the wrong state.
-  const countyFips = typeof a.countyFips === "string" && /^\d{5}$/.test(a.countyFips) ? a.countyFips : null;
-  if (countyFips !== null && FIPS_TO_USPS[countyFips.slice(0, 2)] !== a.state) return { ok: false, detail: "countyFips" };
+  const countyFips = place.countyFips !== null && /^\d{5}$/.test(place.countyFips) ? place.countyFips : null;
+  if (countyFips !== null && FIPS_TO_USPS[countyFips.slice(0, 2)] !== state) return { ok: false, detail: "countyFips" };
 
   // Sort ages and their matching disabled flags together (as pairs) so the
   // permutation applied to childAges is mirrored onto childDisabled, then
@@ -89,7 +96,7 @@ export function validateAnswers(input: unknown): Validation {
   return {
     ok: true,
     value: {
-      state: a.state,
+      state,
       married: a.married,
       age: a.age as number,
       spouseAge: a.married ? (a.spouseAge as number) : null,

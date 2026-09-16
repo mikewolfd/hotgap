@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { analyzeCurve } from "./analyze.js";
 import { PolicyEngineError } from "./client.js";
+import { loadStateFile as loadStateFile_ } from "./data.js";
 import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
 import { validateAnswers } from "./validate.js";
@@ -9,24 +10,19 @@ import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
+import { CA_SINGLE_ONE_KID, respond } from "./testing.js";
 import type { CurvePoint, CurveResponse, HouseholdAnswers, ProgramId } from "./types.js";
 
 const fixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 const fixturePoints = parsePEResponse(JSON.parse(fixture), 101);
 
 function answersWith(over: Partial<Record<string, unknown>> = {}): HouseholdAnswers {
-  const v = validateAnswers({
-    state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
-    youDisabled: false, spouseDisabled: false, childDisabled: [false],
-    monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
-    ...over,
-  });
+  const v = validateAnswers({ ...CA_SINGLE_ONE_KID, ...over });
   if (!v.ok) throw new Error(v.detail);
   return v.value;
 }
 
 const answers = answersWith();
-const respond = (fn: () => Response) => (async () => fn()) as unknown as typeof fetch;
 
 describe("evaluateCurve", () => {
   const curve: CurveResponse = { year: "2026", currentEarnings: 30000, points: fixturePoints };
@@ -166,6 +162,22 @@ describe("evaluateHousehold", () => {
     await expect(
       evaluateHousehold(answers, { fallback: false, fetchImpl: respond(() => new Response("boom", { status: 500 })) }),
     ).rejects.toBeInstanceOf(PolicyEngineError);
+  });
+
+  it("takes the fallback's sweep file from the caller's loader, and only asks for it on the fallback path", async () => {
+    const fail = respond(() => new Response("boom", { status: 500 }));
+    const asked: string[] = [];
+    const loadStateFile = async (state: string) => { asked.push(state); return loadStateFile_(state); };
+    const ev = await evaluateHousehold(answers, { fetchImpl: fail, loadStateFile });
+    expect(ev.source).toBe("archetype");
+    expect(asked).toEqual(["CA"]);
+    // A loader with nothing to give is "no archetype": the live failure surfaces.
+    await expect(evaluateHousehold(answers, { fetchImpl: fail, loadStateFile: async () => null })).rejects.toBeInstanceOf(PolicyEngineError);
+    // The live path never asks.
+    const cached: CurveResponse = { year: "2026", currentEarnings: 30000, points: fixturePoints };
+    asked.length = 0;
+    await evaluateHousehold(answers, { cache: { get: () => cached, set: () => {} }, fetchImpl: fail, loadStateFile });
+    expect(asked).toEqual([]);
   });
 
   it("uses the live curve, untouched by archetype data, when the call succeeds", async () => {

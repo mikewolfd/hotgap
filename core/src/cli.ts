@@ -4,15 +4,14 @@
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { PolicyEngineError } from "./client.js";
-import { zipToCounty } from "./county.js";
 import { loadSummary } from "./data.js";
 import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
-import { toAnnual, type PayUnit } from "./income.js";
+import { HOUSEHOLD_FLAGS, rawAnswersFromFlags, type HouseholdFlags } from "./flags.js";
+import { PAY_UNITS } from "./income.js";
 import { MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import type { Cliff } from "./analyze.js";
 import { type HouseholdAnswers, type ProgramId } from "./types.js";
 import { validateAnswers } from "./validate.js";
-import { isTerritoryZip, zipToState } from "./zip.js";
 
 const USAGE = `hotgap <command> [options]
 
@@ -24,7 +23,7 @@ const USAGE = `hotgap <command> [options]
     --disabled  --spouse-disabled
     --rent 1500  --childcare 600  monthly; default none
     --earnings 30000              annual pay from work
-    --pay 15 --unit hour|month|year          (instead of --earnings; unit defaults to hour)
+    --pay 15 --unit hour|week|month|year     (instead of --earnings; unit defaults to hour)
     --hours 40                    hours a week worked; also converts an hourly --pay
     --spouse-earnings 0
     --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
@@ -45,27 +44,12 @@ const USAGE = `hotgap <command> [options]
   summary [--state CA] [--json]   the weekly sweep's per-state cliff metrics`;
 
 const OPTIONS = {
-  state: { type: "string" }, zip: { type: "string" }, county: { type: "string" },
-  age: { type: "string" }, married: { type: "boolean" }, "spouse-age": { type: "string" },
-  kids: { type: "string" }, "kids-disabled": { type: "string" },
-  disabled: { type: "boolean" }, "spouse-disabled": { type: "boolean" },
-  rent: { type: "string" }, childcare: { type: "string" },
-  earnings: { type: "string" }, pay: { type: "string" }, unit: { type: "string" }, hours: { type: "string" },
-  "spouse-earnings": { type: "string" }, ssdi: { type: "string" },
-  "child-support": { type: "string" }, unemployment: { type: "string" },
-  "head-start": { type: "boolean" }, housing: { type: "boolean" },
-  "childcare-subsidy": { type: "boolean" },
-  "self-employed": { type: "boolean" }, savings: { type: "string" },
-  status: { type: "string" }, "spouse-status": { type: "string" },
-  "years-in-us": { type: "string" }, "spouse-years-in-us": { type: "string" },
-  "no-snap": { type: "boolean" }, "no-tanf": { type: "boolean" }, "no-medicaid": { type: "boolean" }, "no-wic": { type: "boolean" },
-  "employer-coverage": { type: "boolean" }, offline: { type: "boolean" }, json: { type: "boolean" },
-  help: { type: "boolean" },
+  ...HOUSEHOLD_FLAGS,
+  offline: { type: "boolean" }, json: { type: "boolean" }, help: { type: "boolean" },
 } as const;
 
-// Derived from OPTIONS so the flag list has exactly one definition: a boolean
-// flag is present-or-absent, everything else arrives as its raw string.
-type Flags = { [K in keyof typeof OPTIONS]?: (typeof OPTIONS)[K]["type"] extends "boolean" ? boolean : string };
+// The household flags (flags.ts, shared with the site's URL) plus the CLI's own.
+type Flags = HouseholdFlags & { offline?: boolean; json?: boolean; help?: boolean };
 
 function fail(code: number, message: string): never {
   console.error(message);
@@ -76,7 +60,6 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD",
 const money = (n: number) => usd.format(n);
 // An hourly wage keeps its cents: rounding $16.90 to "$17" would misstate a published rate.
 const wage = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
-const num = (v: string | undefined): number | undefined => (v === undefined ? undefined : Number(v));
 // Signed, because `other` (taxes and market-income effects) can go either way;
 // a zero share is left out rather than printed as "$0".
 const signed = (n: number) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
@@ -104,64 +87,12 @@ const breakdownOf = (c: Cliff): string => {
   if (Math.round(c.breakdown.other) !== 0) parts.push(`other ${signed(-c.breakdown.other)}`);
   return parts.join(" · ");
 };
-const list = (v: string | undefined): string[] => (v ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
 function householdFrom(f: Flags): HouseholdAnswers {
-  let state = f.state?.toUpperCase();
-  let county = f.county ?? null;
-  if (f.zip !== undefined) {
-    if (isTerritoryZip(f.zip)) fail(2, "HotGap does not model US territories yet");
-    const zipState = zipToState(f.zip) ?? fail(2, `no state for ZIP ${f.zip}`);
-    if (state !== undefined && state !== zipState) fail(2, `ZIP ${f.zip} is in ${zipState}, not ${state}`);
-    state = zipState;
-    county = county ?? zipToCounty(f.zip, state);
-  }
-  if (state === undefined) fail(2, "--state or --zip is required");
-  if (f.unit !== undefined && !["hour", "month", "year"].includes(f.unit)) fail(2, "--unit must be hour, month, or year");
+  if (f.state === undefined && f.zip === undefined) fail(2, "--state or --zip is required");
+  if (f.unit !== undefined && !(PAY_UNITS as readonly string[]).includes(f.unit)) fail(2, "--unit must be hour, week, month, or year");
   if (f.earnings === undefined && f.pay === undefined) fail(2, "--earnings or --pay is required");
-
-  const childAges = list(f.kids).map(Number);
-  const flags = list(f["kids-disabled"]);
-  const annualEarnings = f.pay !== undefined
-    ? toAnnual({ amount: Number(f.pay), unit: (f.unit ?? "hour") as PayUnit, hoursPerWeek: num(f.hours) })
-    : num(f.earnings);
-
-  const v = validateAnswers({
-    state,
-    countyFips: county,
-    married: f.married === true,
-    age: num(f.age) ?? 30,
-    spouseAge: f.married === true ? num(f["spouse-age"]) ?? 30 : null,
-    childAges,
-    youDisabled: f.disabled === true,
-    spouseDisabled: f["spouse-disabled"] === true,
-    childDisabled: flags.length ? flags.map((x) => x === "1") : childAges.map(() => false),
-    monthlyRent: num(f.rent) ?? null,
-    monthlyChildcare: num(f.childcare) ?? null,
-    annualEarnings,
-    spouseAnnualEarnings: num(f["spouse-earnings"]) ?? 0,
-    // --hours does double duty: it converts an hourly --pay above, and it is
-    // also the household's own weekly hours, which PolicyEngine's
-    // Massachusetts dependent-care deduction scales by.
-    hoursPerWeek: num(f.hours) ?? null,
-    ssdiMonthly: num(f.ssdi) ?? 0,
-    childSupportMonthly: num(f["child-support"]) ?? 0,
-    unemploymentMonthly: num(f.unemployment) ?? 0,
-    getsHeadStart: f["head-start"] === true,
-    getsHousing: f.housing === true,
-    getsChildcareSubsidy: f["childcare-subsidy"] === true,
-    hasEmployerCoverage: f["employer-coverage"] === true,
-    selfEmployed: f["self-employed"] === true,
-    savings: num(f.savings) ?? 0,
-    youStatus: f.status ?? "citizen",
-    spouseStatus: f["spouse-status"] ?? "citizen",
-    youYearsInUs: num(f["years-in-us"]) ?? null,
-    spouseYearsInUs: num(f["spouse-years-in-us"]) ?? null,
-    getsSnap: f["no-snap"] !== true,
-    getsTanf: f["no-tanf"] !== true,
-    getsMedicaid: f["no-medicaid"] !== true,
-    getsWic: f["no-wic"] !== true,
-  });
+  const v = validateAnswers(rawAnswersFromFlags(f));
   return v.ok ? v.value : fail(2, `bad input: ${v.detail}`);
 }
 

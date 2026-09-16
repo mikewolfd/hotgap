@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
 import { axisSpec } from "./translate.js";
-import { loadStateFile, loadSummary, readData } from "./data.js";
+import { loadStateFile, loadSummary, provideData, readData } from "./data.js";
 import { REACH_PERCENTILES } from "./reach.js";
 import { STATE_CODES } from "./states.js";
 
@@ -71,6 +71,16 @@ describe("committed data", () => {
   it("never reads outside data/", () => {
     expect(readData("../package.json")).toBeNull();
     expect(readData("/etc/hosts")).toBeNull();
+  });
+
+  it("serves a provided entry ahead of the disk, whether or not the file was read first", () => {
+    const summary = loadSummary();
+    provideData({ "summary.json": { ...summary, generated: "provided" }, "states/ZZ.json": { state: "ZZ", archetypes: {} } });
+    expect(loadSummary().generated).toBe("provided");
+    expect(loadStateFile("ZZ")?.state).toBe("ZZ");
+    provideData({ "summary.json": summary, "states/ZZ.json": null });
+    expect(loadSummary()).toBe(summary);
+    expect(loadStateFile("ZZ")).toBeNull();
   });
 
   it("reach.json is sampled at the percentile steps the code assumes", () => {

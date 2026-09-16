@@ -1,0 +1,11 @@
+/* Citizen surface: one column, phone first (design/citizen.html is the
+   brief). Only this page's own layout lives here; every shared class is in
+   design/tokens.css, and the editor's in app/src/editor/editor.css. */
+.page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+.result { padding-top: var(--s5); }
+
+/* The answer. The sentence IS the design (design/citizen.html .answer). */
+.answer { font-size: var(--t-answer); line-height: var(--lh-answer);
+          font-weight: var(--w-med); letter-spacing: -0.015em;
+          margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
+@media (min-width: 40rem) { .answer { max-width: 26ch; } }

@@ -1,0 +1,19 @@
+{
+  "name": "@hotgap/worker",
+  "private": true,
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "types": "wrangler types",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@hotgap/core": "*"
+  },
+  "devDependencies": {
+    "wrangler": "^4.132.0"
+  }
+}

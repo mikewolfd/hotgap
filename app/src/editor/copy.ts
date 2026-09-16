@@ -1,0 +1,86 @@
+// Every string the editor shows, in one place, in the citizen register
+// (short words, one thought a line). The readability gate the design asks
+// for (design/PORT-FROM-ARCHIVE-2026-09-16.md, M1) is not ported yet; when
+// it is, this is the file it reads. Program and field names a caseworker
+// uses (SNAP, TANF, CCDF) appear only after the plain phrase.
+export const copy = {
+  wordmark: "HotGap",
+  actions: { change: "Change my answers", print: "Print" },
+  summary: { none: "Tell us about your home to see your answer.", edit: "Edit" },
+  heading: "If your pay goes up, do you keep more?",
+  lead: "Answer four things. We check your help at every pay level and tell you what happens.",
+  privacy: "We do not save what you type. No sign up. No tracking.",
+  place: {
+    legend: "Where you live",
+    zip: "Your ZIP code",
+    zipHint: "Five digits. We use it to find your state and county.",
+    or: "Or pick your state",
+    statePlaceholder: "Choose a state",
+    inState: (state: string) => `That is in ${state}.`,
+  },
+  household: {
+    legend: "Who lives with you",
+    adults: "Adults",
+    single: "Just me",
+    married: "Me and my spouse",
+    kids: "How many kids live with you?",
+    kidsHint: "Kids under 18. Up to six.",
+    kidAge: (n: number) => `How old is kid ${n}?`,
+  },
+  pay: {
+    legend: "What you are paid",
+    amount: "Your pay, before taxes",
+    unit: "Per",
+    units: { hour: "hour", week: "week", month: "month", year: "year" },
+    hours: "Hours you work a week",
+    hoursHint: "Leave it blank if you are not sure. We then assume 40.",
+  },
+  costs: {
+    legend: "What you pay each month",
+    rent: "Rent or house payment",
+    childcare: "Child care",
+    typical: (amount: string, where: string) => `Typical in ${where}: ${amount} a month. Change it if yours is different.`,
+    none: "Put 0 if you pay nothing.",
+  },
+  submit: "See my answer",
+  close: "Close",
+  chips: {
+    where: "Where", household: "Home", pay: "Pay", rent: "Rent", childcare: "Child care",
+    age: "Your age", spouseAge: "Spouse's age", spousePay: "Spouse's pay",
+    ssdi: "SSDI", childSupport: "Child support", unemployment: "Unemployment pay", savings: "Savings",
+    status: "Your status", spouseStatus: "Spouse's status", kidsDisabled: "Kids with a disability",
+    childcareSubsidy: "Child care help", headStart: "Head Start", housing: "Housing help",
+    employerCoverage: "Health plan from a job", selfEmployed: "Self-employed",
+    disabled: "You have a disability", spouseDisabled: "Spouse has a disability",
+    snap: "Gets food help (SNAP)", tanf: "Gets cash help (TANF)", medicaid: "Gets Medicaid", wic: "Gets WIC",
+    on: "on", off: "off", yes: "yes", no: "no", none: "none",
+    aYear: "a year", aMonth: "a month",
+  },
+  dialog: {
+    save: "Save",
+    cancel: "Cancel",
+    monthly: "Dollars a month",
+    yearly: "Dollars a year",
+    years: "Years in the US",
+    yearsHint: "Only if you are not a citizen.",
+    hasDisability: (n: number, age: string) => `Kid ${n} (age ${age}) has a disability`,
+  },
+  status: {
+    citizen: "US citizen", lpr: "Green card (permanent resident)", refugee: "Refugee", asylee: "Asylee",
+    deportation_withheld: "Deportation withheld", cuban_haitian_entrant: "Cuban or Haitian entrant",
+    conditional_entrant: "Conditional entrant", paroled_one_year: "Paroled for a year or more",
+    daca: "DACA", tps: "TPS", undocumented: "No papers",
+  } as Record<string, string>,
+  errors: {
+    check: (label: string) => `Please check ${label}.`,
+    fields: {
+      zip: "your ZIP code", state: "your ZIP code or state", annualEarnings: "your pay", hoursPerWeek: "your hours",
+      childAges: "your kids' ages", age: "your age", spouseAge: "your spouse's age",
+      monthlyRent: "your rent", monthlyChildcare: "your child care cost",
+      spouseAnnualEarnings: "your spouse's pay", ssdiMonthly: "SSDI", childSupportMonthly: "child support",
+      unemploymentMonthly: "unemployment pay", savings: "savings", youStatus: "your status",
+      spouseStatus: "your spouse's status", youYearsInUs: "years in the US", spouseYearsInUs: "your spouse's years in the US",
+      childDisabled: "which kids have a disability", countyFips: "your county",
+    } as Record<string, string>,
+  },
+};

@@ -1,0 +1,58 @@
+/* The input editor's own layout. Everything shared — chips, buttons, the
+   scenario bar, the callout, the select — comes from design/tokens.css as an
+   hg-* class; what is declared here is the form's grid, its text and number
+   inputs, and the one-value dialog. A text input class is something the
+   system lacks (TODO(system) in the editor's report); until it has one,
+   .editor__input mirrors .hg-select. */
+.editor-wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); letter-spacing: -0.01em; margin: 0 var(--s3) 0 0; }
+
+.editor { background: var(--surface); border-bottom: 1px solid var(--rule); }
+.editor__form { max-width: 40rem; margin: 0 auto; padding: var(--s5) var(--s4) var(--s6); }
+.editor__heading { margin-bottom: var(--s2); text-wrap: balance; }
+.editor__lead { color: var(--ink-2); }
+
+/* A fieldset is a group, never a box: the rule and the ground do that work. */
+:where(.editor__form) fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+:where(.editor__form) legend { padding: 0; }
+.editor__group { margin: var(--s5) 0 0; }
+.editor__group > legend { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 0 var(--s3); }
+.editor__field { margin: 0 0 var(--s4); min-width: 0; }
+.editor__field > label, .editor__field > legend { display: block; margin-bottom: var(--s1); font-weight: var(--w-med); }
+.editor__input {
+  min-height: var(--touch); width: 100%; max-width: 100%;
+  border: 1px solid var(--control-edge); border-radius: var(--r-control);
+  background: var(--surface); color: var(--ink); padding: 0 var(--s3); font: inherit;
+}
+.editor__input--short { max-width: 9rem; }
+.editor__input[aria-invalid="true"] { border-color: var(--caution); box-shadow: inset 0 0 0 1px var(--caution); }
+.editor__hint { margin: var(--s1) 0 0; font-size: var(--t-small); color: var(--ink-3); max-width: var(--measure); }
+
+/* Amount beside its unit; two fields beside each other where there is room. */
+.editor__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 8rem); gap: var(--s3); align-items: end; }
+@media (min-width: 40rem) { .editor__pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); align-items: start; } }
+
+/* Radio choices as pressable options: the edge is --control-edge, the chosen
+   one gets the inset ring a pressed chip gets. */
+.editor__options { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); }
+.editor__option {
+  display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch); padding: 0 var(--s3);
+  border: 1px solid var(--control-edge); border-radius: var(--r-control); cursor: pointer;
+}
+.editor__option:has(:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.editor__option:has(:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.editor__option input { margin: 0; }
+.editor__kids { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--s3); }
+
+.editor__actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.editor__privacy { margin-top: var(--s4); }
+.editor__form .hg-callout { margin: var(--s4) 0; }
+
+/* The one-value dialog: a panel, not a card — a rule and a change of ground. */
+.editor__dialog {
+  border: 1px solid var(--rule-strong); border-radius: var(--r-control); background: var(--surface); color: var(--ink);
+  padding: var(--s5); width: min(28rem, calc(100vw - 2 * var(--s4))); margin: auto;
+}
+.editor__dialog::backdrop { background: rgba(18, 23, 28, 0.4); }
+.editor__dialog h2 { margin-bottom: var(--s3); }
+.editor__dialog-actions { display: flex; gap: var(--s2); justify-content: flex-end; margin-top: var(--s4); }
+.editor__checks label { display: flex; gap: var(--s2); align-items: center; min-height: var(--touch); }
