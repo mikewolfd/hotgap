@@ -50,6 +50,8 @@ export function verdictSentence(ev: HouseholdEvaluation, unit: PayUnit, hoursPer
 }
 
 export interface Result {
+  /** Nothing to show: the page went back to a bare URL. */
+  clear(): void;
   loading(count: number): void;
   render(ev: HouseholdEvaluation, flags: HouseholdFlags): void;
   error(result: Extract<EvaluateResult, { ok: false }>): void;
@@ -78,6 +80,13 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   root.append(status, answer, source, alert);
 
   return {
+    clear() {
+      status.textContent = "";
+      answer.textContent = "";
+      source.replaceChildren();
+      delete source.dataset.source;
+      alert.hidden = true;
+    },
     loading(count) {
       alert.hidden = true;
       status.textContent = text.loading(count);

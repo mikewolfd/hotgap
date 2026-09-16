@@ -51,7 +51,7 @@ function start(): void {
   const flags = flagsFromSearchParams(new URLSearchParams(location.search));
   editor.setFlags(flags);
   if (hasAnswers(flags)) void run(editor.flags, { push: false });
-  else editor.open();
+  else { result.clear(); editor.open(); }
 }
 window.addEventListener("popstate", start);
 start();
