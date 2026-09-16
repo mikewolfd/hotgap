@@ -113,6 +113,12 @@ for (const width of [390, 1280]) {
     await expect(age.locator(".hg-chip__v")).toHaveText("45");
     expect(new URL(page.url()).searchParams.get("age")).toBe("45");
     expect((await evaluated).status()).toBe(200);
+    // An Escape after that Save is a cancel, not a second save.
+    await age.click();
+    await page.locator("dialog").getByLabel("Your age").fill("50");
+    await page.keyboard.press("Escape");
+    await expect(age.locator(".hg-chip__v")).toHaveText("45");
+    expect(new URL(page.url()).searchParams.get("age")).toBe("45");
     // A toggle flips, re-evaluates, and keeps focus.
     const housing = page.locator('[data-chip="housing"]');
     await expect(housing).toHaveAttribute("aria-pressed", "false");

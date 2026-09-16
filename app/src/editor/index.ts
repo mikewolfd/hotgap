@@ -425,6 +425,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
         h("button", { type: "submit", class: "hg-button", value: "cancel", formnovalidate: true }, copy.dialog.cancel),
         h("button", { type: "submit", class: "hg-button hg-button--primary", value: "save" }, copy.dialog.save)));
     dialog.replaceChildren(dialogForm);
+    // returnValue survives a close: an Escape after an earlier Save must not read as Save.
+    dialog.returnValue = "";
     btn.setAttribute("aria-expanded", "true");
     dialog.addEventListener("close", () => {
       if (dialog.returnValue === "save") {
