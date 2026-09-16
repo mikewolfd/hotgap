@@ -22,7 +22,7 @@ const TAG = "hotgap-engine";
 const REGION = "nyc3";
 const SIZE = "s-4vcpu-8gb";
 const IMAGE = "ubuntu-24-04-x64";
-const WORKERS = "1";
+const WORKERS = "2";
 
 const env = Object.fromEntries(
   (existsSync(ENV_PATH) ? readFileSync(ENV_PATH, "utf8") : "")

@@ -125,23 +125,28 @@ engine on the GitHub runner, and the CLI falls back to the public API. So
 script owns `HOTGAP_PE_URL` in `.env`; the down/up cycle takes about five
 minutes end to end.
 
-**One worker means one request at a time.** A second request — a health
-probe, or a pipeline run at `--concurrency 2` — waits behind the first,
-which on an override state can be a minute; `npm run pipeline` against
-this box wants `--concurrency 1` (the sweep does not use it anyway), and
-the CLI's own requests (one curve, a second for `unclaimed`, the
-Massachusetts feedback points) queue harmlessly. Verified 2026-09-16: the
-23-test live contract suite in 212 s, and TX + SC + MA through the
-pipeline with no out-of-memory event and 2.8 GB in use afterwards.
-
-**Size, and why.** One gunicorn worker on 8 GB. A worker peaks near 4.5 GB
-on an override state (the preloaded system, a reform system warming to
-~2 GB, the simulation's own working memory), and a 4 GB box died on the
-first one. The App Platform route was tried first: its cheapest 8 GB
+**Size, and why.** Two gunicorn workers on 8 GB. Memory is per worker,
+not shared: the preloaded model (~1.2 GB) is forked copy-on-write, and
+each worker then grows its own reform system (~2 GB warm on an override
+state) and simulation working memory, to about 3 GB private at peak.
+Two workers can therefore touch ~7 GB when both are on override states;
+`--max-requests` recycling keeps the steady state well under, and the
+kernel's out-of-memory killer, if it ever fires, takes one worker, which
+gunicorn respawns. A 4 GB box died on the first override request with one
+worker. The App Platform route was tried first: its cheapest 8 GB
 instance is $98/month, dedicated, and it has no pause; the droplet is the
 same memory for half the price, with `ssh root@<ip>` for anything the
 platform would have hidden. `WORKERS` in the script is the one knob;
 budget 3 GB per worker plus 1.5 GB for the master.
+
+Verified 2026-09-16 with one worker: the 23-test live contract suite in
+212 s, and TX + SC + MA through the pipeline with no out-of-memory event
+and 2.8 GB in use afterwards — but 32 of 33 curves, because a pipeline
+at `--concurrency 2` queued requests behind each other past the 90 s
+timeout on a one-request-at-a-time box. That is why it is two workers
+now. Watchtower's first live update, from the health-check change in
+this commit's Dockerfile, pulled and restarted the engine on its own
+three minutes after the image landed.
 
 ## Which model produced a number
 
