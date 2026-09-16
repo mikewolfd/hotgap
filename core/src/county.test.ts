@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { zipToCounty } from "./county.js";
+import { countyName, zipToCounty } from "./county.js";
 
 describe("zipToCounty", () => {
   it("resolves known ZIPs from the committed crosswalk", () => {
@@ -17,5 +17,16 @@ describe("zipToCounty", () => {
   it("drops a county that disagrees with the caller's state", () => {
     expect(zipToCounty("94110", "CA")).toBe("06075");
     expect(zipToCounty("94110", "NY")).toBeNull();
+  });
+});
+
+describe("countyName", () => {
+  it("names a county the crosswalk can point at, as the gazetteer spells it", () => {
+    expect(countyName(zipToCounty("80903")!)).toBe("El Paso County");
+    expect(countyName("22071")).toBe("Orleans Parish");
+    expect(countyName("35013")).toBe("Doña Ana County");
+  });
+  it("is null for a code the table lacks", () => {
+    expect(countyName("99999")).toBeNull();
   });
 });

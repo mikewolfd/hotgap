@@ -56,3 +56,9 @@
 .editor__dialog h2 { margin-bottom: var(--s3); }
 .editor__dialog-actions { display: flex; gap: var(--s2); justify-content: flex-end; margin-top: var(--s4); }
 .editor__checks label { display: flex; gap: var(--s2); align-items: center; min-height: var(--touch); }
+
+/* A top-row action with a short name for a phone (S1): the full name above
+   720px, the short one below, so the sticky row is one row at every width.
+   display:none keeps the hidden span out of the button's accessible name. */
+.editor-action__short { display: none; }
+@media (max-width: 719.98px) { .editor-action__short { display: inline; } .editor-action__full { display: none; } }
