@@ -106,9 +106,11 @@ function applyDisability(person: Vars, disabled: boolean, ssiPathway: boolean): 
  * gate but it does change the number — Colorado pays the whole $9,600 bill
  * without it and $9,450/$8,913/$7,513 with it, because the rate ceiling and
  * copay only bind once care has a duration (childcare-co-no-attendance.json).
- * `meets_ccdf_activity_test` and `weekly_hours_worked_before_lsr` are NOT
- * required: Colorado's output is byte-identical with and without either
- * (childcare-co-no-activity-test.json, childcare-co-no-hours.json).
+ * Colorado's output is byte-identical with and without
+ * `meets_ccdf_activity_test` or `weekly_hours_worked_before_lsr`
+ * (childcare-co-no-activity-test.json, childcare-co-no-hours.json); other
+ * states gate on one or the other, so both are sent (below, and in
+ * buildPEPayload).
  */
 function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: HouseholdAnswers): void {
   const annual = (a.monthlyChildcare ?? 0) * 12;
@@ -125,6 +127,13 @@ function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: H
   // and 13 states' per-state variables are not in the deployed model at all —
   // asking for `ny_child_care_subsidies` is a 400 (childcare-ny-base.json).
   spmVars.child_care_subsidies = y(null);
+  // Upstream's own switch for "the parents are in an approved activity"
+  // (its docstring: use it for activities not individually modeled). Most
+  // states also read the work hours sent above; Nevada reads only this, so
+  // without it a working parent's $12,000 bill drew $0 there on 2.5.0.
+  // Claiming the subsidy is claiming the activity. Verified 2026-09-15 that
+  // it changes nothing in CO, TX, CA, MA, MD, NY, IL, WA or OH.
+  spmVars.meets_ccdf_activity_test = y(true);
   for (const [name, person] of Object.entries(people)) {
     if (name === "you" || name === "spouse") continue;
     person.childcare_hours_per_day = y(8);

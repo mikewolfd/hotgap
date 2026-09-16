@@ -277,6 +277,9 @@ describe("the child-care subsidy take-up toggle", () => {
     // The aggregate, not `ca_child_care_subsidies`: 13 states' own variables
     // are not in the deployed model and asking for one is a 400.
     expect(spm.child_care_subsidies).toEqual({ "2026": null });
+    // Nevada's activity gate reads only this input.
+    expect(spm.meets_ccdf_activity_test).toEqual({ "2026": true });
+    expect(spmOf(withKids).meets_ccdf_activity_test).toBeUndefined();
   });
 
   it("assumes full-day, full-week care for every child, and none for the adults", () => {
