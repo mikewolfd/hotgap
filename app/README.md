@@ -21,7 +21,7 @@ evaluates on the public PolicyEngine API's older model — still `live`.
 |---|---|---|---|
 | `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result | editor wired; result is the minimal placeholder in `src/citizen/result.ts` |
 | `places.html` | journalist | `src/places/main.ts` | being built |
-| `caseworker.html` | caseworker | `src/caseworker/main.ts` | scaffold |
+| `caseworker.html` | caseworker | `src/caseworker/main.ts` — the editor with this surface's actions, the base household in full, its what-ifs beside it | built |
 
 Every page imports `design/tokens.css` and uses its `hg-*` classes
 (`design/inventory.md` § Class map); a page keeps only its own layout
@@ -36,7 +36,7 @@ symlink to `core/data`):
 
 - `/data/summary.json` — `SummaryJson` (`core/src/data.ts`), with `coverage`
 - `/data/states/{ST}.json` — `StateFileJson`, one curve per archetype
-- `/data/state-defaults.json`, `/data/reach.json`, `/data/zip3-state.json`, `/data/zip5-county.json`
+- `/data/state-defaults.json`, `/data/reach.json`, `/data/zip3-state.json`, `/data/zip5-county.json`, `/data/county-names.json` (FIPS → name, for `countyName`)
 
 A page that needs one of these at runtime fetches it and, where a core
 function reads it, hands it to core with `provideData({ "summary.json": json })`.
@@ -92,6 +92,23 @@ without moving focus). `open(field)` focuses one of the screen's controls:
 (`#f-{field}`); any other flag opens the screen on the ZIP. `setFlags`
 rewrites a hand-typed `earnings=` as `pay=&unit=year`.
 
+The bar is **prepended** to `root`, so a page may keep its own content in
+the same root and the sticky top row's containing block is the whole page
+(a sticky child cannot outlive its parent's box). A surface that is not
+the citizen's names the top row's two actions and can use the rest:
+
+```ts
+mountEditor(root, {
+  onSubmit, onChange,
+  actions: [{ label: "Add a what-if", short: "What-if", onClick() {} }, { label: "Print the client sheet", short: "Print", primary: true, onClick() {} }],
+  altSubmit: { label: "Add as a what-if", onSubmit(flags) {} },   // a second, validated exit from the screen; never on a first visit
+  onClose() {},                                                     // the screen closed, edits and all
+});
+editor.openInputs("housing");   // show the chips row (hidden behind Edit below 720px) and focus a chip
+editor.setNote(text);           // the .hg-scenario__note line a take-up toggle answers with; "" hides it
+editor.setCounty(zip, name);    // the county the Worker resolved, beside the place while that ZIP stands
+```
+
 **DOM the page owns** (`src/citizen/main.ts`): a visually hidden `h1`, then
 `#result`, where `mountResult` puts `[role=status]` (loading text, or the
 new sentence after a chip change), `#answer` (`tabindex="-1"`; focus lands
@@ -111,6 +128,14 @@ flag is `1` when true and absent when false; `flagsFromSearchParams` /
 on submit and replaces it on a chip change; landing with a place and a pay
 evaluates at once, landing without shows the screen.
 
+The caseworker page adds one `whatif=` per what-if, each a mini query
+string of the answers that what-if changes from the base (an empty value
+removes one): `/caseworker.html?zip=80903&kids=3,7&pay=38000&unit=year&whatif=pay%3D55000&whatif=childcare-subsidy%3D`
+(`src/caseworker/url.ts`). A chip pressed while a base stands adds a
+what-if rather than changing the base; the four-facts screen changes the
+base, or, through *Add as a what-if*, adds one. Landing on such a link is
+1 + N evaluations, in parallel.
+
 The editor's client is `src/editor/api.ts`: `evaluate(flags)` →
 `{ ok, evaluation } | { ok: false, error, detail }` (`error` adds `"network"`
 and `"timeout"` to `ApiErrorCode`).
@@ -126,9 +151,13 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 - `toAnnual`, `fromAnnual`, `PAY_UNITS`, `DEFAULT_HOURS`, `axisSpec`
 - `STATE_NAMES`, `STATE_CODES`, `FIPS_TO_USPS`, `IMMIGRATION_STATUSES`, `PROGRAM_IDS`, `CASH_PROGRAMS`
 - `stateDefaults`, `childcareMonthlyFor`, `CHILDCARE_MAX_AGE`, `stateDefaultsProvenance`
+- `pickArchetypeId`, `ARCHETYPES`, `answersFor` (the swept household an archetype curve models), `countyName`, `DEFERRAL_UNTIL`, `COVERAGE_PROGRAMS`
 - `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
 
 The citizen bundle today is 61 KB (18.8 KB gzip) with the two small tables inlined.
+The caseworker page loads the shared editor chunk (57 KB, core and the two
+tables) plus its own 40 KB (14.5 KB gzip), and fetches `summary.json`,
+`reach.json` and, for a live household with a county, `county-names.json`.
 
 ## Proofs
 
@@ -136,7 +165,7 @@ The citizen bundle today is 61 KB (18.8 KB gzip) with the two small tables inlin
     npx vitest run                     # unit tests, worker/src/index.test.ts included
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
-    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/editor.spec.ts
+    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/editor.spec.ts and e2e/caseworker.spec.ts
 
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then

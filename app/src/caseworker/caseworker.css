@@ -1,0 +1,93 @@
+/* Caseworker surface: dense, exact, printable (design/caseworker.html is the
+   brief). Body steps down to 15px — this reader is scanning thresholds, not
+   reading prose. Everything shared (chips, buttons, badges, tables, panels,
+   the chart's marks, the scenario bar) comes from design/tokens.css as an
+   hg-* class and the editor's from app/src/editor/editor.css; what is
+   declared here is layout that belongs to this page alone. */
+body { font-size: var(--t-small); }
+.page { max-width: 76rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+h2 { font-size: var(--t-h2); margin: var(--s6) 0 var(--s3); }
+h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
+p { max-width: var(--measure-wide); }
+#status { margin: var(--s4) 0 0; }
+#alert { margin-top: var(--s4); }
+
+.verdict { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-end;
+           padding: var(--s5) 0 var(--s4); border-bottom: 1px solid var(--rule); }
+.verdict > div:first-child { flex: 1 1 28rem; min-width: 0; }
+.verdict-line { font-size: var(--t-h1); font-weight: var(--w-med); line-height: var(--lh-tight);
+                max-width: 40ch; letter-spacing: -0.01em; margin: 0; }
+.verdict-sub { color: var(--ink-2); margin: var(--s2) 0 0; }
+.tiles { display: flex; gap: var(--s5); flex-wrap: wrap; margin-left: auto; }
+.tile .lab { color: var(--ink-3); font-size: var(--t-micro); display: block; }
+.tile .val { font-size: var(--t-figure); font-weight: var(--w-semi); line-height: 1.1;
+             letter-spacing: -0.02em; display: block; }
+.tile .sub { color: var(--ink-2); font-size: var(--t-micro); display: block; }
+
+/* Coverage notice and corrections sit under the verdict, before the columns (B1, B3). */
+.provenance { display: grid; gap: 0 var(--s6); grid-template-columns: 1fr; }
+@media (min-width: 60rem) { .provenance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.provenance .hg-rows { margin-top: var(--s2); --col: 11rem; }
+.provenance .hg-rows .hg-cite { margin-top: 2px; }
+.provenance .hg-cite .hg-tag { margin-right: var(--s2); vertical-align: 1px; }
+.provenance h2 { margin-top: var(--s5); }
+
+.cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s4); }
+@media (min-width: 60rem) { .cols { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } }
+/* Grid items default to min-width:auto, which lets a wide table push the
+   column past the viewport. The scroller only works if the column can shrink. */
+.cols > * { min-width: 0; }
+.hg-scroll-x .hg-table { min-width: 30rem; }
+.curve { margin: 0; }
+.curve h2 { margin-top: var(--s5); }
+/* A direct label's weight (the largest drop and the leap); its ink and halo are the hg-label modifiers. */
+.cw-label--strong { font-weight: var(--w-semi); }
+
+.ledger .who { color: var(--ink-2); }
+.ledger .hg-badge { margin-left: var(--s1); }
+.drops td:first-child { font-weight: var(--w-semi); white-space: nowrap; }
+.drops .unnamed { color: var(--ink-3); }
+
+/* BreakdownBars (#9): four signed bars from a centre zero (N4). */
+.breakdown { margin-top: var(--s4); }
+.bd { margin: var(--s3) 0 0; }
+.bd-row { display: grid; grid-template-columns: 5.5rem 1fr 5.5rem; gap: var(--s3); align-items: center; padding: var(--s1) 0; }
+.bd-axis { color: var(--ink-3); font-size: var(--t-micro); }
+.bd-axis .bd-track { background: none; height: auto; display: flex; justify-content: space-between; }
+.bd-track { position: relative; height: 14px; background: var(--surface-sunk); }
+.bd-zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--rule-strong); }
+.bd-fill { position: absolute; top: 2px; height: 10px; border-radius: 0 3px 3px 0; }
+.bd-fill.neg { border-radius: 3px 0 0 3px; }
+.bd-val { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bd .footnote { margin: 0; }
+.bd .bd-sum { margin-top: var(--s2); }
+.breakdown > .footnote { margin: var(--s3) 0 0; }
+
+/* CompareTable (#12): a what-if column takes a 3px series-2 rule under its
+   header and a 1px one down its sides — identity by rule, never by text. */
+.compare th:first-child { width: 13rem; }
+.compare td { font-variant-numeric: tabular-nums; }
+.compare thead .b { box-shadow: inset 0 -3px 0 0 var(--series-2); }
+.compare tbody .b { box-shadow: inset -1px 0 0 0 var(--series-2), inset 1px 0 0 0 var(--series-2); }
+.compare .col-actions { display: flex; gap: var(--s1); justify-content: flex-end; margin-top: var(--s2); }
+
+.footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
+.assumptions { margin-top: var(--s5); }
+.assumptions .hg-source { margin-top: var(--s3); }
+.assumptions .hg-button { margin-top: var(--s2); }
+.assumed { margin: 0; padding-left: var(--s5); }
+.assumed li { margin-bottom: var(--s1); overflow-wrap: anywhere; }
+.theme { margin-top: var(--s7); }
+
+@media print {
+  body { font-size: 11pt; }
+  .cols, .provenance { grid-template-columns: 1fr; }
+  .handout { page-break-before: always; }
+  /* TODO(system): tokens.css's print block (`:root, :root[data-theme] {
+     color-scheme: light }`, specificity 0,1,0) loses to its own OS-dark rule
+     (`:root:not([data-theme="light"])`, 0,2,0) when no theme attribute is
+     set, so a print from an OS in dark mode kept dark ink (measured:
+     rgb(242,245,247) on white). Until tokens.css says `!important` there,
+     this page reasserts it. Additive; remove when the system rule lands. */
+  :root { color-scheme: light !important; }
+}
