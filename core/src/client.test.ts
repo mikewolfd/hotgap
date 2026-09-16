@@ -4,37 +4,12 @@ import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePaylo
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { axisSpec, buildPEPayload, type AxisSpec } from "./translate.js";
+import { peBody } from "./testing.js";
+import { axisSpec, buildPEPayload } from "./translate.js";
 import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
 const noopSleep = async () => {};
-
-// A minimal well-formed PolicyEngine response at whatever axis the answers ask
-// for. The recorded fixture is pinned to the retired 101-point / $100k axis, so
-// it can no longer stand in for a live body; parse.ts's own tests still use it.
-function peBody(spec: AxisSpec, ssdi = 0): string {
-  const all = (v: number) => ({ "2026": new Array(spec.count).fill(v) });
-  return JSON.stringify({
-    status: "ok",
-    result: {
-      axes: [[{ min: 0, max: spec.max, count: spec.count }]],
-      households: { h: { household_net_income: all(20000 + ssdi), household_benefits: all(ssdi) } },
-      spm_units: {
-        s: {
-          snap: all(0), tanf: all(0), spm_unit_capped_housing_subsidy: all(0),
-          free_school_meals: all(0), reduced_price_school_meals: all(0),
-          spm_unit_medical_out_of_pocket_expenses: all(0),
-        },
-      },
-      tax_units: { t: { eitc: all(0), refundable_ctc: all(0), premium_tax_credit: all(0) } },
-      people: {
-        you: { age: { "2026": 30 }, medicaid: all(0), chip: all(0), wic: all(0), ssi: all(0) },
-        child1: { age: { "2026": 5 }, medicaid: all(0), chip: all(0) },
-      },
-    },
-  });
-}
 
 const raw = {
   state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],

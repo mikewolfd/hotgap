@@ -13,3 +13,11 @@ engine/.venv/
 
 # Subagent git worktrees
 .claude/worktrees/
+
+# worker/: local secrets for `wrangler dev`, and the Env + runtime types that
+# `wrangler types` regenerates on every typecheck
+.dev.vars
+worker-configuration.d.ts
+
+# wrangler dev state (local cache, logs)
+.wrangler/

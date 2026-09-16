@@ -8,11 +8,12 @@
   "workspaces": [
     "core",
     "pipeline",
-    "app"
+    "app",
+    "worker"
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -b core pipeline app",
+    "typecheck": "npm run -s types -w worker && tsc -b core pipeline app worker",
     "contract": "RUN_CONTRACT=1 vitest run contract --no-file-parallelism",
     "pipeline": "tsx pipeline/src/run.ts",
     "hotgap": "tsx core/src/cli.ts"

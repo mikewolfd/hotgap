@@ -173,17 +173,31 @@ export function provideData(entries: Record<string, unknown>): void {
 const fs = typeof process !== "undefined" && typeof process.getBuiltinModule === "function"
   ? (process.getBuiltinModule("node:fs") as typeof import("node:fs") | undefined)
   : undefined;
-// The second argument is deliberately not the literal `import.meta.url`:
-// Vite rewrites `new URL(<string>, import.meta.url)` into an asset reference
-// at build time, and data/ is a directory, not an asset.
-const here = import.meta.url;
-const DATA_DIR = new URL("../data/", here);
+
+/**
+ * Where data/ is, from this module's own URL — on Node a file: URL. In a
+ * Worker bundle import.meta.url is a bare module name, not a URL, so this is
+ * resolved lazily and a failure means "no disk". The URL is built from a
+ * parameter rather than the literal `import.meta.url` because Vite rewrites
+ * `new URL(<string>, import.meta.url)` into an asset reference at build time,
+ * and data/ is a directory, not an asset.
+ */
+function dataDirFrom(moduleUrl: string): URL | null {
+  try {
+    return new URL("../data/", moduleUrl);
+  } catch {
+    return null;
+  }
+}
+let dataDir: URL | null | undefined;
 
 /** Read `data/<relPath>` from disk; null off Node, or when the file does not exist or the path escapes data/. */
 function readDisk(relPath: string): unknown {
   if (!fs) return null;
-  const url = new URL(relPath, DATA_DIR);
-  const inside = url.href.startsWith(DATA_DIR.href);
+  dataDir ??= dataDirFrom(import.meta.url);
+  if (!dataDir) return null;
+  const url = new URL(relPath, dataDir);
+  const inside = url.href.startsWith(dataDir.href);
   return inside && fs.existsSync(url) ? JSON.parse(fs.readFileSync(url, "utf8")) : null;
 }
 
