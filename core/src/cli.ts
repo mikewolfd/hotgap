@@ -23,7 +23,7 @@ const USAGE = `hotgap <command> [options]
     --disabled  --spouse-disabled
     --rent 1500  --childcare 600  monthly; default none
     --earnings 30000              annual pay from work
-    --pay 15 --unit hour|month|year          (instead of --earnings; unit defaults to hour)
+    --pay 15 --unit hour|week|month|year     (instead of --earnings; unit defaults to hour)
     --hours 40                    hours a week worked; also converts an hourly --pay
     --spouse-earnings 0
     --ssdi 1500  --child-support 400  --unemployment 300   monthly, other income
@@ -90,7 +90,7 @@ const breakdownOf = (c: Cliff): string => {
 
 function householdFrom(f: Flags): HouseholdAnswers {
   if (f.state === undefined && f.zip === undefined) fail(2, "--state or --zip is required");
-  if (f.unit !== undefined && !(PAY_UNITS as readonly string[]).includes(f.unit)) fail(2, "--unit must be hour, month, or year");
+  if (f.unit !== undefined && !(PAY_UNITS as readonly string[]).includes(f.unit)) fail(2, "--unit must be hour, week, month, or year");
   if (f.earnings === undefined && f.pay === undefined) fail(2, "--earnings or --pay is required");
   const v = validateAnswers(rawAnswersFromFlags(f));
   return v.ok ? v.value : fail(2, `bad input: ${v.detail}`);

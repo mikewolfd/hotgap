@@ -16,6 +16,8 @@ import {
   PolicyEngineError,
   provideData,
   validateAnswers,
+  type ApiErrorBody,
+  type ApiErrorCode,
   type CurveCache,
   type CurveResponse,
   type HouseholdEvaluation,
@@ -43,22 +45,6 @@ const RESAMPLE_CONCURRENCY = 2;
 /** A household is a few hundred bytes of JSON; anything near this is not one. */
 const MAX_BODY_BYTES = 16 * 1024;
 
-export type ApiError =
-  | "bad_input"
-  | "not_found"
-  | "method_not_allowed"
-  | "payload_too_large"
-  | "rate_limited"
-  | "busy"
-  | "upstream_timeout"
-  | "upstream_error"
-  | "internal";
-
-export interface ErrorBody {
-  error: ApiError;
-  detail?: string;
-}
-
 /** What the handler needs from its environment, so a test can hand it fakes. */
 export interface Deps {
   fetchImpl: typeof fetch;
@@ -76,8 +62,8 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers },
   });
 
-const error = (status: number, error: ApiError, detail?: string, headers?: Record<string, string>): Response =>
-  json(status, { error, ...(detail === undefined ? {} : { detail }) } satisfies ErrorBody, headers);
+const error = (status: number, error: ApiErrorCode, detail?: string, headers?: Record<string, string>): Response =>
+  json(status, { error, ...(detail === undefined ? {} : { detail }) } satisfies ApiErrorBody, headers);
 
 // Live evaluations this isolate is running. A per-isolate bound, not a
 // global one — Cloudflare runs many isolates — so it caps what one isolate

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { axisSpec, configurePolicyEngine, loadStateFile, validateAnswers, type CurveCache, type CurveResponse, type HouseholdEvaluation } from "@hotgap/core";
+import { axisSpec, configurePolicyEngine, loadStateFile, validateAnswers, type ApiErrorBody, type CurveCache, type CurveResponse, type HouseholdEvaluation } from "@hotgap/core";
 import { peBody } from "../../core/src/testing.js";
-import { curveCache, handleRequest, type Deps, type ErrorBody } from "./index.js";
+import { curveCache, handleRequest, type Deps } from "./index.js";
 
 const raw = {
   state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
@@ -37,7 +37,7 @@ const post = (json: unknown, headers: Record<string, string> = {}) =>
     headers: { "Content-Type": "application/json", ...headers },
   });
 
-const errorOf = async (res: Response) => (await res.json()) as ErrorBody;
+const errorOf = async (res: Response) => (await res.json()) as ApiErrorBody;
 
 // Probes are memoized per endpoint and process; a distinct endpoint per suite
 // keeps one test's fetch counts from depending on another's.
