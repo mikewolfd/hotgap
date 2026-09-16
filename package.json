@@ -12,7 +12,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -b core pipeline",
-    "contract": "RUN_CONTRACT=1 vitest run contract",
+    "contract": "RUN_CONTRACT=1 vitest run contract --no-file-parallelism",
     "pipeline": "tsx pipeline/src/run.ts",
     "hotgap": "tsx core/src/cli.ts"
   },

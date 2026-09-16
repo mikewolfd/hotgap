@@ -25,5 +25,5 @@ jobs:
       - run: npm ci
       - id: engine
         uses: ./.github/actions/start-engine
-      - run: RUN_CONTRACT=1 npx vitest run contract
+      - run: RUN_CONTRACT=1 npx vitest run contract --no-file-parallelism
         env: { HOTGAP_PE_URL: "${{ steps.engine.outputs.url }}" }

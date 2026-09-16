@@ -1,5 +1,6 @@
 import { DEFAULT_HOURS } from "./income.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
+import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
 import { householdSize, YEAR, type HouseholdAnswers } from "./types.js";
 
 export interface AxisSpec {
@@ -67,6 +68,12 @@ export interface PayloadOptions {
    * and Medicaid $11,078 vanishing at $24k as a cliff that does not exist.
    */
   ssiPathway?: boolean;
+  /**
+   * Ask for the state's modeled premium assistance (statePremiumAssistance.ts).
+   * Only an endpoint that has the variable may be asked — the hosted API
+   * rejects the request — so client.ts probes first and sets this.
+   */
+  statePremiumAssistance?: boolean;
 }
 
 // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only
@@ -306,6 +313,8 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   // claiming a premium tax credit files a return, so say so.
   const taxVars: Vars = { tax_unit_is_filer: y(true) };
   for (const v of TAX_VARS) taxVars[v] = y(null);
+  const assistance = statePremiumAssistanceFor(a.state);
+  if (opts.statePremiumAssistance && assistance) taxVars[assistance.variable] = y(null);
 
   const householdVars: {
     members: string[];

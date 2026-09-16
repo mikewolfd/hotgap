@@ -17,6 +17,7 @@ import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_B_ANNUAL, NON_EXPANSION_STATES, fpl2026 } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
 import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
+import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
 import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
@@ -107,8 +108,10 @@ export interface HouseholdEvaluation {
   /** The employer-plan tier and charge at this household's own earnings. */
   esi: EsiSummary | null;
   maTafdc: MaTafdcCorrection | null;
-  /** The state $0-premium tier this household's curve fell inside, if any. */
+  /** The state $0-premium tier this household's curve fell inside, if any (local ladder). */
   premiumWrap: PremiumWrap | null;
+  /** The state's modeled premium assistance netted out of the premium, when the endpoint served it. */
+  statePremiumAssistance: StatePremiumAssistanceSummary | null;
   /**
    * What each entitlement the household said it does not get would pay at
    * its current earnings, from a second curve with every take-up on. Empty
@@ -456,8 +459,36 @@ function applyCoverageGap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint
 // MA, whose $0 is the lowest-cost plan rather than the benchmark. Same MAGI as
 // the coverage-gap test; same adult-Medicaid guard; only where a credit and a
 // premium both exist, which is what "marketplace enrollee" means here.
+/** The state assistance PolicyEngine modeled, netted out of the premium on this curve. */
+export interface StatePremiumAssistanceSummary extends StatePremiumAssistance {
+  /** The largest annual amount on the curve. */
+  maxAnnual: number;
+}
+
+/**
+ * Where the endpoint served the state's own premium assistance, net it out
+ * of the premium here — PolicyEngine keeps it in household_health_benefits,
+ * never in the out-of-pocket figure — and leave the local ladder alone for
+ * that state. A curve without the amounts (the hosted API) falls through to
+ * the ladder as before.
+ */
+function applyStatePremiumAssistance(points: CurvePoint[], a: HouseholdAnswers): { points: CurvePoint[]; assistance: StatePremiumAssistanceSummary | null } {
+  const program = statePremiumAssistanceFor(a.state);
+  if (!program || a.hasEmployerCoverage || !points.every((p) => p.statePremiumAssistance !== undefined)) return { points, assistance: null };
+  let maxAnnual = 0;
+  const out = points.map((p) => {
+    const netted = Math.min(p.statePremiumAssistance!, p.medicalOOP);
+    if (netted <= 0) return p;
+    maxAnnual = Math.max(maxAnnual, netted);
+    return { ...p, netIncome: p.netIncome + netted, medicalOOP: p.medicalOOP - netted };
+  });
+  return { points: out, assistance: maxAnnual > 0 ? { ...program, maxAnnual: Math.round(maxAnnual) } : null };
+}
+
 function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: CurvePoint[]; wrap: PremiumWrap | null } {
   if (a.hasEmployerCoverage) return { points, wrap: null };
+  // The model's own amounts, when served, replace the local ladder.
+  if (points.every((p) => p.statePremiumAssistance !== undefined)) return { points, wrap: null };
   const povertyLine = fpl2025(a.state, householdSize(a));
   const nonWageIncome = a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
   let wrap: PremiumWrap | null = null;
@@ -627,7 +658,8 @@ export function evaluateCurve(
   // The archetype path measures the swept household, not the caller's: its
   // spouse pay, SSDI, unemployment and size decide the poverty-line tests.
   const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeledAnswers) : corrected;
-  const { points: wrapped, wrap: premiumWrap } = knowsWhoHolds ? applyPremiumWrap(gapped, modeledAnswers) : { points: gapped, wrap: null };
+  const { points: assisted, assistance: statePremiumAssistance } = knowsWhoHolds ? applyStatePremiumAssistance(gapped, modeledAnswers) : { points: gapped, assistance: null };
+  const { points: wrapped, wrap: premiumWrap } = knowsWhoHolds ? applyPremiumWrap(assisted, modeledAnswers) : { points: assisted, wrap: null };
   // Medicare last: it is the only correction that reads the coverage-gap
   // verdict's own output (a married couple whose phantom premium has just been
   // removed must not then be charged Part B against a premium that is gone).
@@ -695,6 +727,7 @@ export function evaluateCurve(
     esi: source === "live" ? esiSummary(answers, points, curve.currentEarnings) : null,
     maTafdc: tafdc.correction,
     premiumWrap,
+    statePremiumAssistance,
     unclaimed: null,
   };
 }

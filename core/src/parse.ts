@@ -1,4 +1,5 @@
 import type { MaTafdcInputs } from "./maTafdc.js";
+import { STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
 import { CASH_PROGRAMS, YEAR, type CurvePoint, type ProgramId } from "./types.js";
 
@@ -185,6 +186,10 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // part). Absent from curves fetched before we asked for it, where the
   // refundable series is all we know.
   const totalCtc = "ctc" in tax ? series(tax, "ctc", expectedCount) : null;
+  // Present only when the endpoint was asked for it (translate.ts, on the
+  // client's probe); `stateOf` is consulted only if the state has one.
+  const assistance = STATE_PREMIUM_ASSISTANCE.find((s) => s.variable in tax) ?? null;
+  const stateAssistance = assistance && assistance.state === stateOf(household) ? series(tax, assistance.variable, expectedCount) : null;
 
   const at = (source: Map<ProgramId, number[]>, i: number) =>
     Object.fromEntries([...source.entries()].map(([id, values]) => [id, values[i]]));
@@ -228,6 +233,7 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
     earnings: axis.min + step * i,
     netIncome: n,
     medicalOOP: moop[i],
+    ...(stateAssistance ? { statePremiumAssistance: stateAssistance[i] } : {}),
     programs: at(programSeries, i) as Record<ProgramId, number>,
     childPrograms: at(childSeries, i) as Partial<Record<ProgramId, number>>,
     // Float noise around an identity that holds exactly can only go negative

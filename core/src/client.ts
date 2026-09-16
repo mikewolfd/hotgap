@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
+import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
 import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
 import { axisSpec, buildPEPayload, earningsVariable, type AxisSpec, type PayloadOptions } from "./translate.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
@@ -63,6 +64,12 @@ export interface FetchCurveOptions extends RequestOptions {
    * (see probeMaTafdcDoubleCount); tests and fixtures set it explicitly.
    */
   maTafdcDoubleCounted?: boolean;
+  /**
+   * Whether to ask the endpoint for the state's modeled premium assistance
+   * (statePremiumAssistance.ts). Left unset, a household in one of those
+   * states triggers one cached probe of the endpoint for the variable.
+   */
+  statePremiumAssistance?: boolean;
   /**
    * In-flight limit for the Massachusetts feedback loop's point requests.
    * Measured 2026-09-15 on fresh households (64 points): 49 s at 3, 27 s at
@@ -196,10 +203,11 @@ async function fetchSplicedForSSDI(
   answers: HouseholdAnswers,
   axis: AxisSpec,
   opts: FetchCurveOptions,
+  payloadOpts: PayloadOptions = {},
 ): Promise<CurvePoint[]> {
   const [receiving, stopped] = await Promise.all([
-    requestPE(buildCurvePayload(answers), opts),
-    requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }, ABOVE_SGA), opts),
+    requestPE(buildCurvePayload(answers, payloadOpts), opts),
+    requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }, { ...payloadOpts, ...ABOVE_SGA }), opts),
   ]);
   const withSSDI = parseOrThrow(receiving, axis.count, opts);
   const withoutSSDI = parseOrThrow(stopped, axis.count, opts);
@@ -241,6 +249,43 @@ export async function modelVersion(opts: RequestOptions = {}): Promise<string | 
   } catch {
     return null;
   }
+}
+
+const variableProbeCache = new Map<string, Promise<boolean>>();
+
+/**
+ * Whether `peUrl()` knows a tax-unit variable: a bare household asking for
+ * it comes back 200, or 400 "Unrecognized household variable" from a model
+ * that predates it (the hosted API lacks every state premium-assistance
+ * variable; the engine has them all). One request per endpoint and
+ * variable per process; a failed probe is retried next time.
+ */
+export function endpointHasTaxUnitVariable(variable: string, opts: RequestOptions = {}): Promise<boolean> {
+  const key = `${peUrl()} ${variable}`;
+  let pending = variableProbeCache.get(key);
+  if (!pending) {
+    const y = { [YEAR]: 0 };
+    const payload = {
+      household: {
+        people: { person: { age: { [YEAR]: 30 }, employment_income: y } },
+        households: { household: { members: ["person"], state_code: { [YEAR]: "CA" } } },
+        tax_units: { tax_unit: { members: ["person"], [variable]: { [YEAR]: null } } },
+        spm_units: { spm_unit: { members: ["person"] } },
+        families: { family: { members: ["person"] } },
+        marital_units: { marital_unit: { members: ["person"] } },
+      },
+    };
+    pending = requestPE(payload, opts).then(
+      () => true,
+      (e) => {
+        if (e instanceof PolicyEngineError && e.status === 400 && /unrecognized/i.test(e.message)) return false;
+        throw e;
+      },
+    );
+    pending.catch(() => variableProbeCache.delete(key));
+    variableProbeCache.set(key, pending);
+  }
+  return pending;
 }
 
 /** Forced TAFDC large enough that no other state benefit can be mistaken for it. */
@@ -324,7 +369,8 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
     const aboveSga = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL;
     const base = aboveSga ? { ...answers, ssdiMonthly: 0 } : answers;
     const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
-    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, aboveSga ? ABOVE_SGA : {}), opts), 2, opts);
+    const pointOpts: PayloadOptions = { statePremiumAssistance: opts.statePremiumAssistance === true, ...(aboveSga ? ABOVE_SGA : {}) };
+    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, pointOpts), opts), 2, opts);
     out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
   });
   return out;
@@ -343,9 +389,14 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (answers.state === "MA" && requestOpts.maTafdcDoubleCounted === undefined) {
     requestOpts.maTafdcDoubleCounted = await probeMaTafdcDoubleCount(requestOpts);
   }
+  const assistance = statePremiumAssistanceFor(answers.state);
+  if (assistance && requestOpts.statePremiumAssistance === undefined) {
+    requestOpts.statePremiumAssistance = await endpointHasTaxUnitVariable(assistance.variable, requestOpts);
+  }
+  const payloadOpts: PayloadOptions = { statePremiumAssistance: requestOpts.statePremiumAssistance === true };
   const swept = answers.ssdiMonthly > 0
-    ? await fetchSplicedForSSDI(answers, axis, requestOpts)
-    : parseOrThrow(await requestPE(buildCurvePayload(answers), requestOpts), axis.count, requestOpts);
+    ? await fetchSplicedForSSDI(answers, axis, requestOpts, payloadOpts)
+    : parseOrThrow(await requestPE(buildCurvePayload(answers, payloadOpts), requestOpts), axis.count, requestOpts);
   const points = await resampleMaTafdc(answers, swept, requestOpts);
 
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };

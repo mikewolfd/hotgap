@@ -319,7 +319,9 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   //
   // The personal-path inputs added 2026-09-16, each through HotGap's own
   // payload: the model must read them, on both endpoints.
-  const twoPoints = (over: Partial<ReturnType<typeof answersFor>>, min: number, state = "TX") => {
+  // Pennsylvania by default: no policy override there, so each request is a
+  // baseline calculation rather than a 35–70 s reform on the hosted API.
+  const twoPoints = (over: Partial<ReturnType<typeof answersFor>>, min: number, state = "PA") => {
     const answers = { ...answersFor(state, ARCHETYPES.find((a) => a.id === "single-1")!), childAges: [3], childDisabled: [false], annualEarnings: min, ...over };
     const payload = buildCurvePayload(answers);
     (payload.household as { axes: unknown[][] }).axes[0][0] = { name: answers.selfEmployed ? "self_employment_income" : "employment_income", min, max: min + 1000, count: 2, period: "2026" };
@@ -349,9 +351,10 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   }, 300_000);
 
   it("savings: $5,000 in the bank ends SNAP in a state without broad-based categorical eligibility", async () => {
-    const ms = { ...answersFor("MS", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 10000 };
+    // Kansas: no BBCE, and no policy override to slow the hosted API down.
+    const ks = { ...answersFor("KS", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 10000 };
     const run = (savings: number) => {
-      const payload = buildCurvePayload({ ...ms, savings });
+      const payload = buildCurvePayload({ ...ks, savings });
       (payload.household as { axes: unknown[][] }).axes[0][0] = { name: "employment_income", min: 10000, max: 11000, count: 2, period: "2026" };
       return requestPE(payload, { timeoutMs: 90_000 }).then((body) => parsePEResponse(body, 2)[0]);
     };
@@ -380,6 +383,23 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(family.programs.aca ?? 0).toBe(0);
     const marketplace = await twoPoints({ married: true, spouseAge: 30, childAges: [3, 8], childDisabled: [false, false] }, 60000);
     expect(marketplace.programs.aca).toBeGreaterThan(5000);
+  }, 200_000);
+
+  it("state premium assistance: served and netted out of the premium where the endpoint has it, the local ladder otherwise", async () => {
+    const { fetchCurve, evaluateCurve, endpointHasTaxUnitVariable } = await import("../core/src/index.js");
+    const ca = { ...answersFor("CA", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 23000 }; // ~145% FPL: the $0 band
+    const has = await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { timeoutMs: 90_000 });
+    const ev = evaluateCurve(ca, await fetchCurve(ca, { timeoutMs: 90_000 }), "live");
+    const at23k = ev.curve.points.find((p) => p.earnings === 23000)!;
+    expect(at23k.medicalOOP).toBe(0);
+    if (has) {
+      expect(at23k.statePremiumAssistance).toBeGreaterThan(500);
+      expect(ev.statePremiumAssistance?.variable).toBe("assigned_ca_premium_subsidy");
+      expect(ev.premiumWrap).toBeNull();
+    } else {
+      expect(at23k.statePremiumAssistance).toBeUndefined();
+      expect(ev.premiumWrap?.state).toBe("CA");
+    }
   }, 200_000);
 
   // Two states pay nothing until the provider type is named (policyengine-us

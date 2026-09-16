@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { curveCacheKey, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, PolicyEngineError, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, PolicyEngineError, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -312,6 +312,30 @@ describe("Massachusetts TAFDC feedback loop", () => {
       expect(doubled.calls()).toBe(1); // cached per endpoint
       process.env.HOTGAP_PE_URL = "https://fixed.example/us/calculate";
       expect(await probeMaTafdcDoubleCount({ fetchImpl: fixed.fetchImpl })).toBe(false);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("variable probe: 200 means the endpoint has it, a 400 'unrecognized' means it does not, anything else is an error and not cached", async () => {
+    let calls = 0;
+    const answers = [
+      new Response(JSON.stringify({ status: "ok", result: {} }), { status: 200 }),
+      new Response(JSON.stringify({ status: "error", message: "Unrecognized calculate input(s): Unrecognized household variable `x`" }), { status: 400 }),
+      new Response("", { status: 503 }),
+      new Response(JSON.stringify({ status: "ok", result: {} }), { status: 200 }),
+    ];
+    const fetchImpl = (async () => answers[calls++]) as unknown as typeof fetch;
+    try {
+      process.env.HOTGAP_PE_URL = "https://has.example/us/calculate";
+      expect(await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { fetchImpl })).toBe(true);
+      expect(await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { fetchImpl })).toBe(true); // cached
+      process.env.HOTGAP_PE_URL = "https://lacks.example/us/calculate";
+      expect(await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { fetchImpl })).toBe(false);
+      process.env.HOTGAP_PE_URL = "https://down.example/us/calculate";
+      await expect(endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { fetchImpl })).rejects.toBeInstanceOf(PolicyEngineError);
+      expect(await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { fetchImpl })).toBe(true); // retried, not cached
+      expect(calls).toBe(4);
     } finally {
       delete process.env.HOTGAP_PE_URL;
     }

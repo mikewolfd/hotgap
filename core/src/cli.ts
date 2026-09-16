@@ -290,6 +290,10 @@ function report(ev: HouseholdEvaluation): string {
     );
   }
   if (ev.maTafdc) out.push("", ev.maTafdc.message);
+  if (ev.statePremiumAssistance) {
+    const sp = ev.statePremiumAssistance;
+    out.push("", `${a.state}'s ${sp.program} is modeled by PolicyEngine and netted out of the premium here — up to ${money(sp.maxAnnual)}/yr on this curve.`);
+  }
   if (ev.premiumWrap) {
     const w = ev.premiumWrap;
     out.push("", `${a.state}'s ${w.program} makes the marketplace plan free up to ${Math.round(w.zeroPremiumUpToFpl * 100)}% of the poverty line — shown with no premium in that band (${w.source}).`);

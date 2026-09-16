@@ -118,6 +118,12 @@ export interface CurvePoint {
   // earnings level, net of the ACA subsidy (SPM medical out-of-pocket).
   // Surfaced for transparency; already subtracted from netIncome above.
   medicalOOP: number;
+  /**
+   * The state's own marketplace premium assistance as PolicyEngine modeled
+   * it, when the endpoint served it (statePremiumAssistance.ts). Not yet
+   * netted out of medicalOOP: evaluate.ts does that. Absent otherwise.
+   */
+  statePremiumAssistance?: number;
   programs: Record<ProgramId, number>;
   // The person-level programs (medicaid, chip, wic, ssi, headstart) summed
   // over CHILDREN only, so a threshold that ends a parent's coverage is never

@@ -100,6 +100,28 @@ describe("evaluateOffline", () => {
   });
 });
 
+describe("state premium assistance from the model", () => {
+  it("nets the served amount out of the premium, floors at the premium, and stands down the local ladder", () => {
+    const ca = answersWith({ childAges: [], childDisabled: [], annualEarnings: 23000 });
+    // The fixture is a CA curve without the amount: the local ladder applies.
+    const ladder = evaluateCurve(ca, { year: "2026", currentEarnings: 23000, points: fixturePoints }, "live");
+    expect(ladder.statePremiumAssistance).toBeNull();
+    // The same curve with the amount served: $500 everywhere, more than the premium at some points.
+    const served = fixturePoints.map((p) => ({ ...p, statePremiumAssistance: 500 }));
+    const modeled = evaluateCurve(ca, { year: "2026", currentEarnings: 23000, points: served }, "live");
+    expect(modeled.premiumWrap).toBeNull();
+    expect(modeled.statePremiumAssistance).toMatchObject({ state: "CA", variable: "assigned_ca_premium_subsidy", maxAnnual: 500 });
+    for (let i = 0; i < served.length; i++) {
+      const before = ladder.curve.points[i]; const after = modeled.curve.points[i];
+      // Where the coverage gap zeroed the premium nothing is netted; elsewhere min($500, premium) moves from premium to net income.
+      const rawMoop = served[i].coverageGap ? 0 : served[i].medicalOOP;
+      const expected = Math.min(500, Math.max(0, rawMoop));
+      expect(after.medicalOOP + after.netIncome).toBeCloseTo(before.medicalOOP + before.netIncome, 2);
+      if (!before.coverageGap && before.medicalOOP === served[i].medicalOOP) expect(after.medicalOOP).toBeCloseTo(served[i].medicalOOP - expected, 2);
+    }
+  });
+});
+
 describe("unclaimed entitlements", () => {
   it("asks for a second curve only when something is off, and reports what the off programs would pay at today's pay", async () => {
     let requests = 0;
@@ -108,8 +130,10 @@ describe("unclaimed entitlements", () => {
     const stretch = (v: unknown): unknown =>
       Array.isArray(v) && v.length === 101 ? Array.from({ length: axis.count }, (_, i) => v[Math.min(i, 100)]) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, stretch(b)])) : v;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
-      requests++;
       const payload = JSON.parse(init!.body as string);
+      // California's premium-assistance probe: answer as the hosted API does.
+      if (!payload.household.axes) return new Response(JSON.stringify({ status: "error", message: "Unrecognized household variable" }), { status: 400 });
+      requests++;
       // The all-take-up request carries no switch; the household's own request does.
       const off = payload.household.spm_units.spm_unit.takes_up_snap_if_eligible?.["2026"] === false;
       const body = stretch(JSON.parse(fixture)) as any;
