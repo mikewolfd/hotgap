@@ -102,7 +102,7 @@ describe("rowsFor: the four tile states and their precedence", () => {
 
 describe("bins and group", () => {
   it("bins over the comparable states only: none and incomplete never set a bound", () => {
-    const g = group(rowsFor(fixture, single1, loss));
+    const g = group(rowsFor(fixture, single1, loss), loss);
     expect(g.ranked.map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD"]);
     expect(g.bins.lo).toBe(500);
     expect(g.bins.hi).toBe(12000);
@@ -110,16 +110,34 @@ describe("bins and group", () => {
     expect(g.incomplete.map((r) => r.st)).toEqual(["FF", "GG"]);
     expect(g.programs).toEqual(["FF Premium Savings", "Child-care subsidy (CCDF)"]);
   });
-  it("five equal-width bins with printed bounds; an empty set is all zeros", () => {
-    const b = bins([10, 20, 30, 40, 50]);
-    expect(b.bounds).toEqual([18, 26, 34, 42, 50]);
+  it("a dollar measure takes five equal-width steps with printed bounds; an empty set is all zeros", () => {
+    const b = bins([10, 20, 30, 40, 50], "$");
+    expect(b.kind).toBe("steps");
+    expect(b.classes.map((c) => c.hi)).toEqual([18, 26, 34, 42, 50]);
+    expect(b.classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
     expect([10, 18, 26, 34, 50].map(b.index)).toEqual([0, 1, 2, 3, 4]);
-    expect(bins([7]).index(7)).toBe(0);
-    expect(bins([])).toMatchObject({ lo: 0, hi: 0, bounds: [0, 0, 0, 0, 0] });
+    expect(bins([7], "$").index(7)).toBe(0);
+    expect(bins([], "$")).toMatchObject({ lo: 0, hi: 0, classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, lo: 0, hi: 0 })) });
+  });
+  it("a count takes classes of whole numbers, never a repeated bound, spread over the ramp (S5)", () => {
+    // Deferred cliffs on the 2026-09-16 sweep: every state has 0 or 1.
+    const two = bins([0, 1, 0, 1], "");
+    expect(two).toMatchObject({ kind: "classes", lo: 0, hi: 1 });
+    expect(two.classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }, { ramp: 4, lo: 1, hi: 1 }]);
+    expect([0, 1].map(two.index)).toEqual([0, 4]);
+    // Sixteen distinct counts fit four classes of four, not six of three.
+    const wide = bins([4, 19], "");
+    expect(wide.classes).toEqual([{ ramp: 0, lo: 4, hi: 7 }, { ramp: 1, lo: 8, hi: 11 }, { ramp: 3, lo: 12, hi: 15 }, { ramp: 4, lo: 16, hi: 19 }]);
+    expect([4, 7, 8, 12, 19].map(wide.index)).toEqual([0, 0, 1, 3, 4]);
+    // Exactly five values are five classes of one; one value is one class.
+    expect(bins([2, 6], "").classes.map((c) => [c.lo, c.hi, c.ramp])).toEqual([[2, 2, 0], [3, 3, 1], [4, 4, 2], [5, 5, 3], [6, 6, 4]]);
+    expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, lo: 3, hi: 3 }]);
+    expect(bins([], "").classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }]);
   });
   it("orders the table by state, or by the ranking followed by past, none and incomplete", () => {
-    const rows = rowsFor(fixture, single1, measureByKey("safeExit")!);
-    const g = group(rows);
+    const exit = measureByKey("safeExit")!;
+    const rows = rowsFor(fixture, single1, exit);
+    const g = group(rows, exit);
     expect(tableRows(rows, g, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
     expect(tableRows(rows, g, "measure").map((r) => r.st)).toEqual(["AA", "BB", "DD", "EE", "CC", "FF", "GG"]);
   });
@@ -142,6 +160,14 @@ describe("correctionRows", () => {
       ["Premium tax credit — coverage gap", null],
     ]);
     expect(applied[0].href).toBe("https://fhb.hhs.texas.gov/x");
+    // A correction's published source (core's `cite`) is the link; its `code` pointer is not a reader's fact and never reaches a row.
+    const cited = correctionRows({
+      ...c,
+      maTafdc: { applies: true, note: "tafdc", code: "maTafdc.ts", cite: "https://www.mass.gov/x" },
+      premiumAssistance: { applies: true, source: "ladder", program: "ConnectorCare", note: "ladder", code: "statePremiumWraps.ts", cite: "https://www.mahealthconnector.org/x" },
+    });
+    expect(cited.map((r) => [r.program, r.href])).toEqual([["TANF cash assistance", "https://www.mass.gov/x"], ["ConnectorCare", "https://www.mahealthconnector.org/x"]]);
+    expect(JSON.stringify(cited)).not.toContain(".ts");
   });
 });
 
@@ -151,7 +177,7 @@ describe("the committed sweep", () => {
     for (const a of summary.archetypes) for (const m of MEASURES) {
       const rows = rowsFor(summary, a, m);
       expect(rows.map((r) => r.st)).toEqual([...STATE_CODES].sort());
-      const g = group(rows);
+      const g = group(rows, m);
       expect(g.ranked.length + g.past.length + g.none.length + g.incomplete.length).toBe(rows.length);
       for (const r of g.ranked) expect(Number.isFinite(g.bins.index(r.value as number))).toBe(true);
       for (const r of g.none) expect(r.m.cliffCount).toBe(0);
