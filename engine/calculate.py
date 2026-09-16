@@ -44,12 +44,63 @@ from typing import Any
 from policyengine_core.enums import EnumArray
 from policyengine_us import Simulation
 from policyengine_us.system import CountryTaxBenefitSystem
-from policyengine_us.system import system as BASELINE_SYSTEM
+from policyengine_us.system import system as _PACKAGE_SYSTEM
 from policyengine_core.reforms import Reform
 
 MODEL = "policyengine-us"
 MODEL_VERSION = version("policyengine-us")
 CORE_VERSION = version("policyengine-core")
+
+# --- Baseline overrides -----------------------------------------------------
+#
+# Parameters this service sets on every request. Baked into BASELINE_SYSTEM
+# once, at import in the gunicorn master, so a request with no `policy` of
+# its own runs on the preloaded system that every worker shares copy-on-write
+# — rather than each worker building and caching a 0.45 GB reform system for
+# what is, from HotGap's side, the plain model. Requests that do carry a
+# `policy` get these merged in (see _system_for), so both paths agree.
+
+HEAD_START_IN_NET_INCOME = "gov.simulation.include_head_start_benefits_in_net_income"
+# HotGap's parse.ts subtracts the programs it names from `household_benefits`
+# to get an untracked remainder, and its evaluate.ts values Head Start at
+# replacement cost by adjusting net income DOWN from the sticker. Both assume
+# Head Start sits inside household_net_income, which is how the public API
+# behaves and how every committed curve was swept. policyengine-us 2.4.2 moved
+# that behind this switch, default false, so serving the release as-is would
+# silently change the meaning of every curve and floor that remainder at zero.
+# Restoring it is what makes this service a drop-in rather than a different
+# model; it is named here, switchable, and pinned by HotGap's own contract
+# test ("head_start:0 override removes Head Start from net income").
+_RESTORE_HEAD_START = os.environ.get("HOTGAP_ENGINE_HEAD_START_IN_NET_INCOME", "1") != "0"
+
+
+def _has_parameter(path: str) -> bool:
+    """True when this model version defines that parameter. A ParameterNode is
+    attribute-addressed, not a mapping, so walk it."""
+    node = _PACKAGE_SYSTEM.parameters
+    for part in path.split("."):
+        node = getattr(node, part, None)
+        if node is None:
+            return False
+    return True
+
+
+def _baseline_overrides() -> dict[str, Any]:
+    if not _RESTORE_HEAD_START or not _has_parameter(HEAD_START_IN_NET_INCOME):
+        return {}
+    return {HEAD_START_IN_NET_INCOME: {"2000-01-01.2099-12-31": True}}
+
+
+# Built through the constructor, not applied afterwards: upstream applies a
+# reform after its parameter-processing pipeline so a value inserted at a
+# future date cannot act as a defined value during uprating (policyengine-us
+# #9075). The package's own singleton stays alive underneath (it is a module
+# global there); that one extra system lives in the master and is shared.
+BASELINE_SYSTEM = (
+    CountryTaxBenefitSystem(reform=Reform.from_dict(_baseline_overrides(), country_id="us"))
+    if _baseline_overrides()
+    else _PACKAGE_SYSTEM
+)
 
 _ENTITIES_BY_PLURAL = {entity.plural: entity for entity in BASELINE_SYSTEM.entities}
 # `members` and any other role name is a list of person ids, not a variable.
@@ -142,44 +193,21 @@ def _validate(household: dict[str, Any], system) -> None:
         _reject(errors)
 
 
-# A reform is a whole rebuilt tax-benefit system: 6.6 s on this laptop against
-# 0.07 s to build a simulation over one already built. HotGap sends the same
-# handful of parameter corrections on every request for a given state, so keep
-# the last few. Small on purpose — each system holds the full parameter tree.
-# HotGap's parse.ts subtracts the programs it names from `household_benefits`
-# to get an untracked remainder, and its evaluate.ts values Head Start at
-# replacement cost by adjusting net income DOWN from the sticker. Both assume
-# Head Start sits inside household_net_income, which is how the public API
-# behaves and how every committed curve was swept. policyengine-us 2.4.2 moved
-# that behind a parameter defaulting to false, so serving the release as-is
-# would silently change the meaning of every curve and floor that remainder at
-# zero. Restoring it is what makes this service a drop-in rather than a
-# different model; it is named here, switchable, and pinned by HotGap's own
-# contract test ("head_start:0 override removes Head Start from net income"),
-# which fails loudly if either model moves again.
-HEAD_START_IN_NET_INCOME = "gov.simulation.include_head_start_benefits_in_net_income"
-_RESTORE_HEAD_START = os.environ.get("HOTGAP_ENGINE_HEAD_START_IN_NET_INCOME", "1") != "0"
-
-
-def _has_parameter(path: str) -> bool:
-    """True when this model version defines that parameter. A ParameterNode is
-    attribute-addressed, not a mapping, so walk it."""
-    node = BASELINE_SYSTEM.parameters
-    for part in path.split("."):
-        node = getattr(node, part, None)
-        if node is None:
-            return False
-    return True
-
-
-def _baseline_overrides() -> dict[str, Any]:
-    """Parameters this service sets on every request, with their reasons above."""
-    if not _RESTORE_HEAD_START or not _has_parameter(HEAD_START_IN_NET_INCOME):
-        return {}
-    return {HEAD_START_IN_NET_INCOME: {"2000-01-01.2099-12-31": True}}
-
-
-_POLICY_CACHE_SIZE = 8
+# A reform is a whole rebuilt tax-benefit system: ~6.5 s against 0.07 s to
+# build a simulation over one already built. HotGap sends the same handful of
+# parameter corrections on every request for a given state, so keep the last
+# few.
+# Per worker. Each cached system is a full CountryTaxBenefitSystem built for
+# one distinct `policy`: ~6.5 s to build and ~0.45 GB unwarmed, growing to
+# ~1.5–2 GB once its lazily resolved parameter caches fill on first use, and
+# gunicorn workers do not share them. Measured on 2.5.0 over the eight
+# heaviest states: a worker peaks at 5.4 GB with two cached, 2.75 GB with one;
+# a baseline-only worker plateaus at 1.9 GB. Eight per worker on four workers
+# took a 16 GB runner down mid-sweep. HotGap's sweep sends seven distinct
+# policies (six parent-Medicaid states and New York) in state-major order, so
+# one in play per worker is the working set; the seam between two override
+# states costs one rebuild.
+_POLICY_CACHE_SIZE = int(os.environ.get("HOTGAP_ENGINE_POLICY_CACHE", "1"))
 _policy_cache: "OrderedDict[str, Any]" = OrderedDict()
 # One lock for the cache AND for running a simulation. policyengine-us hands
 # every Simulation the same shared TaxBenefitSystem instance and then applies
@@ -190,11 +218,11 @@ _lock = threading.RLock()
 
 
 def _system_for(policy: dict[str, Any] | None):
+    if not policy:
+        return BASELINE_SYSTEM  # already carries _baseline_overrides()
     # The caller's own overrides win: a request that sets the same parameter
     # is asking for that value deliberately.
-    policy = {**_baseline_overrides(), **(policy or {})}
-    if not policy:
-        return BASELINE_SYSTEM
+    policy = {**_baseline_overrides(), **policy}
     key = json.dumps(policy, sort_keys=True)
     with _lock:
         cached = _policy_cache.get(key)
@@ -203,11 +231,7 @@ def _system_for(policy: dict[str, Any] | None):
             return cached
         try:
             reform = Reform.from_dict(policy, country_id="us")
-            # Built through the constructor, not applied afterwards: upstream
-            # applies a reform after its parameter-processing pipeline so a
-            # value inserted at a future date cannot act as a defined value
-            # during uprating (policyengine-us #9075).
-            built = CountryTaxBenefitSystem(reform=reform)
+            built = CountryTaxBenefitSystem(reform=reform)  # constructor path, see BASELINE_SYSTEM
         except CalculateError:
             raise
         except Exception as e:  # a bad parameter path, period or value

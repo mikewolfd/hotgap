@@ -21,10 +21,13 @@ runs:
       shell: bash
       run: |
         # --preload builds the tax-benefit system once and forks the workers
-        # from it (engine/Dockerfile says why). Four workers for the four
-        # vCPUs an ubuntu-latest runner has; a simulation cannot share a
-        # process, so parallelism is processes.
-        gunicorn --bind 127.0.0.1:8099 --workers 4 --threads 1 --timeout 120 --preload engine.app:app \
+        # from it (engine/Dockerfile says why); a simulation cannot share a
+        # process, so parallelism is processes. Three workers, not four, on
+        # the 16 GB ubuntu-latest runner: an override state's worker peaks at
+        # ~2.75 GB (engine/calculate.py, _POLICY_CACHE_SIZE), and four at that
+        # plus node crossed the line — the runner dies and the job reports
+        # only "The operation was canceled".
+        gunicorn --bind 127.0.0.1:8099 --workers 3 --threads 1 --timeout 120 --preload engine.app:app \
           > engine.log 2>&1 &
         for i in $(seq 1 90); do
           curl -sf http://127.0.0.1:8099/healthz && break

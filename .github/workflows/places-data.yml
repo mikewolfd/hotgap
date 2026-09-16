@@ -16,7 +16,8 @@ jobs:
     # engine/requirements.txt — the latest model, all 51 states' child-care
     # variables, and per-request policy overrides in seconds rather than the
     # public API's 35–40 s. 561 curves took ~35 min locally at concurrency 4
-    # on four engine workers; give a slower runner room.
+    # on four engine workers, ~12% longer on the three the runner gets; give
+    # a slower runner room.
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
@@ -26,8 +27,16 @@ jobs:
       - run: npm ci
       - id: engine
         uses: ./.github/actions/start-engine
-      - run: npx tsx pipeline/src/run.ts --concurrency 4
+      # Memory every 30 s into this step's own log: a runner that runs out of
+      # memory dies without running any later step, and the job then says only
+      # "The operation was canceled" — the streamed log is the one trace left.
+      - run: |
+          ( while true; do free -m | awk -v t="$(date -u +%T)" 'NR==2 {print "[mem " t "] used " $3 " MB, available " $7 " MB"}'; sleep 30; done ) &
+          npx tsx pipeline/src/run.ts --concurrency 4
         env: { HOTGAP_PE_URL: "${{ steps.engine.outputs.url }}" }
+      - if: always()
+        uses: actions/upload-artifact@v6
+        with: { name: engine-log, path: engine.log, retention-days: 14 }
       # Pushing with the default GITHUB_TOKEN does NOT trigger other workflows'
       # `push` events, so a semantically-degenerate sweep (e.g. every state
       # collapsing to a flat curve, or a schema drift the app can't read)

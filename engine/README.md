@@ -58,10 +58,17 @@ Each worker holds its own copy-on-write view of a roughly 1 GB model, so size
   laptop, 0.4-1 s per request against 0.4-0.8 s native, but 18.8 s against
   10.8 s for the tax-benefit-system build behind a cold `policy` object, which
   is the part that is pure CPU.
-* The cache of built `policy` systems is per process, so with `--workers N` a
-  given `policy` object is built up to N times before every worker has it. The
-  eight states HotGap sends corrections for cost about `8 × N × 7 s` of
-  one-time work across a sweep.
+* The cache of built `policy` systems is per process and holds ONE system by
+  default (`HOTGAP_ENGINE_POLICY_CACHE`), because a built system is the
+  expensive thing in memory, not time: ~0.45 GB unwarmed and ~1.5–2 GB once
+  its lazily resolved parameter caches fill, against ~6.5 s to build. A
+  worker serving only baseline requests plateaus at ~1.9 GB; one serving an
+  override state peaks at ~2.75 GB with a one-entry cache and 5.4 GB with two.
+  Size the worker count from that: the 16 GB GitHub runner gets three. The
+  seven states HotGap sends corrections for cost about `7 × N × 7 s` of
+  rebuild work across a sweep, once per worker per state, in the sweep's
+  state-major order. Requests with no `policy` never touch this cache: the
+  baseline overrides (Head Start) are baked into the preloaded system.
 
 ## Point HotGap at it
 
