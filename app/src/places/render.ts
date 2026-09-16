@@ -5,7 +5,7 @@
 import type { SummaryJson } from "@hotgap/core";
 import { CLIFF_MIN } from "../../../core/src/analyze.js";
 import { STATE_NAMES } from "../../../core/src/states.js";
-import { capitalize, dateOf, esc, fmt, list, modelLine, money, reachWord } from "./format.js";
+import { capitalize, dateOf, esc, fmt, list, modelLine, money, reachWord, word } from "./format.js";
 import { bites, correctionRows, type Archetype, type Grouped, type Measure, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
 
@@ -29,12 +29,21 @@ function tileTitle(r: StateRow, measure: Measure): string {
   switch (r.kind) {
     case "incomplete": return `${name(r.st)}: ${list(r.incomplete.map((u) => u.program))} not modelled — figures incomplete`;
     case "none": return `${name(r.st)}: no cliff found`;
-    case "past": return `${name(r.st)}: runs past the top of the axis`;
+    case "past": return `${name(r.st)}: ${PAST_AXIS}`;
     default: return `${name(r.st)}: ${fmt(r.value, measure)}`;
   }
 }
 
-const current = (on: boolean): string => (on ? ` aria-current="true" tabindex="0"` : ` tabindex="-1"`);
+/* One phrase for the past-the-axis state wherever a value would print (N2);
+   the legend and the title say it in full. */
+export const PAST_AXIS = "past the axis";
+
+/* A control's two attributes: `aria-current` says it is the selected state,
+   `tabindex="0"` that it is its group's one tab stop — the selected control
+   when there is one, the group's first otherwise. Never the same thing:
+   the first row on load is a tab stop, not a selection. */
+const control = (st: string, sel: string | null, tabbable: string | undefined): string =>
+  `${st === sel ? ` aria-current="true"` : ""} tabindex="${st === tabbable ? 0 : -1}"`;
 
 /** The figure box: title, sub, the 51 tiles, the ramp scale, the legend and the SourceNote. O(states). */
 export function renderFigure(s: Scene): void {
@@ -47,10 +56,12 @@ export function renderFigure(s: Scene): void {
 
   $("figTitle").textContent = `${measure.title}, by state`;
   $("figSub").textContent = `${s.archLabel}. ${measure.describe}`;
+  const binsSentence = g.bins.kind === "steps"
+    ? `five equal-width steps from ${fmt(g.bins.lo, measure)} to ${fmt(g.bins.hi, measure)}`
+    : `${word(g.bins.classes.length)} ${g.bins.classes.length === 1 ? "class" : "classes"} from ${g.bins.lo} to ${g.bins.hi}`;
   $("figSrc").textContent = `HotGap, from PolicyEngine ${summary.year} rules on ${modelLine(summary.model)}. Weekly sweep ` +
-    `generated ${dateOf(summary.generated)}. Net income after health-insurance premiums. Estimates only. Bins: five ` +
-    `equal-width steps from ${fmt(g.bins.lo, measure)} to ${fmt(g.bins.hi, measure)} over the ` +
-    `${g.ranked.length} states with a comparable figure` +
+    `generated ${dateOf(summary.generated)}. Net income after health-insurance premiums. Estimates only. Bins: ` +
+    `${binsSentence} over the ${g.ranked.length} states with a comparable figure` +
     (g.none.length ? `; ${g.none.length} with no cliff found` : "") +
     (g.past.length ? `; ${g.past.length} past the axis` : "") + "." +
     (incSentence ? ` ${capitalize(incSentence)}` : "");
@@ -59,7 +70,7 @@ export function renderFigure(s: Scene): void {
      the grid's one tab stop (roving tabindex); when nothing is selected, the
      first tile in reading order is. */
   const byState = new Map(s.rows.map((r) => [r.st, r]));
-  const tabbable = s.sel ?? TILE_ORDER[0];
+  const tabbable = s.sel ?? TILE_ORDER.find((st) => byState.has(st));
   const tiles: string[] = [];
   for (const st of TILE_ORDER) {
     const r = byState.get(st);
@@ -77,13 +88,21 @@ export function renderFigure(s: Scene): void {
       style += `;background:var(--loss-${i + 1});color:var(--${i >= 2 ? "surface" : "ink"})`;
     }
     const title = tileTitle(r, measure);
-    tiles.push(`<button type="button" class="${cls}${st === s.sel ? " sel" : ""}" data-st="${st}" style="${style}" ` +
-      `title="${esc(title)}" aria-label="${esc(title)}"${current(st === tabbable)}>${st}</button>`);
+    tiles.push(`<button type="button" class="${cls}" data-st="${st}" style="${style}" ` +
+      `title="${esc(title)}" aria-label="${esc(title)}"${control(st, s.sel, tabbable)}>${st}</button>`);
   }
   $("grid").innerHTML = tiles.join("");
 
-  $("scale").innerHTML = Array.from({ length: 5 }, (_, i) => `<span class="sw" style="background:var(--loss-${i + 1})"></span>`).join("");
-  $("scaleLabels").innerHTML = `<span>${fmt(g.bins.lo, measure)}</span>` + g.bins.bounds.map((x) => `<span>${fmt(x, measure)}</span>`).join("");
+  /* The scale draws the classes that exist: five steps with their six bounds
+     between them, or a count's classes each labelled with what it holds (S5). */
+  const { classes } = g.bins;
+  $("scale").innerHTML = classes.map((c) => `<span class="sw" style="background:var(--loss-${c.ramp + 1})"></span>`).join("");
+  const labels = $("scaleLabels");
+  labels.classList.toggle("classes", g.bins.kind === "classes");
+  labels.style.setProperty("--n", String(classes.length));
+  labels.innerHTML = g.bins.kind === "steps"
+    ? `<span>${fmt(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${fmt(c.hi, measure)}</span>`).join("")
+    : classes.map((c) => `<span>${c.lo === c.hi ? c.lo : `${c.lo}–${c.hi}`}</span>`).join("");
 
   /* The legend outside the ramp: one entry per tile state present, drawn with
      the tile's class, so the entry IS the mark. */
@@ -95,18 +114,27 @@ export function renderFigure(s: Scene): void {
   $("legend").innerHTML = legend.join("");
 }
 
-/** The ranked strip: comparable states on a shared axis, then the two lifted-out blocks. O(states). */
+/**
+ * The ranked strip: comparable states on a shared axis, then the two
+ * lifted-out blocks. Each row is a control (S2): the tile is sized to its
+ * square, so the ranked list beside the map is the 44px control on a
+ * phone, and it is one tab stop with the arrow keys moving by row, like the
+ * table. O(states).
+ */
 export function renderRank(s: Scene): void {
   const { measure, g } = s;
   const span = (g.bins.hi - g.bins.lo) || 1;
+  const order = [...g.ranked, ...g.past, ...g.none, ...g.incomplete];
+  const tabbable = s.sel ?? order[0]?.st;
   const rankRow = (r: StateRow, inner: string, v: string) =>
-    `<li class="${r.st === s.sel ? "sel" : ""}" data-st="${r.st}"><span class="st">${r.st}</span>` +
-    `<span class="track">${inner}</span><span class="v">${v}</span></li>`;
+    `<li><button type="button" class="hg-row-btn" data-st="${r.st}" aria-label="${esc(`${name(r.st)}: ${v}`)}"` +
+    `${control(r.st, s.sel, tabbable)}><span class="st">${r.st}</span>` +
+    `<span class="track">${inner}</span><span class="v">${v}</span></button></li>`;
   /* Past-the-axis rows close the list with a hollow dashed mark at the right
      edge, because "beyond" is a place on the axis and "none" and "incomplete"
      are not. */
   $("rank").innerHTML = [...g.ranked, ...g.past].map((r) => r.kind === "past"
-    ? rankRow(r, `<span class="past" title="runs past the top of the axis"></span>`, "past axis")
+    ? rankRow(r, `<span class="past"></span>`, PAST_AXIS)
     : rankRow(r, `<span class="dot" style="left:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
         `background:var(--loss-${g.bins.index(r.value as number) + 1})"></span>`, fmt(r.value, measure))).join("");
   $("rankAxis").innerHTML = `<span>${fmt(g.bins.lo, measure)}</span><span>${fmt(g.bins.hi, measure)}</span>`;
@@ -142,11 +170,11 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
     const cell = (v: number) => (none ? "none" : money(v));
     return `<tr class="${r.kind === "incomplete" ? "incomplete" : ""}">` +
       `<th scope="row"><button class="hg-row-btn" type="button" data-st="${r.st}" aria-label="${esc(name(r.st))}"` +
-      `${current(r.st === tabbable)}>${r.st}</button></th>` +
+      `${control(r.st, s.sel, tabbable)}>${r.st}</button></th>` +
       `<td class="num">${cell(m.biggestLoss)}</td>` +
       `<td class="num">${cell(m.dangerWidth)}</td>` +
       `<td class="num">${none ? "none" : (m.leapIsLowerBound ? "&ge; " : "") + money(m.leap)}</td>` +
-      `<td class="num">${none ? "none" : m.safeExit === null ? "past the axis" : money(m.safeExit)}</td>` +
+      `<td class="num">${none ? "none" : m.safeExit === null ? PAST_AXIS : money(m.safeExit)}</td>` +
       `<td class="num">${m.cliffCount}</td><td class="num">${m.deferredCliffCount}</td>` +
       `<td class="flag${r.incomplete.length ? " no" : ""}">${r.incomplete.length
         ? `incomplete: ${esc(list(r.incomplete.map((u) => u.program)))} not modelled`
@@ -202,7 +230,7 @@ export function renderDetail(s: Scene): void {
   const cov = sel ? summary.coverage?.[sel] : undefined;
   const lists = ["corrections", "unmod", "other"] as const;
   if (!sel || !cov) {
-    $("stateTitle").textContent = sel ? `Corrections applied in ${name(sel)}` : "Corrections applied";
+    $("stateTitle").textContent = sel ? `Corrections applied in ${name(sel)}` : "Corrections applied — choose a state";
     $("stateSub").textContent = sel
       ? "This sweep recorded no coverage block for this state."
       : "Select a state on the map or in the table to read what HotGap changed on top of PolicyEngine before its figures were read.";
@@ -232,30 +260,29 @@ export function renderDetail(s: Scene): void {
   /* SourceNote (#17) from vintages and model, in the inventory's shape. */
   const v = cov.vintages;
   const [careBasis, careYear] = (v.childcare?.preschool ?? "not recorded").split(" ");
-  $("stateSrc").textContent = `Estimates only. Rules: ${summary.year}. Rent: ${v.rent.publisher.replace(/\.$/, "")}; ` +
-    `${v.rent.vintage.replace(/\.$/, "")}. County: ${v.county.vintage}. Child-care price: ` +
+  $("stateSrc").textContent = `Estimates only. Rules: ${summary.year}. Rent: ${v.rent.publisher}; ${v.rent.vintage}. ` +
+    `County: ${v.county.vintage}. Child-care price: ` +
     `${CARE_WORD[careBasis] ?? careBasis}${careYear ? `, ${careYear} study` : ""}, carried to ${summary.year} dollars by ` +
     `the BLS Employment Cost Index. Reach: ${list(v.reach.vintages.map(reachWord))}. Model: ${modelLine(v.model ?? summary.model)}. ` +
     `Sweep generated ${dateOf(summary.generated)}.`;
 }
 
+/** The three groups of state controls — map, ranking, table — each one tab stop. */
+export const GROUPS = ["grid", "rankList", "tbody"] as const;
+
 /**
- * Selection: the map's tiles and the table's row buttons are the controls;
- * the ranking follows. Nothing is rebuilt — every element carrying a state
- * flips its class and, if it is a control, its aria-current and its place as
- * the roving tab stop. O(states): three elements per state, once.
+ * Selection: every control carrying the state takes aria-current, and each
+ * group's roving tab stop moves to it (or, with nothing selected, back to
+ * the group's first control). Nothing is rebuilt. O(states) per group.
  */
 export function applySelection(sel: string | null): void {
-  const tileFallback = TILE_ORDER[0];
-  let rowFallback: string | null = null;
-  for (const el of document.querySelectorAll<HTMLElement>("[data-st]")) {
-    const st = el.dataset.st as string;
-    const isRow = el.classList.contains("hg-row-btn");
-    if (isRow && rowFallback === null) rowFallback = st;
-    el.classList.toggle("sel", st === sel);
-    if (!(el instanceof HTMLButtonElement)) continue;
-    const on = st === (sel ?? (isRow ? rowFallback : tileFallback));
-    el.tabIndex = on ? 0 : -1;
-    if (st === sel) el.setAttribute("aria-current", "true"); else el.removeAttribute("aria-current");
+  for (const id of GROUPS) {
+    const btns = $(id).querySelectorAll<HTMLButtonElement>("button[data-st]");
+    const tabbable = [...btns].some((b) => b.dataset.st === sel) ? sel : btns[0]?.dataset.st;
+    for (const b of btns) {
+      const st = b.dataset.st;
+      b.tabIndex = st === tabbable ? 0 : -1;
+      if (st === sel) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    }
   }
 }

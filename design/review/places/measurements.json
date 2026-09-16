@@ -1,0 +1,1794 @@
+{
+  "1280.consoleErrors": [],
+  "1280.scroll": {
+    "sw": 1280,
+    "iw": 1280,
+    "sh": 5979
+  },
+  "1280.type": {
+    "h1": "24px/31.2px w600",
+    "wordmark": "17px/26.35px w600",
+    "lede": "17px/26.35px w400",
+    "body": "15px/23.25px w400",
+    "h2": "19px/24.7px w600",
+    "h3fig": "17px/22.1px w600",
+    "h3rank": "17px/22.1px w600",
+    "h4": "15px/19.5px w600",
+    "sub": "15px/23.25px w400",
+    "figSrc": "13px/18.85px w400",
+    "tile": "12px/normal w600",
+    "scaleLabels": "13px/20.15px w400",
+    "legend": "13px/20.15px w400",
+    "rankSt": "15px/23.25px w600",
+    "rankV": "15px/23.25px w400",
+    "rankAxis": "13px/20.15px w400",
+    "rankNote": "13px/20.15px w400",
+    "th": "13px/20.15px w500",
+    "td": "15px/23.25px w400",
+    "rowBtn": "15px/23.25px w700",
+    "flag": "15px/23.25px w400",
+    "filtersLabel": "13px/20.15px w400",
+    "select": "15px/normal w400",
+    "button": "15px/18px w500",
+    "methodLi": "15px/23.25px w400",
+    "callout": "15px/23.25px w400",
+    "status": "13px/18.85px w400",
+    "stateSub": "15px/23.25px w400",
+    "tabCap": "15px/23.25px w400"
+  },
+  "1280.lineLength": {
+    ".lede": {
+      "chars": 232,
+      "lines": 3,
+      "cpl": 77,
+      "widthPx": 584,
+      "maxWidth": "584.157px"
+    },
+    "#figSub": {
+      "chars": 91,
+      "lines": 2,
+      "cpl": 46,
+      "widthPx": 498,
+      "maxWidth": "652.881px"
+    },
+    "#figSrc": {
+      "chars": 433,
+      "lines": 6,
+      "cpl": 72,
+      "widthPx": 498,
+      "maxWidth": "565.831px"
+    },
+    "#stateSub": {
+      "chars": 122,
+      "lines": 2,
+      "cpl": 61,
+      "widthPx": 548,
+      "maxWidth": "652.881px"
+    },
+    "#tabCap": {
+      "chars": 107,
+      "lines": 1,
+      "cpl": 107,
+      "widthPx": 1056,
+      "maxWidth": "none"
+    },
+    ".method li": {
+      "chars": 255,
+      "lines": 3,
+      "cpl": 85,
+      "widthPx": 629,
+      "maxWidth": "none"
+    },
+    ".hg-callout": {
+      "chars": 457,
+      "lines": 5,
+      "cpl": 91,
+      "widthPx": 653,
+      "maxWidth": "652.881px"
+    },
+    "#noneNote": {
+      "chars": 149,
+      "lines": 2,
+      "cpl": 75,
+      "widthPx": 476,
+      "maxWidth": "565.831px"
+    },
+    "#incNote": {
+      "chars": 171,
+      "lines": 3,
+      "cpl": 57,
+      "widthPx": 476,
+      "maxWidth": "565.831px"
+    },
+    "section[aria-labelledby=rankTitle] > .hg-source": {
+      "chars": 204,
+      "lines": 3,
+      "cpl": 68,
+      "widthPx": 476,
+      "maxWidth": "565.831px"
+    },
+    ".hg-scroll-x + .hg-source": {
+      "chars": 384,
+      "lines": 4,
+      "cpl": 96,
+      "widthPx": 566,
+      "maxWidth": "565.831px"
+    },
+    "#methodSrc": {
+      "chars": 340,
+      "lines": 4,
+      "cpl": 85,
+      "widthPx": 566,
+      "maxWidth": "565.831px"
+    }
+  },
+  "1280.spacing": {
+    "mastheadPad": "16px",
+    "h1mb": "8px",
+    "h2mt": "48px",
+    "h2mb": "12px",
+    "filtersPad": "16px",
+    "filtersH": 97,
+    "splitGap": "32px",
+    "splitMt": "24px",
+    "figurePad": "24px",
+    "stateMt": "32px",
+    "gridGap": "2px",
+    "scaleM": "16px 0px 8px",
+    "legendMt": "12px",
+    "figSrcMt": "8px",
+    "rankGroupMt": "24px",
+    "rankLiH": 26,
+    "rankH": 1248,
+    "tableTop": 2071,
+    "tableH": 2363,
+    "rowH": 45,
+    "thH": 37,
+    "figureBox": {
+      "x": 112,
+      "y": 330.703125,
+      "width": 547.71875,
+      "height": 731.453125,
+      "top": 330.703125,
+      "right": 659.71875,
+      "bottom": 1062.15625,
+      "left": 112
+    },
+    "tileBox": {
+      "x": 137,
+      "y": 448.296875,
+      "width": 39.65625,
+      "height": 39.65625,
+      "top": 448.296875,
+      "right": 176.65625,
+      "bottom": 487.953125,
+      "left": 137
+    },
+    "rankBox": {
+      "x": 691.71875,
+      "y": 360.796875,
+      "width": 476.265625,
+      "height": 1248,
+      "top": 360.796875,
+      "right": 1167.984375,
+      "bottom": 1608.796875,
+      "left": 691.71875
+    },
+    "stateDetailBox": {
+      "x": 112,
+      "y": 1094.15625,
+      "width": 547.71875,
+      "height": 76.59375,
+      "top": 1094.15625,
+      "right": 659.71875,
+      "bottom": 1170.75,
+      "left": 112
+    },
+    "leftColBottom": 1171,
+    "rightColBottom": 2023,
+    "themeBtnTop": 5855,
+    "pageH": 5979
+  },
+  "1280.targets": {
+    "tile": [
+      39.7,
+      39.7
+    ],
+    "rowBtn": [
+      37.5,
+      44
+    ],
+    "select": [
+      261.4,
+      44
+    ],
+    "csv": [
+      223.7,
+      44
+    ],
+    "theme": [
+      66.3,
+      44
+    ],
+    "link": null,
+    "skip": [
+      138.4,
+      23.3
+    ]
+  },
+  "1280.light.contrast": {
+    "ink3OnPlane": 4.75,
+    "ink3OnSurface": 5.49,
+    "ink2OnPlane": 7.43,
+    "sunkOnPlane": 17.26,
+    "sunkOnSurface": 19.93,
+    "trackOnPlane": 17.55,
+    "ruleOnPlane": 1.2,
+    "ruleStrongOnPlane": 1.7,
+    "ruleStrongOnSurface": 1.96,
+    "noneOutlineOnSurface": 1.96,
+    "controlEdgeOnPlane": 3.02,
+    "flagNoOnPlane": 4.95,
+    "cautionOnSurface": 5.72,
+    "hatchStripeOnGround": 5.11,
+    "loss1OnSurface": 2.15,
+    "loss5OnSurface": 12.81,
+    "labelOnBins": [
+      "ME:8.11",
+      "AK:5.16",
+      "VT:5.37",
+      "MN:8.56",
+      "NY:12.81"
+    ],
+    "focusOnLoss5": 25339.17,
+    "focusOnLoss1": 4243.11,
+    "thOnPlane": 4.75,
+    "thBorderOnPlane": 1.7,
+    "tagOnPlane": null,
+    "linkOnSurface": 6.24,
+    "rampAdjacent": [
+      1.57,
+      1.59,
+      1.59,
+      1.5
+    ],
+    "raw": {
+      "plane": "rgb(232, 235, 238)",
+      "surface": "rgb(250, 251, 252)",
+      "sunk": "light-dark(#F1F3F6, #1D242A)",
+      "track": "rgba(0, 0, 0, 0)",
+      "incRowMark": "rgb(174, 183, 192) 4px 0px 0px 0px inset"
+    }
+  },
+  "1280.selTile": {
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "offset": "1px",
+    "z": "2",
+    "ariaCurrent": "true"
+  },
+  "1280.selRow": {
+    "rowBg": "rgb(241, 243, 246)",
+    "rankBg": "rgb(241, 243, 246)",
+    "thShadow": "none"
+  },
+  "1280.mapToDetail": {
+    "tileTop": 740,
+    "detailTop": 1094,
+    "detailBottom": 1828,
+    "delta": 354,
+    "inViewport": true
+  },
+  "1280.tableToDetail": {
+    "rowTop": 2401,
+    "detailTop": 1094,
+    "delta": 1307,
+    "detailInViewport": false,
+    "activeEl": "BUTTON.hg-row-btn sel"
+  },
+  "1280.binSamples": {
+    "b1": "ME",
+    "b5": "NY",
+    "hatched": "WA",
+    "none": "NM"
+  },
+  "1280.focus.tile.b5": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "1280.focus.tile.b1": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "1280.focus.tile.hatched": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "1280.focus.tile.sel": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "1280.focus.row": {
+    "el": "hg-row-btn sel",
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "btnLeft": 116,
+    "scrollerLeft": 112,
+    "clearance": 4
+  },
+  "1280.focus.afterDown": {
+    "active": "DC",
+    "sel": "CO"
+  },
+  "1280.tabOrder": [
+    "a.hg-skip",
+    "#arch",
+    "#metric",
+    "#sort",
+    "#csvBtn",
+    "button[ME]",
+    "button[WA]",
+    "button[NY]",
+    "button[CO]",
+    "button[DC]",
+    "a",
+    "#themeBtn",
+    "(12 total)"
+  ],
+  "1280.archOptions": [
+    [
+      "single-0",
+      "1 adult, no children"
+    ],
+    [
+      "single-1",
+      "1 adult, 1 child (3)"
+    ],
+    [
+      "single-2",
+      "1 adult, 2 children (3 and 7)"
+    ],
+    [
+      "single-3",
+      "1 adult, 3 children (1, 4, 9)"
+    ],
+    [
+      "married-0",
+      "2 adults, one working, no children"
+    ],
+    [
+      "married-1",
+      "2 adults, one working, 1 child (3)"
+    ],
+    [
+      "married-2",
+      "2 adults, one working, 2 children (3 and 7)"
+    ],
+    [
+      "married-3",
+      "2 adults, one working, 3 children (1, 4, 9)"
+    ],
+    [
+      "married-dual-1",
+      "2 adults, both working, 1 child (3)"
+    ],
+    [
+      "married-dual-2",
+      "2 adults, both working, 2 children (3 and 7)"
+    ],
+    [
+      "married-dual-3",
+      "2 adults, both working, 3 children (1, 4, 9)"
+    ]
+  ],
+  "1280.measureOptions": [
+    [
+      "biggestLoss",
+      "Largest one-step loss ($)"
+    ],
+    [
+      "dangerWidth",
+      "Width of the worst danger zone ($)"
+    ],
+    [
+      "leap",
+      "The leap — raise needed to clear it ($)"
+    ],
+    [
+      "safeExit",
+      "Safe exit — where the last zone closes ($)"
+    ],
+    [
+      "cliffCount",
+      "Number of cliffs"
+    ],
+    [
+      "deferredCliffCount",
+      "Of those, deferred to a later renewal"
+    ]
+  ],
+  "1280.household.single-0": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, no children. Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $205 to $8,644 over the 46 states with a comparable figure; 3 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (3)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (3)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, no children today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$205$1,893$3,581$5,268$6,956$8,644"
+  },
+  "1280.household.single-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $2,165 to $20,950 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$2,165$5,922$9,679$13,436$17,193$20,950"
+  },
+  "1280.household.single-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $5,190 to $33,587 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$5,190$10,869$16,549$22,228$27,908$33,587"
+  },
+  "1280.household.single-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $1,033 to $60,515 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$1,033$12,929$24,826$36,722$48,619$60,515"
+  },
+  "1280.household.married-0": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, no children. Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $395 to $22,041 over the 47 states with a comparable figure; 2 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (2)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (2)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, no children today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$395$4,724$9,053$13,383$17,712$22,041"
+  },
+  "1280.household.married-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $1,160 to $32,476 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$1,160$7,423$13,686$19,950$26,213$32,476"
+  },
+  "1280.household.married-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $2,125 to $30,337 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$2,125$7,767$13,410$19,052$24,695$30,337"
+  },
+  "1280.household.married-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $869 to $31,307 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$869$6,957$13,044$19,132$25,219$31,307"
+  },
+  "1280.household.married-dual-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $3,446 to $32,468 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$3,446$9,250$15,055$20,859$26,664$32,468"
+  },
+  "1280.household.married-dual-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $6,514 to $32,595 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$6,514$11,730$16,946$22,163$27,379$32,595"
+  },
+  "1280.household.married-dual-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $867 to $59,235 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$867$12,541$24,214$35,888$47,561$59,235"
+  },
+  "1280.measure.biggestLoss": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "scale": [
+      "$5,190",
+      "$10,869",
+      "$16,549",
+      "$22,228",
+      "$27,908",
+      "$33,587"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "MD$33,587",
+    "rankLast": "TN$5,190",
+    "rankAxis": "$5,190$33,587",
+    "rankCount": 48,
+    "scaleWidths": [
+      40,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "1280.measure.dangerWidth": {
+    "title": "Width of the worst danger zone, by state",
+    "sub": "1 adult, 2 children (3 and 7). Earnings spanned by the widest stretch where more pay leaves the household no better off.",
+    "scale": [
+      "$35,000",
+      "$46,000",
+      "$57,000",
+      "$68,000",
+      "$79,000",
+      "$90,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "CO$90,000",
+    "rankLast": "TN$35,000",
+    "rankAxis": "$35,000$90,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      47,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "1280.measure.leap": {
+    "title": "The leap, by state",
+    "sub": "1 adult, 2 children (3 and 7). The raise a household must clear in one move to get past that stretch.",
+    "scale": [
+      "$12,000",
+      "$24,800",
+      "$37,600",
+      "$50,400",
+      "$63,200",
+      "$76,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "Runs past the top of the axis (2)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "ith a comparable figure; 1 with no cliff found; 2 past the axis. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "WI$76,000",
+    "rankLast": "NYpast axis",
+    "rankAxis": "$12,000$76,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      47,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "1280.measure.safeExit": {
+    "title": "Safe exit, by state",
+    "sub": "1 adult, 2 children (3 and 7). Earnings at which the last danger zone closes.",
+    "scale": [
+      "$108,000",
+      "$116,000",
+      "$124,000",
+      "$132,000",
+      "$140,000",
+      "$148,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "Runs past the top of the axis (3)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "ith a comparable figure; 1 with no cliff found; 3 past the axis. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "VT$148,000",
+    "rankLast": "NYpast axis",
+    "rankAxis": "$108,000$148,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      55,
+      55,
+      55,
+      55,
+      55,
+      55
+    ],
+    "scaleOverlap": false
+  },
+  "1280.measure.cliffCount": {
+    "title": "Number of cliffs, by state",
+    "sub": "1 adult, 2 children (3 and 7). Steps down of $200 or more anywhere on the curve.",
+    "scale": [
+      "4",
+      "7",
+      "10",
+      "13",
+      "16",
+      "19"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "VT19",
+    "rankLast": "NY4",
+    "rankAxis": "419",
+    "rankCount": 48,
+    "scaleWidths": [
+      7,
+      7,
+      15,
+      15,
+      15,
+      15
+    ],
+    "scaleOverlap": false
+  },
+  "1280.measure.deferredCliffCount": {
+    "title": "Deferred cliffs, by state",
+    "sub": "1 adult, 2 children (3 and 7). Of those, the ones that land at a future renewal, not with the raise.",
+    "scale": [
+      "0",
+      "0",
+      "0",
+      "1",
+      "1",
+      "1"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "AL1",
+    "rankLast": "WY0",
+    "rankAxis": "01",
+    "rankCount": 48,
+    "scaleWidths": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "scaleOverlap": false
+  },
+  "1280.childlessSafeExit": {
+    "scale": "$23,000$33,600$44,200$54,800$65,400$76,000",
+    "none": "No cliff found (3)",
+    "noneRows": [
+      "MDno cliff",
+      "NMno cliff",
+      "WIno cliff"
+    ],
+    "tableWI": [
+      "WI",
+      "none",
+      "none",
+      "none",
+      "none",
+      "0",
+      "0",
+      "complete"
+    ]
+  },
+  "1280.sortMeasure": {
+    "cap": "All six measures for 1 adult, 2 children (3 and 7), by number of cliffs, largest first. PolicyEngine 2026 rules, sweep of 2026-09-16.",
+    "first5": [
+      "VT$18,890$82,000$42,000$148,000190complete",
+      "OR$25,745$81,000$67,000$120,000151complete",
+      "MO$16,428$61,000$52,000$110,000120complete",
+      "CO$25,449$90,000$73,000$119,000100complete",
+      "LA$9,649$51,000$17,000$114,000100complete"
+    ],
+    "last3": [
+      "NMnonenonenonenone00complete",
+      "NJ$26,206$75,000$62,000$111,00071incomplete: NJ Health Plan Savings not modelled",
+      "WA$19,614$63,000$49,000$119,00061incomplete: Cascade Care Savings not modelled"
+    ]
+  },
+  "1280.url": "http://127.0.0.1:5173/places.html?household=single-2&measure=biggestLoss&sort=state",
+  "1280.csv": {
+    "name": "hotgap-single-2-2026-09-16.csv",
+    "bytes": 20487,
+    "head": "﻿state,state_name,archetype_id,archetype,biggest_one_step_loss,danger_zone_width,leap,safe_exit,cliff_count,deferred_cliff_count,leap_is_lower_bound,no_cliff_found,comparable,figures,unmodeled_programs,corrections_applied,rent_vintage,county_vintage,childcare_price_vintage,reach_vintages,policy_year,sweep_generated,model_endpoint,model_version,source",
+    "row1": "AK,Alaska,single-2,\"1 adult, 2 children (3 and 7)\",14365,75000,45000,136000,6,0,false,false,true,complete,,CCDF child care subsidy: added by HotGap,\"FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx.\",\"Vintage 2024 (July 1, 2024 estimates)\",county 2018,20",
+    "rows": 51
+  },
+  "1280.dark.contrast": {
+    "ink3OnPlane": 7.22,
+    "ink3OnSurface": 6.6,
+    "ink2OnPlane": 11.54,
+    "sunkOnPlane": 1.09,
+    "sunkOnSurface": 1.19,
+    "trackOnPlane": 1.11,
+    "ruleOnPlane": 1.46,
+    "ruleStrongOnPlane": 2.09,
+    "ruleStrongOnSurface": 1.91,
+    "noneOutlineOnSurface": 1.91,
+    "controlEdgeOnPlane": 4.09,
+    "flagNoOnPlane": 9.49,
+    "cautionOnSurface": 8.68,
+    "hatchStripeOnGround": 5.97,
+    "loss1OnSurface": 2.27,
+    "loss5OnSurface": 11.68,
+    "labelOnBins": [
+      "ME:6.99",
+      "AK:4.51",
+      "VT:5.41",
+      "MN:8.22",
+      "NY:11.68"
+    ],
+    "focusOnLoss5": 2831.95,
+    "focusOnLoss1": 14604.58,
+    "thOnPlane": 7.22,
+    "thBorderOnPlane": 2.09,
+    "tagOnPlane": null,
+    "linkOnSurface": 7.86,
+    "rampAdjacent": [
+      1.55,
+      1.54,
+      1.52,
+      1.42
+    ],
+    "raw": {
+      "plane": "rgb(13, 17, 20)",
+      "surface": "rgb(22, 27, 32)",
+      "sunk": "light-dark(#F1F3F6, #1D242A)",
+      "track": "rgba(0, 0, 0, 0)",
+      "incRowMark": "rgb(63, 74, 83) 4px 0px 0px 0px inset"
+    }
+  },
+  "1280.print": {
+    "bodyBg": "rgb(255, 255, 255)",
+    "ink": "rgb(18, 23, 28)",
+    "tileBg": "rgb(178, 118, 163)",
+    "filtersDisplay": "none",
+    "csvDisplay": "none",
+    "themeDisplay": "none",
+    "tableFs": "13px",
+    "tableW": 1056,
+    "scrollerOverflow": "visible",
+    "splitCols": "547.719px 476.266px",
+    "sunkRow": "rgb(241, 243, 246)",
+    "skip": "none"
+  },
+  "1280.reducedMotion": {
+    "animated": 0,
+    "durDraw": "0ms"
+  },
+  "1280.motionNormal": [
+    "(0)"
+  ],
+  "1280.error": {
+    "status": "We could not load the weekly sweep (summary.json: HTTP 404). Reload to try again.",
+    "lede": " sets of rules, household shapes, one axis. Each figure is the worst single $1,000 step of earnings in that state’s curve for that household — how much net income falls when pay goes up by a thousand dollars.",
+    "h2": "All , every measure",
+    "stateTitle": "",
+    "rank": "Ranked",
+    "archOptions": 0,
+    "methodYear": "",
+    "colour": "rgb(138, 90, 0)"
+  },
+  "1280.loading": {
+    "status": "Loading the weekly sweep…",
+    "hidden": false,
+    "lede": " sets of rules, household shapes, one axis. Each figure is the worst single $1,0"
+  },
+  "1280.mock": {
+    "h": 5983,
+    "filtersH": 97,
+    "tileTag": "DIV",
+    "gridRole": "img",
+    "sel": "CO",
+    "stateSub": "What HotGap changed on top of PolicyEngine before any figure for Colorado was read. The state selected in the table below sets this block.",
+    "figSrc": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.5.0. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $5,190 to $33,587 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "tabCap": "All six measures for 1 adult, 2 children (3 and 7). PolicyEngine 2026 rules, sweep of 2026-09-16.",
+    "lede": "Fifty-one sets of rules, eleven household shapes, one axis. ",
+    "h2": "All 51, every measure",
+    "tileW": 39.65625
+  },
+  "390.consoleErrors": [],
+  "390.scroll": {
+    "sw": 390,
+    "iw": 390,
+    "sh": 8174
+  },
+  "390.type": {
+    "h1": "24px/31.2px w600",
+    "wordmark": "17px/26.35px w600",
+    "lede": "17px/26.35px w400",
+    "body": "15px/23.25px w400",
+    "h2": "19px/24.7px w600",
+    "h3fig": "17px/22.1px w600",
+    "h3rank": "17px/22.1px w600",
+    "h4": "15px/19.5px w600",
+    "sub": "15px/23.25px w400",
+    "figSrc": "13px/18.85px w400",
+    "tile": "10px/normal w600",
+    "scaleLabels": "13px/20.15px w400",
+    "legend": "13px/20.15px w400",
+    "rankSt": "15px/23.25px w600",
+    "rankV": "15px/23.25px w400",
+    "rankAxis": "13px/20.15px w400",
+    "rankNote": "13px/20.15px w400",
+    "th": "13px/20.15px w500",
+    "td": "15px/23.25px w400",
+    "rowBtn": "15px/23.25px w700",
+    "flag": "15px/23.25px w400",
+    "filtersLabel": "13px/20.15px w400",
+    "select": "15px/normal w400",
+    "button": "15px/18px w500",
+    "methodLi": "15px/23.25px w400",
+    "callout": "15px/23.25px w400",
+    "status": "13px/18.85px w400",
+    "stateSub": "15px/23.25px w400",
+    "tabCap": "15px/23.25px w400"
+  },
+  "390.lineLength": {
+    ".lede": {
+      "chars": 232,
+      "lines": 5,
+      "cpl": 46,
+      "widthPx": 390,
+      "maxWidth": "584.157px"
+    },
+    "#figSub": {
+      "chars": 91,
+      "lines": 2,
+      "cpl": 46,
+      "widthPx": 366,
+      "maxWidth": "652.881px"
+    },
+    "#figSrc": {
+      "chars": 433,
+      "lines": 8,
+      "cpl": 54,
+      "widthPx": 366,
+      "maxWidth": "565.831px"
+    },
+    "#stateSub": {
+      "chars": 122,
+      "lines": 3,
+      "cpl": 41,
+      "widthPx": 358,
+      "maxWidth": "652.881px"
+    },
+    "#tabCap": {
+      "chars": 107,
+      "lines": 1,
+      "cpl": 107,
+      "widthPx": 768,
+      "maxWidth": "none"
+    },
+    ".method li": {
+      "chars": 255,
+      "lines": 6,
+      "cpl": 43,
+      "widthPx": 300,
+      "maxWidth": "none"
+    },
+    ".hg-callout": {
+      "chars": 457,
+      "lines": 11,
+      "cpl": 42,
+      "widthPx": 324,
+      "maxWidth": "652.881px"
+    },
+    "#noneNote": {
+      "chars": 149,
+      "lines": 3,
+      "cpl": 50,
+      "widthPx": 358,
+      "maxWidth": "565.831px"
+    },
+    "#incNote": {
+      "chars": 171,
+      "lines": 3,
+      "cpl": 57,
+      "widthPx": 358,
+      "maxWidth": "565.831px"
+    },
+    "section[aria-labelledby=rankTitle] > .hg-source": {
+      "chars": 204,
+      "lines": 4,
+      "cpl": 51,
+      "widthPx": 358,
+      "maxWidth": "565.831px"
+    },
+    ".hg-scroll-x + .hg-source": {
+      "chars": 384,
+      "lines": 6,
+      "cpl": 64,
+      "widthPx": 358,
+      "maxWidth": "565.831px"
+    },
+    "#methodSrc": {
+      "chars": 340,
+      "lines": 7,
+      "cpl": 49,
+      "widthPx": 324,
+      "maxWidth": "565.831px"
+    }
+  },
+  "390.spacing": {
+    "mastheadPad": "16px",
+    "h1mb": "8px",
+    "h2mt": "48px",
+    "h2mb": "12px",
+    "filtersPad": "16px",
+    "filtersH": 317,
+    "splitGap": "32px",
+    "splitMt": "24px",
+    "figurePad": "12px",
+    "stateMt": "32px",
+    "gridGap": "2px",
+    "scaleM": "16px 0px 8px",
+    "legendMt": "12px",
+    "figSrcMt": "8px",
+    "rankGroupMt": "24px",
+    "rankLiH": 26,
+    "rankH": 1248,
+    "tableTop": 3228,
+    "tableH": 2447,
+    "rowH": 45,
+    "thH": 37,
+    "figureBox": {
+      "x": 0,
+      "y": 603.671875,
+      "width": 390,
+      "height": 657.265625,
+      "top": 603.671875,
+      "right": 390,
+      "bottom": 1260.9375,
+      "left": 0
+    },
+    "tileBox": {
+      "x": 12,
+      "y": 709.265625,
+      "width": 28.671875,
+      "height": 28.671875,
+      "top": 709.265625,
+      "right": 40.671875,
+      "bottom": 737.9375,
+      "left": 12
+    },
+    "rankBox": {
+      "x": 16,
+      "y": 1478.875,
+      "width": 358,
+      "height": 1248,
+      "top": 1478.875,
+      "right": 374,
+      "bottom": 2726.875,
+      "left": 16
+    },
+    "stateDetailBox": {
+      "x": 16,
+      "y": 1292.9375,
+      "width": 358,
+      "height": 99.84375,
+      "top": 1292.9375,
+      "right": 374,
+      "bottom": 1392.78125,
+      "left": 16
+    },
+    "leftColBottom": 1393,
+    "rightColBottom": 3180,
+    "themeBtnTop": 8050,
+    "pageH": 8174
+  },
+  "390.targets": {
+    "tile": [
+      28.7,
+      28.7
+    ],
+    "rowBtn": [
+      31,
+      44
+    ],
+    "select": [
+      358,
+      44
+    ],
+    "csv": [
+      223.7,
+      44
+    ],
+    "theme": [
+      66.3,
+      44
+    ],
+    "link": null,
+    "skip": [
+      138.4,
+      23.3
+    ]
+  },
+  "390.light.contrast": {
+    "ink3OnPlane": 4.75,
+    "ink3OnSurface": 5.49,
+    "ink2OnPlane": 7.43,
+    "sunkOnPlane": 17.26,
+    "sunkOnSurface": 19.93,
+    "trackOnPlane": 17.55,
+    "ruleOnPlane": 1.2,
+    "ruleStrongOnPlane": 1.7,
+    "ruleStrongOnSurface": 1.96,
+    "noneOutlineOnSurface": 1.96,
+    "controlEdgeOnPlane": 3.02,
+    "flagNoOnPlane": 4.95,
+    "cautionOnSurface": 5.72,
+    "hatchStripeOnGround": 5.11,
+    "loss1OnSurface": 2.15,
+    "loss5OnSurface": 12.81,
+    "labelOnBins": [
+      "ME:8.11",
+      "AK:5.16",
+      "VT:5.37",
+      "MN:8.56",
+      "NY:12.81"
+    ],
+    "focusOnLoss5": 25339.17,
+    "focusOnLoss1": 4243.11,
+    "thOnPlane": 4.75,
+    "thBorderOnPlane": 1.7,
+    "tagOnPlane": null,
+    "linkOnSurface": 6.24,
+    "rampAdjacent": [
+      1.57,
+      1.59,
+      1.59,
+      1.5
+    ],
+    "raw": {
+      "plane": "rgb(232, 235, 238)",
+      "surface": "rgb(250, 251, 252)",
+      "sunk": "light-dark(#F1F3F6, #1D242A)",
+      "track": "rgba(0, 0, 0, 0)",
+      "incRowMark": "rgb(174, 183, 192) 4px 0px 0px 0px inset"
+    }
+  },
+  "390.selTile": {
+    "outline": "rgb(18, 23, 28) solid 2px",
+    "offset": "1px",
+    "z": "2",
+    "ariaCurrent": "true"
+  },
+  "390.selRow": {
+    "rowBg": "rgb(241, 243, 246)",
+    "rankBg": "rgb(241, 243, 246)",
+    "thShadow": "none"
+  },
+  "390.mapToDetail": {
+    "tileTop": 924,
+    "detailTop": 1293,
+    "detailBottom": 2216,
+    "delta": 369,
+    "inViewport": false
+  },
+  "390.tableToDetail": {
+    "rowTop": 4036,
+    "detailTop": 1293,
+    "delta": 2743,
+    "detailInViewport": false,
+    "activeEl": "BUTTON.hg-row-btn sel"
+  },
+  "390.binSamples": {
+    "b1": "ME",
+    "b5": "NY",
+    "hatched": "WA",
+    "none": "NM"
+  },
+  "390.focus.tile.b5": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "390.focus.tile.b1": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "390.focus.tile.hatched": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "390.focus.tile.sel": {
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "z": "3"
+  },
+  "390.focus.row": {
+    "el": "hg-row-btn sel",
+    "fv": true,
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "btnLeft": 20,
+    "scrollerLeft": 16,
+    "clearance": 4
+  },
+  "390.focus.afterDown": {
+    "active": "DC",
+    "sel": "CO"
+  },
+  "390.tabOrder": [
+    "a.hg-skip",
+    "#arch",
+    "#metric",
+    "#sort",
+    "#csvBtn",
+    "button[ME]",
+    "button[WA]",
+    "button[NY]",
+    "button[CO]",
+    "button[DC]",
+    "a",
+    "#themeBtn",
+    "(12 total)"
+  ],
+  "390.archOptions": [
+    [
+      "single-0",
+      "1 adult, no children"
+    ],
+    [
+      "single-1",
+      "1 adult, 1 child (3)"
+    ],
+    [
+      "single-2",
+      "1 adult, 2 children (3 and 7)"
+    ],
+    [
+      "single-3",
+      "1 adult, 3 children (1, 4, 9)"
+    ],
+    [
+      "married-0",
+      "2 adults, one working, no children"
+    ],
+    [
+      "married-1",
+      "2 adults, one working, 1 child (3)"
+    ],
+    [
+      "married-2",
+      "2 adults, one working, 2 children (3 and 7)"
+    ],
+    [
+      "married-3",
+      "2 adults, one working, 3 children (1, 4, 9)"
+    ],
+    [
+      "married-dual-1",
+      "2 adults, both working, 1 child (3)"
+    ],
+    [
+      "married-dual-2",
+      "2 adults, both working, 2 children (3 and 7)"
+    ],
+    [
+      "married-dual-3",
+      "2 adults, both working, 3 children (1, 4, 9)"
+    ]
+  ],
+  "390.measureOptions": [
+    [
+      "biggestLoss",
+      "Largest one-step loss ($)"
+    ],
+    [
+      "dangerWidth",
+      "Width of the worst danger zone ($)"
+    ],
+    [
+      "leap",
+      "The leap — raise needed to clear it ($)"
+    ],
+    [
+      "safeExit",
+      "Safe exit — where the last zone closes ($)"
+    ],
+    [
+      "cliffCount",
+      "Number of cliffs"
+    ],
+    [
+      "deferredCliffCount",
+      "Of those, deferred to a later renewal"
+    ]
+  ],
+  "390.household.single-0": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, no children. Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $205 to $8,644 over the 46 states with a comparable figure; 3 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (3)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (3)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, no children today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$205$1,893$3,581$5,268$6,956$8,644"
+  },
+  "390.household.single-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $2,165 to $20,950 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$2,165$5,922$9,679$13,436$17,193$20,950"
+  },
+  "390.household.single-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $5,190 to $33,587 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$5,190$10,869$16,549$22,228$27,908$33,587"
+  },
+  "390.household.single-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $1,033 to $60,515 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 1 adult, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$1,033$12,929$24,826$36,722$48,619$60,515"
+  },
+  "390.household.married-0": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, no children. Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $395 to $22,041 over the 47 states with a comparable figure; 2 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (2)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (2)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, no children today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$395$4,724$9,053$13,383$17,712$22,041"
+  },
+  "390.household.married-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $1,160 to $32,476 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$1,160$7,423$13,686$19,950$26,213$32,476"
+  },
+  "390.household.married-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $2,125 to $30,337 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$2,125$7,767$13,410$19,052$24,695$30,337"
+  },
+  "390.household.married-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, one working, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $869 to $31,307 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, one working, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$869$6,957$13,044$19,132$25,219$31,307"
+  },
+  "390.household.married-dual-1": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 1 child (3). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $3,446 to $32,468 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 1 child (3) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$3,446$9,250$15,055$20,859$26,664$32,468"
+  },
+  "390.household.married-dual-2": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $6,514 to $32,595 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (1)",
+    "noneHidden": false,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 2 children (3 and 7) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$6,514$11,730$16,946$22,163$27,379$32,595"
+  },
+  "390.household.married-dual-3": {
+    "title": "Largest one-step loss, by state",
+    "sub": "2 adults, both working, 3 children (1, 4, 9). Net income lost in the worst single $1,000 step of earnings.",
+    "src": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $867 to $59,235 over the 49 states with a comparable figure. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "legend": [
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "none": "No cliff found (0)",
+    "noneHidden": true,
+    "inc": "Not ranked — figures incomplete (2)",
+    "unmodSummary": "A program the engine cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For 2 adults, both working, 3 children (1, 4, 9) today that is NJ Health Plan Savings in New Jersey and Cascade Care Savings in Washington.",
+    "hatchCaution": "Hatched is not low. A program the model cannot compute in a state — today NJ Health Plan Savings and Cascade Care Saving",
+    "scale": "$867$12,541$24,214$35,888$47,561$59,235"
+  },
+  "390.measure.biggestLoss": {
+    "title": "Largest one-step loss, by state",
+    "sub": "1 adult, 2 children (3 and 7). Net income lost in the worst single $1,000 step of earnings.",
+    "scale": [
+      "$5,190",
+      "$10,869",
+      "$16,549",
+      "$22,228",
+      "$27,908",
+      "$33,587"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "MD$33,587",
+    "rankLast": "TN$5,190",
+    "rankAxis": "$5,190$33,587",
+    "rankCount": 48,
+    "scaleWidths": [
+      40,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "390.measure.dangerWidth": {
+    "title": "Width of the worst danger zone, by state",
+    "sub": "1 adult, 2 children (3 and 7). Earnings spanned by the widest stretch where more pay leaves the household no better off.",
+    "scale": [
+      "$35,000",
+      "$46,000",
+      "$57,000",
+      "$68,000",
+      "$79,000",
+      "$90,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "CO$90,000",
+    "rankLast": "TN$35,000",
+    "rankAxis": "$35,000$90,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      47,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "390.measure.leap": {
+    "title": "The leap, by state",
+    "sub": "1 adult, 2 children (3 and 7). The raise a household must clear in one move to get past that stretch.",
+    "scale": [
+      "$12,000",
+      "$24,800",
+      "$37,600",
+      "$50,400",
+      "$63,200",
+      "$76,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "Runs past the top of the axis (2)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "ith a comparable figure; 1 with no cliff found; 2 past the axis. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "WI$76,000",
+    "rankLast": "NYpast axis",
+    "rankAxis": "$12,000$76,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      47,
+      47,
+      47,
+      47,
+      47,
+      47
+    ],
+    "scaleOverlap": false
+  },
+  "390.measure.safeExit": {
+    "title": "Safe exit, by state",
+    "sub": "1 adult, 2 children (3 and 7). Earnings at which the last danger zone closes.",
+    "scale": [
+      "$108,000",
+      "$116,000",
+      "$124,000",
+      "$132,000",
+      "$140,000",
+      "$148,000"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "Runs past the top of the axis (3)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "ith a comparable figure; 1 with no cliff found; 3 past the axis. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "VT$148,000",
+    "rankLast": "NYpast axis",
+    "rankAxis": "$108,000$148,000",
+    "rankCount": 48,
+    "scaleWidths": [
+      55,
+      55,
+      55,
+      55,
+      55,
+      55
+    ],
+    "scaleOverlap": false
+  },
+  "390.measure.cliffCount": {
+    "title": "Number of cliffs, by state",
+    "sub": "1 adult, 2 children (3 and 7). Steps down of $200 or more anywhere on the curve.",
+    "scale": [
+      "4",
+      "7",
+      "10",
+      "13",
+      "16",
+      "19"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "VT19",
+    "rankLast": "NY4",
+    "rankAxis": "419",
+    "rankCount": 48,
+    "scaleWidths": [
+      7,
+      7,
+      15,
+      15,
+      15,
+      15
+    ],
+    "scaleOverlap": false
+  },
+  "390.measure.deferredCliffCount": {
+    "title": "Deferred cliffs, by state",
+    "sub": "1 adult, 2 children (3 and 7). Of those, the ones that land at a future renewal, not with the raise.",
+    "scale": [
+      "0",
+      "0",
+      "0",
+      "1",
+      "1",
+      "1"
+    ],
+    "legend": [
+      "No cliff found (1)",
+      "NJ Health Plan Savings and Cascade Care Savings not modelled — figures incomplete, not low (2)"
+    ],
+    "src": "r the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "rankFirst": "AL1",
+    "rankLast": "WY0",
+    "rankAxis": "01",
+    "rankCount": 48,
+    "scaleWidths": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "scaleOverlap": false
+  },
+  "390.childlessSafeExit": {
+    "scale": "$23,000$33,600$44,200$54,800$65,400$76,000",
+    "none": "No cliff found (3)",
+    "noneRows": [
+      "MDno cliff",
+      "NMno cliff",
+      "WIno cliff"
+    ],
+    "tableWI": [
+      "WI",
+      "none",
+      "none",
+      "none",
+      "none",
+      "0",
+      "0",
+      "complete"
+    ]
+  },
+  "390.sortMeasure": {
+    "cap": "All six measures for 1 adult, 2 children (3 and 7), by number of cliffs, largest first. PolicyEngine 2026 rules, sweep of 2026-09-16.",
+    "first5": [
+      "VT$18,890$82,000$42,000$148,000190complete",
+      "OR$25,745$81,000$67,000$120,000151complete",
+      "MO$16,428$61,000$52,000$110,000120complete",
+      "CO$25,449$90,000$73,000$119,000100complete",
+      "LA$9,649$51,000$17,000$114,000100complete"
+    ],
+    "last3": [
+      "NMnonenonenonenone00complete",
+      "NJ$26,206$75,000$62,000$111,00071incomplete: NJ Health Plan Savings not modelled",
+      "WA$19,614$63,000$49,000$119,00061incomplete: Cascade Care Savings not modelled"
+    ]
+  },
+  "390.url": "http://127.0.0.1:5173/places.html?household=single-2&measure=biggestLoss&sort=state",
+  "390.csv": {
+    "name": "hotgap-single-2-2026-09-16.csv",
+    "bytes": 20487,
+    "head": "﻿state,state_name,archetype_id,archetype,biggest_one_step_loss,danger_zone_width,leap,safe_exit,cliff_count,deferred_cliff_count,leap_is_lower_bound,no_cliff_found,comparable,figures,unmodeled_programs,corrections_applied,rent_vintage,county_vintage,childcare_price_vintage,reach_vintages,policy_year,sweep_generated,model_endpoint,model_version,source",
+    "row1": "AK,Alaska,single-2,\"1 adult, 2 children (3 and 7)\",14365,75000,45000,136000,6,0,false,false,true,complete,,CCDF child care subsidy: added by HotGap,\"FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx.\",\"Vintage 2024 (July 1, 2024 estimates)\",county 2018,20",
+    "rows": 51
+  },
+  "390.dark.contrast": {
+    "ink3OnPlane": 7.22,
+    "ink3OnSurface": 6.6,
+    "ink2OnPlane": 11.54,
+    "sunkOnPlane": 1.09,
+    "sunkOnSurface": 1.19,
+    "trackOnPlane": 1.11,
+    "ruleOnPlane": 1.46,
+    "ruleStrongOnPlane": 2.09,
+    "ruleStrongOnSurface": 1.91,
+    "noneOutlineOnSurface": 1.91,
+    "controlEdgeOnPlane": 4.09,
+    "flagNoOnPlane": 9.49,
+    "cautionOnSurface": 8.68,
+    "hatchStripeOnGround": 5.97,
+    "loss1OnSurface": 2.27,
+    "loss5OnSurface": 11.68,
+    "labelOnBins": [
+      "ME:6.99",
+      "AK:4.51",
+      "VT:5.41",
+      "MN:8.22",
+      "NY:11.68"
+    ],
+    "focusOnLoss5": 2831.95,
+    "focusOnLoss1": 14604.58,
+    "thOnPlane": 7.22,
+    "thBorderOnPlane": 2.09,
+    "tagOnPlane": null,
+    "linkOnSurface": 7.86,
+    "rampAdjacent": [
+      1.55,
+      1.54,
+      1.52,
+      1.42
+    ],
+    "raw": {
+      "plane": "rgb(13, 17, 20)",
+      "surface": "rgb(22, 27, 32)",
+      "sunk": "light-dark(#F1F3F6, #1D242A)",
+      "track": "rgba(0, 0, 0, 0)",
+      "incRowMark": "rgb(63, 74, 83) 4px 0px 0px 0px inset"
+    }
+  },
+  "390.print": {
+    "bodyBg": "rgb(255, 255, 255)",
+    "ink": "rgb(18, 23, 28)",
+    "tileBg": "rgb(178, 118, 163)",
+    "filtersDisplay": "none",
+    "csvDisplay": "none",
+    "themeDisplay": "none",
+    "tableFs": "13px",
+    "tableW": 645.390625,
+    "scrollerOverflow": "visible",
+    "splitCols": "174.359px 151.625px",
+    "sunkRow": "rgb(241, 243, 246)",
+    "skip": "none"
+  },
+  "390.reducedMotion": {
+    "animated": 0,
+    "durDraw": "0ms"
+  },
+  "390.motionNormal": [
+    "(0)"
+  ],
+  "390.error": {
+    "status": "We could not load the weekly sweep (summary.json: HTTP 404). Reload to try again.",
+    "lede": " sets of rules, household shapes, one axis. Each figure is the worst single $1,000 step of earnings in that state’s curve for that household — how much net income falls when pay goes up by a thousand dollars.",
+    "h2": "All , every measure",
+    "stateTitle": "",
+    "rank": "Ranked",
+    "archOptions": 0,
+    "methodYear": "",
+    "colour": "rgb(138, 90, 0)"
+  },
+  "390.loading": {
+    "status": "Loading the weekly sweep…",
+    "hidden": false,
+    "lede": " sets of rules, household shapes, one axis. Each figure is the worst single $1,0"
+  },
+  "390.mock": {
+    "h": 8599,
+    "filtersH": 237,
+    "tileTag": "DIV",
+    "gridRole": "img",
+    "sel": "CO",
+    "stateSub": "What HotGap changed on top of PolicyEngine before any figure for Colorado was read. The state selected in the table below sets this block.",
+    "figSrc": "HotGap, from PolicyEngine 2026 rules on policyengine-us 2.5.0. Weekly sweep generated 2026-09-16. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $5,190 to $33,587 over the 48 states with a comparable figure; 1 with no cliff found. 2 states are hatched: NJ Health Plan Savings and Cascade Care Savings are not modelled there, so their figures are incomplete and are not shaded or ranked.",
+    "tabCap": "All six measures for 1 adult, 2 children (3 and 7). PolicyEngine 2026 rules, sweep of 2026-09-16.",
+    "lede": "Fifty-one sets of rules, eleven household shapes, one axis. ",
+    "h2": "All 51, every measure",
+    "tileW": 28.671875
+  }
+}

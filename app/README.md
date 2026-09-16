@@ -137,6 +137,51 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 
 The citizen bundle today is 98 KB (31 KB gzip) with the two small tables inlined.
 
+## Languages
+
+The site must take a new language as one file, not a rewrite. The rules,
+decided 2026-09-16, that every surface builds to (the migration of what
+exists is a single pass after the three pages land; until then each surface
+keeps every user-facing string in its own copy module — `src/editor/copy.ts`
+is the shape — and none inline in render code):
+
+- **Strings.** Every string a person can see lives in a locale file
+  (`src/i18n/<locale>.json`, one file per locale, namespaced by surface),
+  written as ICU MessageFormat so plurals, selects and numbers are the
+  locale's business (`{kids, plural, one {# child} other {# children}}`),
+  rendered through one `t(key, params)` bound to the active locale. No
+  string concatenation of translated fragments; a sentence is one message.
+- **core's prose is a code, not a sentence.** Where a surface prints what
+  core wrote verbatim — coverage notes, unmodeled programs, the
+  other-benefits label, `validateAnswers` details, `/api` error details,
+  program names — core emits a message code with parameters and ships the
+  English table; the surface renders it in the active locale and falls
+  back to core's English. `summary.json` carries both the code and the
+  rendered English so a CSV or a script never needs the app.
+- **Numbers, money, dates** go through `Intl.*` with the active locale.
+  Money is always US dollars (`currency: "USD"`), formatted the locale's way
+  (`es-US`, not `es-ES`, for a US household).
+- **The locale travels.** `?lang=` in the URL (a caseworker can send a
+  client a link in the client's language), else `navigator.languages`, else
+  `en`; `<html lang dir>` is set from it; the viewer's choice is remembered
+  in `localStorage` as a convenience only.
+- **Layout allows for it.** Text expands (~30% for Spanish; the pseudo-locale
+  below does 40%); CSS uses logical properties (`margin-inline`,
+  `text-align: start`), never left/right, so `dir="rtl"` works without a
+  second stylesheet. Archivo carries Latin and Latin Extended; a language in
+  another script adds its subset next to `design/fonts/` when it ships.
+- **The gate.** A pseudo-locale (`qps-ploc`: every `en` message accented,
+  bracketed and lengthened) is generated at test time; the e2e renders every
+  page in it and fails on any visible English source string (a hard-coded
+  one) and on horizontal scroll at 390 (an expansion overflow). The
+  readability gate (`scripts/readability.mjs`) runs on English only.
+- **What stays English.** CSV column headers and URL parameter names are
+  machine contracts and do not localize; the download's label does.
+- **The second language ships with the migration:** Spanish (`es-US`),
+  drafted by the model and marked in the file header as a draft until a
+  native speaker reviews it, so the path is proven with a language people
+  in this audience actually read, not a placeholder.
+
 ## Proofs
 
     npm run typecheck                  # tsc -b core pipeline app worker (wrangler types first)

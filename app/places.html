@@ -13,15 +13,17 @@
 <div class="page masthead">
   <p class="wordmark">HotGap</p>
   <h1>What a raise costs, state by state</h1>
-  <p class="lede"><span id="stateCount"></span> sets of rules, <span id="archCount"></span> household shapes, one axis.
-    Each figure is the worst single $1,000 step of earnings in that state&rsquo;s curve for that
+  <!-- The counted sentence is written from the data once it is in (S6); until then the lede is the sentence that needs no number. -->
+  <p class="lede"><span id="ledeCount"></span>Each figure is the worst single $1,000 step of earnings in that state&rsquo;s curve for that
     household &mdash; how much net income falls when pay goes up by a thousand dollars.</p>
 </div>
 
-<div class="page">
-  <!-- Loading and failure share one line: a status while the sweep loads, an alert if it does not. -->
-  <p class="hg-source" id="status" role="status">Loading the weekly sweep&hellip;</p>
+<!-- Loading and failure share one line: a status while the sweep loads, an alert if it does not.
+     Everything below it stays hidden until the data is in, so neither state shows a skeleton (S6). -->
+<div class="page"><p class="hg-source" id="status" role="status">Loading the weekly sweep&hellip;</p></div>
 
+<div class="page" id="main" hidden>
+  <!-- The shared row: the two scopes the map, the ranking and the table all follow, and the download. -->
   <div class="hg-filters hg-no-print">
     <div>
       <label for="arch">Household</label>
@@ -30,13 +32,6 @@
     <div>
       <label for="metric">Measure</label>
       <select id="metric" class="hg-select"></select>
-    </div>
-    <div>
-      <label for="sort">Table order</label>
-      <select id="sort" class="hg-select">
-        <option value="state">State, A to Z</option>
-        <option value="measure">This measure, largest first</option>
-      </select>
     </div>
     <div class="hg-filters__end">
       <button type="button" class="hg-button" id="csvBtn">Download these rows (CSV)</button>
@@ -63,7 +58,8 @@
       </figure>
 
       <section class="state" id="stateDetail" aria-labelledby="stateTitle">
-        <h3 id="stateTitle"></h3>
+        <!-- Focusable so a selection made from the table can land here (S1). -->
+        <h3 id="stateTitle" tabindex="-1"></h3>
         <p class="sub" id="stateSub"></p>
         <ul class="hg-rows" id="corrections"></ul>
         <h4 id="unmodTitle" hidden></h4>
@@ -74,10 +70,10 @@
       </section>
     </div>
 
-    <section aria-labelledby="rankTitle">
+    <section aria-labelledby="rankTitle" id="rankList">
       <h3 id="rankTitle">Ranked</h3>
-      <ul class="rank" id="rank"></ul>
       <div class="rank-axis" id="rankAxis"></div>
+      <ul class="rank" id="rank"></ul>
       <div class="rank-group" id="noneGroup" hidden>
         <h4 id="noneTitle"></h4>
         <ul class="rank" id="rankNone"></ul>
@@ -88,13 +84,23 @@
         <ul class="rank" id="rankInc"></ul>
         <p id="incNote"></p>
       </div>
-      <p class="hg-source">Bins are five equal-width steps across the observed range and are
-        recomputed for every measure, so a shade means nothing across two different measures.
-        Read the bin bounds, not the colour.</p>
+      <p class="hg-source">Bins are recomputed for every measure &mdash; equal-width steps of a dollar
+        measure, classes of whole numbers for a count &mdash; so a shade means nothing across two
+        different measures. Read the bin bounds, not the colour.</p>
     </section>
   </div>
 
   <h2 id="table">All <span id="tableCount"></span>, every measure</h2>
+  <!-- The order control scopes only this table, so it sits with it (S7, inventory #21). -->
+  <div class="hg-filters hg-no-print table-order">
+    <div>
+      <label for="sort">Table order</label>
+      <select id="sort" class="hg-select">
+        <option value="state">State, A to Z</option>
+        <option value="measure">This measure, largest first</option>
+      </select>
+    </div>
+  </div>
   <div class="hg-scroll-x">
     <table class="hg-table">
       <caption id="tabCap"></caption>
@@ -163,8 +169,6 @@
       axis</em> here and must not be charted as a value.</p>
     <p class="hg-source" id="methodSrc"></p>
   </div>
-
-  <p class="hg-no-print" style="margin-top:var(--s7)"><button class="hg-button" id="themeBtn" type="button">Dark</button></p>
 </div>
 </body>
 </html>
