@@ -98,25 +98,35 @@ release into `summary.json` and each state file as `model`.
 
 ## Hosted on DigitalOcean
 
-The engine runs as a DigitalOcean App Platform service, `hotgap-engine`,
-from the image `.github/workflows/engine-image.yml` pushes to the
-`hotgap` container registry on every change to `engine/` (Dependabot bumps
-included). The app watches the `latest` tag and redeploys itself. It runs
-one gunicorn worker on a 2 vCPU / 4 GB instance — a worker peaks at
-~2.75 GB on an override state (see `_POLICY_CACHE_SIZE`) — and requires a
-bearer token on `/us/calculate` (`HOTGAP_ENGINE_TOKEN`, a secret on the
-app; `/healthz` stays open for the platform's checks). Point HotGap at it
-with both:
+The engine runs as a DigitalOcean App Platform service, `hotgap-engine`
+(`https://hotgap-engine-ymrlt.ondigitalocean.app`), from the image
+`.github/workflows/engine-image.yml` pushes to the `hotgap` container
+registry on every change to `engine/` (Dependabot bumps included). The app
+watches the `latest` tag and redeploys itself. It requires a bearer token
+on `/us/calculate` (`HOTGAP_ENGINE_TOKEN`, a secret on the app; `/healthz`
+stays open for the platform's checks). Point HotGap at it with both — they
+live in `.env` (see `.env.example`):
 
 ```sh
-export HOTGAP_PE_URL=https://<app>.ondigitalocean.app/us/calculate
-export HOTGAP_PE_TOKEN=<the token>
+set -a; . ./.env; set +a     # HOTGAP_PE_URL and HOTGAP_PE_TOKEN
+npm run hotgap -- curve --state MA --kids 2,6 --rent 1800 --childcare 2400 --earnings 32000 --childcare-subsidy
 ```
 
-Scaling is the app spec: `WEB_CONCURRENCY` workers on an instance with
-about 2.5 GB per worker plus 1.5 GB for the preloaded master. The weekly
-sweep does not use this service; it starts its own engine on the GitHub
-runner (`.github/actions/start-engine`), which is free and already sized.
+**Size, and why.** Two gunicorn workers on `apps-d-2vcpu-8gb` (dedicated,
+$98/month) plus the registry's basic tier ($5/month). The first deploy was
+the shared 2 vCPU / 4 GB instance ($50) with one worker, and the first
+override-state request killed it: the preloaded system (~1.2 GB, shared)
+plus a fresh reform system warming to ~2 GB plus the simulation's own
+working memory is more than 4 GB, and a container that runs out of memory
+just restarts, with nothing in the log. Verified on the 8 GB instance:
+the 23-test live contract suite in 120 s, and TX + SC + MA (33 curves,
+reforms and the Massachusetts feedback loop) in 14 minutes, healthy
+throughout. Scaling is the app spec (`WEB_CONCURRENCY`, the instance
+slug): budget about 2.5–3 GB per worker plus 1.5 GB for the master.
+
+The weekly sweep does not use this service; it starts its own engine on
+the GitHub runner (`.github/actions/start-engine`), which is free and
+already sized. This one is for the personal path and whatever UI follows.
 
 ## Which model produced a number
 

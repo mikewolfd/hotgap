@@ -437,6 +437,10 @@ public API stays the fallback for a `hotgap` run with no engine, and
     gunicorn --bind 127.0.0.1:8099 --workers 4 --preload engine.app:app &
     HOTGAP_PE_URL=http://127.0.0.1:8099/us/calculate npm run pipeline
 
+A hosted copy runs on DigitalOcean App Platform for the personal path
+(`engine/README.md`, "Hosted on DigitalOcean"): `.env.example` names the
+two variables that point the CLI at it, URL and bearer token.
+
 `.github/workflows/places-data.yml` runs the sweep on the engine every
 Monday at 07:00 UTC (and on manual dispatch), running the test suite and
 typecheck before committing. Data commits only when the swept numbers
