@@ -43,19 +43,23 @@ function stateOf(household: Record<string, unknown>): string {
   throw new PEParseError("missing state_name");
 }
 
-function series(entity: Record<string, unknown>, variable: string, count: number): number[] {
+/**
+ * `variable` at every point of the axis. A take-up override forces a
+ * program's value to a scalar (e.g. head_start: 0 when the family does not
+ * receive it), and PolicyEngine returns a forced scalar input as-is instead
+ * of broadcasting it across the earnings axis, so a single value is valid
+ * here — hold it constant across all points. `age` is always a scalar for the
+ * same reason: the axis varies employment income only.
+ */
+function seriesOf<T>(entity: Record<string, unknown>, variable: string, count: number, isValue: (x: unknown) => x is T): T[] {
   const v = (entity[variable] as Record<string, unknown> | undefined)?.[YEAR];
-  // A take-up override forces a program's value to a scalar (e.g. head_start: 0
-  // when the family does not receive it). PolicyEngine returns a forced scalar
-  // input as-is instead of broadcasting it across the earnings axis, so a
-  // single number is valid here — hold it constant across all points. `age` is
-  // always a scalar for the same reason: the axis varies employment income only.
-  if (typeof v === "number") return new Array(count).fill(v);
-  if (!Array.isArray(v) || v.length !== count || v.some((x) => typeof x !== "number")) {
-    throw new PEParseError(`bad series for ${variable}`);
-  }
-  return v as number[];
+  if (isValue(v)) return new Array(count).fill(v);
+  if (!Array.isArray(v) || v.length !== count || !v.every(isValue)) throw new PEParseError(`bad series for ${variable}`);
+  return v;
 }
+const isNumber = (x: unknown): x is number => typeof x === "number";
+const isBoolean = (x: unknown): x is boolean => typeof x === "boolean";
+const series = (entity: Record<string, unknown>, variable: string, count: number): number[] => seriesOf(entity, variable, count, isNumber);
 
 export interface ParseOptions {
   /**
@@ -238,11 +242,7 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
     // when the caller knows the model double-counts.
     const tafdc = series(spm, "ma_tafdc", expectedCount);
     const stateBenefits = series(household, "household_state_benefits", expectedCount);
-    const eligible = spm.ma_tafdc_non_financial_eligible?.[YEAR];
-    const flags = typeof eligible === "boolean" ? new Array(expectedCount).fill(eligible) : eligible;
-    if (!Array.isArray(flags) || flags.length !== expectedCount || flags.some((v) => typeof v !== "boolean")) {
-      throw new PEParseError("bad series for ma_tafdc_non_financial_eligible");
-    }
+    const flags = seriesOf(spm, "ma_tafdc_non_financial_eligible", expectedCount, isBoolean);
     const sumPeople = (variable: string) => Object.values(people).reduce(
       (sum, person) => series(person, variable, expectedCount).map((v, i) => v + sum[i]), new Array(expectedCount).fill(0) as number[],
     );
