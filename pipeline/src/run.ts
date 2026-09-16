@@ -123,11 +123,7 @@ export type ReadStateFileFn = (state: string) => Promise<string>;
 
 /** Pure: pulls the per-archetype point arrays back out of a stored state file. */
 export function resultsFromStateFile(file: StateFileJson): Record<string, CurvePoint[]> {
-  const byArchetype: Record<string, CurvePoint[]> = {};
-  for (const [archetypeId, { points }] of Object.entries(file.archetypes)) {
-    byArchetype[archetypeId] = points;
-  }
-  return byArchetype;
+  return Object.fromEntries(Object.entries(file.archetypes).map(([archetypeId, { points }]) => [archetypeId, points]));
 }
 
 /** Reads `{statesDir}/{state}.json` from disk — the injectable default for runFromData. */
@@ -232,16 +228,18 @@ const DEFAULT_PATHS: OutputPaths = {
   statesDir: path.join(process.cwd(), "core/data/states"),
 };
 
+function reportGaps(gaps: ValidationGap[]): number {
+  console.error(`Validation failed: ${gaps.length} gap(s)`);
+  for (const g of gaps) console.error(`  ${g.state} × ${g.archetypeId}: ${g.reason}`);
+  return 1;
+}
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   const opts = parseArgs(argv);
 
   if (opts.fromData) {
     const result = await runFromData(opts.states, defaultReadStateFile(DEFAULT_PATHS.statesDir));
-    if (!result.ok) {
-      console.error(`Validation failed: ${result.gaps.length} gap(s)`);
-      for (const g of result.gaps) console.error(`  ${g.state} × ${g.archetypeId}: ${g.reason}`);
-      return 1;
-    }
+    if (!result.ok) return reportGaps(result.gaps);
     await writeSummary(DEFAULT_PATHS.summaryPath, result.summary!);
     console.log(`Recomputed summary.json from ${opts.states.length} on-disk state file(s) — no network calls, state files untouched.`);
     return 0;
@@ -253,11 +251,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     console.log(`dry-run: built payloads for ${opts.states.length} state(s) × ${ARCHETYPES.length} archetypes`);
     return 0;
   }
-  if (!result.ok) {
-    console.error(`Validation failed: ${result.gaps.length} gap(s)`);
-    for (const g of result.gaps) console.error(`  ${g.state} × ${g.archetypeId}: ${g.reason}`);
-    return 1;
-  }
+  if (!result.ok) return reportGaps(result.gaps);
 
   await writeOutputs(DEFAULT_PATHS, result.summary!, result.stateFiles!);
   console.log(`Wrote summary.json and ${opts.states.length} state file(s).`);

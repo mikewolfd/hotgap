@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES } from "./archetypes.js";
+import { ARCHETYPES, archetypeById } from "./archetypes.js";
 import { REACH_PERCENTILES } from "./reach.js";
 import { reachCell, reachForArchetype, reachForHousehold } from "./reachLookup.js";
 import { STATE_CODES } from "./states.js";
@@ -122,7 +122,7 @@ describe("reachForHousehold", () => {
   it("returns null when the mapped archetype's cell is suppressed", () => {
     const gap = SUPPRESSED.find(({ id }) => ARCHETYPES.some((a) => a.id === id));
     if (!gap) return; // this vintage suppressed nothing; reachForArchetype's null cases cover the path
-    const archetype = ARCHETYPES.find((a) => a.id === gap.id)!;
+    const archetype = archetypeById(gap.id);
     expect(reachForHousehold(gap.state, hh(archetype.married, archetype.childAges.length, archetype.spouseWorks ? 15080 : 0), 50000)).toBeNull();
   });
 

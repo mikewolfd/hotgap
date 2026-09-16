@@ -9,7 +9,7 @@
 // applied to the points BEFORE any analysis runs (so cliffs and danger zones
 // describe the corrected curve, not the raw one), and each is reported on the
 // evaluation so a front end can say what was changed and why.
-import { analyzeCurve, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
+import { analyzeCurve, childCoverageAt, heldByAdults, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
 import { fetchCurve, PolicyEngineError, type FetchCurveOptions } from "./client.js";
 import { escapeAnalysis, type EscapeAnalysis } from "./escape.js";
 import { loadStateFile, type StateFileJson } from "./data.js";
@@ -20,7 +20,7 @@ import { stateDefaults } from "./stateDefaults.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
 import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
-import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
 import { householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
@@ -126,22 +126,29 @@ export interface UnclaimedBenefit {
   annual: number;
 }
 
-const TAKE_UP: { program: UnclaimedBenefit["program"]; flag: keyof Pick<HouseholdAnswers, "getsSnap" | "getsTanf" | "getsMedicaid" | "getsWic"> }[] = [
+/** The entitlements a household can say it does not get, each with the answer that switches it off. */
+export const ENTITLEMENT_TAKE_UP: readonly { program: UnclaimedBenefit["program"]; flag: "getsSnap" | "getsTanf" | "getsMedicaid" | "getsWic" }[] = [
   { program: "snap", flag: "getsSnap" }, { program: "tanf", flag: "getsTanf" },
   { program: "medicaid", flag: "getsMedicaid" }, { program: "wic", flag: "getsWic" },
 ];
 
 /** The same household with every entitlement taken up, or null when nothing is off. */
-export function withEveryEntitlement(a: HouseholdAnswers): HouseholdAnswers | null {
-  if (TAKE_UP.every(({ flag }) => a[flag])) return null;
+function withEveryEntitlement(a: HouseholdAnswers): HouseholdAnswers | null {
+  if (ENTITLEMENT_TAKE_UP.every(({ flag }) => a[flag])) return null;
   return { ...a, getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true };
 }
 
+/** The last sampled point at or below `earnings` — the point whose figures already sit in the curve — or the first when none is. */
+function pointAtOrBelow(points: CurvePoint[], earnings: number): CurvePoint {
+  let at = points[0];
+  for (const p of points) if (p.earnings <= earnings) at = p;
+  return at;
+}
+
 /** Programs that are off for `a` and pay something at its earnings on the all-take-up evaluation. */
-export function unclaimedFrom(a: HouseholdAnswers, allTakeUp: HouseholdEvaluation): UnclaimedBenefit[] {
-  const points = allTakeUp.curve.points;
-  const at = points.filter((p) => p.earnings <= a.annualEarnings).pop() ?? points[0];
-  return TAKE_UP
+function unclaimedFrom(a: HouseholdAnswers, allTakeUp: HouseholdEvaluation): UnclaimedBenefit[] {
+  const at = pointAtOrBelow(allTakeUp.curve.points, a.annualEarnings);
+  return ENTITLEMENT_TAKE_UP
     .filter(({ flag }) => !a[flag])
     .map(({ program }) => ({ program, annual: Math.round(at.programs[program] ?? 0) }))
     .filter(({ annual }) => annual > PROGRAM_END_MIN);
@@ -177,34 +184,19 @@ const normalize = (p: CurvePoint): CurvePoint => ({
   coverageGap: p.coverageGap ?? false,
 });
 
+const adultOnMedicaidAt = (p: CurvePoint): boolean => heldByAdults(p, "medicaid") > PROGRAM_END_MIN;
+const childrenCoveredAt = (p: CurvePoint): boolean => childCoverageAt(p) > PROGRAM_END_MIN;
+
 /**
- * Finding 5 — employer coverage.
- *
- * PolicyEngine charges an ESI household the full *marketplace* premium. Live
- * decomposition 2026-09-14 (CA, one parent one child, $60k): medical
- * out-of-pocket $5,220, every dollar of it `marketplace_net_premium`, with
- * `other_health_insurance_premiums` — the slot an employee contribution would
- * occupy — at $0. Because `offered_aca_disqualifying_esi` zeroes the premium
- * tax credit, that $5,220 is an unsubsidized premium for coverage this
- * household does not buy. The `employer_sponsored_insurance_premiums` input
- * does not touch it: $6,500 and $13,000 give byte-identical output, and
- * PolicyEngine documents the variable as the employer's share anyway.
- *
- * So this REPLACES the premium rather than adding to it — adding would charge
- * the family a marketplace premium and a paycheck deduction at once. What they
- * really pay is the MEPS-IC employee contribution.
- *
- * Two guards, both of which exist to avoid inventing a charge. The
- * $0-earnings point is left alone: no job, no payroll deduction. And a point
- * where PolicyEngine charged nothing is left alone too — for an ESI household
- * its medical out-of-pocket is entirely `marketplace_net_premium`, so $0 there
- * means the family is on Medicaid or CHIP at that income and is not paying an
- * employer plan. Without that second guard the curve grew a false cliff the
- * full size of the contribution at the first dollar of pay.
+ * The household's MAGI apart from the earnings on the axis: the spouse's
+ * wages, unemployment, and Social Security (SSDI is added back). Child
+ * support received is not gross income and is not in MAGI — counting it
+ * moved the marketplace subsidy floor down and restored the phantom premium
+ * between the two lines (verified live 2026-09-15: PolicyEngine's own credit
+ * starts at the family-of-three line on earnings alone).
  */
-const adultMedicaidAt = (p: CurvePoint): number => (p.programs.medicaid ?? 0) - (p.childPrograms.medicaid ?? 0);
-const childrenCoveredAt = (p: CurvePoint): boolean =>
-  (p.childPrograms.medicaid ?? 0) + (p.childPrograms.chip ?? 0) > PROGRAM_END_MIN;
+const magiBesidesEarnings = (a: HouseholdAnswers): number =>
+  a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
 
 /**
  * Which employer-plan tier this household has to buy at this earnings level,
@@ -241,7 +233,7 @@ export function esiTierAt(a: HouseholdAnswers, p: CurvePoint): EsiTier | null {
   // enrolled in, so no contribution is charged. A household that never
   // reported its hours is charged: "unknown" must not become "part-time".
   if (a.hoursPerWeek !== null && a.hoursPerWeek < ESI_FULL_TIME_HOURS) return null;
-  const adultMedicaid = adultMedicaidAt(p) > PROGRAM_END_MIN;
+  const adultMedicaid = adultOnMedicaidAt(p);
   // Exactly one disabled adult is the only way the pair's coverage can differ.
   const onlySpouseDisabled = a.married && a.spouseDisabled && !a.youDisabled;
   const onlyYouDisabled = a.married && a.youDisabled && !a.spouseDisabled;
@@ -251,6 +243,31 @@ export function esiTierAt(a: HouseholdAnswers, p: CurvePoint): EsiTier | null {
   return others === 0 ? "single" : others === 1 ? "plusOne" : "family";
 }
 
+/**
+ * Finding 5 — employer coverage.
+ *
+ * PolicyEngine charges an ESI household the full *marketplace* premium. Live
+ * decomposition 2026-09-14 (CA, one parent one child, $60k): medical
+ * out-of-pocket $5,220, every dollar of it `marketplace_net_premium`, with
+ * `other_health_insurance_premiums` — the slot an employee contribution would
+ * occupy — at $0. Because `offered_aca_disqualifying_esi` zeroes the premium
+ * tax credit, that $5,220 is an unsubsidized premium for coverage this
+ * household does not buy. The `employer_sponsored_insurance_premiums` input
+ * does not touch it: $6,500 and $13,000 give byte-identical output, and
+ * PolicyEngine documents the variable as the employer's share anyway.
+ *
+ * So this REPLACES the premium rather than adding to it — adding would charge
+ * the family a marketplace premium and a paycheck deduction at once. What they
+ * really pay is the MEPS-IC employee contribution.
+ *
+ * Two guards, both of which exist to avoid inventing a charge. The
+ * $0-earnings point is left alone: no job, no payroll deduction. And a point
+ * where PolicyEngine charged nothing is left alone too — for an ESI household
+ * its medical out-of-pocket is entirely `marketplace_net_premium`, so $0 there
+ * means the family is on Medicaid or CHIP at that income and is not paying an
+ * employer plan. Without that second guard the curve grew a false cliff the
+ * full size of the contribution at the first dollar of pay.
+ */
 // WORKAROUND — remove when upstream models the employee ESI share
 // (policyengine-us #9473).
 function applyEmployerCoverage(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
@@ -304,7 +321,7 @@ function applyEmployerCoverage(points: CurvePoint[], a: HouseholdAnswers): Curve
 function applyMedicare(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
   if (a.ssdiMonthly <= 0 || a.hasEmployerCoverage) return points;
   return points.map((p) => {
-    const partB = adultMedicaidAt(p) > PROGRAM_END_MIN ? 0 : MEDICARE_PART_B_ANNUAL;
+    const partB = adultOnMedicaidAt(p) ? 0 : MEDICARE_PART_B_ANNUAL;
     // PolicyEngine reports ONE medical-out-of-pocket figure for the whole SPM
     // unit, so the marketplace premium cannot be split between the people on
     // the plan. The rule, therefore, is all-or-nothing: the premium (and the
@@ -372,28 +389,6 @@ function applyHeadStart(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[]
 }
 
 /**
- * Finding 2 — the coverage gap.
- *
- * In the nine non-expansion states with a gap, an adult above the state's
- * parent limit and below 100% FPL qualifies for nothing: no Medicaid, and no
- * premium tax credit, because 26 CFR 1.36B-2(b)(1) puts the subsidy floor at
- * 100% FPL. PolicyEngine still charges them the full unsubsidized benchmark
- * premium — live 2026-09-14, a Texas parent with one child at $10,000 of
- * earnings has no Medicaid, no credit, and $6,962 of medical out-of-pocket,
- * against a 100%-FPL line of $21,150 for two. Nobody in that band buys that
- * plan. Wyoming's own 2026 eligibility chart labels the band "No Coverage".
- *
- * So we call it what it is: uninsured. The premium comes back out of the money
- * line and the point is flagged, which is worse news honestly told — the
- * household keeps the cash and has no coverage at all.
- *
- * The FPL vintage is 2025, not 2026: marketplace eligibility for coverage year
- * 2026 runs on the guidelines in effect when open enrollment began
- * (26 CFR 1.36B-1(h)). See policyYear.ts.
- */
-// WORKAROUND — remove when upstream gates marketplace take-up on subsidy
-// eligibility (policyengine-us #9472).
-/**
  * True when the SSDI recipient is the only person who needs coverage — no
  * spouse, and every child on Medicaid or CHIP — so Medicare (applyMedicare)
  * covers the whole household and no marketplace premium or gap applies.
@@ -415,50 +410,58 @@ function medicareCoversWholeHousehold(p: CurvePoint, a: HouseholdAnswers): boole
 function adultGroupLossTest(a: HouseholdAnswers): (earnings: number) => boolean {
   if (NON_EXPANSION_STATES.has(a.state)) return () => false;
   const line = fpl2026(a.state, householdSize(a));
-  const nonWageIncome = a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
+  const otherMagi = magiBesidesEarnings(a);
   return (earnings) => {
-    const share = (earnings + nonWageIncome) / line;
+    const share = (earnings + otherMagi) / line;
     return share >= 1.28 && share <= 1.51;
   };
 }
 
+/**
+ * Finding 2 — the coverage gap.
+ *
+ * In the nine non-expansion states with a gap, an adult above the state's
+ * parent limit and below 100% FPL qualifies for nothing: no Medicaid, and no
+ * premium tax credit, because 26 CFR 1.36B-2(b)(1) puts the subsidy floor at
+ * 100% FPL. PolicyEngine still charges them the full unsubsidized benchmark
+ * premium — live 2026-09-14, a Texas parent with one child at $10,000 of
+ * earnings has no Medicaid, no credit, and $6,962 of medical out-of-pocket,
+ * against a 100%-FPL line of $21,150 for two. Nobody in that band buys that
+ * plan. Wyoming's own 2026 eligibility chart labels the band "No Coverage".
+ *
+ * So we call it what it is: uninsured. The premium comes back out of the money
+ * line and the point is flagged, which is worse news honestly told — the
+ * household keeps the cash and has no coverage at all.
+ *
+ * The FPL vintage is 2025, not 2026: marketplace eligibility for coverage year
+ * 2026 runs on the guidelines in effect when open enrollment began
+ * (26 CFR 1.36B-1(h)). See policyYear.ts.
+ *
+ * The subsidy floor is tested on MAGI (IRC §36B(d)(2)(B)) — the earnings on
+ * the axis plus magiBesidesEarnings.
+ */
+// WORKAROUND — remove when upstream gates marketplace take-up on subsidy
+// eligibility (policyengine-us #9472).
 function applyCoverageGap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
-  // Medicare is coverage, so a household HotGap models as enrolled through
-  // SSDI (applyMedicare) is never in the marketplace gap. Only a one-adult
-  // household is exempt outright: a married couple can still have an uncovered
-  // spouse, and applyMedicare leaves their marketplace premium in place for
-  // exactly that reason.
   const povertyLine = fpl2025(a.state, householdSize(a));
-  // The subsidy floor is tested on MAGI (IRC §36B(d)(2)(B)): wages, the
-  // spouse's wages, unemployment, and Social Security (SSDI is added back).
-  // Child support received is not gross income and is not in MAGI — counting
-  // it moved the floor down and restored the phantom premium between the two
-  // lines (verified live 2026-09-15: PolicyEngine's own credit starts at the
-  // family-of-three line on earnings alone).
-  const nonWageIncome = a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
+  const otherMagi = magiBesidesEarnings(a);
   return points.map((p) => {
-    const adultMedicaid = (p.programs.medicaid ?? 0) - (p.childPrograms.medicaid ?? 0);
-    // Medicare is coverage: the household applyMedicare treats as enrolled
-    // through SSDI — the recipient alone, no uncovered spouse or child — is
-    // never in the marketplace gap. Same predicate as applyMedicare's.
+    // Medicare is coverage, so a household HotGap models as enrolled through
+    // SSDI (applyMedicare) is never in the marketplace gap. Only a one-adult
+    // household is exempt outright: a married couple can still have an
+    // uncovered spouse, and applyMedicare leaves their marketplace premium in
+    // place for exactly that reason.
     if (medicareCoversWholeHousehold(p, a)) return p;
     const inGap =
-      adultMedicaid <= PROGRAM_END_MIN &&
+      !adultOnMedicaidAt(p) &&
       (p.programs.aca ?? 0) <= PROGRAM_END_MIN &&
       !a.hasEmployerCoverage &&
       p.medicalOOP > 0 &&
-      p.earnings + nonWageIncome < povertyLine;
+      p.earnings + otherMagi < povertyLine;
     return inGap ? { ...p, coverageGap: true, netIncome: p.netIncome + p.medicalOOP, medicalOOP: 0 } : p;
   });
 }
 
-// WORKAROUND — remove when upstream models state premium wraps (policyengine-us
-// #9481). A marketplace enrollee inside the state's $0-premium tier pays
-// nothing: the state tops up the federal credit. Modeled as the benchmark or
-// lowest-cost plan being free — exact for CT, NM and CA, slightly generous for
-// MA, whose $0 is the lowest-cost plan rather than the benchmark. Same MAGI as
-// the coverage-gap test; same adult-Medicaid guard; only where a credit and a
-// premium both exist, which is what "marketplace enrollee" means here.
 /** The state assistance PolicyEngine modeled, netted out of the premium on this curve. */
 export interface StatePremiumAssistanceSummary extends StatePremiumAssistance {
   /** The largest annual amount on the curve. */
@@ -485,17 +488,23 @@ function applyStatePremiumAssistance(points: CurvePoint[], a: HouseholdAnswers):
   return { points: out, assistance: maxAnnual > 0 ? { ...program, maxAnnual: Math.round(maxAnnual) } : null };
 }
 
+// WORKAROUND — remove when upstream models state premium wraps (policyengine-us
+// #9481). A marketplace enrollee inside the state's $0-premium tier pays
+// nothing: the state tops up the federal credit. Modeled as the benchmark or
+// lowest-cost plan being free — exact for CT, NM and CA, slightly generous for
+// MA, whose $0 is the lowest-cost plan rather than the benchmark. Same MAGI as
+// the coverage-gap test; same adult-Medicaid guard; only where a credit and a
+// premium both exist, which is what "marketplace enrollee" means here.
 function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: CurvePoint[]; wrap: PremiumWrap | null } {
   if (a.hasEmployerCoverage) return { points, wrap: null };
   // The model's own amounts, when served, replace the local ladder.
   if (points.every((p) => p.statePremiumAssistance !== undefined)) return { points, wrap: null };
   const povertyLine = fpl2025(a.state, householdSize(a));
-  const nonWageIncome = a.spouseAnnualEarnings + 12 * (a.ssdiMonthly + a.unemploymentMonthly);
+  const otherMagi = magiBesidesEarnings(a);
   let wrap: PremiumWrap | null = null;
   const out = points.map((p) => {
-    const adultMedicaid = (p.programs.medicaid ?? 0) - (p.childPrograms.medicaid ?? 0);
-    if (adultMedicaid > PROGRAM_END_MIN || (p.programs.aca ?? 0) <= PROGRAM_END_MIN || p.medicalOOP <= 0) return p;
-    const magi = p.earnings + nonWageIncome;
+    if (adultOnMedicaidAt(p) || (p.programs.aca ?? 0) <= PROGRAM_END_MIN || p.medicalOOP <= 0) return p;
+    const magi = p.earnings + otherMagi;
     const share = magi / povertyLine;
     const w = premiumWrapFor(a.state, share);
     if (w) {
@@ -544,10 +553,7 @@ function headStartSummary(raw: CurvePoint[], a: HouseholdAnswers): HeadStartSumm
 /** The employer-plan charge at this household's own pay, for the report. */
 function esiSummary(a: HouseholdAnswers, points: CurvePoint[], currentEarnings: number): EsiSummary | null {
   if (!a.hasEmployerCoverage) return null;
-  // The last sampled point at or below this household's pay — the same point
-  // whose charge already sits in the curve, rather than a re-derived one.
-  const at = points.filter((p) => p.earnings <= currentEarnings).pop() ?? points[0];
-  const tier = esiTierAt(a, at);
+  const tier = esiTierAt(a, pointAtOrBelow(points, currentEarnings));
   return { tier, annualContribution: tier === null ? 0 : ESI_EMPLOYEE_CONTRIBUTION[tier] };
 }
 
@@ -619,7 +625,7 @@ export function evaluateCurve(
   // Offline points describe the swept archetype, including its spouse's $0
   // pay. Never apply the caller's personal inputs to that baseline.
   const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
-    ARCHETYPES.find((a) => a.id === pickArchetypeId(answers))!);
+    archetypeById(pickArchetypeId(answers)));
   const tafdc = correctMaTafdc(modeledAnswers, raw);
   // The child-care subsidy needs no step here: parse.ts already put it in net
   // income wherever the model dropped it (policyengine-us #9405), so a stored

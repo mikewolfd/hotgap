@@ -39,6 +39,13 @@ export const ARCHETYPES: Archetype[] = [
 
 export const DEFAULT_ARCHETYPE = "single-2";
 
+/** The archetype with this id; an id no sweep builds is a bug, not a null. */
+export function archetypeById(id: string): Archetype {
+  const found = ARCHETYPES.find((a) => a.id === id);
+  if (!found) throw new Error(`no archetype "${id}"`);
+  return found;
+}
+
 // Hours a week the second earner works. It is not a pay input — the pay is
 // FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL — but the CCDF subsidy has an ACTIVITY
 // test as well as an income one, and PolicyEngine reads that off

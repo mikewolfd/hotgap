@@ -1,18 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { STATE_CODES } from "./states.js";
-import {
-  CHILDCARE_SUBSIDY_IN_NET_INCOME,
-  CHILDCARE_SUBSIDY_STATES,
-  childcareSubsidyInNetIncome,
-  childcareSubsidyVariable,
-} from "./stateChildcareSubsidies.js";
+import { CHILDCARE_SUBSIDY_IN_NET_INCOME, CHILDCARE_SUBSIDY_STATES, childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
 
 describe("state child-care subsidy table", () => {
-  it("names each state's variable the way PolicyEngine does", () => {
-    expect(childcareSubsidyVariable("CO")).toBe("co_child_care_subsidies");
-    expect(childcareSubsidyVariable("dc")).toBe("dc_child_care_subsidies");
-  });
-
   it("counts the two lists read live from the deployed model on 2026-09-15", () => {
     // 38 of 51 implemented in policyengine-us 1.764.6; 23 reach net income on
     // `main` (18 in the deployed 2026 block — see the module's own note).

@@ -5,22 +5,15 @@ import { PolicyEngineError } from "./client.js";
 import { loadStateFile as loadStateFile_ } from "./data.js";
 import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
-import { validateAnswers } from "./validate.js";
 import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
-import { CA_SINGLE_ONE_KID, respond } from "./testing.js";
-import type { CurvePoint, CurveResponse, HouseholdAnswers, ProgramId } from "./types.js";
+import { answersWith, point as pt, respond, type PointOver } from "./testing.js";
+import type { CurvePoint, CurveResponse, HouseholdAnswers } from "./types.js";
 
 const fixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 const fixturePoints = parsePEResponse(JSON.parse(fixture), 101);
-
-function answersWith(over: Partial<Record<string, unknown>> = {}): HouseholdAnswers {
-  const v = validateAnswers({ ...CA_SINGLE_ONE_KID, ...over });
-  if (!v.ok) throw new Error(v.detail);
-  return v.value;
-}
 
 const answers = answersWith();
 
@@ -66,12 +59,7 @@ describe("evaluateCurve", () => {
   it("reports no safe-exit reach when the curve never has a danger zone", () => {
     // A curve that only ever goes up has safeExitEarnings 0 — "already safe",
     // not an income to locate in a distribution.
-    const flat = (earnings: number, netIncome: number): CurvePoint => ({
-      earnings, netIncome, medicalOOP: 0,
-      programs: { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 },
-      childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-    });
-    const points = [flat(0, 10000), flat(10000, 15000), flat(20000, 21000)];
+    const points = [pt(0, 10000), pt(10000, 15000), pt(20000, 21000)];
     const safe = evaluateCurve(answers, { year: "2026", currentEarnings: 10000, points }, "live");
     expect(safe.escape.safeExitEarnings).toBe(0);
     expect(safe.reach.safeExit).toBeNull();
@@ -199,15 +187,6 @@ describe("evaluateHousehold", () => {
   });
 });
 
-const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-// `programs` arrives as a sparse patch over ZERO, so it cannot be the full
-// Record the CurvePoint field is.
-type PointOver = Partial<Omit<CurvePoint, "programs">> & { programs?: Partial<Record<ProgramId, number>> };
-const pt = (earnings: number, netIncome: number, over: PointOver = {}): CurvePoint => ({
-  earnings, netIncome, medicalOOP: 0, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-  ...over,
-  programs: { ...ZERO, ...(over.programs ?? {}) },
-});
 const evaluateOn = (a: HouseholdAnswers, points: CurvePoint[], currentEarnings = points[0].earnings) =>
   evaluateCurve(a, { year: "2026", currentEarnings, points }, "live");
 
@@ -659,10 +638,7 @@ describe("reach uses householder-plus-spouse earnings", () => {
 
 describe("Head Start and a childcare subsidy together", () => {
   it("values Head Start only for the part of the bill the subsidy does not already pay", () => {
-    const ZERO = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-    const p = (earnings: number, subsidy: number): CurvePoint => ({
-      earnings, netIncome: 40000, medicalOOP: 0, programs: { ...ZERO, headstart: 20000, childcare: subsidy }, childPrograms: { headstart: 20000 }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-    });
+    const p = (earnings: number, subsidy: number) => pt(earnings, 40000, { programs: { headstart: 20000, childcare: subsidy }, childPrograms: { headstart: 20000 } });
     const a = answersWith({ getsHeadStart: true, getsChildcareSubsidy: true, monthlyChildcare: 800, childAges: [3], childDisabled: [false] });
     const alone = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 0), p(30000, 0)] }, "live");
     const both = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 9000), p(30000, 9000)] }, "live");
@@ -672,10 +648,7 @@ describe("Head Start and a childcare subsidy together", () => {
 });
 
 describe("state premium wraps", () => {
-  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-  const enrollee = (earnings: number, moop: number): CurvePoint => ({
-    earnings, netIncome: 30000 - moop, medicalOOP: moop, programs: { ...ZEROS, aca: 4000 }, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-  });
+  const enrollee = (earnings: number, moop: number) => pt(earnings, 30000 - moop, { medicalOOP: moop, programs: { aca: 4000 } });
   const single = (state: string) => answersWith({ state, childAges: [], childDisabled: [], annualEarnings: 23000 });
 
   it("zeroes the premium inside the $0 band on the archetype path too", () => {
@@ -705,12 +678,10 @@ describe("state premium wraps", () => {
 });
 
 describe("transitional medical assistance is a §1931 rule", () => {
-  const ZEROS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
   // A parent with one child whose own Medicaid ends between `at` and the next point.
   const parentLosesAt = (at: number, state: string) => {
-    const p = (earnings: number, net: number, adultMedicaid: number): CurvePoint => ({
-      earnings, netIncome: net, medicalOOP: adultMedicaid > 0 ? 0 : 3000, programs: { ...ZEROS, medicaid: adultMedicaid + 5000, aca: adultMedicaid > 0 ? 0 : 2000 }, childPrograms: { medicaid: 5000 }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
-    });
+    const p = (earnings: number, net: number, adultMedicaid: number) =>
+      pt(earnings, net, { medicalOOP: adultMedicaid > 0 ? 0 : 3000, programs: { medicaid: adultMedicaid + 5000, aca: adultMedicaid > 0 ? 0 : 2000 }, childPrograms: { medicaid: 5000 } });
     const points = [p(at - 1000, 30000, 6000), p(at, 30800, 6000), p(at + 1000, 28600, 0), p(at + 2000, 29400, 0)];
     return evaluateCurve(answersWith({ state, annualEarnings: at }), { year: "2026", currentEarnings: at, points }, "live");
   };

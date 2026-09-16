@@ -1,18 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { maTafdcGrant, correctMaTafdc, type MaTafdcInputs } from "./maTafdc.js";
-import { answersFor, ARCHETYPES } from "./archetypes.js";
+import { answersFor, archetypeById } from "./archetypes.js";
 import { evaluateCurve } from "./evaluate.js";
-import type { CurvePoint } from "./types.js";
+import { point as pt } from "./testing.js";
 
 const inputs: MaTafdcInputs = {
   paymentStandard: 14280, nonFinancialEligible: true, unearnedIncome: 0,
   dependentCareDeduction: 0, clothingAllowance: 0, infantBenefit: 0, duplicatedTanf: 0, engineUsedCorrectedGrant: false,
 };
-const answers = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
-const point = (earnings: number, tanf: number): CurvePoint => ({
-  earnings, netIncome: earnings + tanf, programs: { tanf, snap: 1000 } as CurvePoint["programs"],
-  childPrograms: {}, medicalOOP: 0, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false, maTafdc: inputs,
-});
+const answers = answersFor("MA", archetypeById("married-3"));
+const point = (earnings: number, tanf: number) => pt(earnings, earnings + tanf, { programs: { tanf, snap: 1000 }, maTafdc: inputs });
 
 describe("Massachusetts ongoing-recipient TAFDC", () => {
   it("uses the published five-person standard and a 50% taper after one earner's $200 deduction", () => {
@@ -68,7 +65,7 @@ describe("Massachusetts ongoing-recipient TAFDC", () => {
     // whose spouse earns $15,080 — not against the $40,000 they reported, and
     // not against a married archetype whose spouse earns nothing. TAFDC counts
     // a spouse's wages, so which of the two it is changes the grant.
-    const dual = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-dual-3")!);
+    const dual = answersFor("MA", archetypeById("married-dual-3"));
     const personal = evaluateCurve({ ...answers, spouseAnnualEarnings: 40000 }, curve, "archetype");
     expect(personal.curve.points).toEqual(evaluateCurve(dual, curve, "archetype").curve.points);
     // Their own figure changes nothing: $40,000 and $90,000 give one answer.

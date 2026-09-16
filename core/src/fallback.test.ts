@@ -4,10 +4,9 @@ import { ARCHETYPES, answersFor } from "./archetypes.js";
 import { axisSpec } from "./translate.js";
 import { loadStateFile } from "./data.js";
 import { archetypeCurveFrom, clampFallbackEarnings, pickArchetypeId } from "./fallback.js";
+import { point } from "./testing.js";
 
-const PROGRAMS = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
-const mkPoint = (earnings: number, netIncome: number) => ({ earnings, netIncome, medicalOOP: 0, programs: { ...PROGRAMS }, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false });
-const points = [mkPoint(0, 20000), mkPoint(50000, 30000), mkPoint(100000, 45000)];
+const points = [point(0, 20000), point(50000, 30000), point(100000, 45000)];
 const stateFile = { generated: "2026-07-11T00:00:00.000Z", year: "2026", state: "CA", archetypes: { "single-1": { points } } };
 
 // The household as the picker sees it: married, how many children, and what

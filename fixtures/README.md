@@ -32,6 +32,13 @@ Neither request asks for a state premium-assistance variable
 (`statePremiumAssistance` unset), so each curve is what any endpoint returns
 for the household; the live client asks for it where the endpoint has it.
 
+The Massachusetts request was recorded twenty minutes before `translate.ts`
+began sending `takes_up_housing_assistance_if_eligible: false` for a
+household with no voucher (commit 81ea7f0, 2026-09-16), so it lacks that
+key; the California household has `getsHousing` on and is unaffected. The
+next re-recording picks it up — and may move the MA pins by whatever HUD
+payment the model was paying that renter.
+
 ## Kept from the public API — `pe-ma-married-3kids-11.public-1.764.6.json`
 
 The Massachusetts household above as `api.policyengine.org` answered it on

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, answersFor, buildCurvePayload, evaluateCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, modelVersion, PARENT_LIMITS_UPSTREAM_SINCE, parsePEResponse, probeMaTafdcDoubleCount, releaseAtLeast, requestPE } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, evaluateCurve, PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, modelVersion, PARENT_LIMITS_UPSTREAM_SINCE, parsePEResponse, probeMaTafdcDoubleCount, releaseAtLeast, requestPE } from "../core/src/index.js";
 
 function probe(state: string, id: string, min: number, max: number, count: number) {
-  const answers = answersFor(state, ARCHETYPES.find((a) => a.id === id)!);
+  const answers = answersFor(state, archetypeById(id));
   const payload = buildCurvePayload(answers);
   const household = payload.household as { axes: unknown[][] };
   household.axes[0][0] = { name: "employment_income", min, max, count, period: "2026" };
@@ -23,7 +23,7 @@ describe.skipIf(process.env.RUN_CONTRACT !== "1")("live policy corrections", () 
     const upstream = releaseAtLeast(await modelVersion({ timeoutMs: 30_000 }), PARENT_LIMITS_UPSTREAM_SINCE);
     if (upstream) expect(baseline.result.people.you.medicaid["2026"]).toEqual(corrected.result.people.you.medicaid["2026"]);
     else expect(baseline.result.people.you.medicaid["2026"][1]).toBeGreaterThan(0);
-    const sent = buildCurvePayload(answersFor("SC", ARCHETYPES.find((a) => a.id === "single-2")!), { parentLimitsUpstream: upstream }) as { policy?: object };
+    const sent = buildCurvePayload(answersFor("SC", archetypeById("single-2")), { parentLimitsUpstream: upstream }) as { policy?: object };
     expect(sent.policy === undefined).toBe(upstream);
     for (const child of ["child1", "child2"]) {
       expect(corrected.result.people[child].medicaid["2026"]).toEqual(baseline.result.people[child].medicaid["2026"]);
@@ -47,10 +47,10 @@ describe.skipIf(process.env.RUN_CONTRACT !== "1")("live policy corrections", () 
   it("the TAFDC double-count probe is unambiguous: the sentinel is either in household_state_benefits or absent", async () => {
     const body = await call(maTafdcProbePayload());
     const h = body.result.households.household;
-    expect(h.household_benefits["2026"]).toBeGreaterThan(MA_TAFDC_PROBE_SENTINEL / 2);
+    expect(h.household_benefits["2026"]).toBeGreaterThan(PROBE_SENTINEL / 2);
     const stateBenefits = h.household_state_benefits["2026"] as number;
-    expect(stateBenefits < 10_000 || stateBenefits > MA_TAFDC_PROBE_SENTINEL - 10_000).toBe(true);
-    expect(await probeMaTafdcDoubleCount({ timeoutMs: 90_000 })).toBe(stateBenefits > MA_TAFDC_PROBE_SENTINEL / 2);
+    expect(stateBenefits < 10_000 || stateBenefits > PROBE_SENTINEL - 10_000).toBe(true);
+    expect(await probeMaTafdcDoubleCount({ timeoutMs: 90_000 })).toBe(stateBenefits > PROBE_SENTINEL / 2);
   }, 100_000);
 
   it("supplies enough MA inputs to remove the $26–27k TANF cutoff locally", async () => {

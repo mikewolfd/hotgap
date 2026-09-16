@@ -1,20 +1,16 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, it, expect } from "vitest";
-import { canonical, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { canonical, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { CA_SINGLE_ONE_KID, peBody, respond } from "./testing.js";
+import { answersWith, peBody, respond } from "./testing.js";
 import { axisSpec, buildPEPayload } from "./translate.js";
-import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
 const noopSleep = async () => {};
 
-const raw = CA_SINGLE_ONE_KID;
-const v = validateAnswers(raw);
-if (!v.ok) throw new Error(v.detail);
-const answers = v.value;
+const answers = answersWith();
 
 const axis = axisSpec(answers);
 const body = peBody(axis);
@@ -55,8 +51,7 @@ describe("fetchCurve", () => {
     // it above SGA. fetchCurve therefore asks twice — once with
     // social_security_disability set, once without — and takes points at or
     // below SGA_ANNUAL from the first and the rest from the second.
-    const withSSDI = validateAnswers({ ...raw, ssdiMonthly: 1500 });
-    if (!withSSDI.ok) throw new Error(withSSDI.detail);
+    const withSSDI = answersWith({ ssdiMonthly: 1500 });
     const payloads: string[] = [];
     const fetchImpl = (async (_url: string, init: { body: string }) => {
       payloads.push(init.body);
@@ -64,7 +59,7 @@ describe("fetchCurve", () => {
       return new Response(peBody(axis, sendsSSDI ? 18000 : 0), { status: 200 });
     }) as unknown as typeof fetch;
 
-    const curve = await fetchCurve(withSSDI.value, { fetchImpl });
+    const curve = await fetchCurve(withSSDI, { fetchImpl });
     expect(payloads).toHaveLength(2);
     expect(payloads.filter((p) => p.includes("social_security_disability"))).toHaveLength(1);
 
@@ -82,14 +77,13 @@ describe("fetchCurve", () => {
     // person who kept `is_ssi_disabled` above SGA was granted SSI and
     // SSI-linked Medicaid they could never get — OH at $22–24k showed SSI
     // $1,438 and Medicaid $11,078 ending at $24k as a cliff that is not real.
-    const disabled = validateAnswers({ ...raw, youDisabled: true, ssdiMonthly: 1500 });
-    if (!disabled.ok) throw new Error(disabled.detail);
+    const disabled = answersWith({ youDisabled: true, ssdiMonthly: 1500 });
     const payloads: string[] = [];
     const fetchImpl = (async (_url: string, init: { body: string }) => {
       payloads.push(init.body);
       return new Response(body, { status: 200 });
     }) as unknown as typeof fetch;
-    await fetchCurve(disabled.value, { fetchImpl });
+    await fetchCurve(disabled, { fetchImpl });
 
     const [receiving, stopped] = ["", "!"].map((want) =>
       JSON.parse(payloads.find((p) => (p.includes("social_security_disability") ? "" : "!") === want)!));
@@ -187,15 +181,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
   const loadMa = (name: string) => JSON.parse(readFileSync(new URL(`../../fixtures/${name}`, import.meta.url), "utf8"));
   const maFixture = loadMa("pe-ma-married-3kids-11.json");
   const maDoubled = loadMa("pe-ma-married-3kids-11.public-1.764.6.json");
-  const maAnswers = (() => {
-    const v = validateAnswers({
-      state: "MA", married: true, age: 30, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false],
-      youDisabled: false, spouseDisabled: false, monthlyRent: 1500, monthlyChildcare: null,
-      annualEarnings: 26000, spouseAnnualEarnings: 0,
-    });
-    if (!v.ok) throw new Error(v.detail);
-    return v.value;
-  })();
+  const maAnswers = answersWith({ state: "MA", married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false], annualEarnings: 26000 });
   const maPoints = parsePEResponse(maFixture, 11);
   const YEAR = "2026";
   /** The 11-point fixture stretched to `count` points by repeating its last point. */
@@ -269,7 +255,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
     let probes = 0;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       const payload = JSON.parse(init!.body as string);
-      if (!payload.household.axes) { probes++; return new Response(probeBody(MA_TAFDC_PROBE_SENTINEL), { status: 200 }); }
+      if (!payload.household.axes) { probes++; return new Response(probeBody(PROBE_SENTINEL), { status: 200 }); }
       if (payload.household.axes[0][0].count === 2) { pointRequests++; return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }).replace(/"min":24000/, `"min":${payload.household.axes[0][0].min}`), { status: 200 }); }
       const body = stretch(maFixture) as any;
       body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]];
@@ -287,7 +273,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
   });
 
   /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits`. */
-  function probeBody(stateBenefits: number, benefits = MA_TAFDC_PROBE_SENTINEL + stateBenefits): string {
+  function probeBody(stateBenefits: number, benefits = PROBE_SENTINEL + stateBenefits): string {
     return JSON.stringify({ status: "ok", message: null, result: { households: { household: { household_state_benefits: { [YEAR]: stateBenefits }, household_benefits: { [YEAR]: benefits } } } } });
   }
   /** A fetch that answers the probe with `stateBenefits` under a distinct endpoint, so the per-endpoint cache starts empty. */
@@ -301,9 +287,9 @@ describe("Massachusetts TAFDC feedback loop", () => {
   it("probe: the sentinel is forced on a bare Massachusetts household and read back from household_state_benefits", async () => {
     const payload = maTafdcProbePayload() as any;
     expect(payload.household.households.household.state_code[YEAR]).toBe("MA");
-    expect(payload.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(MA_TAFDC_PROBE_SENTINEL);
+    expect(payload.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(PROBE_SENTINEL);
     expect(payload.household.axes).toBeUndefined();
-    const doubled = probeFetch(MA_TAFDC_PROBE_SENTINEL - 0.06, "https://double.example/us/calculate");
+    const doubled = probeFetch(PROBE_SENTINEL - 0.06, "https://double.example/us/calculate");
     const fixed = probeFetch(3_120, "https://fixed.example/us/calculate");
     try {
       process.env.HOTGAP_PE_URL = "https://double.example/us/calculate";
@@ -414,7 +400,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
 describe("the child-care subsidy probe (policyengine-us #9503)", () => {
   const YEAR = "2026";
   /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits` and the forced aggregate reads back as `aggregate`. */
-  const probeBody = (stateBenefits: number, aggregate = CHILDCARE_SUBSIDY_PROBE_SENTINEL) => JSON.stringify({
+  const probeBody = (stateBenefits: number, aggregate = PROBE_SENTINEL) => JSON.stringify({
     status: "ok", message: null,
     result: {
       households: { household: { household_state_benefits: { [YEAR]: stateBenefits } } },
@@ -431,9 +417,9 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
   it("forces the aggregate on a bare Connecticut household — a state no pre-#9503 list names — and reads household_state_benefits back", async () => {
     const payload = childcareSubsidyProbePayload() as any;
     expect(payload.household.households.household.state_code[YEAR]).toBe("CT");
-    expect(payload.household.spm_units.spm_unit.child_care_subsidies[YEAR]).toBe(CHILDCARE_SUBSIDY_PROBE_SENTINEL);
+    expect(payload.household.spm_units.spm_unit.child_care_subsidies[YEAR]).toBe(PROBE_SENTINEL);
     expect(payload.household.axes).toBeUndefined();
-    const fixed = probeFetch(CHILDCARE_SUBSIDY_PROBE_SENTINEL, "https://fixed-cc.example/us/calculate");
+    const fixed = probeFetch(PROBE_SENTINEL, "https://fixed-cc.example/us/calculate");
     const old = probeFetch(0, "https://old-cc.example/us/calculate");
     try {
       process.env.HOTGAP_PE_URL = "https://fixed-cc.example/us/calculate";
@@ -466,9 +452,8 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
 
   it("fetchCurve probes once for a household with a child-care bill, never for one without, and parses with the answer", async () => {
     process.env.HOTGAP_PE_URL = "https://old-cc2.example/us/calculate";
-    const withCare = validateAnswers({ ...raw, state: "CT", childAges: [3], monthlyChildcare: 800 });
-    if (!withCare.ok) throw new Error(withCare.detail);
-    const spec = axisSpec(withCare.value);
+    const withCare = answersWith({ state: "CT", childAges: [3], monthlyChildcare: 800 });
+    const spec = axisSpec(withCare);
     const all = (v: number) => ({ [YEAR]: new Array(spec.count).fill(v) });
     // A CT body carrying an $8,850 subsidy the old model dropped from net income.
     const curveBody = JSON.parse(peBody(spec));
@@ -478,18 +463,18 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       if (!init?.body) return new Response("{}", { status: 200 }); // a /healthz read, if the state's overrides ask for one
       const payload = JSON.parse(init.body as string);
-      if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === CHILDCARE_SUBSIDY_PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
+      if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
       curves++;
       return new Response(JSON.stringify(curveBody), { status: 200 });
     }) as unknown as typeof fetch;
     try {
-      const curve = await fetchCurve(withCare.value, { fetchImpl });
-      await fetchCurve(withCare.value, { fetchImpl });
+      const curve = await fetchCurve(withCare, { fetchImpl });
+      await fetchCurve(withCare, { fetchImpl });
       expect(probes).toBe(1);
       expect(curves).toBe(2);
       expect(curve.points[0].netIncome).toBe(20000 + 8850);
       // Told the answer, it asks nothing.
-      const told = await fetchCurve(withCare.value, { fetchImpl, childcareSubsidyCounted: true });
+      const told = await fetchCurve(withCare, { fetchImpl, childcareSubsidyCounted: true });
       expect(probes).toBe(1);
       expect(told.points[0].netIncome).toBe(20000);
       // No bill, no subsidy to place, no probe.
@@ -504,7 +489,7 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
     process.env.HOTGAP_PE_URL = "https://fixed-cc3.example/us/calculate";
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       if (!init?.body) return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.7.0" }), { status: 200 });
-      return new Response(probeBody(CHILDCARE_SUBSIDY_PROBE_SENTINEL), { status: 200 });
+      return new Response(probeBody(PROBE_SENTINEL), { status: 200 });
     }) as unknown as typeof fetch;
     try {
       expect(await modelRecord({ fetchImpl })).toEqual({ endpoint: "fixed-cc3.example", version: "2.7.0", countsChildcareSubsidy: true });

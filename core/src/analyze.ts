@@ -135,38 +135,43 @@ export function zoneAt(zones: DangerZone[], earnings: number): DangerZone | null
   ) ?? null;
 }
 
-const total = (p: CurvePoint, ids: ProgramId[]): number =>
+/** What the household holds of these programs at a point, summed. */
+export const programTotal = (p: CurvePoint, ids: ProgramId[]): number =>
   ids.reduce((sum, id) => sum + (p.programs[id] ?? 0), 0);
 
 function breakdownOf(a: CurvePoint, b: CurvePoint, drop: number): CliffBreakdown {
-  const benefits = (total(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (total(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
+  const benefits = (programTotal(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (programTotal(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
   // State refundable credits count here, not in `other`: they are inside
   // netIncome exactly as the federal ones are (parse.ts). The nonrefundable
   // part of the CTC is deliberately absent — it never reaches netIncome, so a
   // credit turning nonrefundable is a tax effect, and lands in `other`.
-  const credits = (total(a, NET_INCOME_CREDITS) + (a.stateCredits ?? 0))
-    - (total(b, NET_INCOME_CREDITS) + (b.stateCredits ?? 0));
+  const credits = (programTotal(a, NET_INCOME_CREDITS) + (a.stateCredits ?? 0))
+    - (programTotal(b, NET_INCOME_CREDITS) + (b.stateCredits ?? 0));
   const premiums = b.medicalOOP - a.medicalOOP;
   return { benefits, credits, premiums, other: drop - benefits - credits - premiums };
 }
 
-// How much of a program one group of people holds at a point. Adults are the
-// household total less the children's share, because PolicyEngine reports the
-// person-level programs per person and parse.ts keeps the children's sum.
-type Group = (p: CurvePoint, id: ProgramId) => number;
-const HOUSEHOLD: Group = (p, id) => p.programs[id] ?? 0;
-const CHILDREN: Group = (p, id) => p.childPrograms?.[id] ?? 0;
-const ADULTS: Group = (p, id) => HOUSEHOLD(p, id) - CHILDREN(p, id);
+/**
+ * How much of a program one group of people holds at a point. Adults are the
+ * household total less the children's share, because PolicyEngine reports the
+ * person-level programs per person and parse.ts keeps the children's sum.
+ */
+export type ProgramHolder = (p: CurvePoint, id: ProgramId) => number;
+export const heldByHousehold: ProgramHolder = (p, id) => p.programs[id] ?? 0;
+export const heldByChildren: ProgramHolder = (p, id) => p.childPrograms?.[id] ?? 0;
+export const heldByAdults: ProgramHolder = (p, id) => heldByHousehold(p, id) - heldByChildren(p, id);
+/** The children's Medicaid and CHIP sticker value at a point — what a child's coverage question is asked of. */
+export const childCoverageAt = (p: CurvePoint): number => COVERAGE_PROGRAMS.reduce((sum, id) => sum + heldByChildren(p, id), 0);
 
 /** A program switching off, or losing more than half its value, for one group in one step. */
-function notches(a: CurvePoint, b: CurvePoint, id: ProgramId, group: Group): boolean {
+function notches(a: CurvePoint, b: CurvePoint, id: ProgramId, group: ProgramHolder): boolean {
   const before = group(a, id);
   const after = group(b, id);
   return before > PROGRAM_END_MIN && (after <= PROGRAM_END_MIN || after < 0.5 * before);
 }
 
 /** …and losing enough of it to explain a real share of this step's drop. */
-const notchesMaterially = (a: CurvePoint, b: CurvePoint, id: ProgramId, group: Group, drop: number): boolean =>
+const notchesMaterially = (a: CurvePoint, b: CurvePoint, id: ProgramId, group: ProgramHolder, drop: number): boolean =>
   notches(a, b, id, group) && group(a, id) - group(b, id) >= LOSS_SHARE_MIN * drop;
 
 /**
@@ -188,16 +193,16 @@ function deferralOf(
   const reasons: DeferralReason[] = [];
   const excused = new Set<ProgramId>();
 
-  if (notches(a, b, "headstart", HOUSEHOLD)) {
+  if (notches(a, b, "headstart", heldByHousehold)) {
     reasons.push("head_start_program_year");
     excused.add("headstart");
   }
-  const childCoverage = COVERAGE_PROGRAMS.filter((id) => notches(a, b, id, CHILDREN));
+  const childCoverage = COVERAGE_PROGRAMS.filter((id) => notches(a, b, id, heldByChildren));
   if (childCoverage.length > 0) {
     reasons.push("child_continuous_eligibility");
     for (const id of childCoverage) excused.add(id);
   }
-  const adultMedicaidEnds = notches(a, b, "medicaid", ADULTS);
+  const adultMedicaidEnds = notches(a, b, "medicaid", heldByAdults);
   if (adultMedicaidEnds && hasChildren && !isAdultGroupLoss(a.earnings)) {
     reasons.push("transitional_medical_assistance");
     excused.add("medicaid");
@@ -252,7 +257,7 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number, opts
       const a = points[i];
       const b = points[i + 1];
       const programsLost = PROGRAM_IDS.filter((id) =>
-        (PERSON_LEVEL_PROGRAMS.includes(id) ? [HOUSEHOLD, ADULTS, CHILDREN] : [HOUSEHOLD])
+        (PERSON_LEVEL_PROGRAMS.includes(id) ? [heldByHousehold, heldByAdults, heldByChildren] : [heldByHousehold])
           .some((group) => notchesMaterially(a, b, id, group, drop)),
       );
       const breakdown = breakdownOf(a, b, drop);

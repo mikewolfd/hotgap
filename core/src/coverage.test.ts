@@ -7,16 +7,12 @@ import { CHILDCARE_SUBSIDY_IN_NET_INCOME } from "./stateChildcareSubsidies.js";
 import { STATE_PREMIUM_ASSISTANCE, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import { STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
 import { STATE_CODES } from "./states.js";
+import { point, type PointOver } from "./testing.js";
 import type { CurvePoint } from "./types.js";
 
-const programs = { snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 };
 /** A flat three-point curve; `otherBenefits` and `statePremiumAssistance` are what the tests vary. */
-function curve(over: Partial<CurvePoint> = {}): CurvePoint[] {
-  return [0, 1000, 2000].map((earnings) => ({
-    earnings, netIncome: 10000, medicalOOP: 0, programs, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false, ...over,
-  }));
-}
-const curves = (over?: Partial<CurvePoint>) => Object.fromEntries(ARCHETYPES.map((a) => [a.id, curve(over)]));
+const curve = (over: PointOver = {}): CurvePoint[] => [0, 1000, 2000].map((earnings) => point(earnings, 10000, over));
+const curves = (over?: PointOver) => Object.fromEntries(ARCHETYPES.map((a) => [a.id, curve(over)]));
 const model = { endpoint: "127.0.0.1:8099", version: "2.5.0" };
 
 describe("stateCoverage — corrections", () => {
