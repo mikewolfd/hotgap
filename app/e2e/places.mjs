@@ -18,7 +18,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { parseCsv } from "./parseCsv.mjs";
-import { formsDrawn, greyRowTransitions, pageContent, pageHeight, pdfObjects, pdfPages, reachable, resource } from "./pdf.mjs";
+import { formsDrawn, greyRowTransitions, pageContent, pageHeight, pdfObjects, pdfPages, reachable, resource, textInks } from "./pdf.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 
@@ -297,7 +297,12 @@ try {
 async function checkPdf(page) {
   await page.goto(`${BASE}/places.html`, { waitUntil: "networkidle" });
   await page.waitForSelector(".tile");
+  /* OS dark with no data-theme attribute: the path the audit's B2 proof did
+     not take (it printed through the theme button), and the one on which
+     tokens.css's print rule lost to its own OS-dark rule until 30d7e99. */
   await page.emulateMedia({ colorScheme: "dark" });
+  const hasTheme = await page.evaluate(() => document.documentElement.hasAttribute("data-theme"));
+  const darkInk = await page.$eval("body", (el) => getComputedStyle(el).color);
   const pdf = await page.pdf({ format: "Letter", printBackground: true });
   writeFileSync(`${OUT}/journalist-letter-from-dark.pdf`, pdf);
   /* The print layout at Letter's width, which is where the PDF's positions
@@ -312,9 +317,13 @@ async function checkPdf(page) {
       scrollWidth: document.documentElement.scrollWidth };
   });
   check(want.scrollWidth <= 816, "the print layout fits Letter's width, so the PDF is not shrunk to fit", want.scrollWidth);
+  const lightInk = await page.$eval("body", (el) => getComputedStyle(el).color);
   const objects = pdfObjects(pdf);
   const pages = pdfPages(objects);
   const p1 = pages[0];
+  const inks = textInks(pageContent(objects, p1));
+  check(!hasTheme && lightInk !== darkInk && inks.includes(rgb(lightInk).join()) && !inks.includes(rgb(darkInk).join()),
+    "printed from OS dark with no data-theme, page 1's text is in the light-scheme ink and none is in the dark-scheme ink", { inks, lightInk, darkInk, hasTheme });
   const forms = formsDrawn(pageContent(objects, p1), pageHeight(p1));
   const atTile = (t) => forms.filter((f) => near(f.x, t.x) && near(f.y, t.y));
   const [wa] = atTile(want.WA);

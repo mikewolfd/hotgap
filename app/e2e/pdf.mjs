@@ -107,6 +107,19 @@ export function formsDrawn(content, pageHeight) {
   return out;
 }
 
+/** The fill colours in force when text was drawn (at each BT), as [r, g, b] strings — the inks on the page. O(tokens). */
+export function textInks(content) {
+  const inks = new Set();
+  let ops = [], fill = null;
+  for (const tok of content.toString("latin1").split(/\s+/)) {
+    if (/^[-+.\d]/.test(tok)) { ops.push(Number(tok)); continue; }
+    if (tok === "rg") fill = ops.slice(-3).map((c) => Math.round(c * 255)).join();
+    else if (tok === "BT" && fill) inks.add(fill);
+    ops = [];
+  }
+  return [...inks];
+}
+
 /** The named resource (an XObject) of a page or form: `/X12 12 0 R` → object 12. */
 export function resource(objects, dict, name) {
   const m = dict.match(new RegExp(`${name.replace("/", "\\/")} (\\d+) 0 R`));
