@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { answersFor, archetypeById, buildCurvePayload, PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, PROBE_SENTINEL, childcareSubsidyProbePayload, heldByAdults, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE, type CurvePoint } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -335,7 +335,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const undocumented = await twoPoints({ youStatus: "undocumented" }, 12000, "PA");
     const newLpr = await twoPoints({ youStatus: "lpr", youYearsInUs: 2 }, 12000, "PA");
     const settledLpr = await twoPoints({ youStatus: "lpr", youYearsInUs: 6 }, 12000, "PA");
-    const adultMedicaid = (p: { programs: Record<string, number>; childPrograms: Partial<Record<string, number>> }) => p.programs.medicaid - (p.childPrograms.medicaid ?? 0);
+    const adultMedicaid = (p: CurvePoint) => heldByAdults(p, "medicaid");
     expect(citizen.programs.eitc).toBeGreaterThan(3000);
     expect(undocumented.programs.eitc).toBe(0);
     expect(undocumented.programs.snap).toBeLessThan(citizen.programs.snap! - 1000);

@@ -1,6 +1,6 @@
 import type { CurvePoint, ProgramId } from "./types.js";
 import { CASH_PROGRAMS, COVERAGE_PROGRAMS, CREDIT_PROGRAMS, PROGRAM_IDS } from "./types.js";
-import { analyzeCurve, PROGRAM_END_MIN, type CurveAnalysis } from "./analyze.js";
+import { analyzeCurve, heldByAdults, heldByChildren, PROGRAM_END_MIN, type CurveAnalysis } from "./analyze.js";
 import { PERSON_LEVEL_PROGRAMS } from "./parse.js";
 
 // PROGRAM_END_MIN now lives in analyze.ts, where the cliff-notch rule needs
@@ -99,17 +99,15 @@ export function escapeAnalysis(points: CurvePoint[], analysis?: CurveAnalysis): 
 
   const programEndsByAge: ProgramEndsByAge = { adults: {}, children: {} };
   for (const id of PERSON_LEVEL_PROGRAMS) {
-    const childValue = (p: CurvePoint) => p.childPrograms?.[id] ?? 0;
-    const adultValue = (p: CurvePoint) => (p.programs[id] ?? 0) - childValue(p);
-    const forAdults = ends(adultValue);
-    const forChildren = ends(childValue);
+    const forAdults = ends((p) => heldByAdults(p, id));
+    const forChildren = ends((p) => heldByChildren(p, id));
     if (forAdults !== null) programEndsByAge.adults[id] = forAdults;
     if (forChildren !== null) programEndsByAge.children[id] = forChildren;
   }
 
   const childCoverage = lastAbove(
     points,
-    (p) => COVERAGE_PROGRAMS.reduce((sum, id) => sum + (p.childPrograms?.[id] ?? 0), 0),
+    (p) => COVERAGE_PROGRAMS.reduce((sum, id) => sum + heldByChildren(p, id), 0),
     PROGRAM_END_MIN,
   );
 

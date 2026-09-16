@@ -5,7 +5,7 @@ import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { PolicyEngineError } from "./client.js";
 import { loadSummary } from "./data.js";
-import { evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
+import { ENTITLEMENT_TAKE_UP, evaluateHousehold, evaluateOffline, type HouseholdEvaluation } from "./evaluate.js";
 import { HOUSEHOLD_FLAGS, rawAnswersFromFlags, type HouseholdFlags } from "./flags.js";
 import { PAY_UNITS } from "./income.js";
 import { MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
@@ -241,13 +241,13 @@ function report(ev: HouseholdEvaluation): string {
   if (a.hoursPerWeek === null) {
     out.push("", "hours: assumed full time (40 a week) because --hours was not given. SNAP's work rules for adults without young children, and some states' child-care activity tests, read this; pass --hours if you work less.");
   }
-  const off = (["getsSnap", "getsTanf", "getsMedicaid", "getsWic"] as const).filter((k) => !a[k]).map((k) => k.slice(4).toLowerCase());
+  const off = ENTITLEMENT_TAKE_UP.filter(({ flag }) => !a[flag]).map(({ program }) => program);
   if (off.length) {
     const NAME = { snap: "SNAP", tanf: "TANF", medicaid: "Medicaid", wic: "WIC" } as const;
     const claims = (ev.unclaimed ?? []).map((u) => `${NAME[u.program]} about ${money(u.annual)}/yr`);
     out.push(
       "",
-      `not received: ${off.map((k) => NAME[k as keyof typeof NAME]).join(", ")} — the curve above is the money you live on without ${off.length > 1 ? "them" : "it"}.` +
+      `not received: ${off.map((k) => NAME[k]).join(", ")} — the curve above is the money you live on without ${off.length > 1 ? "them" : "it"}.` +
         (ev.unclaimed === null ? " Whether you would qualify is not checked on the offline curve." : claims.length ? ` At ${money(analysis.currentEarnings)} you appear to qualify for ${claims.join(", ")}; a caseworker decides.` : ` At ${money(analysis.currentEarnings)} you would not qualify for ${off.length > 1 ? "them" : "it"} anyway.`),
     );
   }
