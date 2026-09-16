@@ -14,6 +14,7 @@ and this matches that.
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 from typing import Any
@@ -63,8 +64,24 @@ def _error(message: str, status: int = 400, errors: list[dict[str, Any]] | None 
     )
 
 
+# When set, /us/calculate wants `Authorization: Bearer <token>`; /healthz stays
+# open for the platform's checks. A hosted copy is a public compute endpoint
+# otherwise — every request is a full simulation on a paid CPU. HotGap's
+# client sends the token from HOTGAP_PE_TOKEN (core/src/client.ts).
+_TOKEN = os.environ.get("HOTGAP_ENGINE_TOKEN", "")
+
+
+def _authorized() -> bool:
+    if not _TOKEN:
+        return True
+    given = request.headers.get("Authorization", "")
+    return given.startswith("Bearer ") and hmac.compare_digest(given[len("Bearer "):], _TOKEN)
+
+
 @app.post("/us/calculate")
 def us_calculate() -> Response:
+    if not _authorized():
+        return _error("Missing or invalid bearer token.", status=401)
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
         return _error("Request body must be a JSON object.")

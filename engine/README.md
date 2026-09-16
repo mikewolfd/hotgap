@@ -96,6 +96,28 @@ pin on the latest release, so a bump is a PR that has to pass that job.
 `core/src/client.ts` also reads `/healthz` once per sweep and writes the
 release into `summary.json` and each state file as `model`.
 
+## Hosted on DigitalOcean
+
+The engine runs as a DigitalOcean App Platform service, `hotgap-engine`,
+from the image `.github/workflows/engine-image.yml` pushes to the
+`hotgap` container registry on every change to `engine/` (Dependabot bumps
+included). The app watches the `latest` tag and redeploys itself. It runs
+one gunicorn worker on a 2 vCPU / 4 GB instance — a worker peaks at
+~2.75 GB on an override state (see `_POLICY_CACHE_SIZE`) — and requires a
+bearer token on `/us/calculate` (`HOTGAP_ENGINE_TOKEN`, a secret on the
+app; `/healthz` stays open for the platform's checks). Point HotGap at it
+with both:
+
+```sh
+export HOTGAP_PE_URL=https://<app>.ondigitalocean.app/us/calculate
+export HOTGAP_PE_TOKEN=<the token>
+```
+
+Scaling is the app spec: `WEB_CONCURRENCY` workers on an instance with
+about 2.5 GB per worker plus 1.5 GB for the preloaded master. The weekly
+sweep does not use this service; it starts its own engine on the GitHub
+runner (`.github/actions/start-engine`), which is free and already sized.
+
 ## Which model produced a number
 
 `GET /healthz` and an `X-PolicyEngine-Version` header on every response:

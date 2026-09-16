@@ -317,6 +317,23 @@ describe("Massachusetts TAFDC feedback loop", () => {
     }
   });
 
+  it("sends a bearer token from HOTGAP_PE_TOKEN, and explains a 401 without one", async () => {
+    let headers: Record<string, string> | undefined;
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => { headers = init!.headers as Record<string, string>; return new Response(JSON.stringify({ status: "ok", result: {} }), { status: 200 }); }) as unknown as typeof fetch;
+    try {
+      process.env.HOTGAP_PE_TOKEN = "s3cret";
+      await requestPE({ household: {} }, { fetchImpl });
+      expect(headers).toEqual({ "Content-Type": "application/json", Authorization: "Bearer s3cret" });
+      delete process.env.HOTGAP_PE_TOKEN;
+      await requestPE({ household: {} }, { fetchImpl });
+      expect(headers).toEqual({ "Content-Type": "application/json" });
+      const denied = (async () => new Response(JSON.stringify({ status: "error", message: "Missing or invalid bearer token." }), { status: 401 })) as unknown as typeof fetch;
+      await expect(requestPE({ household: {} }, { fetchImpl: denied })).rejects.toThrow(/401.*HOTGAP_PE_TOKEN/);
+    } finally {
+      delete process.env.HOTGAP_PE_TOKEN;
+    }
+  });
+
   it("variable probe: 200 means the endpoint has it, a 400 'unrecognized' means it does not, anything else is an error and not cached", async () => {
     let calls = 0;
     const answers = [

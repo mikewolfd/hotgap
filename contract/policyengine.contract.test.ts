@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { ARCHETYPES, answersFor, buildCurvePayload, parsePEResponse, peUrl, requestPE } from "../core/src/index.js";
+import { ARCHETYPES, answersFor, buildCurvePayload, parsePEResponse, peHeaders, peUrl, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -18,7 +18,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   it("computes a 101-point axes sweep with every variable we display", async () => {
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(request),
       signal: AbortSignal.timeout(60_000),
     });
@@ -55,7 +55,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     };
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(probe),
       signal: AbortSignal.timeout(60_000),
     });
@@ -80,7 +80,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     };
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(probe),
       signal: AbortSignal.timeout(60_000),
     });
@@ -117,7 +117,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     };
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(probe),
       signal: AbortSignal.timeout(60_000),
     });
@@ -133,7 +133,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const off = JSON.parse(JSON.stringify(withHS));
     off.household.people.kid.head_start = { "2026": 0 };
     const call = async (body: unknown) => {
-      const res = await fetch(peUrl(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
+      const res = await fetch(peUrl(), { method: "POST", headers: peHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(60_000) });
       return (await res.json()) as any;
     };
     const on = await call(withHS);
@@ -171,7 +171,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     const call = async (body: unknown) => {
       const res = await fetch(peUrl(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: peHeaders(),
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(60_000),
       });
@@ -224,7 +224,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     };
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(probe),
       signal: AbortSignal.timeout(60_000),
     });
@@ -281,7 +281,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     };
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(probe),
       signal: AbortSignal.timeout(60_000),
     });
@@ -302,7 +302,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   it("still computes ok with no county_fips at all (state-only fallback)", async () => {
     const res = await fetch(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(singleAdultHousehold()),
       signal: AbortSignal.timeout(60_000),
     });
@@ -459,7 +459,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
       });
       const call = async (forced: number | null) => {
         const res = await fetch(peUrl(), {
-          method: "POST", headers: { "Content-Type": "application/json" },
+          method: "POST", headers: peHeaders(),
           body: JSON.stringify(household(forced)), signal: AbortSignal.timeout(60_000),
         });
         expect(res.status).toBe(200);

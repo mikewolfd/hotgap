@@ -29,6 +29,12 @@ export function peUrl(): string {
   return process.env.HOTGAP_PE_URL?.trim() || PE_URL;
 }
 
+/** Headers every request carries: JSON, plus the bearer token a hosted engine may require (HOTGAP_PE_TOKEN). */
+export function peHeaders(): Record<string, string> {
+  const token = process.env.HOTGAP_PE_TOKEN?.trim();
+  return token ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` } : { "Content-Type": "application/json" };
+}
+
 const DEFAULT_TIMEOUT_MS = 25_000;
 // The service builds a reform for per-request parameters. Live probes took
 // 34–39 s end to end; use the batch budget for these requests too.
@@ -99,7 +105,7 @@ async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs:
   try {
     res = await fetchImpl(peUrl(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: peHeaders(),
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -110,7 +116,8 @@ async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs:
   if (res.status !== 200) {
     // A rejected payload comes back as { status: "error", message } — keep the message.
     const detail = await res.json().then((b) => (b as { message?: string })?.message, () => undefined);
-    throw new PolicyEngineError("upstream", `PolicyEngine responded ${res.status}${detail ? `: ${detail}` : ""}`, res.status);
+    const hint = res.status === 401 ? " (this engine wants a bearer token: set HOTGAP_PE_TOKEN)" : "";
+    throw new PolicyEngineError("upstream", `PolicyEngine responded ${res.status}${detail ? `: ${detail}` : ""}${hint}`, res.status);
   }
   try {
     return await res.json();
