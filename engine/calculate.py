@@ -86,10 +86,11 @@ def _has_parameter(path: str) -> bool:
     return True
 
 
-def _baseline_overrides() -> dict[str, Any]:
-    if not _RESTORE_HEAD_START or not _has_parameter(HEAD_START_IN_NET_INCOME):
-        return {}
-    return {HEAD_START_IN_NET_INCOME: {"2000-01-01.2099-12-31": True}}
+BASELINE_OVERRIDES: dict[str, Any] = (
+    {HEAD_START_IN_NET_INCOME: {"2000-01-01.2099-12-31": True}}
+    if _RESTORE_HEAD_START and _has_parameter(HEAD_START_IN_NET_INCOME)
+    else {}
+)
 
 
 # Built through the constructor, not applied afterwards: upstream applies a
@@ -98,8 +99,8 @@ def _baseline_overrides() -> dict[str, Any]:
 # #9075). The package's own singleton stays alive underneath (it is a module
 # global there); that one extra system lives in the master and is shared.
 BASELINE_SYSTEM = (
-    CountryTaxBenefitSystem(reform=Reform.from_dict(_baseline_overrides(), country_id="us"))
-    if _baseline_overrides()
+    CountryTaxBenefitSystem(reform=Reform.from_dict(BASELINE_OVERRIDES, country_id="us"))
+    if BASELINE_OVERRIDES
     else _PACKAGE_SYSTEM
 )
 
@@ -220,10 +221,10 @@ _lock = threading.RLock()
 
 def _system_for(policy: dict[str, Any] | None):
     if not policy:
-        return BASELINE_SYSTEM  # already carries _baseline_overrides()
+        return BASELINE_SYSTEM  # already carries BASELINE_OVERRIDES
     # The caller's own overrides win: a request that sets the same parameter
     # is asking for that value deliberately.
-    policy = {**_baseline_overrides(), **policy}
+    policy = {**BASELINE_OVERRIDES, **policy}
     key = json.dumps(policy, sort_keys=True)
     with _lock:
         cached = _policy_cache.get(key)
@@ -233,8 +234,6 @@ def _system_for(policy: dict[str, Any] | None):
         try:
             reform = Reform.from_dict(policy, country_id="us")
             built = CountryTaxBenefitSystem(reform=reform)  # constructor path, see BASELINE_SYSTEM
-        except CalculateError:
-            raise
         except Exception as e:  # a bad parameter path, period or value
             raise CalculateError(f"Invalid policy: {e}") from e
         _policy_cache[key] = built
@@ -248,7 +247,7 @@ def policy_cache_size() -> int:
         return len(_policy_cache)
 
 
-def _series(variable, values, index: int, instances: int) -> list[Any]:
+def _series(values, index: int, instances: int) -> list[Any]:
     """One entity instance's values across the axis.
 
     `expand_axes` repeats the whole situation once per axis point, so the
@@ -318,8 +317,6 @@ def calculate(household: dict[str, Any], policy: dict[str, Any] | None = None) -
     with _lock:
         try:
             simulation = Simulation(tax_benefit_system=system, situation=household)
-        except CalculateError:
-            raise
         except Exception as e:
             raise CalculateError(str(e) or e.__class__.__name__) from e
 
@@ -348,7 +345,7 @@ def calculate(household: dict[str, Any], policy: dict[str, Any] | None = None) -
                                 f"Could not calculate `{name}` for `{period}`: {e}"
                             ) from e
                         result[plural][instance_id][name][period] = (
-                            _series(variable, values, index, count)
+                            _series(values, index, count)
                             if has_axes
                             else _scalar(variable, values, index)
                         )

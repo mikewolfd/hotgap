@@ -204,7 +204,7 @@ about; the rest are cosmetic or are the point of the exercise.
    from $32,986.92 to $55,272.17 against the hosted service's $55,257.64.
 
    The service restores it, as a named baseline override in
-   `engine/calculate.py` (`_baseline_overrides`), because HotGap's own code
+   `engine/calculate.py` (`BASELINE_OVERRIDES`), because HotGap's own code
    assumes it: `core/src/parse.ts` builds `otherBenefits` as
    `household_benefits` minus the programs it names, and it names `headstart`,
    and `applyHeadStart` in `core/src/evaluate.ts` subtracts the sticker value
