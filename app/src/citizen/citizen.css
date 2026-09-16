@@ -1,11 +1,53 @@
-/* Citizen surface: one column, phone first (design/citizen.html is the
-   brief). Only this page's own layout lives here; every shared class is in
-   design/tokens.css, and the editor's in app/src/editor/editor.css. */
+/* Citizen surface: one column, phone first, nothing to decide
+   (design/citizen.html is the brief). Only this page's own layout lives
+   here; every shared class is in design/tokens.css, and the editor's in
+   app/src/editor/editor.css. This file loads after tokens.css, so anything
+   that could meet an hg-* state class is declared at :where() specificity. */
 .page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
-.result { padding-top: var(--s5); }
+.band { background: var(--surface); border-block: 1px solid var(--rule); }
+.band > .page { padding-block: var(--s6); }
+/* The band's status and alert sit above the answer; the alert keeps the callout's own margins. */
+.band [role="status"]:empty { display: none; }
 
-/* The answer. The sentence IS the design (design/citizen.html .answer). */
+/* The answer. The sentence IS the design: each dollar figure carries a rule
+   in the colour of the mark it names, so the sentence doubles as the key. */
 .answer { font-size: var(--t-answer); line-height: var(--lh-answer);
           font-weight: var(--w-med); letter-spacing: -0.015em;
           margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
+.answer:empty { display: none; }
+.answer .amt { font-weight: var(--w-semi); white-space: nowrap;
+               box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
+.amt-keep  { --keyed: var(--series-1); }   /* the line */
+.amt-gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
+.amt-cliff { --keyed: var(--loss-4); }     /* a cliff dot */
+.answer-sub { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+.answer-sub:empty { display: none; }
 @media (min-width: 40rem) { .answer { max-width: 26ch; } }
+
+/* Figure */
+.result figure { margin: 0; }
+.chart-head { display: flex; justify-content: space-between; align-items: baseline;
+              gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
+.chart-title { font-size: var(--t-h3); font-weight: var(--w-semi); }
+.chart-unit { font-size: var(--t-micro); color: var(--ink-3); }
+.result figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
+                     max-width: var(--measure); }
+
+/* The Close a mark's open row gains sits under the row's text. */
+:where(.hg-rows) .hg-button--small { margin-top: var(--s2); }
+.assumed { --col: 8rem; }
+
+.result section > h2 { margin-top: var(--s7); }
+.result section > h2 + p, .result section > h2 + .hg-rows { margin-top: var(--s4); }
+.result .hg-callout h3 { margin-bottom: var(--s2); }
+.result footer { color: var(--ink-3); font-size: var(--t-small); margin-top: var(--s7);
+                 border-top: 1px solid var(--rule); padding-top: var(--s5); }
+.result footer p { max-width: var(--measure); }
+
+/* TODO(system): design/tokens.css's print block reasserts light with
+   `:root, :root[data-theme]` (0,1,0 / 0,2,0), which the OS-dark rule
+   `:root:not([data-theme="light"])` (0,2,0) beats when no theme button was
+   pressed — so a print from OS dark stayed dark (measured 1.09:1 body ink on
+   white). The one declaration below is the token file's own mechanism at the
+   specificity it missed; it belongs in tokens.css and carries no colour. */
+@media print { :root:not([data-theme="light"]) { color-scheme: light; } }
