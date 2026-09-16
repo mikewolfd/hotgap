@@ -9,8 +9,7 @@
 <style>
   /* Citizen surface: one column, phone first, nothing to decide. Everything a
      page may share lives in tokens.css as an hg-* class (S13); what is left
-     here is this page's own layout and the few marks the system does not
-     carry yet, each flagged TODO(system). */
+     here is this page's own layout. */
   .page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
   .band { background: var(--surface); border-block: 1px solid var(--rule); }
   .band > .page { padding-block: var(--s6); }
@@ -42,33 +41,8 @@
   figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
                max-width: var(--measure); }
 
-  /* TODO(system): an SVG word label in a mark's own ink. .hg-label fixes the
-     size floor and the neutral ink; a direct label on a plum rule or the
-     "you" label in --ink has no modifier yet, and a class wins over a fill
-     attribute, so these two are needed. The halo is a 3px surface stroke
-     painted under the glyphs so a label over the hatch stays legible. */
-  .label-loss { fill: var(--loss-ink); }
-  .label-ink  { fill: var(--ink); }
-  .label-halo { stroke: var(--surface); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 
-  /* TODO(system): a key entry that describes a mark not on this chart is
-     hidden from the data; .hg-key li's display:flex would win over the
-     hidden attribute without this. */
-  [hidden] { display: none !important; }
-
-  /* Disclosure (S4). `display: flex` on a summary drops the ::marker in
-     Chromium; list-item keeps it. TODO(system): tokens.css has no rule for
-     details/summary; this is the one the DataTable's "Show the numbers" wants. */
-  details { border-top: 1px solid var(--rule); margin-top: var(--s4); }
-  summary { display: list-item; cursor: pointer; padding: var(--s3) 0 var(--s3) var(--s1);
-            font-weight: var(--w-med); list-style-position: inside; }
-  summary::marker { color: var(--ink-3); }
-  details > .hg-scroll-x { margin-bottom: var(--s3); }
-
-  /* StepList: the loss line under a row's sentence, in the text-safe plum.
-     TODO(system): inventory.md maps StepList to .hg-rows and .hg-rows__at only. */
-  .loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
-  .hg-rows .hg-button--small { margin-top: var(--s2); }
+    .hg-rows .hg-button--small { margin-top: var(--s2); }
   .assumed { --col: 7rem; }
 
   section > h2 { margin-top: var(--s7); }
@@ -175,7 +149,7 @@
   <!-- DataTable (#15), the chart's table twin: the points the picture marks,
        as numbers (N3). The words for each threshold live once, in the list
        below; here a row says only which mark it is. -->
-  <details>
+  <details class="hg-disclosure">
     <summary>Show the numbers</summary>
     <div class="hg-scroll-x">
       <table class="hg-table" id="numbers">
@@ -601,7 +575,7 @@ function draw() {
   const yPeak = zone ? py(zone.peakNet) : NaN;
   if (zone) {
     svg.append(mk("line", { x1: bx0, y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
-    svg.append(text({ x: bx0 - 6, y: yPeak - 9, "text-anchor": "end", class: "hg-label label-loss label-halo", "font-weight": 500 }, money(zone.peakNet)));
+    svg.append(text({ x: bx0 - 6, y: yPeak - 9, "text-anchor": "end", class: "hg-label hg-label--loss hg-label--halo", "font-weight": 500 }, money(zone.peakNet)));
   }
 
   /* The exit: the band's right edge carried up, labelled back to even. When
@@ -610,7 +584,7 @@ function draw() {
   if (exitInWindow) {
     const ex = px(P.escapeEarnings);
     svg.append(mk("line", { x1: ex, y1: top, x2: ex, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-    if (!narrow) svg.append(text({ x: ex + 6, y: top + 12, class: "hg-label label-loss label-halo", "font-weight": 500 },
+    if (!narrow) svg.append(text({ x: ex + 6, y: top + 12, class: "hg-label hg-label--loss hg-label--halo", "font-weight": 500 },
       ESC.safeExitEarnings === P.escapeEarnings ? "back to even, and safe from here" : "back to even"));
   }
   const safeInWindow = ESC.safeExitEarnings !== null && ESC.safeExitEarnings !== P.escapeEarnings
@@ -618,7 +592,7 @@ function draw() {
   if (safeInWindow) {
     const sx = px(ESC.safeExitEarnings);
     svg.append(mk("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-    if (!narrow) svg.append(text({ x: sx + 6, y: top + 12, class: "hg-label label-loss label-halo", "font-weight": 500 }, "safe from here"));
+    if (!narrow) svg.append(text({ x: sx + 6, y: top + 12, class: "hg-label hg-label--loss hg-label--halo", "font-weight": 500 }, "safe from here"));
   }
 
   /* The line: one series, 2px, round caps, no area fill. .hg-draw on the
@@ -656,7 +630,7 @@ function draw() {
     svg.append(mk("circle", { cx: cl.x, cy: cl.y, r: n > 1 ? 6 : 4.5, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
     /* Exactly two direct labels on this chart: the largest drop and the leap. */
     if (cl.cliffs.includes(worst))
-      svg.append(text({ x: cl.x + 9, y: (cl.y + py(land)) / 2 + 4, class: "hg-label label-loss label-halo", "font-weight": 600 }, "−" + money(worst.drop)));
+      svg.append(text({ x: cl.x + 9, y: (cl.y + py(land)) / 2 + 4, class: "hg-label hg-label--loss hg-label--halo", "font-weight": 600 }, "−" + money(worst.drop)));
   }
 
   /* Deferred drops: hollow dot, dashed stub, the word later. Never a break in the line. */
@@ -679,13 +653,13 @@ function draw() {
     svg.append(mk("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
     const leap = stuck ? TOP - HH.currentEarnings : P.escapeEarnings - HH.currentEarnings;
     const leapText = (stuck ? "more than +" : "+") + fmtUnit(payRound(leap), PAY.unit) + (PAY.unit !== "year" ? " " + PER[PAY.unit] : "");
-    svg.append(text({ x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: "hg-label label-loss label-halo", "font-weight": 600 }, leapText));
+    svg.append(text({ x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: "hg-label hg-label--loss hg-label--halo", "font-weight": 600 }, leapText));
   }
 
   /* You are here: a diamond, not a dot — shape carries it when colour cannot. */
   svg.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1 }));
   svg.append(mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
-  svg.append(text({ x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label label-ink", "font-weight": 600 }, "you"));
+  svg.append(text({ x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink", "font-weight": 600 }, "you"));
 
   /* Caption, from the values just computed (never typed). */
   let cap = t("axisNote", { floor: money(y0) });
@@ -864,7 +838,7 @@ for (const r of [...rows.values()].sort((a, b) => a.at - b.at)) {
   if (r.cliff?.deferral) s += t("waitsTail");
   p.append(s);
   if (r.cliff && !r.cliff.deferral) {
-    const loss = document.createElement("span"); loss.className = "loss";
+    const loss = document.createElement("span"); loss.className = "hg-rows__loss";
     loss.textContent = t(future ? "wouldLoss" : "loss", { drop: about(r.cliff.drop) }) + (r.cliff === worst ? t("biggest") : "");
     p.append(" ", loss);
   }

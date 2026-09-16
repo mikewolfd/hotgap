@@ -309,6 +309,13 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    word and takes the prose floor. Set with a class, never a bare font-size. */
 .hg-tick  { font-size: var(--t-tick);  fill: var(--ink-3); }
 .hg-label { font-size: var(--t-micro); fill: var(--ink-2); }
+/* A word label in a mark's own ink: a direct label on a plum rule, the "you"
+   label in --ink. A class wins over a fill attribute, hence modifiers. The
+   halo is a 3px surface stroke painted under the glyphs so a label over the
+   hatch stays legible. */
+.hg-label--loss { fill: var(--loss-ink); }
+.hg-label--ink  { fill: var(--ink); }
+.hg-label--halo { stroke: var(--surface); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 
 /* The one orchestrated moment (S13): a path with pathLength="1" draws itself
    left to right over --dur-draw. Add the class on the first draw only; a
@@ -334,7 +341,11 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 
 /* The cite line under a ledger or list entry (ThresholdLedger, CorrectionsApplied — B3). */
 .hg-cite { display: block; color: var(--ink-3); font-size: var(--t-micro);
-           font-weight: var(--w-reg); line-height: 1.45; }
+           font-weight: var(--w-reg); line-height: 1.45;
+           /* core's notes carry identifiers (assigned_co_premium_assistance)
+              that cannot break on their own; without this a 358px column
+              scrolled sideways. */
+           overflow-wrap: anywhere; }
 
 /* DeferredBadge (#10), one declaration (S13). Dashed everywhere, always:
    dashed means a later renewal, across chart, chip and table. */
@@ -365,6 +376,8 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
   scroll-margin-top: var(--s7);     /* M6: a mark scrolls its row into view */
 }
 .hg-rows .hg-rows__at { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
+/* StepList's loss line under a row's text: the drop, in the loss ink. */
+.hg-rows__loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
 .hg-rows p { margin: 0; max-width: none; }
 /* The row a cliff mark opened (M6): the row is the card. The ground bleeds
    --s2 sideways only, so it never covers the rules above and below. */
@@ -427,18 +440,38 @@ button.hg-chip { cursor: pointer; }
 .hg-chip[aria-pressed="true"]  { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .hg-chip[aria-pressed="false"] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
 
+/* A data-hidden element stays hidden whatever display a class gives it — a
+   key entry for a mark not on this chart, a verdict template, a source state. */
+[hidden] { display: none !important; }
+
+/* Disclosure (S4): `display: flex` on a summary drops the ::marker in
+   Chromium; list-item keeps it. DataTable's "Show the numbers" wants this. */
+details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4); }
+.hg-disclosure > summary { display: list-item; cursor: pointer; padding: var(--s3) 0 var(--s3) var(--s1);
+  font-weight: var(--w-med); list-style-position: inside; }
+.hg-disclosure > summary::marker { color: var(--ink-3); }
+.hg-disclosure > .hg-scroll-x { margin-bottom: var(--s3); }
+
 /* ScenarioBar (#11) layout (S1). Only the top row — wordmark and the two
    actions — is sticky, at every width: one rule, no magic offset, and the
    verdict a what-if changes sits directly under it. The inputs row is not
    sticky; below 720px it hides behind a one-line summary with an edit
    control that sets data-open (and aria-expanded on the control). */
 .hg-scenario { background: var(--surface); border-bottom: 1px solid var(--rule); }
-.hg-scenario__top { position: sticky; top: 0; z-index: 5; background: var(--surface);
-  display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
+/* The sticky thing is the BLOCK that holds the top row, not the row: a sticky
+   child cannot outlive its parent's box, and the caseworker page measured the
+   row scrolling away (top: -556) when the inputs shared its parent. So the top
+   row lives in its own .hg-scenario--sticky block, and the summary and inputs
+   in a second, non-sticky .hg-scenario after it. */
+.hg-scenario--sticky { position: sticky; top: 0; z-index: 5; }
+.hg-scenario__top { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
   max-width: 76rem; margin: 0 auto; }
 .hg-scenario__actions { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
+/* A full-width line of text inside the inputs row — what a take-up toggle
+   answers with. */
+.hg-scenario__note { flex: 1 1 100%; margin: 0; }
 .hg-scenario__summary { display: none; }
 @media (max-width: 719.98px) {
   .hg-scenario__inputs { display: none; }

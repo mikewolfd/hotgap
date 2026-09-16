@@ -38,19 +38,20 @@ layout that is genuinely its own (its column grid, its masthead).
 |---|---|
 | DeferredBadge | `.hg-badge` |
 | CorrectionsApplied, ThresholdLedger cite | `.hg-rows` (set `--col`), `.hg-rows__at`, `.hg-tag`, `.hg-cite` |
-| StepList | `.hg-rows`, `.hg-rows__at`; `[aria-current="true"]` on the open row |
+| StepList | `.hg-rows`, `.hg-rows__at`, `.hg-rows__loss` (the drop line); `[aria-current="true"]` on the open row |
 | MarkKey | `.hg-key` |
 | CurveReadout | `.hg-readout` |
-| MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls), `.hg-tick`, `.hg-label`, `.hg-draw` |
+| MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch), `.hg-draw` |
 | StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete`; `.hg-swatch` with the same modifiers |
 | Callout | `.hg-callout`, `--note`, `--caution` |
 | Button | `.hg-button`, `--primary`, `--small` |
-| ScenarioBar | `.hg-scenario`, `__top`, `__actions`, `__inputs`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
+| ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row), `__top`, `__actions`, `__inputs`, `__note`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
 | FilterRow | `.hg-filters`, `.hg-filters__end`, `.hg-select` (or a bare `<select>` inside the row) |
 | SkipLink | `.hg-skip` |
-| DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control; `.hg-scroll-x` around a wide table |
+| DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control; `.hg-scroll-x` around a wide table; `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print` |
+| Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
 Three rules that go with the map:
 
@@ -80,7 +81,11 @@ be pressed would promise a control that is not there.
 
 **Phone.** Below 720px only the top row — the wordmark and the two actions —
 stays sticky, and it is the only sticky thing at any width (one rule, no
-magic offset; the verdict a what-if changes is directly under it). The
+magic offset; the verdict a what-if changes is directly under it). The top
+row sits in its own `.hg-scenario.hg-scenario--sticky` block and the summary
+and inputs in a second `.hg-scenario` after it: a sticky child cannot outlive
+its parent's box, so a top row that shared a block with the inputs scrolled
+away with them (the caseworker page measured `top: -556`). The
 input chips collapse to one summary line, rendered from `answers`:
 
 > CO · El Paso · 1 adult, kids 3 & 7 · $38,000 — **Edit**
@@ -97,7 +102,9 @@ row and words to nothing else; the summary line stays four facts.
 
 - A **toggle** (CCDF subsidy, Head Start, housing — the take-up answers) is
   a `<button aria-pressed>`. Pressing it flips take-up, re-evaluates, and the
-  `.hg-chip__v` reads *on* or *off*. That is the whole behaviour.
+  `.hg-chip__v` reads *on* or *off*. That is the whole behaviour. A sentence
+  the toggle answers with (what a take-up state means for this household)
+  is a `.hg-scenario__note`: a full-width line inside the inputs row.
 - A **value** (state, county, household, earnings, rent, child care) is a
   `<button>` only when pressing it opens that input's editor. Input design
   is a separate brief (`README.md` § What was deliberately left out), so

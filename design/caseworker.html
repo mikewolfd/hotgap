@@ -21,14 +21,6 @@
      one on a phone, so the sticky top row is one row at every width (S1). */
   .short { display: none; }
   @media (max-width: 719.98px) { .short { display: inline; } .full { display: none; } }
-  /* TODO(system): tokens.css puts `position: sticky` on .hg-scenario__top,
-     whose containing block is the header — a sticky child cannot outlive its
-     parent's box, so the row scrolled away with the inputs. Here the top row
-     is its own full-width strip and the strip is the sticky thing (S1). */
-  .topbar { position: sticky; top: 0; z-index: 5; }
-  /* TODO(system): a full-width line inside .hg-scenario__inputs for the
-     take-up toggles' response; tokens.css gives the row no slot for text. */
-  .takeup-note { flex: 1 1 100%; margin: 0; }
 
   .verdict { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-end;
              padding: var(--s5) 0 var(--s4); border-bottom: 1px solid var(--rule); }
@@ -49,10 +41,7 @@
   .provenance .hg-rows .hg-cite { margin-top: 2px; }
   .provenance .hg-cite .hg-tag { margin-right: var(--s2); vertical-align: 1px; }
   .provenance h2 { margin-top: var(--s5); }
-  /* TODO(system): core's notes carry identifiers (household_net_income,
-     assigned_co_premium_assistance) that cannot break; .hg-cite should allow
-     overflow-wrap: anywhere so a 358px column does not scroll sideways. */
-  .provenance .hg-cite, .assumed li { overflow-wrap: anywhere; }
+  .assumed li { overflow-wrap: anywhere; }
 
   .cols { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s4); }
   @media (min-width: 60rem) { .cols { grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); } }
@@ -99,7 +88,7 @@
 <body>
 <a class="hg-skip" href="#ledger">Skip to the threshold ledger</a>
 
-<div class="hg-scenario topbar hg-no-print">
+<div class="hg-scenario hg-scenario--sticky hg-no-print">
   <div class="hg-scenario__top">
     <p class="wordmark">HotGap</p>
     <div class="hg-scenario__actions">
@@ -703,10 +692,10 @@ for (const el of document.querySelectorAll(".stateName")) el.textContent = STATE
     value("Earnings", money(A.currentEarnings)) + value("Rent", money(s.monthlyRent) + "/mo") +
     value("Child care", money(s.monthlyChildcare) + "/mo") +
     toggle("CCDF subsidy", s.getsChildcareSubsidy) + toggle("Head Start", s.getsHeadStart) + toggle("Housing", s.getsHousing) +
-    `<p class="takeup-note hg-source" aria-live="polite"></p>`;
+    `<p class="hg-scenario__note hg-source" aria-live="polite"></p>`;
   $("summaryLine").textContent = `${s.state} · ${DATA.county.name} · ${household} · ${money(A.currentEarnings)}`;
   for (const b of $("inputs").querySelectorAll("button")) b.addEventListener("click", () => {
-    $("inputs").querySelector(".takeup-note").textContent =
+    $("inputs").querySelector(".hg-scenario__note").textContent =
       `Changing take-up re-runs the evaluation. This sketch is frozen to the sweep of ${day(DATA.summary.generated)}, so nothing here changed.`;
   });
   $("editBtn").addEventListener("click", () => {
