@@ -1,9 +1,9 @@
 name: Engine image
 # Builds engine/ into DigitalOcean's container registry on every change to it.
-# App Platform watches the `latest` tag (deploy_on_push in the app spec) and
-# redeploys the hosted engine; a Dependabot bump of engine/requirements.txt
-# therefore reaches production by itself once CI's engine-contract job has
-# passed and the PR is merged.
+# Watchtower on the droplet (scripts/hosted-engine.mjs) pulls each new
+# `latest` and restarts the engine; a Dependabot bump of
+# engine/requirements.txt therefore reaches the box by itself once CI's
+# engine-contract job has passed and the PR is merged.
 on:
   push:
     branches: [main]

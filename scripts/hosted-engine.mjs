@@ -8,8 +8,7 @@
 // `hotgap` registry (pulled with read-only credentials minted for the
 // purpose), Caddy for HTTPS on a free <ip>.sslip.io hostname, and Watchtower
 // to pull each new `latest` that .github/workflows/engine-image.yml pushes.
-// Sizing: s-4vcpu-8gb ($48/month); one worker peaks near 4.5 GB on an
-// override state and a 4 GB box died on the first one (engine/README.md).
+// Sizing — the box, and WORKERS below — is engine/README.md, "Size, and why".
 //
 // Usage: node scripts/hosted-engine.mjs up | down | status
 // Reads DIGITAL_OCEAN_TOKEN and HOTGAP_PE_TOKEN from .env and writes
@@ -47,9 +46,7 @@ function userData(registryAuth) {
     image: registry.digitalocean.com/hotgap/engine:latest
     restart: unless-stopped
     environment:
-      PORT: "8080"
       WEB_CONCURRENCY: "${WORKERS}"
-      GUNICORN_MAX_REQUESTS: "100"
       HOTGAP_ENGINE_TOKEN: "${need("HOTGAP_PE_TOKEN")}"
     labels: ["com.centurylinklabs.watchtower.enable=true"]
   caddy:
@@ -95,6 +92,8 @@ async function droplets() {
 }
 const ipOf = (d) => d.networks?.v4?.find((n) => n.type === "public")?.ip_address ?? null;
 const urlOf = (d) => { const ip = ipOf(d); return ip ? `https://${ip}.sslip.io` : null; };
+/** The engine's /healthz body, or null while it is not answering. */
+const health = (url) => fetch(`${url}/healthz`, { signal: AbortSignal.timeout(10_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
 function setEnvUrl(url) {
   const lines = (existsSync(ENV_PATH) ? readFileSync(ENV_PATH, "utf8") : "").split("\n").filter((l) => !l.startsWith("HOTGAP_PE_URL=") && l !== "");
@@ -106,9 +105,11 @@ async function ensureFirewall(dropletId) {
   const { firewalls } = await api("/firewalls?per_page=200");
   let fw = (firewalls ?? []).find((f) => f.name === TAG);
   if (!fw) {
-    const all = [{ protocol: "tcp", ports: "1-65535", destinations: { addresses: ["0.0.0.0/0", "::/0"] } }, { protocol: "udp", ports: "1-65535", destinations: { addresses: ["0.0.0.0/0", "::/0"] } }];
-    const inbound = ["22", "80", "443"].map((ports) => ({ protocol: "tcp", ports, sources: { addresses: ["0.0.0.0/0", "::/0"] } }));
-    fw = (await api("/firewalls", { method: "POST", body: JSON.stringify({ name: TAG, inbound_rules: inbound, outbound_rules: all, tags: [TAG] }) })).firewall;
+    const anywhere = { addresses: ["0.0.0.0/0", "::/0"] };
+    // 22 for ssh; 80 and 443 for Caddy (its ACME challenge, and HTTPS).
+    const inbound = ["22", "80", "443"].map((ports) => ({ protocol: "tcp", ports, sources: anywhere }));
+    const outbound = ["tcp", "udp"].map((protocol) => ({ protocol, ports: "1-65535", destinations: anywhere }));
+    fw = (await api("/firewalls", { method: "POST", body: JSON.stringify({ name: TAG, inbound_rules: inbound, outbound_rules: outbound, tags: [TAG] }) })).firewall;
   }
   if (!fw.droplet_ids?.includes(dropletId)) await api(`/firewalls/${fw.id}/droplets`, { method: "POST", body: JSON.stringify({ droplet_ids: [dropletId] }) });
 }
@@ -132,8 +133,8 @@ async function up() {
   console.log(`active at ${url}; waiting for cloud-init, the image pull and the certificate…`);
   const started = Date.now();
   for (;;) {
-    const health = await fetch(`${url}/healthz`, { signal: AbortSignal.timeout(10_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    if (health?.status === "ok") { setEnvUrl(url); console.log(`up: ${url} — ${health.model} ${health.version}, ${Math.round((Date.now() - started) / 1000)} s; HOTGAP_PE_URL written to .env`); return; }
+    const engine = await health(url);
+    if (engine?.status === "ok") { setEnvUrl(url); console.log(`up: ${url} — ${engine.model} ${engine.version}, ${Math.round((Date.now() - started) / 1000)} s; HOTGAP_PE_URL written to .env`); return; }
     if (Date.now() - started > 15 * 60_000) fail(`no healthy answer from ${url} after 15 min — ssh root@${ipOf(d)} and read /var/log/cloud-init-output.log`);
     await sleep(15_000);
   }
@@ -152,8 +153,8 @@ async function status() {
   if (!list.length) { console.log("down (no droplet)"); return; }
   for (const d of list) {
     const url = urlOf(d);
-    const health = url ? await fetch(`${url}/healthz`, { signal: AbortSignal.timeout(10_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null;
-    console.log(`${d.status} ${url ?? ""} — ${d.size_slug}, since ${d.created_at}; engine ${health ? `${health.model} ${health.version}` : "not answering"}`);
+    const engine = url ? await health(url) : null;
+    console.log(`${d.status} ${url ?? ""} — ${d.size_slug}, since ${d.created_at}; engine ${engine ? `${engine.model} ${engine.version}` : "not answering"}`);
   }
 }
 

@@ -34,11 +34,12 @@ PORT=8080 engine/.venv/bin/python -m engine.app
 The first import builds the whole tax-benefit system and takes about 10 s;
 after that the process is ready. `python -m engine.app` is the Flask
 development server — one request at a time, which is what `calculate.py` wants
-anyway. For anything beyond one caller, run it the way the image does:
+anyway. For anything beyond one caller, run it the way the image does —
+`engine/gunicorn.conf.py` holds the settings and why, and a flag on the
+command line overrides one:
 
 ```sh
-engine/.venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 4 --threads 1 --max-requests 100 \
-  --timeout 120 --preload engine.app:app
+engine/.venv/bin/gunicorn -c engine/gunicorn.conf.py --bind 127.0.0.1:8080 --workers 4 engine.app:app
 ```
 
 ## Run it under Docker
@@ -71,9 +72,10 @@ Each worker holds its own copy-on-write view of a roughly 1 GB model, so size
   baseline overrides (Head Start) are baked into the preloaded system.
 * A worker's memory does not plateau over a long run of simulations (the
   GitHub runner's `free` trace climbed 2.5 → 12.3 GB across a ten-minute
-  sweep), so run gunicorn with `--max-requests 100 --max-requests-jitter 20`:
-  a recycled worker re-forks from the preloaded master in about a second and
-  rebuilds at most the one policy system it was holding.
+  sweep), so `gunicorn.conf.py` recycles a worker every ~100 requests
+  (`max_requests`, jittered by 20): a recycled worker re-forks from the
+  preloaded master in about a second and rebuilds at most the one policy
+  system it was holding.
 
 ## Point HotGap at it
 
@@ -171,12 +173,14 @@ The public API is a whole product; this is the one endpoint HotGap calls.
 * **Only `POST /us/calculate` and `GET /healthz`.** No `/us/economy`, no
   `/us/policy`, no `/metadata`, no household storage, no user accounts, no
   other country. Any other path is a Flask 404 in HTML, not the API's JSON.
-* **No authentication, no rate limiting, no result cache.** Bind it to
-  localhost. The public API caches whole responses — a repeat of the Texas
-  request above came back in 0.17 s — and this does not; it caches only the
-  built tax-benefit system for the last 8 distinct `policy` objects, which is
-  where the seconds actually are. HotGap has its own curve cache
-  (`core/src/client.ts`).
+* **No accounts, no rate limiting, no result cache.** Bind it to localhost,
+  or set `HOTGAP_ENGINE_TOKEN` and `/us/calculate` wants that bearer token
+  (`/healthz` stays open) — the only authentication there is. The public API
+  caches whole responses — a repeat of the Texas request above came back in
+  0.17 s — and this does not; it caches only the built tax-benefit system
+  for the last `HOTGAP_ENGINE_POLICY_CACHE` distinct `policy` objects (one,
+  by default — see "Run it under Docker"), which is where the seconds
+  actually are. HotGap has its own curve cache (`core/src/client.ts`).
 * **No `Microsimulation`.** Household situations only. Society-wide impacts,
   datasets and the Populace download are not touched, which is also why the
   container needs no network at runtime.
@@ -202,7 +206,7 @@ about; the rest are cosmetic or are the point of the exercise.
    from $32,986.92 to $55,272.17 against the hosted service's $55,257.64.
 
    The service restores it, as a named baseline override in
-   `engine/calculate.py` (`_baseline_overrides`), because HotGap's own code
+   `engine/calculate.py` (`BASELINE_OVERRIDES`), because HotGap's own code
    assumes it: `core/src/parse.ts` builds `otherBenefits` as
    `household_benefits` minus the programs it names, and it names `headstart`,
    and `applyHeadStart` in `core/src/evaluate.ts` subtracts the sticker value

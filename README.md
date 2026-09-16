@@ -470,7 +470,7 @@ received), `--offline`, `--json`.
 ## Develop
 
     npm test                # unit tests
-    npm run typecheck       # tsc -b core pipeline
+    npm run typecheck       # wrangler types, then tsc -b core pipeline app worker
     npm run contract        # live PolicyEngine contract check (public API, or HOTGAP_PE_URL)
     npm run pipeline        # re-run the weekly PolicyEngine sweep locally (~35 min on the engine; 51 states x 11 archetypes)
 
@@ -479,8 +479,9 @@ from already-fetched curves, no PolicyEngine calls) and `--dry-run` (build every
 without calling PolicyEngine or writing files).
 
 **Which PolicyEngine.** Every request goes to `HOTGAP_PE_URL` when it is set,
-else to the public API. The public API runs an older model (policyengine-us
-1.764.6 in September 2026, against a 2.5.0 release) that lacks 13 states'
+else to the public API. The public API runs an older model (its service
+version 1.764.6 in September 2026, serving a model that matched
+policyengine-us 2.2.0; `fixtures/README.md`) that lacks 13 states'
 child-care subsidies and takes 35–40 s per policy-override request, so the
 sweep — and anything else that can — runs on `engine/`, HotGap's own copy of
 the one endpoint it calls, pinned to the latest release in
@@ -492,7 +493,7 @@ public API stays the fallback for a `hotgap` run with no engine, and
 `.github/workflows/contract.yml` watches it daily.
 
     pip install -r engine/requirements.txt
-    gunicorn --bind 127.0.0.1:8099 --workers 4 --preload engine.app:app &
+    gunicorn -c engine/gunicorn.conf.py --bind 127.0.0.1:8099 --workers 4 engine.app:app &
     HOTGAP_PE_URL=http://127.0.0.1:8099/us/calculate npm run pipeline
 
 A hosted copy runs on a DigitalOcean droplet for the personal path

@@ -58,13 +58,15 @@
 //   PUMS_CACHE=<dir>  where the downloaded zips are kept (default: a stable
 //                     directory under the OS temp dir, so re-runs skip the
 //                     ~700 MB download entirely).
-import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { spawn, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+// The one state list (plain node strips the types; Node 22.18+).
+import { STATE_CODES } from "../core/src/states.ts";
+import { fetchToFile, outputPath, parseArgs, unzipEntry, writeStamped } from "./lib/builder.mjs";
+import { ECI_SERIES, average, calendarYear, projectCy2026, quarterlyValues } from "./lib/eci.mjs";
 
 const PUMS_YEAR = "2024";
 const PUMS_BASE = `https://www2.census.gov/programs-surveys/acs/data/pums/${PUMS_YEAR}`;
@@ -92,14 +94,6 @@ const SOURCE = {
   // builder's variance code against (it reproduces WY "Total males" SE 1948,
   // MOE 3205 and "Age 20-24" SE 1678, MOE 2760 exactly).
   verificationEstimates: `https://www2.census.gov/programs-surveys/acs/tech_docs/pums/estimates/pums_estimates_${PUMS_YEAR.slice(2)}.csv`,
-};
-
-const STATES = {
-  AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10", DC: "11", FL: "12",
-  GA: "13", HI: "15", ID: "16", IL: "17", IN: "18", IA: "19", KS: "20", KY: "21", LA: "22", ME: "23",
-  MD: "24", MA: "25", MI: "26", MN: "27", MS: "28", MO: "29", MT: "30", NE: "31", NV: "32", NH: "33",
-  NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38", OH: "39", OK: "40", OR: "41", PA: "42", RI: "44",
-  SC: "45", SD: "46", TN: "47", TX: "48", UT: "49", VT: "50", VA: "51", WA: "53", WV: "54", WI: "55", WY: "56",
 };
 
 // The five smallest states by 2024 1-Year housing records (WY 3,024 / VT 3,875 /
@@ -171,13 +165,9 @@ const num = (v) => {
 
 /** Streams one CSV out of a zip, line by line: O(rows), bounded memory. */
 async function streamCsv(zipPath, entry, onHeader, onRow) {
-  const child = spawn("unzip", ["-p", zipPath, entry], { stdio: ["ignore", "pipe", "inherit"] });
-  const closed = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`unzip -p ${entry} exited ${code}`))));
-  });
+  const { stdout, closed } = unzipEntry(zipPath, entry);
   let maxIdx = -1;
-  for await (const line of createInterface({ input: child.stdout, crlfDelay: Infinity })) {
+  for await (const line of createInterface({ input: stdout, crlfDelay: Infinity })) {
     if (!line) continue;
     if (maxIdx < 0) { maxIdx = onHeader(splitAll(line)); continue; }
     onRow(splitLine(line, maxIdx));
@@ -198,9 +188,7 @@ async function fetchZip(kind, st, fiveYear) {
   const part = `${dest}.part`;
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await fetch(url, { redirect: "follow" });
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-      await pipeline(Readable.fromWeb(res.body), createWriteStream(part));
+      await fetchToFile(url, part);
       renameSync(part, dest);
       return dest;
     } catch (err) {
@@ -393,8 +381,6 @@ function passes(cell) {
 
 // ------------------------------------------------------- 2024 → 2026 dollars
 
-const ECI_SERIES = "CIU2020000000000I"; // ECI, wages and salaries, private industry workers, index NSA
-
 // Quarterly values fetched from api.bls.gov on 2026-09-14, kept so an offline or
 // rate-limited run still produces a sourced factor rather than a guess. The
 // methodology validation quotes 2026 Q1 177.672 and Q2 179.304, which match.
@@ -414,11 +400,7 @@ async function fetchEci() {
       });
       const json = await res.json();
       if (json.status !== "REQUEST_SUCCEEDED") throw new Error(json.status + " " + (json.message || []).join("; "));
-      const out = {};
-      for (const d of json.Results.series[0].data) {
-        const q = /^Q0([1-4])$/.exec(d.period);
-        if (q) out[`${d.year}-${q[1]}`] = Number(d.value);
-      }
+      const out = quarterlyValues(json.Results.series[0]);
       if (Object.keys(out).length < 8) throw new Error("too few quarters returned");
       return { values: out, live: true, version };
     } catch (err) {
@@ -428,30 +410,12 @@ async function fetchEci() {
   return { values: ECI_FALLBACK, live: false, version: null };
 }
 
-/**
- * CY2024 average → CY2026 average on the ECI. Unpublished 2026 quarters are
- * extrapolated from the same quarter of 2025 at the latest published 12-month
- * rate of change, which is how BLS itself frames the series' headline number.
- */
+/** CY2024 average → CY2026 average on the ECI (scripts/lib/eci.mjs). */
 function growthFactor(eci) {
   const v = eci.values;
-  const cy = (y) => [1, 2, 3, 4].map((q) => v[`${y}-${q}`]);
-  const base = cy(2024);
-  if (base.some((x) => x === undefined)) throw new Error("ECI: CY2024 is incomplete");
-
-  let latest = null;
-  for (const y of [2026, 2025]) for (const q of [4, 3, 2, 1]) if (latest === null && v[`${y}-${q}`] !== undefined) latest = { y, q };
-  const prior = v[`${latest.y - 1}-${latest.q}`];
-  if (prior === undefined) throw new Error("ECI: no year-earlier quarter for the 12-month rate");
-  const yoy = v[`${latest.y}-${latest.q}`] / prior;
-
-  const target = [1, 2, 3, 4].map((q) => {
-    const actual = v[`2026-${q}`];
-    return actual !== undefined ? { q, value: actual, projected: false } : { q, value: v[`2025-${q}`] * yoy, projected: true };
-  });
-  const avg = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
-  const from = avg(base);
-  const to = avg(target.map((t) => t.value));
+  const base = calendarYear(v, 2024);
+  const { latest, prior, yoy, target, to } = projectCy2026(v);
+  const from = average(base);
 
   process.stderr.write(
     `ECI ${ECI_SERIES} (${eci.live ? `live, api.bls.gov ${eci.version}` : "offline fallback, fetched 2026-09-14"})\n` +
@@ -478,9 +442,9 @@ function growthFactor(eci) {
 
 // ---------------------------------------------------------------------- main
 
-const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=")));
-const stateList = argv.states ? argv.states.split(",") : Object.keys(STATES);
-const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new URL("../core/data/reach.json", import.meta.url);
+const argv = parseArgs();
+const stateList = argv.states ? argv.states.split(",") : STATE_CODES;
+const outPath = outputPath(argv, new URL("../core/data/reach.json", import.meta.url));
 
 const growth = growthFactor(await fetchEci());
 const adjincUsed = {};
@@ -491,7 +455,7 @@ const states = argv.states && existsSync(outPath) ? JSON.parse(readFileSync(outP
 const started = Date.now();
 
 for (const st of stateList) {
-  if (!STATES[st]) throw new Error(`unknown state ${st}`);
+  if (!STATE_CODES.includes(st)) throw new Error(`unknown state ${st}`);
   const t0 = Date.now();
   const oneYear = await readState(st, false);
   adjincUsed[VINTAGE_1YR] = [...new Set([...(adjincUsed[VINTAGE_1YR] || []), ...oneYear.adjinc])].sort((a, b) => a - b);
@@ -553,12 +517,7 @@ const body = {
   states,
 };
 
-// Stamp the sweep that last CHANGED the numbers, matching summary.json's
-// convention: an unchanged rebuild leaves the file, and this stamp, alone, so a
-// re-run is not a diff.
-const { generated: priorStamp, ...priorBody } = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
-const unchanged = priorStamp !== undefined && JSON.stringify(priorBody) === JSON.stringify(body);
-writeFileSync(outPath, JSON.stringify({ generated: unchanged ? priorStamp : new Date().toISOString(), ...body }));
+writeStamped(outPath, "generated", new Date().toISOString(), body);
 const cellCount = Object.values(states).flatMap((s) => Object.values(s)).filter(Boolean).length;
 const fromFive = Object.values(states).flatMap((s) => Object.values(s)).filter((c) => c && c.vintage === VINTAGE_5YR).length;
 console.log(

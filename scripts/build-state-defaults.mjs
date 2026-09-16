@@ -37,12 +37,14 @@
 //   ZYTE_TOKEN=<token>  huduser.gov answers a plain request with an empty
 //                     HTTP 202 bot challenge. The other two publishers serve
 //                     the file directly and never touch Zyte.
-import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { spawn, spawnSync } from "node:child_process";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+// The one state list (plain node strips the types; Node 22.18+).
+import { FIPS_TO_USPS, STATE_CODES } from "../core/src/states.ts";
+import { fetchToFile, outputPath, parseArgs, unzipEntry, writeStamped } from "./lib/builder.mjs";
+import { ECI_SERIES, average, calendarYear, projectCy2026, quarterlyValues } from "./lib/eci.mjs";
 
 const SOURCE = {
   countyPop: "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv",
@@ -53,15 +55,6 @@ const SOURCE = {
   ndcpIndex: "https://www.dol.gov/agencies/wb/topics/childcare/price-by-age-care-setting",
   eci: "https://api.bls.gov/publicAPI/v2/timeseries/data/",
 };
-
-const STATES = {
-  AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10", DC: "11", FL: "12",
-  GA: "13", HI: "15", ID: "16", IL: "17", IN: "18", IA: "19", KS: "20", KY: "21", LA: "22", ME: "23",
-  MD: "24", MA: "25", MI: "26", MN: "27", MS: "28", MO: "29", MT: "30", NE: "31", NV: "32", NH: "33",
-  NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38", OH: "39", OK: "40", OR: "41", PA: "42", RI: "44",
-  SC: "45", SD: "46", TN: "47", TX: "48", UT: "49", VT: "50", VA: "51", WA: "53", WV: "54", WI: "55", WY: "56",
-};
-const USPS_BY_FIPS = Object.fromEntries(Object.entries(STATES).map(([usps, fips]) => [fips, usps]));
 
 // ---------------------------------------------------------------- downloading
 
@@ -85,9 +78,7 @@ async function download(url, name, { zipped = false } = {}) {
   const ok = (p) => statSync(p).size > 0 && (!zipped || magic(p) === "PK");
 
   try {
-    const res = await fetch(url, { redirect: "follow" });
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-    await pipeline(Readable.fromWeb(res.body), createWriteStream(part));
+    const res = await fetchToFile(url, part);
     if (!ok(part)) throw new Error(`HTTP ${res.status} with no usable body (bot challenge?)`);
     renameSync(part, dest);
     process.stderr.write(`  fetched ${name}  (${(statSync(dest).size / 1e6).toFixed(1)} MB)\n`);
@@ -167,15 +158,11 @@ function cells(row, strings, want) {
 
 /** Streams a worksheet row by row. `onHeader` receives row 1 and returns the columns to keep. */
 async function streamSheet(file, sheet, strings, onHeader, onRow) {
-  const child = spawn("unzip", ["-p", file, sheet], { stdio: ["ignore", "pipe", "inherit"] });
-  const closed = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`unzip -p ${sheet} exited ${code}`))));
-  });
-  child.stdout.setEncoding("utf8");
+  const { stdout, closed } = unzipEntry(file, sheet);
+  stdout.setEncoding("utf8");
   let buf = "";
   let want = null;
-  for await (const chunk of child.stdout) {
+  for await (const chunk of stdout) {
     buf += chunk;
     let i;
     while ((i = buf.indexOf("</row>")) >= 0) {
@@ -215,13 +202,13 @@ function mostPopulousCounties(csvPath) {
   for (let i = 1; i < lines.length; i++) {
     const f = lines[i].trim().split(",");
     if (f[idx.SUMLEV] !== "050") continue; // 050 = county; 040 = state totals
-    const state = USPS_BY_FIPS[f[idx.STATE]];
+    const state = FIPS_TO_USPS[f[idx.STATE]];
     if (!state) continue; // PR and the other territories are not modeled
     const pop = Number(f[idx.POPESTIMATE2024]);
     if (!Number.isFinite(pop)) throw new Error(`${f[idx.STATE]}${f[idx.COUNTY]}: unreadable POPESTIMATE2024`);
     if (!best[state] || pop > best[state].pop) best[state] = { fips: f[idx.STATE] + f[idx.COUNTY], name: f[idx.CTYNAME], pop };
   }
-  const missing = Object.keys(STATES).filter((s) => !best[s]);
+  const missing = STATE_CODES.filter((s) => !best[s]);
   if (missing.length) throw new Error(`no county found for ${missing.join(", ")}`);
   return best;
 }
@@ -306,8 +293,6 @@ async function childcarePrices(xlsxPath) {
 
 // --------------------------------------------------- study year -> 2026 dollars
 
-const ECI_SERIES = "CIU2020000000000I"; // ECI, wages and salaries, private industry workers, index NSA
-
 // Quarterly values fetched from api.bls.gov on 2026-09-15, kept so an offline
 // or rate-limited run still produces a sourced factor rather than a guess.
 const ECI_FALLBACK = {
@@ -351,10 +336,7 @@ async function fetchEci() {
       });
       const json = await res.json();
       if (json.status !== "REQUEST_SUCCEEDED") throw new Error(`${json.status} ${(json.message || []).join("; ")}`);
-      for (const d of json.Results.series[0].data) {
-        const q = /^Q0([1-4])$/.exec(d.period);
-        if (q) values[`${d.year}-${q[1]}`] = Number(d.value);
-      }
+      Object.assign(values, quarterlyValues(json.Results.series[0]));
     }
     if (Object.keys(values).length < 40) throw new Error("too few quarters returned");
     return { values, live: true };
@@ -366,30 +348,13 @@ async function fetchEci() {
 
 /**
  * Calendar-year average of the four quarterly index values, study year ->
- * CY2026. Quarters 2026 has not published yet are extrapolated from the same
- * quarter of 2025 at the latest published 12-month rate, which is how BLS
- * itself frames the series' headline number — the same arithmetic
- * scripts/build-reach.mjs uses to carry the reach ladders to 2026 dollars.
+ * CY2026 — the arithmetic in scripts/lib/eci.mjs, which build-reach.mjs also
+ * uses to carry the reach ladders to 2026 dollars.
  */
 function eciFactors(eci) {
   const v = eci.values;
-  const cyAverage = (year) => {
-    const qs = [1, 2, 3, 4].map((q) => v[`${year}-${q}`]);
-    if (qs.some((x) => x === undefined)) throw new Error(`ECI: CY${year} is incomplete`);
-    return qs.reduce((s, x) => s + x, 0) / 4;
-  };
-
-  let latest = null;
-  for (const y of [2026, 2025]) for (const q of [4, 3, 2, 1]) if (latest === null && v[`${y}-${q}`] !== undefined) latest = { y, q };
-  const prior = v[`${latest.y - 1}-${latest.q}`];
-  if (prior === undefined) throw new Error("ECI: no year-earlier quarter for the 12-month rate");
-  const yoy = v[`${latest.y}-${latest.q}`] / prior;
-
-  const target = [1, 2, 3, 4].map((q) => {
-    const actual = v[`2026-${q}`];
-    return actual !== undefined ? { q, value: actual, projected: false } : { q, value: v[`2025-${q}`] * yoy, projected: true };
-  });
-  const to = target.reduce((s, t) => s + t.value, 0) / 4;
+  const cyAverage = (year) => average(calendarYear(v, year));
+  const { latest, prior, yoy, target, to } = projectCy2026(v);
 
   process.stderr.write(
     `ECI ${ECI_SERIES} (${eci.live ? "live, api.bls.gov v2" : "offline fallback, fetched 2026-09-15"})\n` +
@@ -445,8 +410,8 @@ const usd = (v) => `$${Math.round(v).toLocaleString("en-US")}`;
 
 // ---------------------------------------------------------------------- main
 
-const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=")));
-const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new URL("../core/data/state-defaults.json", import.meta.url);
+const argv = parseArgs();
+const outPath = outputPath(argv, new URL("../core/data/state-defaults.json", import.meta.url));
 const started = Date.now();
 
 const { factor, meta: eciMeta } = eciFactors(await fetchEci());
@@ -486,7 +451,7 @@ for (const [band, latest] of Object.entries(bands)) {
   byState[band] = {};
   national[band] = [];
   for (const [fips, { year, weekly }] of latest) {
-    const state = USPS_BY_FIPS[fips.slice(0, 2)];
+    const state = FIPS_TO_USPS[fips.slice(0, 2)];
     const price = monthly2026(weekly, year, factor);
     if (state) (byState[band][state] ??= []).push({ fips, year, price });
     if (year === lastYear) national[band].push(price);
@@ -498,7 +463,7 @@ const BAND_KEY = { infant: "monthlyChildcareInfant", toddler: "monthlyChildcareT
 const states = {};
 const basis = {};
 const yearsUsed = new Set();
-for (const state of Object.keys(STATES).sort()) {
+for (const state of [...STATE_CODES].sort()) {
   const { fips } = counties[state];
   states[state] = { countyFips: fips, monthlyRent: countyRent(rentRows.get(fips), fips) };
   basis[state] = {};
@@ -599,12 +564,7 @@ const body = {
   states,
 };
 
-// Stamp the sweep that last CHANGED the numbers, matching reach.json's and
-// summary.json's convention: an unchanged rebuild leaves the file, and this
-// stamp, alone, so a re-run is not a diff.
-const { read: priorStamp, ...priorBody } = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
-const unchanged = priorStamp !== undefined && JSON.stringify(priorBody) === JSON.stringify(body);
-writeFileSync(outPath, JSON.stringify({ read: unchanged ? priorStamp : new Date().toISOString().slice(0, 10), ...body }, null, 1));
+const priorBody = writeStamped(outPath, "read", new Date().toISOString().slice(0, 10), body, 1);
 
 const changed = Object.keys(states).filter((s) => JSON.stringify(priorBody.states?.[s]) !== JSON.stringify(states[s]));
 for (const s of changed) {
