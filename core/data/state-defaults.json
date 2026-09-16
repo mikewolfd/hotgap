@@ -11,11 +11,11 @@
   },
   "monthlyRent": {
    "what": "Two-bedroom Fair Market Rent for that county, in whole dollars per month.",
-   "publisher": "HUD Office of Policy Development and Research, FY2026 Fair Market Rents, county level, revised schedule (fmr_2).",
+   "publisher": "HUD Office of Policy Development and Research, Fair Market Rents",
    "url": "https://www.huduser.gov/portal/datasets/fmr/fmr2026/FY26_FMRs_revised.xlsx",
    "index": "https://www.huduser.gov/portal/datasets/fmr.html",
-   "vintage": "FY2026 (effective 2025-10-01), revised schedule, which supersedes the unrevised FY26_FMRs.xlsx.",
-   "note": "In the six New England states HUD publishes FMRs by town, not by county, and a county can span two or three FMR areas. Those counties take the population-weighted mean of their town rows using HUD's own pop2023 column, rounded to the dollar: MA 25017 ($2,351/$2,941 across 54 town rows -> 2825), ME 23005 ($1,833/$2,130 across 28 town rows -> 2082), NH 33011 ($1,698/$2,037/$2,127 across 31 town rows -> 2058). CT 09110, RI 44007, VT 50007 are single-valued across their town rows. Every other state's county is one row.",
+   "vintage": "FY2026 revised schedule (effective 2025-10-01)",
+   "note": "The revised schedule supersedes HUD's first FY2026 file (FY26_FMRs.xlsx); the column read is the two-bedroom rent, fmr_2. In the six New England states HUD publishes FMRs by town, not by county, and a county can span two or three FMR areas. Those counties take the population-weighted mean of their town rows using HUD's own pop2023 column, rounded to the dollar: MA 25017 ($2,351/$2,941 across 54 town rows -> 2825), ME 23005 ($1,833/$2,130 across 28 town rows -> 2082), NH 33011 ($1,698/$2,037/$2,127 across 31 town rows -> 2058). CT 09110, RI 44007, VT 50007 are single-valued across their town rows. Every other state's county is one row.",
    "access": "huduser.gov answers a plain request with an empty HTTP 202 bot challenge; scripts/build-state-defaults.mjs fetches this file through a proxy."
   },
   "monthlyChildcare": {

@@ -77,8 +77,15 @@
   --w-med:  500;
   --w-semi: 600;
 
-  --measure:      60ch;   /* citizen prose */
-  --measure-wide: 76ch;   /* caseworker / journalist prose */
+  /* Line length, in ch — but Archivo's zero is wide, so a ch here is about
+     0.75 of an average character: 60ch measured 77 characters a line on the
+     journalist lede and 76ch ran 85–96 on its notes (places review N6).
+     These are the ch counts that land the prose where the names say —
+     about 60 characters for citizen prose, about 76 for the professional
+     surfaces — measured on the places page at 1280 (lede 57, method list
+     under 80 on its longest item). */
+  --measure:      48ch;   /* citizen prose */
+  --measure-wide: 58ch;   /* caseworker / journalist prose */
 
   /* ── Space. 4px base. ── */
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
@@ -130,11 +137,12 @@
                           allowed to carry small text, so captions are still AA */
   --rule:        #D3D8DE;  /* hairlines: table rows, panel edges. Never a control's only boundary. */
   --rule-strong: #AEB7C0;  /* 1.96:1 on surface — a heavier hairline, still not a control edge */
-  /* The boundary of an interactive thing (S11): chips, selects, buttons, the
-     no-cliff tile's sibling controls. WCAG 1.4.11 wants 3:1 for a control's
-     only visible edge; --rule-strong measures 1.96:1 on surface, 1.70:1 on
-     plane. This one measures 3.49:1 on surface, 3.02:1 on plane. Interactive
-     edges only — hairlines keep --rule. */
+  /* The boundary of an interactive thing (S11): chips, selects, buttons, and
+     the map's outlined tiles, which are buttons (places review N10). WCAG
+     1.4.11 wants 3:1 for a control's only visible edge; --rule-strong
+     measures 1.96:1 on surface, 1.70:1 on plane. This one measures 3.49:1
+     on surface, 3.02:1 on plane. Interactive edges only — hairlines keep
+     --rule. */
   --control-edge: #7C8894;
   --link:  #1F5CB4;  /*  6.2:1 */
   --focus: #12171C;
@@ -198,9 +206,15 @@
     --caution: light-dark(#8A5A00, #E0B056);
   }
   /* The two ways to be dark: the OS says so and the page has not forced
-     light, or the page's theme button forced dark. */
+     light, or the page's theme button forced dark. The :not() sits in
+     :where() so this rule stays at :root's own specificity: the print
+     block's plain `:root { color-scheme: light }` must beat it by source
+     order, and a bare :not([data-theme="light"]) outranked it — a page
+     saved as PDF from an OS in dark mode came out dark (measured on the
+     places page, 2026-09-16), while the theme button's path, which the
+     audit's B2 proof took, printed light. */
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { color-scheme: dark; }
+    :root:where(:not([data-theme="light"])) { color-scheme: dark; }
   }
   :root[data-theme="dark"] { color-scheme: dark; }
 }
@@ -269,28 +283,65 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    contrast, not the average, that keeps a hatched tile from sorting as
    "lighter than the lowest bin". The old --rule stripes measured 1.29:1 /
    1.20:1 and collapsed to a flat pale square. Outline is left to each use
-   site: a 6px rank strip and a 40px tile want different edges. */
+   site: a 6px rank strip and a 40px tile want different edges.
+
+   The stripes are an SVG mask over a pseudo-element in --ink-3, not a
+   repeating-linear-gradient (places review B1): Chromium's PDF backend
+   writes a repeating gradient as a function-based shading that Ghostscript
+   draws as stripes and mupdf as one smear, so a page saved as PDF showed a
+   hatched state as a pale square — the misreading the mark exists to
+   prevent. An SVG background-image prints, but as a 72-dpi raster in a
+   tiling pattern; a mask is rasterised into a soft mask at the page's
+   resolution and prints crisp in both renderers (measured 2026-09-16), and
+   the SVG carries only geometry, so stripe and ground stay tokens and
+   follow dark mode and print without a second copy. Same pitch as the
+   gradient: 2px stripes on a 6px period, so the tile is 6√2 = 8.4853px
+   wide and its diagonal is one stripe. Positioned at zero specificity so a
+   use site that is already absolutely positioned (the rank strip) keeps
+   its own; isolated so the stripes sit above this element's ground and
+   below its content, whatever stacking context surrounds it. */
 .hg-hatch-incomplete {
-  background: repeating-linear-gradient(45deg,
-    var(--ink-3) 0 2px, var(--surface-sunk) 2px 6px);
+  --hg-hatch-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8.4853' height='8.4853'%3E%3Cpath d='M-1-1L9.4853 9.4853M5.4853-3L11.4853 3M-3 5.4853L3 11.4853' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");
+  isolation: isolate;
+  background: var(--surface-sunk);
+}
+:where(.hg-hatch-incomplete) { position: relative; }
+.hg-hatch-incomplete::after {
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background: var(--ink-3);
+  -webkit-mask: var(--hg-hatch-svg) 0 0 / 8.4853px 8.4853px;
+  mask: var(--hg-hatch-svg) 0 0 / 8.4853px 8.4853px;
+}
+/* Forced colours replace background colours with Canvas, which would erase
+   a masked ground; the stripes take the system text colour instead, so the
+   pattern — the channel that carries the meaning — survives there too. */
+@media (forced-colors: active) {
+  .hg-hatch-incomplete::after { forced-color-adjust: none; background: CanvasText; }
 }
 
 /* The four tile states of the state map and their legend swatches, one
    definition each so the legend entry IS the mark (charts.md § 2). Shaded
-   is a --loss-N background set by the page from the bin index. */
+   is a --loss-N background set by the page from the bin index. The three
+   outlined states take --control-edge (places review N10): a tile is a
+   button now, so the reason --rule-strong had — "a stronger edge on a thing
+   that cannot be pressed would promise a control" — has inverted, and
+   --rule-strong measured 1.91:1 in dark, where the no-cliff tile was the
+   least visible mark on the map. The legend swatches share the class and
+   come along, as they must. */
 .hg-swatch { display: inline-block; width: 18px; height: 12px; flex: none;
              vertical-align: -1px; }
 /* Past the axis: no fill, dashed edge — the measure runs off the sweep. */
 .hg-tile--past, .hg-swatch--past {
   background: var(--surface-sunk); color: var(--ink-3);
-  outline: 1px dashed var(--rule-strong); outline-offset: -1px;
+  outline: 1px dashed var(--control-edge); outline-offset: -1px;
 }
 /* Not computed (B1): the hatch, solid edge — the figure is a floor. The
    postal code sits on a small clear plate (a ::before under the text, above
-   the hatch) so the stripes, now dark enough to read, cannot eat the label. */
+   the hatch's ::after at -2) so the stripes, now dark enough to read,
+   cannot eat the label. */
 .hg-tile--incomplete, .hg-swatch--incomplete {
   color: var(--ink-2);
-  outline: 1px solid var(--rule-strong); outline-offset: -1px;
+  outline: 1px solid var(--control-edge); outline-offset: -1px;
 }
 .hg-tile--incomplete { position: relative; z-index: 0; }
 .hg-tile--incomplete::before {
@@ -302,7 +353,7 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    the best news on the map, and never a step of the ramp. */
 .hg-tile--none, .hg-swatch--none {
   background: none; color: var(--ink-2);
-  outline: 1px solid var(--rule-strong); outline-offset: -1px;
+  outline: 1px solid var(--control-edge); outline-offset: -1px;
 }
 
 /* SVG text floors (S13): a tick is a number sized to its axis; a label is a
@@ -380,9 +431,15 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 .hg-rows__loss { display: block; color: var(--loss-ink); font-weight: var(--w-med); }
 .hg-rows p { margin: 0; max-width: none; }
 /* The row a cliff mark opened (M6): the row is the card. The ground bleeds
-   --s2 sideways only, so it never covers the rules above and below. */
+   --s2 sideways only, so it never covers the rules above and below. The
+   ground alone is 1.07:1 on --surface and 1.08:1 on --plane (1.10 / 1.21
+   dark) — below any threshold — so an open or selected row always pairs it
+   with a 3px ink bar in the same slot the callout's rule uses (places
+   review S3): here the third shadow, showing only where the sunk bleed does
+   not cover it; on a table row, the inset bar on the first cell below. */
 .hg-rows > [aria-current="true"] { background: var(--surface-sunk);
-  box-shadow: var(--s2) 0 0 var(--surface-sunk), calc(-1 * var(--s2)) 0 0 var(--surface-sunk); }
+  box-shadow: var(--s2) 0 0 var(--surface-sunk), calc(-1 * var(--s2)) 0 0 var(--surface-sunk),
+              calc(-1 * var(--s2) - 3px) 0 0 var(--ink); }
 
 /* MarkKey (#5), one declaration (S13): each entry draws the actual mark. */
 .hg-key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
@@ -512,7 +569,12 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 /* A row that is a control (DropLedger, the state table) centres its cells
    on the button, so a wrapped label does not float its neighbours (S9). */
 .hg-table tr:has(> * > .hg-row-btn) > * { vertical-align: middle; }
+/* The selected row: the sunk ground plus a 3px ink bar on its first cell
+   (S3 above). A page's own bar in that slot for another meaning — the
+   places table's grey bar on an incomplete row — must yield to this one, so
+   a page writes its own at lower specificity (:where). */
 .hg-table tr:has(> * > [aria-current="true"]) { background: var(--surface-sunk); }
+.hg-table tr:has(> * > [aria-current="true"]) > :first-child { box-shadow: inset 3px 0 0 var(--ink); }
 
 /* A row button (S2, S9, M6): the four properties `all: unset` was doing,
    and nothing else, so :focus-visible keeps its ring. Fills the cell, is
@@ -575,8 +637,12 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
   .hg-print-only { display: block; }
   .hg-no-print, .hg-scenario__actions, .hg-button, .hg-skip { display: none !important; }
   .hg-hatch-incomplete, .hg-tile--past, .hg-tile--incomplete, .hg-tile--none,
-  .hg-swatch, .hg-callout, .hg-badge, .hg-tag, .hg-rows > [aria-current="true"] {
+  .hg-swatch, .hg-callout, .hg-badge, .hg-tag, .hg-rows > [aria-current="true"],
+  .hg-table tr:has(> * > [aria-current="true"]) > :first-child {
     print-color-adjust: exact; -webkit-print-color-adjust: exact;
   }
+  /* Paper has no finger: a row keeps its rhythm, not its 44px floor, so a
+     51-row table is two pages, not three (places review N5). */
+  .hg-row-btn { min-height: 0; }
   a[href]::after { content: ""; }
 }

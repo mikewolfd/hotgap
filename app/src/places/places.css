@@ -54,13 +54,20 @@ p { max-width: var(--measure-wide); }
    (measured: no tile hatched). The hg-tile--* states and the inline bin
    fill must win. */
 :where(.tile) { background: none; color: var(--ink); }
-.tile.sel { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 2; }
+/* Selection and focus are two marks in two places (S4): the selected tile
+   takes a 2px ring INSIDE its square in the label ink already chosen for
+   contrast on its fill (--surface on bins 3–5, --ink on 1–2, --ink-2 on the
+   three special tiles); the system focus ring stays outside. */
+.tile[aria-current="true"] { box-shadow: inset 0 0 0 2px currentColor; }
 .tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 0; z-index: 3; }
 
 .scale { display: flex; align-items: stretch; gap: 2px; margin: var(--s4) 0 var(--s2); }
 .scale .sw { flex: 1; height: 12px; }
+/* Six bounds between five steps; or, for a count, one label centred under
+   each class that exists (S5; --n is the number of classes). */
 .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
                 font-size: var(--t-micro); font-variant-numeric: tabular-nums; }
+.scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
 /* The legend for the three states outside the ramp: each entry is the
    tile's own class on a swatch, so the legend cannot drift from the map. */
 .legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: var(--s3) 0 0;
@@ -69,10 +76,15 @@ p { max-width: var(--measure-wide); }
 
 /* The ranked reading. A dot on a shared, non-zero axis — never a bar, whose
    length would have to be read from zero and would make a $115k–$134k
-   spread look identical. */
+   spread look identical. Each row is a control (S2): the 44px control beside
+   the map that the tile, sized to its square, cannot be. Above 62rem the
+   list sits beside the map at its 26px density — a pointer needs no more,
+   and WCAG 2.5.8's floor is 24px — and the table keeps the 44px rows. */
 .rank { list-style: none; margin: 0; padding: 0; }
-.rank li { display: grid; grid-template-columns: 2.1rem 1fr 5.4rem; gap: var(--s3);
-           align-items: center; min-height: 26px; border-bottom: 1px solid var(--rule); }
+.rank li { border-bottom: 1px solid var(--rule); }
+.rank .hg-row-btn { display: grid; grid-template-columns: 2.1rem 1fr 5.4rem; gap: var(--s3);
+                    align-items: center; }
+@media (min-width: 62rem) { .rank .hg-row-btn { min-height: 26px; } }
 .rank .st { font-weight: var(--w-semi); }
 .rank .track { position: relative; height: 14px; }
 .rank .track::before { content: ""; position: absolute; left: 0; right: 0; top: 6px;
@@ -83,15 +95,18 @@ p { max-width: var(--measure-wide); }
               border: 2px dashed var(--loss-3); border-radius: 50%; }
 .rank .incomplete-mark { position: absolute; left: 0; right: 0; top: 4px; height: 6px; }
 .rank .v { text-align: right; font-variant-numeric: tabular-nums; }
-.rank li.sel { background: var(--surface-sunk); }
+/* The selected row: the sunk ground plus the 3px ink bar, the tile's mark in
+   the row's slot (S3); the tint alone measured 1.08:1. */
+.rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
+/* The axis bounds sit above the list, where a reader meets them first (N3). */
 .rank-axis { display: flex; justify-content: space-between; color: var(--ink-3);
-             font-size: var(--t-micro); padding: var(--s1) 0 0 2.6rem;
+             font-size: var(--t-micro); padding: 0 0 var(--s1) 2.6rem;
              font-variant-numeric: tabular-nums; }
 /* The two lifted-out blocks (B4, B1): never the tail of the order. */
 .rank-group { margin: var(--s5) 0 0; padding-top: var(--s3);
               border-top: 2px solid var(--rule-strong); }
 .rank-group h4 { margin: 0 0 var(--s2); }
-.rank-group .rank li { grid-template-columns: 2.1rem 1fr 8rem; }
+.rank-group .rank .hg-row-btn { grid-template-columns: 2.1rem 1fr 8rem; }
 .rank-group p { color: var(--ink-2); font-size: var(--t-micro); margin: var(--s2) 0 0; }
 
 /* CorrectionsApplied (B3) and the state's SourceNote, under the map and
@@ -99,19 +114,42 @@ p { max-width: var(--measure-wide); }
    column; below 520px the program sits above its note, so a three-word
    program name does not squeeze the note into a 30-character column. */
 .state { margin-top: var(--s6); }
+/* The heading takes focus when a table row selects its state (S1); the
+   margin keeps it clear of the viewport's top edge, and a heading needs no ring. */
+.state h3 { scroll-margin-top: var(--s7); }
+.state h3:focus { outline: none; }
 .state .hg-rows { --col: 11rem; margin-top: var(--s3); }
 .state .hg-rows > li > div > .hg-tag { margin-bottom: var(--s1); }
 .state .sub { color: var(--ink-2); margin: 0; }
 .state .hg-source { margin-top: var(--s5); }
 @media (max-width: 519.98px) { .state .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); } }
 
+/* The order control scopes the table alone, so it sits with the table (S7)
+   and stays the width of its words. */
+.table-order { padding-top: 0; border-bottom: 0; }
+.table-order > div { flex: 0 1 22rem; }
+
 .hg-scroll-x table { min-width: 48rem; }
+/* Below 62rem the table scrolls sideways in its own box; from 62rem its
+   48rem minimum fits the page, the scroller opens, and the header sticks to
+   the top of the viewport so rows 20–51 keep their names (S8). A collapsed
+   border does not travel with a sticky cell, so the header's rule is drawn
+   as a shadow. */
+@media (min-width: 62rem) {
+  .hg-scroll-x { overflow: visible; }
+  .hg-table thead th { position: sticky; top: 0; background: var(--plane); z-index: 1;
+                       box-shadow: inset 0 -1px 0 var(--rule-strong); }
+}
 /* The row button sets the row's height, and its focus ring sits 4px outside
    its box: the first column keeps that much clear of the scroller's clip edge. */
 .hg-table tbody th { padding: 0 var(--s3) 0 var(--s1); }
 .hg-table thead th:first-child { padding-left: var(--s1); }
-.hg-table tr.incomplete th { box-shadow: inset 4px 0 0 0 var(--rule-strong); }
-.flag { color: var(--ink-2); }
+/* An incomplete row's grey bar, in the slot the selected row's ink bar takes;
+   :where keeps it under the system's selection rule (tokens.css). */
+.hg-table :where(tr.incomplete) th { box-shadow: inset 4px 0 0 0 var(--rule-strong); }
+/* One line, however narrow the viewport: the table already scrolls, and a
+   wrapped reason made the two incomplete rows 90px tall at 390 (N9). */
+.flag { color: var(--ink-2); white-space: nowrap; }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
 
 .method ul { margin: 0 0 var(--s4); padding-left: var(--s5); max-width: var(--measure-wide); }
@@ -122,11 +160,19 @@ p { max-width: var(--measure-wide); }
    this page only keeps its inks on the marks it draws itself, opens the
    scroller so the table is not clipped, and keeps the two columns. */
 @media print {
-  .tile, .scale .sw, .rank .dot, .rank .past, .rank li.sel, .hg-table tr.incomplete th {
+  .tile, .scale .sw, .rank .dot, .rank .past, .rank .hg-row-btn[aria-current="true"], .hg-table tr.incomplete th {
     print-color-adjust: exact; -webkit-print-color-adjust: exact;
   }
   .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); }
   .hg-scroll-x { overflow: visible; }
   .hg-scroll-x table { min-width: 0; font-size: var(--t-micro); }
-  .figure, .state, .rank-group, .hg-panel { break-inside: avoid; }
+  .hg-table thead th { position: static; }
+  /* On paper the flag wraps: an unbreakable reason pushed the table past the
+     page's width, and Chromium shrank the whole PDF to fit it. */
+  .flag { white-space: normal; }
+  /* The method panel is taller than a page, so avoiding a break inside it
+     only moved it to a fresh page behind a stranded heading (measured: a
+     page holding one paragraph). Headings stay with what follows instead. */
+  .figure, .state, .rank-group { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
 }

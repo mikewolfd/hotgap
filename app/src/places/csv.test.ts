@@ -33,7 +33,7 @@ describe("csvFor on the committed sweep", () => {
     for (const r of body) expect(r.length).toBe(head.length);
   });
   it("follows the table's order when the table is sorted by the measure", () => {
-    const sorted = tableRows(rows, group(rows), "measure");
+    const sorted = tableRows(rows, group(rows, measure), "measure");
     const [, ...sortedBody] = parseCsv(csvFor(summary, arch, sorted).replace(/^﻿/, ""));
     expect(sortedBody.map((r) => r[col("state")])).toEqual(sorted.map((r) => r.st));
   });
@@ -67,7 +67,8 @@ describe("csvFor on the committed sweep", () => {
       expect(r[col("figures")]).toBe(rows[i].incomplete.length ? "incomplete" : "complete");
     }
   });
-  it("names the file after the household and the sweep date", () => {
-    expect(csvName(arch, "2026-09-16T19:37:52.231Z")).toBe(`hotgap-${arch.id}-2026-09-16.csv`);
+  it("names the file after the household as the reader knows it, and the sweep date", () => {
+    expect(csvName({ id: "single-2", married: false, childAges: [3, 7] }, "2026-09-16T19:37:52.231Z")).toBe("hotgap-1-adult-2-children-3-and-7-2026-09-16.csv");
+    expect(csvName({ id: "married-dual-1", married: true, childAges: [4] }, "2026-09-16T19:37:52.231Z")).toBe("hotgap-2-adults-both-working-1-child-4-2026-09-16.csv");
   });
 });

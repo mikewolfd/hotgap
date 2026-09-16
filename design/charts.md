@@ -224,6 +224,19 @@ postal code is `--ink` on bins 1–2 and `--surface` on bins 3–5**: measured,
 **Bins are recomputed per measure and their bounds are always printed.** A shade
 means nothing across two measures, and the caption says so.
 
+**Fewer than five, for a count.** "Five, never more" is silent on fewer, and a
+count measure binned five ways over a range of 0 to 1 printed the scale
+*0 0 0 1 1 1* (places review S5). So a measure in whole numbers takes
+**classes of whole numbers**: the class width is the smallest whole number
+that fits the observed range in five classes or fewer (`width = max(1,
+ceil((hi − lo + 1) / 5))`), the classes that exist are the swatches — two
+for 0–1, four of four for 4–19, one when every state agrees — each labelled
+with what it holds ("0", "1", "4–7"), and they are spread over the ramp so
+the two ends of any scale are the ramp's two ends. The caption says "*n*
+classes from *lo* to *hi*". A dollar measure keeps its five equal-width
+steps and its six printed bounds. `app/src/places/model.ts` `bins` is the
+rule.
+
 **Four tile states, and none may be mistaken for another.** This is a required
 part of the grammar, not an edge case:
 
@@ -276,6 +289,11 @@ and a reader concludes the opposite of the truth. A gap in a sequential ramp
 always reads as a low value; the hatch is outside the ramp entirely, and its
 `--ink-3` stripes measure 5.11:1 in light and 5.97:1 in dark on the sunk ground,
 so the *pattern* — the channel that survives greyscale — is what a reader sees.
+The stripes are an SVG mask over a pseudo-element, never a CSS gradient: the
+PDF path flattened a repeating gradient to one shading, and a page saved as
+PDF showed a hatched state as a pale square (places review B1). The system's
+proof reads the PDF's own drawing ops for the hatched tile, because a raster
+print check cannot see that path.
 
 Four rules follow, and all four are required:
 
@@ -304,19 +322,40 @@ Two more properties this has to have:
   household is not left guessing.
 
 **Readable without colour.** Every tile carries its postal code; a 2px surface
-gap separates tiles; the selected state gets a 2px ink outline, not a hue change.
+gap separates tiles; the selected state gets a 2px ring, not a hue change.
 
-**Not interactive on a phone.** At 390px a tile is 26px, and a 26px button breaks
-the 44px rule. The map is a figure (`role="img"` — it has no keys); the ranked
-list and the table below it are the controls, with 44px rows. On a pointer
-device the tiles carry a hover title, which gates nothing.
+**The tiles are buttons.** The built page (`app/places.html`) made each tile
+a `<button>` under `role="group"` with a roving tabindex — one tab stop,
+arrow keys by geography, Enter to open the state's corrections under the
+map — because a reporter on a pointer device reaches for the tile, and a
+screen reader wants the state's name and value where the mark is. The
+sketch's `role="img"` map with no keys is superseded. A tile is sized to its
+square, 28px at 390 and 40px at 1280: above WCAG 2.5.8's 24px floor, below
+the 44px target. The decision carries two obligations (places review S2,
+S4), and both are the page's to keep:
+
+1. **A 44px control beside the map.** The ranked list is that control: each
+   row is a `.hg-row-btn` at `--touch` below 62rem and at the list's 26px
+   density beside the map above it, one tab stop with the arrow keys moving
+   by row, and it opens the same state. The table's rows are the third
+   group, 44px everywhere on screen.
+2. **A selection mark distinct from the focus ring.** The selected tile
+   takes a 2px ring *inside* its square in its label's ink (`box-shadow:
+   inset 0 0 0 2px currentColor`); the system focus ring stays outside. Two
+   positions, two inks, so a focused tile and the selected tile never show
+   the same square.
+
+On a pointer device the tiles also carry a hover title, which gates nothing.
 
 **The figure box** keeps `--s5` padding on a desktop and drops to `--s3` below
 520px, which turns 24px tiles into 27px at 358px (N7). It is not a panel.
 
 **The ranked strip beside it.** A map answers *where*; a ranking answers *how
 much*. Both are always on screen, one filter row scopes both, and the selected
-state highlights in both. Colour follows the state, never its rank position.
+state highlights in both — on the row, the sunk ground with a 3px ink bar,
+never the ground alone (`inventory.md`, the class map's fourth rule). The
+axis bounds print above the list, where a reader meets them first. Colour
+follows the state, never its rank position.
 
 **Screenshot survival.** Everything a reader out of context needs lives inside
 the figure box: title, household shape, what the measure means, the bin bounds,
