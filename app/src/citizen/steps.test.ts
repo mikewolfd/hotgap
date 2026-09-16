@@ -48,6 +48,13 @@ describe("stepRows", () => {
     const s = sceneOf(ev, year);
     expect(stepSentence(s, stepRows(s).find((r) => r.at === 39_000)!)).toBe("Food help for moms and babies ends. It is called WIC. Then help paying for health insurance starts. It is called the Premium tax credit.");
   });
+  test("'it does not end that day' follows the deferred cliff's own programs, not one that merely ends at the same pay", () => {
+    const ev = makeEvaluation();
+    ev.escape.programEnds.wic = 71_000;   // WIC ends at $72k too, without a cliff
+    const s = sceneOf(ev, year);
+    expect(stepSentence(s, stepRows(s).find((r) => r.at === 72_000)!)).toBe(
+      "Your kids' free state health plan would end. It is called Medicaid. It does not end that day. Food help for moms and babies would end. It is called WIC.");
+  });
   test("the tense turns to 'would' above current pay", () => {
     const s = sceneOf(makeEvaluation({}, 80_000), year);
     expect(rowsOf(s).map((r) => r.sentence)).toEqual(expect.arrayContaining([expect.stringMatching(/^Child care help ends\./)]));

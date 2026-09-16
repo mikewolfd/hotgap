@@ -36,7 +36,8 @@ export function yRange(s: Scene, narrow: boolean): { y0: number; y1: number; ste
   const slice = s.lifted.slice(i0, i1 + 1);
   const maxDrop = Math.max(0, ...s.inWindow.map((c) => c.drop));
   const need = 2.5 * maxDrop;
-  const lo = Math.min(...slice), hi = Math.max(...slice);
+  // The real curve (the ghost, and the diamond at the household's own money) is never above the lifted one and must stay in the picture.
+  const lo = Math.min(...slice, ...s.net.slice(i0, i1 + 1), s.currentNet), hi = Math.max(...slice, s.currentNet);
   const padY = (hi - lo) * 0.14;
   let y0 = lo - padY, y1 = hi + padY;
   if (y1 - y0 < need) { const ext = (need - (y1 - y0)) / 2; y0 -= ext; y1 += ext; }

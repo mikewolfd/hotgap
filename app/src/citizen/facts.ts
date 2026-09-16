@@ -44,9 +44,12 @@ export function assumedRows(s: Scene): Fact[] {
   const rows: (Fact | null)[] = [];
 
   rows.push({ label: L.rent, text: A.monthlyRent === null ? t("assumed.rentNone")
-    : t(A.monthlyRent === d.monthlyRent ? "assumed.rentTypical" : "assumed.rent", { amount: m.money(A.monthlyRent), state }) });
+    : A.monthlyRent === d.monthlyRent ? t("assumed.rentTypical", { amount: m.money(A.monthlyRent), state })
+    : t("assumed.rent", { amount: m.money(A.monthlyRent) }) });
+  const kids = kidsWord(A.childAges.length);
   rows.push({ label: L.childcare, text: !A.monthlyChildcare ? t("assumed.childcareNone")
-    : t(A.monthlyChildcare === typicalCare ? "assumed.childcareTypical" : "assumed.childcare", { amount: m.money(A.monthlyChildcare), kids: kidsWord(A.childAges.length), state }) });
+    : A.monthlyChildcare === typicalCare ? t("assumed.childcareTypical", { amount: m.money(A.monthlyChildcare), kids, state })
+    : t("assumed.childcare", { amount: m.money(A.monthlyChildcare), kids }) });
 
   const on = TAKE_UP.filter(([k]) => A[k]).map(([, id]) => phraseAndName(id));
   const off = TAKE_UP.filter(([k]) => !A[k]).map(([, id]) => phraseAndName(id));

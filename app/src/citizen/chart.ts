@@ -194,7 +194,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     }
 
     /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
-    const cx = px(s.current), cy = py(s.lifted[s.idx(s.current)]);
+    /* The diamond sits at the household's own money today (analysis.currentNet is the real curve's), which is off the lifted line only past a deferred step, where the ghost shows why. */
+    const cx = px(s.current), cy = py(s.currentNet);
     if (s.zone && (s.stuck || exitInWindow)) {
       const bx = s.stuck ? W - pad.r : px(s.exit!), by = yPeak - 20;
       picture.append(svg("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (s.stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
@@ -253,8 +254,10 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     cursorNodes = [];
     if (!L) return;
     const { px, py, pad, H } = L;
-    const e = s.earningsAt(cursor), v = s.lifted[cursor];
-    if (e !== s.current) {
+    /* At the household's own point the diamond is the cursor: the readout gives the person's pay and money, not the nearest sampled point's. */
+    const atYou = cursor === s.idx(s.current);
+    const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.lifted[cursor];
+    if (!atYou) {
       const line = svg("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
       const dot = svg("circle", { cx: px(e), cy: py(v), r: 4.5, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 });
       picture.append(line, dot);

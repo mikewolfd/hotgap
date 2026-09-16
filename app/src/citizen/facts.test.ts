@@ -46,6 +46,12 @@ describe("what we assumed", () => {
       "Hours: Not given. We assume full time.",
     ]);
   });
+  test("a rent and a child-care bill the person gave are said as theirs", () => {
+    const ev = makeEvaluation({ answers: { ...makeEvaluation().answers, monthlyRent: 1200, monthlyChildcare: 900 } });
+    const rows = assumedRows(sceneOf(ev, year)).map((r) => r.text);
+    expect(rows[0]).toBe("$1,200 a month. You gave this.");
+    expect(rows[1]).toBe("$900 a month for two kids. You gave this.");
+  });
   test("the corrections that shaped this household's numbers become rows, and unclaimed help is priced", () => {
     const ev = makeEvaluation({
       coverageGap: { fromEarnings: 4000, toEarnings: 21_000 },

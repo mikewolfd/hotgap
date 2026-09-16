@@ -92,6 +92,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
     },
     loading(count) {
       alert.hidden = true;
+      status.classList.remove("hg-visually-hidden");
       status.textContent = t("loading", { count });
     },
     render(ev, flags, { announce = false } = {}) {
@@ -102,6 +103,9 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
 
       /* AnswerSentence (#1): each figure carries the key of the mark it names. */
       answer.replaceChildren(...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
+      // The new sentence is read out for a change made without moving focus;
+      // it is already on the page in display size, so the region is not shown twice.
+      status.classList.toggle("hg-visually-hidden", announce);
       status.textContent = announce ? verdictText(s) : "";
       const againLine = againText(s);
       again.hidden = againLine === null;
