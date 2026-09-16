@@ -27,7 +27,7 @@
 // Sources:
 //   Census Vintage 2024 county population estimates  -> countyFips
 //   HUD FY2026 Fair Market Rents, revised schedule   -> monthlyRent
-//   DOL Women's Bureau NDCP (MCPreschool)            -> monthlyChildcarePreschool
+//   DOL Women's Bureau NDCP (MCInfant/MCToddler/MCPreschool/MCSA) -> monthlyChildcare{Infant,Toddler,Preschool,SchoolAge}
 //   BLS ECI wages & salaries, private industry       -> NDCP study year -> 2026 dollars
 //
 // Usage: node scripts/build-state-defaults.mjs [--out=path]
@@ -263,33 +263,44 @@ function countyRent(rows, fips) {
   return Math.round(rows.reduce((s, r) => s + r.fmr2 * r.pop, 0) / pop);
 }
 
+// The four center-based age bands the NDCP publishes, as HotGap names them.
+// The NDCP's own bands (2024 technical report, p. 6): infant 0–11 months (or
+// 0–23 where a state has no "pretoddler"), toddler 24–35, pre-kindergarten
+// 36–60 and not yet in school, school age 61 months and up — the school-age
+// price being the full-time weekly rate for a child who is in school, i.e.
+// the wraparound care a working parent buys.
+const AGE_BANDS = { infant: "MCInfant", toddler: "MCToddler", preschool: "MCPreschool", schoolAge: "MCSA" };
+
 /**
- * county FIPS -> { year, weekly }: MCPreschool at that county's most recent
- * study year, plus `lastYear`, the newest study year anywhere in the file. A
- * county's latest year equals `lastYear` exactly when it has a price in that
- * year, which is what makes the last cross-section readable off this one map.
+ * For each age band, county FIPS -> { year, weekly } at that county's most
+ * recent study year with a price for that band, plus `firstYear`/`lastYear`,
+ * the oldest and newest study years anywhere in the file. A county's latest
+ * year equals `lastYear` exactly when it has a price in that year, which is
+ * what makes the last cross-section readable off these maps.
  */
-async function preschoolPrices(xlsxPath) {
+async function childcarePrices(xlsxPath) {
   const strings = sharedStrings(xlsxPath);
-  const latest = new Map();
+  const latest = Object.fromEntries(Object.keys(AGE_BANDS).map((band) => [band, new Map()]));
   let firstYear = Infinity;
   let lastYear = 0;
   let col = {};
   await streamSheet(xlsxPath, "xl/worksheets/sheet1.xml", strings, (header) => {
-    col = columnsFor(header, ["County_FIPS_Code", "StudyYear", "MCPreschool"]);
+    col = columnsFor(header, ["County_FIPS_Code", "StudyYear", ...Object.values(AGE_BANDS)]);
     return new Set(Object.values(col));
   }, (c) => {
-    const weekly = Number(c[col.MCPreschool]);
-    if (!(weekly > 0)) return; // blank: that county published no center-based preschool price that year
     const fips = String(c[col.County_FIPS_Code]).padStart(5, "0");
     if (!/^\d{5}$/.test(fips)) return;
     const year = Number(c[col.StudyYear]);
-    if (year > lastYear) lastYear = year;
-    if (year < firstYear) firstYear = year;
-    const prior = latest.get(fips);
-    if (!prior || year > prior.year) latest.set(fips, { year, weekly });
+    for (const [band, column] of Object.entries(AGE_BANDS)) {
+      const weekly = Number(c[col[column]]);
+      if (!(weekly > 0)) continue; // blank: that county published no center-based price for this band that year
+      if (year > lastYear) lastYear = year;
+      if (year < firstYear) firstYear = year;
+      const prior = latest[band].get(fips);
+      if (!prior || year > prior.year) latest[band].set(fips, { year, weekly });
+    }
   });
-  if (!latest.size) throw new Error("the NDCP workbook yielded no MCPreschool prices at all");
+  if (!latest.preschool.size) throw new Error("the NDCP workbook yielded no MCPreschool prices at all");
   return { latest, firstYear, lastYear };
 }
 
@@ -464,48 +475,55 @@ const [popCsv, fmrXlsx, ndcpXlsx] = [
 
 const counties = mostPopulousCounties(popCsv);
 const rentRows = fairMarketRents(fmrXlsx);
-const { latest: preschool, firstYear, lastYear } = await preschoolPrices(ndcpXlsx);
+const { latest: bands, firstYear, lastYear } = await childcarePrices(ndcpXlsx);
+const preschool = bands.preschool;
 
-// Every county's own most recent price, in 2026 dollars, grouped by state —
-// the pool both fallbacks draw on.
+// Every county's own most recent price for each band, in 2026 dollars,
+// grouped by state — the pool both fallbacks draw on.
 const byState = {};
-const national = [];
-for (const [fips, { year, weekly }] of preschool) {
-  const state = USPS_BY_FIPS[fips.slice(0, 2)];
-  const price = monthly2026(weekly, year, factor);
-  if (state) (byState[state] ??= []).push({ fips, year, price });
-  if (year === lastYear) national.push(price);
+const national = {};
+for (const [band, latest] of Object.entries(bands)) {
+  byState[band] = {};
+  national[band] = [];
+  for (const [fips, { year, weekly }] of latest) {
+    const state = USPS_BY_FIPS[fips.slice(0, 2)];
+    const price = monthly2026(weekly, year, factor);
+    if (state) (byState[band][state] ??= []).push({ fips, year, price });
+    if (year === lastYear) national[band].push(price);
+  }
 }
-const nationalMedian = median(national);
+const nationalMedian = Object.fromEntries(Object.entries(national).map(([band, prices]) => [band, median(prices)]));
+const BAND_KEY = { infant: "monthlyChildcareInfant", toddler: "monthlyChildcareToddler", preschool: "monthlyChildcarePreschool", schoolAge: "monthlyChildcareSchoolAge" };
 
 const states = {};
 const basis = {};
 const yearsUsed = new Set();
 for (const state of Object.keys(STATES).sort()) {
   const { fips } = counties[state];
-
-  // The county's own price first: it is the household the row describes.
-  // Then the state's median county, then the national median — each a wider
-  // circle around the same household, never a different one if we can help it.
-  const own = preschool.get(fips);
-  const middle = medianCounty(byState[state] ?? []);
-  let rule, years, price;
-  if (own) [rule, years, price] = ["county", [own.year], monthly2026(own.weekly, own.year, factor)];
-  else if (middle) [rule, years, price] = ["stateMedianCounty", middle.years, middle.price];
-  else [rule, years, price] = ["nationalMedian", [lastYear], nationalMedian];
-  for (const y of years) yearsUsed.add(y);
-
-  states[state] = {
-    countyFips: fips,
-    monthlyRent: countyRent(rentRows.get(fips), fips),
-    monthlyChildcarePreschool: Math.round(price),
-  };
-  basis[state] = `${rule} ${years.join("/")}`;
+  states[state] = { countyFips: fips, monthlyRent: countyRent(rentRows.get(fips), fips) };
+  basis[state] = {};
+  for (const band of Object.keys(AGE_BANDS)) {
+    // The county's own price first: it is the household the row describes.
+    // Then the state's median county, then the national median — each a wider
+    // circle around the same household, never a different one if we can help it.
+    const own = bands[band].get(fips);
+    const middle = medianCounty(byState[band][state] ?? []);
+    let rule, years, price;
+    if (own) [rule, years, price] = ["county", [own.year], monthly2026(own.weekly, own.year, factor)];
+    else if (middle) [rule, years, price] = ["stateMedianCounty", middle.years, middle.price];
+    else [rule, years, price] = ["nationalMedian", [lastYear], nationalMedian[band]];
+    for (const y of years) yearsUsed.add(y);
+    states[state][BAND_KEY[band]] = Math.round(price);
+    basis[state][band] = `${rule} ${years.join("/")}`;
+  }
 }
 
+// Rule counts and the state lists in the notes describe the preschool band,
+// the one every earlier build carried; the other bands' rules are in byState.
 const ruleCounts = {};
-const statesOn = (rule) => Object.keys(basis).filter((s) => basis[s].startsWith(`${rule} `));
-for (const b of Object.values(basis)) ruleCounts[b.split(" ")[0]] = (ruleCounts[b.split(" ")[0]] ?? 0) + 1;
+const statesOn = (rule) => Object.keys(basis).filter((s) => basis[s].preschool.startsWith(`${rule} `));
+for (const b of Object.values(basis)) ruleCounts[b.preschool.split(" ")[0]] = (ruleCounts[b.preschool.split(" ")[0]] ?? 0) + 1;
+const bandCounts = Object.fromEntries(Object.keys(AGE_BANDS).map((band) => [band, Object.values(basis).reduce((acc, b) => ({ ...acc, [b[band].split(" ")[0]]: (acc[b[band].split(" ")[0]] ?? 0) + 1 }), {})]));
 const factors = Object.fromEntries([...yearsUsed].sort().map((y) => [String(y), Number(factor(y).toFixed(6))]));
 
 // New England is the only place a county is not one FMR row. Describe what the
@@ -539,19 +557,19 @@ const body = {
         `. ${flat.map((c) => `${c.state} ${c.countyFips}`).join(", ")} are single-valued across their town rows. Every other state's county is one row.`,
       access: "huduser.gov answers a plain request with an empty HTTP 202 bot challenge; scripts/build-state-defaults.mjs fetches this file through a proxy.",
     },
-    monthlyChildcarePreschool: {
-      what: "Price of center-based care for a preschooler (ages 3-5) in that same county, in whole 2026 dollars per month.",
-      publisher: "U.S. Department of Labor, Women's Bureau, National Database of Childcare Prices (NDCP), variable MCPreschool (median weekly full-time price).",
+    monthlyChildcare: {
+      what: "Price of center-based care in that same county, in whole 2026 dollars per month, for each of the NDCP's age bands: monthlyChildcareInfant (0-23 months), monthlyChildcareToddler (24-35), monthlyChildcarePreschool (36-60, not yet in school) and monthlyChildcareSchoolAge (in school; the full-time weekly rate for a school-age child, i.e. wraparound care). NDCP Technical Report, September 2024, p. 6.",
+      publisher: "U.S. Department of Labor, Women's Bureau, National Database of Childcare Prices (NDCP), variables MCInfant, MCToddler, MCPreschool, MCSA (median weekly full-time price).",
       url: SOURCE.ndcp,
       index: SOURCE.ndcpIndex,
       vintage: `NDCP study years ${firstYear}-${lastYear}; each state's county contributes its own most recent year with a price. See childcareBasis for which year that is, state by state.`,
       arithmetic: "weekly price x 52 / 12 = monthly, then x the BLS Employment Cost Index factor from that study year to CY2026 (see eci), rounded to the dollar.",
       fallback:
         "The county's own price where it has one. Where it does not, the median across the state's counties (each at its own most recent year); where the state has no center-based price in any year, the median of the " +
-        `${lastYear} cross-section (${national.length.toLocaleString("en-US")} counties, ${usd(nationalMedian)}/month). ` +
+        `${lastYear} cross-section (preschool: ${national.preschool.length.toLocaleString("en-US")} counties, ${usd(nationalMedian.preschool)}/month). ` +
         (statesOn("stateMedianCounty").length
           ? `On the state-median rule: ${statesOn("stateMedianCounty").join(", ")}. ` +
-            (basis.CT?.startsWith("stateMedianCounty") && preschool.has("09003")
+            (basis.CT?.preschool.startsWith("stateMedianCounty") && preschool.has("09003")
               ? `The NDCP is built on the eight pre-2022 Connecticut counties, so the ${counties.CT.name} has no row of its own; Hartford County (09003), which that region largely replaces, ` +
                 `is ${usd(monthly2026(preschool.get("09003").weekly, preschool.get("09003").year, factor))} on the same arithmetic against the ${usd(states.CT.monthlyChildcarePreschool)} the state median gives. `
               : "")
@@ -567,10 +585,11 @@ const body = {
   eci: { ...eciMeta, factors },
   childcareBasis: {
     note:
-      "Which rule produced each state's monthlyChildcarePreschool and the NDCP study year behind it. " +
+      "Which rule produced each state's childcare price, band by band, and the NDCP study year behind it. " +
       "'county' is the most populous county's own MCPreschool — the household the row describes. " +
-      "'stateMedianCounty' and 'nationalMedian' are the fallbacks, in that order; see sources.monthlyChildcarePreschool.fallback.",
+      "'stateMedianCounty' and 'nationalMedian' are the fallbacks, in that order; see sources.monthlyChildcare.fallback.",
     counts: ruleCounts,
+    countsByBand: bandCounts,
     byState: basis,
   },
   states,
@@ -586,7 +605,7 @@ writeFileSync(outPath, JSON.stringify({ read: unchanged ? priorStamp : new Date(
 const changed = Object.keys(states).filter((s) => JSON.stringify(priorBody.states?.[s]) !== JSON.stringify(states[s]));
 for (const s of changed) {
   const was = priorBody.states?.[s] ?? {};
-  process.stderr.write(`  ${s}  ${["countyFips", "monthlyRent", "monthlyChildcarePreschool"].filter((k) => was[k] !== states[s][k]).map((k) => `${k} ${was[k] ?? "-"} -> ${states[s][k]}`).join(", ")}\n`);
+  process.stderr.write(`  ${s}  ${["countyFips", "monthlyRent", ...Object.values(BAND_KEY)].filter((k) => was[k] !== states[s][k]).map((k) => `${k} ${was[k] ?? "-"} -> ${states[s][k]}`).join(", ")}\n`);
 }
 console.log(
   `wrote ${outPath.pathname} — ${Object.keys(states).length} states, ${changed.length} rows changed, ` +

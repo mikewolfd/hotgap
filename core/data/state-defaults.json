@@ -1,5 +1,5 @@
 {
- "read": "2026-09-15",
+ "read": "2026-09-16",
  "sources": {
   "countyFips": {
    "what": "Most populous county (or county equivalent) in each state; DC is the District itself.",
@@ -18,21 +18,21 @@
    "note": "In the six New England states HUD publishes FMRs by town, not by county, and a county can span two or three FMR areas. Those counties take the population-weighted mean of their town rows using HUD's own pop2023 column, rounded to the dollar: MA 25017 ($2,351/$2,941 across 54 town rows -> 2825), ME 23005 ($1,833/$2,130 across 28 town rows -> 2082), NH 33011 ($1,698/$2,037/$2,127 across 31 town rows -> 2058). CT 09110, RI 44007, VT 50007 are single-valued across their town rows. Every other state's county is one row.",
    "access": "huduser.gov answers a plain request with an empty HTTP 202 bot challenge; scripts/build-state-defaults.mjs fetches this file through a proxy."
   },
-  "monthlyChildcarePreschool": {
-   "what": "Price of center-based care for a preschooler (ages 3-5) in that same county, in whole 2026 dollars per month.",
-   "publisher": "U.S. Department of Labor, Women's Bureau, National Database of Childcare Prices (NDCP), variable MCPreschool (median weekly full-time price).",
+  "monthlyChildcare": {
+   "what": "Price of center-based care in that same county, in whole 2026 dollars per month, for each of the NDCP's age bands: monthlyChildcareInfant (0-23 months), monthlyChildcareToddler (24-35), monthlyChildcarePreschool (36-60, not yet in school) and monthlyChildcareSchoolAge (in school; the full-time weekly rate for a school-age child, i.e. wraparound care). NDCP Technical Report, September 2024, p. 6.",
+   "publisher": "U.S. Department of Labor, Women's Bureau, National Database of Childcare Prices (NDCP), variables MCInfant, MCToddler, MCPreschool, MCSA (median weekly full-time price).",
    "url": "https://www.dol.gov/sites/dolgov/files/WB/media/nationaldatabaseofchildcareprices.xlsx",
    "index": "https://www.dol.gov/agencies/wb/topics/childcare/price-by-age-care-setting",
    "vintage": "NDCP study years 2008-2018; each state's county contributes its own most recent year with a price. See childcareBasis for which year that is, state by state.",
    "arithmetic": "weekly price x 52 / 12 = monthly, then x the BLS Employment Cost Index factor from that study year to CY2026 (see eci), rounded to the dollar.",
-   "fallback": "The county's own price where it has one. Where it does not, the median across the state's counties (each at its own most recent year); where the state has no center-based price in any year, the median of the 2018 cross-section (2,360 counties, $730/month). On the state-median rule: CT. The NDCP is built on the eight pre-2022 Connecticut counties, so the Capitol Planning Region has no row of its own; Hartford County (09003), which that region largely replaces, is $1,425 on the same arithmetic against the $1,416 the state median gives. On the national-median rule, because the NDCP publishes no center-based price for them in any year: IN, NM.",
+   "fallback": "The county's own price where it has one. Where it does not, the median across the state's counties (each at its own most recent year); where the state has no center-based price in any year, the median of the 2018 cross-section (preschool: 2,360 counties, $730/month). On the state-median rule: CT. The NDCP is built on the eight pre-2022 Connecticut counties, so the Capitol Planning Region has no row of its own; Hartford County (09003), which that region largely replaces, is $1,425 on the same arithmetic against the $1,416 the state median gives. On the national-median rule, because the NDCP publishes no center-based price for them in any year: IN, NM.",
    "note": "DOL's derived 'Childcare Prices by Age of Children and Care Setting' table (Data-Table-2023.xlsx) was NOT used: for the states the NDCP leaves blank in 2018 it carries the weekly price in an annual column, giving Denver County a $36,101/year preschool price and a $693,417/year home-based price."
   }
  },
  "eci": {
   "series": "CIU2020000000000I",
   "source": "https://api.bls.gov/publicAPI/v2/timeseries/data/",
-  "live": false,
+  "live": true,
   "to": {
    "period": "CY2026",
    "index": 179.746,
@@ -42,7 +42,7 @@
    ]
   },
   "twelveMonthRate": 3.138,
-  "method": "BLS Employment Cost Index, wages and salaries, private industry workers (index, not seasonally adjusted). Calendar-year average of the four quarterly index values, NDCP study year -> CY2026; quarters not yet published are extrapolated from the same quarter of the prior year at the latest published 12-month rate (3.138%). https://api.bls.gov/publicAPI/v2/timeseries/data/ did not serve the series on this run (it caps unregistered callers at 25 requests a day), so the quarterly values fetched from it on 2026-09-15 and compiled into scripts/build-state-defaults.mjs were used instead. crossCheck is what tests them: it is computed here and compared against a factor another builder derived from a live fetch.",
+  "method": "BLS Employment Cost Index, wages and salaries, private industry workers (index, not seasonally adjusted). Calendar-year average of the four quarterly index values, NDCP study year -> CY2026; quarters not yet published are extrapolated from the same quarter of the prior year at the latest published 12-month rate (3.138%). Fetched live from https://api.bls.gov/publicAPI/v2/timeseries/data/.",
   "crossCheck": "CY2024 -> CY2026 on this same arithmetic is 1.067533, the factor core/data/reach.json applies to the reach ladders.",
   "factors": {
    "2012": 1.548866,
@@ -53,321 +53,751 @@
   }
  },
  "childcareBasis": {
-  "note": "Which rule produced each state's monthlyChildcarePreschool and the NDCP study year behind it. 'county' is the most populous county's own MCPreschool — the household the row describes. 'stateMedianCounty' and 'nationalMedian' are the fallbacks, in that order; see sources.monthlyChildcarePreschool.fallback.",
+  "note": "Which rule produced each state's childcare price, band by band, and the NDCP study year behind it. 'county' is the most populous county's own MCPreschool — the household the row describes. 'stateMedianCounty' and 'nationalMedian' are the fallbacks, in that order; see sources.monthlyChildcare.fallback.",
   "counts": {
    "county": 48,
    "stateMedianCounty": 1,
    "nationalMedian": 2
   },
+  "countsByBand": {
+   "infant": {
+    "county": 48,
+    "stateMedianCounty": 1,
+    "nationalMedian": 2
+   },
+   "toddler": {
+    "county": 48,
+    "stateMedianCounty": 1,
+    "nationalMedian": 2
+   },
+   "preschool": {
+    "county": 48,
+    "stateMedianCounty": 1,
+    "nationalMedian": 2
+   },
+   "schoolAge": {
+    "county": 48,
+    "stateMedianCounty": 1,
+    "nationalMedian": 2
+   }
+  },
   "byState": {
-   "AK": "county 2018",
-   "AL": "county 2018",
-   "AR": "county 2018",
-   "AZ": "county 2018",
-   "CA": "county 2018",
-   "CO": "county 2015",
-   "CT": "stateMedianCounty 2018",
-   "DC": "county 2012",
-   "DE": "county 2018",
-   "FL": "county 2017",
-   "GA": "county 2016",
-   "HI": "county 2018",
-   "IA": "county 2017",
-   "ID": "county 2018",
-   "IL": "county 2018",
-   "IN": "nationalMedian 2018",
-   "KS": "county 2018",
-   "KY": "county 2018",
-   "LA": "county 2016",
-   "MA": "county 2018",
-   "MD": "county 2018",
-   "ME": "county 2018",
-   "MI": "county 2018",
-   "MN": "county 2018",
-   "MO": "county 2018",
-   "MS": "county 2018",
-   "MT": "county 2016",
-   "NC": "county 2018",
-   "ND": "county 2018",
-   "NE": "county 2018",
-   "NH": "county 2018",
-   "NJ": "county 2018",
-   "NM": "nationalMedian 2018",
-   "NV": "county 2016",
-   "NY": "county 2018",
-   "OH": "county 2018",
-   "OK": "county 2018",
-   "OR": "county 2018",
-   "PA": "county 2018",
-   "RI": "county 2018",
-   "SC": "county 2018",
-   "SD": "county 2018",
-   "TN": "county 2018",
-   "TX": "county 2018",
-   "UT": "county 2018",
-   "VA": "county 2018",
-   "VT": "county 2018",
-   "WA": "county 2018",
-   "WI": "county 2018",
-   "WV": "county 2018",
-   "WY": "county 2018"
+   "AK": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "AL": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "AR": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "AZ": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "CA": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "CO": {
+    "infant": "county 2015",
+    "toddler": "county 2015",
+    "preschool": "county 2015",
+    "schoolAge": "county 2015"
+   },
+   "CT": {
+    "infant": "stateMedianCounty 2018",
+    "toddler": "stateMedianCounty 2018",
+    "preschool": "stateMedianCounty 2018",
+    "schoolAge": "stateMedianCounty 2018"
+   },
+   "DC": {
+    "infant": "county 2012",
+    "toddler": "county 2012",
+    "preschool": "county 2012",
+    "schoolAge": "county 2012"
+   },
+   "DE": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "FL": {
+    "infant": "county 2017",
+    "toddler": "county 2017",
+    "preschool": "county 2017",
+    "schoolAge": "county 2017"
+   },
+   "GA": {
+    "infant": "county 2016",
+    "toddler": "county 2016",
+    "preschool": "county 2016",
+    "schoolAge": "county 2016"
+   },
+   "HI": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "IA": {
+    "infant": "county 2017",
+    "toddler": "county 2017",
+    "preschool": "county 2017",
+    "schoolAge": "county 2017"
+   },
+   "ID": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "IL": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "IN": {
+    "infant": "nationalMedian 2018",
+    "toddler": "nationalMedian 2018",
+    "preschool": "nationalMedian 2018",
+    "schoolAge": "nationalMedian 2018"
+   },
+   "KS": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "KY": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "LA": {
+    "infant": "county 2016",
+    "toddler": "county 2016",
+    "preschool": "county 2016",
+    "schoolAge": "county 2016"
+   },
+   "MA": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MD": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "ME": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MI": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MN": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MO": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MS": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "MT": {
+    "infant": "county 2016",
+    "toddler": "county 2016",
+    "preschool": "county 2016",
+    "schoolAge": "county 2016"
+   },
+   "NC": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "ND": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "NE": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "NH": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "NJ": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "NM": {
+    "infant": "nationalMedian 2018",
+    "toddler": "nationalMedian 2018",
+    "preschool": "nationalMedian 2018",
+    "schoolAge": "nationalMedian 2018"
+   },
+   "NV": {
+    "infant": "county 2016",
+    "toddler": "county 2016",
+    "preschool": "county 2016",
+    "schoolAge": "county 2016"
+   },
+   "NY": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "OH": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "OK": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "OR": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "PA": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "RI": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "SC": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "SD": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "TN": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "TX": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "UT": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "VA": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "VT": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "WA": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "WI": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "WV": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   },
+   "WY": {
+    "infant": "county 2018",
+    "toddler": "county 2018",
+    "preschool": "county 2018",
+    "schoolAge": "county 2018"
+   }
   }
  },
  "states": {
   "AK": {
    "countyFips": "02020",
    "monthlyRent": 1631,
-   "monthlyChildcarePreschool": 1128
+   "monthlyChildcareInfant": 1397,
+   "monthlyChildcareToddler": 1341,
+   "monthlyChildcarePreschool": 1128,
+   "monthlyChildcareSchoolAge": 1186
   },
   "AL": {
    "countyFips": "01073",
    "monthlyRent": 1266,
-   "monthlyChildcarePreschool": 907
+   "monthlyChildcareInfant": 1017,
+   "monthlyChildcareToddler": 1017,
+   "monthlyChildcarePreschool": 907,
+   "monthlyChildcareSchoolAge": 723
   },
   "AR": {
    "countyFips": "05119",
    "monthlyRent": 1147,
-   "monthlyChildcarePreschool": 679
+   "monthlyChildcareInfant": 796,
+   "monthlyChildcareToddler": 752,
+   "monthlyChildcarePreschool": 679,
+   "monthlyChildcareSchoolAge": 597
   },
   "AZ": {
    "countyFips": "04013",
    "monthlyRent": 1839,
-   "monthlyChildcarePreschool": 993
+   "monthlyChildcareInfant": 1314,
+   "monthlyChildcareToddler": 1168,
+   "monthlyChildcarePreschool": 993,
+   "monthlyChildcareSchoolAge": 876
   },
   "CA": {
    "countyFips": "06037",
    "monthlyRent": 2903,
-   "monthlyChildcarePreschool": 1409
+   "monthlyChildcareInfant": 1951,
+   "monthlyChildcareToddler": 1409,
+   "monthlyChildcarePreschool": 1409,
+   "monthlyChildcareSchoolAge": 1169
   },
   "CO": {
    "countyFips": "08041",
    "monthlyRent": 1735,
-   "monthlyChildcarePreschool": 1438
+   "monthlyChildcareInfant": 1893,
+   "monthlyChildcareToddler": 1636,
+   "monthlyChildcarePreschool": 1438,
+   "monthlyChildcareSchoolAge": 1335
   },
   "CT": {
    "countyFips": "09110",
    "monthlyRent": 1865,
-   "monthlyChildcarePreschool": 1416
+   "monthlyChildcareInfant": 1781,
+   "monthlyChildcareToddler": 1781,
+   "monthlyChildcarePreschool": 1416,
+   "monthlyChildcareSchoolAge": 561
   },
   "DC": {
    "countyFips": "11001",
    "monthlyRent": 2246,
-   "monthlyChildcarePreschool": 1596
+   "monthlyChildcareInfant": 2038,
+   "monthlyChildcareToddler": 1698,
+   "monthlyChildcarePreschool": 1596,
+   "monthlyChildcareSchoolAge": 1669
   },
   "DE": {
    "countyFips": "10003",
    "monthlyRent": 1810,
-   "monthlyChildcarePreschool": 1140
+   "monthlyChildcareInfant": 1476,
+   "monthlyChildcareToddler": 1334,
+   "monthlyChildcarePreschool": 1140,
+   "monthlyChildcareSchoolAge": 600
   },
   "FL": {
    "countyFips": "12086",
    "monthlyRent": 2436,
-   "monthlyChildcarePreschool": 685
+   "monthlyChildcareInfant": 897,
+   "monthlyChildcareToddler": 800,
+   "monthlyChildcarePreschool": 685,
+   "monthlyChildcareSchoolAge": 649
   },
   "GA": {
    "countyFips": "13121",
    "monthlyRent": 1820,
-   "monthlyChildcarePreschool": 956
+   "monthlyChildcareInfant": 1080,
+   "monthlyChildcareToddler": 1018,
+   "monthlyChildcarePreschool": 956,
+   "monthlyChildcareSchoolAge": 802
   },
   "HI": {
    "countyFips": "15003",
    "monthlyRent": 2642,
-   "monthlyChildcarePreschool": 1320
+   "monthlyChildcareInfant": 2021,
+   "monthlyChildcareToddler": 2021,
+   "monthlyChildcarePreschool": 1320,
+   "monthlyChildcareSchoolAge": 202
   },
   "IA": {
    "countyFips": "19153",
    "monthlyRent": 1318,
-   "monthlyChildcarePreschool": 1074
+   "monthlyChildcareInfant": 1259,
+   "monthlyChildcareToddler": 1259,
+   "monthlyChildcarePreschool": 1074,
+   "monthlyChildcareSchoolAge": 862
   },
   "ID": {
    "countyFips": "16001",
    "monthlyRent": 1655,
-   "monthlyChildcarePreschool": 865
+   "monthlyChildcareInfant": 1050,
+   "monthlyChildcareToddler": 970,
+   "monthlyChildcarePreschool": 865,
+   "monthlyChildcareSchoolAge": 738
   },
   "IL": {
    "countyFips": "17031",
    "monthlyRent": 1781,
-   "monthlyChildcarePreschool": 1241
+   "monthlyChildcareInfant": 1664,
+   "monthlyChildcareToddler": 1401,
+   "monthlyChildcarePreschool": 1241,
+   "monthlyChildcareSchoolAge": 817
   },
   "IN": {
    "countyFips": "18097",
    "monthlyRent": 1473,
-   "monthlyChildcarePreschool": 730
+   "monthlyChildcareInfant": 897,
+   "monthlyChildcareToddler": 817,
+   "monthlyChildcarePreschool": 730,
+   "monthlyChildcareSchoolAge": 620
   },
   "KS": {
    "countyFips": "20091",
    "monthlyRent": 1358,
-   "monthlyChildcarePreschool": 946
+   "monthlyChildcareInfant": 1177,
+   "monthlyChildcareToddler": 1133,
+   "monthlyChildcarePreschool": 946,
+   "monthlyChildcareSchoolAge": 638
   },
   "KY": {
    "countyFips": "21111",
    "monthlyRent": 1272,
-   "monthlyChildcarePreschool": 817
+   "monthlyChildcareInfant": 920,
+   "monthlyChildcareToddler": 817,
+   "monthlyChildcarePreschool": 817,
+   "monthlyChildcareSchoolAge": 628
   },
   "LA": {
    "countyFips": "22033",
    "monthlyRent": 1204,
-   "monthlyChildcarePreschool": 841
+   "monthlyChildcareInfant": 987,
+   "monthlyChildcareToddler": 925,
+   "monthlyChildcarePreschool": 841,
+   "monthlyChildcareSchoolAge": 771
   },
   "MA": {
    "countyFips": "25017",
    "monthlyRent": 2825,
-   "monthlyChildcarePreschool": 1927
+   "monthlyChildcareInfant": 2663,
+   "monthlyChildcareToddler": 2446,
+   "monthlyChildcarePreschool": 1927,
+   "monthlyChildcareSchoolAge": 1314
   },
   "MD": {
    "countyFips": "24031",
    "monthlyRent": 2246,
-   "monthlyChildcarePreschool": 1548
+   "monthlyChildcareInfant": 2217,
+   "monthlyChildcareToddler": 1548,
+   "monthlyChildcarePreschool": 1548,
+   "monthlyChildcareSchoolAge": 1489
   },
   "ME": {
    "countyFips": "23005",
    "monthlyRent": 2082,
-   "monthlyChildcarePreschool": 1261
+   "monthlyChildcareInfant": 1635,
+   "monthlyChildcareToddler": 1431,
+   "monthlyChildcarePreschool": 1261,
+   "monthlyChildcareSchoolAge": 730
   },
   "MI": {
    "countyFips": "26163",
    "monthlyRent": 1411,
-   "monthlyChildcarePreschool": 958
+   "monthlyChildcareInfant": 1095,
+   "monthlyChildcareToddler": 1095,
+   "monthlyChildcarePreschool": 958,
+   "monthlyChildcareSchoolAge": 867
   },
   "MN": {
    "countyFips": "27053",
    "monthlyRent": 1709,
-   "monthlyChildcarePreschool": 1594
+   "monthlyChildcareInfant": 2090,
+   "monthlyChildcareToddler": 1781,
+   "monthlyChildcarePreschool": 1594,
+   "monthlyChildcareSchoolAge": 1104
   },
   "MO": {
    "countyFips": "29189",
    "monthlyRent": 1218,
-   "monthlyChildcarePreschool": 1255
+   "monthlyChildcareInfant": 1599,
+   "monthlyChildcareToddler": 1255,
+   "monthlyChildcarePreschool": 1255,
+   "monthlyChildcareSchoolAge": 1058
   },
   "MS": {
    "countyFips": "28047",
    "monthlyRent": 1140,
-   "monthlyChildcarePreschool": 482
+   "monthlyChildcareInfant": 507,
+   "monthlyChildcareToddler": 482,
+   "monthlyChildcarePreschool": 482,
+   "monthlyChildcareSchoolAge": 469
   },
   "MT": {
    "countyFips": "30111",
    "monthlyRent": 1417,
-   "monthlyChildcarePreschool": 918
+   "monthlyChildcareInfant": 1050,
+   "monthlyChildcareToddler": 918,
+   "monthlyChildcarePreschool": 918,
+   "monthlyChildcareSchoolAge": 918
   },
   "NC": {
    "countyFips": "37183",
    "monthlyRent": 1750,
-   "monthlyChildcarePreschool": 998
+   "monthlyChildcareInfant": 1610,
+   "monthlyChildcareToddler": 1343,
+   "monthlyChildcarePreschool": 998,
+   "monthlyChildcareSchoolAge": 770
   },
   "ND": {
    "countyFips": "38017",
    "monthlyRent": 1112,
-   "monthlyChildcarePreschool": 971
+   "monthlyChildcareInfant": 1137,
+   "monthlyChildcareToddler": 1086,
+   "monthlyChildcarePreschool": 971,
+   "monthlyChildcareSchoolAge": 393
   },
   "NE": {
    "countyFips": "31055",
    "monthlyRent": 1368,
-   "monthlyChildcarePreschool": 1139
+   "monthlyChildcareInfant": 1325,
+   "monthlyChildcareToddler": 1225,
+   "monthlyChildcarePreschool": 1139,
+   "monthlyChildcareSchoolAge": 1072
   },
   "NH": {
    "countyFips": "33011",
    "monthlyRent": 2058,
-   "monthlyChildcarePreschool": 1181
+   "monthlyChildcareInfant": 1430,
+   "monthlyChildcareToddler": 1322,
+   "monthlyChildcarePreschool": 1181,
+   "monthlyChildcareSchoolAge": 1142
   },
   "NJ": {
    "countyFips": "34003",
    "monthlyRent": 2324,
-   "monthlyChildcarePreschool": 1422
+   "monthlyChildcareInfant": 1708,
+   "monthlyChildcareToddler": 1567,
+   "monthlyChildcarePreschool": 1422,
+   "monthlyChildcareSchoolAge": 1642
   },
   "NM": {
    "countyFips": "35001",
    "monthlyRent": 1464,
-   "monthlyChildcarePreschool": 730
+   "monthlyChildcareInfant": 897,
+   "monthlyChildcareToddler": 817,
+   "monthlyChildcarePreschool": 730,
+   "monthlyChildcareSchoolAge": 620
   },
   "NV": {
    "countyFips": "32003",
    "monthlyRent": 1735,
-   "monthlyChildcarePreschool": 1241
+   "monthlyChildcareInfant": 1472,
+   "monthlyChildcareToddler": 1472,
+   "monthlyChildcarePreschool": 1241,
+   "monthlyChildcareSchoolAge": 1047
   },
   "NY": {
    "countyFips": "36047",
    "monthlyRent": 2910,
-   "monthlyChildcarePreschool": 1624
+   "monthlyChildcareInfant": 2282,
+   "monthlyChildcareToddler": 1770,
+   "monthlyChildcarePreschool": 1624,
+   "monthlyChildcareSchoolAge": 1326
   },
   "OH": {
    "countyFips": "39049",
    "monthlyRent": 1430,
-   "monthlyChildcarePreschool": 1109
+   "monthlyChildcareInfant": 1431,
+   "monthlyChildcareToddler": 1255,
+   "monthlyChildcarePreschool": 1109,
+   "monthlyChildcareSchoolAge": 701
   },
   "OK": {
    "countyFips": "40109",
    "monthlyRent": 1244,
-   "monthlyChildcarePreschool": 921
+   "monthlyChildcareInfant": 1096,
+   "monthlyChildcareToddler": 921,
+   "monthlyChildcarePreschool": 921,
+   "monthlyChildcareSchoolAge": 620
   },
   "OR": {
    "countyFips": "41051",
    "monthlyRent": 1922,
-   "monthlyChildcarePreschool": 1760
+   "monthlyChildcareInfant": 1802,
+   "monthlyChildcareToddler": 1760,
+   "monthlyChildcarePreschool": 1760,
+   "monthlyChildcareSchoolAge": 1149
   },
   "PA": {
    "countyFips": "42101",
    "monthlyRent": 1810,
-   "monthlyChildcarePreschool": 1080
+   "monthlyChildcareInfant": 1343,
+   "monthlyChildcareToddler": 1168,
+   "monthlyChildcarePreschool": 1080,
+   "monthlyChildcareSchoolAge": 934
   },
   "RI": {
    "countyFips": "44007",
    "monthlyRent": 1729,
-   "monthlyChildcarePreschool": 1132
+   "monthlyChildcareInfant": 1320,
+   "monthlyChildcareToddler": 1261,
+   "monthlyChildcarePreschool": 1132,
+   "monthlyChildcareSchoolAge": 727
   },
   "SC": {
    "countyFips": "45045",
    "monthlyRent": 1339,
-   "monthlyChildcarePreschool": 832
+   "monthlyChildcareInfant": 912,
+   "monthlyChildcareToddler": 912,
+   "monthlyChildcarePreschool": 832,
+   "monthlyChildcareSchoolAge": 453
   },
   "SD": {
    "countyFips": "46099",
    "monthlyRent": 1156,
-   "monthlyChildcarePreschool": 728
+   "monthlyChildcareInfant": 812,
+   "monthlyChildcareToddler": 812,
+   "monthlyChildcarePreschool": 728,
+   "monthlyChildcareSchoolAge": 709
   },
   "TN": {
    "countyFips": "47157",
    "monthlyRent": 1274,
-   "monthlyChildcarePreschool": 862
+   "monthlyChildcareInfant": 1080,
+   "monthlyChildcareToddler": 862,
+   "monthlyChildcarePreschool": 862,
+   "monthlyChildcareSchoolAge": 344
   },
   "TX": {
    "countyFips": "48201",
    "monthlyRent": 1573,
-   "monthlyChildcarePreschool": 863
+   "monthlyChildcareInfant": 1026,
+   "monthlyChildcareToddler": 937,
+   "monthlyChildcarePreschool": 863,
+   "monthlyChildcareSchoolAge": 811
   },
   "UT": {
    "countyFips": "49035",
    "monthlyRent": 1747,
-   "monthlyChildcarePreschool": 829
+   "monthlyChildcareInfant": 1069,
+   "monthlyChildcareToddler": 912,
+   "monthlyChildcarePreschool": 829,
+   "monthlyChildcareSchoolAge": 777
   },
   "VA": {
    "countyFips": "51059",
    "monthlyRent": 2246,
-   "monthlyChildcarePreschool": 1839
+   "monthlyChildcareInfant": 2190,
+   "monthlyChildcareToddler": 1839,
+   "monthlyChildcarePreschool": 1839,
+   "monthlyChildcareSchoolAge": 1693
   },
   "VT": {
    "countyFips": "50007",
    "monthlyRent": 2140,
-   "monthlyChildcarePreschool": 1348
+   "monthlyChildcareInfant": 1433,
+   "monthlyChildcareToddler": 1369,
+   "monthlyChildcarePreschool": 1348,
+   "monthlyChildcareSchoolAge": 1129
   },
   "WA": {
    "countyFips": "53033",
    "monthlyRent": 2501,
-   "monthlyChildcarePreschool": 1700
+   "monthlyChildcareInfant": 2129,
+   "monthlyChildcareToddler": 1871,
+   "monthlyChildcarePreschool": 1700,
+   "monthlyChildcareSchoolAge": 869
   },
   "WI": {
    "countyFips": "55079",
    "monthlyRent": 1338,
-   "monthlyChildcarePreschool": 1635
+   "monthlyChildcareInfant": 1822,
+   "monthlyChildcareToddler": 1635,
+   "monthlyChildcarePreschool": 1635,
+   "monthlyChildcareSchoolAge": 1197
   },
   "WV": {
    "countyFips": "54039",
    "monthlyRent": 1036,
-   "monthlyChildcarePreschool": 798
+   "monthlyChildcareInfant": 920,
+   "monthlyChildcareToddler": 859,
+   "monthlyChildcarePreschool": 798,
+   "monthlyChildcareSchoolAge": 767
   },
   "WY": {
    "countyFips": "56021",
    "monthlyRent": 1174,
-   "monthlyChildcarePreschool": 734
+   "monthlyChildcareInfant": 897,
+   "monthlyChildcareToddler": 810,
+   "monthlyChildcarePreschool": 734,
+   "monthlyChildcareSchoolAge": 750
   }
  }
 }

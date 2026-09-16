@@ -20,7 +20,14 @@ describe("state-defaults.json", () => {
 
   it("puts rent and childcare in ranges a real household could pay", () => {
     for (const state of STATE_CODES) {
-      const { monthlyRent, monthlyChildcarePreschool } = stateDefaults(state);
+      const { monthlyRent, monthlyChildcarePreschool, monthlyChildcareInfant, monthlyChildcareToddler, monthlyChildcareSchoolAge } = stateDefaults(state);
+      // Younger is dearer on the NDCP's bands: infant ≥ toddler ≥ preschool in every state. The school-age
+      // rate is a full-time rate for a child in school and runs above preschool in four states (AK, DC, NJ, WY),
+      // so it is only held to the same sane range as the rest.
+      expect(monthlyChildcareInfant, state).toBeGreaterThanOrEqual(monthlyChildcareToddler);
+      expect(monthlyChildcareToddler, state).toBeGreaterThanOrEqual(monthlyChildcarePreschool);
+      expect(monthlyChildcareSchoolAge, state).toBeGreaterThanOrEqual(150); // Hawaii publishes $202 for wraparound care
+      expect(monthlyChildcareSchoolAge, state).toBeLessThanOrEqual(3500);
       expect(monthlyRent, state).toBeGreaterThanOrEqual(500);
       expect(monthlyRent, state).toBeLessThanOrEqual(4000);
       expect(monthlyChildcarePreschool, state).toBeGreaterThanOrEqual(300);
@@ -30,9 +37,9 @@ describe("state-defaults.json", () => {
     }
   });
 
-  it("carries the publisher, file, vintage and date read for all three columns", () => {
+  it("carries the publisher, file, vintage and date read for every source", () => {
     expect(json.read).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    for (const column of ["monthlyRent", "countyFips", "monthlyChildcarePreschool"]) {
+    for (const column of ["monthlyRent", "countyFips", "monthlyChildcare"]) {
       const source = json.sources[column];
       expect(source, column).toBeDefined();
       expect(source.publisher, column).toBeTruthy();
@@ -41,9 +48,9 @@ describe("state-defaults.json", () => {
     }
   });
 
-  it("holds nothing but the three values in a row", () => {
+  it("holds nothing but the county, the rent and the four childcare bands in a row", () => {
     for (const row of Object.values(json.states)) {
-      expect(Object.keys(row as object).sort()).toEqual(["countyFips", "monthlyChildcarePreschool", "monthlyRent"]);
+      expect(Object.keys(row as object).sort()).toEqual(["countyFips", "monthlyChildcareInfant", "monthlyChildcarePreschool", "monthlyChildcareSchoolAge", "monthlyChildcareToddler", "monthlyRent"]);
     }
   });
 });

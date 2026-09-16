@@ -235,15 +235,20 @@ All under `core/data/`:
   `maTafdc` inputs used to replay that correction; use `evaluateOffline` to
   obtain the corrected curve. Rebuild: `npm run pipeline`.
 - `state-defaults.json` — the typical renter each state's archetype sweep
-  uses (`stateDefaults`, read by `answersFor`). All three figures describe
+  uses (`stateDefaults`, read by `answersFor`). Every figure describes
   **one** household in **one** county: the Census Vintage 2024 most populous
   county (`countyFips`), HUD's FY2026 two-bedroom Fair Market Rent for it
   (`monthlyRent`), and DOL's National Database of Childcare Prices
-  center-based preschool price (`MCPreschool`) for that same county, carried
-  from its NDCP study year to 2026 dollars by the BLS Employment Cost Index
-  (`monthlyChildcarePreschool`) — both the archetype's childcare bill per
-  child under 6 and the replacement value of a "free" Head Start slot
-  (`headStart`, above). The price used to be the state *median* county's
+  center-based prices for that same county in each of the NDCP's age bands
+  (`MCInfant`/`MCToddler`/`MCPreschool`/`MCSA` →
+  `monthlyChildcare{Infant,Toddler,Preschool,SchoolAge}`), carried from
+  their NDCP study year to 2026 dollars by the BLS Employment Cost Index.
+  `answersFor` prices each child of a working household by band — ages 0–1
+  infant, 2 toddler, 3–4 preschool, 5–12 the school-age rate, the
+  before-and-after-school care a working parent still buys (a schoolchild
+  cost nothing before 2026-09-16) — and the preschool price is the
+  replacement value of a "free" Head Start slot (`headStart`, above). The
+  preschool price used to be the state *median* county's
   while the county and the rent were the largest county's, which understated
   the bill wherever the biggest county is also the priciest — Virginia was
   $774 against Fairfax's $1,839. Where the county itself has no NDCP price

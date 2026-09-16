@@ -1,5 +1,5 @@
 import { FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL } from "./policyYear.js";
-import { stateDefaults } from "./stateDefaults.js";
+import { childcareMonthlyFor, stateDefaults } from "./stateDefaults.js";
 import type { HouseholdAnswers } from "./types.js";
 
 export interface Archetype {
@@ -81,11 +81,12 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     childAges: a.childAges,
     childDisabled: a.childAges.map(() => false),
     monthlyRent: defaults.monthlyRent,
-    // A working parent of a young child pays for care, so a $0 bill is not the
-    // neutral default — it is the one that hides the childcare cliff. Each
-    // child under 6 is charged the state's center-based preschool price; a
-    // 6-year-old is in school. Infant care really costs more than a
-    // preschooler's, so a household with a baby is understated here.
+    // A working parent pays for care, so a $0 bill is not the neutral default
+    // — it is the one that hides the childcare cliff. Each child through 12 is
+    // charged the state's center-based price for their age band: infant,
+    // toddler, preschool, or — for a child in school — the school-age rate,
+    // the before-and-after-school care a working parent still buys (a
+    // 7-year-old cost nothing here before 2026-09-16).
     //
     // Only the households where every parent works buy it. A single-earner
     // couple's spouse IS the childcare; charging them for care AND denying
@@ -93,7 +94,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     // is the one combination wrong both ways, and it was costing them up to
     // $34,000 a year of expense with nothing against it.
     monthlyChildcare: everyParentWorks
-      ? defaults.monthlyChildcarePreschool * a.childAges.filter((age) => age < 6).length
+      ? a.childAges.reduce((sum, age) => sum + childcareMonthlyFor(defaults, age), 0)
       : 0,
     annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
     spouseAnnualEarnings: a.spouseWorks ? FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL : 0,

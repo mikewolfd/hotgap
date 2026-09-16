@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor } from "./archetypes.js";
 import { FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL } from "./policyYear.js";
-import { stateDefaults } from "./stateDefaults.js";
+import { childcareMonthlyFor, stateDefaults } from "./stateDefaults.js";
 import { STATE_CODES } from "./states.js";
 
 describe("ARCHETYPES", () => {
@@ -46,8 +46,8 @@ describe("answersFor", () => {
       childAges: [3, 7],
       childDisabled: [false, false],
       monthlyRent: 2903,            // HUD FY2026 two-bedroom FMR there
-      // One child under 6 (the 3-year-old); the 7-year-old is in school.
-      monthlyChildcare: stateDefaults("CA").monthlyChildcarePreschool,
+      // A preschool place for the 3-year-old and before-and-after-school care for the 7-year-old.
+      monthlyChildcare: stateDefaults("CA").monthlyChildcarePreschool + stateDefaults("CA").monthlyChildcareSchoolAge,
       annualEarnings: 0,
       spouseAnnualEarnings: 0,
       hoursPerWeek: null,
@@ -99,13 +99,19 @@ describe("answersFor", () => {
     }
   });
 
-  it("charges the state preschool price per child under 6, wherever every parent works", () => {
-    // single-3 is aged 1, 4 and 9: two under 6, so two preschool places.
-    const price = stateDefaults("CA").monthlyChildcarePreschool;
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(2 * price);
+  it("charges each child the state's price for their age band, wherever every parent works", () => {
+    // single-3 is aged 1, 4 and 9: an infant place, a preschool place, and school-age wraparound care.
+    const d = stateDefaults("CA");
+    const threeKids = d.monthlyChildcareInfant + d.monthlyChildcarePreschool + d.monthlyChildcareSchoolAge;
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(threeKids);
     expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-0")!).monthlyChildcare).toBe(0);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-2")!).monthlyChildcare).toBe(price);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-3")!).monthlyChildcare).toBe(2 * price);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-2")!).monthlyChildcare).toBe(d.monthlyChildcarePreschool + d.monthlyChildcareSchoolAge);
+    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-3")!).monthlyChildcare).toBe(threeKids);
+    // The bands, on the NDCP's own lines: 0–1 infant, 2 toddler, 3–4 preschool, 5–12 school age, 13+ none.
+    expect([0, 1, 2, 3, 4, 5, 12, 13].map((age) => childcareMonthlyFor(d, age))).toEqual([
+      d.monthlyChildcareInfant, d.monthlyChildcareInfant, d.monthlyChildcareToddler, d.monthlyChildcarePreschool, d.monthlyChildcarePreschool,
+      d.monthlyChildcareSchoolAge, d.monthlyChildcareSchoolAge, 0,
+    ]);
   });
 
   // The subsidy's activity test requires EVERY parent to be working (verified
@@ -124,11 +130,11 @@ describe("answersFor", () => {
   });
 
   it("differs from its single-earner twin in exactly three things: the spouse's pay, their hours, and the childcare bill", () => {
-    const price = stateDefaults("CO").monthlyChildcarePreschool;
+    const co = stateDefaults("CO");
     for (const kids of [1, 2, 3]) {
       const twin = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-${kids}`)!);
       const dual = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-dual-${kids}`)!);
-      const under6 = dual.childAges.filter((age) => age < 6).length;
+      const bill = dual.childAges.reduce((sum, age) => sum + childcareMonthlyFor(co, age), 0);
       expect(dual, `married-dual-${kids}`).toEqual({
         ...twin,
         // Full time at the FEDERAL minimum wage, held national on purpose so
@@ -137,7 +143,7 @@ describe("answersFor", () => {
         // The subsidy has an activity test as well as an income one, and
         // PolicyEngine reads it off weekly hours worked.
         hoursPerWeek: 40,
-        monthlyChildcare: under6 * price,
+        monthlyChildcare: bill,
         getsChildcareSubsidy: true,
       });
     }

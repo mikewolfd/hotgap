@@ -18,14 +18,34 @@ export interface StateDefaults {
   /** Census Vintage 2024 most populous county (or county equivalent). */
   countyFips: string;
   /**
-   * DOL NDCP median county price of center-based preschool care (ages 3–5),
-   * grown to 2026 dollars. Not an archetype input: `answersFor` keeps
-   * `monthlyChildcare: 0`, because a childcare expense the household does not
-   * actually report would inflate the dependent-care deduction. It is here as
-   * the replacement value of a "free" childcare slot (Head Start).
+   * DOL NDCP price of center-based care in that county, grown to 2026
+   * dollars, for each of the NDCP's age bands (2024 technical report, p. 6):
+   * infant 0–23 months, toddler 24–35, preschool 36–60 and not yet in
+   * school, school age in school — that last one the wraparound care a
+   * working parent of a schoolchild buys. `answersFor` prices each child of
+   * a working household by band (childcareMonthlyFor); the preschool price
+   * is also the replacement value of a "free" Head Start slot.
    */
+  monthlyChildcareInfant: number;
+  monthlyChildcareToddler: number;
   monthlyChildcarePreschool: number;
+  monthlyChildcareSchoolAge: number;
 }
+
+/** The oldest child still charged for care: CCDF's age limit is 13. */
+export const CHILDCARE_MAX_AGE = 12;
+
+/** What a working household pays for one child of this age in this state per month, on the NDCP's bands; $0 from 13. */
+export function childcareMonthlyFor(defaults: StateDefaults, age: number): number {
+  if (age <= 1) return defaults.monthlyChildcareInfant;
+  if (age === 2) return defaults.monthlyChildcareToddler;
+  if (age <= 4) return defaults.monthlyChildcarePreschool;
+  if (age <= CHILDCARE_MAX_AGE) return defaults.monthlyChildcareSchoolAge;
+  return 0;
+}
+
+/** Whether a child of this age is in school, on the NDCP's own line (61 months and up). */
+export const isSchoolAge = (age: number): boolean => age >= 5;
 
 interface StateDefaultsJson {
   read: string;
