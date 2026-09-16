@@ -173,12 +173,14 @@ The public API is a whole product; this is the one endpoint HotGap calls.
 * **Only `POST /us/calculate` and `GET /healthz`.** No `/us/economy`, no
   `/us/policy`, no `/metadata`, no household storage, no user accounts, no
   other country. Any other path is a Flask 404 in HTML, not the API's JSON.
-* **No authentication, no rate limiting, no result cache.** Bind it to
-  localhost. The public API caches whole responses — a repeat of the Texas
-  request above came back in 0.17 s — and this does not; it caches only the
-  built tax-benefit system for the last 8 distinct `policy` objects, which is
-  where the seconds actually are. HotGap has its own curve cache
-  (`core/src/client.ts`).
+* **No accounts, no rate limiting, no result cache.** Bind it to localhost,
+  or set `HOTGAP_ENGINE_TOKEN` and `/us/calculate` wants that bearer token
+  (`/healthz` stays open) — the only authentication there is. The public API
+  caches whole responses — a repeat of the Texas request above came back in
+  0.17 s — and this does not; it caches only the built tax-benefit system
+  for the last `HOTGAP_ENGINE_POLICY_CACHE` distinct `policy` objects (one,
+  by default — see "Run it under Docker"), which is where the seconds
+  actually are. HotGap has its own curve cache (`core/src/client.ts`).
 * **No `Microsimulation`.** Household situations only. Society-wide impacts,
   datasets and the Populace download are not touched, which is also why the
   container needs no network at runtime.
