@@ -12,9 +12,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        citizen: resolve(__dirname, "index.html"),
-        places: resolve(__dirname, "places.html"),
-        caseworker: resolve(__dirname, "caseworker.html"),
+        citizen: resolve(import.meta.dirname, "index.html"),
+        places: resolve(import.meta.dirname, "places.html"),
+        caseworker: resolve(import.meta.dirname, "caseworker.html"),
       },
     },
   },

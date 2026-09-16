@@ -36,6 +36,10 @@ that leap lands among real households' incomes.
   comparison of households rather than of state rules.
   through the same PolicyEngine API and `@hotgap/core` math, producing the
   committed summary and per-state curve data
+- `app/` — the site: three Vite pages on one design system (`design/`),
+  and the input editor. `app/README.md` is the contract a surface builds on
+- `worker/` — the Cloudflare Worker that serves `app/dist` and answers
+  `/api/evaluate` with core against the hosted engine (`app/README.md`)
 - `scripts/` — one-off builders for the ZIP→state, ZIP→county, and reach
   (ACS earnings) data files
 - `contract/` — a live PolicyEngine API contract test (schedule-only; not
@@ -499,10 +503,11 @@ Estimates only — a caseworker decides real benefits.
 
 ## History
 
-The site UI, design system, and Cloudflare Worker were split out of this
-repo and live at git tag `ui-archive`; the deployed site at
-hotgap.hotgap.workers.dev is unchanged. `docs/superpowers/` specs and plans
-predate that split and cite paths (`app/`, `worker/`, `shared/`) that no
-longer exist.
+The first site UI, design system, and Cloudflare Worker were split out of
+this repo and live at git tag `ui-archive`; the deployed site at
+hotgap.hotgap.workers.dev still runs that July core until the new `app/` and
+`worker/` are deployed. `docs/superpowers/` specs and plans predate that
+split and cite paths (`app/`, `worker/`, `shared/`) that have since been
+re-founded on the current core.
 
 License: AGPL-3.0-only.
