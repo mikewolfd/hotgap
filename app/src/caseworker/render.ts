@@ -29,7 +29,9 @@ export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | und
   for (const el of document.querySelectorAll(".stateName")) el.textContent = st;
   const swatch = `<span class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete" aria-hidden="true"></span>`;
   if (!cov) {
-    $("coverage").innerHTML = `<div class="hg-callout hg-callout--caution"><p><strong>No coverage block for ${esc(st)}.</strong> The sweep on this site recorded none for this state, so nothing here can say what the model leaves out.</p></div>`;
+    $("coverage").innerHTML = `<div class="hg-callout hg-callout--caution"><p><strong>Coverage unknown for ${esc(st)}.</strong> ` +
+      (summary ? "The sweep on this site recorded no coverage block for this state, so nothing here can say what the model leaves out."
+        : "The weekly sweep's summary did not load, so nothing here can say what the model leaves out. Reload to try again.") + `</p></div>`;
     return;
   }
   const mine = incompleteHere(cov, ev.answers);
@@ -49,7 +51,8 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
     ? rows.map((r) => `<li><span class="hg-rows__at">${esc(r.program)}</span><p>` +
         (r.source ? `<span class="hg-tag">${esc(r.source)}</span> ` : "") +
         `<span class="hg-cite">${esc(r.note)}${r.href ? ` <a href="${esc(r.href)}">source</a>` : ""}</span></p></li>`).join("")
-    : `<li><span class="hg-rows__at">None</span><p class="hg-cite">No HotGap-side correction touches this state's numbers.</p></li>`;
+    : cov ? `<li><span class="hg-rows__at">None</span><p class="hg-cite">No HotGap-side correction touches this state's numbers.</p></li>`
+    : `<li><span class="hg-rows__at">Unknown</span><p class="hg-cite">The coverage block did not load, so the corrections behind these numbers cannot be listed.</p></li>`;
   const c = cov?.corrections, rest: string[] = [];
   if (c) {
     if (!c.maTafdc.applies) rest.push(`TAFDC: ${c.maTafdc.note}`);
