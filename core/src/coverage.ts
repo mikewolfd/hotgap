@@ -4,8 +4,10 @@
 // table, the premium tables, the child-care list, the expansion list — and
 // from the data files' own provenance, never from a hand-kept list, so the
 // block cannot say one thing while the sweep did another. Each note is one
-// sentence; the long form, with evidence and retirement conditions, is
-// docs/upstream/2026-09-15-local-corrections.md.
+// sentence a surface prints verbatim and a reporter can quote (places review
+// S9): what HotGap did, why, and the upstream issue as the cite; the code
+// pointer is the `code` field beside it. The long form, with evidence and
+// retirement conditions, is docs/upstream/2026-09-15-local-corrections.md.
 import { PROGRAM_END_MIN } from "./analyze.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
 import type { CorrectionNote, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
@@ -26,8 +28,8 @@ export interface CoverageContext {
   childcareSubsidyUnmodeled?: readonly string[];
 }
 
-const PARENT_LIMIT_NOTE = "Parent Medicaid limit sent as a request parameter from the state's published limit for the household's size, as a 2026 poverty-line fraction inclusive of the MAGI disregard; PolicyEngine's is five years stale (policyengine-us #9474, fix in PR #9475).";
-const NY_BHP_NOTE = "Expanded Basic Health Program list emptied so the Essential Plan ceiling is the 200% FPL rule in force from 2026-07-01 for the whole year, not upstream's 250% (policyengine-us #9471; CMS approved the termination 2026-03-20).";
+const PARENT_LIMIT_NOTE = "HotGap sends the state's own published parent Medicaid income limit for this household's size, as a share of the 2026 poverty line including the MAGI disregard, because PolicyEngine's figure is five years out of date (policyengine-us #9474; fixed upstream in PR #9475).";
+const NY_BHP_NOTE = "HotGap takes New York off PolicyEngine's expanded Basic Health Program list, so the Essential Plan ceiling is the 200% of poverty rule in force from 2026-07-01 for the whole year rather than the 250% upstream keeps (policyengine-us #9471; CMS approved the termination on 2026-03-20).";
 
 /** The overrides `buildCurvePayload` attaches in this state, one record per parameter with the value sent per archetype. */
 function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
@@ -45,10 +47,11 @@ function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
 }
 
 function maTafdcNote(state: string): CorrectionNote {
-  if (state !== "MA") return { applies: false, note: "Massachusetts-only; PolicyEngine's TANF as served." };
+  const code = "maTafdc.ts";
+  if (state !== "MA") return { applies: false, code, note: "Massachusetts only; PolicyEngine's TANF stands as served." };
   return {
-    applies: true,
-    note: `TAFDC grant recomputed under the ongoing-recipient rules (106 CMR 704.281: $200 a month per earner, then a 50% disregard; ${MA_TAFDC_SOURCES.rules}) and fed back to the engine point by point so SNAP follows it (policyengine-us #9469, fix in PR #9477); programs.tanf is the ongoing grant, the September clothing allowance rides in otherBenefits, and the six-month full disregard is not modeled.`,
+    applies: true, code, cite: MA_TAFDC_SOURCES.rules,
+    note: "HotGap recomputes the TAFDC grant under the state's ongoing-recipient rules ($200 a month per earner, then a 50% disregard; 106 CMR 704.281) and feeds it back to the engine so SNAP follows it, because PolicyEngine ends the grant abruptly (policyengine-us #9469; fix in PR #9477); the September clothing allowance is counted under other benefits, and the six-month full disregard is not modelled.",
   };
 }
 
@@ -62,51 +65,58 @@ function premiumAssistance(state: string, curves: Record<string, CurvePoint[]>):
   const points = Object.values(curves).flat();
   if (modeled && points.length > 0 && points.every((p) => p.statePremiumAssistance !== undefined)) {
     return {
-      applies: true, source: "modeled", program: modeled.program,
-      note: `PolicyEngine's ${modeled.variable} netted out of the premium (it lands in household_health_benefits, not the out-of-pocket figure HotGap reads); the local ladder stands down.`,
+      applies: true, source: "modeled", program: modeled.program, code: `evaluate.ts applyStatePremiumAssistance (${modeled.variable})`,
+      note: `PolicyEngine computes ${modeled.program} itself, and HotGap subtracts it from the premium the household pays, because the engine reports it as a health benefit rather than in the out-of-pocket premium HotGap reads; no local schedule is applied.`,
     };
   }
   const wrap = STATE_PREMIUM_WRAPS.find((w) => w.state === state);
   if (wrap) {
     return {
-      applies: true, source: "ladder", program: wrap.program,
-      note: `$0-premium tier to ${Math.round(wrap.zeroPremiumUpToFpl * 100)}% FPL${wrap.tiers ? " and the published reduced-premium tiers above it" : ""}, applied locally from ${wrap.source} (read ${wrap.readOn}) — WORKAROUND until upstream models the wrap (policyengine-us #9481).`,
+      applies: true, source: "ladder", program: wrap.program, code: "statePremiumWraps.ts", cite: wrap.source,
+      note: `HotGap applies ${wrap.program}'s published premium schedule itself — a $0 premium up to ${Math.round(wrap.zeroPremiumUpToFpl * 100)}% of the poverty line${wrap.tiers ? " and the reduced premiums above it" : ""}, as read on ${wrap.readOn} — because PolicyEngine does not model the program (policyengine-us #9481).`,
     };
   }
   const known = modeled?.program ?? UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state)?.program ?? null;
   return {
-    applies: false, source: "none", program: known,
+    applies: false, source: "none", program: known, code: "statePremiumAssistance.ts",
     note: known
-      ? `${known} exists but is modeled nowhere on this sweep — no upstream variable served, no FPL-bounded $0 tier for a ladder — so the net premium is overstated by it.`
-      : "No state premium help served by the endpoint, and no ladder or known program for this state.",
+      ? `${known} is not counted: PolicyEngine served no figure for it on this sweep, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.`
+      : "No state premium help applies: PolicyEngine serves none for this state, and HotGap knows of no program to add.",
   };
 }
 
 function childcareSubsidy(state: string, model?: ModelRecord): StateCorrections["childcareSubsidy"] {
+  const code = "parse.ts childcareSubsidyCounted";
   if (model?.countsChildcareSubsidy) {
-    return { applies: false, source: "in net income", note: "Already inside household_net_income: this model counts the aggregate child_care_subsidies in every state (policyengine-us #9503); HotGap only names it." };
+    return { applies: false, source: "in net income", code, note: "PolicyEngine counts the child-care subsidy inside net income in every state on this version (policyengine-us #9503), so HotGap only names it." };
   }
   return childcareSubsidyInNetIncome(state)
-    ? { applies: false, source: "in net income", note: "Already inside household_net_income (gov.household.household_state_benefits lists this state's subsidy); HotGap only names it." }
-    : { applies: true, source: "added by HotGap", note: "Computed by PolicyEngine but dropped from household_net_income here, so HotGap adds it back (parse.ts) — WORKAROUND until this endpoint carries policyengine-us #9503 (issue #9405)." };
+    ? { applies: false, source: "in net income", code, note: "PolicyEngine already counts this state's child-care subsidy in net income, so HotGap only names it." }
+    : { applies: true, source: "added by HotGap", code, note: "PolicyEngine computes the child-care subsidy but leaves it out of net income here, so HotGap adds it back, until the engine's own fix (policyengine-us #9405, PR #9503) reaches this endpoint." };
 }
 
 function coverageGap(state: string): CorrectionNote {
+  const code = "evaluate.ts applyCoverageGap";
   return NON_EXPANSION_STATES.has(state)
-    ? { applies: true, note: "Non-expansion state: an adult with no Medicaid and no premium credit under 100% FPL is charged no marketplace premium, and flagged (evaluate.ts applyCoverageGap) — WORKAROUND until upstream gates take-up on subsidy eligibility (policyengine-us #9472)." }
-    : { applies: false, note: "Expansion state: adults to 138% FPL are on Medicaid, so the coverage-gap correction never fires." };
+    ? { applies: true, code, note: "In this non-expansion state an adult with no Medicaid and no premium credit below 100% of the poverty line is charged no marketplace premium, and the point is flagged, because PolicyEngine bills the full premium to someone the marketplace would not enrol (policyengine-us #9472)." }
+    : { applies: false, code, note: "Expansion state: adults to 138% of the poverty line are on Medicaid, so the coverage-gap correction never fires." };
 }
 
 function unmodeled(state: string, premium: StateCorrections["premiumAssistance"], ctx: CoverageContext): UnmodeledProgram[] {
   const out: UnmodeledProgram[] = [];
   if (premium.source === "none" && premium.program) {
     const known = UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state);
-    out.push({ program: premium.program, note: known ? `${known.note}; no upstream variable and no local ladder.` : "The endpoint did not serve the state's variable on this sweep, and no local ladder covers it." });
+    out.push({
+      program: premium.program,
+      note: known
+        ? `${premium.program} (${known.note}) is not computed by PolicyEngine, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.`
+        : `PolicyEngine models ${premium.program}, but this sweep's endpoint did not serve it and HotGap has no schedule of its own for it, so the premiums here are overstated by it.`,
+    });
   }
   if (ctx.childcareSubsidyUnmodeled?.includes(state)) {
-    out.push({ program: "Child-care subsidy (CCDF)", note: "The engine paid $0 at every point to an archetype that pays for care — a modeling gap, not a state rule; footnote this state rather than read its missing cliff as good news." });
+    out.push({ program: "Child-care subsidy (CCDF)", note: "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news." });
   }
-  out.push({ program: "LIHEAP", note: "Not requested from PolicyEngine and not in its household_benefits; the few state programs upstream models never reach net income." });
+  out.push({ program: "LIHEAP", note: "Not counted anywhere: HotGap does not request LIHEAP from PolicyEngine, and the few state programs the engine models never reach its net income figure." });
   return out;
 }
 

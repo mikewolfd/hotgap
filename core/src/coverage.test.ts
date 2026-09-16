@@ -48,9 +48,9 @@ describe("stateCoverage — corrections", () => {
 
   it("reads premium help off the sweep: modeled when every point carries it, the ladder otherwise, none when neither exists", () => {
     const modeled = stateCoverage("CA", curves({ statePremiumAssistance: 900 })).corrections.premiumAssistance;
-    expect(modeled).toMatchObject({ applies: true, source: "modeled", program: "California Premium Subsidy", note: expect.stringContaining("assigned_ca_premium_subsidy") });
-    // The same state on an endpoint without the variable falls back to its ladder.
-    expect(stateCoverage("CA", curves()).corrections.premiumAssistance).toMatchObject({ source: "ladder", program: "California Premium Subsidy", note: expect.stringContaining("#9481") });
+    expect(modeled).toMatchObject({ applies: true, source: "modeled", program: "California Premium Subsidy", code: expect.stringContaining("assigned_ca_premium_subsidy") });
+    // The same state on an endpoint without the variable falls back to its ladder, citing the page the ladder was read from.
+    expect(stateCoverage("CA", curves()).corrections.premiumAssistance).toMatchObject({ source: "ladder", program: "California Premium Subsidy", note: expect.stringContaining("#9481"), cite: expect.stringMatching(/^https:\/\//) });
     // One archetype without the amount is enough to stand the model down (evaluate.ts needs every point).
     const mixed = { ...curves({ statePremiumAssistance: 900 }), "single-0": curve() };
     expect(stateCoverage("CA", mixed).corrections.premiumAssistance.source).toBe("ladder");
@@ -67,6 +67,22 @@ describe("stateCoverage — corrections", () => {
     expect(md.corrections.premiumAssistance).toMatchObject({ source: "none", program: "Maryland Young Adult Premium Assistance" });
     expect(md.unmodeled[0]).toMatchObject({ program: "Maryland Young Adult Premium Assistance", note: expect.stringContaining("did not serve") });
     expect(stateCoverage("MD", curves({ statePremiumAssistance: 1 })).unmodeled.map((u) => u.program)).toEqual(["LIHEAP"]);
+  });
+
+  it("writes every note for the reader who will quote it: a sentence, the issue as the cite, the code pointer beside it (S9)", () => {
+    for (const state of ["TX", "MA", "CT", "CO", "NY"]) {
+      const c = stateCoverage(state, curves()).corrections;
+      const notes = [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap, ...c.policyOverrides];
+      for (const n of notes) {
+        expect(n.note, `${state}: ${n.note}`).toMatch(/^[A-Z].*\.$/);
+        expect(n.note, `${state}: ${n.note}`).not.toMatch(/WORKAROUND|\.ts\b|household_net_income|household_health_benefits|\bFPL\b/);
+      }
+      for (const n of [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap]) expect(n.code).toMatch(/\.ts\b/);
+      // Every correction that works around an upstream defect names the issue.
+      for (const n of [c.childcareSubsidy, c.coverageGap]) if (n.applies) expect(n.note).toMatch(/policyengine-us #\d{4}/);
+      for (const o of c.policyOverrides) expect(o.note).toMatch(/policyengine-us #\d{4}/);
+    }
+    expect(stateCoverage("MA", curves()).corrections.maTafdc.cite).toMatch(/^https:\/\/www\.mass\.gov\//);
   });
 
   it("follows the child-care inclusion list and the expansion list", () => {
