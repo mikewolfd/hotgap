@@ -43,6 +43,8 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+// The one state list (plain node strips the types; Node 22.18+).
+import { FIPS_TO_USPS, STATE_CODES } from "../core/src/states.ts";
 
 const SOURCE = {
   countyPop: "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv",
@@ -53,15 +55,6 @@ const SOURCE = {
   ndcpIndex: "https://www.dol.gov/agencies/wb/topics/childcare/price-by-age-care-setting",
   eci: "https://api.bls.gov/publicAPI/v2/timeseries/data/",
 };
-
-const STATES = {
-  AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10", DC: "11", FL: "12",
-  GA: "13", HI: "15", ID: "16", IL: "17", IN: "18", IA: "19", KS: "20", KY: "21", LA: "22", ME: "23",
-  MD: "24", MA: "25", MI: "26", MN: "27", MS: "28", MO: "29", MT: "30", NE: "31", NV: "32", NH: "33",
-  NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38", OH: "39", OK: "40", OR: "41", PA: "42", RI: "44",
-  SC: "45", SD: "46", TN: "47", TX: "48", UT: "49", VT: "50", VA: "51", WA: "53", WV: "54", WI: "55", WY: "56",
-};
-const USPS_BY_FIPS = Object.fromEntries(Object.entries(STATES).map(([usps, fips]) => [fips, usps]));
 
 // ---------------------------------------------------------------- downloading
 
@@ -215,13 +208,13 @@ function mostPopulousCounties(csvPath) {
   for (let i = 1; i < lines.length; i++) {
     const f = lines[i].trim().split(",");
     if (f[idx.SUMLEV] !== "050") continue; // 050 = county; 040 = state totals
-    const state = USPS_BY_FIPS[f[idx.STATE]];
+    const state = FIPS_TO_USPS[f[idx.STATE]];
     if (!state) continue; // PR and the other territories are not modeled
     const pop = Number(f[idx.POPESTIMATE2024]);
     if (!Number.isFinite(pop)) throw new Error(`${f[idx.STATE]}${f[idx.COUNTY]}: unreadable POPESTIMATE2024`);
     if (!best[state] || pop > best[state].pop) best[state] = { fips: f[idx.STATE] + f[idx.COUNTY], name: f[idx.CTYNAME], pop };
   }
-  const missing = Object.keys(STATES).filter((s) => !best[s]);
+  const missing = STATE_CODES.filter((s) => !best[s]);
   if (missing.length) throw new Error(`no county found for ${missing.join(", ")}`);
   return best;
 }
@@ -486,7 +479,7 @@ for (const [band, latest] of Object.entries(bands)) {
   byState[band] = {};
   national[band] = [];
   for (const [fips, { year, weekly }] of latest) {
-    const state = USPS_BY_FIPS[fips.slice(0, 2)];
+    const state = FIPS_TO_USPS[fips.slice(0, 2)];
     const price = monthly2026(weekly, year, factor);
     if (state) (byState[band][state] ??= []).push({ fips, year, price });
     if (year === lastYear) national[band].push(price);
@@ -498,7 +491,7 @@ const BAND_KEY = { infant: "monthlyChildcareInfant", toddler: "monthlyChildcareT
 const states = {};
 const basis = {};
 const yearsUsed = new Set();
-for (const state of Object.keys(STATES).sort()) {
+for (const state of [...STATE_CODES].sort()) {
   const { fips } = counties[state];
   states[state] = { countyFips: fips, monthlyRent: countyRent(rentRows.get(fips), fips) };
   basis[state] = {};

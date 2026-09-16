@@ -65,6 +65,8 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+// The one state list (plain node strips the types; Node 22.18+).
+import { STATE_CODES } from "../core/src/states.ts";
 
 const PUMS_YEAR = "2024";
 const PUMS_BASE = `https://www2.census.gov/programs-surveys/acs/data/pums/${PUMS_YEAR}`;
@@ -92,14 +94,6 @@ const SOURCE = {
   // builder's variance code against (it reproduces WY "Total males" SE 1948,
   // MOE 3205 and "Age 20-24" SE 1678, MOE 2760 exactly).
   verificationEstimates: `https://www2.census.gov/programs-surveys/acs/tech_docs/pums/estimates/pums_estimates_${PUMS_YEAR.slice(2)}.csv`,
-};
-
-const STATES = {
-  AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10", DC: "11", FL: "12",
-  GA: "13", HI: "15", ID: "16", IL: "17", IN: "18", IA: "19", KS: "20", KY: "21", LA: "22", ME: "23",
-  MD: "24", MA: "25", MI: "26", MN: "27", MS: "28", MO: "29", MT: "30", NE: "31", NV: "32", NH: "33",
-  NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38", OH: "39", OK: "40", OR: "41", PA: "42", RI: "44",
-  SC: "45", SD: "46", TN: "47", TX: "48", UT: "49", VT: "50", VA: "51", WA: "53", WV: "54", WI: "55", WY: "56",
 };
 
 // The five smallest states by 2024 1-Year housing records (WY 3,024 / VT 3,875 /
@@ -479,7 +473,7 @@ function growthFactor(eci) {
 // ---------------------------------------------------------------------- main
 
 const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=")));
-const stateList = argv.states ? argv.states.split(",") : Object.keys(STATES);
+const stateList = argv.states ? argv.states.split(",") : STATE_CODES;
 const outPath = argv.out ? new URL(argv.out, `file://${process.cwd()}/`) : new URL("../core/data/reach.json", import.meta.url);
 
 const growth = growthFactor(await fetchEci());
@@ -491,7 +485,7 @@ const states = argv.states && existsSync(outPath) ? JSON.parse(readFileSync(outP
 const started = Date.now();
 
 for (const st of stateList) {
-  if (!STATES[st]) throw new Error(`unknown state ${st}`);
+  if (!STATE_CODES.includes(st)) throw new Error(`unknown state ${st}`);
   const t0 = Date.now();
   const oneYear = await readState(st, false);
   adjincUsed[VINTAGE_1YR] = [...new Set([...(adjincUsed[VINTAGE_1YR] || []), ...oneYear.adjinc])].sort((a, b) => a - b);
