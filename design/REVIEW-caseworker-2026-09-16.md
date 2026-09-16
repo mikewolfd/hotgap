@@ -69,6 +69,18 @@ page carries a local `!important` that hides it (TODO(system) 11).
 
 Counts: **2 B, 10 S, 10 N.**
 
+**Resolution pass, 2026-09-16.** Every finding below carries a *Resolved*
+line naming the commit and the evidence the fixed page produced, re-measured
+by `app/e2e/caseworker.spec.ts` on the builder's branch merged with `main`
+(`3e9e544`: the system fixes from the places review) — through
+`npx vite build` and `wrangler dev --port 8790` against the hosted engine,
+with a second `wrangler dev --port 8791 --var HOTGAP_PE_URL:…:9/…` for the
+archetype path — and written to `design/review/caseworker/after/`
+(screenshots named by finding, `measurements.json`). Two items are system
+rules and keep their TODO(system) entry with the page-side part done (S9,
+N2); one was resolved as the places pass resolved its twin (N3, dropped).
+
+
 ---
 
 ## Blockers
@@ -100,6 +112,17 @@ Counts: **2 B, 10 S, 10 N.**
   so the column prints em dashes, its sub-line the reason, and the footer's
   *Try again*; the same test belongs in `compareNote` so the caption stops
   vouching for an empty column.
+
+*Resolved* (`3a86252`): `model.ts` `notInSweep(base, ev)` — the reply is an
+archetype of the base's own id at the base's earnings — puts the column in
+the `unanswered` state: sub-line "not in the sweep — needs the live call",
+cells "—", *Try again* and *Remove* in the footer, and `compareNote` adds
+"The committed sweep varies only a household's shape and pay, so a what-if
+that changes something else has no figure until the live call answers."
+Measured on the dead-engine server with `whatif=housing=1` and
+`whatif=pay=55000`: the housing column unanswered, the raise column a real
+figure marked "(archetype)" (`design/review/caseworker/after/B1-archetype-1280-compare.png`,
+`measurements.json` `B1-archetype-1280`).
 
 ### B2. The CompareTable cannot hold the comparison it exists for
 
@@ -134,6 +157,19 @@ Counts: **2 B, 10 S, 10 N.**
   span both grid columns (`grid-column: 1 / -1`) once there is more than
   one what-if — the page knows the count when it renders the header.
 
+*Resolved* (`3a86252`): the 30rem floor is scoped to the drops table; `.compare
+th:first-child` is 11rem (8rem below 520px), `position: sticky` at the
+start edge on the plane; column heads may wrap below 520px; the Compare
+section is its own grid item and takes `grid-column: 1 / -1` under both
+columns once `data-wide` (more than one what-if) is set by `renderCompare`.
+Measured: three what-ifs at 1280 — table 1184 in a 1184 scroller, names
+176, rows 40px (`design/review/caseworker/after/B2-compare-1280-3-whatifs.png`); the base alone at 390 —
+358 in 358 with the figure column ending at the scroller's edge
+(`design/review/caseworker/after/B2-compare-390-now-only.png`); base + one what-if at 390 — 358 in 358
+(`design/review/caseworker/after/B2-compare-390-1-whatif.png`); two what-ifs at 390 scroll under sticky
+names (`design/review/caseworker/after/B2-compare-390-2-whatifs.png`; `measurements.json`
+`B2-compare-*`).
+
 ---
 
 ## Should fix
@@ -160,6 +196,16 @@ CCDF subsidy off" in the note and *CCDF subsidy off* in the column. Fix:
 `scenarios.ts` already holds, plus a heading and a submit — "The household",
 "Update the household"), and the chip, the note and the column say one name.
 
+*Resolved* (`3a86252`): `mountEditor` takes `copy`, merged over the citizen
+words two levels deep; `src/caseworker/copy.ts` `editor` is the caseworker
+register (Place, Household, Pay, CCDF subsidy, SNAP on/off; "The
+household", "Update the household", "Nothing typed here is stored"); the
+summary's empty line reads "Enter the household to evaluate it";
+`scenarios.ts` names a column by its chip (`flagName` reads the same
+table), so the press is *CCDF subsidy on* in the chip, "What-if added: CCDF
+subsidy off" in the note and *CCDF subsidy off* in the column
+(`design/review/caseworker/after/S1-S2-chips-1280.png`, `design/review/caseworker/after/S3-whatif-390-action-opened.png`).
+
 ### S2. Twenty-two equal chips: "none" set like an answer, the toggles last, the hint below them
 
 The count is right — `inventory.md` § ScenarioBar says the newer answers
@@ -182,6 +228,14 @@ the caseworker's order — the six facts, the take-up toggles, then the rest —
 as an `order` the surface passes with its labels; and the note line first
 in the row, not last (TODO(system) 12).
 
+*Resolved* (`3a86252`): `order` on `mountEditor` (facts, the take-up toggles, then
+the rest); a value chip at "none" carries `data-unset` and `editor.css` sets
+its value in `--ink-3` at 400 (measured: the unset chips at 400 against the
+answered 600, a different ink); the note is the first child of the row.
+(`design/review/caseworker/after/S1-S2-chips-1280.png`, `measurements.json` `S2-chips-1280`.) The
+`.hg-chip--unset` class and the note's place stay on the system list (TODO
+12, 14).
+
 ### S3. A what-if lands a viewport or more away, the action that promises to add one only writes a hint, and *Remove* is never answered
 
 `main.ts:76–80`: at 1280 *Add a what-if* sets a note and focuses a chip; a
@@ -200,6 +254,15 @@ button, so "Add a what-if" always ends in a what-if; the note carries the
 mockup's own link ("…under <a href="#compare">Compare</a>"); and a remove
 writes "What-if removed: {label}." in the same line.
 
+*Resolved* (`3a86252`): the action opens the screen on the pay field with *Add as
+a what-if* first and primary — the one `type="submit"` button, so Enter
+presses it (measured: Enter on the screen with pay 55,000 adds
+`whatif=pay=55000` and leaves the chips on the base); the note is a
+fragment with the link "…evaluated beside the base under <a
+href="#compare">Compare</a>. The chips show the base."; *Remove* writes
+"What-if removed: {label}." (`design/review/caseworker/after/S3-whatif-390-action-opened.png`,
+`design/review/caseworker/after/S3-note-390-after-press.png`). The chips-row hint is gone with it.
+
 ### S4. The leap label sits on the merged mark's ring at both widths
 
 `chart.ts:171` places "+$7,000" at `lx0 + 8, yp − 6` (desktop) or
@@ -217,6 +280,13 @@ intersects a mark's 20px ring, lift it a line (`yp − 20`) — the same
 overlap test the marks already run against each other — and record the
 rule under *Direct labels* in `charts.md`.
 
+*Resolved* (`3a86252`): `chart.ts` `clearRings` measures each direct label's box
+once it is in the tree and lifts it a line (14px, up to three times) while
+it crosses any mark's 20px ring. Measured at 390 and 1280, light and dark:
+every label 0 rings (`design/review/caseworker/after/S4-chart-390.png`, `design/review/caseworker/after/S4-chart-1280.png`,
+`measurements.json` `S4-labels-*`). The `charts.md` rule stays on the
+system list (TODO 15).
+
 ### S5. Two sentences that are true only sometimes print always
 
 `chart.ts:190`: "The y-axis starts at $0, not $0; the visible range is
@@ -228,6 +298,13 @@ correction has just said no premium is charged (`measurements.json`
 mockup never rendered. Fix: render each clause from its condition — the
 "not $0" clause only when `y0 > 0`, the premium clause only when
 `breakdown.premiums > 0` — as the ghost sentence already is.
+
+*Resolved* (`3a86252`): `copy.chart.axis(floor, ratio)` adds ", not $0" only when
+the floor is above zero; `copy.ledger.medicaidEnds(rise)` adds the premium
+clause only when it rises. Measured on the Texas household (ZIP 78701):
+"The y-axis starts at $0; the visible range is 23.3× the largest drop" and no
+"rises $0" in the ledger (`design/review/caseworker/after/S5-chart-1280-TX.png`, `measurements.json`
+`S5-TX-*`).
 
 ### S6. A failed what-if puts its error sentence in the column header and breaks the table
 
@@ -241,6 +318,13 @@ shape ("did not come back" as its sub-line, no sentence); the sentence goes
 beside *Try again* in the footer cell, or into the note line, which is the
 page's one place for a reply.
 
+*Resolved* (`3a86252`): a column has a state (computing / ok / failed /
+unanswered); the header keeps the name and "did not come back"; the
+sentence sits in the footer cell above *Try again* and *Remove*. Measured
+with the engine answering 503 to one what-if: the table 1184 in 1184, names
+176, and *Try again* fills the column once the engine is back
+(`design/review/caseworker/after/S6-compare-1280-whatif-failed.png`).
+
 ### S7. BreakdownBars at 390 is a 124px track with a two-line axis
 
 `caseworker.css:54` keeps `5.5rem 1fr 5.5rem` at every width; in a 358px
@@ -250,6 +334,11 @@ a 1px hairline (`breakdown-390-light.png`, `probe.narrow.bdTrack`).
 Inherited from the mockup. Fix: below 520px, label and value on one line
 above the track (`grid-template-columns: 1fr auto` with the track spanning
 both), which gives a 326px track and one-line axis words.
+
+*Resolved* (`3a86252`): label, value and track are three grid items; below 520px
+`1fr auto` with the track spanning the row below. Measured: track 324px,
+axis words one line (20px) at 390; one 31px row at 1280
+(`design/review/caseworker/after/S7-breakdown-390.png`, `design/review/caseworker/after/S7-breakdown-1280.png`).
 
 ### S8. The client sheet takes the counselor's density, and its heading addresses the counselor
 
@@ -265,6 +354,11 @@ print block, `.handout { font-size: 13pt; }` and `.handout p { max-width:
 var(--measure) }`; a heading in the second person the sheet already uses
 ("Your pay and your help — Colorado, one parent, two children").
 
+*Resolved* (`3a86252`): `.handout { font-size: 13pt }`, `.handout p { max-width:
+var(--measure) }` in the print block; the heading is "Your pay and your
+help — Colorado, one parent, two children". Measured under print emulation:
+17.33px and a 476px measure (`design/review/caseworker/after/S8-print-handout.png`).
+
 ### S9. CorrectionsApplied at 390 leaves 170px for the sentence
 
 `caseworker.css:30` keeps `--col: 11rem` (176px) at every width, so in a
@@ -275,6 +369,10 @@ Colorado's one row, `assigned_co_premium_assis|tance` broken mid-identifier
 uses the same `.hg-rows`. Fix in `tokens.css`, since the row is the
 system's: below 520px `.hg-rows > li { grid-template-columns: 1fr }` with
 the program on its own line (TODO(system) 13).
+
+*Resolved, page side* (`3a86252`): `caseworker.css` stacks `.provenance .hg-rows >
+li` below 520px; the cite measures 358px (`design/review/caseworker/after/S9-provenance-390.png`). The
+system rule for `.hg-rows` stays TODO(system) 13.
 
 ### S10. The landing shows eighteen empty chips above the form
 
@@ -289,6 +387,11 @@ until `hasAnswers(flags)` (the summary line already has this test at
 stands (`.hg-button:disabled` exists in `tokens.css:426`); the citizen page
 gets the same relief.
 
+*Resolved* (`3a86252`): the editor hides `#inputs` until `hasAnswers(flags)` and
+disables any action marked `needsAnswers` (both of this surface's).
+Measured: a bare URL shows the screen, no chips, both actions disabled
+(`design/review/caseworker/after/S10-landing-1280.png`).
+
 ---
 
 ## Nits
@@ -301,21 +404,33 @@ gets the same relief.
   landing is followed by Cmd+P (`print-letter-from-dark-p-1.png`); the
   page's own *Print* button moves focus first and does not. Split "close the
   screen" from "move focus": a landing leaves focus at the document start.
+  *Resolved* (`3a86252`): `runBase` moves focus only on a push (a submit); a
+  landing leaves `document.activeElement` on the body (asserted at both
+  widths).
 - **N2.** The note line is not the full-width line the inventory describes:
   `.hg-source`'s `max-width: 76ch` (`tokens.css:338`) caps the
   `flex-basis: 100%` of `.hg-scenario__note` (`:474`) at 566px, so at 1280
   it sits on the last chip's row, x=341, 8px after *Gets WIC yes*
   (`whatif-1280-1-pending-viewport.png`, `probe.note`). `max-width: none`
   on the note (TODO(system) 12).
+  *Resolved, page side* (`3a86252`): `caseworker.css` sets `.hg-scenario__note {
+  max-width: none }`; measured 358px at 390 (`measurements.json`
+  `S3-N2-note-390`). TODO(system) 12 stays for `tokens.css`.
 - **N3.** The theme button is the last thing on the page (y=3,127 at 1280,
   6,046 at 390) and reads *Dark* on a page the OS already made dark
   (`page-1280-dark.png`; `main.ts:236–241` toggles on the attribute, not
   the computed scheme). The places review's N4 applies; the label should
   follow `getComputedStyle(document.documentElement).colorScheme`.
+  *Resolved* (`3a86252`): dropped, as the places pass dropped its own (its N4,
+  `inventory.md` #20); `prefers-color-scheme` rules and the proof emulates
+  dark.
 - **N4.** `]` skips a merged mark whose first member is below the cursor:
   `chart.ts:257` tests `cliffs()[m.members[0]].startEarnings > at`, so at
   390 the first `]` from $38,000 lands on $60,000, past the six-cliff mark
   that holds $41k–$54k (`measurements.json` `mark1-390`). Test any member.
+  *Resolved* (`3a86252`): `]` and `[` test any member; the first `]` from
+  $38,000 at 390 lands on "6 drops between $37,000 and $55,000, together
+  $29,558 a year" (`measurements.json` `N4-mark1-390`).
 - **N5.** Paper carries screen chrome: the 22 chips print as bordered
   controls, eight rows on Letter page 1 (`print-letter-from-dark-p-1.png`;
   `header.hg-scenario` is not `hg-no-print`, only its summary is); "Select
@@ -323,6 +438,11 @@ gets the same relief.
   readout sentence (`:49`) print on page 2–3; the drops ledger keeps its
   44px rows (places N5). Mark the caption, the readout and the inputs row
   `hg-no-print`; the assumed list already states the inputs.
+  *Resolved* (`3a86252`): the page's print block hides `.hg-scenario` (the bar
+  and its chips), and the drops caption and the readout carry
+  `hg-no-print`; measured `display: none` for all three
+  (`design/review/caseworker/after/N5-print-top.png`). The 44px rows are the system's (`tokens.css` now
+  drops `.hg-row-btn`'s floor on paper).
 - **N6.** The chart's type on paper is whatever width it was last drawn
   at: 9.4pt ticks from a 1280 screen, 17.3pt from a phone (the 240px
   narrow chart stretched ×1.9, `print-letter-direct-390-p-2.png`), 5.2pt
@@ -330,20 +450,34 @@ gets the same relief.
   the resize redraw runs on `requestAnimationFrame`, which print layout does
   not wait for. Redraw synchronously on `beforeprint` at a fixed width
   (`42rem`) and back on `afterprint`.
+  *Resolved* (`3a86252`): `chart.ts` draws at 672px on `beforeprint` and back on
+  `afterprint`; the proof dispatches the events and reads the viewBox (672,
+  then the screen's). Media emulation does not fire `beforeprint`, so the
+  browser's own dispatch is not what the proof measures.
 - **N7.** Every what-if column wears the series-2 rules, so two adjacent
   what-ifs share a doubled 2px orange line and the mark that meant "the
   compared column" (`charts.md` § Both charts) reads as a grid
   (`compare-1280-2-whatifs-dark.png`; `caseworker.css:70–71`). Keep the 3px
   header rule as the what-if mark and draw only the left side rule.
+  *Resolved* (`3a86252`): a what-if cell's shadow is one 1px start-side rule
+  (`measurements.json` `N7-cell-shadow`) under the 3px header rule.
 - **N8.** The compare table's row names are `<th scope="row">` at the
   browser's 700 (`probe.thw.rowTh`) — the only weight on the page outside
   the 400–600 the font is sliced to. `font-weight: var(--w-semi)` on
   `.compare tbody th`.
+  *Resolved* (`3a86252`): `.compare tbody th { font-weight: var(--w-semi) }`;
+  measured 600.
 - **N9.** The summary line is 65 characters — "80903 · CO · El Paso County ·
   1 adult, kids 3 & 7 · $38,000 a year" — and wraps to two lines at 390
   (`viewport-390-light-top.png`, `probe.narrow.summaryLines`) where the
   inventory's line is 41 and one. Drop the ZIP when a county is known and
   "County" from the county.
+  *Resolved in part* (`3a86252`): the summary names the place once — "CO · El
+  Paso · 1 adult, kids 3 & 7 · $38,000 a year" (50 characters) — and the
+  chip keeps the ZIP. It still wraps to two lines at 390 (46.5px,
+  `design/review/caseworker/after/N9-summary-390.png`): the pay's unit phrase, the editor's, is what is
+  left; the inventory's "$38,000" would need the summary to drop the unit
+  for a yearly pay, which is a copy decision left with the inventory.
 - **N10.** *Remove* and *Try again* are `--small` (32px) inside the table
   footer (`render.ts:148–149`), a size the inventory reserves for a source
   line; on a phone they are the only sub-44px controls beside *Edit*. And
@@ -351,6 +485,9 @@ gets the same relief.
   `correctionRows`) where the note, the office and the mockup say TAFDC
   (`provenance-1280-light-MA.png`); the column sub-line joins " · archetype"
   with the middle dot the README rules out.
+  *Resolved* (`3a86252`): the footer's buttons are plain `.hg-button` (44px,
+  measured); Massachusetts's row is headed "TAFDC (MA)" where the note is
+  the `maTafdc` correction's; the sub-line says "(archetype)".
 
 ---
 
@@ -456,6 +593,10 @@ New:
     print block does beat. Fix in `tokens.css`: add
     `:root:not([data-theme="light"])` to the print selector list, or
     `!important` once, then delete the page's copy.
+    *Resolved* (`tokens.css` on `main` `3e9e544`, the page in `3a86252`): the
+    dark rule sits in `:where()`; the page's `!important` copy is deleted
+    and the proof asserts no page override and `rgb(18,23,28)` ink from
+    OS-dark (`measurements.json` `print`).
 12. `.hg-scenario__note` needs `max-width: none` (`.hg-source`'s 76ch cap
     keeps it off its own line, N2), and `inventory.md` § ScenarioBar should
     say where the line sits — first in the row, so it is read before the
