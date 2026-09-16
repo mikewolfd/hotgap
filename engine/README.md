@@ -128,6 +128,20 @@ The weekly sweep does not use this service; it starts its own engine on
 the GitHub runner (`.github/actions/start-engine`), which is free and
 already sized. This one is for the personal path and whatever UI follows.
 
+**It bills while it exists** — App Platform has no pause, and a service
+cannot scale to zero — and nothing depends on it staying up. So take it
+down when idle and bring it back when wanted:
+
+```sh
+node scripts/engine-app.mjs status
+node scripts/engine-app.mjs down    # deletes the app; $0 until `up`. The registry image ($5/month) stays.
+node scripts/engine-app.mjs up      # recreates it from the spec in the script, ~3 min; writes the new URL to .env
+```
+
+The hostname changes on every `up`, which is why the script owns
+`HOTGAP_PE_URL` in `.env`. (`status` has been exercised against the live
+app; the `down`/`up` cycle has not yet been run end to end.)
+
 ## Which model produced a number
 
 `GET /healthz` and an `X-PolicyEngine-Version` header on every response:
