@@ -340,11 +340,10 @@ describe("the child-care subsidy take-up toggle", () => {
     expect(spmOf(withKids).meets_ccdf_activity_test).toBeUndefined();
   });
 
-  it("assumes full-day care for a young child, before-and-after-school care for one in school, none past 12, and none for the adults", () => {
+  it("assumes full-time care for every child through 12 — the schoolchild too, whose NDCP price is a full-time rate — none past 12, and none for the adults", () => {
     const people = peopleOf({ ...withKids, childAges: [3, 8, 14], childDisabled: [false, false, false], getsChildcareSubsidy: true, married: true, spouseAge: 30 });
-    expect(people.child1.childcare_hours_per_day).toEqual({ "2026": 8 });
-    expect(people.child2.childcare_hours_per_day).toEqual({ "2026": 3 });
     for (const child of ["child1", "child2"]) {
+      expect(people[child].childcare_hours_per_day, child).toEqual({ "2026": 8 });
       expect(people[child].childcare_days_per_week, child).toEqual({ "2026": 5 });
       expect(people[child].childcare_attending_days_per_month, child).toEqual({ "2026": 20 });
     }

@@ -1,6 +1,6 @@
 import { DEFAULT_HOURS } from "./income.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
-import { CHILDCARE_MAX_AGE, isSchoolAge } from "./stateDefaults.js";
+import { CHILDCARE_MAX_AGE } from "./stateDefaults.js";
 import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
 import { householdSize, YEAR, type HouseholdAnswers } from "./types.js";
 
@@ -145,20 +145,22 @@ function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: H
   for (const [name, person] of Object.entries(people)) {
     if (name === "you" || name === "spouse") continue;
     const age = (person.age as Record<string, number>)[YEAR];
-    // A child in school is in care before and after it — three hours a day —
-    // and a child past CCDF's age limit is in none; everyone younger is in
-    // full-day care. Matches how stateDefaults prices each band.
+    // A child past CCDF's age limit is in no care. Every younger child,
+    // schoolchildren included, is sent full-time attendance: the NDCP price
+    // stateDefaults charges for a school-age child is its FULL-TIME weekly
+    // rate (it publishes no part-day one), and the states' formulas pay
+    // part-day rates below about five or six hours a day — CA, IL, MA, OH and
+    // NY paid $5,000–7,000 a year less for a 7-year-old at three hours than
+    // at eight (2.5.0, 2026-09-16) — so a part-day schedule against a
+    // full-time bill would understate the subsidy against the very bill it
+    // offsets. Bill and attendance are kept on the same footing.
     if (age > CHILDCARE_MAX_AGE) continue;
-    person.childcare_hours_per_day = y(isSchoolAge(age) ? SCHOOL_AGE_HOURS_PER_DAY : 8);
+    person.childcare_hours_per_day = y(8);
     person.childcare_days_per_week = y(5);
     person.childcare_attending_days_per_month = y(20);
     Object.assign(person, childcareProviderType(a.state, age));
   }
 }
-
-// Before-and-after-school care for a child in school (stateDefaults prices
-// it at the NDCP's school-age rate).
-const SCHOOL_AGE_HOURS_PER_DAY = 3;
 
 // Massachusetts treats a child as school age from this birthday
 // (gov.states.ma.eec.ccfa.age_threshold.school_age), the NDCP's line too.

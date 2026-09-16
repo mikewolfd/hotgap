@@ -44,8 +44,6 @@ export function childcareMonthlyFor(defaults: StateDefaults, age: number): numbe
   return 0;
 }
 
-/** Whether a child of this age is in school, on the NDCP's own line (61 months and up). */
-export const isSchoolAge = (age: number): boolean => age >= 5;
 
 interface StateDefaultsJson {
   read: string;
