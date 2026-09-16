@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { axisSpec, configurePolicyEngine, loadStateFile, validateAnswers, type ApiErrorBody, type CurveCache, type CurveResponse, type HouseholdEvaluation } from "@hotgap/core";
 import { peBody } from "../../core/src/testing.js";
-import { curveCache, handleRequest, type Deps } from "./index.js";
+import { curveCache, handleRequest, localRateLimiter, type Deps } from "./index.js";
 
 const raw = {
   state: "CA", married: false, age: 30, spouseAge: null, childAges: [5],
@@ -148,6 +148,17 @@ describe("routing", () => {
   it("is 405 for GET /api/evaluate and 404 elsewhere under /api", async () => {
     expect((await handleRequest(new Request("https://hotgap.example/api/evaluate"), deps())).status).toBe(405);
     expect((await handleRequest(new Request("https://hotgap.example/api/curve", { method: "POST" }), deps())).status).toBe(404);
+  });
+});
+
+describe("localRateLimiter", () => {
+  it("allows the budget per key per window, then refuses until the window passes", async () => {
+    let t = 0;
+    const allow = localRateLimiter({ limit: 2, periodMs: 1000 }, () => t);
+    expect([await allow("a"), await allow("a"), await allow("a")]).toEqual([true, true, false]);
+    expect(await allow("b")).toBe(true);
+    t = 1000;
+    expect(await allow("a")).toBe(true);
   });
 });
 

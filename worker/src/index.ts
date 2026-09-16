@@ -148,6 +148,28 @@ export function curveCache(cache: Cache, waitUntil: (p: Promise<unknown>) => voi
   };
 }
 
+/** The per-client budget the rate-limit binding enforces (wrangler.toml), and the stand-in's. */
+const RATE_LIMIT = { limit: 20, periodMs: 60_000 };
+
+/**
+ * A per-isolate, per-client counter for a deployment whose plan has no
+ * rate-limit binding: a fixed window per key, expired windows swept on
+ * every call, so the map holds at most one entry per client seen in the
+ * last minute in this isolate. Weaker than the binding — an isolate is not
+ * a location — but the same brake on a loop.
+ */
+export function localRateLimiter({ limit, periodMs } = RATE_LIMIT, now: () => number = Date.now): (key: string) => Promise<boolean> {
+  const windows = new Map<string, { since: number; count: number }>();
+  return async (key) => {
+    const t = now();
+    for (const [k, w] of windows) if (t - w.since >= periodMs) windows.delete(k);
+    const w = windows.get(key) ?? { since: t, count: 0 };
+    windows.set(key, w);
+    return ++w.count <= limit;
+  };
+}
+const fallbackLimiter = localRateLimiter();
+
 /** The two secrets (`wrangler secret put`, or worker/.dev.vars locally). Not in wrangler.toml, so not in the generated Env. */
 type Secrets = { HOTGAP_PE_URL?: string; HOTGAP_PE_TOKEN?: string };
 
@@ -164,7 +186,8 @@ export default {
         const res = await env.ASSETS.fetch(new URL(`/data/states/${state}.json`, req.url));
         return res.ok ? ((await res.json()) as StateFileJson) : null;
       },
-      allow: async (key) => (await env.RATE_LIMIT.limit({ key })).success,
+      // The binding when the plan provides it; the in-isolate counter otherwise.
+      allow: env.RATE_LIMIT ? async (key) => (await env.RATE_LIMIT.limit({ key })).success : fallbackLimiter,
     });
   },
 } satisfies ExportedHandler<Env>;
