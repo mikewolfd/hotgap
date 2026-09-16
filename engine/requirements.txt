@@ -10,9 +10,12 @@
 #
 # 2.5.0 (2026-09-16) carries 2.4.4's fix for the Massachusetts TAFDC double
 # count (policyengine-us #9478) and 2.4.3's Massachusetts CCFA rework; the
-# client detects the first by probing, so nothing HotGap-side changes with
-# the pin. The federal CCDF chain 2.5.0 removed was never requested.
-policyengine-us==2.5.0
+# client detects the first by probing. 2.5.2 carries the corrected parent
+# Medicaid limits (#9475, #9499), which the client's version check retires
+# its own override on. 2.5.3 counts state SSI supplements as SNAP unearned
+# income; 2.6.x is state tax and reform aggregates. The federal CCDF chain
+# 2.5.0 removed was never requested.
+policyengine-us==2.6.2
 policyengine-core==3.32.5
 spm-calculator==1.0.0.post1
 

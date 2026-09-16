@@ -7,7 +7,7 @@ import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
 import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
-import { policyOverridesFor, type PolicyOverrides } from "./policyOverrides.js";
+import { PARENT_LIMITS_UPSTREAM_SINCE, parentMedicaidLimit, policyOverridesFor, releaseAtLeast, type PolicyOverrides } from "./policyOverrides.js";
 import { axisSpec, buildPEPayload, earningsVariable, type AxisSpec, type PayloadOptions } from "./translate.js";
 import { YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
@@ -76,6 +76,12 @@ export interface FetchCurveOptions extends RequestOptions {
    * states triggers one cached probe of the endpoint for the variable.
    */
   statePremiumAssistance?: boolean;
+  /**
+   * Whether the model already carries the parent-limit corrections (release
+   * ≥ PARENT_LIMITS_UPSTREAM_SINCE). Left unset, one cached /healthz read
+   * per endpoint decides; tests set it explicitly.
+   */
+  parentLimitsUpstream?: boolean;
   /**
    * In-flight limit for the Massachusetts feedback loop's point requests.
    * Measured 2026-09-15 on fresh households (64 points): 49 s at 3, 27 s at
@@ -163,7 +169,7 @@ export function curveCacheKey(answers: HouseholdAnswers, policy: PolicyOverrides
 
 /** Household request with HotGap's sourced parameter corrections. */
 export function buildCurvePayload(answers: HouseholdAnswers, opts: PayloadOptions = {}) {
-  const policy = policyOverridesFor(answers);
+  const policy = policyOverridesFor(answers, { parentLimitsUpstream: opts.parentLimitsUpstream });
   return { ...buildPEPayload(answers, opts), ...(Object.keys(policy).length ? { policy } : {}) };
 }
 
@@ -243,7 +249,21 @@ function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Recor
  * (engine/app.py), or null when the endpoint does not say: the public API
  * has no cheap version route (its metadata document is ~70 MB).
  */
-export async function modelVersion(opts: RequestOptions = {}): Promise<string | null> {
+export function modelVersion(opts: RequestOptions = {}): Promise<string | null> {
+  // Once per endpoint per process — the hosted API's null included, since
+  // neither answer changes within one.
+  const endpoint = peUrl();
+  let pending = modelVersionCache.get(endpoint);
+  if (!pending) {
+    pending = readModelVersion(opts);
+    modelVersionCache.set(endpoint, pending);
+  }
+  return pending;
+}
+
+const modelVersionCache = new Map<string, Promise<string | null>>();
+
+async function readModelVersion(opts: RequestOptions): Promise<string | null> {
   const { fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
   const health = new URL(peUrl());
   health.pathname = "/healthz";
@@ -376,7 +396,7 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
     const aboveSga = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL;
     const base = aboveSga ? { ...answers, ssdiMonthly: 0 } : answers;
     const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
-    const pointOpts: PayloadOptions = { statePremiumAssistance: opts.statePremiumAssistance === true, ...(aboveSga ? ABOVE_SGA : {}) };
+    const pointOpts: PayloadOptions = { statePremiumAssistance: opts.statePremiumAssistance === true, parentLimitsUpstream: opts.parentLimitsUpstream === true, ...(aboveSga ? ABOVE_SGA : {}) };
     const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, pointOpts), opts), 2, opts);
     out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
   });
@@ -384,14 +404,20 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
 }
 
 export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOptions = {}): Promise<CurveResponse> {
-  const key = curveCacheKey(answers);
+  // The parent-limit override is dropped on a model that already carries the
+  // fix (one cached /healthz read per endpoint); the cache key follows the
+  // policy actually sent, so it is computed after that.
+  const parentLimitsUpstream = opts.parentLimitsUpstream
+    ?? (parentMedicaidLimit(answers) !== null && releaseAtLeast(await modelVersion(opts), PARENT_LIMITS_UPSTREAM_SINCE));
+  const policy = policyOverridesFor(answers, { parentLimitsUpstream });
+  const key = curveCacheKey(answers, policy);
   const hit = await opts.cache?.get(key);
   if (hit) return hit;
 
   const axis = axisSpec(answers);
   const requestOpts: FetchCurveOptions = {
     ...opts,
-    timeoutMs: opts.timeoutMs ?? (Object.keys(policyOverridesFor(answers)).length ? POLICY_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
+    timeoutMs: opts.timeoutMs ?? (Object.keys(policy).length ? POLICY_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
   };
   if (answers.state === "MA" && requestOpts.maTafdcDoubleCounted === undefined) {
     requestOpts.maTafdcDoubleCounted = await probeMaTafdcDoubleCount(requestOpts);
@@ -400,7 +426,8 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (assistance && requestOpts.statePremiumAssistance === undefined) {
     requestOpts.statePremiumAssistance = await endpointHasTaxUnitVariable(assistance.variable, requestOpts);
   }
-  const payloadOpts: PayloadOptions = { statePremiumAssistance: requestOpts.statePremiumAssistance === true };
+  const payloadOpts: PayloadOptions = { statePremiumAssistance: requestOpts.statePremiumAssistance === true, parentLimitsUpstream };
+  requestOpts.parentLimitsUpstream = parentLimitsUpstream;
   const swept = answers.ssdiMonthly > 0
     ? await fetchSplicedForSSDI(answers, axis, requestOpts, payloadOpts)
     : parseOrThrow(await requestPE(buildCurvePayload(answers, payloadOpts), requestOpts), axis.count, requestOpts);

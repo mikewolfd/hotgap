@@ -75,6 +75,8 @@ export interface PayloadOptions {
    * rejects the request — so client.ts probes first and sets this.
    */
   statePremiumAssistance?: boolean;
+  /** The model already carries the parent-limit corrections, so no override is attached (policyOverrides.ts). */
+  parentLimitsUpstream?: boolean;
 }
 
 // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only

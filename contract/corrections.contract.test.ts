@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, answersFor, buildCurvePayload, evaluateCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, parsePEResponse, probeMaTafdcDoubleCount, requestPE } from "../core/src/index.js";
+import { ARCHETYPES, answersFor, buildCurvePayload, evaluateCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcGrantParts, maTafdcProbePayload, modelVersion, PARENT_LIMITS_UPSTREAM_SINCE, parsePEResponse, probeMaTafdcDoubleCount, releaseAtLeast, requestPE } from "../core/src/index.js";
 
 function probe(state: string, id: string, min: number, max: number, count: number) {
   const answers = answersFor(state, ARCHETYPES.find((a) => a.id === id)!);
@@ -17,7 +17,14 @@ describe.skipIf(process.env.RUN_CONTRACT !== "1")("live policy corrections", () 
     const baseline = await call({ household: payload.household });
     expect(corrected.result.people.you.medicaid["2026"][0]).toBeGreaterThan(0);
     expect(corrected.result.people.you.medicaid["2026"][1]).toBe(0);
-    expect(baseline.result.people.you.medicaid["2026"][1]).toBeGreaterThan(0);
+    // A model at or past 2.5.2 carries the fix itself (policyengine-us #9475),
+    // so the override is a no-op there and fetchCurve stops sending it; an
+    // older model still needs it. Either way the corrected answer is the same.
+    const upstream = releaseAtLeast(await modelVersion({ timeoutMs: 30_000 }), PARENT_LIMITS_UPSTREAM_SINCE);
+    if (upstream) expect(baseline.result.people.you.medicaid["2026"]).toEqual(corrected.result.people.you.medicaid["2026"]);
+    else expect(baseline.result.people.you.medicaid["2026"][1]).toBeGreaterThan(0);
+    const sent = buildCurvePayload(answersFor("SC", ARCHETYPES.find((a) => a.id === "single-2")!), { parentLimitsUpstream: upstream }) as { policy?: object };
+    expect(sent.policy === undefined).toBe(upstream);
     for (const child of ["child1", "child2"]) {
       expect(corrected.result.people[child].medicaid["2026"]).toEqual(baseline.result.people[child].medicaid["2026"]);
       expect(corrected.result.people[child].medicaid["2026"][1]).toBeGreaterThan(0);

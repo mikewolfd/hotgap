@@ -62,10 +62,34 @@ export function parentMedicaidLimit(a: HouseholdAnswers): number | null {
 }
 
 /** Corrections for this household only; PolicyEngine still decides eligibility. */
-export function policyOverridesFor(a: HouseholdAnswers): PolicyOverrides {
+/**
+ * The release that carries the corrected parent limits upstream
+ * (policyengine-us #9475 and #9499, changelog 2.5.2). On a model at or past
+ * it the override is redundant — the same values, at the price of building
+ * a reform system per request (~6.5 s and ~2 GB on the engine) — so
+ * client.ts drops it there and keeps it for the hosted API's older model.
+ */
+export const PARENT_LIMITS_UPSTREAM_SINCE = "2.5.2";
+
+/** True when `version` (a.b.c) is at or past `floor`. Null, the public API's answer, is not. */
+export function releaseAtLeast(version: string | null, floor: string): boolean {
+  if (!version) return false;
+  const parse = (v: string) => v.split(".").map((n) => Number(n));
+  const [a, b] = [parse(version), parse(floor)];
+  if (a.length !== 3 || a.some((n) => !Number.isInteger(n))) return false;
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
+  return true;
+}
+
+export interface OverrideOptions {
+  /** The parent-limit corrections are already in the model being asked (release ≥ PARENT_LIMITS_UPSTREAM_SINCE). */
+  parentLimitsUpstream?: boolean;
+}
+
+export function policyOverridesFor(a: HouseholdAnswers, opts: OverrideOptions = {}): PolicyOverrides {
   if (YEAR !== "2026") throw new Error("Revalidate PolicyEngine overrides for the new policy year");
   const policy: PolicyOverrides = {};
-  const parent = parentMedicaidLimit(a);
+  const parent = opts.parentLimitsUpstream ? null : parentMedicaidLimit(a);
   if (parent !== null) policy[`${PARENT_LIMIT}.${a.state}`] = { [PERIOD]: parent };
   // Only NY requests receive this list replacement, so another state's
   // expanded BHP eligibility cannot be changed by this workaround.

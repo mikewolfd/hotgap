@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
-import { BHP_EXPANDED_STATES, parentMedicaidLimit, policyOverridesFor } from "./policyOverrides.js";
+import { BHP_EXPANDED_STATES, PARENT_LIMITS_UPSTREAM_SINCE, parentMedicaidLimit, policyOverridesFor, releaseAtLeast } from "./policyOverrides.js";
 import { buildCurvePayload, curveCacheKey, fetchCurve } from "./client.js";
 
 describe("sourced PolicyEngine overrides", () => {
@@ -46,6 +46,35 @@ describe("sourced PolicyEngine overrides", () => {
     await expect(fetchCurve(a, { fetchImpl })).rejects.toThrow();
     expect(payloads).toHaveLength(2);
     for (const payload of payloads) expect(payload.policy).toEqual(policyOverridesFor(a));
+  });
+
+  it("drops the parent-limit override on a model that already carries the fix, and keeps New York's", async () => {
+    expect(releaseAtLeast("2.6.2", PARENT_LIMITS_UPSTREAM_SINCE)).toBe(true);
+    expect(releaseAtLeast("2.5.2", PARENT_LIMITS_UPSTREAM_SINCE)).toBe(true);
+    expect(releaseAtLeast("2.10.0", PARENT_LIMITS_UPSTREAM_SINCE)).toBe(true); // numeric, not lexical
+    expect(releaseAtLeast("2.5.0", PARENT_LIMITS_UPSTREAM_SINCE)).toBe(false);
+    expect(releaseAtLeast(null, PARENT_LIMITS_UPSTREAM_SINCE)).toBe(false); // the hosted API says nothing
+    expect(releaseAtLeast("main", PARENT_LIMITS_UPSTREAM_SINCE)).toBe(false);
+    expect(policyOverridesFor(single("SC"), { parentLimitsUpstream: true })).toEqual({});
+    expect(Object.keys(policyOverridesFor(single("NY"), { parentLimitsUpstream: true }))).toEqual([BHP_EXPANDED_STATES]);
+
+    const payloads: any[] = [];
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      if (!init?.body) return new Response(JSON.stringify({ status: "ok", model: "policyengine-us", version: "2.6.2" }), { status: 200 });
+      payloads.push(JSON.parse(init.body as string));
+      return new Response("{}", { status: 400 });
+    }) as typeof fetch;
+    process.env.HOTGAP_PE_URL = "https://fixed-model.example/us/calculate"; // its own version cache
+    try {
+      await expect(fetchCurve(single("SC"), { fetchImpl })).rejects.toThrow();
+      expect(payloads[0].policy).toBeUndefined();
+      await expect(fetchCurve(single("NY"), { fetchImpl })).rejects.toThrow();
+      expect(Object.keys(payloads[1].policy)).toEqual([BHP_EXPANDED_STATES]);
+      // The cache key follows the policy actually sent.
+      expect(curveCacheKey(single("SC"), {})).not.toBe(curveCacheKey(single("SC")));
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
   });
 
   it("allows time for the upstream reform build and honors caller timeouts", async () => {
