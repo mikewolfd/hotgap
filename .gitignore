@@ -21,3 +21,7 @@ worker-configuration.d.ts
 
 # wrangler dev state (local cache, logs)
 .wrangler/
+
+# Playwright output (app/e2e)
+test-results/
+playwright-report/
