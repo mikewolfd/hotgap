@@ -2,11 +2,169 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HotGap — benefits cliffs by state</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HotGap — what a raise costs, state by state</title>
+  <!-- Archivo is self-hosted through tokens.css (N8): no font link, no preconnect. -->
   <script type="module" src="/src/places/main.ts"></script>
 </head>
 <body>
-  <main id="app"></main>
+<a class="hg-skip" href="#table">Skip to the data table</a>
+
+<div class="page masthead">
+  <p class="wordmark">HotGap</p>
+  <h1>What a raise costs, state by state</h1>
+  <p class="lede"><span id="stateCount"></span> sets of rules, <span id="archCount"></span> household shapes, one axis.
+    Each figure is the worst single $1,000 step of earnings in that state&rsquo;s curve for that
+    household &mdash; how much net income falls when pay goes up by a thousand dollars.</p>
+</div>
+
+<div class="page">
+  <!-- Loading and failure share one line: a status while the sweep loads, an alert if it does not. -->
+  <p class="hg-source" id="status" role="status">Loading the weekly sweep&hellip;</p>
+
+  <div class="hg-filters hg-no-print">
+    <div>
+      <label for="arch">Household</label>
+      <select id="arch" class="hg-select"></select>
+    </div>
+    <div>
+      <label for="metric">Measure</label>
+      <select id="metric" class="hg-select"></select>
+    </div>
+    <div>
+      <label for="sort">Table order</label>
+      <select id="sort" class="hg-select">
+        <option value="state">State, A to Z</option>
+        <option value="measure">This measure, largest first</option>
+      </select>
+    </div>
+    <div class="hg-filters__end">
+      <button type="button" class="hg-button" id="csvBtn">Download these rows (CSV)</button>
+    </div>
+  </div>
+
+  <div class="split">
+    <div>
+      <figure class="figure">
+        <h3 id="figTitle"></h3>
+        <p class="sub" id="figSub"></p>
+        <div class="grid" id="grid" role="group" aria-labelledby="figTitle" aria-describedby="figDesc"></div>
+        <div class="scale" id="scale" aria-hidden="true"></div>
+        <div class="scale-labels" id="scaleLabels"></div>
+        <ul class="legend" id="legend"></ul>
+        <p class="hg-source" id="figSrc"></p>
+        <p class="hg-visually-hidden" id="figDesc">A grid of the fifty states and the District
+          of Columbia, each a square in roughly its geographic position, shaded by the selected
+          measure. A state with no cliff is an empty square; a state whose figure runs past the
+          axis has a dashed edge; a state the model cannot complete is hatched rather than
+          shaded. Each square is a button that opens that state&rsquo;s corrections under the
+          map; the arrow keys move between squares. Every value is listed in the table below
+          this figure.</p>
+      </figure>
+
+      <section class="state" id="stateDetail" aria-labelledby="stateTitle">
+        <h3 id="stateTitle"></h3>
+        <p class="sub" id="stateSub"></p>
+        <ul class="hg-rows" id="corrections"></ul>
+        <h4 id="unmodTitle" hidden></h4>
+        <ul class="hg-rows" id="unmod" hidden></ul>
+        <h4 id="otherTitle" hidden></h4>
+        <ul class="hg-rows" id="other" hidden></ul>
+        <p class="hg-source" id="stateSrc"></p>
+      </section>
+    </div>
+
+    <section aria-labelledby="rankTitle">
+      <h3 id="rankTitle">Ranked</h3>
+      <ul class="rank" id="rank"></ul>
+      <div class="rank-axis" id="rankAxis"></div>
+      <div class="rank-group" id="noneGroup" hidden>
+        <h4 id="noneTitle"></h4>
+        <ul class="rank" id="rankNone"></ul>
+        <p id="noneNote"></p>
+      </div>
+      <div class="rank-group" id="incGroup" hidden>
+        <h4 id="incTitle"></h4>
+        <ul class="rank" id="rankInc"></ul>
+        <p id="incNote"></p>
+      </div>
+      <p class="hg-source">Bins are five equal-width steps across the observed range and are
+        recomputed for every measure, so a shade means nothing across two different measures.
+        Read the bin bounds, not the colour.</p>
+    </section>
+  </div>
+
+  <h2 id="table">All <span id="tableCount"></span>, every measure</h2>
+  <div class="hg-scroll-x">
+    <table class="hg-table">
+      <caption id="tabCap"></caption>
+      <thead>
+        <tr><th scope="col">State</th>
+            <th scope="col" class="num">Largest one-step loss</th>
+            <th scope="col" class="num">Danger zone width</th>
+            <th scope="col" class="num">The leap</th>
+            <th scope="col" class="num">Safe exit</th>
+            <th scope="col" class="num">Cliffs</th>
+            <th scope="col" class="num">Deferred</th>
+            <th scope="col">Figures</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="hg-source">Every row keeps the number the model returned, including the rows it
+    cannot complete, because a reporter needs to see what came back. Those rows are flagged
+    in the last column and are not shaded on the map or placed in the ranking. Select a state
+    on the map or in this table to read the corrections behind its numbers under the map; the
+    arrow keys move between states.</p>
+
+  <h2>How these numbers were made</h2>
+  <div class="hg-panel method">
+    <ul>
+      <li>Every cell is one household shape swept through the
+        <a href="https://policyengine.org">PolicyEngine</a> US microsimulation at
+        <span class="year"></span> rules, earnings varied in $1,000 steps from $0 past 400% of
+        the poverty guideline for that household size, plus $40,000 of room to recover.</li>
+      <li>The money line is <strong>health-adjusted</strong>: household net income minus what
+        the household actually pays in health-insurance premiums, net of the marketplace
+        subsidy. Deductibles and copays are not included.</li>
+      <li>Each archetype is a typical renter in the state&rsquo;s most populous county &mdash;
+        HUD Fair Market Rent, Census county estimates, and the DOL National Database of
+        Childcare Prices preschool price for that county, carried to <span class="year"></span>
+        dollars by the BLS Employment Cost Index. The study year behind the price, and whether
+        a state or national median stood in for a county the database lacks, differ by state
+        and are printed in the source line under the map.</li>
+      <li>The CCDF child care subsidy is <strong>on</strong> for this sweep and off for a
+        household&rsquo;s own lookup. Head Start and housing vouchers are off in both: they
+        are rationed, and assuming a family holds one inflates its numbers.</li>
+      <li>Cliffs deferred to a future renewal &mdash; Head Start&rsquo;s program-year
+        carry-over, a child&rsquo;s 12 months of continuous Medicaid or CHIP eligibility,
+        a parent&rsquo;s Transitional Medical Assistance &mdash; are counted in the
+        <em>deferred</em> column and are lifted out of every other figure here. They are real
+        losses; they do not land in the year of the raise.</li>
+      <li>Where a state&rsquo;s figure needed a correction on top of PolicyEngine &mdash; a
+        premium ladder applied locally, the child care subsidy added back into net income, a
+        parent Medicaid limit taken from the state&rsquo;s handbook, a coverage-gap premium
+        &mdash; it is listed under the map for the selected state, from the sweep&rsquo;s own
+        coverage record, not from copy kept here.</li>
+    </ul>
+    <h3>What the model does not include</h3>
+    <ul>
+      <li>Immigration status, assets, and household members aged 65 or over are not inputs.</li>
+      <li>Alaska and Hawaii marketplace subsidies are computed upstream against the
+        48-state poverty guideline rather than their own higher ones
+        (policyengine-us #9482). HotGap does not correct this, so both states&rsquo;
+        premium-driven figures are understated.</li>
+      <li id="unmodSummary"></li>
+    </ul>
+    <p class="hg-callout hg-callout--caution" id="hatchCaution"></p>
+    <p class="hg-callout hg-callout--caution"><strong>Past the axis is not a number.</strong>
+      Where a state&rsquo;s worst danger zone runs off the top of the axis rather than closing,
+      the safe exit is unknown and the leap is a lower bound. Those cells read <em>past the
+      axis</em> here and must not be charted as a value.</p>
+    <p class="hg-source" id="methodSrc"></p>
+  </div>
+
+  <p class="hg-no-print" style="margin-top:var(--s7)"><button class="hg-button" id="themeBtn" type="button">Dark</button></p>
+</div>
 </body>
 </html>
