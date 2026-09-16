@@ -328,6 +328,13 @@ All under `core/data/`:
 - `zip5-county.json` — ZIP → county crosswalk from the
   [U.S. Census Bureau 2020 ZCTA-county relationship file](https://www.census.gov/geographies/reference-files/time-series/geo/relationship-files.html)
   (public domain). Rebuild: `node scripts/build-zip-county.mjs`.
+- `county-names.json` — county FIPS → name ("El Paso County", "Orleans
+  Parish") from the
+  [U.S. Census Bureau 2020 Gazetteer](https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html)
+  counties file (public domain) — the same 2020 county vintage as the
+  crosswalk above, so every county it can point at has a name here
+  (`countyName`). Nothing but the name is kept. Rebuild:
+  `node scripts/build-county-names.mjs`.
 
 ## Try it
 

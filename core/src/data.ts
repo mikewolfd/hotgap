@@ -6,6 +6,7 @@
 //   reach.json          ACS PUMS household-earnings percentile ladders
 //   zip3-state.json     ZIP prefix → state (GeoNames)
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
+//   county-names.json   county FIPS → name (Census 2020 gazetteer)
 import type { MaTafdcCorrection } from "./maTafdc.js";
 import type { CurvePoint } from "./types.js";
 
