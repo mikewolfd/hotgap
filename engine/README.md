@@ -11,7 +11,7 @@ Two reasons to run it:
 * **13 states.** The hosted service runs an older model that exposes 38 of the
   51 state child-care subsidy variables, so a third of the states cannot be
   modelled at all — `ny_child_care_subsidies` is an HTTP 400 there. All 51 are
-  in 2.4.2. A Texas single parent of a 3-year-old with an $800/month bill, at
+  in 2.5.0. A Texas single parent of a 3-year-old with an $800/month bill, at
   $20,000 of pay: the hosted API says the subsidy is $0, this says $6,307, and
   the subsidy's end at $62,000 is a $2,087 cliff that simply is not on the
   hosted curve.
@@ -82,7 +82,7 @@ one switch and nothing changes for anyone who does not set it.
 
 ```sh
 $ curl -s localhost:8080/healthz
-{"status": "ok", "model": "policyengine-us", "version": "2.4.2",
+{"status": "ok", "model": "policyengine-us", "version": "2.5.0",
  "policyengine_core": "3.32.5", "policy_systems_cached": 0}
 ```
 
@@ -117,39 +117,25 @@ The public API is a whole product; this is the one endpoint HotGap calls.
 Honest list. The first item is a real behaviour change and the one to decide
 about; the rest are cosmetic or are the point of the exercise.
 
-1. **Head Start is no longer inside `household_net_income`.** In 2.4.2 that
-   inclusion moved behind a parameter,
+1. **Head Start is behind a switch from 2.4.2.** The inclusion of Head Start
+   in `household_net_income` moved behind a parameter,
    `gov.simulation.include_head_start_benefits_in_net_income`, which defaults
    to `false` for all time; the hosted model has it unconditionally on. The
    person-level `head_start` value is identical on both ($22,285.26 for the
    contract suite's CA household), but net income differs by exactly that
-   amount. This is the one `contract/policyengine.contract.test.ts` assertion
-   that fails against this service ("head_start:0 override removes Head Start
-   from net income": 0 rather than >15000).
+   amount — verified as a `policy` override, the household's net income goes
+   from $32,986.92 to $55,272.17 against the hosted service's $55,257.64.
 
-   The service runs the model as released rather than quietly re-enabling a
-   switch upstream turned off — a $22k sticker value silently entering or
-   leaving every curve is a decision for HotGap to make and source, not for its
-   transport to make invisibly. It is one line either way. To keep HotGap's
-   curves meaning what they meant on the hosted service, add to
-   `policyOverridesFor` in `core/src/policyOverrides.ts`:
-
-   ```ts
-   policy["gov.simulation.include_head_start_benefits_in_net_income"] = { [PERIOD]: true };
-   ```
-
-   Verified here: sent as a `policy` override, the same household's net income
-   goes from $32,986.92 to $55,272.17 against the hosted service's $55,257.64,
-   and `household_head_start_benefits` reports $22,285.26 — the difference is
-   this parameter and nothing else. (That override would not make the contract
-   assertion itself pass: its probe sends a bare household with no `policy`.
-   Only defaulting the parameter on inside the service would, which is the
-   thing this is declining to do silently.)
-
-   It matters beyond one test. `core/src/parse.ts` builds `otherBenefits` as
-   `household_benefits` minus the programs it names, and it names `headstart`;
-   with Head Start out of `household_benefits` that remainder floors at 0 and
-   stops being a true residual for any household claiming Head Start.
+   The service restores it, as a named baseline override in
+   `engine/calculate.py` (`_baseline_overrides`), because HotGap's own code
+   assumes it: `core/src/parse.ts` builds `otherBenefits` as
+   `household_benefits` minus the programs it names, and it names `headstart`,
+   and `applyHeadStart` in `core/src/evaluate.ts` subtracts the sticker value
+   it expects to find there. A $22k value silently leaving every curve is not
+   a transport decision, so the restore is explicit and can be switched off
+   with `HOTGAP_ENGINE_HEAD_START_IN_NET_INCOME=0`. The contract suite's
+   "head_start:0 override removes Head Start from net income" pins it against
+   whichever endpoint `HOTGAP_PE_URL` names.
 
 2. **Model-version differences everywhere else**, which is the whole reason for
    running this. Colorado, a state the hosted model already supports, agrees
@@ -176,7 +162,7 @@ about; the rest are cosmetic or are the point of the exercise.
    has produced one.
 
 6. **`spm_unit_spm_threshold` and `spm_unit_is_in_spm_poverty` need
-   `county_fips`** in 2.4.2, and raise without it. HotGap requests neither.
+   `county_fips`** from 2.4.2, and raise without it. HotGap requests neither.
 
 ## How it was checked
 

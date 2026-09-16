@@ -58,6 +58,12 @@ export interface CurveCache {
 export interface FetchCurveOptions extends RequestOptions {
   cache?: CurveCache;
   /**
+   * Whether the endpoint counts Massachusetts TAFDC twice. Left unset, a
+   * Massachusetts household triggers one cached probe of the endpoint
+   * (see probeMaTafdcDoubleCount); tests and fixtures set it explicitly.
+   */
+  maTafdcDoubleCounted?: boolean;
+  /**
    * In-flight limit for the Massachusetts feedback loop's point requests.
    * Measured 2026-09-15 on fresh households (64 points): 49 s at 3, 27 s at
    * 6, 21 s at 10, 45 s at 15 as the API saturates. Default 8; a batch that
@@ -147,9 +153,9 @@ export function buildCurvePayload(answers: HouseholdAnswers, opts: PayloadOption
   return { ...buildPEPayload(answers, opts), ...(Object.keys(policy).length ? { policy } : {}) };
 }
 
-function parseOrThrow(body: unknown, count: number): CurvePoint[] {
+function parseOrThrow(body: unknown, count: number, opts: FetchCurveOptions = {}): CurvePoint[] {
   try {
-    return parsePEResponse(body, count);
+    return parsePEResponse(body, count, { maTafdcDoubleCounted: opts.maTafdcDoubleCounted });
   } catch (e) {
     if (e instanceof PEParseError) throw new PolicyEngineError("parse", e.message);
     throw e;
@@ -189,14 +195,14 @@ const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
 async function fetchSplicedForSSDI(
   answers: HouseholdAnswers,
   axis: AxisSpec,
-  opts: RequestOptions,
+  opts: FetchCurveOptions,
 ): Promise<CurvePoint[]> {
   const [receiving, stopped] = await Promise.all([
     requestPE(buildCurvePayload(answers), opts),
     requestPE(buildCurvePayload({ ...answers, ssdiMonthly: 0 }, ABOVE_SGA), opts),
   ]);
-  const withSSDI = parseOrThrow(receiving, axis.count);
-  const withoutSSDI = parseOrThrow(stopped, axis.count);
+  const withSSDI = parseOrThrow(receiving, axis.count, opts);
+  const withoutSSDI = parseOrThrow(stopped, axis.count, opts);
   return withSSDI.map((p, i) => (p.earnings <= SGA_ANNUAL ? p : withoutSSDI[i]));
 }
 
@@ -215,6 +221,62 @@ function pointPayload(answers: HouseholdAnswers, earnings: number, forced: Recor
   h.axes = [[{ name: "employment_income", min: earnings, max: earnings + 1000, count: 2, period: YEAR }]];
   for (const [name, value] of Object.entries(forced)) h.spm_units.spm_unit[name] = { [YEAR]: value };
   return payload;
+}
+
+/** Forced TAFDC large enough that no other state benefit can be mistaken for it. */
+export const MA_TAFDC_PROBE_SENTINEL = 1_000_000;
+
+const maTafdcProbeCache = new Map<string, Promise<boolean>>();
+
+/**
+ * Does this endpoint count Massachusetts TAFDC twice (policyengine-us
+ * #9470, fixed in 2.4.4)? Read from the model rather than a version number:
+ * force `ma_tafdc` to the sentinel on a bare Massachusetts household and
+ * see whether `household_state_benefits` absorbs it. A double-counting model
+ * returns the sentinel (verified 2026-09-15 on the public API: $999,999.94,
+ * with household_benefits at $2M); a fixed one returns the other state
+ * benefits, a few thousand at most. One request per endpoint per process;
+ * the parse path then removes the overlap only where it exists, so this
+ * workaround retires itself when the API updates.
+ */
+export function probeMaTafdcDoubleCount(opts: RequestOptions = {}): Promise<boolean> {
+  const endpoint = peUrl();
+  let pending = maTafdcProbeCache.get(endpoint);
+  if (!pending) {
+    pending = requestPE(maTafdcProbePayload(), opts).then((body) => {
+      const r = (body as { result?: { households?: Record<string, Record<string, Record<string, number>>> } }).result;
+      const h = r?.households?.household;
+      const stateBenefits = h?.household_state_benefits?.[YEAR];
+      const benefits = h?.household_benefits?.[YEAR];
+      if (typeof stateBenefits !== "number" || typeof benefits !== "number") {
+        throw new PolicyEngineError("parse", "probe returned no household benefit aggregates");
+      }
+      // An ignored input would look exactly like a fixed model. TANF carries
+      // ma_tafdc into household_benefits on both, so the sentinel must show
+      // there (as $999,999.94 after float32; a fixed model has it once, a
+      // double-counting one twice).
+      if (benefits < MA_TAFDC_PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced ma_tafdc did not reach household_benefits");
+      return stateBenefits > MA_TAFDC_PROBE_SENTINEL / 2;
+    });
+    // A failed probe is not an answer; let the next caller ask again.
+    pending.catch(() => maTafdcProbeCache.delete(endpoint));
+    maTafdcProbeCache.set(endpoint, pending);
+  }
+  return pending;
+}
+
+export function maTafdcProbePayload(): unknown {
+  const year = { [YEAR]: 0 };
+  return {
+    household: {
+      people: { person: { age: { [YEAR]: 30 }, employment_income: year } },
+      households: { household: { members: ["person"], state_code: { [YEAR]: "MA" }, household_state_benefits: { [YEAR]: null }, household_benefits: { [YEAR]: null } } },
+      tax_units: { tax_unit: { members: ["person"] } },
+      spm_units: { spm_unit: { members: ["person"], ma_tafdc: { [YEAR]: MA_TAFDC_PROBE_SENTINEL } } },
+      families: { family: { members: ["person"] } },
+      marital_units: { marital_unit: { members: ["person"] } },
+    },
+  };
 }
 
 /**
@@ -242,7 +304,7 @@ export async function resampleMaTafdc(answers: HouseholdAnswers, points: CurvePo
     const aboveSga = answers.ssdiMonthly > 0 && p.earnings > SGA_ANNUAL;
     const base = aboveSga ? { ...answers, ssdiMonthly: 0 } : answers;
     const grant = maTafdcGrant(p.earnings, answers.spouseAnnualEarnings, p.maTafdc!);
-    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, aboveSga ? ABOVE_SGA : {}), opts), 2);
+    const [point] = parseOrThrow(await requestPE(pointPayload(base, p.earnings, { ma_tafdc: grant }, aboveSga ? ABOVE_SGA : {}), opts), 2, opts);
     out[i] = { ...point, earnings: p.earnings, maTafdc: { ...point.maTafdc!, engineUsedCorrectedGrant: true } };
   });
   return out;
@@ -254,13 +316,16 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (hit) return hit;
 
   const axis = axisSpec(answers);
-  const requestOpts = {
+  const requestOpts: FetchCurveOptions = {
     ...opts,
     timeoutMs: opts.timeoutMs ?? (Object.keys(policyOverridesFor(answers)).length ? POLICY_TIMEOUT_MS : DEFAULT_TIMEOUT_MS),
   };
+  if (answers.state === "MA" && requestOpts.maTafdcDoubleCounted === undefined) {
+    requestOpts.maTafdcDoubleCounted = await probeMaTafdcDoubleCount(requestOpts);
+  }
   const swept = answers.ssdiMonthly > 0
     ? await fetchSplicedForSSDI(answers, axis, requestOpts)
-    : parseOrThrow(await requestPE(buildCurvePayload(answers), requestOpts), axis.count);
+    : parseOrThrow(await requestPE(buildCurvePayload(answers), requestOpts), axis.count, requestOpts);
   const points = await resampleMaTafdc(answers, swept, requestOpts);
 
   const curve: CurveResponse = { year: YEAR, currentEarnings: answers.annualEarnings, points };

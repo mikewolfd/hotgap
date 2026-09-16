@@ -1,10 +1,12 @@
 import { YEAR, type CurvePoint, type HouseholdAnswers } from "./types.js";
 
 // WORKAROUND — this whole module re-implements one state's TAFDC grant
-// because PolicyEngine's formula is wrong (policyengine-us #9469, #9470;
-// fixes in PR #9477 and #9478). Remove it, the ma_tafdc_* inputs requested
-// in translate.ts, and the resample loop in client.ts once both merge and
-// the API serves them.
+// because PolicyEngine's formula is wrong (policyengine-us #9469; fix in
+// PR #9477). Remove it, the ma_tafdc_* inputs requested in translate.ts,
+// and the resample loop in client.ts once that merges and the API serves
+// it. The separate double count (#9470) shipped fixed in 2.4.4; the client
+// probes each endpoint for it (probeMaTafdcDoubleCount) and `duplicatedTanf`
+// below is 0 wherever the fix is served.
 //
 // WHICH REGIME THIS IS, because the state publishes the other one. TAFDC
 // disregards 100% of earnings for the first six months of work, then $200 a

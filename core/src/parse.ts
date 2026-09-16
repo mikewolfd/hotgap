@@ -56,7 +56,19 @@ function series(entity: Record<string, unknown>, variable: string, count: number
   return v as number[];
 }
 
-export function parsePEResponse(body: unknown, expectedCount: number): CurvePoint[] {
+export interface ParseOptions {
+  /**
+   * Whether the model that produced `body` counts Massachusetts TAFDC twice
+   * (in `household_benefits` via TANF and again in `household_state_benefits`;
+   * policyengine-us #9470, fixed in 2.4.4). Default true: every stored
+   * fixture and the public API as of 2026-09 do. client.ts probes the live
+   * endpoint instead of assuming.
+   */
+  maTafdcDoubleCounted?: boolean;
+}
+
+export function parsePEResponse(body: unknown, expectedCount: number, opts: ParseOptions = {}): CurvePoint[] {
+  const maTafdcDoubleCounted = opts.maTafdcDoubleCounted ?? true;
   const b = body as { status?: string; result?: Record<string, unknown> };
   if (b?.status !== "ok" || !b.result) {
     throw new PEParseError(`PolicyEngine error: ${(b as { message?: string })?.message ?? "unknown"}`);
@@ -182,10 +194,12 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
     const standard = series(spm, "ma_tafdc_payment_standard", expectedCount);
     const unearned = series(spm, "ma_tafdc_countable_unearned_income", expectedCount);
     const care = series(spm, "ma_tafdc_dependent_care_deduction", expectedCount);
-    // The served model includes ma_tafdc in household_state_benefits AND
-    // tanf in household_benefits. Retain the overlap for local removal from
-    // both net income and the otherwise-unexplained otherBenefits remainder.
-    // Pinned by the live contract test; recheck when upstream changes its sums.
+    // A double-counting model includes ma_tafdc in household_state_benefits
+    // AND tanf in household_benefits. Retain the overlap for local removal
+    // from both net income and the otherwise-unexplained otherBenefits
+    // remainder. The overlap is a floor, not a detection (other state
+    // benefits can fill household_state_benefits too), so it is only taken
+    // when the caller knows the model double-counts.
     const tafdc = series(spm, "ma_tafdc", expectedCount);
     const stateBenefits = series(household, "household_state_benefits", expectedCount);
     const eligible = spm.ma_tafdc_non_financial_eligible?.[YEAR];
@@ -201,7 +215,7 @@ export function parsePEResponse(body: unknown, expectedCount: number): CurvePoin
     maTafdc = standard.map((paymentStandard, i) => ({
       paymentStandard, nonFinancialEligible: flags[i], unearnedIncome: unearned[i],
       dependentCareDeduction: care[i], clothingAllowance: clothing[i], infantBenefit: infant[i],
-      duplicatedTanf: Math.min(tafdc[i], programSeries.get("tanf")![i], stateBenefits[i]),
+      duplicatedTanf: maTafdcDoubleCounted ? Math.min(tafdc[i], programSeries.get("tanf")![i], stateBenefits[i]) : 0,
       engineUsedCorrectedGrant: false,
     }));
     if (maTafdc.some((inputs) => Object.values(inputs).some((v) => typeof v === "number" && (!Number.isFinite(v) || v < 0)))) {

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { curveCacheKey, fetchCurve, PolicyEngineError, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { curveCacheKey, fetchCurve, MA_TAFDC_PROBE_SENTINEL, maTafdcProbePayload, PolicyEngineError, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -198,6 +198,9 @@ describe("Massachusetts TAFDC feedback loop", () => {
   })();
   const maPoints = parsePEResponse(maFixture, 11);
   const YEAR = "2026";
+  /** The 11-point fixture stretched to `count` points by repeating its last point. */
+  const stretchTo = (v: unknown, count: number): unknown =>
+    Array.isArray(v) && v.length === 11 ? Array.from({ length: count }, (_, i) => v[Math.min(i, 10)]) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, stretchTo(b, count)])) : v;
 
   // A fake PolicyEngine: for a forced-grant point request, answer with the
   // fixture's point at that earnings, the grant as forced, and SNAP raised by
@@ -261,11 +264,12 @@ describe("Massachusetts TAFDC feedback loop", () => {
 
   it("fetchCurve runs the loop for a Massachusetts household with children and stores the flag", async () => {
     const axis = axisSpec(maAnswers);
-    const stretch = (v: unknown): unknown =>
-      Array.isArray(v) && v.length === 11 ? Array.from({ length: axis.count }, (_, i) => v[Math.min(i, 10)]) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as object).map(([a, b]) => [a, stretch(b)])) : v;
+    const stretch = (v: unknown) => stretchTo(v, axis.count);
     let pointRequests = 0;
+    let probes = 0;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       const payload = JSON.parse(init!.body as string);
+      if (!payload.household.axes) { probes++; return new Response(probeBody(MA_TAFDC_PROBE_SENTINEL), { status: 200 }); }
       if (payload.household.axes[0][0].count === 2) { pointRequests++; return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }).replace(/"min":24000/, `"min":${payload.household.axes[0][0].min}`), { status: 200 }); }
       const body = stretch(maFixture) as any;
       body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]];
@@ -276,8 +280,87 @@ describe("Massachusetts TAFDC feedback loop", () => {
     const swept = parsePEResponse(JSON.parse(JSON.stringify(stretch(maFixture))).result ? (() => { const b = stretch(maFixture) as any; b.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]]; return b; })() : null, axis.count);
     const expected = maTafdcResampleIndices(maAnswers, swept);
     expect(pointRequests).toBe(expected.length);
+    expect(probes).toBe(1);
     expect(curve.points).toHaveLength(axis.count);
     for (const i of expected) expect(curve.points[i].maTafdc?.engineUsedCorrectedGrant).toBe(true);
     expect(curve.points.filter((p) => p.maTafdc?.engineUsedCorrectedGrant).length).toBe(expected.length);
+  });
+
+  /** What an endpoint returns for the probe when household_state_benefits holds `stateBenefits`. */
+  function probeBody(stateBenefits: number, benefits = MA_TAFDC_PROBE_SENTINEL + stateBenefits): string {
+    return JSON.stringify({ status: "ok", message: null, result: { households: { household: { household_state_benefits: { [YEAR]: stateBenefits }, household_benefits: { [YEAR]: benefits } } } } });
+  }
+  /** A fetch that answers the probe with `stateBenefits` under a distinct endpoint, so the per-endpoint cache starts empty. */
+  function probeFetch(stateBenefits: number, endpoint: string) {
+    process.env.HOTGAP_PE_URL = endpoint;
+    let calls = 0;
+    const fetchImpl = (async () => { calls++; return new Response(probeBody(stateBenefits), { status: 200 }); }) as unknown as typeof fetch;
+    return { fetchImpl, calls: () => calls };
+  }
+
+  it("probe: the sentinel is forced on a bare Massachusetts household and read back from household_state_benefits", async () => {
+    const payload = maTafdcProbePayload() as any;
+    expect(payload.household.households.household.state_code[YEAR]).toBe("MA");
+    expect(payload.household.spm_units.spm_unit.ma_tafdc[YEAR]).toBe(MA_TAFDC_PROBE_SENTINEL);
+    expect(payload.household.axes).toBeUndefined();
+    const doubled = probeFetch(MA_TAFDC_PROBE_SENTINEL - 0.06, "https://double.example/us/calculate");
+    const fixed = probeFetch(3_120, "https://fixed.example/us/calculate");
+    try {
+      process.env.HOTGAP_PE_URL = "https://double.example/us/calculate";
+      expect(await probeMaTafdcDoubleCount({ fetchImpl: doubled.fetchImpl })).toBe(true);
+      expect(await probeMaTafdcDoubleCount({ fetchImpl: doubled.fetchImpl })).toBe(true);
+      expect(doubled.calls()).toBe(1); // cached per endpoint
+      process.env.HOTGAP_PE_URL = "https://fixed.example/us/calculate";
+      expect(await probeMaTafdcDoubleCount({ fetchImpl: fixed.fetchImpl })).toBe(false);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("probe: a failed or ignored probe is an error, not an answer, and is not cached", async () => {
+    process.env.HOTGAP_PE_URL = "https://flaky.example/us/calculate";
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls++;
+      if (calls === 1) return new Response("{}", { status: 502 });
+      if (calls === 2) return new Response("{}", { status: 200 });
+      return new Response(probeBody(0, 0), { status: 200 }); // sentinel never reached household_benefits
+    }) as unknown as typeof fetch;
+    try {
+      await expect(probeMaTafdcDoubleCount({ fetchImpl })).rejects.toBeInstanceOf(PolicyEngineError);
+      await expect(probeMaTafdcDoubleCount({ fetchImpl })).rejects.toThrow(/no household benefit aggregates/);
+      await expect(probeMaTafdcDoubleCount({ fetchImpl })).rejects.toThrow(/did not reach household_benefits/);
+      expect(calls).toBe(3);
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+
+  it("a fixed model leaves no duplicate to remove, and an explicit option skips the probe", async () => {
+    const withDuplicate = parsePEResponse(maFixture, 11);
+    const without = parsePEResponse(maFixture, 11, { maTafdcDoubleCounted: false });
+    expect(withDuplicate.some((p) => p.maTafdc!.duplicatedTanf > 0)).toBe(true);
+    expect(without.every((p) => p.maTafdc!.duplicatedTanf === 0)).toBe(true);
+    // The correction then leaves net income + otherBenefits higher by exactly the duplicate it no longer removes.
+    const a = correctMaTafdc(maAnswers, withDuplicate).points;
+    const b = correctMaTafdc(maAnswers, without).points;
+    for (let i = 0; i < 11; i++) {
+      expect(b[i].netIncome - a[i].netIncome).toBeCloseTo(withDuplicate[i].maTafdc!.duplicatedTanf, 6);
+      expect(b[i].programs.tanf).toBe(a[i].programs.tanf);
+    }
+    // With the option set, fetchCurve asks no probe; the sweep and its feedback points parse with duplicatedTanf 0.
+    let probes = 0;
+    const axis = axisSpec(maAnswers);
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      const payload = JSON.parse(init!.body as string);
+      if (!payload.household.axes) probes++;
+      if (payload.household.axes?.[0][0].count === 2) return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }), { status: 200 });
+      const body = stretchTo(maFixture, axis.count) as any;
+      body.result.axes = [[{ name: "employment_income", min: 0, max: axis.max, count: axis.count, period: YEAR }]];
+      return new Response(JSON.stringify(body), { status: 200 });
+    }) as unknown as typeof fetch;
+    const curve = await fetchCurve(maAnswers, { fetchImpl, maTafdcDoubleCounted: false });
+    expect(probes).toBe(0);
+    expect(curve.points.every((p) => p.maTafdc!.duplicatedTanf === 0)).toBe(true);
   });
 });

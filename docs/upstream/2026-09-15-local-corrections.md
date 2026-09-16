@@ -13,7 +13,8 @@ real. Each row names what removes it.
 |---|---|---|
 | Six parent-Medicaid limits sent as request parameters | `core/src/policyOverrides.ts` | policyengine-us PR #9475 merges and the API serves it (issue #9474) |
 | New York BHP list emptied for the whole 2026 scenario | `core/src/policyOverrides.ts` | upstream handles the 2026-07-01 change sub-annually (issue #9471; a parameter fix is inert, see the issue comment) |
-| Massachusetts TAFDC grant recomputed locally | `core/src/maTafdc.ts`, `ma_tafdc_*` inputs in `translate.ts` | PRs #9477 and #9478 merge (issues #9469, #9470) |
+| Massachusetts TAFDC grant recomputed locally | `core/src/maTafdc.ts`, `ma_tafdc_*` inputs in `translate.ts` | PR #9477 merges (issue #9469) |
+| Massachusetts TAFDC's second copy removed from net income | `core/src/parse.ts` `duplicatedTanf`, `core/src/client.ts` `probeMaTafdcDoubleCount` | nothing to do: PR #9478 merged and shipped in policyengine-us 2.4.4 (issue #9470). The client probes each endpoint once — forces `ma_tafdc` to $1,000,000 on a bare MA household and reads `household_state_benefits` back — and removes the copy only where the probe finds it, so the public API (1.764.6, still double-counting) and the self-hosted engine (2.5.0, fixed) each get the right treatment. Delete the probe and `duplicatedTanf` once the public API is on ≥ 2.4.4. |
 | Corrected grant fed back one point at a time so SNAP follows it | `core/src/client.ts` `resampleMaTafdc` | same as above — the loop then makes zero requests and can be deleted |
 | Coverage-gap adults' phantom premium zeroed | `core/src/evaluate.ts` `applyCoverageGap` | upstream gates marketplace take-up on subsidy eligibility (issue #9472) |
 | Employee ESI contribution replaces the marketplace premium | `core/src/evaluate.ts` `applyEmployerCoverage` | upstream models the employee share (issue #9473) |

@@ -1,13 +1,18 @@
 # The model, pinned: these three decide every number the service returns.
 #
-# `policyengine-us` 2.4.2's own metadata asks for `spm-calculator>=1.0.0,
-# <=1.0.0.post1` while its README prose says the release "pins
-# spm-calculator==0.3.1 to preserve its SPM threshold API". The metadata is the
-# machine-readable truth and the resolver picks 1.0.0.post1; SPM thresholds
-# were checked under it (a CA family of two, 2026: $37,779) and are sane, so
-# the metadata's range is what is pinned here. Revisit if upstream corrects
-# the prose in a later release.
-policyengine-us==2.4.2
+# `policyengine-us`'s own metadata (2.4.2 through 2.5.0) asks for
+# `spm-calculator>=1.0.0,<=1.0.0.post1` while its README prose says the
+# release "pins spm-calculator==0.3.1 to preserve its SPM threshold API". The
+# metadata is the machine-readable truth and the resolver picks 1.0.0.post1;
+# SPM thresholds were checked under it (a CA family of two, 2026: $37,779)
+# and are sane, so the metadata's range is what is pinned here. Revisit if
+# upstream corrects the prose in a later release.
+#
+# 2.5.0 (2026-09-16) carries 2.4.4's fix for the Massachusetts TAFDC double
+# count (policyengine-us #9478) and 2.4.3's Massachusetts CCFA rework; the
+# client detects the first by probing, so nothing HotGap-side changes with
+# the pin. The federal CCDF chain 2.5.0 removed was never requested.
+policyengine-us==2.5.0
 policyengine-core==3.32.5
 spm-calculator==1.0.0.post1
 
