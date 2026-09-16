@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { STATE_CODES } from "./states.js";
+import { STATE_PREMIUM_ASSISTANCE, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import { STATE_PREMIUM_WRAPS, premiumTierAbove, premiumWrapFor } from "./statePremiumWraps.js";
 
 // A state exchange that does not publish on a .gov domain. Every other source
@@ -75,14 +76,19 @@ describe("STATE_PREMIUM_WRAPS", () => {
   // 2026. Read as a list of "do not re-add without new evidence".
   it("leaves out the states whose 2026 help is not an FPL-bounded $0 tier", () => {
     const excluded = [
-      "NJ", // NJ Health Plan Savings: a flat $20–$100 per person per month to 600% FPL, no $0 band
-      "WA", // Cascade Care Savings: a flat $55/member/month (≤250% FPL), no $0 band
+      // NJ and WA: flat per-member amounts with no $0 band, and no upstream
+      // variable either — the two the coverage block reports as unmodeled.
+      ...UNMODELED_STATE_PREMIUM_ASSISTANCE.map((s) => s.state),
       "CO", // Colorado Premium Assistance: $80 first member + $29 each after, capped at the premium
       "MD", // Maryland Premium Assistance: no published $0 band, and closed to anyone enrolling after 2026-04-01
       "VT", // Vermont Premium Assistance: lowers the bill by 1.5% of income — 2.10% ACA minus 1.5% is not $0
       "NY", // Essential Plan is a Basic Health Program, not a marketplace wrap; PolicyEngine models it
     ];
     for (const state of excluded) expect(premiumWrapFor(state, 1.2), state).toBeNull();
+    // "Modeled nowhere" has to stay true on both sides, or the block lies.
+    for (const { state } of UNMODELED_STATE_PREMIUM_ASSISTANCE) {
+      expect(STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state), `${state} is modeled upstream`).toBe(false);
+    }
   });
 });
 

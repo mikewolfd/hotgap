@@ -49,6 +49,8 @@ export interface SummaryJson {
   model?: ModelRecord;
   archetypes: { id: string; married: boolean; childAges: number[] }[];
   states: Record<string, Record<string, StateMetrics>>;
+  /** Per state, what a reader of its numbers has to know first (coverage.ts). Absent on files written before it was recorded. */
+  coverage?: Record<string, StateCoverage>;
 }
 
 /**
@@ -59,6 +61,80 @@ export interface SummaryJson {
 export interface ModelRecord {
   endpoint: string;
   version: string | null;
+}
+
+/**
+ * What a reader of one state's numbers needs before comparing them with
+ * another state's: which HotGap-side corrections apply there, what the map
+ * cannot show, what the untracked `otherBenefits` remainder actually is, and
+ * which data vintages the state's curves rest on. Derived by the pipeline
+ * from the code that applies each correction and from the data files
+ * themselves (coverage.ts), never hand-typed, so it cannot drift from what
+ * the sweep did.
+ */
+export interface StateCoverage {
+  corrections: StateCorrections;
+  /** Programs the map cannot show for this state. Small on purpose: only what is known to exist and known to be missing. */
+  unmodeled: UnmodeledProgram[];
+  /** What the `otherBenefits` remainder is here; empty where it is $0 throughout the sweep. */
+  otherBenefits: OtherBenefit[];
+  vintages: StateVintages;
+}
+
+export interface StateCorrections {
+  /** Parameter overrides sent with every curve in this state (policyOverrides.ts); empty where none apply. */
+  policyOverrides: PolicyOverrideRecord[];
+  /** Massachusetts only: the TAFDC grant recomputed locally and fed back to the engine (maTafdc.ts). */
+  maTafdc: CorrectionNote;
+  /** Where this state's own marketplace premium help comes from on this sweep. */
+  premiumAssistance: CorrectionNote & { source: "modeled" | "ladder" | "none"; program: string | null };
+  /** Whether PolicyEngine counts the CCDF subsidy in net income here, or HotGap adds it (stateChildcareSubsidies.ts). */
+  childcareSubsidy: CorrectionNote & { source: "in net income" | "added by HotGap" };
+  /** Whether the coverage-gap premium correction can fire here — non-expansion states only (evaluate.ts). */
+  coverageGap: CorrectionNote;
+}
+
+export interface CorrectionNote {
+  applies: boolean;
+  note: string;
+}
+
+export interface PolicyOverrideRecord {
+  parameter: string;
+  period: string;
+  /** The value sent, per archetype: the parent limit is a poverty-line fraction for the household's own size, so it varies. */
+  values: Record<string, number | string[]>;
+  source: string;
+  note: string;
+}
+
+export interface UnmodeledProgram {
+  program: string;
+  note: string;
+}
+
+export interface OtherBenefit {
+  /** The PolicyEngine variable the money was traced to (stateOtherBenefits.ts), or null when it has not been identified yet. */
+  variable: string | null;
+  label: string;
+  /** The largest raw remainder on any of this state's swept curves — the whole remainder, shared when more than one variable is listed. */
+  maxAnnualInSweep: number;
+}
+
+export interface StateVintages {
+  model: ModelRecord | null;
+  /** Read from state-defaults.json `sources`, never retyped. */
+  rent: SourceVintage;
+  county: SourceVintage;
+  /** Rule and NDCP study year behind each child-care price band (state-defaults.json `childcareBasis.byState`). */
+  childcare: Record<string, string>;
+  /** reach.json: the earnings basis, the PUMS vintage(s) this state's cells came from, and the ECI growth factor to 2026. */
+  reach: { basis: string; vintages: string[]; growthFactor: number };
+}
+
+export interface SourceVintage {
+  publisher: string;
+  vintage: string;
 }
 
 export interface StateFileJson {

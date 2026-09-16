@@ -346,7 +346,9 @@ function summaryReport(f: Flags): number {
   const states = f.state ? [f.state.toUpperCase()] : Object.keys(summary.states).sort();
   const picked = Object.fromEntries(states.map((s) => [s, summary.states[s] ?? fail(2, `no sweep data for ${s}`)]));
   if (f.json) {
-    console.log(JSON.stringify({ generated: summary.generated, year: summary.year, states: picked }, null, 2));
+    // The numbers travel with what a reader must know about them (data.ts StateCoverage).
+    const coverage = summary.coverage && Object.fromEntries(states.map((s) => [s, summary.coverage![s]]));
+    console.log(JSON.stringify({ generated: summary.generated, year: summary.year, states: picked, ...(coverage ? { coverage } : {}) }, null, 2));
     return 0;
   }
   console.log(`numbers last changed ${summary.generated} · policy year ${summary.year}`);

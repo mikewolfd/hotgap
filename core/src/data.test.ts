@@ -25,6 +25,21 @@ describe("committed data", () => {
     expect(SWEPT.length).toBeGreaterThan(0);
   });
 
+  it("summary.json carries a complete coverage block for every state, with the sweep's own model", () => {
+    const summary = loadSummary();
+    expect(Object.keys(summary.coverage ?? {}).sort()).toEqual([...STATE_CODES].sort());
+    for (const state of STATE_CODES) {
+      const c = summary.coverage![state];
+      expect(Object.keys(c).sort(), state).toEqual(["corrections", "otherBenefits", "unmodeled", "vintages"]);
+      expect(Object.keys(c.corrections).sort(), state).toEqual(["childcareSubsidy", "coverageGap", "maTafdc", "policyOverrides", "premiumAssistance"]);
+      expect(Object.keys(c.vintages).sort(), state).toEqual(["childcare", "county", "model", "reach", "rent"]);
+      expect(c.vintages.model, state).toEqual(summary.model ?? null);
+      expect(c.unmodeled.length, state).toBeGreaterThan(0);
+      // Nothing unlabeled: every remainder on the map has been traced to a variable.
+      for (const o of c.otherBenefits) expect(o.variable, `${state} $${o.maxAnnualInSweep}`).not.toBeNull();
+    }
+  });
+
   it("names any archetype the committed sweep has not caught up with yet", () => {
     // Not a failure: `npm run pipeline` is a live 51-state sweep and cannot run
     // in a test. It is a standing reminder that until it does, these archetypes

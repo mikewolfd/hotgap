@@ -31,3 +31,16 @@ export const STATE_PREMIUM_ASSISTANCE: readonly StatePremiumAssistance[] = [
 export function statePremiumAssistanceFor(state: string): StatePremiumAssistance | null {
   return STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state) ?? null;
 }
+
+/**
+ * State premium help that exists for 2026 and that NEITHER PolicyEngine (no
+ * variable above) NOR the local ladders (statePremiumWraps.ts) model: each is
+ * a flat per-member amount with no $0 band, so no FPL-bounded ladder fits.
+ * A curve in these states overstates the net premium by the state's help;
+ * the summary's coverage block names them so a reader knows. Checked
+ * 2026-09-15 alongside the ladder table (statePremiumWraps.test.ts).
+ */
+export const UNMODELED_STATE_PREMIUM_ASSISTANCE: readonly { state: string; program: string; note: string }[] = [
+  { state: "NJ", program: "NJ Health Plan Savings", note: "a flat $20–$100 per person per month to 600% FPL, no $0 band" },
+  { state: "WA", program: "Cascade Care Savings", note: "a flat $55 per member per month to 250% FPL, no $0 band" },
+];

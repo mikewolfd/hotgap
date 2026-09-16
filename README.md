@@ -234,6 +234,29 @@ All under `core/data/`:
   approximation notice. State files retain PolicyEngine's TANF and the
   `maTafdc` inputs used to replay that correction; use `evaluateOffline` to
   obtain the corrected curve. Rebuild: `npm run pipeline`.
+  `summary.json` also carries `coverage`, one block per state
+  (`StateCoverage` in `core/src/data.ts`, built by `core/src/coverage.ts`)
+  that a reader of that state's numbers should check before comparing them:
+  `corrections` — which HotGap-side corrections apply there, each derived
+  from the code that applies it (the parameter overrides actually sent, with
+  the value per archetype; the Massachusetts TAFDC recomputation; whether the
+  state's premium help is PolicyEngine's own amount, a local ladder, or
+  nothing; whether the child-care subsidy is inside net income or added by
+  HotGap; whether the coverage-gap correction can fire) with a one-sentence
+  note and the upstream issue number; `unmodeled` — programs the map cannot
+  show there (a state premium program modeled nowhere, a child-care subsidy
+  the engine paid nothing for, LIHEAP everywhere); `otherBenefits` — what the
+  untracked remainder is, traced to a PolicyEngine variable
+  (`core/src/stateOtherBenefits.ts`, pinned live by the contract suite):
+  California's and Kansas's is the HUD voucher payment PolicyEngine models
+  for an eligible renter through `housing_assistance`, a variable the
+  `spm_unit_capped_housing_subsidy: 0` take-up switch does not reach, capped
+  at the PHA utility allowance because the rent is sent as `rent` rather than
+  `pre_subsidy_rent`; New Jersey's is the $450 ANCHOR renter benefit; and
+  `vintages` — the model, the rent and county sources, the child-care price
+  basis and the reach ladders' PUMS vintage(s), read from the data files
+  rather than retyped. `npm run pipeline -- --from-data` regenerates it
+  without network, and a change to it counts as a change to the file.
 - `state-defaults.json` — the typical renter each state's archetype sweep
   uses (`stateDefaults`, read by `answersFor`). Every figure describes
   **one** household in **one** county: the Census Vintage 2024 most populous

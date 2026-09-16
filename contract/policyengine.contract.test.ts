@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { ARCHETYPES, answersFor, buildCurvePayload, parsePEResponse, peHeaders, peUrl, requestPE } from "../core/src/index.js";
+import { ARCHETYPES, answersFor, buildCurvePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -401,6 +401,39 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
       expect(ev.premiumWrap?.state).toBe("CA");
     }
   }, 200_000);
+
+  // The untracked `otherBenefits` remainder, traced to a variable per state in
+  // core/src/stateOtherBenefits.ts. Each row is pinned the only way that is
+  // not circular: the swept household's own payload at the earnings where the
+  // remainder peaks ($0 for every row so far), with the named variable added,
+  // must show that variable carrying the whole remainder. A row that stops
+  // holding here is a stale finding; a remainder this leaves unexplained is
+  // money nobody has named.
+  for (const { variable, entity, states } of OTHER_BENEFIT_SOURCES) {
+    for (const state of states) {
+      it(`${state}: otherBenefits is ${variable}`, async () => {
+        const answers = answersFor(state, ARCHETYPES.find((a) => a.id === "single-0")!);
+        const payload = buildCurvePayload(answers);
+        const household = payload.household as { axes: unknown[][] } & Record<string, Record<string, Record<string, unknown>>>;
+        household.axes[0][0] = { name: "employment_income", min: 0, max: 1000, count: 2, period: "2026" };
+        for (const instance of Object.values(household[entity])) instance[variable] = { "2026": null };
+        // The voucher HotGap switched off must stay off in the figure it forces,
+        // or the remainder would be a double count rather than a leak.
+        if (variable === "housing_assistance") household.spm_units.spm_unit.hud_hap = { "2026": null };
+        const body = (await requestPE(payload, { timeoutMs: 90_000 })) as any;
+        const [point] = parsePEResponse(body, 2);
+        const series = Object.values(body.result[entity] as Record<string, any>)[0][variable]["2026"] as number[];
+        // Observed 2026-09-16 on policyengine-us 2.5.0: CA $2,963, KS $2,471, NJ $450.
+        expect(point.otherBenefits).toBeGreaterThan(100);
+        expect(series[0]).toBeCloseTo(point.otherBenefits, 0);
+        if (variable === "housing_assistance") {
+          const spm = body.result.spm_units.spm_unit;
+          expect(spm.hud_hap["2026"][0]).toBeCloseTo(series[0], 0);
+          expect([spm.spm_unit_capped_housing_subsidy["2026"]].flat().every((v) => v === 0)).toBe(true);
+        }
+      }, 120_000);
+    }
+  }
 
   // Two states pay nothing until the provider type is named (policyengine-us
   // #9485); HotGap names it in its own payload. Pins that the enum values

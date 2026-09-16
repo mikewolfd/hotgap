@@ -39,6 +39,22 @@ export function reachCell(state: string, archetypeId: string): ReachLadder | nul
 }
 
 /**
+ * Where this state's ladders come from, read off the file rather than
+ * retyped: the earnings basis, the PUMS vintage(s) its published cells were
+ * built on (the 5-Year file stands in cell by cell where the 1-Year cannot
+ * support a state), and the ECI factor that grew them to 2026 dollars.
+ */
+export function reachProvenance(state: string): { basis: string; vintages: string[]; growthFactor: number } {
+  const file = reach();
+  const cells = Object.values(file.states[state] ?? {}).filter((c): c is ReachLadder => c !== null);
+  return {
+    basis: file.basis ?? "",
+    vintages: [...new Set(cells.map((c) => c.vintage))].sort(),
+    growthFactor: file.growth?.factor ?? 1,
+  };
+}
+
+/**
  * Where `income` falls (0-100) among real households of `archetypeId` in
  * `state` -- null when there's no trustworthy PUMS cell for that state x
  * archetype (state not in the file, or a suppressed cell). `income` is

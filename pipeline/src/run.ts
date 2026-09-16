@@ -181,6 +181,18 @@ export function sameIgnoringGenerated(a: unknown, b: unknown): boolean {
   return isDeepStrictEqual(stripGenerated(a), stripGenerated(b));
 }
 
+/** Pure: a partial sweep's summary laid over the existing one, state by state; the states it did not sweep keep their rows. */
+export function mergePartial(existing: Partial<SummaryJson>, partial: SummaryJson): SummaryJson {
+  const swept = new Set(Object.keys(partial.states));
+  const unmodeled = [...(existing.childcareSubsidyUnmodeled ?? []).filter((s) => !swept.has(s)), ...(partial.childcareSubsidyUnmodeled ?? [])];
+  return {
+    ...partial,
+    ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
+    states: { ...existing.states, ...partial.states },
+    ...(existing.coverage || partial.coverage ? { coverage: { ...existing.coverage, ...partial.coverage } } : {}),
+  };
+}
+
 /** Parses `filePath` as JSON; undefined when it's missing or unparsable, so the caller overwrites unconditionally. */
 async function readExistingJson(filePath: string): Promise<unknown> {
   try {
@@ -194,8 +206,9 @@ export async function writeSummary(summaryPath: string, summary: SummaryJson): P
   await mkdir(path.dirname(summaryPath), { recursive: true });
   const existing = (await readExistingJson(summaryPath)) as Partial<SummaryJson> | undefined;
   // A partial run (--states) must not drop the states it did not sweep: merge
-  // its metrics into the existing file rather than replacing the file.
-  const next = existing?.states ? { ...summary, states: { ...existing.states, ...summary.states } } : summary;
+  // everything keyed by state — metrics, coverage, and the unmodeled list —
+  // into the existing file rather than replacing the file.
+  const next = existing?.states ? mergePartial(existing, summary) : summary;
   if (existing !== undefined && sameIgnoringGenerated(existing, next)) return;
   await writeFile(summaryPath, JSON.stringify(next));
 }

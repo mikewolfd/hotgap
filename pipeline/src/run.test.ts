@@ -13,6 +13,7 @@ import {
   resultsFromStateFile,
   writeOutputs,
   writeSummary,
+  mergePartial,
   sameIgnoringGenerated,
   ALL_STATES,
 } from "./run.js";
@@ -264,6 +265,20 @@ describe("writeSummary with a partial --states run", () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  it("merges everything keyed by state — coverage and the unmodeled list too — and keeps the unswept states' entries", () => {
+    const existing = { generated: "g1", year: "2026", childcareSubsidyUnmodeled: ["ZZ", "YY"], archetypes: [], states: { ZZ: { leap: 1 }, YY: { leap: 2 } }, coverage: { ZZ: { a: 1 }, YY: { a: 2 } } };
+    const partial = { generated: "g2", year: "2026", archetypes: [], states: { YY: { leap: 3 } }, coverage: { YY: { a: 3 } } };
+    // YY was re-swept and is no longer flagged; ZZ was not swept and keeps its flag, its row and its block.
+    expect(mergePartial(existing as never, partial as never)).toEqual({
+      generated: "g2", year: "2026", childcareSubsidyUnmodeled: ["ZZ"], archetypes: [],
+      states: { ZZ: { leap: 1 }, YY: { leap: 3 } }, coverage: { ZZ: { a: 1 }, YY: { a: 3 } },
+    });
+    // A file written before the block existed gains none from a partial run that has none either.
+    const bare = mergePartial({ states: { ZZ: { leap: 1 } } } as never, { generated: "g", year: "2026", archetypes: [], states: { YY: { leap: 3 } } } as never);
+    expect("coverage" in bare).toBe(false);
+    expect("childcareSubsidyUnmodeled" in bare).toBe(false);
+  });
 });
 
 describe("writeSummary", () => {
@@ -298,6 +313,10 @@ describe("sameIgnoringGenerated", () => {
     const different = { generated: "b", states: { CA: { biggestLoss: 101 } } };
     expect(sameIgnoringGenerated(a, same)).toBe(true);
     expect(sameIgnoringGenerated(a, different)).toBe(false);
+    // A coverage change with identical numbers is a real change: the block is
+    // what a reader trusts about the numbers, so a table edit rewrites the file.
+    const relabeled = { ...same, coverage: { CA: { otherBenefits: [{ variable: "housing_assistance" }] } } };
+    expect(sameIgnoringGenerated({ ...a, coverage: { CA: { otherBenefits: [] } } }, relabeled)).toBe(false);
   });
 });
 

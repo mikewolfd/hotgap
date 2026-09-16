@@ -7,7 +7,11 @@ Every item below is a hack around a PolicyEngine defect. Most are marked
 few (noted below) simply supply a value PolicyEngine would otherwise get
 wrong, without a literal `WORKAROUND` comment; they belong in this table on
 the same footing, since the defect and the retirement condition are just as
-real. Each row names what removes it.
+real. Each row names what removes it. Which of these apply to a given state
+on the committed sweep — and what that state's map cannot show — is written
+per state into `summary.json`'s `coverage` block by `core/src/coverage.ts`,
+derived from the same tables the corrections run on (see the README, "Data
+files and sources").
 
 | Workaround | Code | Retire when |
 |---|---|---|

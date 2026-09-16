@@ -10,7 +10,7 @@
 //
 // data/state-defaults.json carries the publisher, file, vintage, date read and
 // the exact arithmetic for each column; the rows hold nothing but the numbers.
-import { readData } from "./data.js";
+import { readData, type SourceVintage } from "./data.js";
 
 export interface StateDefaults {
   /** HUD FY2026 two-bedroom Fair Market Rent for the state's largest county. */
@@ -48,18 +48,34 @@ export function childcareMonthlyFor(defaults: StateDefaults, age: number): numbe
 interface StateDefaultsJson {
   read: string;
   sources: Record<string, Record<string, string>>;
+  /** Which rule and NDCP study year produced each state's childcare price, band by band. */
+  childcareBasis: { byState: Record<string, Record<string, string>> };
   states: Record<string, StateDefaults>;
 }
 
-const table = (): Record<string, StateDefaults> => {
+const file = (): StateDefaultsJson => {
   const json = readData<StateDefaultsJson>("state-defaults.json");
   if (!json) throw new Error("data/state-defaults.json is missing");
-  return json.states;
+  return json;
 };
 
 /** The typical household's rent, county and childcare price in this state. */
 export function stateDefaults(state: string): StateDefaults {
-  const row = table()[state];
+  const row = file().states[state];
   if (!row) throw new Error(`no state defaults for ${state}`);
   return row;
+}
+
+/**
+ * Where this state's row came from, read off the file's own `sources` and
+ * `childcareBasis` rather than retyped: the publisher and vintage behind the
+ * rent and the county, and the rule plus NDCP study year behind each
+ * childcare price band.
+ */
+export function stateDefaultsProvenance(state: string): { rent: SourceVintage; county: SourceVintage; childcare: Record<string, string> } {
+  const { sources, childcareBasis } = file();
+  const vintage = (column: string): SourceVintage => ({ publisher: sources[column].publisher, vintage: sources[column].vintage });
+  const childcare = childcareBasis.byState[state];
+  if (!childcare) throw new Error(`no childcare basis for ${state}`);
+  return { rent: vintage("monthlyRent"), county: vintage("countyFips"), childcare };
 }
