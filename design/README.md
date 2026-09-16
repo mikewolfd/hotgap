@@ -22,9 +22,9 @@ is the count, and with the count, the density.
 
 They diverge in exactly one place, on purpose: **what is allowed to be
 implicit.** The citizen surface leaves the mechanism implicit and makes the
-consequence explicit ("child care help ends; you keep $9,390 less"). The
+consequence explicit ("child care help ends; you keep about $25,400 less"). The
 caseworker surface leaves the consequence implicit and makes the mechanism
-explicit ("CCDF, $54,000, driver: benefits, $9,733 of it"). The journalist
+explicit ("CCDF, $55,000, driver: benefits, $25,793 of it"). The journalist
 surface makes the *method* explicit and the household implicit ("one archetype,
 swept, these bins, this vintage, here is what it excludes"). Same step, three
 things held constant.
@@ -35,26 +35,40 @@ measures step size, and nothing is a card.
 
 ## Files
 
-- `tokens.css` — type, colour (light and dark), space, shape, motion
+- `tokens.css` — type (with the self-hosted `@font-face`), colour (light and
+  dark, print), space, shape, motion, and the shared `hg-*` classes every
+  surface uses instead of declaring its own
+- `fonts/` — Archivo, weights 400–600, three woff2 subsets and the OFL licence
 - `charts.md` — the money curve and the state map
-- `inventory.md` — seventeen components, tagged by persona
+- `inventory.md` — twenty-two components, tagged by persona, with the class
+  map, the conventions, the verdict catalog and the program phrases
 - `citizen.html`, `caseworker.html`, `journalist.html` — three surface sketches
   rendering the real output of
-  `npx tsx core/src/cli.ts curve --state CO --kids 3,7 --earnings 38000 --offline --json`
+  `npm run -s hotgap -- curve --state CO --kids 3,7 --earnings 38000 --offline --json`
   and `core/data/summary.json`
+- `AUDIT-2026-09-16.md` — the visual audit these rules answer; its screenshots
+  are under `audit/`
 
-All three render the sweep stamped **2026-09-15T18:27:06Z** (`summary.generated`),
-the one that carries `childcareSubsidyUnmodeled`. No number in these files was
-typed by hand: the curve is 151 points copied out of the CLI, the 51-state blob is
-injected from `summary.json`, and every figure a reader could check against the
-data — the axis floor, the bin bounds, the count of incomplete states — is
-rendered from the values the code computed rather than written into the copy,
-because a typed number drifts the first time the data moves.
+All three sketches are **frozen to** the sweep stamped
+**2026-09-16T16:13:51.445Z** (`summary.generated`), run on policyengine-us
+**2.5.0** (`summary.model.version`) — the one that carries a per-state
+`coverage` block and eleven archetypes. "Frozen" is the honest word: a sketch
+is a snapshot of one file, and the file moves weekly. No number in these files
+was typed by hand: the curve is 151 points copied out of the CLI, the 51-state
+blob is injected from `summary.json`, and every figure a reader could check
+against the data — the axis floor, the bin bounds, the count of incomplete
+states, the model version in every `SourceNote` — is rendered from the values
+the code computed rather than written into the copy, because a typed number
+drifts the first time the data moves. The engine has since moved to 2.6.2; the
+source line says 2.5.0 until the file does, because it reports what produced
+the numbers, not what is installed.
 
 ## Colour
 
 Two ramps and three ink levels, all measured rather than judged. Every value was
-run through the `dataviz` skill's `validate_palette.js`:
+run through the `dataviz` skill's `validate_palette.js`, and every contrast
+figure below was recomputed on 2026-09-16 from the hex values in `tokens.css`
+with the WCAG 2.x relative-luminance formula:
 
 - Categorical, light `#2A6FD0`, `#D2611F`, `#1E8E6A`; dark `#4C8DE0`, `#D4722F`,
   `#22A87C` — all six checks pass in both modes under
@@ -66,8 +80,18 @@ run through the `dataviz` skill's `validate_palette.js`:
   2.27:1 on the dark one. The dark ramp reverses its anchor — on a dark ground
   the *smallest* loss is the step nearest the surface.
 - Every ink level clears WCAG AA against both the surface and the plane. The
-  lightest, `--ink-3`, measures 5.5:1 on surface and 4.8:1 on plane, so even
-  captions and axis ticks are AA at small sizes.
+  lightest, `--ink-3`, measures 5.49:1 on surface and 4.75:1 on plane in light
+  (6.60:1 and 7.22:1 in dark), so even captions and axis ticks are AA at small
+  sizes.
+- `--control-edge` is the boundary of anything that can be pressed: 3.49:1 on
+  surface and 3.02:1 on plane in light, 3.74:1 and 4.09:1 in dark, clearing
+  the 3:1 that WCAG 1.4.11 asks of a control's only visible edge. `--rule`
+  (hairlines) and `--rule-strong` stay on things that cannot be pressed.
+- The light set is defined once, plain; the dark set once, as the second
+  value of `light-dark()` beside its light twin; print reasserts light with
+  one `color-scheme` declaration rather than a third copy of any token. A
+  browser without `light-dark()` keeps the plain light set and never goes
+  dark, which is the correct degradation: a half-dark page is worse than none.
 
 ### The ramp that is not red and green
 
@@ -89,29 +113,39 @@ suppressed cell — never the household.
 
 ### "We cannot compute this" is a value the design has to carry
 
-`summary.childcareSubsidyUnmodeled` names the states where PolicyEngine returns
-no child-care subsidy at all — 23 in the sweep of 2026-09-15, six of the ten
-largest states among them. Their largest cliff is missing, so their figures are
-**floors, not measurements**.
+`coverage[state].unmodeled[]` names, for every state, the programs the model
+cannot compute there: the child-care subsidy where the engine paid $0 at every
+point to a household that pays for care, a state premium program with no
+upstream variable and no local ladder, and LIHEAP everywhere. For a household
+that would hold one of the first two, that state's largest cliff may be missing,
+so its figures are **floors, not measurements**.
 
 A reader is meant to take a hatched state as *unmeasured*, never as *low*. The
 sentence a journalist may write is "this model cannot yet say what a raise costs
-in Texas." The sentence they may not write is "Texas is gentler than Vermont."
+in New Jersey." The sentence they may not write is "New Jersey is gentler than
+Vermont."
 
 Rendering it as a light step of the loss ramp would say exactly the wrong thing —
 a gap in a sequential ramp always reads as a small value — so the treatment sits
-outside the ramp: a grey 45° hatch, a separate legend entry that spells out
-*figures incomplete, not low*, exclusion from the ranking into its own labelled
-block, and exclusion from the bin bounds so a known-wrong number cannot move the
-scale. The number itself stays in the table, flagged in its own column, because a
-reporter must be able to see what the model returned. The flag is read from the
-data file every render, so a state leaves it the day upstream starts modelling
-it, and it only applies where the household has a child young enough to need paid
-care. Full rules in `charts.md`.
+outside the ramp: a 45° hatch of `--ink-3` stripes on the sunk ground (5.11:1
+light, 5.97:1 dark, so the pattern is legible and survives greyscale), a
+separate legend entry that spells out *figures incomplete, not low*, exclusion
+from the ranking into its own labelled block, and exclusion from the bin bounds
+so a known-wrong number cannot move the scale. The number itself stays in the
+table, flagged in its own column, because a reporter must be able to see what
+the model returned. The list and its count are read from the data file every
+render — never typed, never kept in a page — so a state leaves it the day
+upstream starts modelling it. On the 2026-09-16 sweep the child-care entry is
+empty (every state pays a paying archetype somewhere) and the marker falls on
+the two states whose own premium program is unmodeled; when the child-care gap
+returns, it returns here. Full rules in `charts.md` § 2.
 
 The caseworker surface carries the same fact in its own register: a line under
-the verdict saying whether the subsidy is modelled in this household's state, and
-— when it is not — that every figure on the page is a floor.
+the verdict saying what is not modelled in this household's state, and — when
+something is — that every figure on the page is a floor. Beside it sits
+`CorrectionsApplied`: which HotGap-side corrections produced this state's
+numbers, from `coverage[state].corrections`, because a number without its
+correction is not defensible.
 
 ## Type
 
@@ -122,28 +156,41 @@ neither of the two default voices shows up. Scale steps ~1.185 from a 17px body;
 the caseworker surface drops the base to 15px because that reader is scanning
 thresholds, not reading prose.
 
+Archivo is **self-hosted**: `tokens.css` declares the `@font-face` rules and
+the files live in `fonts/`, so a page carries no font `<link>` and no
+`preconnect` to a third party. A benefits tool must not send every page view
+to Google for a typeface. `font-display: swap` shows the fallback grotesque at
+once; the fallbacks are metric-close, so the swap does not reflow the answer.
+
+Two floors: 13px (`--t-micro`) for anything prose-like, including a word on a
+chart; 12px (`--t-tick`) for a tick number sized to its axis. The one thing
+below both is a map tile's postal code, sized to its tile and repeated in the
+table.
+
 Sentence case everywhere. No tracked-out capitals, no eyebrow labels above
 headings, no meta strings joined with middle dots, no arrows glued to link text.
 
 ## Motion
 
 One orchestrated moment per surface — the citizen curve draws itself once, left
-to right, 700ms. Nothing else moves unless a person moved it. No scroll reveals,
-no hover lifts, no card transitions. `prefers-reduced-motion` zeroes every
-duration token, so there is one place to honour it.
+to right, 700ms, through `.hg-draw`. Nothing else moves unless a person moved
+it. No scroll reveals, no hover lifts, no card transitions.
+`prefers-reduced-motion` zeroes every duration token in `tokens.css`, so there
+is one place to honour it, and a page never re-checks the preference itself.
 
 ## Where the personas conflict
 
 **1. Precision against reading level.** The caseworker needs "CCDF child care
-subsidy, $54,000, deferred under 42 CFR 435.926." The citizen must not meet a
+subsidy, $55,000, deferred under 42 CFR 435.926." The citizen must not meet a
 regulation citation. *Resolved:* the same step is one component with two
 registers, and the citizen register is not a simplification of the professional
 one — it is a different sentence. "Child care help ends. The state stops paying
 part of your day care bill." Program names appear on the citizen surface only
-after the plain phrase, as an aside ("It is called SNAP"), so a client who hears
-the acronym from an office later can match it up. The citizen page is gated at
-Flesch-Kincaid ≤ 5.9 (it measures **2.12**, worst single string 7.85 — both
-under the repo's corpus and per-string limits).
+after the plain phrase, as an aside ("It is called SNAP"), composed from the
+one phrase table in `inventory.md`, never inline. The citizen page is gated at
+Flesch-Kincaid ≤ 5.9 (it measured **2.12**, worst single string 7.85 — both
+under the repo's corpus and per-string limits — on the 2026-09-15 sketch; the
+gate itself is a separate port).
 
 **2. One answer against many what-ifs.** The citizen surface gives one answer and
 refuses to offer alternatives, because offering paths reads as advice. The
@@ -163,8 +210,9 @@ needs the curve cropped to their own neighbourhood on a 390px screen. The
 journalist needs a figure that keeps its meaning after being dragged into a CMS.
 *Resolved:* they are different objects. The citizen curve crops and carries its
 context in the page around it. The journalist figure never crops and carries
-title, units, bin bounds, vintage and *estimates only* **inside** the figure box.
-The caseworker's curve keeps the full axis and sits next to its own ledger.
+title, units, bin bounds, vintage, model version and *estimates only* **inside**
+the figure box. The caseworker's curve keeps the full axis and sits next to its
+own ledger.
 
 **5. Reach wants to be a prediction.** Every persona wants to read "68th
 percentile" as "she has a 68% chance." *Resolved:* the word *chance* and the word
@@ -175,11 +223,12 @@ returns exactly two points — current and the state's safe exit — and a UI mu
 back to `reachCell` for any third, never interpolate one.
 
 **6. An incomplete state.** A journalist wants 51 comparable numbers; the model
-can only complete 28 of them for a household with a young child. Dropping the
-other 23 would hide six of the ten largest states; shading them would publish a
+cannot always complete all of them for a given household. Dropping the
+incomplete ones would hide large states; shading them would publish a
 falsehood. *Resolved:* they stay on the map, in place, hatched and outside the
-ramp; they leave the ranking into a block that names why; they never move the bin
-bounds; and their raw figures stay in the table under a flag. The caseworker gets
+ramp; they leave the ranking into a block that names why; they never move the
+bin bounds; and their raw figures stay in the table under a flag. The count is
+rendered from `coverage[state].unmodeled[]`, never typed. The caseworker gets
 the same fact as a one-line notice about their own client's state. The citizen
 surface does not carry it at all — a household in Texas is shown its own curve
 with no cross-state claim on the page, so there is nothing to mislead.
@@ -190,12 +239,29 @@ year. *Resolved:* one rule, applied identically on all three surfaces — solid
 means this year, dashed means a later renewal — plus the plotting rule in
 `charts.md` that the line itself must have deferred drops lifted out of it.
 
+**8. The person's unit against the model's.** The model sweeps annual dollars;
+a person paid $14.50 an hour does not think in $30,160 a year. *Resolved:* the
+citizen surface shows every pay figure in the unit the person gave — hour,
+month or year — rounded to $0.25, $50 or $500, with the chart's ticks generated
+in that unit and mapped back to annual for position (`charts.md` § 1). Money
+kept stays yearly, because that is what the curve plots. The caseworker and
+journalist stay annual: they check the table against the file.
+
+**9. The household's own numbers against an archetype's.** When the live call
+fails, core evaluates the state's archetype curve instead
+(`HouseholdEvaluation.source === "archetype"`). The page must never claim those
+are the household's own. *Resolved:* a `SourceNote` state, not a banner — the
+source line changes sentence ("These are numbers for a family like yours in
+your state."), gains *Try again*, and the county is dropped from every sentence
+because the archetype has none.
+
 ## What was deliberately left out
 
 - **A geographic choropleth.** Area would weight Texas twenty times Connecticut
   for no reason. The tile cartogram treats 51 rulebooks as 51 equal squares.
 - **An input flow.** The archived system's fourteen-question wizard was built for
-  one persona and is what made it too narrow. Input design is a separate brief.
+  one persona and is what made it too narrow. Input design is a separate brief;
+  until it lands, a value chip in the `ScenarioBar` is not a button.
 - **Any composite score or ranking badge.** Six measures disagree with each other
   by design; collapsing them would invent a fact.
 - **Head Start, employer coverage and the state premium wrap surfaces.** They are
@@ -209,4 +275,7 @@ means this year, dashed means a later renewal — plus the plotting rule in
 - **Shadows and rounded cards.** Panels are defined by a rule and a change of
   ground. `--r-panel` is `0` on purpose.
 - **A live tooltip as the primary read.** Values are reachable by keyboard, by
-  the readout line, and by the table before hover is considered.
+  the readout line, by a cliff mark that is a button, and by the table before
+  hover is considered.
+- **A popover for a cliff's detail.** The ledger row or the StepList row is the
+  card; a mark opens it in place.

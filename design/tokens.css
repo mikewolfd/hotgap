@@ -1,14 +1,55 @@
 /* HotGap design tokens.
    Foundations for three surfaces: citizen, caseworker, journalist.
    Every colour was validated, not eyeballed — see design/README.md § Colour.
+   Contrast figures in comments were computed from the hex values in this file
+   with the WCAG 2.x relative-luminance formula (AUDIT-2026-09-16 method).
 
    Light surface  #FAFBFC   Light plane  #E8EBEE
    Dark  surface  #161B20   Dark  plane  #0D1114
-*/
+
+   Classes prefixed hg- are the shared layer: a page uses them and does not
+   re-declare them (S13). Each one's comment names the audit finding it
+   answers, so a page agent can trace a rule back to its reason. */
 
 /* ── Type ──────────────────────────────────────────────────────────────
    One family. Archivo: a squared grotesque with tall figures — the voice of
-   an official form, not of a brochure. Falls back cleanly with no network. */
+   an official form, not of a brochure. Self-hosted (N8): the woff2 files in
+   design/fonts/ are the variable font sliced to weights 400–600, the only
+   weights the surfaces use, downloaded 2026-09-16 from Google Fonts' v25
+   build and licensed under the SIL OFL 1.1 (design/fonts/OFL.txt). A
+   benefits tool must not send every page view to a third party for a
+   typeface. `font-display: swap` shows the fallback at once; the fallbacks
+   are metric-close grotesques, so the swap does not reflow the answer. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/archivo-vietnamese.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+
 :root {
   --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
@@ -20,9 +61,13 @@
   --t-h3:     1.0625rem;
   --t-body:   1.0625rem;  /* 17px — citizen default */
   --t-small:  0.9375rem;  /* 15px — caseworker tables, captions */
-  --t-micro:  0.8125rem;  /* 13px — axis ticks, source lines. The floor for prose;
-                             a label sized to its own mark (a map tile's postal
-                             code) may go smaller when a table repeats it. */
+  --t-micro:  0.8125rem;  /* 13px — source lines, and the floor for every
+                             prose-like label, in HTML or in an SVG: a direct
+                             label, "later", "you", "back to even" (S13). */
+  --t-tick:   0.75rem;    /* 12px — the floor for an SVG tick label: a number
+                             sized to its axis, never a word (S13). The one
+                             thing allowed below it is a map tile's postal
+                             code, sized to its tile and repeated in the table. */
 
   --lh-answer: 1.2;
   --lh-tight:  1.3;
@@ -47,7 +92,9 @@
   --r-panel:   0;
 
   /* ── Motion. One orchestrated moment per surface; everything else answers
-       a person's action. ── */
+       a person's action. Pages read these two tokens and never re-check
+       matchMedia themselves (S13): the reduced-motion block below is the one
+       place the preference is honoured, and a 0ms duration is a no-op. ── */
   --dur-fast: 120ms;
   --dur:      240ms;
   --dur-draw: 700ms;
@@ -58,8 +105,18 @@
   :root { --dur-fast: 0ms; --dur: 0ms; --dur-draw: 0ms; }
 }
 
-/* ── Colour: light ─────────────────────────────────────────────────────
-   Cool slate paper, not cream. Ink is blue-black, not tinted near-black. */
+/* ── Colour ────────────────────────────────────────────────────────────
+   Light is the set every browser gets, defined once, plain, below (B2). The
+   dark set is defined once too, in the @supports block after it, as the
+   second argument of light-dark() beside its light twin: each token names
+   both of its values in one place, a browser without light-dark() keeps the
+   plain light set and simply never goes dark, and print (last block in this
+   file) needs only `color-scheme: light` to reassert every light value —
+   no token is written a third time.
+
+   Light: cool slate paper, not cream. Ink is blue-black, not tinted near-black.
+   Dark: re-derived against #161B20, not flipped. The loss ramp reverses its
+   anchor: on a dark ground the SMALLEST loss is the step nearest the surface. */
 :root {
   color-scheme: light;
 
@@ -71,8 +128,14 @@
   --ink-2: #414B55;  /*  8.6:1 */
   --ink-3: #5E6871;  /*  5.5:1 on surface, 4.8:1 on plane — the lightest ink
                           allowed to carry small text, so captions are still AA */
-  --rule:        #D3D8DE;
-  --rule-strong: #AEB7C0;
+  --rule:        #D3D8DE;  /* hairlines: table rows, panel edges. Never a control's only boundary. */
+  --rule-strong: #AEB7C0;  /* 1.96:1 on surface — a heavier hairline, still not a control edge */
+  /* The boundary of an interactive thing (S11): chips, selects, buttons, the
+     no-cliff tile's sibling controls. WCAG 1.4.11 wants 3:1 for a control's
+     only visible edge; --rule-strong measures 1.96:1 on surface, 1.70:1 on
+     plane. This one measures 3.49:1 on surface, 3.02:1 on plane. Interactive
+     edges only — hairlines keep --rule. */
+  --control-edge: #7C8894;
   --link:  #1F5CB4;  /*  6.2:1 */
   --focus: #12171C;
 
@@ -105,66 +168,41 @@
   --caution: #8A5A00;  /* stale data, offline fallback, a suppressed cell */
 }
 
-/* ── Colour: dark ──────────────────────────────────────────────────────
-   Re-derived against #161B20, not flipped. The loss ramp reverses its anchor:
-   on a dark ground the SMALLEST loss is the step nearest the surface. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --plane:        #0D1114;
-    --surface:      #161B20;
-    --surface-sunk: #1D242A;
-    --ink:   #F2F5F7;
-    --ink-2: #C2CBD3;
-    --ink-3: #97A1AA;
-    --rule:        #2A3238;
-    --rule-strong: #3F4A53;
-    --link:  #7FB2F0;
-    --focus: #F2F5F7;
-    --series-1: #4C8DE0;
-    --series-2: #D4722F;
-    --series-3: #22A87C;
-    --loss-1: #7C3D6D;
-    --loss-2: #9C5A8C;
-    --loss-3: #BC7BAB;
-    --loss-4: #D9A2C9;
-    --loss-5: #F0C9E2;
-    --loss-ink:   #D9A2C9;
-    --loss-wash:  rgba(217,162,201,0.13);
-    --loss-hatch: rgba(217,162,201,0.34);
-    --grid: #232A31;
-    --axis: #3F4A53;
-    --note:    #7FB2F0;
-    --caution: #E0B056;
+@supports (color: light-dark(#000, #fff)) {
+  :root {
+    --plane:        light-dark(#E8EBEE, #0D1114);
+    --surface:      light-dark(#FAFBFC, #161B20);
+    --surface-sunk: light-dark(#F1F3F6, #1D242A);
+    --ink:   light-dark(#12171C, #F2F5F7);
+    --ink-2: light-dark(#414B55, #C2CBD3);
+    --ink-3: light-dark(#5E6871, #97A1AA);  /* dark: 6.6:1 on surface, 7.2:1 on plane */
+    --rule:        light-dark(#D3D8DE, #2A3238);
+    --rule-strong: light-dark(#AEB7C0, #3F4A53);
+    --control-edge: light-dark(#7C8894, #6B7680); /* dark: 3.74:1 on surface, 4.09:1 on plane, 3.38:1 on sunk */
+    --link:  light-dark(#1F5CB4, #7FB2F0);
+    --focus: light-dark(#12171C, #F2F5F7);
+    --series-1: light-dark(#2A6FD0, #4C8DE0);
+    --series-2: light-dark(#D2611F, #D4722F);
+    --series-3: light-dark(#1E8E6A, #22A87C);
+    --loss-1: light-dark(#D19FC2, #7C3D6D);
+    --loss-2: light-dark(#B276A3, #9C5A8C);
+    --loss-3: light-dark(#945185, #BC7BAB);
+    --loss-4: light-dark(#713366, #D9A2C9);
+    --loss-5: light-dark(#4D1E43, #F0C9E2);
+    --loss-ink:   light-dark(#713366, #D9A2C9);
+    --loss-wash:  light-dark(rgba(113,51,102,0.10), rgba(217,162,201,0.13));
+    --loss-hatch: light-dark(rgba(113,51,102,0.32), rgba(217,162,201,0.34));
+    --grid: light-dark(#E1E5EA, #232A31);
+    --axis: light-dark(#AEB7C0, #3F4A53);
+    --note:    light-dark(#1F5CB4, #7FB2F0);
+    --caution: light-dark(#8A5A00, #E0B056);
   }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --plane:        #0D1114;
-  --surface:      #161B20;
-  --surface-sunk: #1D242A;
-  --ink:   #F2F5F7;
-  --ink-2: #C2CBD3;
-  --ink-3: #97A1AA;
-  --rule:        #2A3238;
-  --rule-strong: #3F4A53;
-  --link:  #7FB2F0;
-  --focus: #F2F5F7;
-  --series-1: #4C8DE0;
-  --series-2: #D4722F;
-  --series-3: #22A87C;
-  --loss-1: #7C3D6D;
-  --loss-2: #9C5A8C;
-  --loss-3: #BC7BAB;
-  --loss-4: #D9A2C9;
-  --loss-5: #F0C9E2;
-  --loss-ink:   #D9A2C9;
-  --loss-wash:  rgba(217,162,201,0.13);
-  --loss-hatch: rgba(217,162,201,0.34);
-  --grid: #232A31;
-  --axis: #3F4A53;
-  --note:    #7FB2F0;
-  --caution: #E0B056;
+  /* The two ways to be dark: the OS says so and the page has not forced
+     light, or the page's theme button forced dark. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { color-scheme: dark; }
 }
 
 /* ── The floor every surface inherits ─────────────────────────────────── */
@@ -189,7 +227,9 @@ p  { margin: 0 0 var(--s4); max-width: var(--measure); }
 a { color: var(--link); text-underline-offset: 3px; }
 
 /* Focus is never removed and never invisible: a 2px ink ring with a 2px
-   surface gap, so it reads on any ground including a filled control. */
+   surface gap, so it reads on any ground including a filled control. A page
+   must never write `all: unset` on a button — it resets `outline` and this
+   rule loses (S2); use .hg-row-btn or .hg-mark instead. */
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -197,7 +237,7 @@ a { color: var(--link); text-underline-offset: 3px; }
 }
 
 /* Every interactive thing clears 44px. */
-button, [role="button"], summary, select, input, .hg-row-link {
+button, [role="button"], summary, select, input, .hg-row-btn {
   min-height: var(--touch);
   font-family: inherit;
   font-size: inherit;
@@ -212,21 +252,298 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 
-/* The system has exactly one 45° hatch, in two inks:
-   --loss-hatch over a danger band ("more pay, no more money"), and this grey one
-   over "the model cannot compute this". Outline is left to each use site, since
-   a 6px strip and a 40px tile want different edges. */
-.hg-hatch-grey {
+/* Shown only on paper (the caseworker handout) and hidden only on paper
+   (theme button, actions) — one pair, so no page carries its own (S13/B2). */
+.hg-print-only { display: none; }
+
+/* ── Marks that carry meaning without colour ─────────────────────────── */
+
+/* The system has exactly one 45° hatch, in two inks: --loss-hatch over a
+   danger band ("more pay, no more money"), and this one over "the model
+   cannot compute this" (B1). Stripes are --ink-3 on --surface-sunk at a
+   2px stripe / 6px period: 5.11:1 in light, 5.97:1 in dark (the audit's
+   "6.0" is this figure rounded), so the PATTERN is legible, which is the
+   channel that survives greyscale and a CMS re-compression. Mean luminance
+   of the tile: light 0.64 (above --loss-1's 0.42), dark 0.13 (between
+   --loss-1's 0.09 and --loss-3's 0.28) — so in light mode it is the stripe
+   contrast, not the average, that keeps a hatched tile from sorting as
+   "lighter than the lowest bin". The old --rule stripes measured 1.29:1 /
+   1.20:1 and collapsed to a flat pale square. Outline is left to each use
+   site: a 6px rank strip and a 40px tile want different edges. */
+.hg-hatch-incomplete {
   background: repeating-linear-gradient(45deg,
-    var(--rule) 0 3px, var(--surface-sunk) 3px 6px);
+    var(--ink-3) 0 2px, var(--surface-sunk) 2px 6px);
 }
 
+/* The four tile states of the state map and their legend swatches, one
+   definition each so the legend entry IS the mark (charts.md § 2). Shaded
+   is a --loss-N background set by the page from the bin index. */
+.hg-swatch { display: inline-block; width: 18px; height: 12px; flex: none;
+             vertical-align: -1px; }
+/* Past the axis: no fill, dashed edge — the measure runs off the sweep. */
+.hg-tile--past, .hg-swatch--past {
+  background: var(--surface-sunk); color: var(--ink-3);
+  outline: 1px dashed var(--rule-strong); outline-offset: -1px;
+}
+/* Not computed (B1): the hatch, solid edge — the figure is a floor. The
+   postal code sits on a small clear plate (a ::before under the text, above
+   the hatch) so the stripes, now dark enough to read, cannot eat the label. */
+.hg-tile--incomplete, .hg-swatch--incomplete {
+  color: var(--ink-2);
+  outline: 1px solid var(--rule-strong); outline-offset: -1px;
+}
+.hg-tile--incomplete { position: relative; z-index: 0; }
+.hg-tile--incomplete::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 50%;
+  width: 2.3em; height: 1.35em; transform: translate(-50%, -50%);
+  background: var(--surface-sunk);
+}
+/* No cliff found (B4): no fill at all, solid edge — a measurement of zero,
+   the best news on the map, and never a step of the ramp. */
+.hg-tile--none, .hg-swatch--none {
+  background: none; color: var(--ink-2);
+  outline: 1px solid var(--rule-strong); outline-offset: -1px;
+}
+
+/* SVG text floors (S13): a tick is a number sized to its axis; a label is a
+   word and takes the prose floor. Set with a class, never a bare font-size. */
+.hg-tick  { font-size: var(--t-tick);  fill: var(--ink-3); }
+.hg-label { font-size: var(--t-micro); fill: var(--ink-2); }
+
+/* The one orchestrated moment (S13): a path with pathLength="1" draws itself
+   left to right over --dur-draw. Add the class on the first draw only; a
+   redraw for a resize or a theme change re-creates the path and must not
+   animate again. Reduced motion zeroes --dur-draw and the animation is a
+   no-op — the page checks nothing. */
+@keyframes hg-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.hg-draw { stroke-dasharray: 1; stroke-dashoffset: 0;
+           animation: hg-draw var(--dur-draw) var(--ease) both; }
+
+/* ── Shared components ───────────────────────────────────────────────── */
+
 /* Shared: the source line every chart and table carries so a screenshot
-   survives out of context. */
+   survives out of context (SourceNote, #17). */
 .hg-source {
   font-size: var(--t-micro);
   color: var(--ink-3);
   line-height: 1.45;
   margin: var(--s2) 0 0;
   max-width: var(--measure-wide);
+}
+.hg-source .hg-button { margin-left: var(--s2); }   /* M4: "Try again" sits in the line */
+
+/* The cite line under a ledger or list entry (ThresholdLedger, CorrectionsApplied — B3). */
+.hg-cite { display: block; color: var(--ink-3); font-size: var(--t-micro);
+           font-weight: var(--w-reg); line-height: 1.45; }
+
+/* DeferredBadge (#10), one declaration (S13). Dashed everywhere, always:
+   dashed means a later renewal, across chart, chip and table. */
+.hg-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px dashed var(--ink-3); border-radius: var(--r-chip);
+  color: var(--ink-2); padding: 0 9px; line-height: 1.6;
+  font-size: var(--t-micro); font-weight: var(--w-med); white-space: nowrap;
+}
+
+/* A word about the data as a chip (B3): the `source` of a correction —
+   "modeled", "ladder", "added by HotGap" — or a vintage. Solid, because it
+   is not a timing claim; the dashed badge is reserved for "later". */
+.hg-tag {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--rule-strong); border-radius: var(--r-chip);
+  color: var(--ink-2); padding: 0 8px; line-height: 1.6;
+  font-size: var(--t-micro); font-weight: var(--w-med); white-space: nowrap;
+}
+
+/* A two-column list where each row is a rule with a fixed left column (B3):
+   StepList's dollar and sentence, CorrectionsApplied's program and note.
+   The rule is the information, not decoration. Set --col per use. */
+.hg-rows { --col: 6.5rem; list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.hg-rows > li, .hg-rows > div {
+  display: grid; grid-template-columns: var(--col) minmax(0, 1fr); gap: var(--s3);
+  padding: var(--s3) 0; border-top: 1px solid var(--rule); align-items: start;
+  scroll-margin-top: var(--s7);     /* M6: a mark scrolls its row into view */
+}
+.hg-rows .hg-rows__at { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
+.hg-rows p { margin: 0; max-width: none; }
+/* The row a cliff mark opened (M6): the row is the card. The ground bleeds
+   --s2 sideways only, so it never covers the rules above and below. */
+.hg-rows > [aria-current="true"] { background: var(--surface-sunk);
+  box-shadow: var(--s2) 0 0 var(--surface-sunk), calc(-1 * var(--s2)) 0 0 var(--surface-sunk); }
+
+/* MarkKey (#5), one declaration (S13): each entry draws the actual mark. */
+.hg-key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
+          padding: 0; list-style: none; font-size: var(--t-micro); color: var(--ink-2); }
+.hg-key li { display: flex; align-items: center; gap: var(--s2); }
+.hg-key svg { width: 22px; height: 12px; flex: none; }
+
+/* CurveReadout (#4), one declaration (S13). min-height keeps the chart from
+   jumping when the sentence wraps. */
+.hg-readout { font-size: var(--t-small); color: var(--ink-2); margin: var(--s2) 0 0;
+              min-height: 2.6em; max-width: var(--measure); }
+.hg-readout b { color: var(--ink); font-weight: var(--w-semi); }
+
+/* Callout (#19), ONE shape for the three jobs (S13): a 3px left rule, the
+   text a step lighter than body, the lead word in ink. The rule's colour is
+   the only thing the modifier changes, and it always travels with a word
+   (a heading or a <strong> first), never alone. Default: a neutral aside.
+   --note: an estimate, a definition, a deferred change.
+   --caution: stale data, an offline fallback, an incomplete state. */
+.hg-callout { border-left: 3px solid var(--rule-strong);
+              padding: var(--s1) 0 var(--s1) var(--s4); margin: var(--s5) 0;
+              color: var(--ink-2); max-width: var(--measure-wide); }
+.hg-callout--note    { border-left-color: var(--note); }
+.hg-callout--caution { border-left-color: var(--caution); }
+.hg-callout > :last-child { margin-bottom: 0; }
+.hg-callout strong, .hg-callout h2, .hg-callout h3 { color: var(--ink); }
+
+/* Button (#20), one declaration (S13). The theme button, the CSV download
+   and the secondary action are the base; --primary is the one action a
+   surface leads with (the caseworker's print). Edge at --control-edge (S11). */
+.hg-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  min-height: var(--touch); padding: 0 var(--s4);
+  border: 1px solid var(--control-edge); border-radius: var(--r-control);
+  background: var(--surface); color: var(--ink);
+  font: inherit; font-weight: var(--w-med); line-height: 1.2;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.hg-button--primary { background: var(--ink); color: var(--plane); border-color: var(--ink); }
+.hg-button--small { min-height: 32px; padding: 0 var(--s3); font-size: var(--t-micro); }
+.hg-button:disabled { color: var(--ink-3); border-color: var(--rule-strong); cursor: default; }
+
+/* ScenarioBar (#11) value chip (S1, S11). A key and a value; the chip is a
+   <button> only when pressing it does something stated (a take-up toggle,
+   aria-pressed; or opening an editor) — otherwise it is a <span>, because a
+   button that does nothing is a lie. Same look on both elements. */
+.hg-chip {
+  display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch);
+  padding: 0 var(--s3); border: 1px solid var(--control-edge); background: var(--surface);
+  color: var(--ink); border-radius: var(--r-control); white-space: nowrap; font: inherit;
+}
+button.hg-chip { cursor: pointer; }
+.hg-chip__k { color: var(--ink-3); }
+.hg-chip__v { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
+.hg-chip[aria-pressed="true"]  { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.hg-chip[aria-pressed="false"] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
+
+/* ScenarioBar (#11) layout (S1). Only the top row — wordmark and the two
+   actions — is sticky, at every width: one rule, no magic offset, and the
+   verdict a what-if changes sits directly under it. The inputs row is not
+   sticky; below 720px it hides behind a one-line summary with an edit
+   control that sets data-open (and aria-expanded on the control). */
+.hg-scenario { background: var(--surface); border-bottom: 1px solid var(--rule); }
+.hg-scenario__top { position: sticky; top: 0; z-index: 5; background: var(--surface);
+  display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
+  max-width: 76rem; margin: 0 auto; }
+.hg-scenario__actions { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+.hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
+  padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
+.hg-scenario__summary { display: none; }
+@media (max-width: 719.98px) {
+  .hg-scenario__inputs { display: none; }
+  .hg-scenario__inputs[data-open="true"] { display: flex; }
+  .hg-scenario__summary { display: flex; align-items: center; gap: var(--s3);
+    padding: 0 var(--s4) var(--s3); color: var(--ink-2); font-size: var(--t-small); }
+  .hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
+}
+
+/* FilterRow (#21), one row above everything it scopes (S13, S11). */
+.hg-filters { display: flex; gap: var(--s4); flex-wrap: wrap; align-items: flex-end;
+              padding: var(--s4) 0; border-bottom: 1px solid var(--rule); }
+.hg-filters > div { min-width: 0; flex: 1 1 15rem; }
+.hg-filters label { display: block; color: var(--ink-3); font-size: var(--t-micro); }
+.hg-filters .hg-filters__end { margin-left: auto; display: flex; gap: var(--s2); flex: 0 0 auto; }
+.hg-select, .hg-filters select {
+  min-height: var(--touch); border: 1px solid var(--control-edge); background: var(--surface);
+  color: var(--ink); border-radius: var(--r-control); padding: 0 var(--s3);
+  width: 100%; max-width: 100%; font: inherit;
+}
+
+/* SkipLink (#22), one declaration (S13). */
+.hg-skip { position: absolute; left: -9999px; }
+.hg-skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
+                 background: var(--surface); color: var(--ink); padding: var(--s3);
+                 border: 1px solid var(--ink); }
+
+/* DataTable (#15) base and caption, one declaration (S13). The surface sets
+   density by its base font size, not the table. */
+.hg-table { border-collapse: collapse; width: 100%; }
+.hg-table caption { text-align: left; color: var(--ink-2); padding-bottom: var(--s2); }
+.hg-table th, .hg-table td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
+                             border-bottom: 1px solid var(--rule); vertical-align: top; }
+.hg-table thead th { color: var(--ink-3); font-weight: var(--w-med); font-size: var(--t-micro);
+                     border-bottom-color: var(--rule-strong); }
+.hg-table .num { text-align: right; padding-right: var(--s3); white-space: nowrap; }
+.hg-table .money { font-weight: var(--w-semi); }
+/* A row that is a control (DropLedger, the state table) centres its cells
+   on the button, so a wrapped label does not float its neighbours (S9). */
+.hg-table tr:has(> * > .hg-row-btn) > * { vertical-align: middle; }
+.hg-table tr:has(> * > [aria-current="true"]) { background: var(--surface-sunk); }
+
+/* A row button (S2, S9, M6): the four properties `all: unset` was doing,
+   and nothing else, so :focus-visible keeps its ring. Fills the cell, is
+   at least 44px tall, and centres its text. */
+.hg-row-btn { border: 0; background: none; padding: 0; font: inherit; color: inherit;
+              display: flex; align-items: center; width: 100%; text-align: left;
+              min-height: var(--touch); cursor: pointer; }
+
+/* Panel, one padding (S13): --s4. Both panel-bearing surfaces set a 15px
+   base, where 16px is one line-height — the text block sits on the same
+   rhythm as the rules around it. --s5 was the journalist figure's choice
+   and belongs to the figure box (charts.md § 2), not to a panel. */
+.hg-panel { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: var(--r-panel); padding: var(--s4); }
+.hg-panel > :first-child { margin-top: 0; }
+.hg-panel > :last-child { margin-bottom: 0; }
+
+/* A horizontal scroller for a wide table; the min-width is the table's job. */
+.hg-scroll-x { overflow-x: auto; }
+
+/* ── Interactive chart (M6, S8, S12) ─────────────────────────────────── */
+
+/* The chart wrapper: role="group", aria-roledescription="interactive chart",
+   tabindex="0", and the one tab stop for the whole chart. Marks inside are
+   real buttons at tabindex="-1", reached with [ and ] from the wrapper. */
+.hg-chart { position: relative; }
+.hg-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.hg-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+
+/* A cliff mark as a control: a 44px hit area centred on the drawn dot,
+   positioned over the SVG in percent of its box. The dot stays in the SVG;
+   the button is transparent, so the mark's drawing rules in charts.md are
+   unchanged. aria-expanded says whether its row is open. */
+.hg-marks { position: absolute; inset: 0; pointer-events: none; }
+.hg-mark {
+  position: absolute; width: var(--touch); height: var(--touch);
+  margin: calc(var(--touch) / -2) 0 0 calc(var(--touch) / -2);
+  border: 0; background: none; padding: 0; border-radius: 50%;
+  pointer-events: auto; cursor: pointer;
+}
+.hg-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: -6px; border-radius: 50%; }
+.hg-mark[aria-expanded="true"]::after {
+  content: ""; position: absolute; inset: 12px; border-radius: 50%;
+  border: 2px solid var(--ink);
+}
+/* A merged mark (S8): dots closer than 10px become one mark with a count,
+   drawn by the page as a --loss-4 dot with the count in --surface ink. */
+.hg-mark__count { position: absolute; inset: 0; display: grid; place-items: center;
+                  font-size: var(--t-tick); font-weight: var(--w-semi); color: var(--surface); }
+
+/* ── Print (B2) ──────────────────────────────────────────────────────── */
+/* Paper is light. `color-scheme: light` flips every light-dark() token back
+   to its first value, whatever the OS or the theme button said, so this
+   block carries no colours. A page must not add its own `body { color:#000 }`
+   print override: that half-fixed the dark print and hid the rest. The
+   meaning-bearing marks keep their ink on paper. */
+@media print {
+  :root, :root[data-theme] { color-scheme: light; }
+  body { background: #fff; }
+  .hg-print-only { display: block; }
+  .hg-no-print, .hg-scenario__actions, .hg-button, .hg-skip { display: none !important; }
+  .hg-hatch-incomplete, .hg-tile--past, .hg-tile--incomplete, .hg-tile--none,
+  .hg-swatch, .hg-callout, .hg-badge, .hg-tag, .hg-rows > [aria-current="true"] {
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
+  a[href]::after { content: ""; }
 }
