@@ -5,22 +5,15 @@ import { PolicyEngineError } from "./client.js";
 import { loadStateFile as loadStateFile_ } from "./data.js";
 import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
-import { validateAnswers } from "./validate.js";
 import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
 import { reachForArchetype } from "./reachLookup.js";
 import { stateDefaults } from "./stateDefaults.js";
-import { CA_SINGLE_ONE_KID, point as pt, respond, type PointOver } from "./testing.js";
+import { answersWith, point as pt, respond, type PointOver } from "./testing.js";
 import type { CurvePoint, CurveResponse, HouseholdAnswers } from "./types.js";
 
 const fixture = readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8");
 const fixturePoints = parsePEResponse(JSON.parse(fixture), 101);
-
-function answersWith(over: Partial<Record<string, unknown>> = {}): HouseholdAnswers {
-  const v = validateAnswers({ ...CA_SINGLE_ONE_KID, ...over });
-  if (!v.ok) throw new Error(v.detail);
-  return v.value;
-}
 
 const answers = answersWith();
 

@@ -5,8 +5,7 @@ import { evaluateCurve, evaluateOffline } from "./evaluate.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { parsePEResponse } from "./parse.js";
 import { readFileSync } from "node:fs";
-import { point as pt } from "./testing.js";
-import { validateAnswers } from "./validate.js";
+import { answersWith, point as pt } from "./testing.js";
 
 vi.mock("./evaluate.js", async (original) => ({ ...await original<object>(), evaluateOffline: vi.fn() }));
 vi.mock("./data.js", async (original) => ({ ...await original<object>(), loadSummary: vi.fn() }));
@@ -50,12 +49,7 @@ describe("CLI correction notices", () => {
 
   it("prints deferred cliffs in their own block, and labels the refundable CTC", async () => {
     const hs = { programs: { headstart: 12000, ctc: 1500 }, childPrograms: { headstart: 12000 }, totalCtc: 6600 };
-    const ca = validateAnswers({
-      state: "CA", married: false, age: 30, spouseAge: null, childAges: [4], childDisabled: [false],
-      youDisabled: false, spouseDisabled: false, monthlyRent: null, monthlyChildcare: 900,
-      annualEarnings: 10000, spouseAnnualEarnings: 0, getsHeadStart: true,
-    });
-    if (!ca.ok) throw new Error(ca.detail);
+    const ca = answersWith({ childAges: [4], monthlyRent: null, monthlyChildcare: 900, annualEarnings: 10000, getsHeadStart: true });
     const points = [
       pt(0, 40000, hs), pt(10000, 45000, hs),
       pt(20000, 27000, { programs: { ctc: 0 }, totalCtc: 6600 }),   // Head Start ends: deferred
@@ -64,7 +58,7 @@ describe("CLI correction notices", () => {
       pt(50000, 60000, { totalCtc: 0 }),
     ];
     vi.mocked(evaluateOffline).mockReturnValue(
-      evaluateCurve(ca.value, { year: "2026", currentEarnings: 10000, points }, "live"),
+      evaluateCurve(ca, { year: "2026", currentEarnings: 10000, points }, "live"),
     );
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     expect(await main(["curve", "--state", "CA", "--kids", "4", "--earnings", "10000", "--offline"])).toBe(0);
@@ -83,16 +77,11 @@ describe("CLI correction notices", () => {
   });
 
   it("passes --childcare-subsidy through and prints the subsidy like any other program", async () => {
-    const ct = validateAnswers({
-      state: "CT", married: false, age: 30, spouseAge: null, childAges: [3], childDisabled: [false],
-      youDisabled: false, spouseDisabled: false, monthlyRent: null, monthlyChildcare: 800,
-      annualEarnings: 25000, spouseAnnualEarnings: 0, getsChildcareSubsidy: true,
-    });
-    if (!ct.ok) throw new Error(ct.detail);
+    const ct = answersWith({ state: "CT", childAges: [3], monthlyRent: null, monthlyChildcare: 800, annualEarnings: 25000, getsChildcareSubsidy: true });
     const subsidized = (earnings: number, netIncome: number, childcare: number) => pt(earnings, netIncome, { programs: { childcare } });
     const points = [subsidized(24000, 33000, 8850), subsidized(25000, 34121, 8850), subsidized(26000, 34500, 0), subsidized(27000, 45000, 0)];
     vi.mocked(evaluateOffline).mockReturnValue(
-      evaluateCurve(ct.value, { year: "2026", currentEarnings: 25000, points }, "live"),
+      evaluateCurve(ct, { year: "2026", currentEarnings: 25000, points }, "live"),
     );
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     expect(await main(["curve", "--state", "CT", "--kids", "3", "--childcare", "800", "--childcare-subsidy", "--earnings", "25000", "--offline"])).toBe(0);

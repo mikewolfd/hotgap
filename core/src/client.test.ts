@@ -4,17 +4,13 @@ import { canonical, childcareSubsidyProbePayload, configurePolicyEngine, curveCa
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
-import { CA_SINGLE_ONE_KID, peBody, respond } from "./testing.js";
+import { answersWith, peBody, respond } from "./testing.js";
 import { axisSpec, buildPEPayload } from "./translate.js";
-import { validateAnswers } from "./validate.js";
 import type { CurveResponse } from "./types.js";
 
 const noopSleep = async () => {};
 
-const raw = CA_SINGLE_ONE_KID;
-const v = validateAnswers(raw);
-if (!v.ok) throw new Error(v.detail);
-const answers = v.value;
+const answers = answersWith();
 
 const axis = axisSpec(answers);
 const body = peBody(axis);
@@ -55,8 +51,7 @@ describe("fetchCurve", () => {
     // it above SGA. fetchCurve therefore asks twice — once with
     // social_security_disability set, once without — and takes points at or
     // below SGA_ANNUAL from the first and the rest from the second.
-    const withSSDI = validateAnswers({ ...raw, ssdiMonthly: 1500 });
-    if (!withSSDI.ok) throw new Error(withSSDI.detail);
+    const withSSDI = answersWith({ ssdiMonthly: 1500 });
     const payloads: string[] = [];
     const fetchImpl = (async (_url: string, init: { body: string }) => {
       payloads.push(init.body);
@@ -64,7 +59,7 @@ describe("fetchCurve", () => {
       return new Response(peBody(axis, sendsSSDI ? 18000 : 0), { status: 200 });
     }) as unknown as typeof fetch;
 
-    const curve = await fetchCurve(withSSDI.value, { fetchImpl });
+    const curve = await fetchCurve(withSSDI, { fetchImpl });
     expect(payloads).toHaveLength(2);
     expect(payloads.filter((p) => p.includes("social_security_disability"))).toHaveLength(1);
 
@@ -82,14 +77,13 @@ describe("fetchCurve", () => {
     // person who kept `is_ssi_disabled` above SGA was granted SSI and
     // SSI-linked Medicaid they could never get — OH at $22–24k showed SSI
     // $1,438 and Medicaid $11,078 ending at $24k as a cliff that is not real.
-    const disabled = validateAnswers({ ...raw, youDisabled: true, ssdiMonthly: 1500 });
-    if (!disabled.ok) throw new Error(disabled.detail);
+    const disabled = answersWith({ youDisabled: true, ssdiMonthly: 1500 });
     const payloads: string[] = [];
     const fetchImpl = (async (_url: string, init: { body: string }) => {
       payloads.push(init.body);
       return new Response(body, { status: 200 });
     }) as unknown as typeof fetch;
-    await fetchCurve(disabled.value, { fetchImpl });
+    await fetchCurve(disabled, { fetchImpl });
 
     const [receiving, stopped] = ["", "!"].map((want) =>
       JSON.parse(payloads.find((p) => (p.includes("social_security_disability") ? "" : "!") === want)!));
@@ -187,15 +181,7 @@ describe("Massachusetts TAFDC feedback loop", () => {
   const loadMa = (name: string) => JSON.parse(readFileSync(new URL(`../../fixtures/${name}`, import.meta.url), "utf8"));
   const maFixture = loadMa("pe-ma-married-3kids-11.json");
   const maDoubled = loadMa("pe-ma-married-3kids-11.public-1.764.6.json");
-  const maAnswers = (() => {
-    const v = validateAnswers({
-      state: "MA", married: true, age: 30, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false],
-      youDisabled: false, spouseDisabled: false, monthlyRent: 1500, monthlyChildcare: null,
-      annualEarnings: 26000, spouseAnnualEarnings: 0,
-    });
-    if (!v.ok) throw new Error(v.detail);
-    return v.value;
-  })();
+  const maAnswers = answersWith({ state: "MA", married: true, spouseAge: 30, childAges: [1, 4, 9], childDisabled: [false, false, false], annualEarnings: 26000 });
   const maPoints = parsePEResponse(maFixture, 11);
   const YEAR = "2026";
   /** The 11-point fixture stretched to `count` points by repeating its last point. */
@@ -466,9 +452,8 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
 
   it("fetchCurve probes once for a household with a child-care bill, never for one without, and parses with the answer", async () => {
     process.env.HOTGAP_PE_URL = "https://old-cc2.example/us/calculate";
-    const withCare = validateAnswers({ ...raw, state: "CT", childAges: [3], monthlyChildcare: 800 });
-    if (!withCare.ok) throw new Error(withCare.detail);
-    const spec = axisSpec(withCare.value);
+    const withCare = answersWith({ state: "CT", childAges: [3], monthlyChildcare: 800 });
+    const spec = axisSpec(withCare);
     const all = (v: number) => ({ [YEAR]: new Array(spec.count).fill(v) });
     // A CT body carrying an $8,850 subsidy the old model dropped from net income.
     const curveBody = JSON.parse(peBody(spec));
@@ -483,13 +468,13 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
       return new Response(JSON.stringify(curveBody), { status: 200 });
     }) as unknown as typeof fetch;
     try {
-      const curve = await fetchCurve(withCare.value, { fetchImpl });
-      await fetchCurve(withCare.value, { fetchImpl });
+      const curve = await fetchCurve(withCare, { fetchImpl });
+      await fetchCurve(withCare, { fetchImpl });
       expect(probes).toBe(1);
       expect(curves).toBe(2);
       expect(curve.points[0].netIncome).toBe(20000 + 8850);
       // Told the answer, it asks nothing.
-      const told = await fetchCurve(withCare.value, { fetchImpl, childcareSubsidyCounted: true });
+      const told = await fetchCurve(withCare, { fetchImpl, childcareSubsidyCounted: true });
       expect(probes).toBe(1);
       expect(told.points[0].netIncome).toBe(20000);
       // No bill, no subsidy to place, no probe.

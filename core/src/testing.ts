@@ -1,7 +1,8 @@
 // Test-only helpers shared by the core and worker suites. Not exported from
 // index.ts: nothing here is part of the library.
 import type { AxisSpec } from "./translate.js";
-import { PROGRAM_IDS, type CurvePoint, type ProgramId } from "./types.js";
+import { PROGRAM_IDS, type CurvePoint, type HouseholdAnswers, type ProgramId } from "./types.js";
+import { validateAnswers } from "./validate.js";
 
 /** A California single parent, 30, with a 5-year-old, $1,500 rent, $30,000 a year — the suites' stock household. */
 export const CA_SINGLE_ONE_KID = {
@@ -9,6 +10,13 @@ export const CA_SINGLE_ONE_KID = {
   youDisabled: false, spouseDisabled: false, childDisabled: [false],
   monthlyRent: 1500, monthlyChildcare: null, annualEarnings: 30000, spouseAnnualEarnings: 0,
 };
+
+/** The stock household with `over` applied, through validateAnswers; a rejected variant is a test bug, so it throws. */
+export function answersWith(over: Record<string, unknown> = {}): HouseholdAnswers {
+  const v = validateAnswers({ ...CA_SINGLE_ONE_KID, ...over });
+  if (!v.ok) throw new Error(v.detail);
+  return v.value;
+}
 
 /** Every program at $0: the `programs` record of a point with no benefit. */
 export const NO_PROGRAMS = Object.fromEntries(PROGRAM_IDS.map((id) => [id, 0])) as Record<ProgramId, number>;
