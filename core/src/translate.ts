@@ -2,7 +2,7 @@ import { DEFAULT_HOURS } from "./income.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
 import { CHILDCARE_MAX_AGE } from "./stateDefaults.js";
 import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
-import { householdSize, YEAR, type HouseholdAnswers } from "./types.js";
+import { householdSize, YEAR, type HouseholdAnswers, type ImmigrationStatus } from "./types.js";
 
 export interface AxisSpec {
   /** Top of the earnings sweep, in dollars. */
@@ -204,22 +204,28 @@ export function earningsVariable(a: Pick<HouseholdAnswers, "selfEmployed">): "em
  * none, so no EITC (26 U.S.C. 32(m)) and, from 2025, no refundable child tax
  * credit. Omitted for a citizen so the payload stays byte-identical.
  */
-function applyImmigration(person: Vars, status: HouseholdAnswers["youStatus"], yearsInUs: number | null): void {
+const PE_IMMIGRATION_STATUS: Record<Exclude<ImmigrationStatus, "citizen">, string> = {
+  lpr: "LEGAL_PERMANENT_RESIDENT", refugee: "REFUGEE", asylee: "ASYLEE", deportation_withheld: "DEPORTATION_WITHHELD",
+  cuban_haitian_entrant: "CUBAN_HAITIAN_ENTRANT", conditional_entrant: "CONDITIONAL_ENTRANT", paroled_one_year: "PAROLED_ONE_YEAR",
+  daca: "DACA", tps: "TPS", undocumented: "UNDOCUMENTED",
+};
+
+function applyImmigration(person: Vars, status: ImmigrationStatus, yearsInUs: number | null): void {
   if (status === "citizen") return;
-  const pe: Record<Exclude<HouseholdAnswers["youStatus"], "citizen">, string> = {
-    lpr: "LEGAL_PERMANENT_RESIDENT", refugee: "REFUGEE", asylee: "ASYLEE", deportation_withheld: "DEPORTATION_WITHHELD",
-    cuban_haitian_entrant: "CUBAN_HAITIAN_ENTRANT", conditional_entrant: "CONDITIONAL_ENTRANT", paroled_one_year: "PAROLED_ONE_YEAR",
-    daca: "DACA", tps: "TPS", undocumented: "UNDOCUMENTED",
-  };
-  person.immigration_status = y(pe[status]);
+  person.immigration_status = y(PE_IMMIGRATION_STATUS[status]);
   person.ssn_card_type = y(status === "undocumented" ? "NONE" : status === "daca" || status === "tps" ? "NON_CITIZEN_VALID_EAD" : "CITIZEN");
   if (yearsInUs !== null) person.years_since_us_entry = y(yearsInUs);
 }
 
+/** A person with the programs every member is asked about (PERSON_VARS) left for PolicyEngine to compute. */
+const person = (vars: Vars): Vars => {
+  for (const v of PERSON_VARS) vars[v] = y(null);
+  return vars;
+};
+
 export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): { household: object } {
   const ssiPathway = opts.ssiPathway ?? true;
-  const you: Vars = { age: y(a.age) };
-  for (const v of PERSON_VARS) you[v] = y(null);
+  const you = person({ age: y(a.age) });
   applyImmigration(you, a.youStatus, a.youYearsInUs);
   // Liquid assets on the householder; SNAP sums them over the unit. Omitted
   // when zero so the payload, and the cache key built from it, stay canonical.
@@ -248,22 +254,17 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   if (a.childSupportMonthly > 0) you.child_support_received = y(a.childSupportMonthly * 12);
   if (a.unemploymentMonthly > 0) you.unemployment_compensation = y(a.unemploymentMonthly * 12);
   if (a.ssdiMonthly > 0) you.social_security_disability = y(a.ssdiMonthly * 12);
-  if (a.hasEmployerCoverage) {
-    // Employer coverage requires all three inputs together to disqualify ACA
-    // subsidies (verified live 2026-07-11). Only the two flags do any work:
-    // the premium figure is inert — $6,500 and $13,000 produce byte-identical
-    // output (verified live 2026-09-14) — and PolicyEngine documents the
-    // variable as the EMPLOYER-paid premium, not the employee's share. We send
-    // the MEPS-IC employee contribution because that is the figure the money
-    // line uses (evaluate.ts); if the variable ever starts doing work, switch
-    // this to the MEPS total premium minus that contribution.
-    // Inert upstream (see the comment above); the tier the household actually
-    // pays is evaluate.ts's esiTierAt, so this field carries one figure only.
-    const esiPremium = ESI_EMPLOYEE_CONTRIBUTION.single;
-    you.has_esi = y(true);
-    you.offered_aca_disqualifying_esi = y(true);
-    you.employer_sponsored_insurance_premiums = y(esiPremium);
-  }
+  // Employer coverage requires all three inputs together to disqualify ACA
+  // subsidies (verified live 2026-07-11). Only the two flags do any work:
+  // the premium figure is inert — $6,500 and $13,000 produce byte-identical
+  // output (verified live 2026-09-14) — and PolicyEngine documents the
+  // variable as the EMPLOYER-paid premium, not the employee's share. We send
+  // the MEPS-IC single-tier employee contribution because that is the figure
+  // the money line uses; the tier the household actually pays is
+  // evaluate.ts's esiTierAt, so this field carries one figure only. If the
+  // variable ever starts doing work, switch this to the MEPS total premium
+  // minus that contribution.
+  //
   // The plan reaches the spouse and children too (evaluate.ts charges the
   // plus-one and family tiers), so the ACA firewall applies to them as well:
   // without these flags PolicyEngine kept computing a premium credit for the
@@ -271,11 +272,11 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   // never on the marketplace. Medicaid and CHIP for the children are
   // untouched by the flags (verified 2026-09-16, both endpoints).
   const esiFlags: Vars = a.hasEmployerCoverage ? { has_esi: y(true), offered_aca_disqualifying_esi: y(true) } : {};
+  if (a.hasEmployerCoverage) Object.assign(you, esiFlags, { employer_sponsored_insurance_premiums: y(ESI_EMPLOYEE_CONTRIBUTION.single) });
 
   const people: Record<string, Vars> = { you };
   if (a.married) {
-    people.spouse = { age: y(a.spouseAge), employment_income: y(a.spouseAnnualEarnings), ...esiFlags };
-    for (const v of PERSON_VARS) people.spouse[v] = y(null);
+    people.spouse = person({ age: y(a.spouseAge), employment_income: y(a.spouseAnnualEarnings), ...esiFlags });
     applyImmigration(people.spouse, a.spouseStatus, a.spouseYearsInUs);
     // Only a spouse with earnings works the hours; a stay-at-home spouse at 40
     // hours a week would be a different household.
@@ -288,8 +289,7 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
   // live 2026-07-11).
   const hsValue = a.getsHeadStart ? null : 0;
   a.childAges.forEach((age, i) => {
-    const child: Vars = { age: y(age), early_head_start: y(hsValue), head_start: y(hsValue), ...esiFlags };
-    for (const v of PERSON_VARS) child[v] = y(null);
+    const child = person({ age: y(age), early_head_start: y(hsValue), head_start: y(hsValue), ...esiFlags });
     // WIC has no take-up switch upstream; like Head Start, "off" forces the value.
     if (!a.getsWic) child.wic = y(0);
     applyDisability(child, a.childDisabled[i] ?? false, ssiPathway);
