@@ -98,49 +98,50 @@ release into `summary.json` and each state file as `model`.
 
 ## Hosted on DigitalOcean
 
-The engine runs as a DigitalOcean App Platform service, `hotgap-engine`
-(`https://hotgap-engine-ymrlt.ondigitalocean.app`), from the image
-`.github/workflows/engine-image.yml` pushes to the `hotgap` container
-registry on every change to `engine/` (Dependabot bumps included). The app
-watches the `latest` tag and redeploys itself. It requires a bearer token
-on `/us/calculate` (`HOTGAP_ENGINE_TOKEN`, a secret on the app; `/healthz`
-stays open for the platform's checks). Point HotGap at it with both — they
-live in `.env` (see `.env.example`):
+The engine runs on a DigitalOcean droplet, `hotgap-engine` (`s-4vcpu-8gb`,
+$48/month, plus the `hotgap` container registry's basic tier, $5/month),
+built entirely by the cloud-init in `scripts/hosted-engine.mjs`: Docker,
+the engine image from the registry (pulled with read-only credentials
+minted for the box), Caddy for HTTPS on a free `<ip>.sslip.io` hostname,
+and Watchtower, which pulls each new `latest` that
+`.github/workflows/engine-image.yml` pushes — so a Dependabot bump of the
+model reaches the box on its own once CI's engine-contract job has passed
+and the PR is merged. `/us/calculate` requires a bearer token
+(`HOTGAP_ENGINE_TOKEN` in the container, `HOTGAP_PE_TOKEN` in `.env`);
+`/healthz` is open.
 
 ```sh
-set -a; . ./.env; set +a     # HOTGAP_PE_URL and HOTGAP_PE_TOKEN
+node scripts/hosted-engine.mjs status
+node scripts/hosted-engine.mjs down    # destroys the droplet; $0 until `up`. The registry image stays.
+node scripts/hosted-engine.mjs up      # recreates it, ~5 min; writes the new URL to .env
+set -a; . ./.env; set +a               # HOTGAP_PE_URL and HOTGAP_PE_TOKEN
 npm run hotgap -- curve --state MA --kids 2,6 --rent 1800 --childcare 2400 --earnings 32000 --childcare-subsidy
 ```
 
-**Size, and why.** Two gunicorn workers on `apps-d-2vcpu-8gb` (dedicated,
-$98/month) plus the registry's basic tier ($5/month). The first deploy was
-the shared 2 vCPU / 4 GB instance ($50) with one worker, and the first
-override-state request killed it: the preloaded system (~1.2 GB, shared)
-plus a fresh reform system warming to ~2 GB plus the simulation's own
-working memory is more than 4 GB, and a container that runs out of memory
-just restarts, with nothing in the log. Verified on the 8 GB instance:
-the 23-test live contract suite in 120 s, and TX + SC + MA (33 curves,
-reforms and the Massachusetts feedback loop) in 14 minutes, healthy
-throughout. Scaling is the app spec (`WEB_CONCURRENCY`, the instance
-slug): budget about 2.5–3 GB per worker plus 1.5 GB for the master.
+**It bills while it exists** — a powered-off droplet still bills — and
+nothing depends on it staying up: the weekly sweep and CI start their own
+engine on the GitHub runner, and the CLI falls back to the public API. So
+`down` when idle. The hostname follows the droplet's IP, which is why the
+script owns `HOTGAP_PE_URL` in `.env`; the down/up cycle takes about five
+minutes end to end.
 
-The weekly sweep does not use this service; it starts its own engine on
-the GitHub runner (`.github/actions/start-engine`), which is free and
-already sized. This one is for the personal path and whatever UI follows.
+**One worker means one request at a time.** A second request — a health
+probe, or a pipeline run at `--concurrency 2` — waits behind the first,
+which on an override state can be a minute; `npm run pipeline` against
+this box wants `--concurrency 1` (the sweep does not use it anyway), and
+the CLI's own requests (one curve, a second for `unclaimed`, the
+Massachusetts feedback points) queue harmlessly. Verified 2026-09-16: the
+23-test live contract suite in 212 s, and TX + SC + MA through the
+pipeline with no out-of-memory event and 2.8 GB in use afterwards.
 
-**It bills while it exists** — App Platform has no pause, and a service
-cannot scale to zero — and nothing depends on it staying up. So take it
-down when idle and bring it back when wanted:
-
-```sh
-node scripts/engine-app.mjs status
-node scripts/engine-app.mjs down    # deletes the app; $0 until `up`. The registry image ($5/month) stays.
-node scripts/engine-app.mjs up      # recreates it from the spec in the script, ~3 min; writes the new URL to .env
-```
-
-The hostname changes on every `up`, which is why the script owns
-`HOTGAP_PE_URL` in `.env`. (`status` has been exercised against the live
-app; the `down`/`up` cycle has not yet been run end to end.)
+**Size, and why.** One gunicorn worker on 8 GB. A worker peaks near 4.5 GB
+on an override state (the preloaded system, a reform system warming to
+~2 GB, the simulation's own working memory), and a 4 GB box died on the
+first one. The App Platform route was tried first: its cheapest 8 GB
+instance is $98/month, dedicated, and it has no pause; the droplet is the
+same memory for half the price, with `ssh root@<ip>` for anything the
+platform would have hidden. `WORKERS` in the script is the one knob;
+budget 3 GB per worker plus 1.5 GB for the master.
 
 ## Which model produced a number
 

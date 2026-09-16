@@ -17,7 +17,9 @@ ENV PORT=8080 \
     PYTHONUNBUFFERED=1
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --start-period=90s --timeout=10s \
+# One sync worker answers one request at a time, so a health probe can wait
+# behind a whole simulation (up to ~90 s on an override state); give it that.
+HEALTHCHECK --interval=60s --start-period=120s --timeout=120s --retries=3 \
   CMD python -c "import os,sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ['PORT']+'/healthz', timeout=5).status == 200 else 1)"
 
 # --preload builds the tax-benefit system once in the master (~10 s, ~1 GB) and
