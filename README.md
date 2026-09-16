@@ -138,6 +138,15 @@ that leap lands among real households' incomes.
   - `premiumWrap` — the state's own $0-premium marketplace tier this
     household's curve fell inside, if any (Connecticut, Massachusetts, New
     Mexico, California — see Honesty, below)
+  - `statePremiumAssistance` — the state's own marketplace premium help as
+    PolicyEngine modeled it, netted out of the premium here, when the endpoint
+    served the variable (California, New Mexico, Maryland, Colorado, Vermont
+    on the self-hosted engine; null on the hosted API, where the ladder above
+    stands in)
+  - `unclaimed` — for each entitlement the household said it does not get
+    (`getsSnap`, `getsTanf`, `getsMedicaid`, `getsWic` false), what it would
+    pay at current earnings on a second curve with every take-up on; empty
+    when nothing off would pay, null on the offline path
 - `loadSummary` / `loadStateFile` — read the committed weekly-sweep data
 
 ### Running outside Node

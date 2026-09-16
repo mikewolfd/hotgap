@@ -2,12 +2,12 @@
 
 ## Workarounds to retire
 
-Every item below is a hack around a PolicyEngine defect. Most are marked
-`WORKAROUND` in the code — check with `grep -rn WORKAROUND core/src` — but a
-few (noted below) simply supply a value PolicyEngine would otherwise get
-wrong, without a literal `WORKAROUND` comment; they belong in this table on
-the same footing, since the defect and the retirement condition are just as
-real. Each row names what removes it. Which of these apply to a given state
+Every item below is a hack around a PolicyEngine defect, and every one is
+marked `WORKAROUND` in at least one of the files its row names — check with
+`grep -rn WORKAROUND core/src` — including the ones that simply supply a
+value PolicyEngine would otherwise get wrong (the filer flag, the county, the
+Medicare stand-in), since the defect and the retirement condition are just as
+real there. Each row names what removes it. Which of these apply to a given state
 on the committed sweep — and what that state's map cannot show — is written
 per state into `summary.json`'s `coverage` block by `core/src/coverage.ts`,
 derived from the same tables the corrections run on (see the README, "Data
@@ -24,10 +24,9 @@ files and sources").
 | Employee ESI contribution replaces the marketplace premium | `core/src/evaluate.ts` `applyEmployerCoverage` | upstream models the employee share (issue #9473). Since 2026-09-16 the ACA firewall (`has_esi`, `offered_aca_disqualifying_esi`) goes on every covered member, so the model computes no premium credit or marketplace premium for the family; only the contribution is local, and it stays local on purpose — its tier follows who is on Medicaid at each point of the curve, which a scalar `other_health_insurance_premiums` input cannot express. Retires when upstream models the employee share per point. |
 | `tax_unit_is_filer: true` forced on every request | `core/src/translate.ts` | upstream makes marketplace enrollment create a filing obligation (issue #9479, branch `aca-filer-fix`). Still needed on 2.5.0: a TX childless couple at $28,000 — under the joint filing threshold, no refundable credits — gets PTC $0 without the flag and $13,335 with it. |
 | State $0-premium marketplace tiers (CT, MA, NM, CA) modeled locally | `core/src/statePremiumWraps.ts`, `core/src/evaluate.ts` `applyPremiumWrap` | the endpoint serves the state's own amount. Since 2026-09-16 the client probes each endpoint for the state's tax-unit variable (`core/src/statePremiumAssistance.ts`: CA, NM, MD, CO, VT) and, where served, nets PolicyEngine's amount out of the premium and stands the ladder down for that state — the engine (2.5.0) serves all five, the hosted API (1.764.6) none. Compared on 2.5.0: CA within $4 of the ladder; NM's upstream model keeps paying 250–400% FPL where the ladder stopped. CT and MA have no upstream model (issue #9481); their ladders stay everywhere. |
-| `tax_unit_is_filer: true` sent on every request (no `WORKAROUND` comment — see note above) | `core/src/translate.ts` | policyengine-us #9479 derives filer status from APTC eligibility rather than the ordinary filing thresholds |
-| A real county sent for every archetype and every resolved ZIP/county (no `WORKAROUND` comment) | `core/src/stateDefaults.ts`, `core/src/archetypes.ts` `answersFor` | policyengine-us #9480 fixes the default rating area — but sending a real county is correct regardless of that fix, so only the DEFECT this sidesteps retires; the input itself should stay |
+| A real county sent for every archetype and every resolved ZIP/county | `core/src/archetypes.ts` `answersFor` (marked "partly"), the row itself in `core/src/stateDefaults.ts` | policyengine-us #9480 fixes the default rating area — but sending a real county is correct regardless of that fix, so only the DEFECT this sidesteps retires; the input itself should stay |
 | State child-care subsidy added to net income in the states upstream omits | `core/src/parse.ts` (`childcareSubsidyCounted`), `core/src/client.ts` `probeChildcareSubsidyCounted`, `core/src/stateChildcareSubsidies.ts` | nothing to do once every endpoint carries PR #9503 (issue #9405), which replaces the per-state entries in `gov.household.household_state_benefits` with the aggregate `child_care_subsidies` in every period. Since 2026-09-16 the client probes each endpoint once — forces the aggregate to $1,000,000 on a bare Connecticut household and reads `household_state_benefits` back — and adds the subsidy only where the model dropped it, so the sweep's `model.countsChildcareSubsidy` says which kind produced it. Verified both ways in Python on 2026-09-16: upstream `main` (a29f1b1) returns $0, the #9503 branch (ec8dbf8) returns the sentinel, in CT and CO alike. Delete the probe, the option and the table once the public API is on a release with #9503. |
-| SSDI recipient modeled as on Medicare (Part B charged; no marketplace premium or credit) — no `WORKAROUND` comment | `core/src/evaluate.ts` `applyMedicare` | upstream models Medicare enrollment/entitlement for an SSDI beneficiary directly; no issue is filed for this because HotGap has not found any evidence PolicyEngine tracks Medicare entitlement at all |
+| SSDI recipient modeled as on Medicare (Part B charged; no marketplace premium or credit) | `core/src/evaluate.ts` `applyMedicare` | upstream models Medicare enrollment/entitlement for an SSDI beneficiary directly; no issue is filed for this because HotGap has not found any evidence PolicyEngine tracks Medicare entitlement at all |
 
 **Upstream-only, nothing to retire here:** policyengine-us #9482 (Alaska and
 Hawaii's marketplace subsidy computed against the 48-contiguous-states

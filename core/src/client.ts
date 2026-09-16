@@ -380,8 +380,9 @@ export function endpointHasTaxUnitVariable(variable: string, opts: RequestOption
 export const PROBE_SENTINEL = 1_000_000;
 
 /**
- * Does this endpoint count Massachusetts TAFDC twice (policyengine-us
- * #9470, fixed in 2.4.4)? Read from the model rather than a version number:
+ * WORKAROUND — delete with parse.ts's `duplicatedTanf` once the public API
+ * is on policyengine-us >= 2.4.4. Does this endpoint count Massachusetts
+ * TAFDC twice (#9470, fixed in 2.4.4)? Read from the model rather than a version number:
  * force `ma_tafdc` to the sentinel on a bare Massachusetts household and
  * see whether `household_state_benefits` absorbs it. A double-counting model
  * returns the sentinel (verified 2026-09-15 on the public API: $999,999.94,
