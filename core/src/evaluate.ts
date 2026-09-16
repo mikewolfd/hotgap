@@ -9,7 +9,7 @@
 // applied to the points BEFORE any analysis runs (so cliffs and danger zones
 // describe the corrected curve, not the raw one), and each is reported on the
 // evaluation so a front end can say what was changed and why.
-import { analyzeCurve, heldByAdults, heldByChildren, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
+import { analyzeCurve, childCoverageAt, heldByAdults, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
 import { fetchCurve, PolicyEngineError, type FetchCurveOptions } from "./client.js";
 import { escapeAnalysis, type EscapeAnalysis } from "./escape.js";
 import { loadStateFile, type StateFileJson } from "./data.js";
@@ -185,8 +185,7 @@ const normalize = (p: CurvePoint): CurvePoint => ({
 });
 
 const adultOnMedicaidAt = (p: CurvePoint): boolean => heldByAdults(p, "medicaid") > PROGRAM_END_MIN;
-const childrenCoveredAt = (p: CurvePoint): boolean =>
-  heldByChildren(p, "medicaid") + heldByChildren(p, "chip") > PROGRAM_END_MIN;
+const childrenCoveredAt = (p: CurvePoint): boolean => childCoverageAt(p) > PROGRAM_END_MIN;
 
 /**
  * The household's MAGI apart from the earnings on the axis: the spouse's

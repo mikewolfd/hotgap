@@ -135,17 +135,18 @@ export function zoneAt(zones: DangerZone[], earnings: number): DangerZone | null
   ) ?? null;
 }
 
-const total = (p: CurvePoint, ids: ProgramId[]): number =>
+/** What the household holds of these programs at a point, summed. */
+export const programTotal = (p: CurvePoint, ids: ProgramId[]): number =>
   ids.reduce((sum, id) => sum + (p.programs[id] ?? 0), 0);
 
 function breakdownOf(a: CurvePoint, b: CurvePoint, drop: number): CliffBreakdown {
-  const benefits = (total(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (total(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
+  const benefits = (programTotal(a, CASH_PROGRAMS) + (a.otherBenefits ?? 0)) - (programTotal(b, CASH_PROGRAMS) + (b.otherBenefits ?? 0));
   // State refundable credits count here, not in `other`: they are inside
   // netIncome exactly as the federal ones are (parse.ts). The nonrefundable
   // part of the CTC is deliberately absent — it never reaches netIncome, so a
   // credit turning nonrefundable is a tax effect, and lands in `other`.
-  const credits = (total(a, NET_INCOME_CREDITS) + (a.stateCredits ?? 0))
-    - (total(b, NET_INCOME_CREDITS) + (b.stateCredits ?? 0));
+  const credits = (programTotal(a, NET_INCOME_CREDITS) + (a.stateCredits ?? 0))
+    - (programTotal(b, NET_INCOME_CREDITS) + (b.stateCredits ?? 0));
   const premiums = b.medicalOOP - a.medicalOOP;
   return { benefits, credits, premiums, other: drop - benefits - credits - premiums };
 }
@@ -159,6 +160,8 @@ export type ProgramHolder = (p: CurvePoint, id: ProgramId) => number;
 export const heldByHousehold: ProgramHolder = (p, id) => p.programs[id] ?? 0;
 export const heldByChildren: ProgramHolder = (p, id) => p.childPrograms?.[id] ?? 0;
 export const heldByAdults: ProgramHolder = (p, id) => heldByHousehold(p, id) - heldByChildren(p, id);
+/** The children's Medicaid and CHIP sticker value at a point — what a child's coverage question is asked of. */
+export const childCoverageAt = (p: CurvePoint): number => COVERAGE_PROGRAMS.reduce((sum, id) => sum + heldByChildren(p, id), 0);
 
 /** A program switching off, or losing more than half its value, for one group in one step. */
 function notches(a: CurvePoint, b: CurvePoint, id: ProgramId, group: ProgramHolder): boolean {

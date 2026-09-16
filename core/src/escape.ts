@@ -1,6 +1,6 @@
 import type { CurvePoint, ProgramId } from "./types.js";
-import { CASH_PROGRAMS, COVERAGE_PROGRAMS, CREDIT_PROGRAMS, PROGRAM_IDS } from "./types.js";
-import { analyzeCurve, heldByAdults, heldByChildren, PROGRAM_END_MIN, type CurveAnalysis } from "./analyze.js";
+import { CASH_PROGRAMS, CREDIT_PROGRAMS, PROGRAM_IDS } from "./types.js";
+import { analyzeCurve, childCoverageAt, heldByAdults, heldByChildren, PROGRAM_END_MIN, programTotal, type CurveAnalysis } from "./analyze.js";
 import { PERSON_LEVEL_PROGRAMS } from "./parse.js";
 
 // PROGRAM_END_MIN now lives in analyze.ts, where the cliff-notch rule needs
@@ -105,11 +105,7 @@ export function escapeAnalysis(points: CurvePoint[], analysis?: CurveAnalysis): 
     if (forChildren !== null) programEndsByAge.children[id] = forChildren;
   }
 
-  const childCoverage = lastAbove(
-    points,
-    (p) => COVERAGE_PROGRAMS.reduce((sum, id) => sum + heldByChildren(p, id), 0),
-    PROGRAM_END_MIN,
-  );
+  const childCoverage = lastAbove(points, childCoverageAt, PROGRAM_END_MIN);
 
   // Money only. Coverage sticker values are excluded from this total as of
   // 2026-09-14: they are PolicyEngine's valuation of an insurance card, not
@@ -119,13 +115,7 @@ export function escapeAnalysis(points: CurvePoint[], analysis?: CurveAnalysis): 
   // IS money — but note it carries any SSDI, child support or unemployment
   // the household reported (parse.ts), so such a household legitimately keeps
   // receiving a benefit at every earnings level on the axis.
-  const benefitsEnd = lastAbove(
-    points,
-    (p) =>
-      [...CASH_PROGRAMS, ...CREDIT_PROGRAMS].reduce((sum, id) => sum + (p.programs[id] ?? 0), 0) +
-      (p.otherBenefits ?? 0),
-    BENEFITS_END_MIN,
-  );
+  const benefitsEnd = lastAbove(points, (p) => programTotal(p, [...CASH_PROGRAMS, ...CREDIT_PROGRAMS]) + (p.otherBenefits ?? 0), BENEFITS_END_MIN);
 
   return {
     safeExitEarnings,
