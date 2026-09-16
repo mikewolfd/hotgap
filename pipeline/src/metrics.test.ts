@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, answersFor, evaluateCurve, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { answersFor, archetypeById, evaluateCurve, parsePEResponse, type CurvePoint } from "@hotgap/core";
 import { point as flat } from "../../core/src/testing.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -8,7 +8,7 @@ const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
 );
 const fixturePoints = parsePEResponse(fixture, 101);
-const single1 = ARCHETYPES.find((a) => a.id === "single-1")!;
+const single1 = archetypeById("single-1");
 const evaluated = (points: CurvePoint[], state = "CA") =>
   evaluateCurve(answersFor(state, single1), { year: "2026", currentEarnings: 0, points }, "archetype");
 

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { main } from "./cli.js";
 import { loadSummary } from "./data.js";
 import { evaluateCurve, evaluateOffline } from "./evaluate.js";
-import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { answersFor, archetypeById } from "./archetypes.js";
 import { parsePEResponse } from "./parse.js";
 import { readFileSync } from "node:fs";
 import { point as pt } from "./testing.js";
@@ -11,7 +11,7 @@ import { validateAnswers } from "./validate.js";
 vi.mock("./evaluate.js", async (original) => ({ ...await original<object>(), evaluateOffline: vi.fn() }));
 vi.mock("./data.js", async (original) => ({ ...await original<object>(), loadSummary: vi.fn() }));
 
-const a = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
+const a = answersFor("MA", archetypeById("married-3"));
 const raw = JSON.parse(readFileSync(new URL("../../fixtures/pe-ma-married-3kids-11.json", import.meta.url), "utf8"));
 const ev = evaluateCurve(a, { year: "2026", currentEarnings: 26000, points: parsePEResponse(raw, 11) }, "archetype");
 

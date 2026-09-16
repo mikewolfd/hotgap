@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, answersFor, axisSpec, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
+import { ARCHETYPES, answersFor, archetypeById, axisSpec, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -10,7 +10,7 @@ const fixture = JSON.parse(
 const fixturePoints = parsePEResponse(fixture, 101);
 
 const AXIS_COUNT = axisSpec(answersFor("CA", ARCHETYPES[0])).count;
-const countFor = (state: string, archetypeId: string) => axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === archetypeId)!)).count;
+const countFor = (state: string, archetypeId: string) => axisSpec(answersFor(state, archetypeById(archetypeId))).count;
 
 function linearCurve(netIncomeStart = 10000, length = AXIS_COUNT): CurvePoint[] {
   return Array.from({ length }, (_, i) => ({
@@ -82,7 +82,7 @@ describe("buildSummary", () => {
         p.netIncome -= 7000;
       }
     }
-    const a = answersFor("TX", ARCHETYPES.find((a) => a.id === "single-2")!);
+    const a = answersFor("TX", archetypeById("single-2"));
     const evaluation = evaluateCurve(a, { year: "2026", currentEarnings: 0, points }, "archetype");
     expect(evaluation.curve.points[6].coverageGap).toBe(true);
     const summary = buildSummary("g", ["TX"], results);
@@ -97,7 +97,7 @@ describe("buildSummary", () => {
     const points = parsePEResponse(raw, 11).map(roundPoint);
     const results = fullResultsFor("MA");
     results.MA["married-3"] = points;
-    const a = answersFor("MA", ARCHETYPES.find((a) => a.id === "married-3")!);
+    const a = answersFor("MA", archetypeById("married-3"));
     const evaluation = evaluateCurve(a, { year: "2026", currentEarnings: 0, points }, "archetype");
     expect(buildSummary("g", ["MA"], results).states.MA["married-3"]).toEqual({
       ...stateMetrics(evaluation), maTafdc: evaluation.maTafdc,
@@ -113,7 +113,7 @@ describe("buildSummary", () => {
     expect(summary.generated).toBe("2026-07-11T00:00:00.000Z");
     expect(summary.year).toBe("2026");
     expect(summary.archetypes).toEqual(ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })));
-    const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
+    const single2 = archetypeById("single-2");
     expect(summary.states.CA["single-2"]).toEqual(stateMetrics(evaluateCurve(answersFor("CA", single2), { year: "2026", currentEarnings: 0, points: linearCurve(10000, countFor("CA", "single-2")) }, "archetype")));
     expect(Object.keys(summary.states.CA)).toEqual(ARCHETYPES.map((a) => a.id));
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor } from "./archetypes.js";
+import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor, archetypeById } from "./archetypes.js";
 import { FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL } from "./policyYear.js";
 import { childcareMonthlyFor, stateDefaults } from "./stateDefaults.js";
 import { STATE_CODES } from "./states.js";
@@ -20,8 +20,8 @@ describe("ARCHETYPES", () => {
 
   it("gives each dual-earner archetype the same children as its single-earner twin", () => {
     for (const kids of [1, 2, 3]) {
-      const twin = ARCHETYPES.find((a) => a.id === `married-${kids}`)!;
-      const dual = ARCHETYPES.find((a) => a.id === `married-dual-${kids}`)!;
+      const twin = archetypeById(`married-${kids}`);
+      const dual = archetypeById(`married-dual-${kids}`);
       expect(dual.childAges, `married-dual-${kids}`).toEqual(twin.childAges);
       expect(dual.married).toBe(true);
       expect(dual.spouseWorks).toBe(true);
@@ -38,7 +38,7 @@ describe("ARCHETYPES", () => {
 
 describe("answersFor", () => {
   it("builds the documented household: age-30 adults, not disabled, renting in the state's largest county", () => {
-    const single2 = ARCHETYPES.find((a) => a.id === "single-2")!;
+    const single2 = archetypeById("single-2");
     expect(answersFor("CA", single2)).toEqual({
       state: "CA",
       countyFips: "06037",          // Los Angeles County
@@ -69,7 +69,7 @@ describe("answersFor", () => {
   });
 
   it("gives a married archetype a spouse age of 30", () => {
-    const married0 = ARCHETYPES.find((a) => a.id === "married-0")!;
+    const married0 = archetypeById("married-0");
     const answers = answersFor("TX", married0);
     expect(answers.married).toBe(true);
     expect(answers.spouseAge).toBe(30);
@@ -77,12 +77,12 @@ describe("answersFor", () => {
   });
 
   it("marks every child as not disabled, regardless of count", () => {
-    const married3 = ARCHETYPES.find((a) => a.id === "married-3")!;
+    const married3 = archetypeById("married-3");
     expect(answersFor("NY", married3).childDisabled).toEqual([false, false, false]);
   });
 
   it("defaults archetypes to NOT receiving rationed programs (honest baseline)", () => {
-    const a = answersFor("CA", ARCHETYPES.find((x) => x.id === "single-2")!);
+    const a = answersFor("CA", archetypeById("single-2"));
     expect(a.getsHeadStart).toBe(false);
     expect(a.getsHousing).toBe(false);
     expect(a.hasEmployerCoverage).toBe(false);
@@ -93,7 +93,7 @@ describe("answersFor", () => {
     // SNAP shelter deduction; a null county is the state's default ACA rating
     // area, which several states share.
     for (const state of STATE_CODES) {
-      const a = answersFor(state, ARCHETYPES.find((x) => x.id === "single-2")!);
+      const a = answersFor(state, archetypeById("single-2"));
       expect(a.countyFips, state).toBe(stateDefaults(state).countyFips);
       expect(a.monthlyRent, state).toBe(stateDefaults(state).monthlyRent);
     }
@@ -103,10 +103,10 @@ describe("answersFor", () => {
     // single-3 is aged 1, 4 and 9: an infant place, a preschool place, and school-age wraparound care.
     const d = stateDefaults("CA");
     const threeKids = d.monthlyChildcareInfant + d.monthlyChildcarePreschool + d.monthlyChildcareSchoolAge;
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-3")!).monthlyChildcare).toBe(threeKids);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "single-0")!).monthlyChildcare).toBe(0);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-2")!).monthlyChildcare).toBe(d.monthlyChildcarePreschool + d.monthlyChildcareSchoolAge);
-    expect(answersFor("CA", ARCHETYPES.find((x) => x.id === "married-dual-3")!).monthlyChildcare).toBe(threeKids);
+    expect(answersFor("CA", archetypeById("single-3")).monthlyChildcare).toBe(threeKids);
+    expect(answersFor("CA", archetypeById("single-0")).monthlyChildcare).toBe(0);
+    expect(answersFor("CA", archetypeById("married-dual-2")).monthlyChildcare).toBe(d.monthlyChildcarePreschool + d.monthlyChildcareSchoolAge);
+    expect(answersFor("CA", archetypeById("married-dual-3")).monthlyChildcare).toBe(threeKids);
     // The bands, on the NDCP's own lines: 0–1 infant, 2 toddler, 3–4 preschool, 5–12 school age, 13+ none.
     expect([0, 1, 2, 3, 4, 5, 12, 13].map((age) => childcareMonthlyFor(d, age))).toEqual([
       d.monthlyChildcareInfant, d.monthlyChildcareInfant, d.monthlyChildcareToddler, d.monthlyChildcarePreschool, d.monthlyChildcarePreschool,
@@ -121,7 +121,7 @@ describe("answersFor", () => {
   // is the combination that is wrong both ways.
   it("buys no care and claims no subsidy for a single-earner couple: a parent is home", () => {
     for (const id of ["married-0", "married-1", "married-2", "married-3"]) {
-      const a = answersFor("CA", ARCHETYPES.find((x) => x.id === id)!);
+      const a = answersFor("CA", archetypeById(id));
       expect(a.monthlyChildcare, id).toBe(0);
       expect(a.getsChildcareSubsidy, id).toBe(false);
       expect(a.spouseAnnualEarnings, id).toBe(0);
@@ -132,8 +132,8 @@ describe("answersFor", () => {
   it("differs from its single-earner twin in exactly three things: the spouse's pay, their hours, and the childcare bill", () => {
     const co = stateDefaults("CO");
     for (const kids of [1, 2, 3]) {
-      const twin = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-${kids}`)!);
-      const dual = answersFor("CO", ARCHETYPES.find((a) => a.id === `married-dual-${kids}`)!);
+      const twin = answersFor("CO", archetypeById(`married-${kids}`));
+      const dual = answersFor("CO", archetypeById(`married-dual-${kids}`));
       const bill = dual.childAges.reduce((sum, age) => sum + childcareMonthlyFor(co, age), 0);
       expect(dual, `married-dual-${kids}`).toEqual({
         ...twin,

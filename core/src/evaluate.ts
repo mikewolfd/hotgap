@@ -20,7 +20,7 @@ import { stateDefaults } from "./stateDefaults.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
 import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
-import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
 import { householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
@@ -619,7 +619,7 @@ export function evaluateCurve(
   // Offline points describe the swept archetype, including its spouse's $0
   // pay. Never apply the caller's personal inputs to that baseline.
   const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
-    ARCHETYPES.find((a) => a.id === pickArchetypeId(answers))!);
+    archetypeById(pickArchetypeId(answers)));
   const tafdc = correctMaTafdc(modeledAnswers, raw);
   // The child-care subsidy needs no step here: parse.ts already put it in net
   // income wherever the model dropped it (policyengine-us #9405), so a stored

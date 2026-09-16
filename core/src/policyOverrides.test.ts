@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { answersFor, archetypeById } from "./archetypes.js";
 import { BHP_EXPANDED_STATES, PARENT_LIMITS_UPSTREAM_SINCE, parentMedicaidLimit, policyOverridesFor, releaseAtLeast } from "./policyOverrides.js";
 import { buildCurvePayload, curveCacheKey, fetchCurve } from "./client.js";
 
 describe("sourced PolicyEngine overrides", () => {
-  const single = (state: string) => answersFor(state, ARCHETYPES.find((a) => a.id === "single-2")!);
+  const single = (state: string) => answersFor(state, archetypeById("single-2"));
   it.each([
     ["TX", (230 + 113.85) * 12], ["MS", 498 * 12], ["GA", 662 * 12],
     ["FL", 600 * 12], ["WY", 873 * 12 + 27320 * 0.05], ["SC", 27320 * 0.67],

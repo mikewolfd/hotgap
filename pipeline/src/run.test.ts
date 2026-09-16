@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ARCHETYPES, CHILDCARE_SUBSIDY_PROBE_SENTINEL, answersFor, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
+import { ARCHETYPES, CHILDCARE_SUBSIDY_PROBE_SENTINEL, answersFor, archetypeById, axisSpec, evaluateCurve, parsePEResponse, type StateFileJson } from "@hotgap/core";
 import { buildStateFile, buildSummary, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
 import {
@@ -149,7 +149,7 @@ describe("runPipeline", () => {
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
 
       const points = result.stateFiles![state].archetypes["single-2"].points;
-      expect(points).toHaveLength(axisSpec(answersFor(state, ARCHETYPES.find((a) => a.id === "single-2")!)).count);
+      expect(points).toHaveLength(axisSpec(answersFor(state, archetypeById("single-2"))).count);
       expect(Number.isInteger(points[0].netIncome)).toBe(true);
     }
     expect(result.summary!.archetypes).toHaveLength(ARCHETYPES.length);

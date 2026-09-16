@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { ARCHETYPES, answersFor, buildCurvePayload, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, CHILDCARE_SUBSIDY_PROBE_SENTINEL, childcareSubsidyProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -322,7 +322,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // Pennsylvania by default: no policy override there, so each request is a
   // baseline calculation rather than a 35–70 s reform on the hosted API.
   const twoPoints = (over: Partial<ReturnType<typeof answersFor>>, min: number, state = "PA") => {
-    const answers = { ...answersFor(state, ARCHETYPES.find((a) => a.id === "single-1")!), childAges: [3], childDisabled: [false], annualEarnings: min, ...over };
+    const answers = { ...answersFor(state, archetypeById("single-1")), childAges: [3], childDisabled: [false], annualEarnings: min, ...over };
     const payload = buildCurvePayload(answers);
     (payload.household as { axes: unknown[][] }).axes[0][0] = { name: answers.selfEmployed ? "self_employment_income" : "employment_income", min, max: min + 1000, count: 2, period: "2026" };
     return requestPE(payload, { timeoutMs: 90_000 }).then((body) => parsePEResponse(body, 2)[0]);
@@ -352,7 +352,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
 
   it("savings: $5,000 in the bank ends SNAP in a state without broad-based categorical eligibility", async () => {
     // Kansas: no BBCE, and no policy override to slow the hosted API down.
-    const ks = { ...answersFor("KS", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 10000 };
+    const ks = { ...answersFor("KS", archetypeById("single-0")), annualEarnings: 10000 };
     const run = (savings: number) => {
       const payload = buildCurvePayload({ ...ks, savings });
       (payload.household as { axes: unknown[][] }).axes[0][0] = { name: "employment_income", min: 10000, max: 11000, count: 2, period: "2026" };
@@ -387,7 +387,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
 
   it("state premium assistance: served and netted out of the premium where the endpoint has it, the local ladder otherwise", async () => {
     const { fetchCurve, evaluateCurve, endpointHasTaxUnitVariable } = await import("../core/src/index.js");
-    const ca = { ...answersFor("CA", ARCHETYPES.find((a) => a.id === "single-0")!), annualEarnings: 23000 }; // ~145% FPL: the $0 band
+    const ca = { ...answersFor("CA", archetypeById("single-0")), annualEarnings: 23000 }; // ~145% FPL: the $0 band
     const has = await endpointHasTaxUnitVariable("assigned_ca_premium_subsidy", { timeoutMs: 90_000 });
     const ev = evaluateCurve(ca, await fetchCurve(ca, { timeoutMs: 90_000 }), "live");
     const at23k = ev.curve.points.find((p) => p.earnings === 23000)!;
@@ -412,7 +412,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   for (const { variable, entity, states } of OTHER_BENEFIT_SOURCES) {
     for (const state of states) {
       it(`${state}: otherBenefits is ${variable}`, async () => {
-        const answers = answersFor(state, ARCHETYPES.find((a) => a.id === "single-0")!);
+        const answers = answersFor(state, archetypeById("single-0"));
         const payload = buildCurvePayload(answers);
         const household = payload.household as { axes: unknown[][] } & Record<string, Record<string, Record<string, unknown>>>;
         household.axes[0][0] = { name: "employment_income", min: 0, max: 1000, count: 2, period: "2026" };
@@ -435,7 +435,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // it. Pins that it stays closed, and that a voucher household still draws it.
   it("no voucher means no HUD payment in the remainder (CA, KS); a voucher household still draws one", async () => {
     for (const state of ["CA", "KS"] as const) {
-      const answers = answersFor(state, ARCHETYPES.find((a) => a.id === "single-0")!);
+      const answers = answersFor(state, archetypeById("single-0"));
       const at0 = async (getsHousing: boolean) => {
         const payload = buildCurvePayload({ ...answers, getsHousing });
         const household = payload.household as { axes: unknown[][]; spm_units: { spm_unit: Record<string, unknown> } };
@@ -457,7 +457,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
   // exist on the endpoint and that they turn the award on.
   for (const state of ["MA", "MD"] as const) {
     it(`${state}: a 3-year-old's bill draws a subsidy through HotGap's payload (provider type named)`, async () => {
-      const answers = { ...answersFor(state, ARCHETYPES.find((a) => a.id === "single-1")!), childAges: [3], childDisabled: [false], monthlyChildcare: 1000, getsChildcareSubsidy: true };
+      const answers = { ...answersFor(state, archetypeById("single-1")), childAges: [3], childDisabled: [false], monthlyChildcare: 1000, getsChildcareSubsidy: true };
       const payload = buildCurvePayload(answers);
       const household = payload.household as { axes: unknown[][] };
       household.axes[0][0] = { name: "employment_income", min: 20000, max: 21000, count: 2, period: "2026" };
