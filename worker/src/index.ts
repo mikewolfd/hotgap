@@ -25,15 +25,17 @@ import {
   type StateFileJson,
 } from "@hotgap/core";
 import reach from "@hotgap/core/data/reach.json";
+import smi from "@hotgap/core/data/smi.json";
 import stateDefaults from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
 import zip5County from "@hotgap/core/data/zip5-county.json";
 
-// The four small tables core reads synchronously, bundled (about 930 KB raw
-// against a 64 MiB limit) and provided once per isolate. The 51 state files
-// (29 MB) are not bundled: the fallback fetches the one it needs from the
-// static assets (loadStateFile below), and only when PolicyEngine has failed.
-provideData({ "reach.json": reach, "state-defaults.json": stateDefaults, "zip3-state.json": zip3State, "zip5-county.json": zip5County });
+// The five small tables core reads synchronously, bundled (about 940 KB raw
+// against a 64 MiB limit) and provided once per isolate; smi.json (6 KB) is
+// the LIHEAP boundary's state-median-income table (liheap.ts). The 51 state
+// files (29 MB) are not bundled: the fallback fetches the one it needs from
+// the static assets (loadStateFile below), and only when PolicyEngine has failed.
+provideData({ "reach.json": reach, "smi.json": smi, "state-defaults.json": stateDefaults, "zip3-state.json": zip3State, "zip5-county.json": zip5County });
 
 /** A live curve is a function of the answers and the model, not of the sweep, so a week is safe. */
 const CACHE_TTL_S = 7 * 24 * 3600;
