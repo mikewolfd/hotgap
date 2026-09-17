@@ -279,7 +279,7 @@ export function renderRank(s: Scene): void {
   let rank = 0;
   $("rank").innerHTML = g.ranked.map((r, i) => {
     if (i === 0 || r.value !== g.ranked[i - 1].value) rank = n + i + 1;
-    return rankRow(r, `<span class="dot" style="left:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
+    return rankRow(r, `<span class="dot" style="inset-inline-start:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
       `background:var(--loss-${g.bins.index(r.value as number) + 1})"></span>`, value(r.value, measure), rankOrdinal(rank));
   }).join("");
   $("rankAxis").innerHTML = `<span>${value(g.bins.lo, measure)}</span><span>${value(g.bins.hi, measure)}</span>`;

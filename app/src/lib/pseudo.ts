@@ -43,11 +43,12 @@ function print(els: Ast, text: (s: string) => string, inPlural: boolean): string
   }).join("");
 }
 
-/** One message: accented, lengthened by two fifths of its letters, bracketed. */
+/** One message: accented, lengthened by two fifths of its letters — in words of tildes, so the extra length wraps as a translation's words would — bracketed. */
 export function pseudo(message: string): string {
   const ast = new IntlMessageFormat(message, "en", undefined, { ignoreTag: true }).getAst();
   const letters = message.replace(/\{[^}]*\}/g, "").replace(/[^A-Za-z]/g, "").length;
-  const filler = letters ? ` ${"~".repeat(Math.ceil(letters * 0.4))}` : "";
+  const extra = Math.ceil(letters * 0.4);
+  const filler = extra ? ` ${"~".repeat(extra).replace(/(~{5})(?=~)/g, "$1 ")}` : "";
   return `[${print(ast, accent, false)}${filler}]`;
 }
 
