@@ -69,11 +69,15 @@ export const copy = {
     on: "on", off: "off", yes: "yes", no: "no", none: "none",
     aYear: "{amount} a year", aMonth: "{amount} a month",
   },
+  /* The one-value dialog: its title is the chip's name, so its one label carries the unit or the question instead of the name again (citizen review N8). */
   dialog: {
     save: "Save",
     cancel: "Cancel",
+    age: "Age in years",
     monthly: "Dollars a month",
     yearly: "Dollars a year",
+    dollars: "Dollars",
+    choose: "Choose one",
     years: "Years in the US",
     yearsHint: "Only if you are not a citizen.",
     hasDisability: "Kid {n}, who is {age}, lives with a disability",

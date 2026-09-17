@@ -22,6 +22,10 @@ const editor = mountEditor(app, {
   // A chip changed one answer: with a result on the page, that is a new
   // household to evaluate; before one, it is just an answer for later.
   onChange: (flags) => { if (hasAnswers(flags)) run(flags, { submitted: false }); },
+  // This surface has no controls that change the answer (design/README.md
+  // § Where the personas conflict, 2): the chips keep the phone rule at
+  // every width — the summary line and Edit, the chips behind it (review S1).
+  collapse: "always",
 });
 const resultRoot = h("div", { class: "result", id: "result" });
 app.append(h("h1", { class: "hg-visually-hidden" }, t("heading")), resultRoot);

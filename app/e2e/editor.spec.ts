@@ -128,7 +128,7 @@ for (const width of [390, 1280]) {
     await expect(pay).toHaveAttribute("aria-expanded", "false");
     // Saving a value from the dialog with Enter re-evaluates and keeps the URL current.
     await age.click();
-    await page.locator("dialog").getByLabel("Your age").fill("45");
+    await page.locator("dialog").getByLabel("Age in years").fill("45");   /* the label carries the unit; the title is the chip's name (review N8) */
     const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
     await page.keyboard.press("Enter");
     await expect(age).toBeFocused();
@@ -137,7 +137,7 @@ for (const width of [390, 1280]) {
     expect((await evaluated).status()).toBe(200);
     // An Escape after that Save is a cancel, not a second save.
     await age.click();
-    await page.locator("dialog").getByLabel("Your age").fill("50");
+    await page.locator("dialog").getByLabel("Age in years").fill("50");
     await page.keyboard.press("Escape");
     await expect(age.locator(".hg-chip__v")).toHaveText("45");
     expect(new URL(page.url()).searchParams.get("age")).toBe("45");

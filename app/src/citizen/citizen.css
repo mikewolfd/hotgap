@@ -5,16 +5,6 @@
    that could meet an hg-* state class is declared at :where() specificity. */
 .page { --page-max: 40rem; }
 
-/* S1: this surface has no controls that change the answer (design/README.md
-   § Where the personas conflict, 2), so the chips keep the phone rule at
-   every width — the summary line and Edit, the chips behind it — where
-   tokens.css shows them from 720px for the counselor's row. The editor could
-   carry this as a mountEditor option; until it does, the page says it. */
-.hg-scenario__inputs:not([data-open="true"]) { display: none; }
-.hg-scenario__summary { display: flex; align-items: center; gap: var(--s3); padding: 0 var(--s4) var(--s3);
-                        color: var(--ink-2); font-size: var(--t-small); max-width: 76rem; margin: 0 auto; }
-.hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
-
 /* Paper (S2): the masthead line tokens.css's print block cannot supply, the
    chips and the readout left behind as screen chrome, the figure kept whole
    and the disclosure's summary gone (its table is open by then). The two

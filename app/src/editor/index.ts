@@ -76,6 +76,14 @@ export interface EditorOptions {
   copy?: CopyOverride;
   /** Chip ids in the order the surface wants them first; the rest follow in the citizen order. */
   order?: readonly string[];
+  /**
+   * "always": the chips stay behind the summary line's Edit at every width,
+   * not only below 720px — for a surface with no controls that change the
+   * answer (the citizen page; design/README.md § Where the personas conflict,
+   * 2; citizen review S1). Sets data-collapse on the bar's second block;
+   * tokens.css carries the rule.
+   */
+  collapse?: "always";
 }
 
 export interface Editor {
@@ -181,9 +189,10 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const placeLabel = () => listOfItems([flags.zip, state(), countyLabel()].filter((x): x is string => Boolean(x))) || copy.chips.none;
 
   // ── The chips, in row order ──────────────────────────────────────────
-  const monthlyField = (flag: HouseholdFlagName, label: string): DialogField => ({ flag, label, kind: "number", min: 0, max: 20000, step: 1, hint: copy.dialog.monthly });
-  const statusFields = (status: HouseholdFlagName, years: HouseholdFlagName, label: string): DialogField[] => [
-    { flag: status, label, kind: "select", options: IMMIGRATION_STATUSES },
+  /* A dialog's field is labelled by the unit or the question, never by the chip's name again — that is the dialog's title (review N8). */
+  const monthlyField = (flag: HouseholdFlagName): DialogField => ({ flag, label: copy.dialog.monthly, kind: "number", min: 0, max: 20000, step: 1 });
+  const statusFields = (status: HouseholdFlagName, years: HouseholdFlagName): DialogField[] => [
+    { flag: status, label: copy.dialog.choose, kind: "select", options: IMMIGRATION_STATUSES },
     { flag: years, label: copy.dialog.years, kind: "number", min: 0, max: 100, step: 1, hint: copy.dialog.yearsHint },
   ];
   const chips: ChipSpec[] = [
@@ -192,15 +201,15 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     { kind: "fact", id: "pay", label: copy.chips.pay, value: payLabel, field: "pay" },
     { kind: "fact", id: "rent", label: copy.chips.rent, value: () => monthly(flags.rent), field: "rent" },
     { kind: "fact", id: "childcare", label: copy.chips.childcare, value: () => monthly(flags.childcare), field: "childcare", when: () => kids().some((a) => a <= CHILDCARE_MAX_AGE) },
-    { kind: "value", id: "age", label: copy.chips.age, value: () => flags.age ?? "30", fields: [{ flag: "age", label: copy.chips.age, kind: "number", min: 16, max: 110, step: 1 }] },
-    { kind: "value", id: "spouse-age", label: copy.chips.spouseAge, value: () => flags["spouse-age"] ?? "30", fields: [{ flag: "spouse-age", label: copy.chips.spouseAge, kind: "number", min: 16, max: 110, step: 1 }], when: married },
-    { kind: "value", id: "spouse-earnings", label: copy.chips.spousePay, value: () => yearly(flags["spouse-earnings"]), fields: [{ flag: "spouse-earnings", label: copy.chips.spousePay, kind: "number", min: 0, max: 500000, step: 1, hint: copy.dialog.yearly }], when: married },
-    { kind: "value", id: "ssdi", label: copy.chips.ssdi, value: () => monthly(flags.ssdi), fields: [monthlyField("ssdi", copy.chips.ssdi)] },
-    { kind: "value", id: "child-support", label: copy.chips.childSupport, value: () => monthly(flags["child-support"]), fields: [monthlyField("child-support", copy.chips.childSupport)] },
-    { kind: "value", id: "unemployment", label: copy.chips.unemployment, value: () => monthly(flags.unemployment), fields: [monthlyField("unemployment", copy.chips.unemployment)] },
-    { kind: "value", id: "savings", label: copy.chips.savings, value: () => (flags.savings ? money(Number(flags.savings)) : copy.chips.none), fields: [{ flag: "savings", label: copy.chips.savings, kind: "number", min: 0, max: 10_000_000, step: 1 }] },
-    { kind: "value", id: "status", label: copy.chips.status, value: () => copy.status[flags.status ?? "citizen"], fields: statusFields("status", "years-in-us", copy.chips.status) },
-    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => copy.status[flags["spouse-status"] ?? "citizen"], fields: statusFields("spouse-status", "spouse-years-in-us", copy.chips.spouseStatus), when: married },
+    { kind: "value", id: "age", label: copy.chips.age, value: () => flags.age ?? "30", fields: [{ flag: "age", label: copy.dialog.age, kind: "number", min: 16, max: 110, step: 1 }] },
+    { kind: "value", id: "spouse-age", label: copy.chips.spouseAge, value: () => flags["spouse-age"] ?? "30", fields: [{ flag: "spouse-age", label: copy.dialog.age, kind: "number", min: 16, max: 110, step: 1 }], when: married },
+    { kind: "value", id: "spouse-earnings", label: copy.chips.spousePay, value: () => yearly(flags["spouse-earnings"]), fields: [{ flag: "spouse-earnings", label: copy.dialog.yearly, kind: "number", min: 0, max: 500000, step: 1 }], when: married },
+    { kind: "value", id: "ssdi", label: copy.chips.ssdi, value: () => monthly(flags.ssdi), fields: [monthlyField("ssdi")] },
+    { kind: "value", id: "child-support", label: copy.chips.childSupport, value: () => monthly(flags["child-support"]), fields: [monthlyField("child-support")] },
+    { kind: "value", id: "unemployment", label: copy.chips.unemployment, value: () => monthly(flags.unemployment), fields: [monthlyField("unemployment")] },
+    { kind: "value", id: "savings", label: copy.chips.savings, value: () => (flags.savings ? money(Number(flags.savings)) : copy.chips.none), fields: [{ flag: "savings", label: copy.dialog.dollars, kind: "number", min: 0, max: 10_000_000, step: 1 }] },
+    { kind: "value", id: "status", label: copy.chips.status, value: () => copy.status[flags.status ?? "citizen"], fields: statusFields("status", "years-in-us") },
+    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => copy.status[flags["spouse-status"] ?? "citizen"], fields: statusFields("spouse-status", "spouse-years-in-us"), when: married },
     { kind: "value", id: "kids-disabled", label: copy.chips.kidsDisabled, value: () => { const n = flagList(flags["kids-disabled"]).filter((x) => x === "1").length; return n ? String(n) : copy.chips.none; }, fields: [{ flag: "kids-disabled", label: copy.chips.kidsDisabled, kind: "kids-disabled" }], when: () => kids().length > 0 },
     { kind: "toggle", id: "childcare-subsidy", label: copy.chips.childcareSubsidy, when: () => kids().some((a) => a <= CHILDCARE_MAX_AGE) },
     { kind: "toggle", id: "head-start", label: copy.chips.headStart, when: () => kids().some((a) => a <= HEAD_START_MAX_AGE) },
@@ -300,7 +309,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
       h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark),
         h("div", { class: "hg-scenario__actions" }, ...actions))),
-    h("header", { class: "hg-scenario" },
+    h("header", { class: "hg-scenario", "data-collapse": opts.collapse },
       h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),
     editorSection,
     dialog,

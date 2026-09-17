@@ -105,6 +105,7 @@ mountEditor(root, {
   onClose() {},                                                     // the screen closed, edits and all
   copy: { chips: { childcareSubsidy: "CCDF subsidy" }, heading: "The household", submit: "Update the household" },   // the surface's register over copy.ts, two levels deep
   order: ["where", "household", "pay", "rent", "childcare", "childcare-subsidy"],   // chip ids first; the rest follow in the citizen order
+  collapse: "always",   // the chips stay behind the summary line's Edit at every width (the citizen page: no controls that change the answer)
 });
 editor.open("pay", { lead: "alt" });   // the screen led by the alternate exit: it is the primary button and what Enter presses
 editor.setNote(textOrFragment);        // the .hg-scenario__note line, first in the row (a live region, placed on first use); "" empties it
@@ -114,8 +115,11 @@ editor.setCounty(zip, name);           // the county the Worker resolved, beside
 A `needsAnswers` action is disabled, and the chips row hidden, until the
 flags say enough to evaluate. A value chip whose answer is still "none"
 carries `data-unset`, which the editor sets a step lighter. Below 720px
-the summary line names the place once: the county in place of the ZIP
-once one is known.
+(at every width with `collapse: "always"`) the summary line names the
+place once — the county in place of the ZIP once one is known — and its
+separators are the editor's copy (`summary.line`), not code. A value chip's
+dialog is titled by the chip's name and labels its one field by the unit
+or the question ("Age in years", "Dollars a month", "Choose one").
 
 **DOM the page owns** (`src/citizen/main.ts`): a visually hidden `h1`, then
 `#result`, where `mountResult` puts `[role=status]` (loading text, or the
