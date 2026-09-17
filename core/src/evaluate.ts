@@ -18,7 +18,7 @@ import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_B_ANNUAL, NON_EXPANSION_STATES, fpl2026 } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
-import { perMemberPremiumHelpFor, premiumTierAbove, premiumWrapFor, type PerMemberPremiumHelp, type PremiumWrap } from "./statePremiumWraps.js";
+import { PER_MEMBER_PREMIUM_HELP, perMemberPremiumHelpFor, premiumTierAbove, premiumWrapFor, type PerMemberPremiumHelp, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
@@ -558,9 +558,10 @@ function applyPerMemberPremiumHelp(points: CurvePoint[], a: HouseholdAnswers): {
   if (a.hasEmployerCoverage) return { points, help: null };
   // The model's own amounts, when served, replace the local schedule.
   if (points.every((p) => p.statePremiumAssistance !== undefined)) return { points, help: null };
+  const help = PER_MEMBER_PREMIUM_HELP.find((h) => h.state === a.state);
+  if (!help) return { points, help: null };
   const povertyLine = fpl2025(a.state, householdSize(a));
   const otherMagi = magiBesidesEarnings(a);
-  let table: PerMemberPremiumHelp | null = null;
   let maxAnnual = 0;
   const out = points.map((p) => {
     // Unlike the $0 ladder, no federal-credit guard: New Jersey pays where
@@ -569,19 +570,17 @@ function applyPerMemberPremiumHelp(points: CurvePoint[], a: HouseholdAnswers): {
     // FPL with the children on FamilyCare, on the engine, gets $1,200 against
     // a $0 credit). A premium and an adult off Medicaid are the enrollee test.
     if (adultOnMedicaidAt(p) || p.medicalOOP <= 0) return p;
-    const share = (p.earnings + otherMagi) / povertyLine;
-    const band = perMemberPremiumHelpFor(a.state, share);
+    const band = perMemberPremiumHelpFor(a.state, (p.earnings + otherMagi) / povertyLine);
     if (!band) return p;
     // The state pays the carrier on top of the federal credit, so it can never
     // take the bill below zero: capped at what is left of the premium, exactly
     // as upstream's own formula caps it at the post-credit residual.
     const paid = Math.min(12 * band.monthlyPerMember * marketplaceEnrolleesAt(p, a), p.medicalOOP);
     if (paid <= 0) return p;
-    table = band.help;
     maxAnnual = Math.max(maxAnnual, paid);
     return { ...p, netIncome: p.netIncome + paid, medicalOOP: p.medicalOOP - paid };
   });
-  return { points: out, help: table ? { ...(table as PerMemberPremiumHelp), maxAnnual: Math.round(maxAnnual) } : null };
+  return { points: out, help: maxAnnual > 0 ? { ...help, maxAnnual: Math.round(maxAnnual) } : null };
 }
 
 function coverageGapSummary(points: CurvePoint[]): CoverageGapSummary | null {
