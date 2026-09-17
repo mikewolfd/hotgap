@@ -4,7 +4,7 @@
 // the chart geometry can be tested from a fixture. O(points × programs)
 // once per evaluation; nothing here is repeated per component.
 import {
-  ARCHETYPES, answersFor, DEFAULT_HOURS, PAY_UNITS, pickArchetypeId, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
+  DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
@@ -52,7 +52,7 @@ export interface Scene {
   /** Axis step and the last swept pay. */
   step: number;
   top: number;
-  /** The REAL curve's net income per point, and the same with deferred drops lifted out (charts.md § The lift). */
+  /** The REAL curve's net income per point, and the same with deferred drops lifted out (charts.md § The lift: core's immediateCurve). */
   net: number[];
   lifted: number[];
   idx(earnings: number): number;
@@ -86,13 +86,6 @@ export interface Scene {
   /** The first pay at which each program appears, from the points (context for a StepList row). */
   starts: Partial<Record<ProgramId, number[]>>;
   remains(c: Cliff): Remainder[];
-}
-
-/** The same arithmetic as immediateCurve() in core/src/evaluate.ts: each deferred drop added back above its step. */
-export function liftDeferred(net: number[], deferred: Cliff[], idx: (earnings: number) => number): number[] {
-  const out = net.slice();
-  for (const d of deferred) for (let k = idx(d.startEarnings) + 1; k < out.length; k++) out[k] += d.drop;
-  return out;
 }
 
 /** The context the crop carries around what it must show: a third before, two thirds after, where the climb back is. */
@@ -142,8 +135,6 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     exit: ev.personal.escapeEarnings, next, worst,
   };
   const window = windowFor(base);
-  const modeled = ev.source === "live" ? ev.answers
-    : answersFor(ev.answers.state, ARCHETYPES.find((x) => x.id === pickArchetypeId(ev.answers)) ?? ARCHETYPES[0]);
 
   // O(points × programs), once: where each program first appears.
   const starts: Partial<Record<ProgramId, number[]>> = {};
@@ -156,7 +147,7 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
 
   return {
     ...base,
-    ev, pay, m: moneyFor(pay), net, lifted: liftDeferred(net, deferred, idx), idx, earningsAt: (i) => points[i].earnings,
+    ev, pay, m: moneyFor(pay), net, lifted: immediateCurve(points, ev.deferred).map((p) => p.netIncome), idx, earningsAt: (i) => points[i].earnings,
     currentNet: a.currentNet,
     state: ev.answers.state, stateName: STATE_NAMES[ev.answers.state] ?? ev.answers.state,
     safeExit: ev.escape.safeExitEarnings,
@@ -165,7 +156,7 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     window, inWindow: a.cliffs.filter((c) => c.startEarnings >= window[0] && c.endEarnings <= window[1]),
     boundary: ev.liheap,
     boundaryInWindow: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit >= window[0] && ev.liheap.earningsLimit <= window[1],
-    modeled, clamped: a.currentEarnings !== ev.answers.annualEarnings,
+    modeled: modeledAnswers(ev), clamped: a.currentEarnings !== ev.answers.annualEarnings,
     starts,
     // programsLost also fires when a program halves in a step (analyze.ts), so
     // some of it can go on past the cliff: what is left, and until when

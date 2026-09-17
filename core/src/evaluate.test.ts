@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { analyzeCurve } from "./analyze.js";
 import { PolicyEngineError } from "./client.js";
 import { loadStateFile as loadStateFile_ } from "./data.js";
-import { evaluateCurve, evaluateHousehold, evaluateOffline } from "./evaluate.js";
+import { evaluateCurve, evaluateHousehold, evaluateOffline, immediateCurve, modeledAnswers } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
 import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
@@ -64,6 +64,32 @@ describe("evaluateCurve", () => {
     expect(safe.escape.safeExitEarnings).toBe(0);
     expect(safe.reach.safeExit).toBeNull();
     expect(safe.reach.current).toBeTypeOf("number");
+  });
+});
+
+describe("the lift (immediateCurve)", () => {
+  it("is the same points when nothing is deferred, and adds each deferred drop back to every point above its step and only there", () => {
+    const points = [pt(0, 100), pt(1000, 200), pt(2000, 50), pt(3000, 150), pt(4000, 250)];
+    expect(immediateCurve(points, [])).toBe(points);
+    const deferred = { startEarnings: 1000, endEarnings: 2000, drop: 150, programsLost: [], driver: "benefits" as const, breakdown: { benefits: 150, credits: 0, premiums: 0, other: 0 }, deferral: { reason: "head_start_program_year" as const, until: "later" } };
+    const lifted = immediateCurve(points, [deferred]).map((p) => p.netIncome);
+    // The drop happens BETWEEN $1,000 and $2,000, so $1,000 itself is untouched and everything from $2,000 up is lifted.
+    expect(lifted).toEqual([100, 200, 200, 300, 400]);
+    // The real points are never mutated: evaluateCurve reports them as they came.
+    expect(points.map((p) => p.netIncome)).toEqual([100, 200, 50, 150, 250]);
+  });
+});
+
+describe("the household a curve models (modeledAnswers)", () => {
+  it("is the caller's own answers on the live path and the swept archetype's on the fallback", () => {
+    const live = answersWith({ monthlyRent: 999, getsHousing: true });
+    expect(modeledAnswers({ answers: live, source: "live" })).toBe(live);
+    const swept = modeledAnswers({ answers: live, source: "archetype" });
+    // The archetype's shape (single-1: one child, aged 3) at the state's typical rent, with every take-up toggle off.
+    expect(swept.state).toBe(live.state);
+    expect(swept.childAges).toHaveLength(live.childAges.length);
+    expect(swept.monthlyRent).toBe(stateDefaults(live.state).monthlyRent);
+    expect(swept.getsHousing).toBe(false);
   });
 });
 

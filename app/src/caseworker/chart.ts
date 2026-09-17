@@ -8,9 +8,9 @@
 //
 // A draw is O(points + cliffs + zones); a resize redraws once per frame;
 // print redraws synchronously at a fixed width (review N6).
-import type { Cliff, HouseholdEvaluation } from "@hotgap/core";
+import { immediateCurve, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
 import { copy, fmt } from "./copy.js";
-import { cliffAt, cliffSentence, indexOf, lifted as liftedOf } from "./model.js";
+import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
 export interface ChartHost { wrap: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
 
@@ -308,7 +308,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   return {
     render(next, src) {
       ev = next; source = src;
-      lifted = liftedOf(next); earn = next.curve.points.map((p) => p.earnings);
+      /* THE LIFT (design/charts.md § 1): the line the zones and the verdict describe is core's immediate curve, deferred drops removed. */
+      lifted = immediateCurve(next.curve.points, next.deferred).map((p) => p.netIncome); earn = next.curve.points.map((p) => p.earnings);
       cursor = indexOf(next, next.analysis.currentEarnings);
       selected = null;
       draw();

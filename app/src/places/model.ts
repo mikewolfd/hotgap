@@ -3,6 +3,7 @@
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
 import { CHILDCARE_MAX_AGE, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, type CareHousehold } from "../lib/coverage.js";
 import { copy } from "./copy.js";
 
 export type Archetype = SummaryJson["archetypes"][number];
@@ -41,15 +42,11 @@ export const archLabel = (a: Archetype): string => copy.household(a.married, wor
 export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || worksBoth(a));
 
 /* IncompleteMarker (B1): keyed off coverage[state].unmodeled[], never a list
-   kept here. A gap every state shares (scope "all": LIHEAP) cannot make one
-   state's figures a floor beside another's and is not a reason to hatch; the
-   child-care entry (coverage.ts writes "Child-care subsidy (CCDF)") bites only
-   a household that pays for care; a state premium program bites every one. */
-export const bites = (u: UnmodeledProgram, a: Archetype): boolean =>
-  u.scope !== "all" && (!/child.?care/i.test(u.program) || paysForCare(a));
-
-export const incompleteFor = (cov: StateCoverage | undefined, a: Archetype): UnmodeledProgram[] =>
-  (cov?.unmodeled ?? []).filter((u) => bites(u, a));
+   kept here, under the one rule every surface reads (lib/coverage.ts) — the
+   swept household's care bill is the archetype reading above. */
+const careOf = (a: Archetype): CareHousehold => ({ childAges: a.childAges, paysForCare: paysForCare(a) });
+export const bites = (u: UnmodeledProgram, a: Archetype): boolean => bitesHousehold(u, careOf(a));
+export const incompleteFor = (cov: StateCoverage | undefined, a: Archetype): UnmodeledProgram[] => incompleteForHousehold(cov, careOf(a));
 
 /* The four tile states, in precedence: incomplete (the figure is a floor,
    whatever it says), none (cliffCount === 0), past (a null value, or the leap

@@ -6,8 +6,8 @@ import { evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateA
 import { describe, expect, it } from "vitest";
 import { fmt } from "./copy.js";
 import {
-  assumed, bitesHousehold, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  lifted, modeled, notInSweep, sourceLine, tiles, unclaimedNote, verdict,
+  assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
+  modeled, notInSweep, sourceLine, tiles, unclaimedNote, verdict,
 } from "./model.js";
 
 const answers = (flags: Record<string, string | boolean>) => {
@@ -33,18 +33,6 @@ describe("figures, through Intl in the locale", () => {
     expect(fmt.date("2026-09-16T16:13:51.445Z", "America/New_York")).toBe("Sep 16, 2026");
     expect(fmt.date("2026-09-17T01:16:58.798Z", "America/New_York")).toBe("Sep 16, 2026");
     expect(fmt.date("2026-09-17T01:16:58.798Z", "UTC")).toBe("Sep 17, 2026");
-  });
-});
-
-describe("the lift", () => {
-  it("is the real curve when nothing is deferred, and lifts every point past a deferred step", () => {
-    expect(lifted(co)).toEqual(co.curve.points.map((p) => p.netIncome));
-    const deferred = { ...co.analysis.cliffs[0], deferral: { reason: "child_continuous_eligibility" as const, until: "later" } };
-    const ev: HouseholdEvaluation = { ...co, deferred: [deferred] };
-    const at = co.curve.points.findIndex((p) => p.earnings === deferred.startEarnings);
-    const l = lifted(ev);
-    expect(l[at]).toBe(co.curve.points[at].netIncome);
-    expect(l[at + 1]).toBeCloseTo(co.curve.points[at + 1].netIncome + deferred.drop, 6);
   });
 });
 
@@ -87,12 +75,11 @@ describe("IncompleteMarker", () => {
   const liheap: UnmodeledProgram = { program: "LIHEAP", note: "" };
   const premium: UnmodeledProgram = { program: "NJ Health Plan Savings", note: "" };
   const care: UnmodeledProgram = { program: "Child-care subsidy (CCDF)", note: "" };
-  it("bites on a premium program always, on child care only with a paying young child, on LIHEAP never", () => {
-    expect(bitesHousehold(liheap, co.answers)).toBe(false);
-    expect(bitesHousehold(premium, co.answers)).toBe(true);
-    expect(bitesHousehold(care, { ...co.answers, monthlyChildcare: 1000 })).toBe(true);
-    expect(bitesHousehold(care, { ...co.answers, monthlyChildcare: 0 })).toBe(false);
-    expect(bitesHousehold(care, { ...co.answers, monthlyChildcare: 1000, childAges: [15] })).toBe(false);
+  it("bites on a premium program always, on child care only with a paying young child, on LIHEAP never — the rule is lib/coverage.ts's, over this surface's answers", () => {
+    expect(incompleteHere({ ...cov, unmodeled: [liheap, premium, care] }, co.answers)).toEqual(["NJ Health Plan Savings"]);
+    expect(incompleteHere({ ...cov, unmodeled: [care] }, { ...co.answers, monthlyChildcare: 1000 })).toEqual([care.program]);
+    expect(incompleteHere({ ...cov, unmodeled: [care] }, { ...co.answers, monthlyChildcare: 0 })).toEqual([]);
+    expect(incompleteHere({ ...cov, unmodeled: [care] }, { ...co.answers, monthlyChildcare: 1000, childAges: [15] })).toEqual([]);
   });
   it("reads the state's block and counts the states that would mark this household, from the file", () => {
     expect(incompleteHere(cov, co.answers)).toEqual([]);

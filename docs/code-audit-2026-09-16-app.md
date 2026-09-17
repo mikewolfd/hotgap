@@ -131,6 +131,10 @@ lands, `lib/`. Proves: `caseworker/model.test.ts` "lists the swept
 household's assumptions on the archetype path", `citizen/facts.test.ts` "the
 archetype path describes the swept household". ~4 lines here, 1 in core.
 
+**Resolved** (`modeledAnswers` exported from `core/src/evaluate.ts`, with a
+test; `evaluateCurve` calls it; `caseworker/model.ts modeled` delegates,
+`citizen/model.ts` reads it into the scene).
+
 ### D6. The lift, four times
 
 `caseworker/model.ts:46 lifted` (O(points × deferred)), `citizen/model.ts:89
@@ -142,6 +146,12 @@ against itself; keep it. One home: core exports `immediateCurve` (or a
 `liftedNet(points, deferred): number[]`); pages and fixture call it.
 Cross-boundary again. Proves: `caseworker/model.test.ts` "the lift",
 `citizen/geometry.test.ts` "the lift". ~10 lines.
+
+**Resolved** (`immediateCurve` exported from core with a test of its own;
+the caseworker chart, the citizen scene and the citizen fixture call it;
+`caseworker/model.ts lifted` and `citizen/model.ts liftDeferred` deleted.
+`e2e/citizen.spec.ts plotted` stays, on purpose, as the proof's second
+implementation).
 
 ### D7. The IncompleteMarker rule, three times — and one is wrong
 
@@ -165,6 +175,13 @@ with a paying young child" (move it to lib), `places/model.test.ts` "a
 child-care gap hatches only a household that pays for care". ~4 lines, one
 bug.
 
+**Resolved** (`lib/coverage.ts`: `bites(u, { childAges, paysForCare })`,
+`careHousehold(answers)`, `incompleteFor`, with `coverage.test.ts` over the
+three cases; the citizen bug had already been fixed by import (review N6) —
+now the three surfaces call one function, the journalist page mapping the
+archetype's own care reading onto it. A gap every state shares never bites:
+`scope: "all"`, and LIHEAP by name on a file from before scope was recorded).
+
 ### D8. Threshold rows under the one convention, twice
 
 `caseworker/model.ts:150–175 ledgerRows` and `citizen/steps.ts:37–66
@@ -186,6 +203,9 @@ eight-line function. One home: `lib/corrections.ts` (it reads
 `StateCorrections` and names programs in the `name` register). Proves:
 `places/model.test.ts` "correctionRows"; `e2e/caseworker.spec.ts:70–74`.
 0 lines, one chunk.
+
+**Resolved** before this pass (4ed97d6: `lib/corrections.ts`; the caseworker
+page no longer imports anything from `places/`).
 
 ### D10. Two charts that are one chart with two windows
 

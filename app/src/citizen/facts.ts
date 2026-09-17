@@ -4,12 +4,10 @@
 // archetype state M4), the IncompleteMarker (#16), reach and hours. The
 // provenance parts take the sweep's summary when the page has fetched it and
 // say less, never something wrong, when it has not.
-import {
-  CHILDCARE_MAX_AGE, childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson,
-} from "@hotgap/core";
+import { childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
-import { dateWords, listOf, unitFigure } from "../lib/format.js";
-import { capitalize, modelLine } from "../lib/format.js";
+import { careHousehold, incompleteFor } from "../lib/coverage.js";
+import { capitalize, dateWords, listOf, modelLine, unitFigure } from "../lib/format.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
@@ -115,15 +113,9 @@ export function provenanceText(s: Scene, sweep: Sweep | null): string {
   return out + t("source.money");
 }
 
-/**
- * IncompleteMarker (#16), citizen register: the programs the model cannot
- * compute in this state that could move this household — every entry but
- * LIHEAP, and the child-care one only where a child of child-care age
- * (through CHILDCARE_MAX_AGE, the one rule every surface uses) has paid care.
- */
+/** IncompleteMarker (#16), citizen register: the programs the model cannot compute in this state that could move this household (lib/coverage.ts, the one rule every surface uses). */
 export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
-  const unmodeled = (sweep?.coverage?.unmodeled ?? []).filter((u) => u.program !== "LIHEAP").filter((u) =>
-    !/child.?care/i.test(u.program) || (s.modeled.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (s.modeled.monthlyChildcare ?? 0) > 0));
+  const unmodeled = incompleteFor(sweep?.coverage, careHousehold(s.modeled));
   if (!unmodeled.length) return null;
   return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map((u) => u.program)) });
 }

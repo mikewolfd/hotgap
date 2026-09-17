@@ -1,19 +1,19 @@
 // The caseworker surface's reading of one HouseholdEvaluation and its state's
 // coverage block (design/caseworker.html's inline script, as pure functions):
-// the lift, the verdict in the caseworker register, the tiles, the
-// IncompleteMarker test, the ThresholdLedger under the one threshold
-// convention, the CompareTable rows, the assumed list, the SourceNote and the
-// client sheet. No DOM, no fetch — vitest covers it directly (model.test.ts).
+// the verdict in the caseworker register, the tiles, the IncompleteMarker
+// count, the ThresholdLedger under the one threshold convention, the
+// CompareTable rows, the assumed list, the SourceNote and the client sheet.
+// The lift and the modeled household are core's (immediateCurve,
+// modeledAnswers); the IncompleteMarker rule is lib/coverage.ts's. No DOM,
+// no fetch — vitest covers it directly (model.test.ts).
 // Every figure is annual (design/inventory.md M5): this reader checks the
 // table against the file. Every word is copy.ts's.
 import {
-  ARCHETYPES,
-  answersFor,
-  CHILDCARE_MAX_AGE,
   CLIFF_MIN,
   COVERAGE_PROGRAMS,
   DEFERRAL_UNTIL,
   liheapLimitWords,
+  modeledAnswers,
   pickArchetypeId,
   REACH_PERCENTILES,
   STATE_NAMES,
@@ -25,10 +25,10 @@ import {
   type ReachLadder,
   type StateCoverage,
   type SummaryJson,
-  type UnmodeledProgram,
 } from "@hotgap/core";
 import { sceneOf } from "../citizen/model.js";
 import { againText, verdictText } from "../citizen/verdict.js";
+import { careHousehold, incompleteFor } from "../lib/coverage.js";
 import { copy, fmt, programName } from "./copy.js";
 
 export const stateName = (st: string): string => STATE_NAMES[st] ?? st;
@@ -40,29 +40,12 @@ export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
   Math.round((earnings - ev.curve.points[0].earnings) / stepOf(ev));
 const top = (ev: HouseholdEvaluation): number => ev.curve.points[ev.curve.points.length - 1].earnings;
 
-/**
- * THE LIFT (design/charts.md § 1): analysis.dangerZones, the verdict and
- * `personal` describe the curve with deferred drops removed; curve.points do
- * not. Plot this line. O(points × deferred).
- */
-export function lifted(ev: HouseholdEvaluation): number[] {
-  const net = ev.curve.points.map((p) => p.netIncome);
-  for (const d of ev.deferred) for (let k = indexOf(ev, d.startEarnings) + 1; k < net.length; k++) net[k] += d.drop;
-  return net;
-}
-
 /** The cliff object `nextCliff`/`worstCliff` name — they are never the same object as a `cliffs` entry (evaluate.ts). */
 export const cliffAt = (ev: HouseholdEvaluation, ref: { startEarnings: number } | null): Cliff | null =>
   ref ? ev.analysis.cliffs.find((c) => c.startEarnings === ref.startEarnings) ?? null : null;
 
-/**
- * The household the curve actually models. Live: the answers as given. An
- * archetype curve is the swept household's — the state's typical renter
- * (answersFor) — not the flags the caller typed, and every sentence about
- * rent, care or take-up has to say so.
- */
-export const modeled = (ev: HouseholdEvaluation): HouseholdAnswers =>
-  ev.source === "live" ? ev.answers : answersFor(ev.answers.state, ARCHETYPES.find((a) => a.id === pickArchetypeId(ev.answers))!);
+/** The household the curve actually models: core's reading (the swept renter on the archetype path), which every sentence about rent, care or take-up describes. */
+export const modeled = (ev: HouseholdEvaluation): HouseholdAnswers => modeledAnswers(ev);
 
 export const archetypeOf = (ev: HouseholdEvaluation): string => pickArchetypeId(ev.answers);
 
@@ -117,17 +100,9 @@ export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[]
   return out;
 }
 
-// ── IncompleteMarker (#16) ──────────────────────────────────────────────
-/**
- * An unmodeled entry counts against a household when it could move its
- * figures: a premium program always, the child-care entry only with a child
- * of care age and paid care, LIHEAP never (design/inventory.md § IncompleteMarker).
- */
-export const bitesHousehold = (u: UnmodeledProgram, a: HouseholdAnswers): boolean =>
-  u.program !== "LIHEAP" && (!/child.?care/i.test(u.program) || (a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (a.monthlyChildcare ?? 0) > 0));
-
+// ── IncompleteMarker (#16): the one rule is lib/coverage.ts's ────────────
 export const incompleteHere = (cov: StateCoverage | undefined, a: HouseholdAnswers): string[] =>
-  (cov?.unmodeled ?? []).filter((u) => bitesHousehold(u, a)).map((u) => u.program);
+  incompleteFor(cov, careHousehold(a)).map((u) => u.program);
 
 /** Every state whose block would mark this household incomplete — the count is rendered, never typed. */
 export const incompleteStates = (summary: SummaryJson, a: HouseholdAnswers): string[] =>

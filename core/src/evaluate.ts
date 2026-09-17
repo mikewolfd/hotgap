@@ -679,9 +679,11 @@ function esiSummary(a: HouseholdAnswers, points: CurvePoint[], currentEarnings: 
  * is reported — `evaluateCurve` returns the real points and uses this copy
  * only to decide danger zones, safe exit, the leap and this household's own
  * path. A deferred cliff is still listed, still carries its full drop, and
- * still says what carries the household past it.
+ * still says what carries the household past it. Exported because it is the
+ * line a chart plots (design/charts.md § The lift): a page calls this with
+ * `evaluation.deferred` rather than lifting the points again. O(points).
  */
-function immediateCurve(points: CurvePoint[], deferred: Cliff[]): CurvePoint[] {
+export function immediateCurve(points: CurvePoint[], deferred: Cliff[]): CurvePoint[] {
   if (deferred.length === 0) return points;
   const dropAt = new Map(deferred.map((c) => [c.startEarnings, c.drop]));
   let lift = 0;
@@ -709,6 +711,15 @@ function personalEscape(analysis: CurveAnalysis): PersonalEscape {
   };
 }
 
+/**
+ * The household a curve models. Live: the answers as given. An archetype
+ * curve is the swept household's — the state's typical renter (`answersFor`)
+ * — not the answers the caller typed, and every sentence about rent, care or
+ * take-up has to say so; the corrections below make the same choice.
+ */
+export const modeledAnswers = ({ answers, source }: Pick<HouseholdEvaluation, "answers" | "source">): HouseholdAnswers =>
+  source === "live" ? answers : answersFor(answers.state, archetypeById(pickArchetypeId(answers)));
+
 /** Every derived result for one household against one already-fetched curve. */
 export function evaluateCurve(
   answers: HouseholdAnswers,
@@ -735,22 +746,21 @@ export function evaluateCurve(
   // property of the state and the income, so it applies to both.
   // Offline points describe the swept archetype, including its spouse's $0
   // pay. Never apply the caller's personal inputs to that baseline.
-  const modeledAnswers = source === "live" ? answers : answersFor(answers.state,
-    archetypeById(pickArchetypeId(answers)));
-  const tafdc = correctMaTafdc(modeledAnswers, raw);
+  const modeled = modeledAnswers({ answers, source });
+  const tafdc = correctMaTafdc(modeled, raw);
   // The child-care subsidy needs no step here: parse.ts already put it in net
   // income wherever the model dropped it (policyengine-us #9405), so a stored
   // curve and a live one both arrive with it counted once.
   const corrected = source === "live" ? applyLiheap(applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers), answers) : tafdc.points;
   // The archetype path measures the swept household, not the caller's: its
   // spouse pay, SSDI, unemployment and size decide the poverty-line tests.
-  const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeledAnswers) : corrected;
-  const { points: assisted, assistance: statePremiumAssistance } = knowsWhoHolds ? applyStatePremiumAssistance(gapped, modeledAnswers) : { points: gapped, assistance: null };
-  const { points: wrapped, wrap: premiumWrap } = knowsWhoHolds ? applyPremiumWrap(assisted, modeledAnswers) : { points: assisted, wrap: null };
+  const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeled) : corrected;
+  const { points: assisted, assistance: statePremiumAssistance } = knowsWhoHolds ? applyStatePremiumAssistance(gapped, modeled) : { points: gapped, assistance: null };
+  const { points: wrapped, wrap: premiumWrap } = knowsWhoHolds ? applyPremiumWrap(assisted, modeled) : { points: assisted, wrap: null };
   // The two local tables are disjoint by state (statePremiumWraps.test.ts), so
   // the order between them never decides an amount; both stand down wherever
   // the endpoint served the state's own figure.
-  const { points: helped, help: perMemberPremiumHelp } = knowsWhoHolds ? applyPerMemberPremiumHelp(wrapped, modeledAnswers) : { points: wrapped, help: null };
+  const { points: helped, help: perMemberPremiumHelp } = knowsWhoHolds ? applyPerMemberPremiumHelp(wrapped, modeled) : { points: wrapped, help: null };
   // Medicare last: it is the only correction that reads the coverage-gap
   // verdict's own output (a married couple whose phantom premium has just been
   // removed must not then be charged Part B against a premium that is gone).
@@ -770,8 +780,8 @@ export function evaluateCurve(
   // thresholds use. Excusing a cliff is the strong claim; a curve that cannot
   // tell a parent's Medicaid from a child's does not get to make it.
   const opts = {
-    hasChildren: knowsWhoHolds && modeledAnswers.childAges.length > 0,
-    isAdultGroupLoss: adultGroupLossTest(modeledAnswers),
+    hasChildren: knowsWhoHolds && modeled.childAges.length > 0,
+    isAdultGroupLoss: adultGroupLossTest(modeled),
   };
   const full = analyzeCurve(points, curve.currentEarnings, opts);
   const deferred = full.cliffs.filter((c) => c.deferral !== null);
@@ -822,7 +832,7 @@ export function evaluateCurve(
     statePremiumAssistance,
     // The swept household on the archetype path, this one on the live path —
     // the same choice every poverty-line test above makes.
-    liheap: liheapBoundary(modeledAnswers, { ...curve, points }),
+    liheap: liheapBoundary(modeled, { ...curve, points }),
     unclaimed: null,
   };
 }

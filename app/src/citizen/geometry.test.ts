@@ -5,12 +5,12 @@ import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
 import { tickMoney } from "../lib/format.js";
 import { clusterCliffs, layout, niceStep, niceTicks, xTicks, yRange } from "./geometry.js";
-import { liftDeferred, sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
+import { sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
 
 describe("the lift", () => {
-  test("a deferred drop is added back to every point above its step, and only there", () => {
+  test("a deferred drop is added back to every point above its step, and only there (core's immediateCurve, on the scene)", () => {
     const s = sceneOf(makeEvaluation(), year);
     const d = s.deferred[0];
     expect(d.startEarnings).toBe(71_000);
@@ -21,7 +21,6 @@ describe("the lift", () => {
     // The lifted curve no longer steps down there.
     expect(s.net[i + 1]).toBeLessThan(s.net[i]);
     expect(s.lifted[i + 1]).toBeGreaterThanOrEqual(s.lifted[i]);
-    expect(liftDeferred([1, 2, 3], [], (e) => e)).toEqual([1, 2, 3]);
   });
 });
 

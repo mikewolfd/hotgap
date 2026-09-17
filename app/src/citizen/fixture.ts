@@ -4,7 +4,7 @@
 // shape the components branch on, small enough to read. Built through
 // core's own analyzeCurve and escapeAnalysis, so the fixture cannot drift
 // from what the Worker returns.
-import { analyzeCurve, escapeAnalysis, type Cliff, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
+import { analyzeCurve, escapeAnalysis, immediateCurve, type Cliff, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
 
 export const ANSWERS: HouseholdAnswers = {
   state: "CO", married: false, age: 30, spouseAge: null, youStatus: "citizen", spouseStatus: "citizen",
@@ -67,9 +67,8 @@ export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, cur
   const opts = { hasChildren: true, isAdultGroupLoss: () => true };
   const full = analyzeCurve(points, current, opts);
   const deferred: Cliff[] = full.cliffs.filter((c) => c.deferral !== null);
-  // The same lift evaluate.ts makes before the verdict is read.
-  const lifted = points.map((p) => ({ ...p, netIncome: p.netIncome + deferred.filter((d) => d.startEarnings < p.earnings).reduce((s, d) => s + d.drop, 0) }));
-  const immediate = analyzeCurve(lifted, current, opts);
+  // The lift evaluate.ts makes before the verdict is read — its own function.
+  const immediate = analyzeCurve(immediateCurve(points, deferred), current, opts);
   const analysis = { ...immediate, points, cliffs: full.cliffs, currentNet: full.currentNet };
   const escape = escapeAnalysis(points, analysis);
   const zone = analysis.dangerZones.find((z) => current > z.startEarnings && (z.endEarnings === null || current < z.endEarnings)) ?? null;
