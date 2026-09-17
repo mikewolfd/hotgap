@@ -78,7 +78,7 @@ export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, cur
     analysis, deferred, escape,
     personal: { zone, escapeEarnings: zone?.endEarnings ?? null, raiseToClear: zone ? (zone.endEarnings ?? TOP) - current : null, raiseIsLowerBound: zone !== null && zone.endEarnings === null },
     reach: { safeExit: 80, current: 37.5 }, minWage: { wage: 15.16, fullTimeEarnings: 31532.8, cliffs: [] },
-    coverageGap: null, headStart: null, esi: null, maTafdc: null, premiumWrap: null, statePremiumAssistance: null, unclaimed: [],
+    coverageGap: null, headStart: null, esi: null, maTafdc: null, premiumWrap: null, statePremiumAssistance: null, liheap: null, unclaimed: [],
     ...overrides,
   };
 }

@@ -179,7 +179,8 @@ describe("what the model does not include, and where the numbers came from", () 
     expect(modeled(co).monthlyRent).toBe(1735);
     expect(lines[1]).toBe("Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage, and no other income; aged 30.");
     expect(lines[2]).toBe("Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC, and CCDF child care subsidy; not for Head Start and Housing voucher.");
-    expect(lines[4]).toMatch(/^Not modelled in Colorado: LIHEAP\./);
+    // LIHEAP is a boundary on every block since Plan 7, never an unmodeled row (Phase 2 renders it from cov.liheap).
+    expect(lines.some((l) => /Not modelled in Colorado: LIHEAP/.test(l))).toBe(false);
   });
   it("says which curve, in which words, and drops the county on an archetype", () => {
     const arche = sourceLine(co, { ...prov, county: "El Paso County" });

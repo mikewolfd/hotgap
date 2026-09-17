@@ -10,7 +10,8 @@
 // retirement conditions, is docs/upstream/2026-09-15-local-corrections.md.
 import { PROGRAM_END_MIN } from "./analyze.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
-import type { CorrectionNote, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
+import type { CorrectionNote, LiheapCoverage, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
+import { liheapLimitWords, liheapRow } from "./liheap.js";
 import { MA_TAFDC_SOURCES } from "./maTafdc.js";
 import { BHP_EXPANDED_STATES, POLICY_OVERRIDE_SOURCES, policyOverridesFor } from "./policyOverrides.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
@@ -116,46 +117,47 @@ function unmodeled(state: string, premium: StateCorrections["premiumAssistance"]
   if (ctx.childcareSubsidyUnmodeled?.includes(state)) {
     out.push({ program: "Child-care subsidy (CCDF)", note: "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news." });
   }
-  const liheap = liheapUnmodeled(state);
-  if (liheap) out.push(liheap);
+  // LIHEAP is no longer an unmodeled row: its boundary is shown in every
+  // state (corrections.liheap and the `liheap` block below), and Michigan's
+  // is counted.
   return out;
 }
 
-// The three states whose LIHEAP schedule PolicyEngine models in full
-// (programs.yaml: dc_liheap, ma_liheap, il_liheap), none of which is on
-// gov.household.household_state_benefits, so none reaches net income
-// (docs/research/liheap-cliff-2026-09-16.md § 2).
-const LIHEAP_MODELED_UPSTREAM: ReadonlySet<string> = new Set(["DC", "MA", "IL"]);
-
 /**
- * LIHEAP as this state's unmodeled row, or null where it is not unmodeled at
- * all: Michigan pays its heating assistance as a refundable state income-tax
- * credit that PolicyEngine models (mi_home_heating_credit) and HotGap
- * already counts in stateCredits — verified live 2026-09-16, $180.38 for a
- * single parent of two at $20,000 — so the old "not counted anywhere" note
- * was wrong there (the research's finding 1). Michigan's row is a correction
- * note instead (liheapNote).
+ * LIHEAP as this state's correction note: a boundary everywhere but
+ * Michigan, whose heating assistance is a refundable state income-tax credit
+ * that PolicyEngine models (mi_home_heating_credit) and HotGap already
+ * counts in stateCredits — verified live 2026-09-16, $180.38 for a single
+ * parent of two at $20,000 — so the old "not counted anywhere" note was wrong
+ * there (the research's finding 1). Elsewhere the row in liheap.ts says
+ * where the program stops and what it pays there; the money enters net
+ * income only behind the household's own take-up toggle, because the state
+ * served the share of eligible households the note names, not all of them.
  */
-function liheapUnmodeled(state: string): UnmodeledProgram | null {
-  if (state === "MI") return null;
-  if (LIHEAP_MODELED_UPSTREAM.has(state)) {
-    return { program: "LIHEAP", note: "PolicyEngine models this state's LIHEAP schedule, but the amount never reaches its net income figure and HotGap does not yet show it, so a heating benefit ending is not on this curve." };
+function liheapNote(state: string): StateCorrections["liheap"] {
+  const row = liheapRow(state);
+  if (row.upstream?.counted === "state credit") {
+    return {
+      applies: false, source: "in net income", program: "Home Heating Credit", code: "parse.ts stateCredits",
+      // The MI-1040CR-7 booklet (2024 tax year), as the Clearinghouse serves it
+      // for FY2026: Table A (standard allowance and income ceiling) and line 41
+      // ("reduce your computed standard credit by 50 percent" when heat is in
+      // the rent). Read 2026-09-16.
+      cite: row.sources.amounts ?? row.sources.limits,
+      note: "Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is.",
+    };
   }
-  return { program: "LIHEAP", note: "Not counted anywhere: HotGap does not request LIHEAP from PolicyEngine, and the few state programs the engine models never reach its net income figure." };
+  const served = row.servedShare === null ? "a share of eligible households the FY2024 profile does not give" : `about ${Math.round(row.servedShare * 100)}% of its income-eligible households in FY2024`;
+  return {
+    applies: false, source: "boundary", program: "LIHEAP", code: "liheap.ts liheapBoundary", cite: row.sources.limits,
+    note: `HotGap shows where energy assistance (LIHEAP) stops in this state — ${liheapLimitWords(row.heating.limit)} — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served ${served}, so a curve that assumed it would draw a benefit most eligible families never receive.`,
+  };
 }
 
-/** Michigan's LIHEAP as the correction it is: counted, in state credits, on one stated assumption. */
-function liheapNote(state: string): StateCorrections["liheap"] | undefined {
-  if (state !== "MI") return undefined;
-  return {
-    applies: false, source: "in net income", program: "Home Heating Credit", code: "parse.ts stateCredits",
-    // The MI-1040CR-7 booklet (2024 tax year), as the Clearinghouse serves it
-    // for FY2026: Table A (standard allowance and income ceiling) and line 41
-    // ("reduce your computed standard credit by 50 percent" when heat is in
-    // the rent). Read 2026-09-16.
-    cite: "https://liheapch.acf.gov/docs/2026/benefits-matricies/MI_BenefitMatrix_2026_Heating-see-pg-11.pdf",
-    note: "Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is.",
-  };
+/** The boundary facts a surface prints per state, straight from the table. */
+function liheapCoverage(state: string): LiheapCoverage {
+  const { heating, servedShare, upstream, sources, readOn } = liheapRow(state);
+  return { limitKind: liheapLimitWords(heating.limit), limit: heating.limit, topBand: heating.topBand, shape: heating.shape, servedShare, upstream, sources, readOn };
 }
 
 /**
@@ -174,7 +176,6 @@ function otherBenefits(state: string, curves: Record<string, CurvePoint[]>): Oth
 /** Everything a reader of this state's summary row should know first, from the swept curves and the tables that shaped them. */
 export function stateCoverage(state: string, curves: Record<string, CurvePoint[]>, ctx: CoverageContext = {}): StateCoverage {
   const premium = premiumAssistance(state, curves);
-  const liheap = liheapNote(state);
   return {
     corrections: {
       policyOverrides: policyOverrideRecords(state),
@@ -182,10 +183,11 @@ export function stateCoverage(state: string, curves: Record<string, CurvePoint[]
       premiumAssistance: premium,
       childcareSubsidy: childcareSubsidy(state, ctx.model),
       coverageGap: coverageGap(state),
-      ...(liheap ? { liheap } : {}),
+      liheap: liheapNote(state),
     },
     unmodeled: unmodeled(state, premium, ctx),
     otherBenefits: otherBenefits(state, curves),
+    liheap: liheapCoverage(state),
     vintages: { model: ctx.model ?? null, ...stateDefaultsProvenance(state), reach: reachProvenance(state) },
   };
 }

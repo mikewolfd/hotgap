@@ -725,3 +725,25 @@ describe("the state child-care subsidy (policyengine-us #9405)", () => {
     expect(steep.escape.programEnds.childcare).toBe(25000);
   });
 });
+
+describe("LIHEAP boundary (Plan 7)", () => {
+  // Texas, one parent, children 3 and 7: 150% of the 2025 guideline for three is $39,975.
+  const tx = answersWith({ state: "TX", childAges: [3, 7], childDisabled: [false, false], annualEarnings: 30000 });
+  const flat = (top: number) => Array.from({ length: top / 1000 + 1 }, (_, i) => pt(i * 1000, 20000 + i * 800));
+
+  it("is on the evaluation as a boundary — not a cliff, not a program end, not a zone — with the same figures on both paths", () => {
+    const live = evaluateOn(tx, flat(150_000), 30000);
+    expect(live.liheap).toMatchObject({ component: "heating", earningsLimit: 39975, topBand: { min: 1200, max: 1200 }, servedShare: 0.03 });
+    expect(live.analysis.cliffs).toEqual([]);
+    expect(live.escape.programEnds).toEqual({});
+    expect(live.analysis.dangerZones).toEqual([]);
+    // The archetype path reads the swept household — the same shape, so the same limit.
+    const offline = evaluateOffline(tx)!;
+    expect(offline.liheap?.earningsLimit).toBe(live.liheap?.earningsLimit);
+    expect(offline.liheap?.householdIncomeLimit).toBe(39975);
+  });
+
+  it("is null when the curve ends below the limit", () => {
+    expect(evaluateOn(tx, flat(30_000), 10000).liheap).toBeNull();
+  });
+});

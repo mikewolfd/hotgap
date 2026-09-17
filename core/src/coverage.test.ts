@@ -57,23 +57,23 @@ describe("stateCoverage — corrections", () => {
   it("names a program that exists but is modeled nowhere, on both the correction and the unmodeled list", () => {
     const nj = stateCoverage("NJ", curves());
     expect(nj.corrections.premiumAssistance).toMatchObject({ source: "none", program: "NJ Health Plan Savings" });
-    expect(nj.unmodeled.map((u) => u.program)).toEqual(["NJ Health Plan Savings", "LIHEAP"]);
+    expect(nj.unmodeled.map((u) => u.program)).toEqual(["NJ Health Plan Savings"]);
     // Maryland's is modeled upstream; a sweep that did not carry it is a gap for that sweep only.
     const md = stateCoverage("MD", curves());
     expect(md.corrections.premiumAssistance).toMatchObject({ source: "none", program: "Maryland Young Adult Premium Assistance" });
     expect(md.unmodeled[0]).toMatchObject({ program: "Maryland Young Adult Premium Assistance", note: expect.stringContaining("did not serve") });
-    expect(stateCoverage("MD", curves({ statePremiumAssistance: 1 })).unmodeled.map((u) => u.program)).toEqual(["LIHEAP"]);
+    expect(stateCoverage("MD", curves({ statePremiumAssistance: 1 })).unmodeled).toEqual([]);
   });
 
   it("writes every note for the reader who will quote it: a sentence, the issue as the cite, the code pointer beside it (S9)", () => {
     for (const state of ["TX", "MA", "CT", "CO", "NY"]) {
       const c = stateCoverage(state, curves()).corrections;
-      const notes = [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap, ...c.policyOverrides];
+      const notes = [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap, c.liheap!, ...c.policyOverrides];
       for (const n of notes) {
         expect(n.note, `${state}: ${n.note}`).toMatch(/^[A-Z].*\.$/);
         expect(n.note, `${state}: ${n.note}`).not.toMatch(/WORKAROUND|\.ts\b|household_net_income|household_health_benefits|\bFPL\b/);
       }
-      for (const n of [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap]) expect(n.code).toMatch(/\.ts\b/);
+      for (const n of [c.maTafdc, c.premiumAssistance, c.childcareSubsidy, c.coverageGap, c.liheap!]) expect(n.code).toMatch(/\.ts\b/);
       // Every correction that works around an upstream defect names the issue.
       for (const n of [c.childcareSubsidy, c.coverageGap]) if (n.applies) expect(n.note).toMatch(/policyengine-us #\d{4}/);
       for (const o of c.policyOverrides) expect(o.note).toMatch(/policyengine-us #\d{4}/);
@@ -94,21 +94,33 @@ describe("stateCoverage — corrections", () => {
 });
 
 describe("stateCoverage — unmodeled and otherBenefits", () => {
-  it("names LIHEAP outside Michigan, and the child-care subsidy only where the sweep found it unmodeled", () => {
-    expect(stateCoverage("TX", curves()).unmodeled).toEqual([{ program: "LIHEAP", note: expect.stringContaining("Not counted anywhere") }]);
+  it("names the child-care subsidy only where the sweep found it unmodeled; LIHEAP is a boundary, never an unmodeled row (Plan 7)", () => {
+    expect(stateCoverage("TX", curves()).unmodeled).toEqual([]);
     const flagged = stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["TX"] }).unmodeled.map((u) => u.program);
-    expect(flagged).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
-    expect(stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["MA"] }).unmodeled).toHaveLength(1);
-    // The three schedules PolicyEngine models in full still never reach net income; the note says which gap this is.
-    for (const state of ["DC", "MA", "IL"]) expect(stateCoverage(state, curves()).unmodeled.at(-1), state).toEqual({ program: "LIHEAP", note: expect.stringContaining("models this state's LIHEAP schedule") });
+    expect(flagged).toEqual(["Child-care subsidy (CCDF)"]);
+    expect(stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["MA"] }).unmodeled).toHaveLength(0);
   });
 
-  it("Michigan's LIHEAP is the Home Heating Credit, counted in state credits: a correction note, not an unmodeled row (Plan 7, Phase 0)", () => {
+  it("writes LIHEAP's boundary per state — the limit in words, the top band, the served share — and the note that says why it is not in net income", () => {
+    const tx = stateCoverage("TX", curves());
+    expect(tx.liheap).toMatchObject({ limitKind: "150% of the poverty guideline", limit: { kind: "fpg", pct: 150 }, topBand: { min: 1200, max: 1200 }, shape: "staircase", servedShare: 0.03, upstream: null, readOn: "2026-09-16" });
+    expect(tx.liheap?.sources.limits).toMatch(/^https:\/\/liheapch\.acf\.gov\//);
+    expect(tx.corrections.liheap).toMatchObject({ applies: false, source: "boundary", program: "LIHEAP", code: expect.stringContaining("liheap.ts"), cite: expect.stringMatching(/^https:\/\//) });
+    expect(tx.corrections.liheap?.note).toMatch(/^HotGap shows where energy assistance \(LIHEAP\) stops in this state — 150% of the poverty guideline — .*about 3% of its income-eligible households in FY2024.*\.$/);
+    expect(stateCoverage("MA", curves()).liheap).toMatchObject({ limitKind: "60% of state median income", upstream: { variable: "ma_liheap" }, servedShare: 0.18 });
+    expect(stateCoverage("MD", curves()).liheap?.limitKind).toBe("39% to 60% of state median income, rising with household size");
+    expect(stateCoverage("SC", curves()).liheap?.limitKind).toContain("FY2025");
+    // Hawaii's profile was not read: the note says so instead of inventing a share.
+    expect(stateCoverage("HI", curves()).liheap?.servedShare).toBeNull();
+    expect(stateCoverage("HI", curves()).corrections.liheap?.note).toContain("the FY2024 profile does not give");
+  });
+
+  it("Michigan's LIHEAP is the Home Heating Credit, counted in state credits (Plan 7, Phase 0)", () => {
     const mi = stateCoverage("MI", curves());
     expect(mi.unmodeled.map((u) => u.program)).not.toContain("LIHEAP");
     expect(mi.corrections.liheap).toMatchObject({ applies: false, source: "in net income", program: "Home Heating Credit", note: expect.stringContaining("halves") });
     expect(mi.corrections.liheap?.cite).toMatch(/^https:\/\/liheapch\.acf\.gov\//);
-    expect(stateCoverage("OH", curves()).corrections.liheap).toBeUndefined();
+    expect(mi.liheap).toMatchObject({ limitKind: "110% of the poverty guideline", upstream: { variable: "mi_home_heating_credit", counted: "state credit" }, servedShare: 0.85 });
   });
 
   it("labels the remainder from the traced table, reports an untraced one as such, and ignores noise", () => {
@@ -140,8 +152,7 @@ describe("stateCoverage — vintages", () => {
 describe("stateCoverage — every state", () => {
   const keys = (c: StateCoverage) => ({
     top: Object.keys(c).sort(),
-    // `liheap` is Michigan's alone for now (coverage.ts liheapNote) and is asserted per state below.
-    corrections: Object.keys(c.corrections).filter((k) => k !== "liheap").sort(),
+    corrections: Object.keys(c.corrections).sort(),
     vintages: Object.keys(c.vintages).sort(),
   });
   const expected = keys(stateCoverage("CA", curves()));
@@ -158,8 +169,9 @@ describe("stateCoverage — every state", () => {
       expect(premium.source, state).toBe(hasWrap ? "ladder" : "none");
       const known = STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state) || UNMODELED_STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state);
       expect(premium.program !== null, state).toBe(hasWrap || known);
-      expect(c.unmodeled.at(-1)?.program, state).toBe(state === "MI" ? undefined : "LIHEAP");
-      expect(c.corrections.liheap !== undefined, state).toBe(state === "MI");
+      expect(c.unmodeled.map((u) => u.program), state).not.toContain("LIHEAP");
+      expect(c.corrections.liheap?.source, state).toBe(state === "MI" ? "in net income" : "boundary");
+      expect(c.liheap?.limitKind, state).toMatch(/^\d+% (to \d+% )?of (the poverty guideline|state median income)/);
       for (const o of c.corrections.policyOverrides) expect(o.source.startsWith("https://"), state).toBe(true);
     }
   });

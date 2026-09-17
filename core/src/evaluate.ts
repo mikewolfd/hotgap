@@ -22,6 +22,7 @@ import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremi
 import { reachForHousehold } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
+import { liheapBoundary, type LiheapBoundary } from "./liheap.js";
 import { householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 /** Where the curve came from: a live PolicyEngine call, or the committed sweep. */
@@ -112,6 +113,16 @@ export interface HouseholdEvaluation {
   premiumWrap: PremiumWrap | null;
   /** The state's modeled premium assistance netted out of the premium, when the endpoint served it. */
   statePremiumAssistance: StatePremiumAssistanceSummary | null;
+  /**
+   * Where energy assistance (LIHEAP) stops for this household — the state's
+   * income limit inside this curve's range, what the state pays at that top
+   * band, and the share of eligible households it served — or null when the
+   * curve ends below the limit (liheap.ts). A boundary, not a Cliff: it is
+   * not in `cliffs`, `programEnds`, `dangerZones` or any metric, because
+   * with the toggle off there is nothing in the money line to lose. Read
+   * from the answers and the axis alone, so both paths agree.
+   */
+  liheap: LiheapBoundary | null;
   /**
    * What each entitlement the household said it does not get would pay at
    * its current earnings, from a second curve with every take-up on. Empty
@@ -704,6 +715,9 @@ export function evaluateCurve(
     maTafdc: tafdc.correction,
     premiumWrap,
     statePremiumAssistance,
+    // The swept household on the archetype path, this one on the live path —
+    // the same choice every poverty-line test above makes.
+    liheap: liheapBoundary(modeledAnswers, { ...curve, points }),
     unclaimed: null,
   };
 }

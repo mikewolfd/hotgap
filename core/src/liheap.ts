@@ -646,6 +646,15 @@ export function liheapLimitDollars(state: string, limit: LiheapLimit, size: numb
   }
 }
 
+/** A limit in the words a coverage note prints: "150% of the poverty guideline", "60% of state median income", Maryland's slide. */
+export function liheapLimitWords(limit: LiheapLimit): string {
+  switch (limit.kind) {
+    case "fpg": return `${limit.pct}% of the poverty guideline`;
+    case "smi": return `${limit.pct}% of state median income${limit.vintage ? ` (the state still applies the ${limit.vintage} table)` : ""}`;
+    case "smi-by-size": return `${limit.pct[0]}% to ${limit.pct[limit.pct.length - 1]}% of state median income, rising with household size`;
+  }
+}
+
 /** The heating limit that governs a household of this size: the last size rule reached, else the state's base limit. */
 export function heatingLimitFor(row: LiheapRow, size: number): LiheapLimit {
   let limit = row.heating.limit;
