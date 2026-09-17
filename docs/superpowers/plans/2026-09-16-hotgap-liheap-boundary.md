@@ -50,9 +50,9 @@ Tests: 51 rows, every state once; every `pct` within the statutory floor/ceiling
 
 ### Phase 0 — Michigan note (now, separate merge)
 
-- [ ] `core/src/coverage.ts` `unmodeled()`: the LIHEAP entry becomes per state — MI: *counted* ("Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is"); DC/MA/IL: "PolicyEngine models the schedule but it does not reach net income; HotGap does not yet show it" (until Phase 3); all others: today's note.
-- [ ] `coverage.test.ts`: MI's LIHEAP row is not in `unmodeled`; it appears under `corrections` as `{ applies: false, source: "in net income", program: "Home Heating Credit" }`.
-- [ ] `--from-data` rebuild; every metric byte-identical; only MI's coverage block changes.
+- [x] `core/src/coverage.ts` `unmodeled()`: the LIHEAP entry becomes per state — MI: *counted* ("Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is"); DC/MA/IL: "PolicyEngine models the schedule but it does not reach net income; HotGap does not yet show it" (until Phase 3); all others: today's note.
+- [x] `coverage.test.ts`: MI's LIHEAP row is not in `unmodeled`; it appears under `corrections` as `{ applies: false, source: "in net income", program: "Home Heating Credit" }`.
+- [x] `--from-data` rebuild; every metric byte-identical; only MI's coverage block changes.
 
 ### Phase 1 — the boundary in the evaluation
 

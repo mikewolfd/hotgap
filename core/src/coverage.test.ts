@@ -94,11 +94,21 @@ describe("stateCoverage — corrections", () => {
 });
 
 describe("stateCoverage — unmodeled and otherBenefits", () => {
-  it("always names LIHEAP, and the child-care subsidy only where the sweep found it unmodeled", () => {
-    expect(stateCoverage("TX", curves()).unmodeled).toEqual([{ program: "LIHEAP", note: expect.any(String) }]);
+  it("names LIHEAP outside Michigan, and the child-care subsidy only where the sweep found it unmodeled", () => {
+    expect(stateCoverage("TX", curves()).unmodeled).toEqual([{ program: "LIHEAP", note: expect.stringContaining("Not counted anywhere") }]);
     const flagged = stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["TX"] }).unmodeled.map((u) => u.program);
     expect(flagged).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
     expect(stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["MA"] }).unmodeled).toHaveLength(1);
+    // The three schedules PolicyEngine models in full still never reach net income; the note says which gap this is.
+    for (const state of ["DC", "MA", "IL"]) expect(stateCoverage(state, curves()).unmodeled.at(-1), state).toEqual({ program: "LIHEAP", note: expect.stringContaining("models this state's LIHEAP schedule") });
+  });
+
+  it("Michigan's LIHEAP is the Home Heating Credit, counted in state credits: a correction note, not an unmodeled row (Plan 7, Phase 0)", () => {
+    const mi = stateCoverage("MI", curves());
+    expect(mi.unmodeled.map((u) => u.program)).not.toContain("LIHEAP");
+    expect(mi.corrections.liheap).toMatchObject({ applies: false, source: "in net income", program: "Home Heating Credit", note: expect.stringContaining("halves") });
+    expect(mi.corrections.liheap?.cite).toMatch(/^https:\/\/liheapch\.acf\.gov\//);
+    expect(stateCoverage("OH", curves()).corrections.liheap).toBeUndefined();
   });
 
   it("labels the remainder from the traced table, reports an untraced one as such, and ignores noise", () => {
@@ -130,7 +140,8 @@ describe("stateCoverage — vintages", () => {
 describe("stateCoverage — every state", () => {
   const keys = (c: StateCoverage) => ({
     top: Object.keys(c).sort(),
-    corrections: Object.keys(c.corrections).sort(),
+    // `liheap` is Michigan's alone for now (coverage.ts liheapNote) and is asserted per state below.
+    corrections: Object.keys(c.corrections).filter((k) => k !== "liheap").sort(),
     vintages: Object.keys(c.vintages).sort(),
   });
   const expected = keys(stateCoverage("CA", curves()));
@@ -147,7 +158,8 @@ describe("stateCoverage — every state", () => {
       expect(premium.source, state).toBe(hasWrap ? "ladder" : "none");
       const known = STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state) || UNMODELED_STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state);
       expect(premium.program !== null, state).toBe(hasWrap || known);
-      expect(c.unmodeled.at(-1)?.program, state).toBe("LIHEAP");
+      expect(c.unmodeled.at(-1)?.program, state).toBe(state === "MI" ? undefined : "LIHEAP");
+      expect(c.corrections.liheap !== undefined, state).toBe(state === "MI");
       for (const o of c.corrections.policyOverrides) expect(o.source.startsWith("https://"), state).toBe(true);
     }
   });

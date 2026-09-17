@@ -101,6 +101,13 @@ export interface StateCorrections {
   childcareSubsidy: CorrectionNote & { source: "in net income" | "added by HotGap" };
   /** Whether the coverage-gap premium correction can fire here — non-expansion states only (evaluate.ts). */
   coverageGap: CorrectionNote;
+  /**
+   * Michigan only for now: LIHEAP's heating money is the refundable Home
+   * Heating Credit, which PolicyEngine models and HotGap already counts in
+   * state credits, so it is not an unmodeled program there (coverage.ts
+   * liheapNote). Absent everywhere else, where LIHEAP stays in `unmodeled`.
+   */
+  liheap?: CorrectionNote & { source: "in net income"; program: string };
 }
 
 /**
