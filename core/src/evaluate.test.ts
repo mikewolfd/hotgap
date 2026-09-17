@@ -721,14 +721,16 @@ describe("per-member state premium help (NJ, WA)", () => {
     expect(served.statePremiumAssistance).toMatchObject({ state: "WA", variable: "wa_cascade_care_savings", maxAnnual: 660 });
   });
 
-  it("leaves a point alone where nobody is buying a marketplace plan", () => {
-    // An adult on Medicaid, a point with no premium credit, a point with no premium, and employer coverage: nothing to help with.
+  it("leaves a point alone where nobody is buying a marketplace plan, but not one where the federal credit alone is $0", () => {
+    // An adult on Medicaid, a point with no premium, and employer coverage: nothing to help with.
+    // A premium with no federal credit IS helped — New Jersey pays above 400% FPL and wherever
+    // the required contribution already exceeds a cheap benchmark, and the engine does the same.
     const onMedicaid = enrollee(30000, 2000, { programs: { aca: 4000, medicaid: 5000 } });
-    const noCredit = enrollee(30000, 2000, { programs: { aca: 0 } });
+    const noCredit = enrollee(70000, 2000, { programs: { aca: 0 } }); // 447% FPL: the $50 band, no credit
     const noPremium = enrollee(30000, 0);
     const ev = evaluateCurve(single("NJ", 30000), { year: "2026", currentEarnings: 30000, points: [onMedicaid, noCredit, noPremium] }, "archetype");
-    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([2000, 2000, 0]);
-    expect(ev.perMemberPremiumHelp).toBeNull();
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([2000, 2000 - 600, 0]);
+    expect(ev.perMemberPremiumHelp?.maxAnnual).toBe(600);
     // Employer coverage is a live-path input (the sweep never sent it), so it is tested on a live curve.
     const esi = evaluateCurve(answersWith({ state: "NJ", childAges: [], childDisabled: [], annualEarnings: 30000, hasEmployerCoverage: true }), { year: "2026", currentEarnings: 30000, points: [enrollee(30000, 2000), enrollee(40000, 3000)] }, "live");
     expect(esi.perMemberPremiumHelp).toBeNull();

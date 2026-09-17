@@ -563,7 +563,12 @@ function applyPerMemberPremiumHelp(points: CurvePoint[], a: HouseholdAnswers): {
   let table: PerMemberPremiumHelp | null = null;
   let maxAnnual = 0;
   const out = points.map((p) => {
-    if (adultOnMedicaidAt(p) || (p.programs.aca ?? 0) <= PROGRAM_END_MIN || p.medicalOOP <= 0) return p;
+    // Unlike the $0 ladder, no federal-credit guard: New Jersey pays where
+    // there is no credit at all — above 400% FPL, and wherever the required
+    // contribution already exceeds a cheap benchmark (a lone parent at 263%
+    // FPL with the children on FamilyCare, on the engine, gets $1,200 against
+    // a $0 credit). A premium and an adult off Medicaid are the enrollee test.
+    if (adultOnMedicaidAt(p) || p.medicalOOP <= 0) return p;
     const share = (p.earnings + otherMagi) / povertyLine;
     const band = perMemberPremiumHelpFor(a.state, share);
     if (!band) return p;
