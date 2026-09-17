@@ -25,6 +25,18 @@ partially, plus 3 ungated copy sources · Page CSS 11 · Worker 6 (1 fixed).
 Estimated removal from the fix pass: about 450 lines of `app/src` and
 `app/e2e`, one 3.9 kB chunk off the caseworker page, one bug.
 
+**Fix pass, 2026-09-17** (branch `worktree-agent-a935b0b88f805e197`, from
+`main` at f709f45; steps 1–4 and 11 had landed with Plan 8, 4ed97d6). Every
+finding below carries a **Resolved** line, or says why not, re-verified
+against that tree first: some findings were gone (K6, N6, N9), some had
+moved (D1–D3 on the surfaces Plan 8 did not touch). One commit per step,
+each green on `npm run typecheck`, `npx vitest run`, `vite build` and the
+four Playwright proofs behind the Worker; the three pages rendered at 390
+and 1280, light and dark, before and after the CSS and chart steps, compared
+pixel for pixel. Not done: F9 (a rhythm change, the owner's), D11 (not in
+the pass's order). The readability gate is green for the first time since it
+was ported (its corpus rule counted a label bag as one sentence).
+
 ---
 
 ## 1. Duplication → the one home
