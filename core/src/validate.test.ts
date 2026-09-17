@@ -41,15 +41,15 @@ describe("validateAnswers", () => {
     // A given county wins over the ZIP's; a given state must agree with it.
     const la = validateAnswers({ ...good, zip: "94110", countyFips: "06037" });
     expect(la.ok && la.value.countyFips).toBe("06037");
-    expect(validateAnswers({ ...good, state: "NY", zip: "94110" })).toEqual({ ok: false, detail: "ZIP 94110 is in CA, not NY" });
-    expect(validateAnswers({ ...noState, zip: "00000" })).toEqual({ ok: false, detail: "no state for ZIP 00000" });
-    expect(validateAnswers({ ...good, zip: 94110 })).toEqual({ ok: false, detail: "zip" });
+    expect(validateAnswers({ ...good, state: "NY", zip: "94110" })).toMatchObject({ ok: false, detail: "ZIP 94110 is in CA, not NY" });
+    expect(validateAnswers({ ...noState, zip: "00000" })).toMatchObject({ ok: false, detail: "no state for ZIP 00000" });
+    expect(validateAnswers({ ...good, zip: 94110 })).toMatchObject({ ok: false, detail: "zip" });
   });
   it("keeps a county in the household's state and rejects one from another state", () => {
     const base = { state: "CA", married: false, age: 30, spouseAge: null, childAges: [], youDisabled: false, spouseDisabled: false, childDisabled: [], monthlyRent: null, monthlyChildcare: null, annualEarnings: 1, spouseAnnualEarnings: 0 };
     const la = validateAnswers({ ...base, countyFips: "06037" });
     expect(la.ok && la.value.countyFips).toBe("06037");
-    expect(validateAnswers({ ...base, countyFips: "36061" })).toEqual({ ok: false, detail: "countyFips" });
+    expect(validateAnswers({ ...base, countyFips: "36061" })).toMatchObject({ ok: false, detail: "countyFips" });
     const shapeless = validateAnswers({ ...base, countyFips: "6037" });
     expect(shapeless.ok && shapeless.value.countyFips).toBeNull();
   });
@@ -57,10 +57,10 @@ describe("validateAnswers", () => {
   it("defaults the new inputs — citizen, wages, no savings, every entitlement taken up — and checks them when given", () => {
     const v = validateAnswers(good);
     expect(v.ok && v.value).toMatchObject({ youStatus: "citizen", spouseStatus: "citizen", youYearsInUs: null, selfEmployed: false, savings: 0, getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true });
-    expect(validateAnswers({ ...good, youStatus: "martian" })).toEqual({ ok: false, detail: "youStatus" });
-    expect(validateAnswers({ ...good, youStatus: "lpr", youYearsInUs: 2.5 })).toEqual({ ok: false, detail: "youYearsInUs" });
-    expect(validateAnswers({ ...good, savings: -1 })).toEqual({ ok: false, detail: "savings" });
-    expect(validateAnswers({ ...good, getsSnap: "no" })).toEqual({ ok: false, detail: "getsSnap" });
+    expect(validateAnswers({ ...good, youStatus: "martian" })).toMatchObject({ ok: false, detail: "youStatus" });
+    expect(validateAnswers({ ...good, youStatus: "lpr", youYearsInUs: 2.5 })).toMatchObject({ ok: false, detail: "youYearsInUs" });
+    expect(validateAnswers({ ...good, savings: -1 })).toMatchObject({ ok: false, detail: "savings" });
+    expect(validateAnswers({ ...good, getsSnap: "no" })).toMatchObject({ ok: false, detail: "getsSnap" });
     const lpr = validateAnswers({ ...good, youStatus: "lpr", youYearsInUs: 3, selfEmployed: true, savings: 25000, getsSnap: false });
     expect(lpr.ok && lpr.value).toMatchObject({ youStatus: "lpr", youYearsInUs: 3, selfEmployed: true, savings: 25000, getsSnap: false, getsTanf: true });
     // Years in the US mean nothing for a citizen, so they are dropped; a spouse's status is dropped when unmarried.
@@ -189,9 +189,9 @@ describe("validateAnswers", () => {
   });
 
   it("rejects a negative or non-numeric non-wage income by name", () => {
-    expect(validateAnswers({ ...good, ssdiMonthly: -1 })).toEqual({ ok: false, detail: "ssdiMonthly" });
-    expect(validateAnswers({ ...good, childSupportMonthly: "some" })).toEqual({ ok: false, detail: "childSupportMonthly" });
-    expect(validateAnswers({ ...good, unemploymentMonthly: null })).toEqual({ ok: false, detail: "unemploymentMonthly" });
+    expect(validateAnswers({ ...good, ssdiMonthly: -1 })).toMatchObject({ ok: false, detail: "ssdiMonthly" });
+    expect(validateAnswers({ ...good, childSupportMonthly: "some" })).toMatchObject({ ok: false, detail: "childSupportMonthly" });
+    expect(validateAnswers({ ...good, unemploymentMonthly: null })).toMatchObject({ ok: false, detail: "unemploymentMonthly" });
   });
 
   describe("hoursPerWeek", () => {
@@ -209,7 +209,7 @@ describe("validateAnswers", () => {
     });
     it("rejects zero, a fraction, and more hours than a week of work", () => {
       for (const hoursPerWeek of [0, -1, 37.5, 81, "40"]) {
-        expect(validateAnswers({ ...good, hoursPerWeek }), String(hoursPerWeek)).toEqual({ ok: false, detail: "hoursPerWeek" });
+        expect(validateAnswers({ ...good, hoursPerWeek }), String(hoursPerWeek)).toMatchObject({ ok: false, detail: "hoursPerWeek" });
       }
     });
   });

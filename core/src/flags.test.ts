@@ -19,7 +19,7 @@ describe("rawAnswersFromFlags", () => {
     expect(rawAnswersFromFlags({ state: "TX", pay: "30000", unit: "year" })).toMatchObject({ annualEarnings: 30000 });
   });
   it("leaves a missing pay for validateAnswers to name", () => {
-    expect(validateAnswers(rawAnswersFromFlags({ state: "TX" }))).toEqual({ ok: false, detail: "annualEarnings" });
+    expect(validateAnswers(rawAnswersFromFlags({ state: "TX" }))).toMatchObject({ ok: false, detail: "annualEarnings" });
   });
 });
 

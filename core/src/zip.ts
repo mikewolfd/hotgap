@@ -1,5 +1,6 @@
 import { zipToCounty } from "./county.js";
 import { readData } from "./data.js";
+import { coded, type Coded, type MessageCode, type MessageParams } from "./messages.js";
 import { STATE_CODES } from "./states.js";
 
 const VALID_STATES = new Set(STATE_CODES);
@@ -29,7 +30,9 @@ export interface PlaceInput {
   countyFips?: string | null;
 }
 
-export type Place = { ok: true; state: string | undefined; countyFips: string | null } | { ok: false; detail: string };
+export type Place = { ok: true; state: string | undefined; countyFips: string | null } | { ok: false; detail: string; message: Coded };
+
+const refuse = (code: MessageCode, params?: MessageParams): Place => { const { message, text } = coded(code, params); return { ok: false, detail: text, message }; };
 
 /**
  * A ZIP resolved to the state and county every caller sends PolicyEngine —
@@ -40,9 +43,9 @@ export type Place = { ok: true; state: string | undefined; countyFips: string | 
  */
 export function resolvePlace({ zip, state, countyFips }: PlaceInput): Place {
   if (zip === undefined) return { ok: true, state, countyFips: countyFips ?? null };
-  if (isTerritoryZip(zip)) return { ok: false, detail: "HotGap does not model US territories yet" };
+  if (isTerritoryZip(zip)) return refuse("place.territory");
   const zipState = zipToState(zip);
-  if (zipState === null) return { ok: false, detail: `no state for ZIP ${zip}` };
-  if (state !== undefined && state !== zipState) return { ok: false, detail: `ZIP ${zip} is in ${zipState}, not ${state}` };
+  if (zipState === null) return refuse("place.noState", { zip });
+  if (state !== undefined && state !== zipState) return refuse("place.stateMismatch", { zip, zipState, state });
   return { ok: true, state: zipState, countyFips: countyFips ?? zipToCounty(zip, zipState) };
 }

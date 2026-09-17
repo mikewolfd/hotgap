@@ -11,11 +11,9 @@
 // here through lib/format.ts before it fills a slot (lib/copy.ts).
 import {
   CLIFF_MIN,
-  liheapLimitWords,
   modeledAnswers,
   pickArchetypeId,
   REACH_PERCENTILES,
-  STATE_NAMES,
   type Cliff,
   type HouseholdAnswers,
   type HouseholdEvaluation,
@@ -27,13 +25,14 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
-import { careHousehold, incompleteFor } from "../lib/coverage.js";
+import { coreText, limitWords } from "../lib/copy.js";
+import { careHousehold, incompleteFor, unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
-import { programName } from "../lib/names.js";
+import { programName, stateName } from "../lib/names.js";
 import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
 import { copy, SERVED_VINTAGE, t } from "./copy.js";
 
-export const stateName = (st: string): string => STATE_NAMES[st] ?? st;
+export { stateName };
 /** A share of eligible households as the whole-number percent the profiles print. */
 const pct = (share: number): number => Math.round(share * 100);
 
@@ -104,7 +103,7 @@ export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[]
 
 // ── IncompleteMarker (#16): the one rule is lib/coverage.ts's ────────────
 export const incompleteHere = (cov: StateCoverage | undefined, a: HouseholdAnswers): string[] =>
-  incompleteFor(cov, careHousehold(a)).map((u) => u.program);
+  incompleteFor(cov, careHousehold(a)).map(unmodeledName);
 
 /** Every state whose block would mark this household incomplete — the count is rendered, never typed. */
 export const incompleteStates = (summary: SummaryJson, a: HouseholdAnswers): string[] =>
@@ -159,7 +158,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
   const h = modeled(ev);
   const b = ev.liheap;
   if (r.id === "liheap" && b) {
-    const limit = cov?.liheap?.limitKind ?? liheapLimitWords(b.limit);
+    const limit = limitWords(cov?.liheap?.limit ?? b.limit);
     if (r.credit) {
       const program = cov?.corrections.liheap?.program ?? null;
       return t("ledger.liheapCredit", {
@@ -216,7 +215,7 @@ export function ledgerNote(ev: HouseholdEvaluation, cov: StateCoverage | undefin
   if (e.childCoverageEndEarnings !== null) s.push(t("ledger.childCoverageEnds", { at: usd(e.childCoverageEndEarnings + step) }));
   if (cov) {
     const c = cov.corrections, pa = c.premiumAssistance;
-    s.push(t(c.coverageGap.applies ? "ledger.gapApplies" : "ledger.gapNone", { note: c.coverageGap.note }));
+    s.push(t(c.coverageGap.applies ? "ledger.gapApplies" : "ledger.gapNone", { note: coreText(c.coverageGap.message, c.coverageGap.note) }));
     s.push(pa.source === "modeled" ? t("ledger.premiumModeled", { program: pa.program ?? "", max: usd(ev.statePremiumAssistance?.maxAnnual ?? 0) })
       : pa.source === "ladder" ? t("ledger.premiumLadder", { program: pa.program ?? "" })
       : pa.program ? t("ledger.premiumUnmodeled", { program: pa.program }) : L.premiumNone);
@@ -302,9 +301,9 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
     A.health, t("assumed.facts", { facts: listOf(facts), age: h.age }),
     off.length ? t("assumed.takeUp.some", { on: listOf(on), off: listOf(off) }) : t("assumed.takeUp.all", { on: listOf(on) }),
     A.annualised,
-    ...(cov?.unmodeled ?? []).map((u) => t("assumed.unmodeled", { state: st, program: u.program, note: u.note })),
-    // EligibilityBoundary (#23): core's one sentence on why the money is not in net income, verbatim.
-    ...(cov?.corrections.liheap ? [t("assumed.liheap", { state: st, note: cov.corrections.liheap.note })] : []),
+    ...(cov?.unmodeled ?? []).map((u) => t("assumed.unmodeled", { state: st, program: unmodeledName(u), note: unmodeledNote(u) })),
+    // EligibilityBoundary (#23): core's one sentence on why the money is not in net income, in the active language.
+    ...(cov?.corrections.liheap ? [t("assumed.liheap", { state: st, note: coreText(cov.corrections.liheap.message, cov.corrections.liheap.note, cov.liheap ? { limit: limitWords(cov.liheap.limit) } : {}) })] : []),
   ];
 }
 
@@ -323,7 +322,7 @@ export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
     t("source.lead", { year, curve }),
     v ? t("source.vintages", { rent: t("source.rent", { publisher: v.rent.publisher, vintage: v.rent.vintage }), care: v.childcare.preschool, year,
       reach: t("source.reachVintages", { basis: v.reach.basis, vintages: listOf(v.reach.vintages.map(reachWord)) }) }) : null,
-    cov?.otherBenefits.length ? t("source.other", { other: cov.otherBenefits.map((o) => t("source.otherBenefit", { label: o.label, max: usd(o.maxAnnualInSweep) })).join("; ") }) : null,
+    cov?.otherBenefits.length ? t("source.other", { other: cov.otherBenefits.map((o) => t("source.otherBenefit", { label: coreText(o.message, o.label), max: usd(o.maxAnnualInSweep) })).join("; ") }) : null,
     t("source.model", { model: modelLine(cov?.vintages.model ?? summary?.model) }),
   ].filter((x): x is string => x !== null).join(" ");
 }

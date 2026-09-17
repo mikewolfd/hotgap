@@ -4,10 +4,11 @@
 // the chart geometry can be tested from a fixture. O(points × programs)
 // once per evaluation; nothing here is repeated per component.
 import {
-  DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
+  DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { money, moneyAbout, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
+import { stateName } from "../lib/names.js";
 
 /** The unit the person gave and the hours an hourly figure converts through. */
 export interface Pay { unit: PayUnit; hours: number }
@@ -149,7 +150,7 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     ...base,
     ev, pay, m: moneyFor(pay), net, lifted: immediateCurve(points, ev.deferred).map((p) => p.netIncome), idx, earningsAt: (i) => points[i].earnings,
     currentNet: a.currentNet,
-    state: ev.answers.state, stateName: STATE_NAMES[ev.answers.state] ?? ev.answers.state,
+    state: ev.answers.state, stateName: stateName(ev.answers.state),
     safeExit: ev.escape.safeExitEarnings,
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
     cliffs: a.cliffs, immediate, deferred,

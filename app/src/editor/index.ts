@@ -26,13 +26,15 @@ import {
   STATE_NAMES,
   stateDefaults,
   validateAnswers,
+  type Coded,
   type HouseholdFlagName,
   type HouseholdFlags,
   type PayUnit,
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
-import { fill } from "../lib/copy.js";
+import { coreText, fill } from "../lib/copy.js";
+import { stateName } from "../lib/names.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
@@ -98,7 +100,8 @@ export interface Editor {
   open(field?: HouseholdFlagName, opts?: { lead?: "submit" | "alt" }): void;
   close(): void;
   /** Show a validation detail — core's, from the page or the API — beside the field it names. */
-  showError(detail: string): void;
+  /** A rejection from core (validateAnswers, the API): its English detail and, where core sent one, its code, said in the page's language. */
+  showError(detail: string, message?: Coded): void;
   /** The full-width line, first in the chips row, that a press answers with (§ ScenarioBar): text or a fragment with a link; "" empties it. */
   setNote(content: string | Node): void;
   /** The county the evaluation resolved for a ZIP, shown beside the place while that ZIP stands; undefined clears it. */
@@ -262,7 +265,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const zipInput = h("input", { id: "f-zip", name: "zip", class: "hg-input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
   const zipHint = h("p", { class: "editor__hint", id: "h-zip", "aria-live": "polite" }, copy.place.zipHint);
   const stateSelect = h("select", { id: "f-state", name: "state", class: "hg-select" }, h("option", { value: "" }, copy.place.statePlaceholder),
-    ...Object.entries(STATE_NAMES).map(([code, name]) => h("option", { value: code }, name)));
+    ...Object.keys(STATE_NAMES).map((code) => h("option", { value: code }, stateName(code))));
   const radio = (value: string, label: string) => h("label", { class: "editor__option" }, h("input", { type: "radio", name: "married", value }), label);
   const kidsCount = h("input", { id: "f-kids", name: "kids-count", type: "number", min: "0", max: String(MAX_KIDS), inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-kids" });
   const kidsRows = h("div", { class: "editor__kids" });
@@ -358,7 +361,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(stateSelect, st ?? "");
     const p = place();
     if (flags.zip) {
-      zipHint.textContent = p.ok && p.state ? fill(copy.place.inState, { state: STATE_NAMES[p.state] }) : p.ok ? copy.place.zipHint : p.detail;
+      zipHint.textContent = p.ok && p.state ? fill(copy.place.inState, { state: stateName(p.state) }) : p.ok ? copy.place.zipHint : coreText(p.message, p.detail);
       zipInput.setAttribute("aria-invalid", p.ok ? "false" : "true");
     } else {
       zipHint.textContent = copy.place.zipHint;
@@ -381,7 +384,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(rentInput, flags.rent ?? "");
     write(childcareInput, flags.childcare ?? "");
     childcareField.hidden = !k.some((a) => a <= CHILDCARE_MAX_AGE);
-    const where = st ? STATE_NAMES[st] : null;
+    const where = st ? stateName(st) : null;
     rentHint.textContent = where && prefilled.rent ? fill(copy.costs.typical, { amount: money(Number(prefilled.rent)), where }) : copy.costs.none;
     childcareHint.textContent = where && prefilled.childcare ? fill(copy.costs.typical, { amount: money(Number(prefilled.childcare)), where }) : copy.costs.none;
   }
@@ -496,12 +499,14 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     if (f) opts.onSubmit(f);
   });
 
-  function showError(detail: string): void {
-    const label = (copy.errors.fields as Record<string, string>)[detail];
-    errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : detail);
+  function showError(detail: string, message?: Coded): void {
+    // A field's rejection names the field (code validate.field); the editor's own words for it are the line.
+    const field = message?.code === "validate.field" ? String(message.params?.field) : detail;
+    const label = (copy.errors.fields as Record<string, string>)[field];
+    errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : coreText(message, detail));
     errorLine.hidden = false;
     // A field name points at its control; a sentence about a ZIP points at the ZIP.
-    const fieldId = FIELD_OF[detail] ?? (/ZIP|territor/i.test(detail) ? "zip" : null);
+    const fieldId = FIELD_OF[field] ?? ((message ? message.code.startsWith("place.") : /ZIP|territor/i.test(detail)) ? "zip" : null);
     const control = fieldId ? form.querySelector<HTMLElement>(`#f-${fieldId}`) : null;
     control?.setAttribute("aria-invalid", "true");
     // An error from the API arrives with the screen closed; one from the

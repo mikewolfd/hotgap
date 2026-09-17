@@ -46,7 +46,7 @@ async function run(flags: HouseholdFlags, { submitted, landing = false, retry = 
   if (submitted && url !== location.search) history.pushState(null, "", url);
   else history.replaceState(null, "", url);
   const v = validateAnswers(rawAnswersFromFlags(flags));
-  if (!v.ok) { editor.showError(v.detail); return; }
+  if (!v.ok) { editor.showError(v.detail, v.message); return; }
   const id = ++latest;
   result.loading(axisSpec(v.value).count);
   const r = await evaluate(flags);
@@ -69,7 +69,7 @@ async function run(flags: HouseholdFlags, { submitted, landing = false, retry = 
       if (!landing) document.querySelector<HTMLElement>("#answer")?.focus();
     }
   } else if (r.error === "bad_input" && r.detail) {
-    editor.showError(r.detail);
+    editor.showError(r.detail, r.message);
   } else {
     result.error(r);
   }

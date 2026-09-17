@@ -5,7 +5,10 @@
 // it; the published source it was read from (an override's `source`, another
 // correction's `cite`) is the cite's link; core's `code` pointer is not a
 // reader's fact and is not shown. Program names are the `name` register (M3).
+// `note` is rendered in the active language from the code core sent beside
+// it (lib/copy.ts coreText), the English as the fallback.
 import type { StateCorrections } from "@hotgap/core";
+import { coreText } from "./copy.js";
 import { programName } from "./names.js";
 
 export interface CorrectionRow {
@@ -24,10 +27,10 @@ const overrideProgram = (parameter: string): string =>
 
 export function correctionRows(c: StateCorrections | undefined): CorrectionRow[] {
   if (!c) return [];
-  const rows: CorrectionRow[] = c.policyOverrides.map((o) => ({ program: overrideProgram(o.parameter), source: "overridden", note: o.note, href: o.source }));
-  if (c.maTafdc.applies) rows.push({ program: programName("tanf"), source: null, note: c.maTafdc.note, href: c.maTafdc.cite });
-  if (c.premiumAssistance.applies) rows.push({ program: c.premiumAssistance.program ?? "State premium help", source: c.premiumAssistance.source, note: c.premiumAssistance.note, href: c.premiumAssistance.cite });
-  if (c.childcareSubsidy.applies) rows.push({ program: programName("childcare"), source: c.childcareSubsidy.source, note: c.childcareSubsidy.note });
-  if (c.coverageGap.applies) rows.push({ program: `${programName("aca")} — coverage gap`, source: null, note: c.coverageGap.note });
+  const rows: CorrectionRow[] = c.policyOverrides.map((o) => ({ program: overrideProgram(o.parameter), source: "overridden", note: coreText(o.message, o.note), href: o.source }));
+  if (c.maTafdc.applies) rows.push({ program: programName("tanf"), source: null, note: coreText(c.maTafdc.message, c.maTafdc.note), href: c.maTafdc.cite });
+  if (c.premiumAssistance.applies) rows.push({ program: c.premiumAssistance.program ?? "State premium help", source: c.premiumAssistance.source, note: coreText(c.premiumAssistance.message, c.premiumAssistance.note), href: c.premiumAssistance.cite });
+  if (c.childcareSubsidy.applies) rows.push({ program: programName("childcare"), source: c.childcareSubsidy.source, note: coreText(c.childcareSubsidy.message, c.childcareSubsidy.note) });
+  if (c.coverageGap.applies) rows.push({ program: `${programName("aca")} — coverage gap`, source: null, note: coreText(c.coverageGap.message, c.coverageGap.note) });
   return rows;
 }

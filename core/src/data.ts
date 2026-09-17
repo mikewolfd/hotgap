@@ -9,6 +9,7 @@
 //   county-names.json   county FIPS → name (Census 2020 gazetteer)
 import type { LiheapLimit, LiheapShape } from "./liheap.js";
 import type { MaTafdcCorrection } from "./maTafdc.js";
+import type { Coded } from "./messages.js";
 import type { CurvePoint, ProgramId } from "./types.js";
 
 export interface StateMetrics {
@@ -153,13 +154,17 @@ export interface LiheapCoverage {
  * A correction as a reader meets it: `note` is the sentence a surface prints
  * verbatim (inventory.md § CorrectionsApplied) — what HotGap did, why, and
  * the upstream issue as the cite — so it is written for the reporter who
- * will quote it, never for a log. The engineering pointers ride beside it:
- * `code`, where the correction lives in core, and `cite`, the published
- * source it was read from, when there is one.
+ * will quote it, never for a log. `message` is the same sentence as a code
+ * with its parameters (messages.ts), so a surface can say it in another
+ * language; absent on files written before it was recorded, and the note
+ * is the fallback. The engineering pointers ride beside them: `code`, where
+ * the correction lives in core, and `cite`, the published source it was
+ * read from, when there is one.
  */
 export interface CorrectionNote {
   applies: boolean;
   note: string;
+  message?: Coded;
   code?: string;
   cite?: string;
 }
@@ -171,11 +176,13 @@ export interface PolicyOverrideRecord {
   values: Record<string, number | string[]>;
   source: string;
   note: string;
+  message?: Coded;
 }
 
 export interface UnmodeledProgram {
   program: string;
   note: string;
+  message?: Coded;
   /**
    * "state": a gap particular to this state, listed under it and a reason to
    * mark its figures incomplete. "all": a gap every state shares (LIHEAP
@@ -190,6 +197,7 @@ export interface OtherBenefit {
   /** The PolicyEngine variable the money was traced to (stateOtherBenefits.ts), or null when it has not been identified yet. */
   variable: string | null;
   label: string;
+  message?: Coded;
   /** The largest raw remainder on any of this state's swept curves — the whole remainder, shared when more than one variable is listed. */
   maxAnnualInSweep: number;
 }

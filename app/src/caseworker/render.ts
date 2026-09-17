@@ -4,7 +4,8 @@
 // sheet. Every string is copy.ts's or comes from the evaluation and the
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
-import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { CLIFF_MIN, type CorrectionNote, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { coreText, limitWords, type Params } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
 import { $, fillText } from "../lib/dom.js";
 import { esc, listOf, listOfItems, lossFigure, money as usd, signedMoney } from "../lib/format.js";
@@ -62,20 +63,20 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
   const C = copy.corrections, c = cov?.corrections;
   const rows = correctionRows(c);
   /* The office, the note and the mockup say TAFDC for Massachusetts's row (review N10). */
-  const program = (r: { program: string; note: string }) => (c?.maTafdc.applies && r.note === c.maTafdc.note ? C.tafdc : r.program);
+  const program = (r: { program: string; note: string }) => (c?.maTafdc.applies && r.note === coreText(c.maTafdc.message, c.maTafdc.note) ? C.tafdc : r.program);
   $("corrections").innerHTML = rows.length
     ? rows.map((r) => `<li><span class="hg-rows__at">${esc(program(r))}</span><p>` +
         (r.source ? `<span class="hg-tag">${esc(r.source)}</span> ` : "") +
         `<span class="hg-cite">${esc(r.note)}${r.href ? ` <a href="${esc(r.href)}">${esc(C.source)}</a>` : ""}</span></p></li>`).join("")
     : `<li><span class="hg-rows__at">${esc(cov ? C.none : C.unknown)}</span><p class="hg-cite">${esc(cov ? C.noneBody : C.unknownBody)}</p></li>`;
   const rest: string[] = [];
-  const checked = (program: string, note: string) => rest.push(t("corrections.checked", { program, note }));
+  const checked = (program: string, n: CorrectionNote, overrides?: Params) => rest.push(t("corrections.checked", { program, note: coreText(n.message, n.note, overrides) }));
   if (c) {
-    if (!c.maTafdc.applies) checked(C.tafdcChecked, c.maTafdc.note);
-    if (!c.premiumAssistance.applies) checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance.note);
-    if (!c.childcareSubsidy.applies) checked(programName("childcare"), c.childcareSubsidy.note);
-    if (!c.coverageGap.applies) checked(C.coverageGap, c.coverageGap.note);
-    if (c.liheap && !c.liheap.applies) checked(programName("liheap"), c.liheap.note);
+    if (!c.maTafdc.applies) checked(C.tafdcChecked, c.maTafdc);
+    if (!c.premiumAssistance.applies) checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance);
+    if (!c.childcareSubsidy.applies) checked(programName("childcare"), c.childcareSubsidy);
+    if (!c.coverageGap.applies) checked(C.coverageGap, c.coverageGap);
+    if (c.liheap && !c.liheap.applies) checked(programName("liheap"), c.liheap, cov?.liheap ? { limit: limitWords(cov.liheap.limit) } : undefined);
   }
   $("correctionsRest").textContent = rest.length ? t("corrections.rest", { items: rest.join(" ") }) : "";
 }

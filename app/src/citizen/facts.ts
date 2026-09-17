@@ -6,7 +6,7 @@
 // say less, never something wrong, when it has not.
 import { childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
-import { careHousehold, incompleteFor } from "../lib/coverage.js";
+import { careHousehold, incompleteFor, unmodeledName } from "../lib/coverage.js";
 import { capitalize, dateWords, listOf, modelLine, numberWords, unitFigure } from "../lib/format.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
@@ -116,7 +116,7 @@ export function provenanceText(s: Scene, sweep: Sweep | null): string {
 export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
   const unmodeled = incompleteFor(sweep?.coverage, careHousehold(s.modeled));
   if (!unmodeled.length) return null;
-  return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map((u) => u.program)) });
+  return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map(unmodeledName)) });
 }
 
 export function reachText(s: Scene): string | null {

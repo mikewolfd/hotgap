@@ -121,7 +121,7 @@ describe("buildSummary", () => {
     expect(summary.model).toEqual(model);
     expect(Object.keys(summary.coverage!).sort()).toEqual(["NJ", "TX"]);
     expect(summary.coverage!.NJ).toEqual(stateCoverage("NJ", results.NJ, { model, childcareSubsidyUnmodeled: summary.childcareSubsidyUnmodeled }));
-    expect(summary.coverage!.NJ.otherBenefits).toEqual([{ variable: "nj_property_tax_relief", label: expect.any(String), maxAnnualInSweep: 450 }]);
+    expect(summary.coverage!.NJ.otherBenefits).toEqual([{ variable: "nj_property_tax_relief", label: expect.any(String), message: { code: "coverage.otherBenefits.nj_property_tax_relief" }, maxAnnualInSweep: 450 }]);
     expect(summary.coverage!.NJ.vintages.model).toEqual(model);
     // A partial re-sweep leaves states on different models: each block keeps its own, the summary names none.
     const newer = { endpoint: "127.0.0.1:8099", version: "2.7.0", countsChildcareSubsidy: true };

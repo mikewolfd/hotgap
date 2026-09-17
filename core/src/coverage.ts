@@ -5,15 +5,20 @@
 // from the data files' own provenance, never from a hand-kept list, so the
 // block cannot say one thing while the sweep did another. Each note is one
 // sentence a surface prints verbatim and a reporter can quote (places review
-// S9): what HotGap did, why, and the upstream issue as the cite; the code
-// pointer is the `code` field beside it. The long form, with evidence and
-// retirement conditions, is docs/upstream/2026-09-15-local-corrections.md.
+// S9): what HotGap did, why, and the upstream issue as the cite; it is
+// rendered from its code (messages.ts, messages/en.json), and the code with
+// its parameters rides beside it as `message` so a surface can say it in
+// another language. The code pointer is the `code` field. The long form,
+// with evidence and retirement conditions, is
+// docs/upstream/2026-09-15-local-corrections.md.
 import { PROGRAM_END_MIN } from "./analyze.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
 import { countyName } from "./county.js";
 import type { CorrectionNote, LiheapCoverage, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
+import type { Coded } from "./messages.js";
 import { LIHEAP_VINTAGE, liheapLimitWords, liheapRow } from "./liheap.js";
 import { MA_TAFDC_SOURCES } from "./maTafdc.js";
+import { coded, message } from "./messages.js";
 import { BHP_EXPANDED_STATES, POLICY_OVERRIDE_SOURCES, policyOverridesFor } from "./policyOverrides.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
 import { reachProvenance } from "./reachLookup.js";
@@ -30,9 +35,6 @@ export interface CoverageContext {
   childcareSubsidyUnmodeled?: readonly string[];
 }
 
-const PARENT_LIMIT_NOTE = "HotGap sends the state's own published parent Medicaid income limit for this household's size, as a share of the 2026 poverty line including the MAGI disregard, because PolicyEngine's figure is five years out of date (policyengine-us #9474; fixed upstream in PR #9475).";
-const NY_BHP_NOTE = "HotGap takes New York off PolicyEngine's expanded Basic Health Program list, so the Essential Plan ceiling is the 200% of poverty rule in force from 2026-07-01 for the whole year rather than the 250% upstream keeps (policyengine-us #9471; CMS approved the termination on 2026-03-20).";
-
 /** The overrides `buildCurvePayload` attaches in this state, one record per parameter with the value sent per archetype. */
 function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
   const byParameter = new Map<string, PolicyOverrideRecord>();
@@ -40,7 +42,8 @@ function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
     for (const [parameter, byPeriod] of Object.entries(policyOverridesFor(answersFor(state, a)))) {
       const [period, value] = Object.entries(byPeriod)[0];
       const source = POLICY_OVERRIDE_SOURCES[state as keyof typeof POLICY_OVERRIDE_SOURCES].source;
-      const record = byParameter.get(parameter) ?? { parameter, period, values: {}, source, note: parameter === BHP_EXPANDED_STATES ? NY_BHP_NOTE : PARENT_LIMIT_NOTE };
+      const { message: msg, text } = coded(parameter === BHP_EXPANDED_STATES ? "coverage.override.nyBhp" : "coverage.override.parentLimit");
+      const record = byParameter.get(parameter) ?? { parameter, period, values: {}, source, note: text, message: msg };
       record.values[a.id] = value;
       byParameter.set(parameter, record);
     }
@@ -48,13 +51,13 @@ function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
   return [...byParameter.values()];
 }
 
+/** A note's two forms from its code: the English `note` and the `message` a surface renders in its own language. */
+const note = (...args: Parameters<typeof coded>): { note: string; message: Coded } => { const { message: m, text } = coded(...args); return { note: text, message: m }; };
+
 function maTafdcNote(state: string): CorrectionNote {
   const code = "maTafdc.ts";
-  if (state !== "MA") return { applies: false, code, note: "Massachusetts only; PolicyEngine's TANF stands as served." };
-  return {
-    applies: true, code, cite: MA_TAFDC_SOURCES.rules,
-    note: "HotGap recomputes the TAFDC grant under the state's ongoing-recipient rules ($200 a month per earner, then a 50% disregard; 106 CMR 704.281) and feeds it back to the engine so SNAP follows it, because PolicyEngine ends the grant abruptly (policyengine-us #9469; fix in PR #9477); the September clothing allowance is counted under other benefits, and the six-month full disregard is not modelled.",
-  };
+  if (state !== "MA") return { applies: false, code, ...note("coverage.maTafdc.elsewhere") };
+  return { applies: true, code, cite: MA_TAFDC_SOURCES.rules, ...note("coverage.maTafdc.applied") };
 }
 
 /**
@@ -68,14 +71,14 @@ function premiumAssistance(state: string, curves: Record<string, CurvePoint[]>):
   if (modeled && points.length > 0 && points.every((p) => p.statePremiumAssistance !== undefined)) {
     return {
       applies: true, source: "modeled", program: modeled.program, code: `evaluate.ts applyStatePremiumAssistance (${modeled.variable})`,
-      note: `PolicyEngine computes ${modeled.program} itself, and HotGap subtracts it from the premium the household pays, because the engine reports it as a health benefit rather than in the out-of-pocket premium HotGap reads; no local schedule is applied.`,
+      ...note("coverage.premium.modeled", { program: modeled.program }),
     };
   }
   const wrap = STATE_PREMIUM_WRAPS.find((w) => w.state === state);
   if (wrap) {
     return {
       applies: true, source: "ladder", program: wrap.program, code: "statePremiumWraps.ts", cite: wrap.source,
-      note: `HotGap applies ${wrap.program}'s published premium schedule itself — a $0 premium up to ${Math.round(wrap.zeroPremiumUpToFpl * 100)}% of the poverty line${wrap.tiers ? " and the reduced premiums above it" : ""}, as read on ${wrap.readOn} — because PolicyEngine does not model the program (policyengine-us #9481).`,
+      ...note("coverage.premium.ladder", { program: wrap.program, pct: Math.round(wrap.zeroPremiumUpToFpl * 100), tiers: wrap.tiers ? "yes" : "no", readOn: wrap.readOn }),
     };
   }
   // The other local table: a flat amount per person per month rather than a
@@ -85,36 +88,33 @@ function premiumAssistance(state: string, curves: Record<string, CurvePoint[]>):
   if (perMember) {
     const cheapest = Math.min(...perMember.bands.map((b) => b.monthlyPerMember));
     const dearest = Math.max(...perMember.bands.map((b) => b.monthlyPerMember));
-    const range = cheapest === dearest ? `$${dearest}` : `$${cheapest} to $${dearest}`;
     return {
       applies: true, source: "ladder", program: perMember.program, code: "statePremiumWraps.ts", cite: perMember.source,
-      note: `HotGap applies ${perMember.program}'s published schedule itself — ${range} a month for each person on the plan, up to ${Math.round(perMember.bands[perMember.bands.length - 1].upToFpl * 100)}% of the poverty line, as read on ${perMember.readOn} — because the version of PolicyEngine this sweep ran against does not carry the program (policyengine-us ${perMember.upstreamIssue}).`,
+      ...note("coverage.premium.perMember", { program: perMember.program, range: cheapest === dearest ? "flat" : "range", cheapest, dearest, pct: Math.round(perMember.bands[perMember.bands.length - 1].upToFpl * 100), readOn: perMember.readOn, issue: perMember.upstreamIssue }),
     };
   }
   const known = modeled?.program ?? UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state)?.program ?? null;
   return {
     applies: false, source: "none", program: known, code: "statePremiumAssistance.ts",
-    note: known
-      ? `${known} is not counted: PolicyEngine served no figure for it on this sweep, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.`
-      : "No state premium help applies: PolicyEngine serves none for this state, and HotGap knows of no program to add.",
+    ...(known ? note("coverage.premium.unserved", { program: known }) : note("coverage.premium.none")),
   };
 }
 
 function childcareSubsidy(state: string, model?: ModelRecord): StateCorrections["childcareSubsidy"] {
   const code = "parse.ts childcareSubsidyCounted";
   if (model?.countsChildcareSubsidy) {
-    return { applies: false, source: "in net income", code, note: "PolicyEngine counts the child-care subsidy inside net income in every state on this version (policyengine-us #9503), so HotGap only names it." };
+    return { applies: false, source: "in net income", code, ...note("coverage.childcare.countedEverywhere") };
   }
   return childcareSubsidyInNetIncome(state)
-    ? { applies: false, source: "in net income", code, note: "PolicyEngine already counts this state's child-care subsidy in net income, so HotGap only names it." }
-    : { applies: true, source: "added by HotGap", code, note: "PolicyEngine computes the child-care subsidy but leaves it out of net income here, so HotGap adds it back, until the engine's own fix (policyengine-us #9405, PR #9503) reaches this endpoint." };
+    ? { applies: false, source: "in net income", code, ...note("coverage.childcare.counted") }
+    : { applies: true, source: "added by HotGap", code, ...note("coverage.childcare.added") };
 }
 
 function coverageGap(state: string): CorrectionNote {
   const code = "evaluate.ts applyCoverageGap";
   return NON_EXPANSION_STATES.has(state)
-    ? { applies: true, code, note: "In this non-expansion state an adult with no Medicaid and no premium credit below 100% of the poverty line is charged no marketplace premium, and the point is flagged, because PolicyEngine bills the full premium to someone the marketplace would not enrol (policyengine-us #9472)." }
-    : { applies: false, code, note: "Expansion state: adults to 138% of the poverty line are on Medicaid, so the coverage-gap correction never fires." };
+    ? { applies: true, code, ...note("coverage.coverageGap.applies") }
+    : { applies: false, code, ...note("coverage.coverageGap.expansion") };
 }
 
 function unmodeled(state: string, premium: StateCorrections["premiumAssistance"], ctx: CoverageContext): UnmodeledProgram[] {
@@ -123,13 +123,11 @@ function unmodeled(state: string, premium: StateCorrections["premiumAssistance"]
     const known = UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state);
     out.push({
       program: premium.program, scope: "state",
-      note: known
-        ? `${premium.program} (${known.note}) is not computed by PolicyEngine, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.`
-        : `PolicyEngine models ${premium.program}, but this sweep's endpoint did not serve it and HotGap has no schedule of its own for it, so the premiums here are overstated by it.`,
+      ...(known ? note("coverage.unmodeled.premiumKnown", { program: premium.program, detail: known.note }) : note("coverage.unmodeled.premiumUnserved", { program: premium.program })),
     });
   }
   if (ctx.childcareSubsidyUnmodeled?.includes(state)) {
-    out.push({ program: "Child-care subsidy (CCDF)", scope: "state", note: "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news." });
+    out.push({ program: message("program.childcareCcdf"), scope: "state", ...note("coverage.unmodeled.childcare") });
   }
   // LIHEAP is no longer an unmodeled row: its boundary is shown in every
   // state (corrections.liheap and the `liheap` block below), and Michigan's
@@ -152,19 +150,20 @@ function liheapNote(state: string): StateCorrections["liheap"] {
   const row = liheapRow(state);
   if (row.upstream?.counted === "state credit") {
     return {
-      applies: false, source: "in net income", program: "Home Heating Credit", code: "parse.ts stateCredits",
+      applies: false, source: "in net income", program: message("program.homeHeatingCredit"), code: "parse.ts stateCredits",
       // The MI-1040CR-7 booklet (2024 tax year), as the Clearinghouse serves it
       // for FY2026: Table A (standard allowance and income ceiling) and line 41
       // ("reduce your computed standard credit by 50 percent" when heat is in
       // the rent). Read 2026-09-16.
       cite: row.sources.amounts ?? row.sources.limits,
-      note: "Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is.",
+      ...note("coverage.liheap.credit"),
     };
   }
-  const served = row.servedShare === null ? `a share of eligible households the ${LIHEAP_VINTAGE.served} profile does not give` : `about ${Math.round(row.servedShare * 100)}% of its income-eligible households in ${LIHEAP_VINTAGE.served}`;
+  // `limit` is the limit's own message rendered (liheapLimitWords); a surface
+  // re-renders it in its language from the `liheap` block's structured limit.
   return {
-    applies: false, source: "boundary", program: "LIHEAP", code: "liheap.ts liheapBoundary", cite: row.sources.limits,
-    note: `HotGap shows where energy assistance (LIHEAP) stops in this state — ${liheapLimitWords(row.heating.limit)} — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served ${served}, so a curve that assumed it would draw a benefit most eligible families never receive.`,
+    applies: false, source: "boundary", program: message("program.liheap"), code: "liheap.ts liheapBoundary", cite: row.sources.limits,
+    ...note("coverage.liheap.boundary", { limit: liheapLimitWords(row.heating.limit), served: row.servedShare === null ? "unknown" : "known", pct: row.servedShare === null ? 0 : Math.round(row.servedShare * 100), vintage: LIHEAP_VINTAGE.served }),
   };
 }
 
@@ -183,8 +182,8 @@ function otherBenefits(state: string, curves: Record<string, CurvePoint[]>): Oth
   const maxAnnualInSweep = Math.round(Object.values(curves).flat().reduce((max, p) => Math.max(max, p.otherBenefits ?? 0), 0));
   if (maxAnnualInSweep <= PROGRAM_END_MIN) return [];
   const sources = otherBenefitSourcesFor(state);
-  if (sources.length === 0) return [{ variable: null, label: "not yet identified — probe the engine with the household-benefit lists (stateOtherBenefits.ts)", maxAnnualInSweep }];
-  return sources.map(({ variable, label }) => ({ variable, label, maxAnnualInSweep }));
+  if (sources.length === 0) { const { message: m, text } = coded("coverage.otherBenefits.unidentified"); return [{ variable: null, label: text, message: m, maxAnnualInSweep }]; }
+  return sources.map(({ variable, label, message: m }) => ({ variable, label, message: m, maxAnnualInSweep }));
 }
 
 /** Everything a reader of this state's summary row should know first, from the swept curves and the tables that shaped them. */

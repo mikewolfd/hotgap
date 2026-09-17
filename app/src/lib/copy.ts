@@ -44,12 +44,13 @@
 // pseudo-locale gate catches one that stays English). `qps-ploc` is not a
 // file: it is `en` accented, bracketed and lengthened at load time, through
 // this same path, so the e2e can render every page in it.
+import type { Coded, LiheapLimit } from "@hotgap/core";
 import { IntlMessageFormat, PART_TYPE } from "intl-messageformat";
 
 export type Params = Record<string, string | number>;
 export type Part = { text: string } | { slot: string; text: string };
-/** The whole catalog's shape: en.json's, which every other locale mirrors. */
-export type Catalog = typeof import("../i18n/en.json");
+/** The whole catalog's shape: en.json's, which every other locale mirrors, with core's messages under `core`. */
+export type Catalog = Omit<typeof import("../i18n/en.json"), "_"> & { core: Omit<typeof import("../../../core/src/messages/en.json"), "_"> };
 
 /** The languages the switch offers, in its order; a new language is added here and as its file. */
 export const LANGUAGES = ["en", "es-US"] as const;
@@ -216,11 +217,39 @@ export function parts(text: string, params: Params = {}): Part[] {
   return out;
 }
 
+const at = (copy: object, key: string): unknown => key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], copy);
+
 /** The message at a dotted key ("steps.ends") in `copy`, filled; a key that is not a message throws. */
 export function bind(copy: object): (key: string, params?: Params) => string {
   return (key, params) => {
-    const s = key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], copy);
+    const s = at(copy, key);
     if (typeof s !== "string") throw new Error(`missing string ${key}`);
     return fill(s, params);
   };
+}
+
+/**
+ * A sentence core wrote, in the active language: its code rendered from
+ * `core.*` (core/src/messages/<locale>.json), else the English core sent —
+ * a file older than the catalog carries no code, and a code the catalog
+ * does not know renders as core said it. `overrides` replaces a parameter
+ * core rendered in English with the surface's own rendering (the LIHEAP
+ * limit, which the coverage block also carries as data).
+ */
+export function coreText(m: Coded | undefined, fallback: string, overrides: Params = {}): string {
+  const s = m && at(catalog.core, m.code);
+  if (typeof s !== "string") return fallback;
+  const params: Params = { ...m!.params };
+  for (const k in overrides) if (k in params) params[k] = overrides[k];
+  return fill(s, params);
+}
+
+/** A LIHEAP limit in words, from the coverage block's structured limit (core's liheapLimitWords, in the active language). */
+export function limitWords(limit: LiheapLimit): string {
+  const L = catalog.core.liheap.limit;
+  switch (limit.kind) {
+    case "fpg": return fill(L.fpg, { pct: limit.pct });
+    case "smi": return limit.vintage ? fill(L.smiVintage, { pct: limit.pct, vintage: limit.vintage }) : fill(L.smi, { pct: limit.pct });
+    case "smi-by-size": return fill(L.smiBySize, { from: limit.pct[0], to: limit.pct[limit.pct.length - 1] });
+  }
 }

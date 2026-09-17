@@ -10,6 +10,7 @@
 // is turned off). The analysis itself is O(points × programs) and measured
 // under 2 ms on a 151-point curve, well inside the free plan's 10 ms of CPU.
 import {
+  coded,
   configurePolicyEngine,
   evaluateHousehold,
   modelVersion,
@@ -19,6 +20,7 @@ import {
   validateAnswers,
   type ApiErrorBody,
   type ApiErrorCode,
+  type Coded,
   type CurveCache,
   type CurveResponse,
   type HouseholdEvaluation,
@@ -65,8 +67,8 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers },
   });
 
-const error = (status: number, code: ApiErrorCode, detail?: string, headers?: Record<string, string>): Response =>
-  json(status, { error: code, ...(detail === undefined ? {} : { detail }) } satisfies ApiErrorBody, headers);
+const error = (status: number, code: ApiErrorCode, detail?: string, headers?: Record<string, string>, message?: Coded): Response =>
+  json(status, { error: code, ...(detail === undefined ? {} : { detail }), ...(message === undefined ? {} : { message }) } satisfies ApiErrorBody, headers);
 
 // Live evaluations this isolate is running. A per-isolate bound, not a
 // global one — Cloudflare runs many isolates — so it caps what one isolate
@@ -82,10 +84,11 @@ async function evaluate(req: Request, deps: Deps): Promise<Response> {
   try {
     input = JSON.parse(text);
   } catch {
-    return error(400, "bad_input", "invalid JSON");
+    const { message: m, text } = coded("api.invalidJson");
+    return error(400, "bad_input", text, undefined, m);
   }
   const v = validateAnswers(input);
-  if (!v.ok) return error(400, "bad_input", v.detail);
+  if (!v.ok) return error(400, "bad_input", v.detail, undefined, v.message);
 
   const client = req.headers.get("cf-connecting-ip") ?? "anonymous";
   if (!(await deps.allow(client))) return error(429, "rate_limited", undefined, { "Retry-After": "60" });

@@ -5,11 +5,12 @@
 // keeps the dashes in core's notes. Column headers are a machine contract
 // and stay English (app/README.md § Languages); the header order is printed
 // in the method panel's download line.
-import { STATE_NAMES, type SummaryJson } from "@hotgap/core";
-import { fill } from "../lib/copy.js";
+import type { SummaryJson } from "@hotgap/core";
+import { fill, limitWords } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
+import { unmodeledName } from "../lib/coverage.js";
 import { listOf } from "../lib/format.js";
-import { programName } from "../lib/names.js";
+import { programName, stateName } from "../lib/names.js";
 import { copy } from "./copy.js";
 import { archLabel, type Archetype, type StateRow } from "./model.js";
 import { modelLabel } from "./words.js";
@@ -45,9 +46,9 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
     const { m } = r, cov = summary.coverage?.[r.st], v = cov?.vintages;
     const none = r.kind === "none";
     const dollars = (x: number | null) => (none || x === null ? "" : x);
-    const missing = r.incomplete.map((u) => u.program);
+    const missing = r.incomplete.map(unmodeledName);
     lines.push([
-      r.st, STATE_NAMES[r.st] ?? r.st, a.id, label,
+      r.st, stateName(r.st), a.id, label,
       dollars(m.biggestLoss), dollars(m.biggestLossAt), m.biggestLossPrograms.map(programName).join("; "),
       dollars(m.dangerWidth), dollars(m.leap), dollars(m.safeExit),
       m.cliffCount, m.deferredCliffCount,
@@ -56,7 +57,7 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? copy.detail.applied}`).join("; "),
       cov ? (cov.corrections.childcareSubsidy.source === "added by HotGap" ? copy.csv.subsidy.added : copy.csv.subsidy.inNetIncome) : "",
       /* EligibilityBoundary (#23): the heating limit in words and the served share as a fraction, both the block's — empty where the profile was not read (Hawaii), never a number. */
-      cov?.liheap?.limitKind ?? "", cov?.liheap?.servedShare ?? "",
+      cov?.liheap ? limitWords(cov.liheap.limit) : "", cov?.liheap?.servedShare ?? "",
       v?.county.name ?? "", v?.county.fips ?? "",
       v?.rent.vintage ?? "", v?.county.vintage ?? "", v?.childcare.preschool ?? "",
       summary.year, summary.generated, modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",
