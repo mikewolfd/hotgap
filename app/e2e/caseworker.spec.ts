@@ -13,12 +13,11 @@
 // (wrangler dev --var HOTGAP_PE_URL:http://127.0.0.1:9/us/calculate); the
 // B1 test runs against it and is skipped otherwise.
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { AUDIT_DIR as AUDIT, consoleErrors, noOverflow, outDir } from "./support.js";
 
-const AUDIT = resolve(import.meta.dirname, "../../design/audit/app");
-const AFTER = resolve(import.meta.dirname, "../../design/review/caseworker/after");
-for (const d of [AUDIT, AFTER]) mkdirSync(d, { recursive: true });
+const AFTER = outDir("design/review/caseworker/after");
 const shot = (name: string) => resolve(AUDIT, `caseworker-${name}.png`);
 const after = (name: string) => resolve(AFTER, `${name}.png`);
 const measured: Record<string, unknown> = {};
@@ -27,13 +26,6 @@ test.afterAll(() => writeFileSync(resolve(AFTER, "measurements.json"), JSON.stri
 const HOUSEHOLD = "/caseworker.html?zip=80903&kids=3%2C7&pay=38000&unit=year&rent=1735&childcare=2773&childcare-subsidy=1";
 const ARCHETYPE_URL = process.env.HOTGAP_ARCHETYPE_URL;
 
-const consoleErrors = (page: Page): string[] => {
-  const errors: string[] = [];
-  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-  page.on("pageerror", (e) => errors.push(e.message));
-  return errors;
-};
-const noOverflow = async (page: Page) => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 const rendered = async (page: Page) => {
   await expect(page.locator("#verdictLine")).toContainText("In a danger zone. Between $36,000 and $45,000 of earnings");
   await expect(page.locator("#sourceNote")).toHaveAttribute("data-source", "live");

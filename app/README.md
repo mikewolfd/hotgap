@@ -224,7 +224,7 @@ is the shape — and none inline in render code):
     npx vitest run                     # unit tests, worker/src/index.test.ts included
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
-    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/)
+    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts — the editor, citizen, caseworker and places proofs (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/; the shared harness is e2e/support.ts)
     npm run readability                # Flesch–Kincaid over app/src/*/copy.ts (design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
 
 For the archetype path: run `wrangler dev` yourself with a dead engine

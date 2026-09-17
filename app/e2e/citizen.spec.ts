@@ -8,29 +8,13 @@
 // HOTGAP_EXPECT_SOURCE=archetype runs the archetype assertions instead
 // (start wrangler with a dead HOTGAP_PE_URL first; the README says how).
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
+import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, rgb } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
-const OUT = resolve(import.meta.dirname, "../../design/audit/app");
-mkdirSync(OUT, { recursive: true });
-
-const consoleErrors = (page: Page): string[] => {
-  const errors: string[] = [];
-  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-  page.on("pageerror", (e) => errors.push(e.message));
-  return errors;
-};
-
-/* WCAG 2.x relative luminance and contrast, the audit's own method, over the colours the page resolved. */
-const lum = ([r, g, b]: number[]) => {
-  const f = (c: number) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-};
-const contrast = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-const rgb = (s: string) => (s.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
 
 interface Ev {
   analysis: {
@@ -209,7 +193,7 @@ for (const scheme of ["light", "dark"] as const) {
       if (c.labelInk) expect(contrast(rgb(c.labelInk), rgb(c.rowGround))).toBeGreaterThanOrEqual(4.5);
 
       /* The page as a whole. */
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      await noOverflow(page);
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}.png`), fullPage: true });
       if (scheme === "light") {

@@ -3,6 +3,7 @@
 // default — an engine or the public API answers) or "archetype" (run the
 // server with a dead HOTGAP_PE_URL; the committed sweep answers instead).
 import { expect, test, type Page } from "@playwright/test";
+import { consoleErrors, noOverflow } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 
@@ -31,13 +32,6 @@ async function openChips(page: Page): Promise<void> {
   const edit = page.getByRole("button", { name: "Edit", exact: true });
   if (await edit.isVisible() && (await edit.getAttribute("aria-expanded")) === "false") await edit.click();
 }
-
-const consoleErrors = (page: Page): string[] => {
-  const errors: string[] = [];
-  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-  page.on("pageerror", (e) => errors.push(e.message));
-  return errors;
-};
 
 test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ page }) => {
   const errors = consoleErrors(page);
@@ -100,8 +94,7 @@ for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
     await expect(page.locator("#answer")).toContainText("You are paid");
-    const noOverflow = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    await noOverflow();
+    await noOverflow(page);
     // The chips hide behind the summary's Edit control — below 720px on every
     // surface, and at every width on the citizen page, which has no controls
     // that change the answer (design/REVIEW-citizen-2026-09-16.md S1).
@@ -128,7 +121,7 @@ for (const width of [390, 1280]) {
     await expect(page.locator("#editor")).toBeVisible();
     await expect(page.getByLabel("Your pay, before taxes")).toBeFocused();
     await expect(pay).toHaveAttribute("aria-expanded", "true");
-    await noOverflow();
+    await noOverflow(page);
     await page.getByRole("button", { name: "Close" }).click();
     await expect(page.locator("#editor")).toBeHidden();
     await expect(pay).toBeFocused();

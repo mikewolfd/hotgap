@@ -291,6 +291,18 @@ under the same config (its `check()` becomes `expect`, its PDF assertions
 keep `pdf.mjs`). Proves: the proofs themselves, now all under one gate.
 ~40 lines.
 
+**Resolved** (`e2e/support.ts`: `AUDIT_DIR`/`outDir`, `consoleErrors`,
+`noOverflow`, `lum`/`contrast`/`rgb`, and `check` — a soft assertion that
+prints its measurement, so the places proof's log reads as before;
+`places.mjs` → `places.spec.ts` under the config's server with its 193
+checks (96 lines, two widths and the failed fetch), core's constants and
+the lib program table imported rather than regex-read off the source. One
+expectation moved with the server: the Cite line's URL is the page's own
+address, which behind the Worker's assets router is `/places`, not
+`/places.html`. The three specs import the harness. The two review scripts
+(`citizen-review.mjs`, `liheap-review.mjs`) are evidence tools, not proofs,
+and keep their own `check`.)
+
 ### D13. Copy modules in three shapes
 
 `editor/copy.ts` — object of strings and arrow functions; `citizen/copy.ts` —
