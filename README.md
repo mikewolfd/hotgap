@@ -258,7 +258,9 @@ All under `core/data/`:
   subsidy cliff off the top of a bigger family's chart (see `axisSpec` in
   `core/src/translate.ts`). `summary.json` carries `leapIsLowerBound` per
   archetype: true when its worst danger zone runs off the top of that axis
-  rather than actually closing. `cliffCount` and `deferredCliffCount` come
+  rather than actually closing, and `axisTop`, the axis that cell was swept
+  to, so a page can print "past $150,000" rather than "past the axis".
+  `cliffCount` and `deferredCliffCount` come
   from the same `evaluateCurve` that `evaluateHousehold` and
   `evaluateOffline` both call — every cliff, real or deferred, counts
   toward one or the other, and `biggestLoss`, the danger zones, and `leap`
@@ -526,7 +528,10 @@ CLI at it, URL and bearer token.
 Monday at 07:00 UTC (and on manual dispatch), running the test suite and
 typecheck before committing. Data commits only when the swept numbers
 changed — `generated` in `summary.json` and each state file is the stamp of
-the sweep that last changed that file, not of the most recent sweep.
+the sweep that last changed that file, not of the most recent sweep; a
+`--from-data` rebuild of the summary keeps the newest state file's stamp,
+since adding a derived field is not a sweep. It is a UTC instant, and the
+pages print its date in the reader's own time zone.
 
 Estimates only — a caseworker decides real benefits.
 

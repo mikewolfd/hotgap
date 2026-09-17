@@ -134,12 +134,14 @@ export function defaultReadStateFile(statesDir: string): ReadStateFileFn {
 export async function runFromData(states: string[], readStateFile: ReadStateFileFn): Promise<RunResult> {
   const results: ResultsByStateArchetype = {};
   const models: ModelsByState = {};
+  let generated = "";
   for (const state of states) {
     try {
       const raw = await readStateFile(state);
       const file = JSON.parse(raw) as StateFileJson;
       results[state] = resultsFromStateFile(file);
       models[state] = file.model;
+      if (file.generated > generated) generated = file.generated;
     } catch (e) {
       // Missing/unreadable/corrupt file: leave the state absent from `results`
       // so validateResults reports it as a normal "missing" gap below.
@@ -152,8 +154,11 @@ export async function runFromData(states: string[], readStateFile: ReadStateFile
 
   // Each state's numbers are read with the model that swept them (a partial
   // re-sweep leaves a mix); the summary's own provenance is the one they
-  // share, when they do (sharedModel).
-  const generated = new Date().toISOString();
+  // share, when they do (sharedModel). The stamp is the newest sweep among
+  // the files read, not this rebuild's clock: `generated` is "the sweep that
+  // last changed these numbers", and a rebuild that adds a derived field is
+  // not a sweep. (The Plan 8 rebuild stamped 01:16 UTC on a page read at
+  // 9 pm Eastern the day before — the "run of tomorrow" a reporter bounced.)
   const summary = buildSummary(generated, states, results, models);
   return { ok: true, dryRun: false, gaps: [], summary };
 }

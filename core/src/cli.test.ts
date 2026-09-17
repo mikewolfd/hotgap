@@ -94,7 +94,7 @@ describe("CLI correction notices", () => {
   it("prints the same approximation with the summary rankings", async () => {
     vi.mocked(loadSummary).mockReturnValue({
       generated: "g", year: "2026", archetypes: [], states: { MA: { "married-3": {
-        biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false,
+        biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 150000,
         maTafdc: ev.maTafdc!,
       } } },
     });
@@ -104,7 +104,7 @@ describe("CLI correction notices", () => {
   });
 
   it("ships the picked states' coverage blocks with the summary JSON", async () => {
-    const row = { biggestLoss: 0, dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false };
+    const row = { biggestLoss: 0, dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 150000 };
     const coverage = { CA: { otherBenefits: [{ variable: "housing_assistance" }] }, TX: { otherBenefits: [] } };
     vi.mocked(loadSummary).mockReturnValue({ generated: "g", year: "2026", archetypes: [], states: { CA: { "single-0": row }, TX: { "single-0": row } }, coverage } as never);
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
