@@ -329,6 +329,29 @@ Severity: **B** = a cold reader draws a wrong conclusion or cannot do one
 of the eight tasks; **S** = had to guess, guessed right eventually;
 **N** = friction.
 
+**Resolution pass, 2026-09-16 (Plan 8,
+`docs/superpowers/plans/2026-09-16-hotgap-places-cold-reader.md`).** Every
+finding below carries a *Resolved* (or *Declined*) line naming the commit
+and the evidence; the re-rendered evidence is under
+`design/review/places-context-blind/after/` (the originals' names where the
+content corresponds, plus `05-oh-readout.png`, `06-NJ-readout.png`,
+`04-measure-N-ranked.png`, `07-table-sorted-cliffCount-top.png`,
+`08-download-sample.csv`, `10-method.png`, `11-laptop-dark-above-fold.png`,
+`09-phone-*` for the tap, the readout and the table at both scroll edges,
+`print-letter-from-dark.pdf`, and `measurements.txt`, the proof's own lines
+for every finding). Commits on the branch: audit steps `4ed97d6`; core and
+pipeline `d41f40d` (Phase A); the copy module `21dfe35` (C); the page
+`781e239` (B); the CSV `3be6cf4` (D); the proof `ac4bb59`; the Worker's
+dev-only rate-limit escape `48f5275`. Proofs on the final tree, through
+the project runners: `npm run typecheck` clean, `npx vitest run` 530
+passed, `cd app && npx vite build` clean, `app/e2e/places.mjs` 136 checks
+passing (79 before), the PDF inspection included. Every number the page
+prints is read from `summary.json` or the coverage block, and the lede
+sentence the reviewer could not write is now the readout's:
+*"Ohio — $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy
+ends. Renter, Franklin County."* The plan's example guessed Medicaid; the
+file says the child-care subsidy, which is the point of reading it.
+
 ### B — 4
 
 **B1. "Largest first" puts the possibly-largest states last.** Under
@@ -342,6 +365,15 @@ lower-bound rows first under a one-line heading such as "Bigger than the
 axis — at least $53,000, exact size unknown (2)", or exclude them from the
 sorted body the way NM is, with the same sub-list treatment.
 
+*Resolved* (`781e239`): lower-bound rows lead the ranked strip under
+their own heading — "At least this much — the exact size runs past the
+axis (2)" with `≥ $72,000`-style figures on the leap, "Past the top of the
+axis — no safe exit found on the scale (2)" on safe exit — and lead the
+sorted table the same way, where every lifted-out group now has a heading
+row (`after/04-measure-2-ranked.png`, `after/07-table-sorted-leap-top.png`).
+`model.test.ts` pins the order on the committed file; the proof reads the
+lower-bound set from `summary.json` and checks it heads both.
+
 **B2. Whether Ohio's figure includes the child-care subsidy is
 undecidable from the page.** Ohio: "PolicyEngine's own figures for Ohio
 stand as served; HotGap changed nothing on top of them." Texas / NJ / NM:
@@ -354,6 +386,13 @@ status ("Child-care subsidy: inside PolicyEngine's net income for Ohio" /
 "…added by HotGap for Texas"), or a sentence in the "(0)" block saying the
 Texas-style fixes were not needed here and why.
 
+*Resolved* (`781e239`): every block's second line states the footing from
+`corrections.childcareSubsidy.source` — "Child-care subsidy: inside
+PolicyEngine's net income for Ohio." / "…added by HotGap for Texas." —
+and the (0) block reads "…HotGap changed nothing on top of them — the
+fixes other states need were not needed here." (`after/05-oh-click-below-
+map.png`, `after/06-TX-below-map.png`; proof lines B2).
+
 **B3. The figure has no program and no income attached.** "Largest
 one-step loss, by state — Net income lost in the worst single $1,000 step
 of earnings." Nothing on the page says at what earnings Ohio's $12,062
@@ -364,6 +403,15 @@ came from" (task 4). Needed: per state, "at $X → $X+1,000 of earnings, when
 [program] ends" in the selected-state block, and ideally a link to that
 state's curve.
 
+*Resolved* (`d41f40d`, `781e239`): `StateMetrics` gains `biggestLossAt`
+and `biggestLossPrograms` from the worst cliff (every existing number in
+`summary.json` byte-identical on the `--from-data` rebuild; 5,543 leaves
+unchanged, 0 removed); the readout under the map and the block's first
+line print them: "Ohio — $12,062 lost at $38,000 → $39,000, when CCDF
+child care subsidy ends." (`after/05-oh-readout.png`). The CSV carries
+`biggest_loss_at` and `biggest_loss_programs` (`3be6cf4`). The link to a
+curve is the plan's declined item: the caseworker page is the curve.
+
 **B4. The county is never named.** Methodology: "Each archetype is a
 typical renter in the state's most populous county". Source line under the
 map: "County: Vintage 2024 (July 1, 2024 estimates)". The name slot holds a
@@ -372,6 +420,13 @@ Franklin — many would say Cuyahoga) and will either print the wrong one or
 a vague "an Ohio family" that the rent figure does not support. Needed:
 "Rent and child care: Franklin County (Columbus), HUD FY2026 FMR" in the
 state block and a `county_name` column in the CSV.
+
+*Resolved* (`d41f40d`, `781e239`, `3be6cf4`): `vintages.county` gains
+`fips` and `name` from the gazetteer (null for Connecticut alone, whose
+planning region post-dates it); the readout ends "Renter, Franklin
+County.", the state's source line reads "County: Franklin County (the
+state's most populous; Vintage 2024 …)", and the CSV has `county_name` and
+`county_fips` (`after/05-oh-readout.png`, `after/08-download-sample.csv`).
 
 ### S — 10
 
@@ -382,12 +437,25 @@ phone; the rank-list and table highlights are also offscreen. Needed: scroll
 the block into view, or show the state's name and headline number next to
 the map with a "details below" link, or a tooltip on the tile.
 
+*Resolved* (`781e239`): the state readout (`.hg-readout`, the
+CurveReadout's shape) fills under the map on any selection with a
+"Details below ↓" link, and a tile click, like a table click, scrolls the
+block into view and focuses its heading (`after/05-oh-click-viewport.png`,
+`after/09-phone-oh-tap.png`; proof line S1 measures focus and
+in-viewport at both widths).
+
 **S2. Measure options lean on their neighbours.** "The leap — raise needed
 to clear it ($)", "Safe exit — where the last zone closes ($)", "Of those,
 deferred to a later renewal". "It", "zone", "Of those" have no referent
 inside a closed dropdown. Needed: self-contained labels, e.g. "The leap —
 raise needed to clear the worst danger zone ($)", "Deferred cliffs — of the
 cliffs counted, those that land at a later renewal".
+
+*Resolved* (`21dfe35`): the options are copy's and stand alone — "The
+leap — the raise needed to clear the worst danger zone ($)", "Safe exit —
+earnings above which no danger zone remains ($)", "Deferred cliffs — of
+the cliffs counted, those that land at a later renewal"; `model.test.ts`
+and the proof check no option leans on "it", "that stretch" or "of those".
 
 **S3. "Cliff" and "danger zone" are defined only after you choose them.**
 The intro never uses the word "cliff"; "Steps down of $200 or more anywhere
@@ -398,10 +466,18 @@ the subhead: "A cliff is a $1,000 raise that cuts net income by $200 or
 more; a danger zone is a run of earnings across which the household never
 gets ahead."
 
+*Resolved* (`21dfe35`, `781e239`): that sentence, with the $200 from
+core's `CLIFF_MIN`, is the glossary line under the lede
+(`after/01-laptop-above-fold.png`); the proof reads the floor from
+`core/src/analyze.ts` and checks the sentence against it.
+
 **S4. "Deferred … to a later renewal"** is explained only in the sixth
 methodology bullet. Needed: a subtitle on the Deferred map naming the three
 mechanisms ("Head Start carry-over, 12-month Medicaid/CHIP, Transitional
 Medical Assistance").
+
+*Resolved* (`21dfe35`): the deferred map's subtitle names the three
+(`after/04-measure-5.png`).
 
 **S5. Hatched states have numbers in one place and "not comparable" in
 another.** Ranked: "NJ ▨ not comparable". Table: "NJ $26,206 … incomplete:
@@ -410,24 +486,54 @@ It takes three notes in three places to learn the numbers are floors.
 Needed: put "floor — real cliff may be larger" in the table cell itself
 ("≥ $26,206 (incomplete)") so the row carries its own caveat.
 
+*Resolved* (`781e239`, `3be6cf4`): an incomplete row's cells read
+"$26,206 (floor)" and its Figures cell "floor: NJ Health Plan Savings not
+modelled"; the CSV's `figures` column carries the same wording; the
+readout for such a state says "at least $26,206 … a floor, because NJ
+Health Plan Savings is not modelled" (`after/06-NJ-readout.png`,
+`after/09-phone-table.png`).
+
 **S6. "PolicyEngine" is never introduced.** It appears in the legend,
 every state block and the methodology as a name with a link. Needed: one
 clause on first use: "PolicyEngine, an open-source tax-and-benefit
 calculator".
 
+*Resolved* (`21dfe35`): the glossary line ends "The figures come from
+PolicyEngine, an open-source tax-and-benefit calculator, run by HotGap.
+Estimates only." and the method's first bullet says it again.
+
 **S7. Two left bars, two meanings.** Grey bar = incomplete row (NJ, WA);
 dark bar = selected state. Needed: drop the grey bar (the amber Figures
 text already flags the row) or use a different device for selection.
+
+*Resolved* (`781e239`): the grey bar is gone; the incomplete row is
+flagged by its cells' words and, below 62rem, an amber "floor" beside its
+code; the proof checks the only left bar on an incomplete row is the
+selected row's, in ink.
 
 **S8. "Not modelled in Ohio (1): LIHEAP — Not counted anywhere"** reads as
 an Ohio gap until you click a second state. Needed: move universal
 exclusions to the "What the model does not include" list and keep the
 per-state block for state-specific items only.
 
+*Resolved* (`d41f40d`, `781e239`): `UnmodeledProgram.scope` ("all" for
+LIHEAP) is written by core; the page lists `all` entries once under "What
+the model does not include" ("LIHEAP, in every state: …") and a state's
+block lists its own only — Ohio's "Not modelled" heading no longer appears
+(`after/05-oh-click-below-map.png`, `after/10-method.png`).
+
 **S9. NE has a plain leap ($44,000) but "past the axis" safe exit.** The
 box says "Where a state's worst danger zone runs off the top of the axis
 … the safe exit is unknown and the leap is a lower bound." Needed: "…the
 *last* danger zone…" and a clause that the worst and last zones can differ.
+
+*Resolved* (`21dfe35`, `781e239`): the box reads "Where a state's *last*
+danger zone runs off the top of the axis rather than closing, the safe
+exit is unknown; the leap is a lower bound only when the *worst* zone is
+the one that runs off. The two can differ, so a state can show an exact
+leap and no safe exit." and every past-the-axis cell carries
+`aria-describedby` to it; the proof finds Nebraska from the file ($44,000
+leap, no safe exit) and checks the cells (`after/06-NE-below-map.png`).
 
 **S10. Phone table clips mid-glyph with no scroll cue.** "The le", "$45,00";
 Safe exit, Cliffs, Deferred, Figures hidden. Needed: an edge fade or
@@ -435,49 +541,124 @@ Safe exit, Cliffs, Deferred, Figures hidden. Needed: an edge fade or
 narrow widths; at minimum keep the Figures flag visible (e.g. move it
 next to the state code).
 
+*Resolved* (`781e239`, system): `.hg-scroll-x` in `tokens.css` draws an
+edge shadow on whichever side still has content, by CSS alone (the
+covering gradients scroll with the content), and takes `data-more` for a
+page's own swipe words while it finds an overflow; the places table's
+state column is sticky and the amber "floor" mark sits beside the code
+(`after/09-phone-table.png`, `-scrolled-right.png`, `-end.png`). Proof at
+390: NJ's mark ends at x=74 inside a 374px scroller at scrollLeft 0, four
+gradients on the scroller, "Swipe for more →" set; none of it at 1280.
+
 ### N — 13
 
 **N1.** Browser Back leaves the site (`about:blank`) instead of undoing the
 last dropdown change; selections are written with replaceState. Needed:
 pushState for household/measure changes.
 
+*Declined* for filters (plan decision 5: history spam makes Back useless
+for leaving; the reviewer's Back went to `about:blank` because the tab was
+fresh). Selecting a state now pushes an entry, so Back from a shared deep
+link returns to the unselected view, and popstate renders the URL's view
+(`781e239`).
+
 **N2.** Column headers in "All 51, every measure" are not sortable; the
 only sort is the two-option "Table order", tied to the map's measure.
+
+*Resolved* (`781e239`) by widening the one control: Table order offers
+"State, A to Z" and the six measures ("Largest one-step loss, largest
+first" … "Deferred cliffs, most first"); `sort=` carries the measure key
+and an older `sort=measure` link still lands on that measure's order
+(`after/07-table-sorted-cliffCount-top.png`). Sortable headers stay
+declined.
 
 **N3.** "Ranked" prints no rank numbers; finding "Ohio is 30th" means
 counting 30 rows.
 
+*Resolved* (`781e239`): a competition rank before every ranked row (ties
+share one, the next skips), none in the lifted-out groups
+(`after/04-measure-1-ranked.png`).
+
 **N4.** No hover/tap tooltip on map tiles; a state's value is only in the
 list or table.
+
+*Declined* (plan): the readout answers the need without a hover-only
+device; a tile's `title` remains for a pointer.
 
 **N5.** Phone header (wordmark, headline, subhead) has no side gutter; the
 subhead's em dash touches the right edge.
 
+*Resolved* (`781e239`): the masthead's own `padding` shorthand had
+cancelled the page column's gutter; it now sets only top and bottom
+(`after/09-phone-above-fold.png`; proof: h1 left edge 16px at 390).
+
 **N6.** Phone tile tap targets are 28×28 px.
+
+*Declined* (plan): the 44px control beside the map is the ranked row
+(design review TODO 2); the tiles keep their square.
 
 **N7.** Developer vocabulary in reporter-facing text: "(policyengine-us
 #9474; fixed upstream in PR #9475)", "PolicyEngine variable
 nj_property_tax_relief", "reaches this endpoint", "Weekly sweep",
 "sweep's own coverage record".
 
+*Resolved* for the page's own words (`21dfe35`): "run" for "sweep", no
+"endpoint", the Alaska/Hawaii issue number only in its link's title, the
+other-benefit variable only in the cite's title; the proof greps the
+page's text with core's notes and the CSV column list removed. Core's
+correction notes keep their issue numbers as the cite (the design-review
+pass wrote them for the reader; not this page's strings).
+
 **N8.** CSV `model_endpoint` = `45.55.61.191.sslip.io` (a bare-IP host that
 reads as a scratch server); DC `source` = `HotGap` vs `HotGap/PolicyEngine`
 elsewhere, unexplained.
+
+*Resolved* in part (`3be6cf4`): the CSV keeps `model_endpoint` (the
+provenance) and gains `model_label` = "HotGap hosted engine,
+policyengine-us 2.6.2". The DC oddity was checked at its cause: the
+reviewer's CSV is not in the evidence folder; the committed sample and
+this writer both give DC `HotGap/PolicyEngine`, the code writes one
+constant per row, so the "HotGap" seen was a reader splitting "Washington,
+DC" on its comma — `csv.test.ts` and the proof now round-trip the DC row
+through an independent RFC 4180 reader. A real hostname for the engine is
+a domain purchase, the owner's call.
 
 **N9.** "Reach: ACS 2024 1-year PUMS" in every state's source line, and
 `reach_vintages` in the CSV, describe something the page never shows or
 defines.
 
+*Resolved* (`781e239`, `3be6cf4`): reach leaves this page — the state's
+source line, the method's source line and the CSV (the caseworker page
+shows reach and keeps its line).
+
 **N10.** "the arrow keys move between states" — they move focus; Enter
 selects. Say "arrow keys then Enter".
+
+*Resolved* (`21dfe35`): "the arrow keys move between states and Enter
+selects", under the table and in the map's description.
 
 **N11.** The "Deferred cliffs" map is nearly monochrome (48 states at 0 or
 1); a list would say more than a map here.
 
+*Resolved* as a map (plan decision 10): when one class holds nine
+comparable states in ten the caption says so, from the rows — "45 of the
+48 comparable states have none." for the two-earner couple; the proof
+computes the share from `summary.json` (`after/04-measure-5.png`).
+
 **N12.** Subhead phrase "one axis" is opaque to a newcomer.
+
+*Resolved* (`21dfe35`): "one earnings scale — from $0 past 400% of the
+poverty line for that household".
 
 **N13.** No suggested citation line; "how to cite" has to be assembled from
 the footer.
+
+*Resolved* (`781e239`): a "Cite as:" line closes the method panel, from
+the run's year, model and date and the page's own address for the current
+view — "Cite as: HotGap, *What a raise costs, state by state*, 2026 rules
+on PolicyEngine (policyengine-us 2.6.2), run of Sep 17, 2026,
+…/places?household=single-2&measure=biggestLoss&sort=state&state=OH."
+(`after/10-method.png`).
 
 ---
 
