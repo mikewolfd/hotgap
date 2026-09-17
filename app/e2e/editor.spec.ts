@@ -26,6 +26,12 @@ async function fillFourFacts(page: Page): Promise<void> {
   await expect(page.getByLabel("Child care")).not.toHaveValue("");
 }
 
+/** The chips row sits behind the summary's Edit control where a surface keeps the phone rule (the citizen page, at every width). */
+async function openChips(page: Page): Promise<void> {
+  const edit = page.getByRole("button", { name: "Edit", exact: true });
+  if (await edit.isVisible() && (await edit.getAttribute("aria-expanded")) === "false") await edit.click();
+}
+
 const consoleErrors = (page: Page): string[] => {
   const errors: string[] = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
@@ -65,6 +71,7 @@ test("a hand-typed link with a lower-case state and a yearly earnings figure sti
   // `earnings` was rewritten as pay in years; the state is the code core knows.
   const url = new URL(page.url());
   expect([url.searchParams.get("pay"), url.searchParams.get("unit"), url.searchParams.get("earnings")]).toEqual(["30000", "year", null]);
+  await openChips(page);
   await expect(page.locator('[data-chip="where"] .hg-chip__v')).toHaveText("TX");
   await page.locator('[data-chip="where"]').click();
   await expect(page.getByLabel("Or pick your state")).toHaveValue("TX");
@@ -95,11 +102,13 @@ for (const width of [390, 1280]) {
     await expect(page.locator("#answer")).toContainText("You are paid");
     const noOverflow = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await noOverflow();
-    // Below 720px the chips hide behind the summary's Edit control.
-    if (width < 720) {
-      const edit = page.getByRole("button", { name: "Edit", exact: true });
+    // The chips hide behind the summary's Edit control — below 720px on every
+    // surface, and at every width on the citizen page, which has no controls
+    // that change the answer (design/REVIEW-citizen-2026-09-16.md S1).
+    const edit = page.getByRole("button", { name: "Edit", exact: true });
+    if (await edit.isVisible()) {
       await expect(edit).toHaveAttribute("aria-expanded", "false");
-      await edit.click();
+      await openChips(page);
       await expect(edit).toHaveAttribute("aria-expanded", "true");
     }
     // A value chip opens its one-value dialog; closing it returns focus to the chip.

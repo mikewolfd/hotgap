@@ -1,11 +1,72 @@
-/* Citizen surface: one column, phone first (design/citizen.html is the
-   brief). Only this page's own layout lives here; every shared class is in
-   design/tokens.css, and the editor's in app/src/editor/editor.css. */
+/* Citizen surface: one column, phone first, nothing to decide
+   (design/citizen.html is the brief). Only this page's own layout lives
+   here; every shared class is in design/tokens.css, and the editor's in
+   app/src/editor/editor.css. This file loads after tokens.css, so anything
+   that could meet an hg-* state class is declared at :where() specificity. */
 .page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
-.result { padding-top: var(--s5); }
 
-/* The answer. The sentence IS the design (design/citizen.html .answer). */
+/* S1: this surface has no controls that change the answer (design/README.md
+   § Where the personas conflict, 2), so the chips keep the phone rule at
+   every width — the summary line and Edit, the chips behind it — where
+   tokens.css shows them from 720px for the counselor's row. The editor could
+   carry this as a mountEditor option; until it does, the page says it. */
+.hg-scenario__inputs:not([data-open="true"]) { display: none; }
+.hg-scenario__summary { display: flex; align-items: center; gap: var(--s3); padding: 0 var(--s4) var(--s3);
+                        color: var(--ink-2); font-size: var(--t-small); max-width: 76rem; margin: 0 auto; }
+.hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
+
+/* Paper (S2): the masthead line tokens.css's print block cannot supply, the
+   chips and the readout left behind as screen chrome, the figure kept whole
+   and the disclosure's summary gone (its table is open by then). The two
+   editor selectors are the page's until tokens.css carries them (TODO 26). */
+.masthead { font-size: var(--t-small); color: var(--ink-2); margin: 0 0 var(--s3); }
+/* Whose numbers these are (S5): the callout's shape, above the answer, in the band. */
+.whose { margin: var(--s4) 0 0; font-size: var(--t-small); }
+@media print {
+  .hg-scenario__inputs, .hg-readout, details.hg-disclosure > summary { display: none !important; }
+  .result figure { break-inside: avoid; }
+}
+.band { background: var(--surface); border-block: 1px solid var(--rule); }
+.band > .page { padding-block: var(--s6); }
+/* The band's status and alert sit above the answer; the alert keeps the callout's own margins. */
+.band [role="status"]:empty { display: none; }
+
+/* The answer. The sentence IS the design: each dollar figure carries a rule
+   in the colour of the mark it names, so the sentence doubles as the key. */
 .answer { font-size: var(--t-answer); line-height: var(--lh-answer);
           font-weight: var(--w-med); letter-spacing: -0.015em;
           margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
+.answer:empty { display: none; }
+.answer .amt { font-weight: var(--w-semi); white-space: nowrap;
+               box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
+.amt-keep  { --keyed: var(--series-1); }   /* the line */
+.amt-gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
+.amt-cliff { --keyed: var(--loss-4); }     /* a cliff dot */
+.answer-sub { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+.answer-sub:empty { display: none; }
 @media (min-width: 40rem) { .answer { max-width: 26ch; } }
+
+/* Figure */
+.result figure { margin: 0; }
+.chart-head { display: flex; justify-content: space-between; align-items: baseline;
+              gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
+.chart-title { font-size: var(--t-h3); font-weight: var(--w-semi); }
+.chart-unit { font-size: var(--t-micro); color: var(--ink-3); }
+.result figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
+                     max-width: var(--measure); }
+
+/* The Close a mark's open row gains sits under the row's text. */
+:where(.hg-rows) .hg-button--small { margin-top: var(--s2); }
+.assumed { --col: 8rem; }
+
+.result section > h2 { margin-top: var(--s7); }
+.result section > h2 + p, .result section > h2 + .hg-rows { margin-top: var(--s4); }
+.result .hg-callout h3 { margin-bottom: var(--s2); }
+.result footer { color: var(--ink-3); font-size: var(--t-small); margin-top: var(--s7);
+                 border-top: 1px solid var(--rule); padding-top: var(--s5); }
+.result footer p { max-width: var(--measure); }
+
+/* TODO(system): a merged mark whose every cliff waits is a hollow dot, so
+   its count cannot be --surface ink as .hg-mark__count is; tokens.css has
+   no modifier for it. */
+.hg-mark__count--later { color: var(--ink-3); }

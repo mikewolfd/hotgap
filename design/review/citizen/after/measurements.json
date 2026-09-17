@@ -1,0 +1,832 @@
+{
+ "ca-390-light": {
+  "answer": "You are paid $30,000 a year. You keep $42,830. More pay does not add to that until you are paid $43,000: a raise of $13,000.",
+  "caption": "The side numbers start at $40,000, not at $0, so the drops are easy to see. The biggest drop, about $7,100 a year at $107,000, is outside the picture. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $18,000 a year to $63,000 a year. It is flat from $28,000 to $43,000. It is flat again from $106,000 to $119,000. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "yTicks": [
+   40000,
+   45000,
+   50000,
+   55000
+  ],
+  "yratio": 7.33,
+  "drops": [
+   26.7,
+   6.7,
+   7.6
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 27.7,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Your flat stretch",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 984.359375,
+  "sourceY": 1131.859375,
+  "answerY": 185.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "ca-1280-light": {
+  "answer": "You are paid $30,000 a year. You keep $42,830. More pay does not add to that until you are paid $43,000: a raise of $13,000.",
+  "caption": "The side numbers start at $40,000, not at $0, so the drops are easy to see. The biggest drop, about $7,100 a year at $107,000, is outside the picture. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $18,000 a year to $63,000 a year. It is flat from $28,000 to $43,000. It is flat again from $106,000 to $119,000. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "yTicks": [
+   40000,
+   45000,
+   50000,
+   55000
+  ],
+  "yratio": 7.33,
+  "drops": [
+   32.2,
+   8.1,
+   9.1
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 37.6,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Your flat stretch",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 946.390625,
+  "sourceY": 1070.640625,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "nocliff-390-light": {
+  "answer": "You are paid $40,000 a year. You keep $29,795. When you earn more, you keep more. We did not find a spot where more pay leaves you with less.",
+  "caption": "The side numbers start at $20,000, not at $0. These are estimates. They use the rules for 2026 in Wisconsin.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $30,000 a year to $60,000 a year. The household sits at $40,000 a year.",
+  "yTicks": [
+   20000,
+   30000,
+   40000
+  ],
+  "yratio": null,
+  "drops": [],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": null,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 931.21875,
+  "sourceY": 1008.96875,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "nocliff-1280-light": {
+  "answer": "You are paid $40,000 a year. You keep $29,795. When you earn more, you keep more. We did not find a spot where more pay leaves you with less.",
+  "caption": "The side numbers start at $21,250, not at $0. These are estimates. They use the rules for 2026 in Wisconsin.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $30,000 a year to $60,000 a year. The household sits at $40,000 a year.",
+  "yTicks": [
+   25000,
+   30000,
+   35000,
+   40000,
+   45000
+  ],
+  "yratio": null,
+  "drops": [],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": null,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 975.984375,
+  "sourceY": 1030.484375,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "headstart-390-light": {
+  "answer": "You are paid $30,000 a year. You keep $51,229. Near $32,000, more pay can mean less money: past it you would keep about $600 less a year. People call this a benefits cliff. One more thing: at $31,000, free early learning stops, but not that day. Later, you would keep about $16,600 less a year.",
+  "caption": "The side numbers start at $25,000, not at $0, so the drops are easy to see. The biggest drop, about $3,900 a year at $85,000, is outside the picture. From $91,000 up, more pay always adds to what you keep. The dashed line is what happens if the later change happens. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $52,000 a year. The biggest drop is at $85,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   30000,
+   40000,
+   50000,
+   60000,
+   70000
+  ],
+  "yratio": 2.71,
+  "drops": [
+   7.3,
+   2.8
+  ],
+  "hollow": 0,
+  "stubs": 1,
+  "later": 1,
+  "nearestMarkToDiamond": 20.5,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "A drop that waits",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1118.578125,
+  "sourceY": 1289.328125,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "headstart-1280-light": {
+  "answer": "You are paid $30,000 a year. You keep $51,229. Near $32,000, more pay can mean less money: past it you would keep about $600 less a year. People call this a benefits cliff. One more thing: at $31,000, free early learning stops, but not that day. Later, you would keep about $16,600 less a year.",
+  "caption": "The side numbers start at $25,000, not at $0, so the drops are easy to see. The biggest drop, about $3,900 a year at $85,000, is outside the picture. From $91,000 up, more pay always adds to what you keep. The dashed line is what happens if the later change happens. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $52,000 a year. The biggest drop is at $85,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   30000,
+   40000,
+   50000,
+   60000,
+   70000
+  ],
+  "yratio": 2.71,
+  "drops": [
+   8.7,
+   3.3
+  ],
+  "hollow": 1,
+  "stubs": 1,
+  "later": 1,
+  "nearestMarkToDiamond": 20,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "A drop that waits",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1160.15625,
+  "sourceY": 1307.65625,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "past-390-light": {
+  "answer": "You are paid $125,000 a year. You keep $82,581. The big drop is below your pay now. From here, more pay means more for you.",
+  "caption": "The side numbers start at $67,500, not at $0, so the drops are easy to see. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $96,000 a year to $145,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $125,000 a year.",
+  "yTicks": [
+   70000,
+   80000,
+   90000
+  ],
+  "yratio": 4.25,
+  "drops": [
+   46.1
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 114.4,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1000.203125,
+  "sourceY": 1101.203125,
+  "answerY": 185.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "past-1280-light": {
+  "answer": "You are paid $125,000 a year. You keep $82,581. The big drop is below your pay now. From here, more pay means more for you.",
+  "caption": "The side numbers start at $67,500, not at $0, so the drops are easy to see. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $96,000 a year to $145,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $125,000 a year.",
+  "yTicks": [
+   70000,
+   75000,
+   80000,
+   85000,
+   90000,
+   95000
+  ],
+  "yratio": 4.25,
+  "drops": [
+   55.5
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 204.6,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 930.390625,
+  "sourceY": 1008.140625,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "hourly-390-light": {
+  "answer": "You are paid $18.50 an hour. You keep $54,668. Near $32.50 an hour, more pay can mean less money: past it you would keep about $3,200 less a year. People call this a benefits cliff. One more thing: at $24.25 an hour, free early learning stops, but not that day. Later, you would keep about $19,300 less a year.",
+  "caption": "The side numbers start at $31,250, not at $0, so the drops are easy to see. From $50.50 an hour up, more pay always adds to what you keep. The dashed line is what happens if the later change happens. These are estimates. They use the rules for 2026 in Massachusetts.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $12.75 an hour to $57.75 an hour. The biggest drop is at $46.75 an hour, where some help ends. The household sits at $18.50 an hour.",
+  "yTicks": [
+   50000,
+   75000,
+   100000
+  ],
+  "yratio": 3.9,
+  "drops": [
+   8.4,
+   13.3
+  ],
+  "hollow": 1,
+  "stubs": 1,
+  "later": 1,
+  "nearestMarkToDiamond": 34.7,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "A drop that waits",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1176.765625,
+  "sourceY": 1324.265625,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "hourly-1280-light": {
+  "answer": "You are paid $18.50 an hour. You keep $54,668. Near $32.50 an hour, more pay can mean less money: past it you would keep about $3,200 less a year. People call this a benefits cliff. One more thing: at $24.25 an hour, free early learning stops, but not that day. Later, you would keep about $19,300 less a year.",
+  "caption": "The side numbers start at $30,000, not at $0, so the drops are easy to see. The dashed line is what happens if the later change happens. These are estimates. They use the rules for 2026 in Massachusetts.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $12.75 an hour to $57.75 an hour. The biggest drop is at $46.75 an hour, where some help ends. The household sits at $18.50 an hour.",
+  "yTicks": [
+   40000,
+   60000,
+   80000,
+   100000
+  ],
+  "yratio": 3.9,
+  "drops": [
+   10.2,
+   16
+  ],
+  "hollow": 1,
+  "stubs": 1,
+  "later": 1,
+  "nearestMarkToDiamond": 61,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "A drop that waits",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1277.6875,
+  "sourceY": 1378.6875,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "ma-390-light": {
+  "answer": "You are paid $30,000 a year. You keep $44,773. Near $40,000, more pay can mean less money: past it you would keep about $400 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $40,000, not at $0. The biggest drop, about $8,400 a year at $107,000, is outside the picture. From $120,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Massachusetts.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $60,000 a year. The biggest drop is at $107,000 a year, where some help ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   40000,
+   45000,
+   50000,
+   55000
+  ],
+  "yratio": 37.62,
+  "drops": [
+   5.2
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 70.3,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1005.703125,
+  "sourceY": 1129.953125,
+  "answerY": 185.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "ma-1280-light": {
+  "answer": "You are paid $30,000 a year. You keep $44,773. Near $40,000, more pay can mean less money: past it you would keep about $400 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $40,000, not at $0. The biggest drop, about $8,400 a year at $107,000, is outside the picture. From $120,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Massachusetts.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $60,000 a year. The biggest drop is at $107,000 a year, where some help ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   40000,
+   45000,
+   50000,
+   55000
+  ],
+  "yratio": 37.62,
+  "drops": [
+   6.3
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 122,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 995.234375,
+  "sourceY": 1096.234375,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "tx-390-light": {
+  "answer": "You are paid $20,000 a year. You keep $35,730. Near $51,000, more pay can mean less money: past it you would keep about $1,000 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $17,500, not at $0. The biggest drop, about $4,400 a year at $107,000, is outside the picture. From $114,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Texas.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $10,000 a year to $71,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $20,000 a year.",
+  "yTicks": [
+   20000,
+   30000,
+   40000,
+   50000,
+   60000
+  ],
+  "yratio": 49.69,
+  "drops": [
+   3.9
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 150.4,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1005.703125,
+  "sourceY": 1129.953125,
+  "answerY": 185.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "tx-1280-light": {
+  "answer": "You are paid $20,000 a year. You keep $35,730. Near $51,000, more pay can mean less money: past it you would keep about $1,000 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $17,500, not at $0. The biggest drop, about $4,400 a year at $107,000, is outside the picture. From $114,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Texas.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $10,000 a year to $71,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $20,000 a year.",
+  "yTicks": [
+   20000,
+   30000,
+   40000,
+   50000,
+   60000
+  ],
+  "yratio": 49.69,
+  "drops": [
+   4.7
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 263.9,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 995.234375,
+  "sourceY": 1096.234375,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "nj-390-light": {
+  "answer": "You are paid $30,000 a year. You keep $45,204. Near $38,000, more pay can mean less money: past it you would keep about $1,100 less a year. People call this a benefits cliff. One more thing: at $97,000, your kids' health plan for kids stops, but not that day. Later, you would keep about $3,200 less a year.",
+  "caption": "The side numbers start at $37,500, not at $0. The biggest drop, about $2,400 a year at $107,000, is outside the picture. From $111,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in New Jersey.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $58,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   40000,
+   45000,
+   50000
+  ],
+  "yratio": 10.27,
+  "drops": [
+   14,
+   30.6
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 59.4,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": 1305.171875,
+  "captionY": 1164.921875,
+  "sourceY": 1442.546875,
+  "answerY": 185.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "nj-1280-light": {
+  "answer": "You are paid $30,000 a year. You keep $45,204. Near $38,000, more pay can mean less money: past it you would keep about $1,100 less a year. People call this a benefits cliff. One more thing: at $97,000, your kids' health plan for kids stops, but not that day. Later, you would keep about $3,200 less a year.",
+  "caption": "The side numbers start at $38,125, not at $0, so the drops are easy to see. The biggest drop, about $2,400 a year at $107,000, is outside the picture. From $111,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in New Jersey.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $20,000 a year to $58,000 a year. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year.",
+  "yTicks": [
+   40000,
+   43000,
+   45000,
+   48000,
+   50000
+  ],
+  "yratio": 9.41,
+  "drops": [
+   18.3,
+   15.2,
+   25.1
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 102.3,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": 1317.859375,
+  "captionY": 1177.609375,
+  "sourceY": 1402.546875,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "monthly-390-light": {
+  "answer": "You are paid $3,000 a month. You keep $28,278. Near $5,250 a month, more pay can mean less money: past it you would keep about $200 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $15,000, not at $0. From $5,350 a month up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Colorado.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $2,150 a month to $6,900 a month. The biggest drop is at $5,250 a month, where some help ends. The household sits at $3,000 a month.",
+  "yTicks": [
+   20000,
+   40000,
+   60000
+  ],
+  "yratio": 244.02,
+  "drops": [
+   0.8
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 147.3,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1023.046875,
+  "sourceY": 1124.046875,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "monthly-1280-light": {
+  "answer": "You are paid $3,000 a month. You keep $28,278. Near $5,250 a month, more pay can mean less money: past it you would keep about $200 less a year. People call this a benefits cliff.",
+  "caption": "The side numbers start at $15,000, not at $0. These are estimates. They use the rules for 2026 in Colorado.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": null,
+  "aria": "A line of the money this household keeps as pay rises from $2,150 a month to $6,900 a month. The biggest drop is at $5,250 a month, where some help ends. The household sits at $3,000 a month.",
+  "yTicks": [
+   20000,
+   30000,
+   40000,
+   50000,
+   60000
+  ],
+  "yratio": 244.02,
+  "drops": [
+   1
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 251.2,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1067.171875,
+  "sourceY": 1121.671875,
+  "answerY": 171,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ },
+ "print-390": {
+  "masthead": "HotGap A parent with 2 kids, ages 3 and 7, in California.",
+  "chips": false,
+  "readout": false,
+  "summary": false,
+  "tableOpen": true,
+  "ys": [
+   "hg-print-only masthead:34",
+   "answer:105",
+   "chart-title:450",
+   "[object SVGAnimatedString]:517",
+   "hg-rows:1494",
+   "hg-rows assumed:2837"
+  ],
+  "svgW": "640",
+  "pages": 4,
+  "inks": [
+   "65,75,85",
+   "18,23,28",
+   "94,104,113",
+   "250,251,252",
+   "113,51,102",
+   "94,104,113",
+   "18,23,28",
+   "113,51,102",
+   "65,75,85",
+   "113,51,102",
+   "18,23,28",
+   "65,75,85",
+   "18,23,28",
+   "94,104,113"
+  ]
+ },
+ "print-1280": {
+  "masthead": "HotGap A parent with 2 kids, ages 3 and 7, in California.",
+  "chips": false,
+  "readout": false,
+  "summary": false,
+  "tableOpen": true,
+  "ys": [
+   "hg-print-only masthead:34",
+   "answer:81",
+   "chart-title:424",
+   "[object SVGAnimatedString]:458",
+   "hg-rows:1430",
+   "hg-rows assumed:2351"
+  ],
+  "svgW": "640",
+  "pages": 4,
+  "inks": [
+   "65,75,85",
+   "18,23,28",
+   "94,104,113",
+   "250,251,252",
+   "113,51,102",
+   "94,104,113",
+   "18,23,28",
+   "113,51,102",
+   "65,75,85",
+   "113,51,102",
+   "18,23,28",
+   "65,75,85",
+   "18,23,28",
+   "94,104,113"
+  ]
+ },
+ "archetype-390-light": {
+  "answer": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "caption": "The side numbers start at $73,125, not at $0, so the drops are easy to see. The biggest drop, about $14,000 a year at $92,000, is outside the picture. From $142,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+  "status": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
+  "aria": "A line of the money this household keeps as pay rises from $18,000 a year to $60,000 a year. It is flat from $28,000 to $37,000. It is flat again from $39,000 to $44,000. It is flat again from $44,000 to $47,000. It is flat again from $48,000 to $53,000. It is flat again from $72,000 to $75,000. It is flat again from $87,000 to $142,000. The biggest drop is at $92,000 a year, where child care help ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "yTicks": [
+   75000,
+   78000,
+   80000,
+   83000
+  ],
+  "yratio": 4.73,
+  "drops": [
+   41.4,
+   16.2,
+   3.8,
+   14.7
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 40.4,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Your flat stretch",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1132.59375,
+  "sourceY": 1280.09375,
+  "answerY": 279.25,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 390,
+  "innerW": 390,
+  "errors": []
+ },
+ "archetype-390-after-try-again": {
+  "status": "We still could not get your exact numbers. These are numbers for a family like yours in your state.",
+  "focus": "Try again",
+  "inSource": true
+ },
+ "archetype-1280-light": {
+  "answer": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "caption": "The side numbers start at $73,125, not at $0, so the drops are easy to see. The biggest drop, about $14,000 a year at $92,000, is outside the picture. From $142,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "readout": "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+  "status": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
+  "aria": "A line of the money this household keeps as pay rises from $18,000 a year to $60,000 a year. It is flat from $28,000 to $37,000. It is flat again from $39,000 to $44,000. It is flat again from $44,000 to $47,000. It is flat again from $48,000 to $53,000. It is flat again from $72,000 to $75,000. It is flat again from $87,000 to $142,000. The biggest drop is at $92,000 a year, where child care help ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "yTicks": [
+   75000,
+   78000,
+   80000,
+   83000
+  ],
+  "yratio": 4.73,
+  "drops": [
+   49.9,
+   19.5,
+   4.5,
+   17.6
+  ],
+  "hollow": 0,
+  "stubs": 0,
+  "later": 0,
+  "nearestMarkToDiamond": 52.1,
+  "collisions": [],
+  "keys": [
+   "Money you keep",
+   "Your flat stretch",
+   "Other flat stretches",
+   "A drop this year",
+   "You now"
+  ],
+  "incompleteY": null,
+  "captionY": 1071.375,
+  "sourceY": 1195.625,
+  "answerY": 241.5,
+  "chipsVisible": false,
+  "summaryVisible": true,
+  "scrollW": 1280,
+  "innerW": 1280,
+  "errors": []
+ }
+}

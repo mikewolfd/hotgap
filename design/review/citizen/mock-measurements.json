@@ -1,0 +1,258 @@
+{
+ "390": {
+  "pageH": 5014,
+  "masthead": {
+   "y": 0,
+   "h": 89.6,
+   "w": 390
+  },
+  "who": "A parent with two kids, ages 3 and 7, in Colorado",
+  "answer": {
+   "y": 146.6,
+   "h": 159.2,
+   "w": 335.1
+  },
+  "answerText": "You are paid $38,000 a year. You keep $84,371. More pay does not add to that until you are paid $45,000: a raise of $7,000.",
+  "chart": {
+   "y": 585,
+   "h": 260,
+   "w": 358
+  },
+  "yratio": "3.93",
+  "caption": "The side numbers start at $20,000, not at $0, so the drops are easy to see. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Colorado.",
+  "readout": "Paid $38,000 a year, you keep $84,371. This pay is inside your flat stretch.",
+  "source": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.Try againSource: HotGap, from PolicyEngine 2.5.0 with 2026 rules. Rent: HUD Fair Market Rents, FY2026. Child care price: county 2015, grown to 2026 dollars. Sweep of 2026-09-16. Money kept is what is left after taxes and health-plan premiums.",
+  "steps": [
+   "$7,000Cash help ends. It is called TANF cash assistance. You keep about $3,900 less.",
+   "$27,000Your tax breaks get smaller here. You keep about $600 less.",
+   "$38,000Your own free state health plan ends. It is called Medicaid. Then help paying for health insurance starts. It is called the Premium tax credit. You keep about $200 less.",
+   "$41,000Your kids' free state health plan would end. It is called Medicaid. Then a health plan for kids would start. It is called CHIP.",
+   "$42,000Your tax breaks would get smaller here. You would keep about $300 less.",
+   "$47,000Your tax breaks would get smaller here. You would keep about $400 less.",
+   "$52,000Your tax breaks would get smaller here. You would keep about $800 less.",
+   "$54,000Food help would end. It is called SNAP. Food help for moms and babies would end. It is called WIC. Some goes on until $55,000: $713 of food help and $181 of food help for moms and babies. You would keep about $2,400 less.",
+   "$55,000Child care help would end. It is called the CCDF child care subsidy. You would keep about $25,400 less. This is the biggest drop.",
+   "$59,000A tax break for workers would end. It is called the Earned Income Tax Credit (EITC).",
+   "$61,000Your tax breaks would get smaller here. You would keep about $900 less.",
+   "$73,000A health plan for kids would end. It is called CHIP. Then help paying for health insurance would start. It is called the Premium tax credit.",
+   "$107,000Help paying for health insurance would end. It is called the Premium tax credit. You would keep about $3,800 less."
+  ],
+  "assumed": [
+   "Rent$1,735 a month. The usual rent in El Paso County, the county we use for Colorado.",
+   "Child care$2,773 a month for two kids. The usual price of day care there.",
+   "Help you getFood help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), food help for moms and babies (WIC) and child care help (CCDF child care subsidy). We count each as if you get it.",
+   "Not countedHousing help (Housing voucher) and free early learning (Head Start). We count them as if you do not get them.",
+   "YouAge 30. A U.S. citizen. No one in the home has a disability.",
+   "SavingsNone. No child support, SSDI or unemployment pay.",
+   "HoursNot used. You gave your pay by the year."
+  ],
+  "reach": "About 4 in 10 parents like you in Colorado are paid $38,000 a year or less. The count could be off by a few thousand dollars either way.",
+  "reachSource": "From U.S. Census Bureau ACS 2024 1-Year public-use microdata, grown to 2026 dollars. 393 households in this cell; the margin at this point is about $8,000.",
+  "hours": "Colorado's lowest legal pay is $15.16 an hour. Full-time work at that pay is about $31,500 a year.",
+  "texts": [
+   [
+    "$20k",
+    "hg-tick"
+   ],
+   [
+    "$40k",
+    "hg-tick"
+   ],
+   [
+    "$60k",
+    "hg-tick"
+   ],
+   [
+    "$80k",
+    "hg-tick"
+   ],
+   [
+    "$100k",
+    "hg-tick"
+   ],
+   [
+    "$120k",
+    "hg-tick"
+   ],
+   [
+    "$20k",
+    "hg-tick"
+   ],
+   [
+    "$40k",
+    "hg-tick"
+   ],
+   [
+    "$60k",
+    "hg-tick"
+   ],
+   [
+    "$80k",
+    "hg-tick"
+   ],
+   [
+    "$100k",
+    "hg-tick"
+   ],
+   [
+    "$84,732",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "−$25,449",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "+$7,000",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "you",
+    "hg-label hg-label--ink"
+   ]
+  ],
+  "yTicks": [
+   "$20k",
+   "$40k",
+   "$60k",
+   "$80k",
+   "$100k",
+   "$120k",
+   "$20k",
+   "$40k",
+   "$60k",
+   "$80k",
+   "$100k"
+  ]
+ },
+ "1280": {
+  "pageH": 3882,
+  "masthead": {
+   "y": 0,
+   "h": 50.3,
+   "w": 640
+  },
+  "who": "A parent with two kids, ages 3 and 7, in Colorado",
+  "answer": {
+   "y": 107.3,
+   "h": 182.4,
+   "w": 566.9
+  },
+  "answerText": "You are paid $38,000 a year. You keep $84,371. More pay does not add to that until you are paid $45,000: a raise of $7,000.",
+  "chart": {
+   "y": 510.4,
+   "h": 300,
+   "w": 608
+  },
+  "yratio": "3.93",
+  "caption": "The side numbers start at $20,000, not at $0, so the drops are easy to see. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in Colorado.",
+  "readout": "Paid $38,000 a year, you keep $84,371. This pay is inside your flat stretch.",
+  "source": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.Try againSource: HotGap, from PolicyEngine 2.5.0 with 2026 rules. Rent: HUD Fair Market Rents, FY2026. Child care price: county 2015, grown to 2026 dollars. Sweep of 2026-09-16. Money kept is what is left after taxes and health-plan premiums.",
+  "steps": [
+   "$7,000Cash help ends. It is called TANF cash assistance. You keep about $3,900 less.",
+   "$27,000Your tax breaks get smaller here. You keep about $600 less.",
+   "$38,000Your own free state health plan ends. It is called Medicaid. Then help paying for health insurance starts. It is called the Premium tax credit. You keep about $200 less.",
+   "$41,000Your kids' free state health plan would end. It is called Medicaid. Then a health plan for kids would start. It is called CHIP.",
+   "$42,000Your tax breaks would get smaller here. You would keep about $300 less.",
+   "$47,000Your tax breaks would get smaller here. You would keep about $400 less.",
+   "$52,000Your tax breaks would get smaller here. You would keep about $800 less.",
+   "$54,000Food help would end. It is called SNAP. Food help for moms and babies would end. It is called WIC. Some goes on until $55,000: $713 of food help and $181 of food help for moms and babies. You would keep about $2,400 less.",
+   "$55,000Child care help would end. It is called the CCDF child care subsidy. You would keep about $25,400 less. This is the biggest drop.",
+   "$59,000A tax break for workers would end. It is called the Earned Income Tax Credit (EITC).",
+   "$61,000Your tax breaks would get smaller here. You would keep about $900 less.",
+   "$73,000A health plan for kids would end. It is called CHIP. Then help paying for health insurance would start. It is called the Premium tax credit.",
+   "$107,000Help paying for health insurance would end. It is called the Premium tax credit. You would keep about $3,800 less."
+  ],
+  "assumed": [
+   "Rent$1,735 a month. The usual rent in El Paso County, the county we use for Colorado.",
+   "Child care$2,773 a month for two kids. The usual price of day care there.",
+   "Help you getFood help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), food help for moms and babies (WIC) and child care help (CCDF child care subsidy). We count each as if you get it.",
+   "Not countedHousing help (Housing voucher) and free early learning (Head Start). We count them as if you do not get them.",
+   "YouAge 30. A U.S. citizen. No one in the home has a disability.",
+   "SavingsNone. No child support, SSDI or unemployment pay.",
+   "HoursNot used. You gave your pay by the year."
+  ],
+  "reach": "About 4 in 10 parents like you in Colorado are paid $38,000 a year or less. The count could be off by a few thousand dollars either way.",
+  "reachSource": "From U.S. Census Bureau ACS 2024 1-Year public-use microdata, grown to 2026 dollars. 393 households in this cell; the margin at this point is about $8,000.",
+  "hours": "Colorado's lowest legal pay is $15.16 an hour. Full-time work at that pay is about $31,500 a year.",
+  "texts": [
+   [
+    "$20k",
+    "hg-tick"
+   ],
+   [
+    "$40k",
+    "hg-tick"
+   ],
+   [
+    "$60k",
+    "hg-tick"
+   ],
+   [
+    "$80k",
+    "hg-tick"
+   ],
+   [
+    "$100k",
+    "hg-tick"
+   ],
+   [
+    "$120k",
+    "hg-tick"
+   ],
+   [
+    "$20k",
+    "hg-tick"
+   ],
+   [
+    "$40k",
+    "hg-tick"
+   ],
+   [
+    "$60k",
+    "hg-tick"
+   ],
+   [
+    "$80k",
+    "hg-tick"
+   ],
+   [
+    "$100k",
+    "hg-tick"
+   ],
+   [
+    "$84,732",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "back to even",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "−$25,449",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "+$7,000",
+    "hg-label hg-label--loss hg-label--halo"
+   ],
+   [
+    "you",
+    "hg-label hg-label--ink"
+   ]
+  ],
+  "yTicks": [
+   "$20k",
+   "$40k",
+   "$60k",
+   "$80k",
+   "$100k",
+   "$120k",
+   "$20k",
+   "$40k",
+   "$60k",
+   "$80k",
+   "$100k"
+  ]
+ }
+}

@@ -1,0 +1,1565 @@
+{
+ "390-light": {
+  "tabOrderToChart": [
+   "A.hg-skip Skip to the answer",
+   "BUTTON.hg-button Change my answers",
+   "BUTTON.hg-button Print",
+   "BUTTON.hg-button Edit",
+   "DIV#chart.hg-chart A line of the money this"
+  ],
+  "chartFocus": {
+   "tag": "DIV",
+   "cls": "hg-chart",
+   "id": "chart",
+   "text": "A line of the money this household keeps as pay rises from $",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "4px",
+   "radius": "6px",
+   "box": {
+    "x": 16,
+    "y": 597.578125,
+    "w": 358,
+    "h": 260
+   },
+   "viewportY": 583.578125
+  },
+  "markFocus": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 118.796875,
+    "y": 738.6875,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 724.6875
+  },
+  "rowOpen": {
+   "id": "step-29000",
+   "bg": "rgb(241, 243, 246)",
+   "shadow": "rgb(241, 243, 246) 8px 0px 0px 0px, rgb(241, 243, 246) -8px 0px 0px 0px, rgb(18, 23, 28) -11px 0px 0px 0px",
+   "box": {
+    "y": 1344.421875,
+    "h": 144.03125,
+    "viewportY": 700.421875
+   },
+   "close": {
+    "w": 60.125,
+    "h": 32
+   },
+   "markRing": "2px rgb(18, 23, 28) inset 12px",
+   "readout": "A drop near $29,000 a year. You keep about $2,400 less a year here.",
+   "focused": "hg-mark"
+  },
+  "afterEscape": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 118.796875,
+    "y": 738.6875,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 94.6875
+  },
+  "rowClosed": true,
+  "readoutAfterKeys": "Paid $9,000 a year, you keep $36,494. Here, more pay means more money.",
+  "readoutBox": {
+   "x": 16,
+   "y": 267.578125,
+   "width": 358,
+   "height": 46.5
+  },
+  "numbersOpen": {
+   "open": true,
+   "summaryDisplay": "list-item",
+   "marker": "normal",
+   "tableW": 358,
+   "scrollerW": 358,
+   "ths": [
+    {
+     "text": "Your pay",
+     "align": "right"
+    },
+    {
+     "text": "You keep",
+     "align": "right"
+    },
+    {
+     "text": "Drop",
+     "align": "right"
+    },
+    {
+     "text": "On the picture",
+     "align": "left"
+    }
+   ],
+   "rows": [
+    [
+     "$28,000",
+     "$45,020",
+     "",
+     "The top of your flat stretch"
+    ],
+    [
+     "$29,000",
+     "$42,632",
+     "−$2,387",
+     "A drop"
+    ],
+    [
+     "$30,000",
+     "$42,830",
+     "",
+     "You now"
+    ],
+    [
+     "$37,000",
+     "$43,885",
+     "−$600",
+     "A drop"
+    ],
+    [
+     "$40,000",
+     "$43,994",
+     "−$677",
+     "A drop"
+    ],
+    [
+     "$43,000",
+     "$45,448",
+     "",
+     "Back to even"
+    ],
+    [
+     "$119,000",
+     "$78,999",
+     "",
+     "Safe from here"
+    ]
+   ]
+  },
+  "dialog": {
+   "open": true,
+   "box": {
+    "x": 20,
+    "y": 311.484375,
+    "w": 350,
+    "h": 221.03125
+   },
+   "border": "rgb(174, 183, 192)",
+   "radius": "6px",
+   "title": "Savings",
+   "focused": "INPUT d-savings-0",
+   "buttons": [
+    {
+     "text": "Cancel",
+     "h": 44
+    },
+    {
+     "text": "Save",
+     "h": 44
+    }
+   ]
+  },
+  "afterDialog": {
+   "tag": "BUTTON",
+   "cls": "hg-chip",
+   "id": "",
+   "text": "Savingsnone",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "2px",
+   "radius": "6px",
+   "box": {
+    "x": 16,
+    "y": 439.5,
+    "w": 134.34375,
+    "h": 44
+   },
+   "viewportY": 439.5
+  },
+  "inputsOpen": {
+   "h": 836,
+   "chips": 22
+  },
+  "rings": {
+   "skip": {
+    "tag": "A",
+    "cls": "hg-skip",
+    "id": "",
+    "text": "Skip to the answer",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 8,
+     "w": 163.625,
+     "h": 52.34375
+    },
+    "viewportY": 8
+   },
+   "change": {
+    "tag": "BUTTON",
+    "cls": "hg-button",
+    "id": "",
+    "text": "Change my answers",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 106.390625,
+     "y": 12,
+     "w": 189.40625,
+     "h": 44
+    },
+    "viewportY": 12
+   },
+   "chip": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Where94110, CA",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 127.5,
+     "w": 165.40625,
+     "h": 44
+    },
+    "viewportY": 127.5
+   },
+   "summary": {
+    "tag": "SUMMARY",
+    "cls": "",
+    "id": "",
+    "text": "Show the numbers",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 2041.390625,
+     "w": 358,
+     "h": 50.34375
+    },
+    "viewportY": 607.390625
+   },
+   "edit": {
+    "tag": "BUTTON",
+    "cls": "hg-button hg-button--small",
+    "id": "",
+    "text": "Edit",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 324.640625,
+     "y": 76.25,
+     "w": 49.359375,
+     "h": 32
+    },
+    "viewportY": 76.25
+   }
+  },
+  "toggle": {
+   "before": "You are paid $30,000 a year. You keep $42,830. More pay does not add to that until you are paid $43,000: a raise of $13,000.",
+   "after": "You are paid $30,000 a year. You keep $39,777. More pay does not add to that until you are paid $36,000: a raise of $6,000.",
+   "status": "You are paid $30,000 a year. You keep $39,777. More pay does not add to that until you are paid $36,000: a raise of $6,000.",
+   "statusHidden": "hg-source hg-visually-hidden",
+   "focused": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Gets food help (SNAP)no",
+    "outline": "none 3px rgb(18, 23, 28)",
+    "offset": "0px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 803.5,
+     "w": 225.4375,
+     "h": 44
+    },
+    "viewportY": 799.5
+   },
+   "loadingSeen": null
+  },
+  "loading": {
+   "status": "Doing the math… We check your help at 151 pay levels. This can take a few seconds.",
+   "answer": "",
+   "bodyH": 290,
+   "editorHidden": true
+  },
+  "failed": {
+   "text": "",
+   "rule": "rgb(138, 90, 0)",
+   "box": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "tryAgain": null,
+   "answer": "",
+   "editorHidden": true,
+   "status": "",
+   "bodyH": 399,
+   "focused": "BODY"
+  },
+  "reducedMotion": {
+   "durDraw": "0s",
+   "pathAnim": "0s",
+   "matchMediaInPage": null
+  },
+  "pdf": {
+   "pages": 5,
+   "inks": [
+    "94,104,113",
+    "18,23,28",
+    "65,75,85",
+    "250,251,252",
+    "113,51,102"
+   ],
+   "screenInk": "rgb(18, 23, 28)"
+  },
+  "print": {
+   "ink": "rgb(18, 23, 28)",
+   "bg": "rgb(255, 255, 255)",
+   "scheme": "light",
+   "numbersOpen": true,
+   "hidden": [
+    [
+     ".hg-scenario--sticky",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-scenario__summary",
+     [
+      "none"
+     ]
+    ],
+    [
+     "#inputs",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-readout",
+     [
+      "block"
+     ]
+    ],
+    [
+     ".hg-button",
+     [
+      "none",
+      "none",
+      "none",
+      "none",
+      "none"
+     ]
+    ],
+    [
+     "#chart .hg-marks",
+     [
+      "block"
+     ]
+    ]
+   ],
+   "chartW": 358,
+   "tickSize": "12px",
+   "pageW": 390,
+   "pageH": 4731,
+   "chipsVisible": 22
+  }
+ },
+ "390-dark": {
+  "tabOrderToChart": [
+   "A.hg-skip Skip to the answer",
+   "BUTTON.hg-button Change my answers",
+   "BUTTON.hg-button Print",
+   "BUTTON.hg-button Edit",
+   "DIV#chart.hg-chart A line of the money this"
+  ],
+  "chartFocus": {
+   "tag": "DIV",
+   "cls": "hg-chart",
+   "id": "chart",
+   "text": "A line of the money this household keeps as pay rises from $",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "4px",
+   "radius": "6px",
+   "box": {
+    "x": 16,
+    "y": 597.578125,
+    "w": 358,
+    "h": 260
+   },
+   "viewportY": 583.578125
+  },
+  "markFocus": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 118.796875,
+    "y": 738.6875,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 724.6875
+  },
+  "rowOpen": {
+   "id": "step-29000",
+   "bg": "rgb(29, 36, 42)",
+   "shadow": "rgb(29, 36, 42) 8px 0px 0px 0px, rgb(29, 36, 42) -8px 0px 0px 0px, rgb(242, 245, 247) -11px 0px 0px 0px",
+   "box": {
+    "y": 1344.421875,
+    "h": 144.03125,
+    "viewportY": 700.421875
+   },
+   "close": {
+    "w": 60.125,
+    "h": 32
+   },
+   "markRing": "2px rgb(242, 245, 247) inset 12px",
+   "readout": "A drop near $29,000 a year. You keep about $2,400 less a year here.",
+   "focused": "hg-mark"
+  },
+  "afterEscape": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 118.796875,
+    "y": 738.6875,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 94.6875
+  },
+  "rowClosed": true,
+  "readoutAfterKeys": "Paid $9,000 a year, you keep $36,494. Here, more pay means more money.",
+  "readoutBox": {
+   "x": 16,
+   "y": 267.578125,
+   "width": 358,
+   "height": 46.5
+  },
+  "numbersOpen": {
+   "open": true,
+   "summaryDisplay": "list-item",
+   "marker": "normal",
+   "tableW": 358,
+   "scrollerW": 358,
+   "ths": [
+    {
+     "text": "Your pay",
+     "align": "right"
+    },
+    {
+     "text": "You keep",
+     "align": "right"
+    },
+    {
+     "text": "Drop",
+     "align": "right"
+    },
+    {
+     "text": "On the picture",
+     "align": "left"
+    }
+   ],
+   "rows": [
+    [
+     "$28,000",
+     "$45,020",
+     "",
+     "The top of your flat stretch"
+    ],
+    [
+     "$29,000",
+     "$42,632",
+     "−$2,387",
+     "A drop"
+    ],
+    [
+     "$30,000",
+     "$42,830",
+     "",
+     "You now"
+    ],
+    [
+     "$37,000",
+     "$43,885",
+     "−$600",
+     "A drop"
+    ],
+    [
+     "$40,000",
+     "$43,994",
+     "−$677",
+     "A drop"
+    ],
+    [
+     "$43,000",
+     "$45,448",
+     "",
+     "Back to even"
+    ],
+    [
+     "$119,000",
+     "$78,999",
+     "",
+     "Safe from here"
+    ]
+   ]
+  },
+  "dialog": {
+   "open": true,
+   "box": {
+    "x": 20,
+    "y": 311.484375,
+    "w": 350,
+    "h": 221.03125
+   },
+   "border": "rgb(63, 74, 83)",
+   "radius": "6px",
+   "title": "Savings",
+   "focused": "INPUT d-savings-0",
+   "buttons": [
+    {
+     "text": "Cancel",
+     "h": 44
+    },
+    {
+     "text": "Save",
+     "h": 44
+    }
+   ]
+  },
+  "afterDialog": {
+   "tag": "BUTTON",
+   "cls": "hg-chip",
+   "id": "",
+   "text": "Savingsnone",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "2px",
+   "radius": "6px",
+   "box": {
+    "x": 16,
+    "y": 439.5,
+    "w": 134.34375,
+    "h": 44
+   },
+   "viewportY": 439.5
+  },
+  "inputsOpen": {
+   "h": 836,
+   "chips": 22
+  },
+  "rings": {
+   "skip": {
+    "tag": "A",
+    "cls": "hg-skip",
+    "id": "",
+    "text": "Skip to the answer",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 8,
+     "w": 163.625,
+     "h": 52.34375
+    },
+    "viewportY": 8
+   },
+   "change": {
+    "tag": "BUTTON",
+    "cls": "hg-button",
+    "id": "",
+    "text": "Change my answers",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 106.390625,
+     "y": 12,
+     "w": 189.40625,
+     "h": 44
+    },
+    "viewportY": 12
+   },
+   "chip": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Where94110, CA",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 127.5,
+     "w": 165.40625,
+     "h": 44
+    },
+    "viewportY": 127.5
+   },
+   "summary": {
+    "tag": "SUMMARY",
+    "cls": "",
+    "id": "",
+    "text": "Show the numbers",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 2041.390625,
+     "w": 358,
+     "h": 50.34375
+    },
+    "viewportY": 607.390625
+   },
+   "edit": {
+    "tag": "BUTTON",
+    "cls": "hg-button hg-button--small",
+    "id": "",
+    "text": "Edit",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 324.640625,
+     "y": 76.25,
+     "w": 49.359375,
+     "h": 32
+    },
+    "viewportY": 76.25
+   }
+  },
+  "failed": {
+   "text": "",
+   "rule": "rgb(224, 176, 86)",
+   "box": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "tryAgain": null,
+   "answer": "",
+   "editorHidden": true,
+   "status": "",
+   "bodyH": 399,
+   "focused": "BODY"
+  },
+  "pdf": {
+   "pages": 5,
+   "inks": [
+    "94,104,113",
+    "18,23,28",
+    "65,75,85",
+    "250,251,252",
+    "113,51,102"
+   ],
+   "screenInk": "rgb(242, 245, 247)"
+  },
+  "print": {
+   "ink": "rgb(18, 23, 28)",
+   "bg": "rgb(255, 255, 255)",
+   "scheme": "light",
+   "numbersOpen": true,
+   "hidden": [
+    [
+     ".hg-scenario--sticky",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-scenario__summary",
+     [
+      "none"
+     ]
+    ],
+    [
+     "#inputs",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-readout",
+     [
+      "block"
+     ]
+    ],
+    [
+     ".hg-button",
+     [
+      "none",
+      "none",
+      "none",
+      "none",
+      "none"
+     ]
+    ],
+    [
+     "#chart .hg-marks",
+     [
+      "block"
+     ]
+    ]
+   ],
+   "chartW": 358,
+   "tickSize": "12px",
+   "pageW": 390,
+   "pageH": 4731,
+   "chipsVisible": 22
+  }
+ },
+ "1280-light": {
+  "tabOrderToChart": [
+   "A.hg-skip Skip to the answer",
+   "BUTTON.hg-button Change my answers",
+   "BUTTON.hg-button Print",
+   "BUTTON.hg-chip Where94110, CA",
+   "BUTTON.hg-chip Home1 adult, kids 3 & 7",
+   "BUTTON.hg-chip Pay$30,000 a year",
+   "BUTTON.hg-chip Rentnone",
+   "BUTTON.hg-chip Child carenone",
+   "BUTTON.hg-chip Your age30",
+   "BUTTON.hg-chip SSDInone",
+   "BUTTON.hg-chip Child supportnone",
+   "BUTTON.hg-chip Unemployment paynone",
+   "BUTTON.hg-chip Savingsnone",
+   "BUTTON.hg-chip Your statusUS citizen",
+   "BUTTON.hg-chip Kids with a disabilityno",
+   "BUTTON.hg-chip Child care helpoff",
+   "BUTTON.hg-chip Head Startoff",
+   "BUTTON.hg-chip Housing helpoff",
+   "BUTTON.hg-chip Health plan from a jobof",
+   "BUTTON.hg-chip Self-employedoff",
+   "BUTTON.hg-chip You have a disabilityoff",
+   "BUTTON.hg-chip Gets food help (SNAP)yes",
+   "BUTTON.hg-chip Gets cash help (TANF)yes",
+   "BUTTON.hg-chip Gets Medicaidyes",
+   "BUTTON.hg-chip Gets WICyes",
+   "DIV#chart.hg-chart A line of the money this"
+  ],
+  "chartFocus": {
+   "tag": "DIV",
+   "cls": "hg-chart",
+   "id": "chart",
+   "text": "A line of the money this household keeps as pay rises from $",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "4px",
+   "radius": "6px",
+   "box": {
+    "x": 336,
+    "y": 715.75,
+    "w": 608,
+    "h": 300
+   },
+   "viewportY": 599.75
+  },
+  "markFocus": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 511.1875,
+    "y": 884.84375,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 768.84375
+  },
+  "rowOpen": {
+   "id": "step-29000",
+   "bg": "rgb(241, 243, 246)",
+   "shadow": "rgb(241, 243, 246) 8px 0px 0px 0px, rgb(241, 243, 246) -8px 0px 0px 0px, rgb(18, 23, 28) -11px 0px 0px 0px",
+   "box": {
+    "y": 1432.359375,
+    "h": 117.6875,
+    "viewportY": 782.359375
+   },
+   "close": {
+    "w": 60.125,
+    "h": 32
+   },
+   "markRing": "2px rgb(18, 23, 28) inset 12px",
+   "readout": "A drop near $29,000 a year. You keep about $2,400 less a year here.",
+   "focused": "hg-mark"
+  },
+  "afterEscape": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 511.1875,
+    "y": 884.84375,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 234.84375
+  },
+  "rowClosed": true,
+  "readoutAfterKeys": "Paid $9,000 a year, you keep $36,494. Here, more pay means more money.",
+  "readoutBox": {
+   "x": 336,
+   "y": 373.75,
+   "width": 412.34375,
+   "height": 46.5
+  },
+  "numbersOpen": {
+   "open": true,
+   "summaryDisplay": "list-item",
+   "marker": "normal",
+   "tableW": 608,
+   "scrollerW": 608,
+   "ths": [
+    {
+     "text": "Your pay",
+     "align": "right"
+    },
+    {
+     "text": "You keep",
+     "align": "right"
+    },
+    {
+     "text": "Drop",
+     "align": "right"
+    },
+    {
+     "text": "On the picture",
+     "align": "left"
+    }
+   ],
+   "rows": [
+    [
+     "$28,000",
+     "$45,020",
+     "",
+     "The top of your flat stretch"
+    ],
+    [
+     "$29,000",
+     "$42,632",
+     "−$2,387",
+     "A drop"
+    ],
+    [
+     "$30,000",
+     "$42,830",
+     "",
+     "You now"
+    ],
+    [
+     "$37,000",
+     "$43,885",
+     "−$600",
+     "A drop"
+    ],
+    [
+     "$40,000",
+     "$43,994",
+     "−$677",
+     "A drop"
+    ],
+    [
+     "$43,000",
+     "$45,448",
+     "",
+     "Back to even"
+    ],
+    [
+     "$119,000",
+     "$78,999",
+     "",
+     "Safe from here"
+    ]
+   ]
+  },
+  "dialog": {
+   "open": true,
+   "box": {
+    "x": 416,
+    "y": 339.484375,
+    "w": 448,
+    "h": 221.03125
+   },
+   "border": "rgb(174, 183, 192)",
+   "radius": "6px",
+   "title": "Savings",
+   "focused": "INPUT d-savings-0",
+   "buttons": [
+    {
+     "text": "Cancel",
+     "h": 44
+    },
+    {
+     "text": "Save",
+     "h": 44
+    }
+   ]
+  },
+  "afterDialog": {
+   "tag": "BUTTON",
+   "cls": "hg-chip",
+   "id": "",
+   "text": "Savingsnone",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "2px",
+   "radius": "6px",
+   "box": {
+    "x": 458.96875,
+    "y": 121,
+    "w": 134.34375,
+    "h": 44
+   },
+   "viewportY": 121
+  },
+  "rings": {
+   "skip": {
+    "tag": "A",
+    "cls": "hg-skip",
+    "id": "",
+    "text": "Skip to the answer",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 8,
+     "w": 163.625,
+     "h": 52.34375
+    },
+    "viewportY": 8
+   },
+   "change": {
+    "tag": "BUTTON",
+    "cls": "hg-button",
+    "id": "",
+    "text": "Change my answers",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 964.390625,
+     "y": 12,
+     "w": 189.40625,
+     "h": 44
+    },
+    "viewportY": 12
+   },
+   "chip": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Where94110, CA",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 48,
+     "y": 69,
+     "w": 165.40625,
+     "h": 44
+    },
+    "viewportY": 69
+   },
+   "summary": {
+    "tag": "SUMMARY",
+    "cls": "",
+    "id": "",
+    "text": "Show the numbers",
+    "outline": "solid 2px rgb(18, 23, 28)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 336,
+     "y": 1293.328125,
+     "w": 608,
+     "h": 50.34375
+    },
+    "viewportY": 577.328125
+   }
+  },
+  "toggle": {
+   "before": "You are paid $30,000 a year. You keep $42,830. More pay does not add to that until you are paid $43,000: a raise of $13,000.",
+   "after": "You are paid $30,000 a year. You keep $39,777. More pay does not add to that until you are paid $36,000: a raise of $6,000.",
+   "status": "You are paid $30,000 a year. You keep $39,777. More pay does not add to that until you are paid $36,000: a raise of $6,000.",
+   "statusHidden": "hg-source hg-visually-hidden",
+   "focused": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Gets food help (SNAP)no",
+    "outline": "none 3px rgb(18, 23, 28)",
+    "offset": "0px",
+    "radius": "6px",
+    "box": {
+     "x": 955.875,
+     "y": 173,
+     "w": 225.4375,
+     "h": 44
+    },
+    "viewportY": 173
+   },
+   "loadingSeen": null
+  },
+  "loading": {
+   "status": "Doing the math… We check your help at 151 pay levels. This can take a few seconds.",
+   "answer": "",
+   "bodyH": 458,
+   "editorHidden": true
+  },
+  "failed": {
+   "text": "",
+   "rule": "rgb(138, 90, 0)",
+   "box": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "tryAgain": null,
+   "answer": "",
+   "editorHidden": true,
+   "status": "",
+   "bodyH": 526,
+   "focused": "BODY"
+  },
+  "reducedMotion": {
+   "durDraw": "0s",
+   "pathAnim": "0s",
+   "matchMediaInPage": null
+  },
+  "pdf": {
+   "pages": 5,
+   "inks": [
+    "94,104,113",
+    "18,23,28",
+    "65,75,85",
+    "250,251,252",
+    "113,51,102"
+   ],
+   "screenInk": "rgb(18, 23, 28)"
+  },
+  "print": {
+   "ink": "rgb(18, 23, 28)",
+   "bg": "rgb(255, 255, 255)",
+   "scheme": "light",
+   "numbersOpen": true,
+   "hidden": [
+    [
+     ".hg-scenario--sticky",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-scenario__summary",
+     [
+      "none"
+     ]
+    ],
+    [
+     "#inputs",
+     [
+      "flex"
+     ]
+    ],
+    [
+     ".hg-readout",
+     [
+      "block"
+     ]
+    ],
+    [
+     ".hg-button",
+     [
+      "none",
+      "none",
+      "none",
+      "none",
+      "none"
+     ]
+    ],
+    [
+     "#chart .hg-marks",
+     [
+      "block"
+     ]
+    ]
+   ],
+   "chartW": 608,
+   "tickSize": "12px",
+   "pageW": 1280,
+   "pageH": 3935,
+   "chipsVisible": 22
+  }
+ },
+ "1280-dark": {
+  "tabOrderToChart": [
+   "A.hg-skip Skip to the answer",
+   "BUTTON.hg-button Change my answers",
+   "BUTTON.hg-button Print",
+   "BUTTON.hg-chip Where94110, CA",
+   "BUTTON.hg-chip Home1 adult, kids 3 & 7",
+   "BUTTON.hg-chip Pay$30,000 a year",
+   "BUTTON.hg-chip Rentnone",
+   "BUTTON.hg-chip Child carenone",
+   "BUTTON.hg-chip Your age30",
+   "BUTTON.hg-chip SSDInone",
+   "BUTTON.hg-chip Child supportnone",
+   "BUTTON.hg-chip Unemployment paynone",
+   "BUTTON.hg-chip Savingsnone",
+   "BUTTON.hg-chip Your statusUS citizen",
+   "BUTTON.hg-chip Kids with a disabilityno",
+   "BUTTON.hg-chip Child care helpoff",
+   "BUTTON.hg-chip Head Startoff",
+   "BUTTON.hg-chip Housing helpoff",
+   "BUTTON.hg-chip Health plan from a jobof",
+   "BUTTON.hg-chip Self-employedoff",
+   "BUTTON.hg-chip You have a disabilityoff",
+   "BUTTON.hg-chip Gets food help (SNAP)yes",
+   "BUTTON.hg-chip Gets cash help (TANF)yes",
+   "BUTTON.hg-chip Gets Medicaidyes",
+   "BUTTON.hg-chip Gets WICyes",
+   "DIV#chart.hg-chart A line of the money this"
+  ],
+  "chartFocus": {
+   "tag": "DIV",
+   "cls": "hg-chart",
+   "id": "chart",
+   "text": "A line of the money this household keeps as pay rises from $",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "4px",
+   "radius": "6px",
+   "box": {
+    "x": 336,
+    "y": 715.75,
+    "w": 608,
+    "h": 300
+   },
+   "viewportY": 599.75
+  },
+  "markFocus": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 511.1875,
+    "y": 884.84375,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 768.84375
+  },
+  "rowOpen": {
+   "id": "step-29000",
+   "bg": "rgb(29, 36, 42)",
+   "shadow": "rgb(29, 36, 42) 8px 0px 0px 0px, rgb(29, 36, 42) -8px 0px 0px 0px, rgb(242, 245, 247) -11px 0px 0px 0px",
+   "box": {
+    "y": 1432.359375,
+    "h": 117.6875,
+    "viewportY": 782.359375
+   },
+   "close": {
+    "w": 60.125,
+    "h": 32
+   },
+   "markRing": "2px rgb(242, 245, 247) inset 12px",
+   "readout": "A drop near $29,000 a year. You keep about $2,400 less a year here.",
+   "focused": "hg-mark"
+  },
+  "afterEscape": {
+   "tag": "BUTTON",
+   "cls": "hg-mark",
+   "id": "",
+   "text": "A drop near $29,000 a year. You keep about $2,400 less a yea",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "-6px",
+   "radius": "50%",
+   "box": {
+    "x": 511.1875,
+    "y": 884.84375,
+    "w": 44,
+    "h": 44
+   },
+   "viewportY": 234.84375
+  },
+  "rowClosed": true,
+  "readoutAfterKeys": "Paid $9,000 a year, you keep $36,494. Here, more pay means more money.",
+  "readoutBox": {
+   "x": 336,
+   "y": 373.75,
+   "width": 412.34375,
+   "height": 46.5
+  },
+  "numbersOpen": {
+   "open": true,
+   "summaryDisplay": "list-item",
+   "marker": "normal",
+   "tableW": 608,
+   "scrollerW": 608,
+   "ths": [
+    {
+     "text": "Your pay",
+     "align": "right"
+    },
+    {
+     "text": "You keep",
+     "align": "right"
+    },
+    {
+     "text": "Drop",
+     "align": "right"
+    },
+    {
+     "text": "On the picture",
+     "align": "left"
+    }
+   ],
+   "rows": [
+    [
+     "$28,000",
+     "$45,020",
+     "",
+     "The top of your flat stretch"
+    ],
+    [
+     "$29,000",
+     "$42,632",
+     "−$2,387",
+     "A drop"
+    ],
+    [
+     "$30,000",
+     "$42,830",
+     "",
+     "You now"
+    ],
+    [
+     "$37,000",
+     "$43,885",
+     "−$600",
+     "A drop"
+    ],
+    [
+     "$40,000",
+     "$43,994",
+     "−$677",
+     "A drop"
+    ],
+    [
+     "$43,000",
+     "$45,448",
+     "",
+     "Back to even"
+    ],
+    [
+     "$119,000",
+     "$78,999",
+     "",
+     "Safe from here"
+    ]
+   ]
+  },
+  "dialog": {
+   "open": true,
+   "box": {
+    "x": 416,
+    "y": 339.484375,
+    "w": 448,
+    "h": 221.03125
+   },
+   "border": "rgb(63, 74, 83)",
+   "radius": "6px",
+   "title": "Savings",
+   "focused": "INPUT d-savings-0",
+   "buttons": [
+    {
+     "text": "Cancel",
+     "h": 44
+    },
+    {
+     "text": "Save",
+     "h": 44
+    }
+   ]
+  },
+  "afterDialog": {
+   "tag": "BUTTON",
+   "cls": "hg-chip",
+   "id": "",
+   "text": "Savingsnone",
+   "outline": "solid 2px rgb(242, 245, 247)",
+   "offset": "2px",
+   "radius": "6px",
+   "box": {
+    "x": 458.96875,
+    "y": 121,
+    "w": 134.34375,
+    "h": 44
+   },
+   "viewportY": 121
+  },
+  "rings": {
+   "skip": {
+    "tag": "A",
+    "cls": "hg-skip",
+    "id": "",
+    "text": "Skip to the answer",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 16,
+     "y": 8,
+     "w": 163.625,
+     "h": 52.34375
+    },
+    "viewportY": 8
+   },
+   "change": {
+    "tag": "BUTTON",
+    "cls": "hg-button",
+    "id": "",
+    "text": "Change my answers",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 964.390625,
+     "y": 12,
+     "w": 189.40625,
+     "h": 44
+    },
+    "viewportY": 12
+   },
+   "chip": {
+    "tag": "BUTTON",
+    "cls": "hg-chip",
+    "id": "",
+    "text": "Where94110, CA",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 48,
+     "y": 69,
+     "w": 165.40625,
+     "h": 44
+    },
+    "viewportY": 69
+   },
+   "summary": {
+    "tag": "SUMMARY",
+    "cls": "",
+    "id": "",
+    "text": "Show the numbers",
+    "outline": "solid 2px rgb(242, 245, 247)",
+    "offset": "2px",
+    "radius": "6px",
+    "box": {
+     "x": 336,
+     "y": 1293.328125,
+     "w": 608,
+     "h": 50.34375
+    },
+    "viewportY": 577.328125
+   }
+  },
+  "failed": {
+   "text": "",
+   "rule": "rgb(224, 176, 86)",
+   "box": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "tryAgain": null,
+   "answer": "",
+   "editorHidden": true,
+   "status": "",
+   "bodyH": 526,
+   "focused": "BODY"
+  },
+  "pdf": {
+   "pages": 5,
+   "inks": [
+    "94,104,113",
+    "18,23,28",
+    "65,75,85",
+    "250,251,252",
+    "113,51,102"
+   ],
+   "screenInk": "rgb(242, 245, 247)"
+  },
+  "print": {
+   "ink": "rgb(18, 23, 28)",
+   "bg": "rgb(255, 255, 255)",
+   "scheme": "light",
+   "numbersOpen": true,
+   "hidden": [
+    [
+     ".hg-scenario--sticky",
+     [
+      "none"
+     ]
+    ],
+    [
+     ".hg-scenario__summary",
+     [
+      "none"
+     ]
+    ],
+    [
+     "#inputs",
+     [
+      "flex"
+     ]
+    ],
+    [
+     ".hg-readout",
+     [
+      "block"
+     ]
+    ],
+    [
+     ".hg-button",
+     [
+      "none",
+      "none",
+      "none",
+      "none",
+      "none"
+     ]
+    ],
+    [
+     "#chart .hg-marks",
+     [
+      "block"
+     ]
+    ]
+   ],
+   "chartW": 608,
+   "tickSize": "12px",
+   "pageW": 1280,
+   "pageH": 3935,
+   "chipsVisible": 22
+  }
+ },
+ "landing": {
+  "focused": {
+   "tag": "INPUT",
+   "cls": "editor__input editor__input--short",
+   "id": "f-zip",
+   "text": "",
+   "outline": "solid 2px rgb(18, 23, 28)",
+   "offset": "2px",
+   "radius": "6px",
+   "box": {
+    "x": 16,
+    "y": 316.0625,
+    "w": 144,
+    "h": 44
+   },
+   "viewportY": 316.0625
+  },
+  "h2": "If your pay goes up, do you keep more?",
+  "lead": "Answer four things. We check your help at every pay level and tell you what happens.",
+  "legends": [
+   "Where you live",
+   "Who lives with you",
+   "Adults",
+   "What you are paid",
+   "What you pay each month"
+  ],
+  "labels": [
+   "Your ZIP code",
+   "Or pick your state",
+   "Just me",
+   "Me and my spouse",
+   "How many kids live with you?",
+   "Your pay, before taxes",
+   "Per",
+   "Hours you work a week",
+   "Rent or house payment",
+   "Child care"
+  ],
+  "hints": [
+   "Five digits. We use it to find your state and county.",
+   "Kids under 18. Up to six.",
+   "Leave it blank if you are not sure. We then assume 40.",
+   "Put 0 if you pay nothing.",
+   "Put 0 if you pay nothing."
+  ],
+  "submit": "See my answer",
+  "privacy": "We do not save what you type. No sign up. No tracking.",
+  "summary": "Tell us about your home to see your answer.",
+  "chipsShown": 18,
+  "inputsDisplay": "none",
+  "status": 1,
+  "formH": 1214
+ }
+}
