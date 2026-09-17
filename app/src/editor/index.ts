@@ -182,7 +182,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const householdLabel = () => {
     const k = kids(), S = copy.summary;
     const adults = married() ? S.adults.two : S.adults.one;
-    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids[pluralKey(k.length)], { ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
+    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids[pluralKey(k.length) as "one" | "other"], { ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
   };
   const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);

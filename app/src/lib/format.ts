@@ -6,7 +6,10 @@
 // an HTML escape). A copy module holds no formatter: a slot's value is
 // formatted here and handed to the message (lib/copy.ts).
 import { DEFAULT_HOURS, fromAnnual, type ModelRecord, type PayUnit } from "@hotgap/core";
-import { LOCALE } from "./copy.js";
+import { intlLocale } from "./copy.js";
+
+/** The locale this page load formats in, fixed once the catalog is loaded (lib/copy.ts resolves it before any importer runs). */
+const LOCALE = intlLocale();
 
 const usd = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdCents = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
