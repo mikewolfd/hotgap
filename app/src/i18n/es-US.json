@@ -1,0 +1,1438 @@
+{
+  "_": {
+    "language": "es-US",
+    "status": "draft",
+    "note": "Borrador. Redactado por el modelo el 2026-09-17 a partir de en.json; pendiente de revisión por un hablante nativo antes de considerarse definitivo (app/README.md § Languages). Registro: el ciudadano y la hoja del cliente en usted, sencillo; el trabajador social, profesional; el periodista, citable. Los acrónimos de los programas se conservan; la frase sencilla se traduce. / A draft: machine-written 2026-09-17 from en.json, awaiting a native speaker's review.",
+    "drafted": "2026-09-17",
+    "reviewed": null
+  },
+  "editor": {
+    "wordmark": "HotGap",
+    "actions": {
+      "change": "Cambiar mis respuestas",
+      "print": "Imprimir"
+    },
+    "summary": {
+      "none": "Cuéntenos sobre su hogar para ver su respuesta.",
+      "edit": "Editar",
+      "line": "{place} · {household} · {pay}",
+      "place": {
+        "withCounty": "{state} · {county}",
+        "withZip": "{zip} · {state}",
+        "stateOnly": "{state}"
+      },
+      "household": {
+        "alone": "{adults}",
+        "withKids": "{adults}, {kids}"
+      },
+      "adults": {
+        "one": "1 adulto",
+        "two": "2 adultos"
+      },
+      "kids": "{n, plural, one {niño de {ages}} other {niños de {ages}}}"
+    },
+    "heading": "Si su pago sube, ¿le queda más?",
+    "lead": "Responda cuatro cosas. Revisamos su ayuda en cada nivel de pago y le decimos qué pasa.",
+    "privacy": "No guardamos lo que escribe. Sin registro. Sin rastreo.",
+    "place": {
+      "legend": "Dónde vive",
+      "zip": "Su código postal",
+      "zipHint": "Cinco dígitos. Lo usamos para saber su estado y su condado.",
+      "or": "O elija su estado",
+      "statePlaceholder": "Elija un estado",
+      "inState": "Eso está en {state}."
+    },
+    "household": {
+      "legend": "Quién vive con usted",
+      "adults": "Adultos",
+      "single": "Solo yo",
+      "married": "Mi pareja y yo",
+      "kids": "¿Cuántos niños viven con usted?",
+      "kidsHint": "Niños menores de 18. Hasta seis.",
+      "kidAge": "¿Cuántos años tiene el niño {n}?"
+    },
+    "pay": {
+      "legend": "Cuánto le pagan",
+      "amount": "Su pago, antes de impuestos",
+      "unit": "Por",
+      "units": {
+        "hour": "hora",
+        "week": "semana",
+        "month": "mes",
+        "year": "año"
+      },
+      "hours": "Horas que trabaja a la semana",
+      "hoursHint": "Déjelo en blanco si no está seguro. Entonces suponemos 40."
+    },
+    "costs": {
+      "legend": "Lo que paga cada mes",
+      "rent": "Renta o pago de la casa",
+      "childcare": "Cuidado de niños",
+      "typical": "Lo típico en {where}: {amount} al mes. Cámbielo si lo suyo es distinto.",
+      "none": "Ponga 0 si no paga nada."
+    },
+    "submit": "Ver mi respuesta",
+    "close": "Cerrar",
+    "chips": {
+      "where": "Dónde",
+      "household": "Hogar",
+      "pay": "Pago",
+      "rent": "Renta",
+      "childcare": "Cuidado de niños",
+      "age": "Su edad",
+      "spouseAge": "Edad de su pareja",
+      "spousePay": "Pago de su pareja",
+      "ssdi": "SSDI",
+      "childSupport": "Manutención de hijos",
+      "unemployment": "Pago por desempleo",
+      "savings": "Ahorros",
+      "status": "Su estatus",
+      "spouseStatus": "Estatus de su pareja",
+      "kidsDisabled": "Niños con una discapacidad",
+      "childcareSubsidy": "Ayuda para el cuidado de niños",
+      "headStart": "Head Start",
+      "housing": "Ayuda para la vivienda",
+      "energyAssistance": "Ayuda con la calefacción",
+      "heatInRent": "La calefacción va en mi renta",
+      "employerCoverage": "Plan de salud del trabajo",
+      "selfEmployed": "Trabajo por cuenta propia",
+      "disabled": "Usted vive con una discapacidad",
+      "spouseDisabled": "Su pareja vive con una discapacidad",
+      "snap": "Recibe ayuda para la comida (SNAP)",
+      "tanf": "Recibe ayuda en efectivo (TANF)",
+      "medicaid": "Recibe Medicaid",
+      "wic": "Recibe WIC",
+      "on": "sí",
+      "off": "no",
+      "yes": "sí",
+      "no": "no",
+      "none": "nada",
+      "aYear": "{amount} al año",
+      "aMonth": "{amount} al mes"
+    },
+    "dialog": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "age": "Edad en años",
+      "monthly": "Dólares al mes",
+      "yearly": "Dólares al año",
+      "dollars": "Dólares",
+      "choose": "Elija una opción",
+      "years": "Años en EE. UU.",
+      "yearsHint": "Solo si no es ciudadano.",
+      "hasDisability": "El niño {n}, de {age} años, vive con una discapacidad"
+    },
+    "status": {
+      "citizen": "Ciudadano de EE. UU.",
+      "lpr": "Tiene green card (residente permanente)",
+      "refugee": "Refugiado",
+      "asylee": "Asilado",
+      "deportation_withheld": "Deportación suspendida",
+      "cuban_haitian_entrant": "Entrante cubano o haitiano",
+      "conditional_entrant": "Entrante condicional",
+      "paroled_one_year": "Con permiso de permanencia (parole) de un año o más",
+      "daca": "DACA",
+      "tps": "TPS",
+      "undocumented": "Sin papeles"
+    },
+    "errors": {
+      "checkThis": "Revise esto.",
+      "check": "Por favor revise {label}.",
+      "fields": {
+        "zip": "su código postal",
+        "state": "su código postal o estado",
+        "annualEarnings": "su pago",
+        "hoursPerWeek": "sus horas",
+        "childAges": "las edades de sus niños",
+        "age": "su edad",
+        "spouseAge": "la edad de su pareja",
+        "monthlyRent": "su renta",
+        "monthlyChildcare": "lo que paga por el cuidado de niños",
+        "spouseAnnualEarnings": "el pago de su pareja",
+        "ssdiMonthly": "el SSDI",
+        "childSupportMonthly": "la manutención de hijos",
+        "unemploymentMonthly": "el pago por desempleo",
+        "savings": "los ahorros",
+        "youStatus": "su estatus",
+        "spouseStatus": "el estatus de su pareja",
+        "youYearsInUs": "los años en EE. UU.",
+        "spouseYearsInUs": "los años de su pareja en EE. UU.",
+        "childDisabled": "qué niños tienen una discapacidad",
+        "countyFips": "su condado"
+      }
+    }
+  },
+  "citizen": {
+    "loading": "Haciendo las cuentas… Revisamos su ayuda en {count} niveles de pago. Puede tardar unos segundos.",
+    "errorTitle": "No pudimos obtener su respuesta.",
+    "errors": {
+      "rate_limited": "Ha preguntado varias veces seguidas. Espere un minuto y vuelva a intentarlo.",
+      "busy": "El servicio de cálculo está ocupado ahora. Vuelva a intentarlo en unos segundos.",
+      "other": "El servicio de cálculo no respondió. Sus respuestas no se guardaron. Vuelva a intentarlo en un minuto."
+    },
+    "tryAgain": "Intentar de nuevo",
+    "skip": "Ir a la respuesta",
+    "wordmark": "HotGap",
+    "pageTitle": "HotGap — si gano más, ¿pierdo dinero?",
+    "heading": "Si su pago sube, ¿le queda más?",
+    "who": "{adults} con {kids}, en {place}.",
+    "whoNoKids": "{adults} sin niños, en {place}.",
+    "adults": {
+      "one": "Una madre o un padre",
+      "two": "Dos padres",
+      "oneNoKids": "Un adulto",
+      "twoNoKids": "Una pareja"
+    },
+    "kidsOne": "un niño de {age} años",
+    "kidsMany": "{n} niños de {ages} años",
+    "stillArchetype": "Todavía no pudimos obtener sus números exactos. Estos son los números de una familia como la suya en su estado.",
+    "verdict": {
+      "always_up": "Le pagan {pay}. Le quedan {kept}. Cuando gana más, le queda más. No encontramos un punto donde ganar más le deje con menos.",
+      "cliff_ahead": "Le pagan {pay}. Le quedan {kept}. Cerca de {wage}, ganar más puede dejarle menos dinero: pasado ese punto le quedarían unos {drop} menos al año. A esto le llaman un precipicio de beneficios.",
+      "in_danger_zone": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso hasta que le paguen {exit}: un aumento de {leap}.",
+      "in_danger_zone:stuck": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso en el rango de pago que revisamos, hasta {top}. No encontramos un punto donde vuelva a salir ganando.",
+      "cliff_behind": "Le pagan {pay}. Le quedan {kept}. La gran caída está por debajo de su pago actual. De aquí en adelante, ganar más es más para usted.",
+      "waits": " Una cosa más: en {at}, {phrase} se termina, pero no ese mismo día. Más adelante, le quedarían unos {drop} menos al año."
+    },
+    "again": "Pasa otra vez de {from} a {to}.",
+    "againMany": "Pasa {n} veces más, entre {from} y {to}.",
+    "sub": {
+      "more": "Le queda más que su pago porque la ayuda y el dinero de los impuestos son parte de ello.",
+      "less": "Le queda menos que su pago porque de ahí salen los impuestos y los costos de salud."
+    },
+    "noncash": {
+      "childcare": "{amount} de esto es ayuda para el cuidado de niños. Va a su guardería, no a usted.",
+      "schoolmeals": "{amount} de esto son comidas escolares gratuitas. No es efectivo.",
+      "headstart": "{amount} de esto es educación temprana gratuita. No es efectivo.",
+      "liheap": "{amount} de esto es ayuda con la factura de la calefacción. Va a su compañía de servicios, no a usted."
+    },
+    "health": "{amount} al año para su plan de salud salen primero.",
+    "chart": {
+      "title": "El dinero que le queda en un año, a medida que sube su pago",
+      "unit": {
+        "year": "El pago es por año.",
+        "month": "El pago es por mes.",
+        "week": "El pago es por semana.",
+        "hour": "El pago es por hora, a {hours} horas a la semana."
+      },
+      "readoutHint": "Recorra la línea con el dedo, el mouse o las flechas izquierda y derecha.",
+      "readoutMarks": " Pulse ] y [ para saltar entre caídas.",
+      "readout": "Con un pago de {pay}, le quedan {kept}.",
+      "inYourZone": " Este pago está dentro de su tramo plano.",
+      "inZone": " Este pago está dentro de un tramo plano.",
+      "outZone": " Aquí, ganar más es más dinero.",
+      "markWould": "Una caída cerca de {pay}. Aquí le quedarían unos {drop} menos al año.",
+      "markPast": "Una caída cerca de {pay}. Aquí le quedan unos {drop} menos al año.",
+      "markLater": "Una caída cerca de {pay} que espera. Más adelante, le quedarían unos {drop} menos al año.",
+      "markMerged": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año.",
+      "markMergedWaits": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año. Parte de ello espera a un día más adelante.",
+      "axisNote": "Los números del lado empiezan en {floor}, no en $0, para que las caídas se vean bien.",
+      "axisNoteBare": "Los números del lado empiezan en {floor}, no en $0.",
+      "biggestBeyond": " La caída más grande, de unos {drop} al año en {pay}, queda fuera del dibujo.",
+      "safeBeyond": " Desde {safe} en adelante, ganar más siempre suma a lo que le queda.",
+      "safeNever": " En el rango de pago que revisamos, hasta {top}, no encontramos un punto más allá de todos los tramos planos.",
+      "ghost": " La línea punteada es lo que pasa si el cambio de más adelante ocurre.",
+      "ghostNow": " La línea punteada es donde está usted ahora: el cambio de más adelante ya le llegó.",
+      "estimates": " Son estimaciones. Usan las reglas de {year} en {state}.",
+      "aria": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}. Es plana de {zoneFrom} a {zoneTo}.{more}{worst} El hogar está en {pay}, dentro de un tramo plano.",
+      "ariaMore": " Vuelve a ser plana de {from} a {to}.",
+      "ariaWorst": " La caída más grande está en {at}, donde se termina {what}.",
+      "ariaNoZone": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}.{worst} El hogar está en {pay}.",
+      "someHelp": "parte de la ayuda",
+      "labels": {
+        "later": "más adelante",
+        "you": "usted",
+        "backToEven": "de vuelta a la par",
+        "backToEvenSafe": "de vuelta a la par, y seguro de aquí en adelante",
+        "safe": "seguro de aquí en adelante",
+        "leap": "+{leap}",
+        "leapMore": "más de +{leap}",
+        "drop": "−{drop}"
+      }
+    },
+    "key": {
+      "line": "El dinero que le queda",
+      "band": "Su tramo plano",
+      "other": "Otros tramos planos",
+      "drop": "Una caída este año",
+      "later": "Una caída que espera",
+      "you": "Usted ahora",
+      "boundary": "Donde se termina la ayuda con la calefacción"
+    },
+    "boundary": {
+      "line": "Por encima de {pay}, ya no puede pedir ayuda con la factura de la calefacción en {state}. Se llama LIHEAP.",
+      "worth": " Vale de {min} a {max} por invierno si la recibe.",
+      "worthFlat": " Vale {amount} por invierno si la recibe.",
+      "worthUnknown": " No pudimos leer cuánto paga.",
+      "served": {
+        "some": " Alrededor de {n} de cada 10 familias que podrían recibirla aquí la reciben.",
+        "few": " Menos de 1 de cada 10 familias que podrían recibirla aquí la reciben.",
+        "most": " Casi todas las familias que podrían recibirla aquí la reciben.",
+        "unknown": " No sabemos cuántas familias que podrían recibirla aquí la reciben."
+      },
+      "invite": "Si la recibe, actívela para verla en su línea.",
+      "credit": "En {state}, la ayuda con la calefacción es un crédito en los impuestos. Ya está en su línea. Se achica a medida que gana más y se acaba por encima de {pay}.",
+      "counted": "Usted dijo que recibe ayuda con la calefacción (LIHEAP). La pusimos en su línea: unos {amount} al año, hasta {pay}."
+    },
+    "source": {
+      "archetype": "No pudimos obtener sus números exactos en este momento. Estos son los números de una familia como la suya en su estado.",
+      "clamped": " Su pago está por encima del rango que revisamos. Estos números son para {top}, el tope de ese rango.",
+      "live": "Fuente: HotGap, con PolicyEngine y las reglas de {year}. Estos son sus propios números.",
+      "sweep": "Fuente: HotGap, con {model} y las reglas de {year}. Barrido del {date}.",
+      "sweepBare": "Fuente: HotGap, con PolicyEngine. Reglas de {year}.",
+      "rent": " Renta: rentas justas de mercado de HUD, {rent}.",
+      "childcare": " Precio del cuidado de niños: {childcare}, llevado a dólares de {year}.",
+      "money": " El dinero que le queda es lo que sobra después de los impuestos y las primas del plan de salud."
+    },
+    "table": {
+      "show": "Ver los números",
+      "caption": "Los puntos que marca el dibujo. El dinero que le queda está en dólares al año.",
+      "pay": "Su pago",
+      "keep": "Le quedan",
+      "drop": "Caída",
+      "dropCell": "−{drop}",
+      "mark": "En el dibujo",
+      "marks": {
+        "peak": "El tope de su tramo plano",
+        "you": "Usted ahora",
+        "exit": "De vuelta a la par",
+        "drop": "Una caída",
+        "later": "Una caída que espera",
+        "safe": "Seguro de aquí en adelante"
+      }
+    },
+    "steps": {
+      "heading": "Qué se termina, y cuándo",
+      "none": "Nada se termina en el rango de pago que revisamos.",
+      "ends": "{Phrase} se termina. Se llama {name}.",
+      "wouldEnd": "{Phrase} se terminaría. Se llama {name}.",
+      "endsGroup": {
+        "adults": "Se termina {noun} para usted. Se llama {name}.",
+        "children": "Se termina {noun} de sus niños. Se llama {name}."
+      },
+      "wouldEndGroup": {
+        "adults": "Se terminaría {noun} para usted. Se llama {name}.",
+        "children": "Se terminaría {noun} de sus niños. Se llama {name}."
+      },
+      "starts": " Entonces empieza {phrase}. Se llama {name}.",
+      "wouldStart": " Entonces empezaría {phrase}. Se llama {name}.",
+      "remains": " Parte sigue hasta {until}: {list}.",
+      "remainsItem": "{amount} de {phrase}",
+      "smaller": {
+        "benefits": "Aquí parte de la ayuda se achica.",
+        "credits": "Aquí sus descuentos en los impuestos se achican.",
+        "premiums": "Aquí su plan de salud cuesta más.",
+        "other": "Aquí otro dinero se achica."
+      },
+      "wouldSmaller": {
+        "benefits": "Aquí parte de la ayuda se achicaría.",
+        "credits": "Aquí sus descuentos en los impuestos se achicarían.",
+        "premiums": "Aquí su plan de salud costaría más.",
+        "other": "Aquí otro dinero se achicaría."
+      },
+      "loss": "Le quedan unos {drop} menos.",
+      "wouldLoss": "Le quedarían unos {drop} menos.",
+      "laterLoss": "Más adelante, le quedarían unos {drop} menos al año.",
+      "biggest": " Esta es la caída más grande.",
+      "waitsBadge": "Espera",
+      "waitsTail": " No se termina ese mismo día.",
+      "close": "Cerrar"
+    },
+    "waits": {
+      "head": "Un cambio espera",
+      "headMany": "{n} cambios esperan",
+      "reasons": {
+        "child_continuous_eligibility": "En {at} sus niños dejan de poder recibir {phrase}. Pero la ley les da a los niños un año completo cada vez. Así que se termina en su próxima revisión anual, hasta 12 meses después.",
+        "head_start_program_year": "En {at} sus niños dejan de poder recibir {phrase}. Pero un niño que ya está en el programa se queda hasta el final del próximo año del programa.",
+        "transitional_medical_assistance": "En {at} usted deja de poder recibir {phrase}. Pero la ley le da de 6 a 12 meses más."
+      },
+      "foot": "No lo dibujamos como una caída hoy, porque no lo es.",
+      "thisHelp": "esta ayuda",
+      "kids": "{noun} de sus niños",
+      "own": "{noun} para usted"
+    },
+    "assumed": {
+      "heading": "Lo que supusimos sobre usted",
+      "rent": "{amount} al mes. Usted nos lo dio.",
+      "rentTypical": "{amount} al mes. La renta habitual en {state}.",
+      "rentNone": "No nos lo dio. No contamos ninguna renta.",
+      "childcare": "{amount} al mes por {kids}. Usted nos lo dio.",
+      "childcareTypical": "{amount} al mes por {kids}. El precio habitual de la guardería en {state}.",
+      "childcareNone": "Nada. Nadie en el hogar paga guardería.",
+      "help": "{list}. Contamos cada una como si la recibiera.",
+      "notCounted": "{list}. Las contamos como si no las recibiera.",
+      "you": "{age} años. Ciudadano de EE. UU.",
+      "youNotCitizen": "{age} años. No es ciudadano de EE. UU.",
+      "spouse": "{age} años. Le pagan {pay} al año.",
+      "spouseNoPay": "{age} años. Sin pago.",
+      "nobodyDisabled": " Nadie en el hogar tiene una discapacidad.",
+      "youDisabled": " Usted dijo que tiene una discapacidad.",
+      "spouseDisabled": " Usted dijo que su pareja tiene una discapacidad.",
+      "kidDisabled": " Usted dijo que uno de sus niños tiene una discapacidad.",
+      "kidsDisabled": " Usted dijo que {n} de sus niños tienen una discapacidad.",
+      "savings": "Ahorros: {savings}.",
+      "noOtherMoney": " Sin manutención de hijos, SSDI ni pago por desempleo.",
+      "hours": "{hours} horas a la semana.",
+      "hoursNone": "No nos lo dio. Suponemos tiempo completo.",
+      "selfEmployed": "Usted trabaja por cuenta propia, no para un jefe.",
+      "employerPlan": "{amount} al año salen de su pago para pagarlo.",
+      "employerPlanFree": "Con su pago, no contamos ningún costo por él.",
+      "headStart": "Vale {amount} al año para usted: lo que costaría la guardería.",
+      "coverageGap": "De {from} a {to} no tendría ningún plan de salud: ni Medicaid ni ayuda para comprar uno. Ahí no contamos ningún costo de plan de salud.",
+      "premiumHelp": "{program}. Ayuda a pagar el seguro de salud. Lo contamos.",
+      "premiumHelpMax": "{program}, hasta {amount} al año. Ayuda a pagar el seguro de salud. Lo contamos.",
+      "maTafdc": "Usamos la regla del estado para quienes ya la reciben. No la regla del primer año.",
+      "unclaimed": "Usted dijo que no recibe {list}. Con su pago valdría unos {amount} al año.",
+      "labels": {
+        "rent": "Renta",
+        "childcare": "Cuidado de niños",
+        "help": "Ayuda que recibe",
+        "notCounted": "No contada",
+        "you": "Usted",
+        "spouse": "Su pareja",
+        "money": "Otro dinero",
+        "hours": "Horas",
+        "work": "Trabajo",
+        "employerPlan": "Plan de salud del trabajo",
+        "headStart": "Head Start",
+        "coverageGap": "Sin plan de salud",
+        "premiumHelp": "Ayuda con el plan de salud",
+        "maTafdc": "Ayuda en efectivo (TANF)",
+        "unclaimed": "Ayuda que podría recibir"
+      },
+      "kids": "{n, plural, =1 {un niño} =2 {dos niños} =3 {tres niños} other {{n} niños}}",
+      "monthly": {
+        "ssdi": " SSDI: {amount} al mes.",
+        "childSupport": " Manutención de hijos: {amount} al mes.",
+        "unemployment": " Pago por desempleo: {amount} al mes."
+      },
+      "none": "Ninguno"
+    },
+    "incomplete": {
+      "lead": "Una cosa que no pudimos contar.",
+      "body": " {state} tiene {program}. Nuestras cuentas no lo incluyen. En esta página podría faltar una caída."
+    },
+    "reach": {
+      "heading": "¿Qué tan común es este pago?",
+      "some": "Alrededor de {n} de cada 10 {who} en {state} ganan {pay} o menos.",
+      "few": "Menos de 1 de cada 10 {who} en {state} ganan {pay} o menos.",
+      "most": "Casi todos los {who} en {state} ganan {pay} o menos.",
+      "who": {
+        "parents": "padres como usted",
+        "couples": "parejas como la suya",
+        "people": "personas como usted"
+      },
+      "margin": " La cuenta puede variar unos miles de dólares hacia arriba o hacia abajo.",
+      "note": "Esto dice qué tan común es el pago. No dice cuánto va a ganar usted.",
+      "source": "De datos de encuestas de la Oficina del Censo de EE. UU. ({vintages}). Llevados a dólares de {year}.",
+      "sourceBare": "De datos de encuestas de la Oficina del Censo de EE. UU.",
+      "survey": {
+        "one": "ACS {year}, {n} año",
+        "range": "ACS {from}–{to}, {n} años"
+      }
+    },
+    "hours": {
+      "heading": "El pago mínimo legal",
+      "body": "El pago mínimo legal de {state} es {wage} por hora. Un trabajo de tiempo completo con ese pago da unos {fullTime} al año."
+    },
+    "footer": {
+      "estimates": "Son estimaciones.",
+      "caseworker": " Un trabajador social decide la ayuda real.",
+      "assumed": "Usamos las reglas de {year}. La lista de arriba dice lo que supusimos. Si algo de eso no es cierto para usted, estos números tampoco lo son. No preguntamos por nadie en el hogar de 65 años o más.",
+      "noAdvice": "No le decimos qué hacer."
+    },
+    "program": {
+      "snap": "la ayuda para la comida",
+      "medicaid": "un plan de salud gratuito del estado",
+      "chip": "un plan de salud para niños",
+      "eitc": "un descuento en los impuestos para trabajadores",
+      "ctc": "el descuento en los impuestos por hijos",
+      "aca": "la ayuda para pagar el seguro de salud",
+      "tanf": "la ayuda en efectivo",
+      "housing": "la ayuda para la vivienda",
+      "wic": "la ayuda para la comida de mamás y bebés",
+      "ssi": "la ayuda en efectivo del SSI",
+      "headstart": "la educación temprana gratuita",
+      "schoolmeals": "las comidas escolares gratuitas",
+      "childcare": "la ayuda para el cuidado de niños",
+      "liheap": "la ayuda con la factura de la calefacción"
+    },
+    "called": {
+      "eitc": "Crédito Tributario por Ingreso del Trabajo (EITC)",
+      "ctc": "Crédito Tributario por Hijos",
+      "aca": "crédito fiscal para las primas",
+      "housing": "vale de vivienda",
+      "childcare": "subsidio de cuidado infantil CCDF",
+      "liheap": "LIHEAP"
+    },
+    "noun": {
+      "snap": "la ayuda para la comida",
+      "medicaid": "el plan de salud gratuito del estado",
+      "chip": "el plan de salud para niños",
+      "eitc": "el descuento en los impuestos para trabajadores",
+      "ctc": "el descuento en los impuestos por hijos",
+      "aca": "la ayuda para pagar el seguro de salud",
+      "tanf": "la ayuda en efectivo",
+      "housing": "la ayuda para la vivienda",
+      "wic": "la ayuda para la comida de mamás y bebés",
+      "ssi": "la ayuda en efectivo del SSI",
+      "headstart": "la educación temprana gratuita",
+      "schoolmeals": "las comidas escolares gratuitas",
+      "childcare": "la ayuda para el cuidado de niños",
+      "liheap": "la ayuda con la factura de la calefacción"
+    },
+    "phraseAndName": "{phrase} ({name})"
+  },
+  "caseworker": {
+    "pageTitle": "HotGap — trabajador social",
+    "editor": {
+      "summary": {
+        "none": "Ingrese el hogar para evaluarlo.",
+        "edit": "Editar"
+      },
+      "heading": "El hogar",
+      "lead": "Lugar, hogar, pago y gastos mensuales. El ingreso neto se evalúa en cada nivel de pago del eje.",
+      "privacy": "Nada de lo que se escribe aquí se guarda.",
+      "place": {
+        "legend": "Lugar",
+        "zip": "Código postal",
+        "zipHint": "Cinco dígitos; fija el estado y el condado.",
+        "or": "O el estado",
+        "statePlaceholder": "Elija un estado",
+        "inState": "En {state}."
+      },
+      "household": {
+        "legend": "Hogar",
+        "adults": "Adultos",
+        "single": "Un adulto",
+        "married": "Dos adultos, casados",
+        "kids": "Niños en el hogar",
+        "kidsHint": "Menores de 18. Hasta seis.",
+        "kidAge": "Edad del niño {n}"
+      },
+      "pay": {
+        "legend": "Pago",
+        "amount": "Pago, antes de impuestos",
+        "unit": "Por",
+        "hours": "Horas a la semana",
+        "hoursHint": "En blanco supone 40."
+      },
+      "costs": {
+        "legend": "Gastos mensuales",
+        "rent": "Renta o hipoteca",
+        "childcare": "Cuidado de niños",
+        "typical": "Lo típico en {where}: {amount} al mes. Cámbielo si el del hogar es distinto.",
+        "none": "0 si no se paga nada."
+      },
+      "submit": "Actualizar el hogar",
+      "chips": {
+        "where": "Lugar",
+        "household": "Hogar",
+        "pay": "Pago",
+        "rent": "Renta",
+        "childcare": "Cuidado de niños",
+        "age": "Edad",
+        "spouseAge": "Edad del cónyuge",
+        "spousePay": "Pago del cónyuge",
+        "ssdi": "SSDI",
+        "childSupport": "Manutención de hijos",
+        "unemployment": "Desempleo",
+        "savings": "Ahorros",
+        "status": "Estatus",
+        "spouseStatus": "Estatus del cónyuge",
+        "kidsDisabled": "Niños con una discapacidad",
+        "childcareSubsidy": "Subsidio CCDF",
+        "headStart": "Head Start",
+        "housing": "Vale de vivienda",
+        "energyAssistance": "LIHEAP",
+        "heatInRent": "Calefacción en la renta",
+        "employerCoverage": "Cobertura del empleador",
+        "selfEmployed": "Cuenta propia",
+        "disabled": "Discapacidad",
+        "spouseDisabled": "Discapacidad del cónyuge",
+        "snap": "SNAP",
+        "tanf": "TANF",
+        "medicaid": "Medicaid",
+        "wic": "WIC",
+        "yes": "sí",
+        "no": "no"
+      },
+      "errors": {
+        "check": "Revise {label}.",
+        "fields": {
+          "zip": "el código postal",
+          "state": "el código postal o el estado",
+          "annualEarnings": "el pago",
+          "hoursPerWeek": "las horas",
+          "childAges": "las edades de los niños",
+          "age": "la edad",
+          "spouseAge": "la edad del cónyuge",
+          "monthlyRent": "la renta",
+          "monthlyChildcare": "el gasto en cuidado de niños",
+          "spouseAnnualEarnings": "el pago del cónyuge",
+          "ssdiMonthly": "el SSDI",
+          "childSupportMonthly": "la manutención de hijos",
+          "unemploymentMonthly": "el pago por desempleo",
+          "savings": "los ahorros",
+          "youStatus": "el estatus",
+          "spouseStatus": "el estatus del cónyuge",
+          "youYearsInUs": "los años en EE. UU.",
+          "spouseYearsInUs": "los años del cónyuge en EE. UU.",
+          "childDisabled": "qué niños tienen una discapacidad",
+          "countyFips": "el condado"
+        }
+      }
+    },
+    "actions": {
+      "whatIf": "Agregar un escenario",
+      "whatIfShort": "Escenario",
+      "print": "Imprimir la hoja del cliente",
+      "printShort": "Imprimir",
+      "addAsWhatIf": "Agregar como escenario"
+    },
+    "page": {
+      "title": "Precipicios de beneficios de un hogar, con escenarios",
+      "skip": "Ir al registro de umbrales",
+      "coverageHeading": "Cobertura del modelo en {state}",
+      "correctionsHeading": "Correcciones aplicadas en {state}",
+      "readoutHint": "Flechas, o arrastre, para leer cualquier punto. Los corchetes saltan entre precipicios.",
+      "dropsHeading": "Cada escalón hacia abajo",
+      "dropsCaption": "Seleccione una fila o su marca para ver el desglose.",
+      "dropsCols": {
+        "earnings": "Ingresos",
+        "drop": "Caída",
+        "lost": "Programas perdidos",
+        "driver": "Causa"
+      },
+      "breakdownFootnote": "Las cuatro partes suman exactamente la caída. Una parte a la derecha del cero se suma a la pérdida; una a la izquierda la compensa — aquí, una factura de impuestos que baja. Medicaid y CHIP nunca aparecen: su valor es el precio de lista de la cobertura, nunca efectivo, así que no puede mover el ingreso neto. Un niño que pierde la cobertura aparece en los programas perdidos.",
+      "ledgerHeading": "Dónde termina cada programa",
+      "ledgerCaption": "Un programa termina en el primer pago en el que ya no está. Los adultos y los niños se informan por separado: un padre suele perder la cobertura muy por debajo del límite de un niño.",
+      "ledgerCols": {
+        "earnings": "Ingresos",
+        "program": "Programa",
+        "who": "Quién"
+      },
+      "compareHeading": "Comparar",
+      "compareCaption": "Las mismas reglas aplicadas a cada escenario.",
+      "compareEmpty": "Todavía no hay escenarios. Pulse un chip de participación, o cambie un valor en la barra de arriba, para agregar uno junto al caso base.",
+      "assumptionsHeading": "Lo que este modelo no incluye"
+    },
+    "status": {
+      "loading": "Evaluando… el ingreso neto se revisa en {count} niveles de pago. Un hogar nuevo tarda unos segundos.",
+      "errorTitle": "La evaluación no regresó.",
+      "errors": {
+        "rate_limited": "Demasiadas evaluaciones en un minuto. Espere un minuto y vuelva a intentarlo.",
+        "busy": "El motor está ocupado. Vuelva a intentarlo en unos segundos.",
+        "other": "El motor no respondió. No se guardó nada. Vuelva a intentarlo en un minuto.",
+        "badInput": "No es un hogar: {detail}."
+      },
+      "tryAgain": "Intentar de nuevo"
+    },
+    "whatIf": {
+      "added": "Escenario agregado: {label}, evaluado junto al caso base bajo",
+      "addedAfterLink": ". Los chips muestran el caso base.",
+      "compareLink": "Comparar",
+      "removed": "Escenario eliminado: {label}.",
+      "already": "{label} ya está en la comparación.",
+      "now": "Ahora",
+      "computing": "calculando",
+      "failed": "no regresó",
+      "notInSweep": "no está en el barrido — necesita la llamada en vivo",
+      "archetype": "(arquetipo)",
+      "thisWhatIf": "Este escenario",
+      "remove": "Quitar",
+      "removeAria": "Quitar el escenario {title}",
+      "ellipsis": "…",
+      "dash": "—",
+      "married": "Casado",
+      "single": "Soltero",
+      "cleared": "{label} en blanco",
+      "place": "Lugar {where}",
+      "pay": "Pago {pay}",
+      "monthly": "{label} {amount} al mes",
+      "yearly": "{label} {amount} al año",
+      "figure": "{label} {amount}",
+      "children": "Niños {ages}",
+      "valued": "{label} {value}",
+      "toggled": {
+        "on": "{label} sí",
+        "off": "{label} no"
+      },
+      "names": {
+        "zip": "Código postal",
+        "state": "Estado",
+        "county": "Condado",
+        "age": "Edad",
+        "spouse-age": "Edad del cónyuge",
+        "kids": "Niños",
+        "kids-disabled": "Niños con una discapacidad",
+        "rent": "Renta",
+        "childcare": "Cuidado de niños",
+        "earnings": "Ingresos",
+        "pay": "Pago",
+        "unit": "Unidad de pago",
+        "hours": "Horas a la semana",
+        "spouse-earnings": "Pago del cónyuge",
+        "ssdi": "SSDI",
+        "child-support": "Manutención de hijos",
+        "unemployment": "Desempleo",
+        "savings": "Ahorros",
+        "status": "Estatus",
+        "spouse-status": "Estatus del cónyuge",
+        "years-in-us": "Años en EE. UU.",
+        "spouse-years-in-us": "Años del cónyuge en EE. UU."
+      }
+    },
+    "verdict": {
+      "alwaysUp": "Sin zona de peligro. El neto sube con cada escalón de ingresos del eje.",
+      "cliffAhead": "Un precipicio por delante: en {at} el neto cae {drop}. Por debajo, más pago es más dinero.",
+      "cliffBehind": "Pasado el precipicio. La gran caída está por debajo de los ingresos actuales; de aquí en adelante, más pago es más dinero.",
+      "stuck": "En una zona de peligro sin salida en el eje. De {start} hasta {top} de ingresos, el neto nunca vuelve a los {peak} que alcanza en {start}.",
+      "inZone": "En una zona de peligro. Entre {start} y {exit} de ingresos, el neto nunca vuelve a los {peak} que alcanza en {start}. Sale en {exit}: un aumento de {raise}.",
+      "again": "Pasa otra vez entre {exit} y {safe}.",
+      "safeFrom": {
+        "exact": "Seguro desde {safe}: un aumento de {leap}.",
+        "atLeast": "Seguro desde {safe}: un aumento de {leap} o más."
+      },
+      "neverSafe": "El barrido nunca encontró un pago pasado el cual no quede ninguna zona."
+    },
+    "tiles": {
+      "net": "Neto, después de primas",
+      "netSub": "con {earned} de ingresos",
+      "raise": "Aumento para salir de la zona",
+      "raiseTo": "hasta {exit} de ingresos",
+      "raiseNotFound": "no encontrado por debajo de {top}",
+      "atLeast": "> {n}",
+      "drop": "Mayor caída en un escalón",
+      "dropAt": "en {from} → {to}",
+      "reach": "Alcance con los ingresos actuales",
+      "reachSub": "percentil, ±{moe} (n = {n})"
+    },
+    "coverage": {
+      "unknown": "Cobertura desconocida para {state}.",
+      "noBlock": "El barrido de este sitio no registró un bloque de cobertura para este estado, así que nada aquí puede decir qué deja fuera el modelo.",
+      "notLoaded": "El resumen del barrido semanal no cargó, así que nada aquí puede decir qué deja fuera el modelo. Recargue para intentarlo de nuevo.",
+      "incomplete": "Cifras incompletas en {state}.",
+      "incompleteBody": "El modelo no puede calcular {programs} aquí, así que a esta curva le falta un precipicio que este hogar sí encontraría. Cada cifra de esta página es un piso, no una medición. No lea a este hogar como mejor situado que uno en un estado que el modelo sí puede completar.",
+      "complete": "Cifras completas para {state}.",
+      "completeBody": "Nada de lo que este hogar tendría queda sin modelar aquí.",
+      "elsewhere": "{n, plural, one {En 1 estado ({states}) esta línea llevaría la} other {En {n} estados ({states}) esta línea llevaría la}}",
+      "elsewhereAfterMark": "marca y cada cifra de la página sería un piso."
+    },
+    "corrections": {
+      "none": "Ninguna",
+      "noneBody": "Ninguna corrección del lado de HotGap toca los números de este estado.",
+      "unknown": "Desconocido",
+      "unknownBody": "El bloque de cobertura no cargó, así que no se pueden listar las correcciones detrás de estos números.",
+      "source": "fuente",
+      "tafdc": "TAFDC (MA)",
+      "tafdcChecked": "TAFDC",
+      "premiumHelp": "Ayuda estatal con las primas",
+      "coverageGap": "Brecha de cobertura",
+      "rest": "Revisadas y no aplicables aquí — {items}",
+      "checked": "{program}: {note}"
+    },
+    "drops": {
+      "range": "{from} → {to}",
+      "noneNamed": "ninguno identificado",
+      "deferred": "Diferido",
+      "until": "hasta {when}",
+      "empty": "Ningún escalón hacia abajo de {min} o más en toda esta curva.",
+      "drivers": {
+        "benefits": "beneficios",
+        "credits": "créditos",
+        "premiums": "primas",
+        "other": "otros"
+      }
+    },
+    "breakdown": {
+      "idle": "A dónde fue una caída",
+      "idleBody": "Seleccione un escalón arriba, o una marca en la gráfica.",
+      "title": "A dónde fueron los {drop} — de {from} a {to}",
+      "parts": {
+        "benefits": "Beneficios",
+        "credits": "Créditos",
+        "premiums": "Primas",
+        "other": "Otros"
+      },
+      "offsets": "compensa la pérdida",
+      "adds": "se suma a la pérdida",
+      "sum": "Suma {drop}, la caída. Causa: {driver}."
+    },
+    "ledger": {
+      "who": {
+        "Adult": "Adulto",
+        "Children": "Niños",
+        "Household": "Hogar"
+      },
+      "deferred": "Diferido",
+      "continues": {
+        "open": "{left} al año de {program} continúan en {at}.",
+        "closed": "{left} al año de {program} continúan en {at}, nada desde {goneAt}."
+      },
+      "careWorth": {
+        "priced": "Vale {worth} al año en {at}. Cuidado tasado en {monthly} al mes por {kids} (precios de {price}, llevados a dólares de {year} con el Índice de Costo del Empleo del BLS).",
+        "unpriced": "Vale {worth} al año en {at}. Cuidado tasado en {monthly} al mes por {kids}."
+      },
+      "kids": "{n, plural, one {{n} niño} other {{n} niños}}",
+      "medicaidEnds": {
+        "flat": "La cobertura termina con el aumento (no aplica ningún diferimiento).",
+        "premium": "La cobertura termina con el aumento (no aplica ningún diferimiento); la prima neta sube {premiumRise} en el escalón."
+      },
+      "acaEnds": {
+        "alone": "La prima neta sube {premiumRise} en un escalón.",
+        "withHelp": "La prima neta sube {premiumRise} en un escalón; {program} ({amount}) termina con ella."
+      },
+      "toChip": "Los niños pasan a CHIP: {amount} al año de cobertura desde {at}.",
+      "eitc": "Se reduce gradualmente; ningún escalón de {min} o más, así que no es un precipicio.",
+      "chipEnds": "El crédito fiscal para las primas sube {ptcRise} cuando termina.",
+      "deferredUntil": "Cruzar este punto no lo termina este año: la pérdida cae en {when}.",
+      "cashNever": "Los beneficios en efectivo nunca terminan dentro de este eje.",
+      "cashEnds": "El último beneficio en efectivo termina en {at}.",
+      "childCoverageEnds": "La cobertura de los niños termina en {at}, diferida.",
+      "gapApplies": "Aplica la banda de brecha de cobertura: {note}",
+      "gapNone": "Sin banda de brecha de cobertura: {note}",
+      "premiumModeled": "{program} está modelado: se descuenta de la prima, hasta {max} al año.",
+      "premiumLadder": "{program} se aplica desde una escala local.",
+      "premiumUnmodeled": "{program} existe pero no está modelado en este barrido.",
+      "premiumNone": "No aplica ninguna ayuda estatal con las primas.",
+      "ifYouApply": "si lo solicita",
+      "liheapBoundary": "Límite de calefacción: {limit}. {worthServed} No se cuenta a menos que el hogar diga que lo recibe. Leído el {readOn}.",
+      "liheapWorthServed": {
+        "bandKnown": "Vale {band} en esa banda si se recibe; el {pct}% de los hogares elegibles por ingreso fueron atendidos en {vintage}.",
+        "bandUnread": "Vale {band} en esa banda si se recibe; la proporción de hogares elegibles por ingreso atendidos en {vintage} no se leyó.",
+        "unreadKnown": "El monto en esa banda no se leyó; el {pct}% de los hogares elegibles por ingreso fueron atendidos en {vintage}.",
+        "unreadUnread": "El monto en esa banda no se leyó; la proporción de hogares elegibles por ingreso atendidos en {vintage} no se leyó."
+      },
+      "liheapCredit": "{paidAs} {served} {heat} Leído el {readOn}.",
+      "liheapPaidAs": {
+        "named": "Se paga como el {program}, un crédito estatal reembolsable que PolicyEngine modela y HotGap cuenta en los créditos estatales; se reduce gradualmente hasta el límite del estado, {limit}, así que no es un precipicio.",
+        "unnamed": "Se paga como un crédito estatal reembolsable que PolicyEngine modela y HotGap cuenta en los créditos estatales; se reduce gradualmente hasta el límite del estado, {limit}, así que no es un precipicio."
+      },
+      "liheapServed": {
+        "known": "El {pct}% de los hogares elegibles por ingreso fueron atendidos en {vintage}.",
+        "unread": "La proporción de hogares elegibles por ingreso atendidos en {vintage} no se leyó."
+      },
+      "liheapHeat": {
+        "inRent": "La calefacción está incluida en la renta, así que el crédito se reduce a la mitad.",
+        "notInRent": "Supone que la calefacción no está incluida en la renta; el crédito se reduce a la mitad cuando lo está."
+      },
+      "liheapCounted": "Contado según lo dicho por el hogar: {amount} al año de la tabla de HotGap con el calendario publicado del estado, hasta el límite de {limit}. PolicyEngine no entrega ningún monto de LIHEAP con esta carga.",
+      "liheapBand": {
+        "flat": "{min}",
+        "range": "{min}–{max}"
+      }
+    },
+    "chart": {
+      "title": "Ingreso neto después de primas, de {from} a {to} de ingresos",
+      "label": {
+        "lead": "Ingreso neto después de primas frente a ingresos, de {from} a {to}.",
+        "zones": "{n, plural, =0 {Sin zona de peligro.} one {{n} zona de peligro.} other {{n} zonas de peligro.}}",
+        "own": {
+          "toExit": "La de este hogar va de {start} a {exit}.",
+          "toExitRaise": "La de este hogar va de {start} a {exit}, y se sale con un aumento de {raise}.",
+          "toTop": "La de este hogar va de {start} al tope del eje.",
+          "toTopRaise": "La de este hogar va de {start} al tope del eje, y se sale con un aumento de {raise}."
+        },
+        "worst": "{n, plural, =0 {El mayor escalón hacia abajo es de {drop} en {at}.} one {El mayor escalón hacia abajo es de {drop} en {at}, donde termina {programs}.} other {El mayor escalón hacia abajo es de {drop} en {at}, donde terminan {programs}.}}",
+        "safe": {
+          "none": "Ningún pago del eje está más allá de todas las zonas.",
+          "from": "Seguro desde {safe}."
+        }
+      },
+      "cliff": {
+        "lead": "Precipicio en {from} a {to}: {drop}.",
+        "lost": "{n, plural, =0 {Ningún programa identificado.} one {Termina {programs}.} other {Terminan {programs}.}}",
+        "driver": "Causa: {driver}.",
+        "deferred": "Diferido hasta {until}."
+      },
+      "merged": "{n} caídas entre {from} y {to}, juntas {sum} al año.",
+      "later": "más adelante",
+      "backToEven": "de vuelta a la par",
+      "backToEvenAndSafe": "de vuelta a la par, y seguro de aquí en adelante",
+      "safeFromHere": "seguro de aquí en adelante",
+      "leap": {
+        "exact": "+{raise}",
+        "atLeast": "más de +{raise}"
+      },
+      "key": {
+        "net": "Ingreso neto",
+        "ownZone": "Zona de este hogar",
+        "otherZones": "Otras zonas",
+        "zones": "Zonas de peligro",
+        "immediate": "Precipicio inmediato",
+        "deferred": "Precipicio diferido",
+        "current": "Ingresos actuales",
+        "leap": "El salto, hasta la salida",
+        "safe": "Seguro de aquí en adelante"
+      },
+      "readout": {
+        "lead": "Ingresos {earnings} → neto {net}.",
+        "outside": "Fuera de toda zona de peligro.",
+        "own": {
+          "toExit": "Dentro de la zona de peligro del hogar (termina en {end}; pico de {peak} en {start}).",
+          "toTop": "Dentro de la zona de peligro del hogar (termina más allá del eje; pico de {peak} en {start})."
+        },
+        "other": {
+          "toExit": "Dentro de una zona posterior ({start}–{end}).",
+          "toTop": "Dentro de una zona posterior ({start}–el tope del eje)."
+        }
+      },
+      "axis": {
+        "fromZero": "El eje vertical empieza en {floor}; el rango visible es {ratio} veces la mayor caída.",
+        "aboveZero": "El eje vertical empieza en {floor}, no en $0; el rango visible es {ratio} veces la mayor caída."
+      },
+      "liftedGhost": "Las caídas diferidas se sacan de la línea trazada, que es lo que describe analysis.dangerZones; la curva real que las incluye es la línea fantasma punteada.",
+      "liftedNoGhost": "Las caídas diferidas se sacan de la línea trazada, que es lo que describe analysis.dangerZones; aquí son demasiado pequeñas para dibujarlas.",
+      "noneDeferred": "Ningún precipicio de esta curva está diferido."
+    },
+    "compare": {
+      "rows": {
+        "net": "Neto después de primas",
+        "change": "Cambio desde ahora",
+        "inZone": "En una zona de peligro",
+        "zoneEnds": "La zona termina en",
+        "raise": "Aumento que aún falta",
+        "safe": "Seguro desde",
+        "drop": "Mayor caída",
+        "adultMedicaid": "Medicaid de adulto termina",
+        "childCoverage": "Cobertura de niños termina",
+        "reach": "Alcance con estos ingresos"
+      },
+      "yes": "Sí",
+      "no": "No",
+      "pastAxis": "más allá del eje",
+      "none": "ninguna",
+      "dash": "—",
+      "sub": "{adults}, {earnings}",
+      "adults": {
+        "one": "1 adulto",
+        "two": "2 adultos"
+      },
+      "reachNote": "El alcance es la proporción de hogares con la misma forma en {state} que ganan esta cifra o menos: dice qué tan común es el pago, nunca las probabilidades de llegar a él.",
+      "ladderNote": "Una columna cuya forma de hogar difiere está en su propia escala ({other} frente a {base}), y por eso el mismo pago puede quedar en otro percentil ahí.",
+      "archetypeNote": "Una columna marcada como arquetipo es el barrido comprometido para un hogar de esa forma en este estado, no la llamada en vivo de esta familia.",
+      "unansweredNote": "{n, plural, one {El barrido comprometido solo varía la forma y el pago de un hogar, así que un escenario que cambia otra cosa no tiene cifra hasta que responda la llamada en vivo.} other {El barrido comprometido solo varía la forma y el pago de un hogar, así que {n} escenarios que cambian otra cosa no tienen cifra hasta que responda la llamada en vivo.}}"
+    },
+    "assumed": {
+      "health": "El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
+      "facts": "Supuesto para esta curva: {facts}; {age} años.",
+      "citizen": "ciudadano",
+      "status": "estatus: {status}",
+      "savings": "{amount} en ahorros",
+      "noSavings": "sin ahorros",
+      "selfEmployed": "cuenta propia",
+      "wages": "salario, no cuenta propia",
+      "esi": "cobertura del empleador ofrecida",
+      "noEsi": "sin cobertura del empleador",
+      "otherIncome": "otros ingresos según lo ingresado",
+      "noOtherIncome": "sin otros ingresos",
+      "takeUp": {
+        "all": "Se supone participación en {on}.",
+        "some": "Se supone participación en {on}; no en {off}."
+      },
+      "annualised": "Escenarios anualizados con las reglas actuales, no totales de beneficios prorrateados por año calendario.",
+      "unmodeled": "No modelado en {state}: {program}. {note}",
+      "liheap": "Asistencia energética (LIHEAP) en {state}: {note}"
+    },
+    "source": {
+      "lead": "Solo estimaciones: un trabajador social decide los beneficios reales. Reglas: {year}. Curva: {curve}",
+      "vintages": "Renta: {rent} Precio del cuidado de niños: {care}, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. Alcance: {reach}",
+      "other": "Otros beneficios estatales en el resto: {other}.",
+      "model": "Modelo: {model}.",
+      "archetype": {
+        "dated": "barrido de arquetipos comprometido ({id}), generado el {generated}; no es la llamada en vivo de esta familia.",
+        "undated": "barrido de arquetipos comprometido ({id}); no es la llamada en vivo de esta familia."
+      },
+      "clamped": "El pago está por encima del rango modelado: evaluado en {clamped}, el tope del barrido.",
+      "live": {
+        "inPlace": "llamada en vivo a PolicyEngine para este hogar en {where}.",
+        "anywhere": "llamada en vivo a PolicyEngine para este hogar."
+      },
+      "inPlace": "{county}, {state}",
+      "rent": "{publisher} {vintage}",
+      "reachVintages": "{basis} Ediciones usadas: {vintages}.",
+      "otherBenefit": "{label} (hasta {max})",
+      "unclaimed": "Desactivado para este hogar: {items} con {earnings}.",
+      "wouldPay": "{program} pagaría {annual} al año"
+    },
+    "handout": {
+      "title": "Su pago y su ayuda — {state}, {parents}, {children}",
+      "parents": {
+        "one": "una madre o un padre",
+        "two": "dos padres"
+      },
+      "children": "{n, plural, =0 {sin niños} one {un niño} other {{words} niños}}",
+      "careShare": "{amount} de lo que le queda es {phrase} que se paga directo a su guardería.",
+      "biggestDrop": "{n, plural, =0 {La caída más grande está en {at} de pago: su descuento en los impuestos se achica y le quedan {drop} menos.} one {La caída más grande está en {at} de pago: se termina {phrases} y le quedan {drop} menos.} other {La caída más grande está en {at} de pago: se terminan {phrases} y le quedan {drop} menos.}}",
+      "snapEnds": "La ayuda para la comida se termina en {at}.",
+      "kidsCoverage": "El plan de salud de sus niños se termina en {at} de pago, pero no ese mismo año. Se termina en su próxima revisión anual, hasta 12 meses después.",
+      "estimates": "Son estimaciones. Un trabajador social decide la ayuda real.",
+      "printed": {
+        "dated": "Impreso desde HotGap. Reglas de {year}. Barrido del {sweep}.",
+        "undated": "Impreso desde HotGap. Reglas de {year}."
+      }
+    }
+  },
+  "places": {
+    "pageTitle": "HotGap — lo que cuesta un aumento, estado por estado",
+    "wordmark": "HotGap",
+    "skip": "Ir a la tabla de datos",
+    "title": "Lo que cuesta un aumento, estado por estado",
+    "lede": {
+      "counted": {
+        "withDc": "{states} estados y el Distrito de Columbia, {households} tipos de hogar, una sola escala de ingresos: desde $0 hasta más allá del 400% de la línea de pobreza de ese hogar. ",
+        "plain": "{states} estados, {households} tipos de hogar, una sola escala de ingresos: desde $0 hasta más allá del 400% de la línea de pobreza de ese hogar. "
+      },
+      "figure": "Cada cifra es el peor escalón de $1,000 de ingresos en la curva de ese estado para ese hogar: cuánto cae el ingreso neto cuando el pago sube mil dólares.",
+      "glossary": "Un *precipicio* es un aumento de $1,000 que recorta el ingreso neto en {floor} o más; una *zona de peligro* es un tramo de ingresos en el que el hogar nunca sale ganando. Las cifras vienen de [PolicyEngine](https://policyengine.org), una calculadora de impuestos y beneficios de código abierto, ejecutada por HotGap. Solo estimaciones."
+    },
+    "status": {
+      "loading": "Cargando la corrida semanal…",
+      "failed": "No pudimos cargar la corrida semanal: {reason}. Recargue para intentarlo de nuevo.",
+      "http": "el archivo de datos respondió HTTP {status}"
+    },
+    "filters": {
+      "household": "Hogar",
+      "measure": "Medida",
+      "csv": "Descargar estas filas (CSV)"
+    },
+    "measures": {
+      "biggestLoss": {
+        "title": "Mayor pérdida en un escalón",
+        "option": "Mayor pérdida en un escalón ($)",
+        "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
+      },
+      "dangerWidth": {
+        "title": "Ancho total de las zonas de peligro",
+        "option": "Ancho total de las zonas de peligro — cada tramo en el que más pago no deja al hogar mejor, sumados ($)",
+        "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
+      },
+      "leap": {
+        "title": "El salto",
+        "option": "El salto — el aumento necesario para salir de la peor zona de peligro ($)",
+        "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
+      },
+      "safeExit": {
+        "title": "Salida segura",
+        "option": "Salida segura — ingresos por encima de los cuales no queda ninguna zona de peligro ($)",
+        "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
+      },
+      "cliffCount": {
+        "title": "Número de precipicios",
+        "option": "Número de precipicios",
+        "describe": "Escalones hacia abajo de {floor} o más en cualquier punto de la curva."
+      },
+      "deferredCliffCount": {
+        "title": "Precipicios diferidos",
+        "option": "Precipicios diferidos — de los precipicios contados, los que caen en una renovación posterior",
+        "describe": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre."
+      }
+    },
+    "household": {
+      "line": "{adults}, {children}",
+      "adults": {
+        "single": "1 adulto",
+        "bothWork": "2 adultos, ambos trabajan",
+        "oneWorks": "2 adultos, uno trabaja"
+      },
+      "children": "{n, plural, =0 {sin niños} one {{n} niño ({ages})} other {{n} niños ({ages})}}"
+    },
+    "pastAxis": "más allá del eje",
+    "figure": {
+      "title": "{measure}, por estado",
+      "sub": "{household}, que renta en el condado más poblado del estado. {describe}",
+      "description": "Una cuadrícula de los cincuenta estados y el Distrito de Columbia, cada uno un cuadro en aproximadamente su posición geográfica, sombreado según la medida seleccionada. Un estado sin precipicio es un cuadro vacío; un estado cuya cifra se sale del eje tiene borde punteado; un estado que el modelo no puede completar está rayado en vez de sombreado. Cada cuadro es un botón que abre las correcciones de ese estado debajo del mapa; las flechas se mueven entre cuadros y Enter selecciona. Cada valor aparece en la tabla debajo de esta figura.",
+      "tile": {
+        "value": "{state}: {value}",
+        "none": "{state}: no se encontró precipicio",
+        "past": "{state}: más allá del eje",
+        "incomplete": "{state}: {programs} no modelado — cifras incompletas"
+      },
+      "legend": {
+        "none": "No se encontró precipicio ({n})",
+        "past": "Se sale por el tope del eje ({n})",
+        "incomplete": "{programs} no modelado — cifras incompletas, no bajas ({n})"
+      },
+      "bins": {
+        "steps": "cinco escalones de igual ancho de {lo} a {hi}",
+        "classes": "{n, plural, one {{words} clase de {lo} a {hi}} other {{words} clases de {lo} a {hi}}}"
+      },
+      "source": "HotGap, con las reglas de {year} de PolicyEngine en {model}. Corrida semanal del {date}. Ingreso neto después de las primas del seguro de salud. Solo estimaciones.",
+      "binsLine": {
+        "plain": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable.",
+        "none": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable; {none} sin precipicio encontrado.",
+        "past": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable; {past} más allá del eje.",
+        "nonePast": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable; {none} sin precipicio encontrado; {past} más allá del eje."
+      },
+      "hatched": "{n, plural, one {{m, plural, one {Un estado está rayado: {programs} no está modelado ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.} other {Un estado está rayado: {programs} no están modelados ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.}}} other {{m, plural, one {{n} estados están rayados: {programs} no está modelado ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.} other {{n} estados están rayados: {programs} no están modelados ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.}}}}",
+      "oneClass": {
+        "countNone": "{n} de los {total} estados comparables no tienen ninguno.",
+        "countValue": "{n} de los {total} estados comparables tienen {value}.",
+        "countRange": "{n} de los {total} estados comparables tienen de {lo} a {hi}.",
+        "dollars": "{n} de los {total} estados comparables quedan entre {lo} y {hi}."
+      }
+    },
+    "readout": {
+      "empty": "Seleccione un estado en el mapa o en la tabla.",
+      "step": "{n, plural, one {{state} — {loss} perdidos en {step}, cuando termina {programs}.} other {{state} — {loss} perdidos en {step}, cuando terminan {programs}.} =0 {{state} — {loss} perdidos en {step}; ningún programa por sí solo explica la caída.}}",
+      "floor": "{n, plural, one {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no están modelados.}}}}",
+      "worstStep": "{n, plural, one {Peor escalón: {loss} perdidos en {step}, cuando termina {programs}.} other {Peor escalón: {loss} perdidos en {step}, cuando terminan {programs}.} =0 {Peor escalón: {loss} perdidos en {step}; ningún programa por sí solo explica la caída.}}",
+      "worstStepFloor": "{n, plural, one {{m, plural, one {Peor escalón: al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {Peor escalón: al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {Peor escalón: al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {Peor escalón: al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {Peor escalón: al menos {loss} perdidos en {step}; un piso, porque {missing} no está modelado.} other {Peor escalón: al menos {loss} perdidos en {step}; un piso, porque {missing} no están modelados.}}}}",
+      "measure": {
+        "dangerWidth": "{state} — {width} de ingresos quedan dentro de zonas de peligro.",
+        "dangerWidthOpen": "{state} — al menos {width} de ingresos quedan dentro de zonas de peligro; la última no se había cerrado en {top}, el tope del eje.",
+        "leap": "{state} — un aumento de {leap} sale de la peor zona de peligro.",
+        "leapAtLeast": "{state} — un aumento de al menos {leap} para salir de la peor zona de peligro, que se extiende más allá de {top}, el tope del eje.",
+        "safeExit": "{state} — no queda ninguna zona de peligro por encima de {exit}.",
+        "safeExitPast": "{state} — no se encontró salida segura: la última zona de peligro no se había cerrado en {top}, el tope del eje.",
+        "cliffCount": "{n, plural, one {{deferred, plural, =0 {{state} — 1 precipicio en la curva de este hogar, ninguno diferido.} other {{state} — 1 precipicio en la curva de este hogar, y {deferred} más diferidos a una renovación posterior.}}} other {{deferred, plural, =0 {{state} — {n} precipicios en la curva de este hogar, ninguno diferido.} other {{state} — {n} precipicios en la curva de este hogar, y {deferred} más diferidos a una renovación posterior.}}}}",
+        "deferred": "{deferred, plural, =0 {{n, plural, one {{state} — ningún precipicio diferido a una renovación posterior; su único precipicio cae con el aumento.} other {{state} — ningún precipicio diferido a una renovación posterior; los {n} caen con el aumento.}}} one {{n, plural, one {{state} — 1 precipicio diferido a una renovación posterior, además de {n} que cae con el aumento.} other {{state} — 1 precipicio diferido a una renovación posterior, además de {n} que caen con el aumento.}}} other {{n, plural, one {{state} — {deferred} precipicios diferidos a una renovación posterior, además de {n} que cae con el aumento.} other {{state} — {deferred} precipicios diferidos a una renovación posterior, además de {n} que caen con el aumento.}}}}",
+        "floorTail": "{n, plural, one {Incompleto: {missing} no está modelado, así que la cifra es un piso.} other {Incompleto: {missing} no están modelados, así que la cifra es un piso.}}"
+      },
+      "none": "{state} — no se encontró precipicio: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más, hasta {top}.",
+      "noneDeferred": "{deferred, plural, one {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; 1 precipicio está diferido a una renovación posterior.} other {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; {deferred} precipicios están diferidos a una renovación posterior.}}",
+      "renter": {
+        "county": "Inquilino, {county}.",
+        "unknown": "Inquilino en el condado más poblado del estado."
+      },
+      "details": "Detalles abajo ↓"
+    },
+    "rank": {
+      "heading": "Clasificación",
+      "row": {
+        "plain": "{rank} {state}: {value}",
+        "withAt": "{rank} {state}: {value}, {at}"
+      },
+      "at": "en {value}",
+      "ordinal": "{n}.",
+      "range": "{n, plural, one {1.} other {1–{n}}}",
+      "floor": "{value} (piso)",
+      "atLeast": "≥ {value}",
+      "step": "{from} → {to}",
+      "lower": {
+        "leap": "{n, plural, one {Puesto 1 — al menos esto; el tamaño exacto se sale del eje (1)} other {Puestos 1–{n} compartidos — al menos esto; el tamaño exacto se sale del eje ({n})}}",
+        "safeExit": "{n, plural, one {Puesto 1 — más allá del tope del eje; no se encontró salida segura en la escala (1)} other {Puestos 1–{n} compartidos — más allá del tope del eje; no se encontró salida segura en la escala ({n})}}",
+        "note": {
+          "leap": "{n, plural, one {Este estado podría necesitar el mayor aumento (el eje termina antes de que se cierre la peor zona), así que ocupa el primer puesto.} other {Cualquiera de estos podría necesitar el mayor aumento (el eje termina antes de que se cierre la peor zona), así que comparten los primeros puestos como en un empate.}}",
+          "leapTop": {
+            "reaches": "El mayor salto medido es el de {topState}, de {topValue}; el de {floorState} es al menos igual de grande.",
+            "larger": "El mayor salto medido es el de {topState}, de {topValue}; el de {floorState} es de al menos {floorValue} y puede ser mayor."
+          },
+          "safeExit": "{n, plural, one {Este estado no había cerrado su última zona de peligro al tope del eje, así que ocupa el primer puesto.} other {Ninguno de estos había cerrado la última zona de peligro al tope del eje, así que cualquiera podría ser el más alto; comparten los primeros puestos como en un empate.}}",
+          "safeExitTop": "La salida segura medida más alta es la de {topState}, de {topValue}."
+        }
+      },
+      "none": {
+        "heading": "No se encontró precipicio ({n})",
+        "value": "sin precipicio",
+        "note": "Ningún escalón hacia abajo de {floor} o más en toda la curva de este hogar. Una medición de cero, no la pérdida más pequeña: estos estados quedan fuera de los rangos."
+      },
+      "incomplete": {
+        "heading": "Sin clasificar — cifras incompletas ({n})",
+        "value": "no comparable",
+        "note": "{n, plural, one {{m, plural, one {{programs} no está modelado aquí, así que a esta curva podría faltarle un precipicio real. No es un estado bajo; es un estado sin medir.} other {{programs} no están modelados aquí, así que a esta curva podría faltarle un precipicio real. No es un estado bajo; es un estado sin medir.}}} other {{m, plural, one {{programs} no está modelado aquí, así que a estas curvas podría faltarles un precipicio real. No son estados bajos; son estados sin medir.} other {{programs} no están modelados aquí, así que a estas curvas podría faltarles un precipicio real. No son estados bajos; son estados sin medir.}}}}"
+      },
+      "bins": "Los rangos se recalculan para cada medida (escalones de igual ancho para una medida en dólares, clases de números enteros para un conteo), así que un tono no significa nada entre dos medidas distintas. Lea los límites del rango, no el color."
+    },
+    "table": {
+      "heading": "Los {n}, todas las medidas",
+      "order": {
+        "label": "Orden de la tabla",
+        "state": "Estado, de la A a la Z",
+        "measure": {
+          "dollars": "{title}, de mayor a menor",
+          "count": "{title}, de más a menos"
+        },
+        "hint": "Ordena solo esta tabla; el mapa y la clasificación siguen la medida de arriba."
+      },
+      "caption": "Las seis medidas para {household}, {order}. Reglas de {year} de PolicyEngine, corrida del {date}.",
+      "byState": "por estado",
+      "byMeasure": {
+        "dollars": "por {title}, de mayor a menor",
+        "count": "por {title}, de más a menos"
+      },
+      "cols": {
+        "state": "Estado",
+        "biggestLoss": "Mayor pérdida en un escalón",
+        "biggestLossAt": "Peor escalón",
+        "dangerWidth": "Zonas de peligro, ancho total",
+        "leap": "El salto",
+        "safeExit": "Salida segura",
+        "cliffCount": "Precipicios",
+        "deferredCliffCount": "Diferidos",
+        "figures": "Cifras"
+      },
+      "defs": {
+        "label": "Qué significan las columnas",
+        "biggestLossAt": "El escalón de $1,000 de ingresos en el que cae la mayor pérdida en un escalón.",
+        "figures": "Completas, o el programa que el modelo no puede calcular en ese estado, lo que convierte las cifras de la fila en pisos; y si HotGap agregó el subsidio de cuidado infantil al ingreso neto, donde PolicyEngine lo había dejado fuera."
+      },
+      "none": "ninguno",
+      "complete": "completas",
+      "floor": "piso: {programs} no modelado",
+      "subsidyAdded": "subsidio de cuidado infantil agregado por HotGap",
+      "floorMark": "piso",
+      "swipe": "Deslice para ver más →",
+      "note": "Cada fila conserva el número que devolvió el modelo, incluidas las filas que no puede completar, porque un reportero necesita ver lo que salió. Esas filas están marcadas en la última columna y no se sombrean en el mapa ni entran en la clasificación. Seleccione un estado en el mapa o en esta tabla para leer las correcciones detrás de sus números debajo del mapa; las flechas se mueven entre estados y Enter selecciona."
+    },
+    "detail": {
+      "choose": "Correcciones aplicadas — elija un estado",
+      "chooseSub": "Seleccione un estado en el mapa o en la tabla para leer lo que HotGap cambió sobre PolicyEngine antes de leer sus cifras.",
+      "heading": "Correcciones aplicadas en {state} ({n})",
+      "applied": "aplicada",
+      "noBlock": "Esta corrida no registró un bloque de cobertura para este estado.",
+      "changed": "Lo que HotGap cambió sobre PolicyEngine antes de leer cualquier cifra de {state}.",
+      "unchanged": "Las cifras propias de PolicyEngine para {state} se mantienen tal como se sirvieron; HotGap no cambió nada sobre ellas: los arreglos que otros estados necesitan no hicieron falta aquí.",
+      "subsidy": {
+        "added": "Subsidio de cuidado infantil: agregado por HotGap para {state}.",
+        "inNetIncome": "Subsidio de cuidado infantil: dentro del ingreso neto de PolicyEngine para {state}."
+      },
+      "unmodeled": "No modelado en {state} ({n})",
+      "incompleteTag": "cifras incompletas",
+      "other": "También en el ingreso neto de {state} ({n})",
+      "otherNote": "Hasta {max} al año en esta corrida.",
+      "variable": "Variable de PolicyEngine: {name}",
+      "liheap": {
+        "program": "Asistencia energética (LIHEAP)",
+        "footing": {
+          "boundary": "no contada",
+          "inNetIncome": "en el ingreso neto"
+        },
+        "limit": "Se detiene en {limit}, el límite de calefacción para {vintage}.",
+        "worth": {
+          "unread": "La matriz del estado no imprime ningún monto en esa banda.",
+          "flatTaper": "Vale {lo} por invierno si se recibe; el monto se reduce gradualmente hacia el límite.",
+          "flatNotch": "Vale {lo} por invierno si se recibe, sin cambios hasta el límite.",
+          "flatOther": "Vale {lo} por invierno si se recibe, en esa banda superior de ingresos.",
+          "rangeTaper": "Vale de {lo} a {hi} por invierno si se recibe; el monto se reduce gradualmente hacia el límite.",
+          "rangeNotch": "Vale de {lo} a {hi} por invierno si se recibe, sin cambios hasta el límite.",
+          "rangeOther": "Vale de {lo} a {hi} por invierno si se recibe, en esa banda superior de ingresos."
+        },
+        "served": {
+          "few": "Menos de 1 de cada 10 hogares elegibles por ingreso fueron atendidos en {vintage} ({pct}%).",
+          "some": "Unos {n} de cada 10 hogares elegibles por ingreso fueron atendidos en {vintage} ({pct}%).",
+          "most": "Casi todos los hogares elegibles por ingreso fueron atendidos en {vintage} ({pct}%).",
+          "unread": "La proporción de hogares elegibles por ingreso atendidos no está publicada para {vintage}."
+        },
+        "counted": "Se paga como el {program}, que se cuenta en cada cifra de {state}.",
+        "cite": {
+          "limitAndAmount": "Límite y monto: {host}.",
+          "limit": "Límite: {host}.",
+          "amount": "Monto: {host}.",
+          "served": "Hogares atendidos: {host}.",
+          "readOn": "Leído el {readOn}.",
+          "link": "[{host}]({url})"
+        }
+      },
+      "care": {
+        "county": "precio del condado",
+        "stateMedianCounty": "precio del condado mediano del estado",
+        "nationalMedian": "precio mediano nacional",
+        "unknown": "no registrado"
+      },
+      "source": "Solo estimaciones. Reglas: {year}. Renta: {rentPublisher}; {rentVintage}. Condado: {county}. Precio del cuidado de niños: {care}, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. Modelo: {model}. Corrida semanal del {date}.",
+      "sourceCounty": {
+        "named": "{county} (el más poblado del estado; {vintage})",
+        "unnamed": "el más poblado del estado, {vintage}"
+      },
+      "sourceCare": {
+        "dated": "{care}, estudio de {year}",
+        "undated": "{care}"
+      }
+    },
+    "csv": {
+      "subsidy": {
+        "inNetIncome": "en el ingreso neto de PolicyEngine",
+        "added": "agregado por HotGap"
+      },
+      "modelLabel": {
+        "hosted": "motor alojado de HotGap, {model}",
+        "publicApi": "API pública de PolicyEngine ({endpoint})"
+      }
+    },
+    "method": {
+      "heading": "Cómo se hicieron estos números",
+      "items": {
+        "engine": "Cada celda es un tipo de hogar procesado con [PolicyEngine](https://policyengine.org), una calculadora de impuestos y beneficios de código abierto, con las reglas de {year}, variando los ingresos en escalones de $1,000 desde $0 hasta más allá del 400% de la guía de pobreza para ese tamaño de hogar, más $40,000 de margen para recuperarse.",
+        "money": "La línea de dinero está **ajustada por salud**: el ingreso neto del hogar menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado. No se incluyen deducibles ni copagos.",
+        "household": "Cada hogar es un inquilino típico del condado más poblado del estado (nombrado debajo del mapa para el estado seleccionado), con la renta justa de mercado de HUD, las estimaciones de condado del Censo y el precio de preescolar de la Base de Datos Nacional de Precios de Cuidado Infantil del DOL para ese condado, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. El año del estudio detrás del precio, y si una mediana estatal o nacional reemplazó a un condado que la base de datos no tiene, varían por estado y se imprimen en la línea de fuente debajo del mapa.",
+        "takeUp": "El subsidio de cuidado infantil CCDF está **activado** en esta corrida y desactivado en la consulta de un hogar propio. Head Start y los vales de vivienda están desactivados en ambas: están racionados, y suponer que una familia tiene uno infla sus números.",
+        "deferred": "Los precipicios diferidos a una renovación futura (la continuidad de Head Start hasta el fin del año del programa, los 12 meses de elegibilidad continua de Medicaid o CHIP de un niño, la Asistencia Médica de Transición de un padre) se cuentan en la columna *diferidos* y se sacan de todas las demás cifras de aquí. Son pérdidas reales; no caen en el año del aumento.",
+        "corrections": "Cuando la cifra de un estado necesitó una corrección sobre PolicyEngine (una escala de primas aplicada localmente, el subsidio de cuidado infantil devuelto al ingreso neto, un límite de Medicaid para padres tomado del manual del estado, una prima por brecha de cobertura), aparece debajo del mapa para el estado seleccionado, a partir del propio registro de cobertura de la corrida, no de un texto guardado aquí.",
+        "download": "La descarga son las filas de la tabla en el orden de la tabla, una por estado, con estas columnas: {columns}. Las celdas de dólares vacías son un estado sin precipicio o una salida segura más allá del eje; las banderas dicen qué cifras son pisos o cotas inferiores."
+      },
+      "axis": {
+        "plain": "Para {household} el eje va de $0 a {top}; una cifra que se sale del eje se sale de eso.",
+        "exceptions": "Para {household} el eje va de $0 a {top} ({exceptions}); una cifra que se sale del eje se sale de eso."
+      },
+      "exception": "{top} en {state}",
+      "excludes": {
+        "heading": "Lo que el modelo no incluye",
+        "inputs": "El estatus migratorio, los bienes y los miembros del hogar de 65 años o más no son entradas.",
+        "alaskaHawaii": "Los subsidios del mercado de Alaska y Hawái se calculan río arriba con la guía de pobreza de los 48 estados y no con las suyas, más altas ([reportado a PolicyEngine](https://github.com/PolicyEngine/policyengine-us/issues/9482 \"policyengine-us #9482\")). HotGap no corrige esto, así que las cifras impulsadas por primas de ambos estados están subestimadas.",
+        "everywhere": "{program}, en todos los estados: {note}",
+        "liheap": {
+          "none": "La asistencia energética (LIHEAP) no está en ninguna cifra de esta página.",
+          "counted": "La asistencia energética (LIHEAP) no está en ninguna cifra de esta página, salvo en {states}, donde se paga como {programs} y se cuenta.",
+          "grant": "Es una subvención en bloque, no un derecho: en {vintage} los estados atendieron entre el {loPct}% ({loState}) y el {hiPct}% ({hiState}) de sus hogares elegibles por ingreso, así que una curva que la supusiera dibujaría un beneficio que la mayoría de las familias elegibles nunca recibe. El bloque de cada estado debajo del mapa dice dónde se detiene, cuánto paga ahí y la proporción atendida; la descarga lleva el límite y la proporción.",
+          "the": "el {program}"
+        },
+        "hatched": "Un programa que el modelo no puede calcular en un estado aparece debajo del mapa para ese estado y lo raya en cada medida que podría mover. Para {household} hoy eso es {where}.",
+        "whereItem": "{programs} en {state}",
+        "nothing": "Nada de lo que el modelo no puede calcular movería las cifras de este hogar en ningún estado, así que ningún estado está rayado para {household}."
+      },
+      "hatchCaution": {
+        "some": "**Rayado no es bajo.** Un programa que el modelo no puede calcular en un estado (hoy {programs}) falta en cada cifra de ese estado, así que sus números son pisos, no mediciones. No escriba que esos estados son más benignos; la única afirmación honesta es que este modelo todavía no puede decirlo. La bandera se lee del propio registro de cobertura de la corrida, no de una lista guardada aquí, así que un estado sale de ella el día en que el motor empiece a modelar el programa.",
+        "none": "**Rayado no es bajo.** Un programa que el modelo no puede calcular en un estado falta en cada cifra de ese estado, así que sus números son pisos, no mediciones. No escriba que esos estados son más benignos; la única afirmación honesta es que este modelo todavía no puede decirlo. La bandera se lee del propio registro de cobertura de la corrida, no de una lista guardada aquí, así que un estado sale de ella el día en que el motor empiece a modelar el programa."
+      },
+      "pastAxisCaution": "**Más allá del eje no es un número.** Cuando la *última* zona de peligro de un estado se sale por el tope del eje en vez de cerrarse, la salida segura se desconoce; el salto es una cota inferior solo cuando la *peor* zona es la que se sale. Las dos pueden diferir, así que un estado puede mostrar un salto exacto y ninguna salida segura. Esas celdas dicen aquí *más allá del eje* y no deben graficarse como un valor.",
+      "source": "Corrida del {date} en {model}. Licencia: AGPL-3.0-only. Solo estimaciones: un trabajador social decide los beneficios reales.",
+      "cite": "Cítese como: HotGap, *Lo que cuesta un aumento, estado por estado*, reglas de {year} en PolicyEngine ({model}), corrida del {date}, {url}."
+    }
+  },
+  "shared": {
+    "program": {
+      "snap": "SNAP",
+      "medicaid": "Medicaid",
+      "chip": "CHIP",
+      "eitc": "Crédito Tributario por Ingreso del Trabajo (EITC)",
+      "ctc": "Crédito Tributario por Hijos",
+      "aca": "Crédito fiscal para las primas",
+      "tanf": "Asistencia en efectivo TANF",
+      "housing": "Vale de vivienda",
+      "wic": "WIC",
+      "ssi": "SSI",
+      "headstart": "Head Start",
+      "schoolmeals": "Comidas escolares",
+      "childcare": "Subsidio de cuidado infantil CCDF",
+      "liheap": "Asistencia energética LIHEAP"
+    },
+    "pay": {
+      "hour": "{figure} por hora",
+      "week": "{figure} a la semana",
+      "month": "{figure} al mes",
+      "year": "{figure} al año"
+    },
+    "ordinal": "{n, selectordinal, other {#.º}}",
+    "numbers": {
+      "ones": [
+        "cero",
+        "uno",
+        "dos",
+        "tres",
+        "cuatro",
+        "cinco",
+        "seis",
+        "siete",
+        "ocho",
+        "nueve",
+        "diez",
+        "once",
+        "doce",
+        "trece",
+        "catorce",
+        "quince",
+        "dieciséis",
+        "diecisiete",
+        "dieciocho",
+        "diecinueve"
+      ],
+      "tens": [
+        "veinte",
+        "treinta",
+        "cuarenta",
+        "cincuenta",
+        "sesenta",
+        "setenta",
+        "ochenta",
+        "noventa"
+      ],
+      "compound": "{tens} y {ones}",
+      "exact": {
+        "21": "veintiuno",
+        "22": "veintidós",
+        "23": "veintitrés",
+        "24": "veinticuatro",
+        "25": "veinticinco",
+        "26": "veintiséis",
+        "27": "veintisiete",
+        "28": "veintiocho",
+        "29": "veintinueve"
+      }
+    },
+    "reachVintage": {
+      "one": "PUMS de {n} año de la ACS {year}",
+      "range": "PUMS de {n} años de la ACS {from}–{to}"
+    },
+    "model": {
+      "versioned": "policyengine-us {version}",
+      "endpoint": "la API de PolicyEngine en {endpoint}",
+      "unrecorded": "PolicyEngine (versión no registrada)"
+    },
+    "tickThousands": "{amount}k",
+    "language": {
+      "label": "Idioma"
+    },
+    "correctionSource": {
+      "modeled": "modelado",
+      "ladder": "escala",
+      "overridden": "reemplazado",
+      "added by HotGap": "agregado por HotGap",
+      "in net income": "en el ingreso neto"
+    },
+    "state": {
+      "AL": "Alabama",
+      "AK": "Alaska",
+      "AZ": "Arizona",
+      "AR": "Arkansas",
+      "CA": "California",
+      "CO": "Colorado",
+      "CT": "Connecticut",
+      "DE": "Delaware",
+      "DC": "Distrito de Columbia",
+      "FL": "Florida",
+      "GA": "Georgia",
+      "HI": "Hawái",
+      "ID": "Idaho",
+      "IL": "Illinois",
+      "IN": "Indiana",
+      "IA": "Iowa",
+      "KS": "Kansas",
+      "KY": "Kentucky",
+      "LA": "Luisiana",
+      "ME": "Maine",
+      "MD": "Maryland",
+      "MA": "Massachusetts",
+      "MI": "Míchigan",
+      "MN": "Minnesota",
+      "MS": "Misisipi",
+      "MO": "Misuri",
+      "MT": "Montana",
+      "NE": "Nebraska",
+      "NV": "Nevada",
+      "NH": "Nuevo Hampshire",
+      "NJ": "Nueva Jersey",
+      "NM": "Nuevo México",
+      "NY": "Nueva York",
+      "NC": "Carolina del Norte",
+      "ND": "Dakota del Norte",
+      "OH": "Ohio",
+      "OK": "Oklahoma",
+      "OR": "Oregón",
+      "PA": "Pensilvania",
+      "RI": "Rhode Island",
+      "SC": "Carolina del Sur",
+      "SD": "Dakota del Sur",
+      "TN": "Tennessee",
+      "TX": "Texas",
+      "UT": "Utah",
+      "VT": "Vermont",
+      "VA": "Virginia",
+      "WA": "Washington",
+      "WV": "Virginia Occidental",
+      "WI": "Wisconsin",
+      "WY": "Wyoming"
+    }
+  }
+}

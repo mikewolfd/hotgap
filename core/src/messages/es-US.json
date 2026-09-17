@@ -1,0 +1,78 @@
+{
+  "_": {
+    "language": "es-US",
+    "status": "draft",
+    "note": "Borrador redactado por el modelo el 2026-09-17; pendiente de revisión por un hablante nativo. / A draft, machine-written 2026-09-17, awaiting a native speaker's review (app/README.md § Languages).",
+    "drafted": "2026-09-17",
+    "reviewed": null
+  },
+  "coverage": {
+    "override": {
+      "parentLimit": "HotGap envía el límite de ingresos de Medicaid para padres que el propio estado publica para el tamaño de este hogar, como proporción de la línea de pobreza de 2026 incluido el descuento MAGI, porque la cifra de PolicyEngine tiene cinco años de atraso (policyengine-us #9474; corregido río arriba en el PR #9475).",
+      "nyBhp": "HotGap saca a Nueva York de la lista de Programas Básicos de Salud ampliados de PolicyEngine, de modo que el techo del Essential Plan es la regla del 200% de la pobreza vigente desde el 2026-07-01 para todo el año, y no el 250% que río arriba se conserva (policyengine-us #9471; CMS aprobó la terminación el 2026-03-20)."
+    },
+    "maTafdc": {
+      "elsewhere": "Solo Massachusetts; el TANF de PolicyEngine se mantiene tal como se sirvió.",
+      "applied": "HotGap recalcula la ayuda TAFDC con las reglas del estado para beneficiarios en curso ($200 al mes por trabajador y luego un descuento del 50%; 106 CMR 704.281) y la devuelve al motor para que SNAP la siga, porque PolicyEngine termina la ayuda de golpe (policyengine-us #9469; corrección en el PR #9477); la asignación de ropa de septiembre se cuenta en otros beneficios, y el descuento total de seis meses no está modelado."
+    },
+    "premium": {
+      "modeled": "PolicyEngine calcula {program} por sí mismo, y HotGap lo resta de la prima que paga el hogar, porque el motor lo informa como un beneficio de salud y no en la prima de bolsillo que HotGap lee; no se aplica ningún calendario local.",
+      "ladder": "{tiers, select, yes {HotGap aplica por sí mismo el calendario de primas publicado de {program} (una prima de $0 hasta el {pct}% de la línea de pobreza y las primas reducidas por encima, leído el {readOn}) porque PolicyEngine no modela el programa (policyengine-us #9481).} other {HotGap aplica por sí mismo el calendario de primas publicado de {program} (una prima de $0 hasta el {pct}% de la línea de pobreza, leído el {readOn}) porque PolicyEngine no modela el programa (policyengine-us #9481).}}",
+      "perMember": "{range, select, flat {HotGap aplica por sí mismo el calendario publicado de {program} (${dearest} al mes por cada persona en el plan, hasta el {pct}% de la línea de pobreza, leído el {readOn}) porque la versión de PolicyEngine contra la que corrió este barrido no incluye el programa (policyengine-us {issue}).} other {HotGap aplica por sí mismo el calendario publicado de {program} (de ${cheapest} a ${dearest} al mes por cada persona en el plan, hasta el {pct}% de la línea de pobreza, leído el {readOn}) porque la versión de PolicyEngine contra la que corrió este barrido no incluye el programa (policyengine-us {issue}).}}",
+      "unserved": "{program} no se cuenta: PolicyEngine no sirvió ninguna cifra para él en este barrido, y los calendarios propios de HotGap solo cubren los tramos de prima $0, así que las primas de aquí están sobreestimadas por ese monto.",
+      "none": "No aplica ninguna ayuda estatal con las primas: PolicyEngine no sirve ninguna para este estado, y HotGap no conoce ningún programa que agregar."
+    },
+    "childcare": {
+      "countedEverywhere": "PolicyEngine cuenta el subsidio de cuidado infantil dentro del ingreso neto en todos los estados en esta versión (policyengine-us #9503), así que HotGap solo lo nombra.",
+      "counted": "PolicyEngine ya cuenta el subsidio de cuidado infantil de este estado en el ingreso neto, así que HotGap solo lo nombra.",
+      "added": "PolicyEngine calcula el subsidio de cuidado infantil pero lo deja fuera del ingreso neto aquí, así que HotGap lo vuelve a sumar, hasta que la corrección propia del motor (policyengine-us #9405, PR #9503) llegue a este punto de acceso."
+    },
+    "coverageGap": {
+      "applies": "En este estado sin expansión, a un adulto sin Medicaid y sin crédito para primas por debajo del 100% de la línea de pobreza no se le cobra ninguna prima del mercado, y el punto se marca, porque PolicyEngine le cobra la prima completa a alguien a quien el mercado no inscribiría (policyengine-us #9472).",
+      "expansion": "Estado con expansión: los adultos hasta el 138% de la línea de pobreza están en Medicaid, así que la corrección por brecha de cobertura nunca se activa."
+    },
+    "unmodeled": {
+      "premiumKnown": "{program} ({detail}) no lo calcula PolicyEngine, y los calendarios propios de HotGap solo cubren los tramos de prima $0, así que las primas de aquí están sobreestimadas por ese monto.",
+      "premiumUnserved": "PolicyEngine modela {program}, pero el punto de acceso de este barrido no lo sirvió y HotGap no tiene un calendario propio para él, así que las primas de aquí están sobreestimadas por ese monto.",
+      "childcare": "PolicyEngine pagó $0 de subsidio de cuidado infantil en cada punto a un hogar de aquí que paga por el cuidado (una brecha del modelo, no una regla del estado), así que podría faltar un precipicio real; ponga una nota a este estado en vez de leer la brecha como buena noticia."
+    },
+    "liheap": {
+      "credit": "Míchigan paga su asistencia para calefacción como el Home Heating Credit, un crédito reembolsable; PolicyEngine lo modela y HotGap lo cuenta en los créditos estatales, suponiendo que la calefacción no está incluida en la renta: el crédito se reduce a la mitad cuando lo está.",
+      "boundary": "{served, select, known {HotGap muestra dónde se detiene la asistencia energética (LIHEAP) en este estado ({limit}) y cuánto paga el estado en esa banda superior, pero cuenta el dinero solo para un hogar que dice recibirlo, porque el programa es una subvención en bloque que atendió a cerca del {pct}% de sus hogares elegibles por ingreso en {vintage}, así que una curva que lo supusiera dibujaría un beneficio que la mayoría de las familias elegibles nunca recibe.} other {HotGap muestra dónde se detiene la asistencia energética (LIHEAP) en este estado ({limit}) y cuánto paga el estado en esa banda superior, pero cuenta el dinero solo para un hogar que dice recibirlo, porque el programa es una subvención en bloque que atendió a una proporción de hogares elegibles que el perfil de {vintage} no indica, así que una curva que lo supusiera dibujaría un beneficio que la mayoría de las familias elegibles nunca recibe.}}"
+    },
+    "otherBenefits": {
+      "unidentified": "todavía sin identificar — sondee el motor con las listas de beneficios del hogar (stateOtherBenefits.ts)",
+      "nj_property_tax_relief": "Alivio del impuesto predial ANCHOR de Nueva Jersey, beneficio para inquilinos ($450 al año por debajo de $150,000 de ingresos)"
+    }
+  },
+  "program": {
+    "liheap": "LIHEAP",
+    "childcareCcdf": "Subsidio de cuidado infantil (CCDF)",
+    "homeHeatingCredit": "Home Heating Credit"
+  },
+  "liheap": {
+    "limit": {
+      "fpg": "{pct}% de la guía de pobreza",
+      "smi": "{pct}% del ingreso mediano del estado",
+      "smiVintage": "{pct}% del ingreso mediano del estado (el estado todavía aplica la tabla de {vintage})",
+      "smiBySize": "{from}% a {to}% del ingreso mediano del estado, subiendo con el tamaño del hogar"
+    }
+  },
+  "validate": {
+    "notObject": "el cuerpo debe ser un objeto",
+    "field": "{field}"
+  },
+  "place": {
+    "territory": "HotGap todavía no modela los territorios de EE. UU.",
+    "noState": "no hay estado para el código postal {zip}",
+    "stateMismatch": "El código postal {zip} está en {zipState}, no en {state}"
+  },
+  "api": {
+    "invalidJson": "JSON no válido"
+  },
+  "deferral": {
+    "head_start_program_year": "el final del próximo año del programa Head Start (45 CFR 1302.12(j)(1))",
+    "child_continuous_eligibility": "la próxima renovación anual del niño, hasta 12 meses después (42 CFR 435.926, 457.342)",
+    "transitional_medical_assistance": "que se agoten los 6 a 12 meses de Asistencia Médica de Transición (§1925 de la Ley del Seguro Social, 42 U.S.C. 1396r-6)"
+  }
+}
