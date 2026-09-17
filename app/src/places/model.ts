@@ -138,6 +138,7 @@ export function bins(values: number[], unit: Measure["unit"]): Bins {
 export interface Grouped {
   /** Shaded rows, largest value first — the ranking. */
   ranked: StateRow[];
+  /** Rows the axis bounds: they lead the ranking and share its top ranks (B1). On the leap, largest floor first; a safe exit past the axis has no floor, so postal order. */
   past: StateRow[];
   none: StateRow[];
   incomplete: StateRow[];
@@ -149,8 +150,9 @@ export interface Grouped {
 /** Split the rows into the ranking and the three lifted-out groups, and bin the comparable values. O(states log states). */
 export function group(rows: StateRow[], measure: Measure): Grouped {
   const by = (kind: TileKind) => rows.filter((r) => r.kind === kind);
-  const shaded = by("shaded"), past = by("past"), none = by("none"), incomplete = by("incomplete");
+  const shaded = by("shaded"), none = by("none"), incomplete = by("incomplete");
   const ranked = shaded.slice().sort((a, z) => (z.value as number) - (a.value as number));
+  const past = measure.key === "leap" ? by("past").sort((a, z) => (z.value as number) - (a.value as number)) : by("past");
   return {
     ranked, past, none, incomplete,
     bins: bins(shaded.map((r) => r.value as number), measure.unit),

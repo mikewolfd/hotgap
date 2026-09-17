@@ -71,6 +71,14 @@ describe("csvFor on the committed sweep", () => {
     expect(oh[col("biggest_loss_programs")]).toBe(m.biggestLossPrograms.map(programName).join("; "));
     expect(oh[col("county_name")]).toBe(summary.coverage!.OH.vintages.county.name);
   });
+  it("carries the child-care subsidy's footing on every row, from the coverage record (rerun S4): Ohio's is PolicyEngine's, Texas's HotGap's", () => {
+    for (const r of body) {
+      const source = summary.coverage![r[col("state")]].corrections.childcareSubsidy.source;
+      expect(r[col("childcare_subsidy_footing")]).toBe(source === "added by HotGap" ? "added by HotGap" : "in PolicyEngine's net income");
+    }
+    expect(body.find((r) => r[col("state")] === "OH")![col("childcare_subsidy_footing")]).toBe("in PolicyEngine's net income");
+    expect(body.find((r) => r[col("state")] === "TX")![col("childcare_subsidy_footing")]).toBe("added by HotGap");
+  });
   it("prints the model's numbers where there is a cliff, and leaves the dollar cells empty where there is none", () => {
     for (const [i, r] of body.entries()) {
       const m = rows[i].m;

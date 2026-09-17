@@ -67,25 +67,27 @@ function main(summary: SummaryJson): void {
     swipeHint();
   };
 
-  /* Selecting a state rebuilds nothing but the readout and the detail block.
-     From a tile or the table the page also takes the reader to the block and
-     hands focus to its heading (S1) — the rule a chart mark follows when it
-     opens its row (charts.md § M6); the control keeps aria-current, so its
-     group's tab stop is still that control on the way back. A rank row is
-     beside the map, where the readout answers in place. */
-  const select = (st: string, from: (typeof GROUPS)[number]) => {
+  /* Selecting a state rebuilds nothing but the readout and the detail block,
+     and moves nothing: the readout beside the map is the answer, the control
+     keeps aria-current and focus stays on it (rerun S1 — the jump to the
+     block, ~1,200px down, read as leaving the page and cost a scroll-back
+     per state compared). The readout's "Details below" link is the opt-in
+     jump: it scrolls the block into view and hands focus to its heading. */
+  const select = (st: string) => {
     view = { ...view, state: st };
     scene.sel = st;
     applySelection(st);
     renderReadout(scene);
     renderDetail(scene);
     writeUrl(true);
-    if (from !== "rankList") {
-      const heading = $("stateTitle");
-      heading.scrollIntoView({ block: "start" });
-      heading.focus();
-    }
   };
+  $("readout").addEventListener("click", (e) => {
+    if (!(e.target as HTMLElement).closest('a[href="#stateTitle"]')) return;
+    e.preventDefault();
+    const heading = $("stateTitle");
+    heading.scrollIntoView({ block: "start" });
+    heading.focus();
+  });
 
   /* The table's scroller says when there is more to the side (S10): the
      system draws the edge fade; the words are this page's. Re-read when the
@@ -125,7 +127,7 @@ function main(summary: SummaryJson): void {
     from.tabIndex = -1; to.tabIndex = 0; to.focus();
   };
   for (const id of GROUPS) {
-    $(id).addEventListener("click", (e) => { const b = stateOf(e); if (b) select(b.dataset.st as string, id); });
+    $(id).addEventListener("click", (e) => { const b = stateOf(e); if (b) select(b.dataset.st as string); });
     $(id).addEventListener("keydown", (e) => {
       const b = stateOf(e); if (!b) return;
       if (id === "grid") {

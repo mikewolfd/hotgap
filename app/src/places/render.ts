@@ -3,7 +3,7 @@
 // panel's per-view sentences, and the selected state's detail
 // (CorrectionsApplied, IncompleteMarker, otherBenefits, SourceNote). Every
 // word is copy.ts's; every number is read from the summary; nothing is typed.
-import { STATE_NAMES, type StateCoverage, type StateMetrics, type SummaryJson } from "@hotgap/core";
+import { CLIFF_MIN, STATE_NAMES, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { correctionRows } from "../lib/corrections.js";
 import { $, fillText } from "../lib/dom.js";
 import { esc, modelLine } from "../lib/format.js";
@@ -49,11 +49,21 @@ export function renderStatic(): void {
     skip: copy.skip, wordmark: copy.wordmark, title: copy.title, ledeFigure: copy.lede.figure, status: copy.status.loading,
     archLabel: copy.filters.household, metricLabel: copy.filters.measure, csvBtn: copy.filters.csv,
     figDesc: copy.figure.description, readout: copy.readout.empty, rankTitle: copy.rank.heading, rankBins: copy.rank.bins,
-    sortLabel: copy.table.order.label, colState: C.state, colBiggestLoss: C.biggestLoss, colDangerWidth: C.dangerWidth, colLeap: C.leap,
-    colSafeExit: C.safeExit, colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
+    sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state, colBiggestLoss: C.biggestLoss, colBiggestLossAt: C.biggestLossAt,
+    colDangerWidth: C.dangerWidth, colLeap: C.leap, colSafeExit: C.safeExit, colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
     tableNote: copy.table.note, methodHeading: copy.method.heading, excludesHeading: copy.method.excludes.heading,
   });
   $("glossary").innerHTML = rich(copy.lede.glossary);
+  /* One sentence per column where the headers are (rerun S3): the measures'
+     own `describe`, the step's and the flag's; each header points at its line. */
+  const measureDefs = MEASURES.map((m): [string, string, string] => [`col${m.key[0].toUpperCase()}${m.key.slice(1)}`, m.title, m.describe]);
+  const defs: [string, string, string][] = [
+    measureDefs[0], ["colBiggestLossAt", C.biggestLossAt, copy.table.defs.biggestLossAt], ...measureDefs.slice(1),
+    ["colFigures", C.figures, copy.table.defs.figures],
+  ];
+  $("defs").setAttribute("aria-label", copy.table.defs.label);
+  $("defs").innerHTML = defs.map(([id, term, def]) => `<dt>${esc(term)}</dt><dd id="def-${id}">${esc(def)}</dd>`).join("");
+  for (const [id] of defs) $(id).setAttribute("aria-describedby", `def-${id}`);
   $("pastAxisNote").innerHTML = rich(copy.method.pastAxisCaution);
   $<HTMLSelectElement>("metric").innerHTML = MEASURES.map((m) => `<option value="${m.key}">${esc(m.option)}</option>`).join("");
   $<HTMLSelectElement>("sort").innerHTML = `<option value="state">${esc(copy.table.order.state)}</option>` +
@@ -64,9 +74,12 @@ export function renderStatic(): void {
 export function renderOnce(summary: SummaryJson): void {
   const states = Object.keys(summary.states);
   $<HTMLSelectElement>("arch").innerHTML = summary.archetypes.map((a) => `<option value="${a.id}">${esc(copy.household(a.married, a.id.includes("dual"), a.childAges))}</option>`).join("");
-  $("ledeCount").textContent = copy.lede.counted(states.length, summary.archetypes.length);
+  $("ledeCount").textContent = copy.lede.counted(states.length, summary.archetypes.length, states.includes("DC"));
   $("table").textContent = copy.table.heading(states.length);
-  $("methodList").innerHTML = copy.method.items(summary.year, CSV_HEADER).map((t) => `<li>${rich(t)}</li>`).join("");
+  /* The axis in dollars for the selected household (rerun N9) follows the axis bullet; renderMethod fills it per view. */
+  const items = copy.method.items(summary.year, CSV_HEADER).map((t) => `<li>${rich(t)}</li>`);
+  items.splice(1, 0, `<li id="axisLine"></li>`);
+  $("methodList").innerHTML = items.join("");
   /* A gap every state shares is listed once here, never under a state (S8): the `all` entries, one per program. */
   const coverage = summary.coverage ?? {};
   const everywhere = new Map<string, string>();
@@ -160,38 +173,58 @@ export function renderFigure(s: Scene): void {
 }
 
 /**
- * The state's headline sentence (B3, B4): the figure with its step, the
- * programs that step ends, and the county the household rents in — the
- * readout under the map and the first line of the detail block. Bold on the
- * state and the figure is the readout's own mark (`.hg-readout b`).
+ * The state's sentences (B3, B4; rerun B2): the selected measure's figure
+ * leads in its own sentence — on the one-step loss that is the worst step
+ * itself, with the programs it ends — then the worst step as a second line
+ * where it is not the measure, then the county the household rents in. A
+ * state with no cliff says what the model found instead, up to the axis it
+ * was swept to (rerun S6). The readout under the map and the first lines of
+ * the detail block are the same sentences; bold on the state and the figure
+ * is the readout's own mark (`.hg-readout b`). Every figure is the row's.
  */
-function stepSentence(st: string, m: StateMetrics, cov: StateCoverage | undefined, missing: string[], marked: boolean): string {
-  const R = copy.readout;
+function stateLines(r: StateRow, measure: Measure, cov: StateCoverage | undefined, marked: boolean): string[] {
+  const R = copy.readout, { m } = r;
   const b = (t: string) => (marked ? `<b>${esc(t)}</b>` : esc(t));
-  const county = cov?.vintages.county.name ?? null;
-  if (m.cliffCount === 0 || m.biggestLossAt === null) return `${R.none(b(name(st)))} ${esc(R.renter(county))}`;
-  const step = fmt.step(m.biggestLossAt, STEP);
-  const line = missing.length
-    ? R.floor(b(name(st)), b(fmt.money(m.biggestLoss)), esc(step), m.biggestLossPrograms, missing.map(esc))
-    : R.step(b(name(st)), b(fmt.money(m.biggestLoss)), esc(step), m.biggestLossPrograms);
-  return `${line} ${esc(R.renter(county))}`;
+  const st = b(name(r.st)), top = fmt.money(m.axisTop), renter = esc(R.renter(cov?.vintages.county.name ?? null));
+  const missing = r.incomplete.map((u) => u.program);
+  if (m.cliffCount === 0 || m.biggestLossAt === null) {
+    const none = m.deferredCliffCount
+      ? R.noneDeferred(st, fmt.money(STEP), fmt.money(CLIFF_MIN), top, m.deferredCliffCount)
+      : R.none(st, fmt.money(STEP), fmt.money(CLIFF_MIN), top);
+    return [`${none} ${renter}`];
+  }
+  const step = esc(fmt.step(m.biggestLossAt, STEP)), loss = b(fmt.money(m.biggestLoss));
+  if (measure.key === "biggestLoss") {
+    const line = missing.length ? R.floor(st, loss, step, m.biggestLossPrograms, missing.map(esc)) : R.step(st, loss, step, m.biggestLossPrograms);
+    return [`${line} ${renter}`];
+  }
+  const M = R.measure;
+  const lead = measure.key === "dangerWidth" ? (m.safeExit === null ? M.dangerWidthOpen(st, b(fmt.money(m.dangerWidth)), top) : M.dangerWidth(st, b(fmt.money(m.dangerWidth))))
+    : measure.key === "leap" ? (m.leapIsLowerBound ? M.leapAtLeast(st, b(fmt.money(m.leap)), top) : M.leap(st, b(fmt.money(m.leap))))
+    : measure.key === "safeExit" ? (m.safeExit === null ? M.safeExitPast(st, top) : M.safeExit(st, b(fmt.money(m.safeExit))))
+    : measure.key === "cliffCount" ? M.cliffCount(st, m.cliffCount, m.deferredCliffCount)
+    : M.deferred(st, m.deferredCliffCount, m.cliffCount);
+  const worst = missing.length ? R.worstStepFloor(fmt.money(m.biggestLoss), step, m.biggestLossPrograms, missing.map(esc)) : R.worstStep(fmt.money(m.biggestLoss), step, m.biggestLossPrograms);
+  return [lead + (missing.length ? esc(M.floorTail(missing)) : ""), `${worst} ${renter}`];
 }
 
-/** The readout beside the map: the selected state's sentence with a link to its block, or how to select one. O(1). */
+/** The readout beside the map: the selected state's sentences with a link to its block, or how to select one. O(1). */
 export function renderReadout(s: Scene): void {
   const el = $("readout");
   const r = s.sel ? s.rows.find((x) => x.st === s.sel) : undefined;
   if (!r) { el.textContent = copy.readout.empty; return; }
-  el.innerHTML = `${stepSentence(r.st, r.m, s.summary.coverage?.[r.st], r.incomplete.map((u) => u.program), true)} <a href="#stateTitle">${esc(copy.readout.details)}</a>`;
+  el.innerHTML = `${stateLines(r, s.measure, s.summary.coverage?.[r.st], true).join("<br>")} <a href="#stateTitle">${esc(copy.readout.details)}</a>`;
 }
 
 /**
  * The ranked strip: the lower-bound rows first under their own heading (B1),
- * then the comparable states on a shared axis with their rank (N3), then the
- * two lifted-out blocks. Each row is a control (S2): the tile is sized to its
- * square, so the ranked list beside the map is the 44px control on a phone,
- * and it is one tab stop with the arrow keys moving by row, like the table.
- * O(states).
+ * sharing the top ranks the way a tie shares one rank (rerun B1), then the
+ * comparable states on a shared axis with their rank counted on from there
+ * (N3), then the two lifted-out blocks. On the one-step loss each row also
+ * says where its step begins (rerun S5). Each row is a control (S2): the
+ * tile is sized to its square, so the ranked list beside the map is the
+ * 44px control on a phone, and it is one tab stop with the arrow keys moving
+ * by row, like the table. O(states).
  */
 export function renderRank(s: Scene): void {
   const { measure, g } = s;
@@ -199,26 +232,40 @@ export function renderRank(s: Scene): void {
   const span = (g.bins.hi - g.bins.lo) || 1;
   const order = [...g.past, ...g.ranked, ...g.none, ...g.incomplete];
   const tabbable = s.sel ?? order[0]?.st;
-  const rankRow = (r: StateRow, inner: string, v: string, n?: number) =>
-    `<li><button type="button" class="hg-row-btn" data-st="${r.st}" aria-label="${esc(R.row(name(r.st), v))}"` +
-    `${control(r.st, s.sel, tabbable)}>${n === undefined ? "" : `<span class="n">${fmt.rank(n)}</span>`}<span class="st">${r.st}</span>` +
-    `<span class="track">${inner}</span><span class="v">${esc(v)}</span></button></li>`;
+  const withAt = measure.key === "biggestLoss";
+  const rankRow = (r: StateRow, inner: string, v: string, n?: string) => {
+    const at = withAt && r.m.biggestLossAt !== null ? R.at(fmt.money(r.m.biggestLossAt)) : "";
+    return `<li><button type="button" class="hg-row-btn" data-st="${r.st}" aria-label="${esc(R.row(n ?? "", name(r.st), v, at))}"` +
+      `${control(r.st, s.sel, tabbable)}>${n === undefined ? "" : `<span class="n">${esc(n)}</span>`}<span class="st">${r.st}</span>` +
+      `<span class="track">${inner}</span><span class="v">${esc(v)}${at ? ` <small class="at">${esc(at)}</small>` : ""}</span></button></li>`;
+  };
+  $("rank").classList.toggle("with-at", withAt);
 
-  /* Lower-bound rows lead, under a heading that says what they are (B1): the
-     leap's floor is a figure, a safe exit past the axis is not. A hollow
-     dashed mark at the right edge, because "beyond" is a place on the axis. */
-  $("lowerGroup").hidden = g.past.length === 0;
-  $("lowerTitle").textContent = measure.key === "leap" ? R.lower.leap(g.past.length) : R.lower.safeExit(g.past.length);
+  /* Lower-bound rows lead, under a heading that says what they are and that
+     they share ranks 1–n (B1): the leap's floor is a figure, a safe exit
+     past the axis is not. The mark is the tile's own — a dashed square at
+     the right edge, because "beyond" is a place on the axis. The note under
+     them says why the ranks are shared and the one thing the data lets a
+     reader say about the worst: the largest measured figure, and how the
+     largest floor stands to it. */
+  const n = g.past.length;
+  $("lowerGroup").hidden = n === 0;
+  $("lowerTitle").textContent = measure.key === "leap" ? R.lower.leap(n) : R.lower.safeExit(n);
   $("rankLower").innerHTML = g.past.map((r) => rankRow(r, `<span class="past"></span>`,
-    measure.key === "leap" && r.value !== null ? fmt.atLeast(value(r.value, measure)) : copy.pastAxis)).join("");
+    measure.key === "leap" && r.value !== null ? fmt.atLeast(value(r.value, measure)) : copy.pastAxis, fmt.rankRange(n))).join("");
+  const top = g.ranked[0] ? { state: name(g.ranked[0].st), v: value(g.ranked[0].value, measure) } : null;
+  $("lowerNote").textContent = n === 0 ? "" : measure.key === "leap"
+    ? R.lower.note.leap(n, top, { state: name(g.past[0].st), v: value(g.past[0].value, measure), reaches: (g.past[0].value ?? 0) >= (g.ranked[0]?.value ?? 0) })
+    : R.lower.note.safeExit(n, top);
 
   /* Competition ranking (N3): equal values share a rank, and the next rank
-     skips — twelve states at 1 are all first, and the first 0 is thirteenth. */
+     skips — twelve states at 1 are all first, and the first 0 is thirteenth.
+     The count starts after the lower-bound group, which holds ranks 1–n. */
   let rank = 0;
   $("rank").innerHTML = g.ranked.map((r, i) => {
-    if (i === 0 || r.value !== g.ranked[i - 1].value) rank = i + 1;
+    if (i === 0 || r.value !== g.ranked[i - 1].value) rank = n + i + 1;
     return rankRow(r, `<span class="dot" style="left:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
-      `background:var(--loss-${g.bins.index(r.value as number) + 1})"></span>`, value(r.value, measure), rank);
+      `background:var(--loss-${g.bins.index(r.value as number) + 1})"></span>`, value(r.value, measure), fmt.rank(rank));
   }).join("");
   $("rankAxis").innerHTML = `<span>${value(g.bins.lo, measure)}</span><span>${value(g.bins.hi, measure)}</span>`;
 
@@ -249,27 +296,32 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
   const tabbable = s.sel ?? rows[0]?.st;
   $("tabCap").innerHTML = `<span>${esc(T.caption(s.archLabel.toLowerCase(), sortMeasure ? T.byMeasure(sortMeasure.title, isCount(sortMeasure)) : T.byState,
     s.summary.year, fmt.date(s.summary.generated)))}</span>`;
-  const heading = (t: string) => `<tr class="group"><th colspan="8"><span>${esc(t)}</span></th></tr>`;
+  const heading = (t: string) => `<tr class="group"><th colspan="9"><span>${esc(t)}</span></th></tr>`;
   const headingFor = (r: StateRow, prev: StateRow | undefined): string => {
     if (!sortMeasure || r.kind === prev?.kind || r.kind === "shaded") return "";
     const n = rows.filter((x) => x.kind === r.kind).length;
     return r.kind === "past" ? heading(sortMeasure.key === "leap" ? copy.rank.lower.leap(n) : copy.rank.lower.safeExit(n))
       : r.kind === "none" ? heading(copy.rank.none.heading(n)) : heading(copy.rank.incomplete.heading(n));
   };
-  /* A no-cliff cell prints "none" for every dollar measure, never $0 (B4). */
+  /* A no-cliff cell prints "none" for every dollar measure, never $0 (B4).
+     The Figures cell carries the child-care subsidy's footing where HotGap
+     added it (rerun S4), so Ohio and Texas read on their footing without a click. */
   $("tbody").innerHTML = rows.map((r, i) => {
     const { m } = r, none = r.kind === "none", missing = r.incomplete.map((u) => u.program);
     const floor = (v: string) => (missing.length ? fmt.floor(v) : v);
     const cell = (v: number) => (none ? T.none : floor(fmt.money(v)));
+    const figures = esc(missing.length ? T.floor(missing) : T.complete) +
+      (s.summary.coverage?.[r.st]?.corrections.childcareSubsidy.source === "added by HotGap" ? `<small>${esc(T.subsidyAdded)}</small>` : "");
     return headingFor(r, rows[i - 1]) + `<tr>` +
       `<th scope="row"><button class="hg-row-btn" type="button" data-st="${r.st}" aria-label="${esc(name(r.st))}"` +
       `${control(r.st, s.sel, tabbable)}>${r.st}${missing.length ? `<span class="flag-mark" aria-hidden="true">${esc(T.floorMark)}</span>` : ""}</button></th>` +
       `<td class="num">${cell(m.biggestLoss)}</td>` +
+      `<td class="num">${none || m.biggestLossAt === null ? T.none : esc(fmt.step(m.biggestLossAt, STEP))}</td>` +
       `<td class="num">${cell(m.dangerWidth)}</td>` +
       `<td class="num">${none ? T.none : floor(m.leapIsLowerBound ? fmt.atLeast(fmt.money(m.leap)) : fmt.money(m.leap))}</td>` +
       `<td class="num">${none ? T.none : m.safeExit === null ? `<span aria-describedby="pastAxisNote">${esc(copy.pastAxis)}</span>` : floor(fmt.money(m.safeExit))}</td>` +
       `<td class="num">${floor(String(m.cliffCount))}</td><td class="num">${floor(String(m.deferredCliffCount))}</td>` +
-      `<td class="flag${missing.length ? " no" : ""}">${missing.length ? esc(T.floor(missing)) : T.complete}</td></tr>`;
+      `<td class="flag${missing.length ? " no" : ""}">${figures}</td></tr>`;
   }).join("");
   return rows;
 }
@@ -281,6 +333,13 @@ export function renderMethod(s: Scene): void {
     ? E.hatched(label, g.incomplete.map((r) => E.whereItem(r.incomplete.map((u) => u.program), name(r.st))))
     : E.nothing(label);
   $("hatchCaution").innerHTML = rich(copy.method.hatchCaution(g.programs));
+  /* The axis this household was swept to, in dollars (rerun N9): the top most
+     states share, and the states whose higher guidelines lengthen it. */
+  const tops = new Map<number, string[]>();
+  for (const r of s.rows) tops.set(r.m.axisTop, [...(tops.get(r.m.axisTop) ?? []), r.st]);
+  const [common] = [...tops].sort((a, z) => z[1].length - a[1].length)[0] ?? [0];
+  const exceptions = s.rows.filter((r) => r.m.axisTop !== common).map((r) => ({ state: name(r.st), top: fmt.money(r.m.axisTop) }));
+  $("axisLine").textContent = copy.method.axis(label, fmt.money(common), exceptions);
 }
 
 /** The suggested citation, from the run's facts and the page's own address for this view (N13). */
@@ -306,7 +365,7 @@ export function renderDetail(s: Scene): void {
   const cov = sel ? summary.coverage?.[sel] : undefined;
   const row = sel ? s.rows.find((r) => r.st === sel) : undefined;
   $("stateStep").hidden = !row;
-  if (row) $("stateStep").innerHTML = stepSentence(row.st, row.m, cov, row.incomplete.map((u) => u.program), false);
+  if (row) $("stateStep").innerHTML = stateLines(row, s.measure, cov, false).join("<br>");
   if (!sel || !cov) {
     $("stateTitle").textContent = sel ? D.heading(name(sel), 0) : D.choose;
     $("stateSub").textContent = sel ? D.noBlock : D.chooseSub;
@@ -319,7 +378,7 @@ export function renderDetail(s: Scene): void {
   const rows = correctionRows(cov.corrections);
   $("stateTitle").textContent = D.heading(stateName, rows.length);
   $("stateSub").textContent = `${rows.length ? D.changed(stateName) : D.unchanged(stateName)} ${D.subsidy(stateName, cov.corrections.childcareSubsidy.source)}`;
-  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source, r.note, r.href)).join("");
+  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ?? D.applied, r.note, r.href)).join("");
 
   const own = cov.unmodeled.filter((u) => u.scope !== "all");
   $("unmodTitle").hidden = $("unmod").hidden = own.length === 0;
