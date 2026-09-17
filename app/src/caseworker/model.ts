@@ -13,6 +13,7 @@ import {
   CLIFF_MIN,
   COVERAGE_PROGRAMS,
   DEFERRAL_UNTIL,
+  liheapLimitWords,
   pickArchetypeId,
   REACH_PERCENTILES,
   STATE_NAMES,
@@ -140,6 +141,8 @@ export interface LedgerRow {
   cliff?: Cliff;
   /** When the loss lands, if not this year. */
   deferred: string | null;
+  /** EligibilityBoundary (#23): a limit the household never crossed, tagged *if you apply*; never a cliff. */
+  boundary?: true;
 }
 
 /**
@@ -171,6 +174,8 @@ export function ledgerRows(ev: HouseholdEvaluation): LedgerRow[] {
     }
   for (const [id, at] of Object.entries(ends.programEnds) as [ProgramId, number][])
     if (![...seen].some((k) => k.startsWith(`${id}|`))) out.push({ at: at + step, id, group: "Household", deferred: null });
+  // Where energy assistance stops, with the toggle off: the earner's own pay at the state's limit, not a step of the axis.
+  if (ev.liheap && !ev.liheap.counted) out.push({ at: ev.liheap.earningsLimit, id: "liheap", group: "Household", deferred: null, boundary: true });
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 }
 
@@ -188,6 +193,12 @@ function series(ev: HouseholdEvaluation, r: LedgerRow): number[] | null {
 export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage | undefined): string {
   const pts = ev.curve.points, i = indexOf(ev, r.at), before = i - 1, p = series(ev, r), s: string[] = [], L = copy.ledger;
   const h = modeled(ev);
+  const b = ev.liheap;
+  if (r.id === "liheap" && b) {
+    const limit = cov?.liheap?.limitKind ?? liheapLimitWords(b.limit);
+    if (r.boundary) return L.liheapBoundary({ limit, band: b.topBand ? L.liheapBand(b.topBand.min, b.topBand.max) : null, servedShare: b.servedShare, readOn: b.readOn });
+    if (r.cliff) return L.liheapCounted(pts[before].programs.liheap ?? 0, limit);
+  }
   if (r.cliff) {
     const left = p ? p[i] : 0;
     if (left > 0) {
@@ -278,13 +289,18 @@ export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluati
 export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined): string[] {
   const h = modeled(ev), on: string[] = [], off: string[] = [], A = copy.assumed;
   const takeUp: [boolean, ProgramId][] = [[h.getsSnap, "snap"], [h.getsTanf, "tanf"], [h.getsMedicaid, "medicaid"], [h.getsWic, "wic"],
-    [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"]];
+    [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"], [h.getsEnergyAssistance, "liheap"]];
   for (const [gets, id] of takeUp) (gets ? on : off).push(programName(id));
   const facts = [h.youStatus === "citizen" ? A.citizen : A.status(h.youStatus), h.savings ? A.savings(h.savings) : A.noSavings,
     h.selfEmployed ? A.selfEmployed : A.wages, h.hasEmployerCoverage ? A.esi : A.noEsi,
     h.ssdiMonthly || h.childSupportMonthly || h.unemploymentMonthly ? A.otherIncome : A.noOtherIncome];
   const st = stateName(ev.answers.state);
-  return [A.health, A.facts(facts, h.age), A.takeUp(on, off), A.annualised, ...(cov?.unmodeled ?? []).map((u) => A.unmodeled(st, u.program, u.note))];
+  return [
+    A.health, A.facts(facts, h.age), A.takeUp(on, off), A.annualised,
+    ...(cov?.unmodeled ?? []).map((u) => A.unmodeled(st, u.program, u.note)),
+    // EligibilityBoundary (#23): core's one sentence on why the money is not in net income, verbatim.
+    ...(cov?.corrections.liheap ? [A.liheap(st, cov.corrections.liheap.note)] : []),
+  ];
 }
 
 // ── SourceNote (#17, M4, N9): every fact from the data ──────────────────

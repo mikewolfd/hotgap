@@ -2,7 +2,7 @@
 // states and the reach and hours sentences.
 import { describe, expect, test } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
-import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText } from "./facts.js";
+import { assumedRows, boundaryText, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText } from "./facts.js";
 import { makeEvaluation } from "./fixture.js";
 import { sceneOf } from "./model.js";
 import { tableRows } from "./table.js";
@@ -40,7 +40,7 @@ describe("what we assumed", () => {
       "Rent: $1,735 a month. The usual rent in Colorado.",
       "Child care: None. Nobody in the home pays for day care.",
       "Help you get: Food help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), and food help for moms and babies (WIC). We count each as if you get it.",
-      "Not counted: Child care help (CCDF child care subsidy), housing help (Housing voucher), and free early learning (Head Start). We count them as if you do not get them.",
+      "Not counted: Child care help (CCDF child care subsidy), housing help (Housing voucher), free early learning (Head Start), and help with heating bills (LIHEAP energy assistance). We count them as if you do not get them.",
       "You: Age 30. A U.S. citizen. No one in the home has a disability.",
       "Other money: Savings: None. No child support, SSDI or unemployment pay.",
       "Hours: Not given. We assume full time.",
@@ -135,5 +135,30 @@ describe("reach and hours", () => {
   test("hours: the state's minimum wage and full-time pay at it, to $500", () => {
     expect(hoursText(sceneOf(makeEvaluation(), year))).toBe("Colorado's lowest legal pay is $15.16 an hour. Full-time work at that pay is about $31,500 a year.");
     expect(hoursText(sceneOf(makeEvaluation({ minWage: null }), year))).toBeNull();
+  });
+});
+
+describe("EligibilityBoundary (#23)", () => {
+  const boundary = (over = {}) => ({
+    component: "heating" as const, earningsLimit: 39_975, householdIncomeLimit: 39_975, limit: { kind: "fpg" as const, pct: 150 },
+    topBand: { min: 1200, max: 1200 }, shape: "staircase" as const, servedShare: 0.03, upstream: null, counted: false,
+    sources: { limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: null, served: null }, readOn: "2026-09-16", note: "", ...over,
+  });
+  test("says the three facts and invites the toggle; a range, a flat figure or an unread amount; the served share as families in ten", () => {
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary() }), year)))
+      .toBe("Above $40,000 a year, you can no longer apply for help with heating bills in Colorado. It is called LIHEAP. It is worth $1,200 a winter if you get it. Fewer than 1 in 10 families who could get it here do. If you get it, turn it on to see it in your line.");
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: { min: 355, max: 430 }, servedShare: 0.18 }) }), year)))
+      .toContain("It is worth $355 to $430 a winter if you get it. About 2 in 10 families who could get it here do.");
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.85 }) }), year))).toContain("About 9 in 10 families who could get it here do.");
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.96 }) }), year))).toContain("Almost all families who could get it here do.");
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: null, servedShare: null }) }), year)))
+      .toContain("We could not read what it pays. We do not know how many families who could get it here do.");
+    expect(boundaryText(sceneOf(makeEvaluation({ liheap: null }), year))).toBeNull();
+  });
+  test("with the toggle on, says only that it was counted, and the tick leaves the picture", () => {
+    const s = sceneOf(makeEvaluation({ liheap: boundary({ counted: true }) }), year);
+    expect(boundaryText(s)).toMatch(/^You said you get help with heating bills \(LIHEAP\)\. We put it in your line: about \$\d[\d,]* a year, up to \$40,000 a year\.$/);
+    expect(s.boundaryInWindow).toBe(false);
+    expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryInWindow).toBe(true);
   });
 });

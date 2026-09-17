@@ -44,11 +44,11 @@ const CHIP_OF: Partial<Record<HouseholdFlagName, ChipKey>> = {
   age: "age", "spouse-age": "spouseAge", "spouse-earnings": "spousePay", rent: "rent", childcare: "childcare",
   ssdi: "ssdi", "child-support": "childSupport", unemployment: "unemployment", savings: "savings",
   status: "status", "spouse-status": "spouseStatus",
-  "childcare-subsidy": "childcareSubsidy", "head-start": "headStart", housing: "housing", "employer-coverage": "employerCoverage",
+  "childcare-subsidy": "childcareSubsidy", "head-start": "headStart", housing: "housing", "energy-assistance": "energyAssistance", "heat-in-rent": "heatInRent", "employer-coverage": "employerCoverage",
   "self-employed": "selfEmployed", disabled: "disabled", "spouse-disabled": "spouseDisabled",
   "no-snap": "snap", "no-tanf": "tanf", "no-medicaid": "medicaid", "no-wic": "wic",
 };
-const TOGGLES = new Set<HouseholdFlagName>(["childcare-subsidy", "head-start", "housing", "employer-coverage", "self-employed", "disabled", "spouse-disabled"]);
+const TOGGLES = new Set<HouseholdFlagName>(["childcare-subsidy", "head-start", "housing", "energy-assistance", "heat-in-rent", "employer-coverage", "self-employed", "disabled", "spouse-disabled"]);
 const INVERTED = new Set<HouseholdFlagName>(["no-snap", "no-tanf", "no-medicaid", "no-wic"]);
 const MONTHLY = new Set<HouseholdFlagName>(["rent", "childcare", "ssdi", "child-support", "unemployment"]);
 const YEARLY = new Set<HouseholdFlagName>(["earnings", "spouse-earnings"]);

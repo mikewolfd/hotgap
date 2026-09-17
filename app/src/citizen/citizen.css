@@ -54,6 +54,8 @@
 .chart-unit { font-size: var(--t-micro); color: var(--ink-3); }
 .result figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
                      max-width: var(--measure); }
+/* EligibilityBoundary (#23): one line under the key, in the caption's voice — prose, never a mark. */
+.result .boundary { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure); }
 
 /* The Close a mark's open row gains sits under the row's text. */
 :where(.hg-rows) .hg-button--small { margin-top: var(--s2); }

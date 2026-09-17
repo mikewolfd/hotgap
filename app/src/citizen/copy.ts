@@ -105,6 +105,24 @@ export const copy = {
     drop: "A drop this year",
     later: "A drop that waits",
     you: "You now",
+    boundary: "Where help with heating bills stops",
+  },
+
+  // EligibilityBoundary (#23): three facts and an invitation, never a drop.
+  // {pay} is in the person's own unit; {min}, {max}, {amount} are yearly money.
+  boundary: {
+    line: "Above {pay}, you can no longer apply for help with heating bills in {state}. It is called LIHEAP.",
+    worth: " It is worth {min} to {max} a winter if you get it.",
+    worthFlat: " It is worth {amount} a winter if you get it.",
+    worthUnknown: " We could not read what it pays.",
+    served: {
+      some: " About {n} in 10 families who could get it here do.",
+      few: " Fewer than 1 in 10 families who could get it here do.",
+      most: " Almost all families who could get it here do.",
+      unknown: " We do not know how many families who could get it here do.",
+    },
+    invite: " If you get it, turn it on to see it in your line.",
+    counted: "You said you get help with heating bills (LIHEAP). We put it in your line: about {amount} a year, up to {pay}.",
   },
 
   // SourceNote (#17) with its archetype state (M4).

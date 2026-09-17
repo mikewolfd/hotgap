@@ -67,9 +67,9 @@ Tests: 51 rows, every state once; every `pct` within the statutory floor/ceiling
 
 The design system has no component for "a boundary you never crossed": IncompleteMarker is a data gap, DeferredBadge is a later loss, the one convention is where a received program ends. Phase 2 starts with a **design brief** (`design/`, an inventory entry — working name *EligibilityBoundary*), reviewed the way the audit was, before any page code:
 
-- [ ] Inventory entry: what it says (the three facts: the limit, the worth-if-received range, the served share as "about N in 10"), where it sits on each surface (citizen: one line under the curve's key, in the citizen register, and a tick on the x-axis with no drop drawn; caseworker: a ThresholdLedger row tagged *if you apply* with the cite; journalist: a column in the state block and a CSV pair `liheap_limit`, `liheap_served_share`), and what it must never do (draw a drop, enter a ranking, appear as a cliff count).
-- [ ] Copy through each surface's copy module (languages rule, `app/README.md` § Languages): the served share is a plural-aware message; core emits the code and parameters.
-- [ ] Citizen, caseworker, journalist pages: render from `evaluation.liheap` / `coverage[ST].liheap`; e2e per page pins the TX and MA renders; the places CSV gains the two columns with provenance.
+- [x] Inventory entry: what it says (the three facts: the limit, the worth-if-received range, the served share as "about N in 10"), where it sits on each surface (citizen: one line under the curve's key, in the citizen register, and a tick on the x-axis with no drop drawn; caseworker: a ThresholdLedger row tagged *if you apply* with the cite; journalist: a column in the state block and a CSV pair `liheap_limit`, `liheap_served_share`), and what it must never do (draw a drop, enter a ranking, appear as a cliff count).
+- [x] Copy through each surface's copy module (languages rule, `app/README.md` § Languages): the served share is a plural-aware message; core emits the code and parameters.
+- [x] Citizen and caseworker pages: render from `evaluation.liheap` (2026-09-16). **Pending:** the journalist column and the places CSV pair (`liheap_limit`, `liheap_served_share`) land after Plan 8's rebuild of `app/src/places/**` merges; the e2e pins for those follow it.
 - [ ] Visual review (the `frontend-design` skill, B/S/N doc) before merge, as for every surface.
 
 ### Phase 3 — the take-up toggle: LIHEAP in the money line, in every state
