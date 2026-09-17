@@ -31,7 +31,7 @@ export interface Fact { label: string; text: string }
 
 const TAKE_UP: [keyof Scene["modeled"], ProgramId][] = [
   ["getsSnap", "snap"], ["getsTanf", "tanf"], ["getsMedicaid", "medicaid"], ["getsWic", "wic"],
-  ["getsChildcareSubsidy", "childcare"], ["getsHousing", "housing"], ["getsHeadStart", "headstart"],
+  ["getsChildcareSubsidy", "childcare"], ["getsHousing", "housing"], ["getsHeadStart", "headstart"], ["getsEnergyAssistance", "liheap"],
 ];
 
 const kidsWord = (n: number): string =>
@@ -158,6 +158,32 @@ export function hoursText(s: Scene): string | null {
   const w = s.ev.minWage;
   if (!w) return null;
   return t("hours.body", { state: s.stateName, wage: unitFigure(w.wage, "hour"), fullTime: s.m.money(Math.round(w.fullTimeEarnings / 500) * 500) });
+}
+
+/**
+ * EligibilityBoundary (#23) under the key: where help with heating bills
+ * stops, what it is worth if received, and the share of eligible families
+ * the state served — "about N in 10", never this family's odds — then the
+ * invitation to the toggle. With the toggle on, only that it was counted.
+ */
+export function boundaryText(s: Scene): string | null {
+  const b = s.boundary;
+  if (!b) return null;
+  const { m } = s;
+  if (b.counted) {
+    const at = s.ev.curve.points.filter((p) => p.earnings <= b.earningsLimit).pop();
+    return t("boundary.counted", { amount: m.about(at?.programs.liheap ?? 0), pay: m.payUnit(b.earningsLimit) });
+  }
+  let out = t("boundary.line", { pay: m.payUnit(b.earningsLimit), state: s.stateName });
+  out += !b.topBand ? t("boundary.worthUnknown")
+    : b.topBand.min === b.topBand.max ? t("boundary.worthFlat", { amount: m.money(b.topBand.min) })
+    : t("boundary.worth", { min: m.money(b.topBand.min), max: m.money(b.topBand.max) });
+  if (b.servedShare === null) out += t("boundary.served.unknown");
+  else {
+    const n = Math.round(b.servedShare * 10);
+    out += n <= 0 ? t("boundary.served.few") : n >= 10 ? t("boundary.served.most") : t("boundary.served.some", { n });
+  }
+  return out + t("boundary.invite");
 }
 
 /** The phrase for a cliff's first named program, for the chart's spoken label. */

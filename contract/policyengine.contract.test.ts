@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 // The endpoint under test: the public API unless HOTGAP_PE_URL names another
 // one. Every assertion below is about behaviour the public API has, so a
 // self-hosted stand-in (engine/) has to satisfy all of them unchanged.
-import { answersFor, archetypeById, buildCurvePayload, PROBE_SENTINEL, childcareSubsidyProbePayload, heldByAdults, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, requestPE, type CurvePoint } from "../core/src/index.js";
+import { answersFor, archetypeById, buildCurvePayload, PROBE_SENTINEL, childcareSubsidyProbePayload, heldByAdults, liheapAmount, liheapProbePayload, OTHER_BENEFIT_SOURCES, parsePEResponse, peHeaders, peUrl, probeChildcareSubsidyCounted, probeLiheapCounted, requestPE, type CurvePoint } from "../core/src/index.js";
 
 const RUN = process.env.RUN_CONTRACT === "1";
 // Only load the fixture when the contract suite actually runs, so a missing or
@@ -551,4 +551,42 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
       }
     }, 120_000);
   }
+
+  // Plan 7: the LIHEAP probe, pinned per endpoint. False on the droplet at
+  // policyengine-us 2.6.2 (2026-09-16): the forced ma_liheap comes back as
+  // itself and household_state_benefits stays $0, because no LIHEAP variable
+  // is on gov.household.household_state_benefits. The day upstream lists
+  // them this flips to true and parse.ts stops adding the amount.
+  it("the LIHEAP probe reads its sentinel back and answers", async () => {
+    const body = (await requestPE(liheapProbePayload(), { timeoutMs: 90_000 })) as any;
+    expect(body.result.spm_units.spm_unit.ma_liheap["2026"]).toBeCloseTo(PROBE_SENTINEL, -1);
+    expect(typeof (await probeLiheapCounted({ timeoutMs: 90_000 }))).toBe("boolean");
+  }, 120_000);
+
+  // The Massachusetts schedule at three band edges, HotGap's table against the
+  // engine's ma_liheap on HotGap's own payload. The finding this pins
+  // (2026-09-16, droplet 2.6.2): the served variable is $0 at every edge,
+  // because ma_liheap is capped at a heating bill HotGap never sends, while the
+  // state's FY2026 chart (2025-06-02) pays $460/$425/$355 there — and with
+  // heat-in-rent sent the engine pays its own FY2026 figures, which differ
+  // from that chart. The table stands until the served series is non-zero on
+  // this payload (evaluate.ts applyLiheap).
+  it("Massachusetts: HotGap's LIHEAP table at three band edges against ma_liheap live", async () => {
+    const ma = { ...answersFor("MA", archetypeById("single-2")), getsEnergyAssistance: true };
+    // 125% and 150% FPG for three ($33,312.50, which the chart prints as $33,313; $39,975) and 60% SMI ($83,641); the edge is inclusive.
+    const edges: [number, number][] = [[33312, 460], [39975, 425], [83641, 355]];
+    for (const [earnings, table] of edges) expect(liheapAmount(ma, earnings), `${earnings}`).toBe(table);
+    expect(liheapAmount(ma, 83642)).toBe(0);
+    const served = async (earnings: number, heatInRent: boolean) => {
+      const payload = buildCurvePayload({ ...ma, annualEarnings: earnings, heatInRent }, { liheap: true });
+      const household = payload.household as { axes: unknown[][]; spm_units: Record<string, Record<string, unknown>> };
+      household.axes[0][0] = { name: "employment_income", min: earnings, max: earnings + 1000, count: 2, period: "2026" };
+      const body = (await requestPE(payload, { timeoutMs: 90_000 })) as any;
+      expect(body.status).toBe("ok");
+      return body.result.spm_units.spm_unit.ma_liheap["2026"][0] as number;
+    };
+    for (const [earnings] of edges) expect(await served(earnings, false), `${earnings}`).toBe(0);
+    // The one household fact that lifts the cap: the engine then pays its own schedule, not $0.
+    expect(await served(33313, true)).toBeGreaterThan(0);
+  }, 300_000);
 });

@@ -74,7 +74,10 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     await expect(page.locator("#correctionsRest")).toContainText("Checked and not applying here — TAFDC:");
     // ThresholdLedger under the one convention: the subsidy ends at $55,000, SNAP's remainder cited.
     const ledger = page.locator("#ledgerRows tr");
-    await expect(ledger).toHaveCount(9);
+    // Nine program ends and, since Plan 7, the LIHEAP boundary row at Colorado's $69,935 limit (EligibilityBoundary #23).
+    await expect(ledger).toHaveCount(10);
+    await expect(ledger.nth(7)).toContainText("$69,935");
+    await expect(ledger.nth(7).locator(".hg-tag")).toHaveText("if you apply");
     await expect(ledger.nth(5)).toContainText("$55,000");
     await expect(ledger.nth(5)).toContainText("CCDF child care subsidy");
     await expect(ledger.nth(5)).toContainText("Care priced at $2,773 a month for 2 children (county 2015 prices");
@@ -421,4 +424,20 @@ test("archetype path: a what-if the sweep cannot answer says so instead of +$0 (
   measured["B1-archetype-1280"] = { head: await page.locator("#compareHead").innerText(), change: await change.innerText() };
   await page.evaluate(() => document.getElementById("compare")!.scrollIntoView());
   await page.screenshot({ path: after("B1-archetype-1280-compare") });
+});
+
+test("Texas: the ledger carries the LIHEAP boundary as a row tagged 'if you apply', with the cite; the assumptions carry core's sentence (Plan 7)", async ({ page }) => {
+  await light(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/caseworker.html?zip=78701&kids=3%2C7&pay=30000&unit=year&rent=1500");
+  await expect(page.locator("#sourceNote")).toHaveAttribute("data-source", "live");
+  const row = page.locator("#ledgerRows tr[data-boundary]");
+  await expect(row).toHaveCount(1);
+  await expect(row).toContainText("$39,975");
+  await expect(row).toContainText("LIHEAP energy assistance");
+  await expect(row.locator(".hg-tag")).toHaveText("if you apply");
+  await expect(row.locator(".hg-cite")).toHaveText("Above this the household can no longer apply: the state's limit is 150% of the poverty guideline. Worth $1,200 at that band if received. 3% of income-eligible households were served in FY2024. Not in net income unless the household says it gets it. Read 2026-09-16.");
+  await expect(page.locator("#assumed")).toContainText("Energy assistance (LIHEAP) in Texas: HotGap shows where energy assistance (LIHEAP) stops in this state");
+  await expect(page.locator("#correctionsRest")).toContainText("LIHEAP energy assistance: HotGap shows where energy assistance");
+  measured["P7-TX-ledger-boundary"] = await row.textContent();
 });

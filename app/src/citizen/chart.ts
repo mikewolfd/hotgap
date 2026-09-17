@@ -11,7 +11,7 @@ import type { Cliff } from "@hotgap/core";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
-import { worstPhrase } from "./facts.js";
+import { boundaryText, worstPhrase } from "./facts.js";
 import { layout, type Cluster, type Layout } from "./geometry.js";
 import type { Scene } from "./model.js";
 
@@ -33,7 +33,7 @@ export interface Chart {
 const LOSS_LABEL = "hg-label hg-label--loss hg-label--halo";
 
 /** The key entries: each draws the actual mark (never a swatch alone). */
-function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean): HTMLUListElement {
+function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean, hasBoundary: boolean): HTMLUListElement {
   const entry = (label: string, inner: string, hidden = false) => {
     const li = h("li", { hidden }, label);
     const pic = svg("svg", { viewBox: "0 0 22 12", "aria-hidden": "true" });
@@ -48,6 +48,8 @@ function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolea
     entry(copy.key.drop, `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`, !hasDrop),
     entry(copy.key.later, `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`, !hasLater),
     entry(copy.key.you, `<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`),
+    /* EligibilityBoundary (#23): the axis tick, and nothing that looks like a loss. */
+    entry(copy.key.boundary, `<line x1="1" y1="11" x2="21" y2="11" stroke="var(--axis)" stroke-width="1"/><line x1="11" y1="3" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2"/>`, !hasBoundary),
   );
 }
 
@@ -90,12 +92,16 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint") + (s.inWindow.length && innerWidth >= 720 ? t("chart.readoutMarks") : ""));
   const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.inWindow.length ? t("chart.readoutMarks") : ""));
   const caption = h("figcaption", { id: "curveCaption" });
+  /* EligibilityBoundary (#23): one line under the key, whether or not the tick is in the window; nothing when the curve ends below the limit. */
+  const boundary = boundaryText(s);
   /* The readout paints the caret only once a person has moved it; before that it holds the hint. */
   let touched = false;
   figure.append(
     h("div", { class: "chart-head" }, h("span", { class: "chart-title" }, t("chart.title")),
       h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
-    wrapper, readout, keys, keyList(s, hasOther, hasLater, hasDrop), caption,
+    wrapper, readout, keys, keyList(s, hasOther, hasLater, hasDrop, s.boundaryInWindow),
+    ...(boundary ? [h("p", { class: "boundary", id: "boundary", "data-counted": String(s.boundary!.counted) }, boundary)] : []),
+    caption,
   );
 
   let L: Layout | null = null;
@@ -152,6 +158,12 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     }
     for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
     picture.append(svg("line", { x1: pad.l, y1: bottom, x2: W - pad.r, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
+
+    /* EligibilityBoundary (#23): a tick on the axis where energy assistance stops — no dot, no connector, no drop. */
+    if (s.boundaryInWindow) {
+      const tx = px(s.boundary!.earningsLimit);
+      picture.append(svg("line", { x1: tx, y1: bottom - 8, x2: tx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-linecap": "round", "data-boundary": "true" }));
+    }
 
     /* The peak of the household's zone: a rule across the band, labelled with the dollar (N2). */
     const yPeak = s.zone ? py(s.zone.peakNet) : NaN;

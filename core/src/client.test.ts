@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, it, expect } from "vitest";
-import { canonical, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, PROBE_SENTINEL, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
+import { canonical, childcareSubsidyProbePayload, configurePolicyEngine, curveCacheKey, endpointHasTaxUnitVariable, fetchCurve, PROBE_SENTINEL, liheapProbePayload, maTafdcProbePayload, modelRecord, PE_URL, peHeaders, peUrl, PolicyEngineError, probeChildcareSubsidyCounted, probeLiheapCounted, probeMaTafdcDoubleCount, requestPE, resampleMaTafdc, type CurveCache } from "./client.js";
 import { correctMaTafdc, maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -499,6 +499,35 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
     }) as unknown as typeof fetch;
     try {
       expect(await modelRecord({ fetchImpl })).toEqual({ endpoint: "fixed-cc3.example", version: "2.7.0", countsChildcareSubsidy: true });
+    } finally {
+      delete process.env.HOTGAP_PE_URL;
+    }
+  });
+});
+
+describe("the LIHEAP probe (Plan 7)", () => {
+  const YEAR = "2026";
+  const probeBody = (stateBenefits: number, served = PROBE_SENTINEL) => JSON.stringify({
+    status: "ok", message: null,
+    result: {
+      households: { household: { household_state_benefits: { [YEAR]: stateBenefits } } },
+      spm_units: { spm_unit: { ma_liheap: { [YEAR]: served } } },
+    },
+  });
+  const probeFetch = (stateBenefits: number, served?: number) => (async () => new Response(probeBody(stateBenefits, served), { status: 200 })) as unknown as typeof fetch;
+
+  it("forces ma_liheap on a bare Massachusetts household and reads household_state_benefits back — false on today's droplet, true once upstream lists it", async () => {
+    const payload = liheapProbePayload() as any;
+    expect(payload.household.households.household.state_code[YEAR]).toBe("MA");
+    expect(payload.household.spm_units.spm_unit.ma_liheap[YEAR]).toBe(PROBE_SENTINEL);
+    try {
+      process.env.HOTGAP_PE_URL = "https://unlisted-liheap.example/us/calculate";
+      expect(await probeLiheapCounted({ fetchImpl: probeFetch(0) })).toBe(false);
+      process.env.HOTGAP_PE_URL = "https://listed-liheap.example/us/calculate";
+      expect(await probeLiheapCounted({ fetchImpl: probeFetch(PROBE_SENTINEL) })).toBe(true);
+      // An ignored input would look exactly like an unlisted variable: it is an error instead.
+      process.env.HOTGAP_PE_URL = "https://ignores-liheap.example/us/calculate";
+      await expect(probeLiheapCounted({ fetchImpl: probeFetch(0, 0) })).rejects.toThrow(/was not read back/);
     } finally {
       delete process.env.HOTGAP_PE_URL;
     }

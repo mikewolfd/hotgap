@@ -1,0 +1,337 @@
+{
+ "read": "2026-09-17",
+ "fiscalYear": "FY2026",
+ "period": "2025-10-01",
+ "source": {
+  "commit": "6b7101388adc0661df510d3ee854e015647e5753",
+  "url": {
+   "amount": "https://raw.githubusercontent.com/PolicyEngine/policyengine-us/6b7101388adc0661df510d3ee854e015647e5753/policyengine_us/parameters/gov/hhs/smi/amount.yaml",
+   "adjustment": "https://raw.githubusercontent.com/PolicyEngine/policyengine-us/6b7101388adc0661df510d3ee854e015647e5753/policyengine_us/parameters/gov/hhs/smi/household_size_adjustment.yaml",
+   "threshold": "https://raw.githubusercontent.com/PolicyEngine/policyengine-us/6b7101388adc0661df510d3ee854e015647e5753/policyengine_us/parameters/gov/hhs/smi/additional_person_threshold.yaml"
+  },
+  "publisher": "policyengine-us parameters gov/hhs/smi (amount.yaml, household_size_adjustment.yaml, additional_person_threshold.yaml), a transcription of the ACF table below, at the pinned commit",
+  "acf": {
+   "title": "State Median Income (SMI) by Household Size for Mandatory Use in LIHEAP for FY 2026",
+   "href": "https://acf.gov/sites/default/files/documents/ocs/COMM_LIHEAP_IM2025-02_SMIStateTable_Att4.pdf"
+  },
+  "sizeRule": "45 CFR 96.85: 60% of the four-person SMI times 52% for one person, +16 points a person through six, +3 points a person above six",
+  "periods": {
+   "FY2025": "2024-10-01",
+   "FY2026": "2025-10-01"
+  }
+ },
+ "adjustment": {
+  "firstPerson": 0.52,
+  "secondToSixthPerson": 0.16,
+  "additionalPerson": 0.03,
+  "additionalPersonThreshold": 6
+ },
+ "states": {
+  "AL": {
+   "fourPerson": {
+    "FY2025": 95455,
+    "FY2026": 98700
+   }
+  },
+  "AK": {
+   "fourPerson": {
+    "FY2025": 121634,
+    "FY2026": 128650
+   }
+  },
+  "AZ": {
+   "fourPerson": {
+    "FY2025": 101783,
+    "FY2026": 107983
+   }
+  },
+  "AR": {
+   "fourPerson": {
+    "FY2025": 86577,
+    "FY2026": 90280
+   }
+  },
+  "CA": {
+   "fourPerson": {
+    "FY2025": 121926,
+    "FY2026": 128144
+   }
+  },
+  "CO": {
+   "fourPerson": {
+    "FY2025": 130104,
+    "FY2026": 138760
+   }
+  },
+  "CT": {
+   "fourPerson": {
+    "FY2025": 145853,
+    "FY2026": 153091
+   }
+  },
+  "DE": {
+   "fourPerson": {
+    "FY2025": 120963,
+    "FY2026": 126099
+   }
+  },
+  "DC": {
+   "fourPerson": {
+    "FY2025": 184525,
+    "FY2026": 198211
+   }
+  },
+  "FL": {
+   "fourPerson": {
+    "FY2025": 98038,
+    "FY2026": 103063
+   }
+  },
+  "GA": {
+   "fourPerson": {
+    "FY2025": 105893,
+    "FY2026": 110736
+   }
+  },
+  "HI": {
+   "fourPerson": {
+    "FY2025": 129108,
+    "FY2026": 134428
+   }
+  },
+  "ID": {
+   "fourPerson": {
+    "FY2025": 97325,
+    "FY2026": 105243
+   }
+  },
+  "IL": {
+   "fourPerson": {
+    "FY2025": 122136,
+    "FY2026": 128140
+   }
+  },
+  "IN": {
+   "fourPerson": {
+    "FY2025": 103324,
+    "FY2026": 107555
+   }
+  },
+  "IA": {
+   "fourPerson": {
+    "FY2025": 113549,
+    "FY2026": 117810
+   }
+  },
+  "KS": {
+   "fourPerson": {
+    "FY2025": 107363,
+    "FY2026": 112919
+   }
+  },
+  "KY": {
+   "fourPerson": {
+    "FY2025": 96305,
+    "FY2026": 100924
+   }
+  },
+  "LA": {
+   "fourPerson": {
+    "FY2025": 95801,
+    "FY2026": 98137
+   }
+  },
+  "ME": {
+   "fourPerson": {
+    "FY2025": 113259,
+    "FY2026": 118065
+   }
+  },
+  "MD": {
+   "fourPerson": {
+    "FY2025": 149249,
+    "FY2026": 154117
+   }
+  },
+  "MA": {
+   "fourPerson": {
+    "FY2025": 157680,
+    "FY2026": 165955
+   }
+  },
+  "MI": {
+   "fourPerson": {
+    "FY2025": 111699,
+    "FY2026": 117043
+   }
+  },
+  "MN": {
+   "fourPerson": {
+    "FY2025": 137690,
+    "FY2026": 143998
+   }
+  },
+  "MS": {
+   "fourPerson": {
+    "FY2025": 82331,
+    "FY2026": 85708
+   }
+  },
+  "MO": {
+   "fourPerson": {
+    "FY2025": 105825,
+    "FY2026": 109229
+   }
+  },
+  "MT": {
+   "fourPerson": {
+    "FY2025": 102893,
+    "FY2026": 108077
+   }
+  },
+  "NE": {
+   "fourPerson": {
+    "FY2025": 112961,
+    "FY2026": 118162
+   }
+  },
+  "NV": {
+   "fourPerson": {
+    "FY2025": 96026,
+    "FY2026": 100681
+   }
+  },
+  "NH": {
+   "fourPerson": {
+    "FY2025": 146582,
+    "FY2026": 152580
+   }
+  },
+  "NJ": {
+   "fourPerson": {
+    "FY2025": 153514,
+    "FY2026": 160276
+   }
+  },
+  "NM": {
+   "fourPerson": {
+    "FY2025": 81873,
+    "FY2026": 87796
+   }
+  },
+  "NY": {
+   "fourPerson": {
+    "FY2025": 127802,
+    "FY2026": 133609
+   }
+  },
+  "NC": {
+   "fourPerson": {
+    "FY2025": 104937,
+    "FY2026": 109383
+   }
+  },
+  "ND": {
+   "fourPerson": {
+    "FY2025": 123092,
+    "FY2026": 129911
+   }
+  },
+  "OH": {
+   "fourPerson": {
+    "FY2025": 109319,
+    "FY2026": 114593
+   }
+  },
+  "OK": {
+   "fourPerson": {
+    "FY2025": 90026,
+    "FY2026": 93937
+   }
+  },
+  "OR": {
+   "fourPerson": {
+    "FY2025": 117983,
+    "FY2026": 123027
+   }
+  },
+  "PA": {
+   "fourPerson": {
+    "FY2025": 121268,
+    "FY2026": 125674
+   }
+  },
+  "RI": {
+   "fourPerson": {
+    "FY2025": 125328,
+    "FY2026": 135424
+   }
+  },
+  "SC": {
+   "fourPerson": {
+    "FY2025": 98172,
+    "FY2026": 102542
+   }
+  },
+  "SD": {
+   "fourPerson": {
+    "FY2025": 105723,
+    "FY2026": 111183
+   }
+  },
+  "TN": {
+   "fourPerson": {
+    "FY2025": 98377,
+    "FY2026": 102735
+   }
+  },
+  "TX": {
+   "fourPerson": {
+    "FY2025": 103213,
+    "FY2026": 108284
+   }
+  },
+  "UT": {
+   "fourPerson": {
+    "FY2025": 111554,
+    "FY2026": 117667
+   }
+  },
+  "VT": {
+   "fourPerson": {
+    "FY2025": 125336,
+    "FY2026": 131654
+   }
+  },
+  "VA": {
+   "fourPerson": {
+    "FY2025": 134005,
+    "FY2026": 139313
+   }
+  },
+  "WA": {
+   "fourPerson": {
+    "FY2025": 131054,
+    "FY2026": 139313
+   }
+  },
+  "WV": {
+   "fourPerson": {
+    "FY2025": 90661,
+    "FY2026": 94396
+   }
+  },
+  "WI": {
+   "fourPerson": {
+    "FY2025": 117736,
+    "FY2026": 123148
+   }
+  },
+  "WY": {
+   "fourPerson": {
+    "FY2025": 111736,
+    "FY2026": 114837
+   }
+  }
+ }
+}

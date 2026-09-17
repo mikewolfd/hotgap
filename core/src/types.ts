@@ -5,11 +5,11 @@ export const YEAR = "2026" as const;
 export type ProgramId =
   | "snap" | "medicaid" | "chip" | "eitc" | "ctc"
   | "aca" | "tanf" | "housing" | "wic" | "ssi"
-  | "headstart" | "schoolmeals" | "childcare";
+  | "headstart" | "schoolmeals" | "childcare" | "liheap";
 
 export const PROGRAM_IDS: ProgramId[] = [
   "snap", "medicaid", "chip", "eitc", "ctc", "aca", "tanf", "housing", "wic", "ssi",
-  "headstart", "schoolmeals", "childcare",
+  "headstart", "schoolmeals", "childcare", "liheap",
 ];
 
 // The three kinds of program value, because they do not belong in the same
@@ -25,7 +25,10 @@ export const PROGRAM_IDS: ProgramId[] = [
 // is capped at a real bill. That is school meals and Head Start, not a
 // Medicaid sticker price — which is a valuation of coverage nobody would have
 // bought at that price and which never moves a household's own money.
-export const CASH_PROGRAMS: ProgramId[] = ["snap", "tanf", "housing", "wic", "ssi", "headstart", "schoolmeals", "childcare"];
+// `liheap` is energy assistance (LIHEAP), on the curve only behind the
+// `getsEnergyAssistance` toggle (liheap.ts): like the child-care subsidy it
+// is paid to a vendor — the utility — against a real bill, one for one.
+export const CASH_PROGRAMS: ProgramId[] = ["snap", "tanf", "housing", "wic", "ssi", "headstart", "schoolmeals", "childcare", "liheap"];
 export const CREDIT_PROGRAMS: ProgramId[] = ["eitc", "ctc", "aca"];
 // Credits that live inside PolicyEngine's household_net_income. The premium
 // tax credit does NOT (pinned live by the contract suite): it reaches
@@ -89,6 +92,16 @@ export interface HouseholdAnswers {
   // children, and most states run a waiting list. Turning it on also changes
   // what PolicyEngine is asked for the childcare bill — see translate.ts.
   getsChildcareSubsidy: boolean;
+  // Take-up of energy assistance (LIHEAP). Off by default, like every other
+  // rationed program here: it is a block grant that served 3–85% of eligible
+  // households in FY2024 (liheap.ts). Off, the evaluation still shows where
+  // it stops as a boundary; on, the state's amount is a program series in
+  // the curve and its end joins whatever else ends in that step.
+  getsEnergyAssistance: boolean;
+  // Whether heat is included in the rent. PolicyEngine's default is no; it
+  // halves Michigan's Home Heating Credit and picks the heat-in-rent row of
+  // the schedules upstream models, so it is sent when true (translate.ts).
+  heatInRent: boolean;
   // The entitlements, on by default: a household that does not currently
   // get one of these turns it off, and the curve is then the money it
   // actually lives on. evaluate.ts reports what an off program would pay

@@ -74,6 +74,7 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
     if (!c.premiumAssistance.applies) rest.push(C.checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance.note));
     if (!c.childcareSubsidy.applies) rest.push(C.checked(programName("childcare"), c.childcareSubsidy.note));
     if (!c.coverageGap.applies) rest.push(C.checked(C.coverageGap, c.coverageGap.note));
+    if (c.liheap && !c.liheap.applies) rest.push(C.checked(programName("liheap"), c.liheap.note));
   }
   $("correctionsRest").textContent = rest.length ? C.rest(rest) : "";
 }
@@ -126,7 +127,8 @@ export function renderLedger(ev: HouseholdEvaluation, cov: StateCoverage | undef
   const L = copy.ledger;
   $("ledgerRows").innerHTML = ledgerRows(ev).map((r) => {
     const note = cite(ev, r, cov);
-    return `<tr><td class="num money">${esc(fmt.money(r.at))}</td><td>${esc(programName(r.id))}` +
+    return `<tr${r.boundary ? ` data-boundary="true"` : ""}><td class="num money">${esc(fmt.money(r.at))}</td><td>${esc(programName(r.id))}` +
+      (r.boundary ? ` <span class="hg-tag">${esc(L.ifYouApply)}</span>` : "") +
       (r.deferred ? ` <span class="hg-badge">${esc(L.deferred)}</span>` : "") +
       (note ? `<span class="hg-cite">${esc(note)}</span>` : "") + `</td><td class="who">${esc(L.who[r.group])}</td></tr>`;
   }).join("");

@@ -20,6 +20,7 @@ const NAME: Record<ProgramId, { name: string; called: string }> = {
   headstart: { name: "Head Start", called: "Head Start" },
   schoolmeals: { name: "School meals", called: "School meals" },
   childcare: { name: "CCDF child care subsidy", called: "the CCDF child care subsidy" },
+  liheap: { name: "LIHEAP energy assistance", called: "LIHEAP" },
 };
 
 export const phrase = (id: ProgramId): string => copy.program[id];
@@ -37,4 +38,4 @@ export const phraseAndName = (id: ProgramId): string => `${phrase(id)} (${NAME[i
  * candidates: they are not in netIncome, so naming them here would
  * double-count.
  */
-export const NONCASH: ("childcare" | "schoolmeals" | "headstart")[] = ["childcare", "schoolmeals", "headstart"];
+export const NONCASH: ("childcare" | "schoolmeals" | "headstart" | "liheap")[] = ["childcare", "schoolmeals", "headstart", "liheap"];

@@ -1,4 +1,5 @@
 import { DEFAULT_HOURS } from "./income.js";
+import { liheapUpstreamVariable } from "./liheap.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025 } from "./policyYear.js";
 import { CHILDCARE_MAX_AGE } from "./stateDefaults.js";
 import { statePremiumAssistanceFor } from "./statePremiumAssistance.js";
@@ -77,6 +78,15 @@ export interface PayloadOptions {
   statePremiumAssistance?: boolean;
   /** The model already carries the parent-limit corrections, so no override is attached (policyOverrides.ts). */
   parentLimitsUpstream?: boolean;
+  /**
+   * Ask for the state's modeled LIHEAP schedule (liheap.ts: dc_liheap_payment,
+   * ma_liheap, il_liheap) when the household says it gets energy assistance.
+   * Only an endpoint that has the variable may be asked, so client.ts probes
+   * first and sets this. The served series is used only where it is non-zero
+   * somewhere on the curve (evaluate.ts applyLiheap): every one of the three
+   * is capped at or keyed on a fuel and heating bill HotGap never asks for.
+   */
+  liheap?: boolean;
 }
 
 // `is_disabled: true` alone does not unlock SSI in PolicyEngine — only
@@ -315,6 +325,13 @@ export function buildPEPayload(a: HouseholdAnswers, opts: PayloadOptions = {}): 
     }
   }
   for (const v of SPM_VARS) spmVars[v] = y(null);
+  // A household fact, sent when true and omitted otherwise (PolicyEngine's
+  // default is false, and the payload stays canonical): it halves Michigan's
+  // Home Heating Credit (verified on the droplet 2026-09-16, $180.38 → $90.19)
+  // and picks the heat-in-rent row of the LIHEAP schedules upstream models.
+  if (a.heatInRent) spmVars.heat_expense_included_in_rent = y(true);
+  const liheap = liheapUpstreamVariable(a.state);
+  if (opts.liheap && a.getsEnergyAssistance && liheap) spmVars[liheap] = y(null);
   if (!a.getsHousing) {
     spmVars.spm_unit_capped_housing_subsidy = y(0);
     // Not the same variable: `household_benefits` reads `housing_assistance`,

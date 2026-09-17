@@ -273,3 +273,37 @@ describe("the state child-care subsidy", () => {
     expect(() => parsePEResponse(b, 2)).toThrow(PEParseError);
   });
 });
+
+describe("the LIHEAP series (Plan 7)", () => {
+  const body = (liheap: number[] | null) => ({
+    status: "ok",
+    result: {
+      axes: [[{ min: 25000, max: 45000, count: 2 }]],
+      households: { h: { state_name: { "2026": "MA" }, household_net_income: { "2026": [45226, 45928] }, household_benefits: { "2026": [1553, 0] } } },
+      spm_units: {
+        s: {
+          snap: { "2026": [1553, 0] }, tanf: { "2026": [0, 0] }, spm_unit_capped_housing_subsidy: { "2026": [0, 0] },
+          free_school_meals: { "2026": [0, 0] }, reduced_price_school_meals: { "2026": [0, 0] },
+          spm_unit_medical_out_of_pocket_expenses: { "2026": [0, 0] },
+          ...(liheap ? { ma_liheap: { "2026": liheap } } : {}),
+        },
+      },
+      tax_units: { t: { eitc: { "2026": [0, 0] }, refundable_ctc: { "2026": [0, 0] }, premium_tax_credit: { "2026": [0, 0] } } },
+      people: { you: { age: { "2026": [30, 30] } } },
+    },
+  });
+
+  it("reads a served schedule as programs.liheap and adds it to net income where the model dropped it, once, out of the remainder", () => {
+    const [p] = parsePEResponse(body([814, 0]), 2);
+    expect(p.programs.liheap).toBe(814);
+    expect(p.netIncome).toBe(45226 + 814);
+    expect(p.otherBenefits).toBe(0);
+  });
+
+  it("adds nothing on a model that counts it, and is simply absent on a curve that never asked", () => {
+    const [counted] = parsePEResponse(body([814, 0]), 2, { liheapCounted: true });
+    expect(counted.netIncome).toBe(45226);
+    expect(counted.programs.liheap).toBe(814);
+    expect(parsePEResponse(body(null), 2)[0].programs.liheap).toBeUndefined();
+  });
+});

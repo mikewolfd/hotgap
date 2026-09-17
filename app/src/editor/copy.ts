@@ -50,6 +50,7 @@ export const copy = {
     ssdi: "SSDI", childSupport: "Child support", unemployment: "Unemployment pay", savings: "Savings",
     status: "Your status", spouseStatus: "Spouse's status", kidsDisabled: "Kids with a disability",
     childcareSubsidy: "Child care help", headStart: "Head Start", housing: "Housing help",
+    energyAssistance: "Heating bill help", heatInRent: "Heat is in my rent",
     employerCoverage: "Health plan from a job", selfEmployed: "Self-employed",
     disabled: "You have a disability", spouseDisabled: "Spouse has a disability",
     snap: "Gets food help (SNAP)", tanf: "Gets cash help (TANF)", medicaid: "Gets Medicaid", wic: "Gets WIC",

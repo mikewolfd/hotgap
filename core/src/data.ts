@@ -7,6 +7,7 @@
 //   zip3-state.json     ZIP prefix → state (GeoNames)
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
 //   county-names.json   county FIPS → name (Census 2020 gazetteer)
+import type { LiheapLimit, LiheapShape } from "./liheap.js";
 import type { MaTafdcCorrection } from "./maTafdc.js";
 import type { CurvePoint, ProgramId } from "./types.js";
 
@@ -103,6 +104,8 @@ export interface StateCoverage {
   unmodeled: UnmodeledProgram[];
   /** What the `otherBenefits` remainder is here; empty where it is $0 throughout the sweep. */
   otherBenefits: OtherBenefit[];
+  /** Where energy assistance stops in this state and what it pays there (liheap.ts). Absent on files written before Plan 7. */
+  liheap?: LiheapCoverage;
   vintages: StateVintages;
 }
 
@@ -117,6 +120,33 @@ export interface StateCorrections {
   childcareSubsidy: CorrectionNote & { source: "in net income" | "added by HotGap" };
   /** Whether the coverage-gap premium correction can fire here — non-expansion states only (evaluate.ts). */
   coverageGap: CorrectionNote;
+  /**
+   * How LIHEAP is treated here (coverage.ts liheapNote): a `boundary` —
+   * the state's limit is shown and the amount enters net income only behind
+   * the take-up toggle — everywhere but Michigan, whose heating money is the
+   * refundable Home Heating Credit that PolicyEngine models and HotGap
+   * already counts in state credits (`in net income`). Absent on files
+   * written before Plan 7.
+   */
+  liheap?: CorrectionNote & { source: "boundary" | "in net income"; program: string };
+}
+
+/**
+ * LIHEAP's boundary facts for one state, straight from the table in
+ * liheap.ts, so a surface can name the limit, the top-band amount and the
+ * served share without loading the table.
+ */
+export interface LiheapCoverage {
+  /** The heating limit as the state elects it, in words: "150% of the poverty guideline", "60% of state median income". */
+  limitKind: string;
+  limit: LiheapLimit;
+  topBand: { min: number; max: number } | null;
+  shape: LiheapShape | null;
+  /** Households served ÷ income-eligible households, FY2024, or null where the profile was not read. */
+  servedShare: number | null;
+  upstream: { variable: string; counted?: "state credit" } | null;
+  sources: { limits: string; amounts: string | null; served: string | null };
+  readOn: string;
 }
 
 /**

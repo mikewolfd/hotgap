@@ -5,7 +5,7 @@
 // once per evaluation; nothing here is repeated per component.
 import {
   ARCHETYPES, answersFor, DEFAULT_HOURS, PAY_UNITS, pickArchetypeId, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
-  type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type PayUnit, type ProgramId,
+  type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
 
@@ -77,6 +77,9 @@ export interface Scene {
   /** The crop the citizen chart shows, in annual dollars, and the cliffs inside it. */
   window: [number, number];
   inWindow: Cliff[];
+  /** Where energy assistance stops (EligibilityBoundary #23), when it lies on the axis; drawn as a tick only while the toggle is off. */
+  boundary: LiheapBoundary | null;
+  boundaryInWindow: boolean;
   /** The household the curve was actually run for: the person's own on the live path, the swept archetype otherwise (S6). */
   modeled: HouseholdAnswers;
   clamped: boolean;
@@ -160,6 +163,8 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
     cliffs: a.cliffs, immediate, deferred,
     window, inWindow: a.cliffs.filter((c) => c.startEarnings >= window[0] && c.endEarnings <= window[1]),
+    boundary: ev.liheap,
+    boundaryInWindow: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit >= window[0] && ev.liheap.earningsLimit <= window[1],
     modeled, clamped: a.currentEarnings !== ev.answers.annualEarnings,
     starts,
     // programsLost also fires when a program halves in a step (analyze.ts), so

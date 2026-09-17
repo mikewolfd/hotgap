@@ -10,14 +10,14 @@ export const ANSWERS: HouseholdAnswers = {
   state: "CO", married: false, age: 30, spouseAge: null, youStatus: "citizen", spouseStatus: "citizen",
   youYearsInUs: null, spouseYearsInUs: null, childAges: [3, 7], youDisabled: false, spouseDisabled: false, childDisabled: [false, false],
   monthlyRent: 1735, monthlyChildcare: null, annualEarnings: 43000, spouseAnnualEarnings: 0, selfEmployed: false, savings: 0,
-  hoursPerWeek: null, getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, getsSnap: true, getsTanf: true,
+  hoursPerWeek: null, getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, getsEnergyAssistance: false, heatInRent: false, getsSnap: true, getsTanf: true,
   getsMedicaid: true, getsWic: true, hasEmployerCoverage: false, countyFips: "08041", ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
 };
 
 export const STEP = 1000;
 export const TOP = 150_000;
 
-const zero = (): Record<ProgramId, number> => ({ snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0 });
+const zero = (): Record<ProgramId, number> => ({ snap: 0, medicaid: 0, chip: 0, eitc: 0, ctc: 0, aca: 0, tanf: 0, housing: 0, wic: 0, ssi: 0, headstart: 0, schoolmeals: 0, childcare: 0, liheap: 0 });
 
 export interface Shape {
   /** SNAP ($3,000) ends at $42k with a $2,500 drop: the household's zone is $41k–$46k. */
@@ -78,7 +78,7 @@ export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, cur
     analysis, deferred, escape,
     personal: { zone, escapeEarnings: zone?.endEarnings ?? null, raiseToClear: zone ? (zone.endEarnings ?? TOP) - current : null, raiseIsLowerBound: zone !== null && zone.endEarnings === null },
     reach: { safeExit: 80, current: 37.5 }, minWage: { wage: 15.16, fullTimeEarnings: 31532.8, cliffs: [] },
-    coverageGap: null, headStart: null, esi: null, maTafdc: null, premiumWrap: null, perMemberPremiumHelp: null, statePremiumAssistance: null, unclaimed: [],
+    coverageGap: null, headStart: null, esi: null, maTafdc: null, premiumWrap: null, perMemberPremiumHelp: null, statePremiumAssistance: null, liheap: null, unclaimed: [],
     ...overrides,
   };
 }

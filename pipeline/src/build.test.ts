@@ -134,8 +134,11 @@ describe("buildSummary", () => {
     expect(buildSummary("g", ["NJ"], results).model).toBeUndefined();
     // A linear curve pays no subsidy, so both states are flagged, and each block says so.
     expect(summary.childcareSubsidyUnmodeled).toEqual(["NJ", "TX"]);
-    expect(summary.coverage!.TX.unmodeled.map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
+    expect(summary.coverage!.TX.unmodeled.map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)"]);
     expect(summary.coverage!.TX.corrections.coverageGap.applies).toBe(true);
+    // LIHEAP's boundary rides on every block (Plan 7), from the table, not the curves.
+    expect(summary.coverage!.TX.liheap).toMatchObject({ limitKind: "150% of the poverty guideline", servedShare: 0.03 });
+    expect(summary.coverage!.TX.corrections.liheap?.source).toBe("boundary");
   });
 
   // Fixture-driven: feed the real CA fixture's points under an archetype id

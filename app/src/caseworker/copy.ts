@@ -57,6 +57,7 @@ export const copy = {
       ssdi: "SSDI", childSupport: "Child support", unemployment: "Unemployment", savings: "Savings",
       status: "Status", spouseStatus: "Spouse's status", kidsDisabled: "Children with a disability",
       childcareSubsidy: "CCDF subsidy", headStart: "Head Start", housing: "Housing voucher",
+      energyAssistance: "LIHEAP", heatInRent: "Heat in rent",
       employerCoverage: "Employer coverage", selfEmployed: "Self-employed", disabled: "Disability", spouseDisabled: "Spouse's disability",
       snap: "SNAP", tanf: "TANF", medicaid: "Medicaid", wic: "WIC",
       yes: "on", no: "off",
@@ -73,7 +74,7 @@ export const copy = {
     },
   },
   /* The chips a counselor what-ifs first: the six facts, then the take-up toggles, then the rest in the citizen order. */
-  chipOrder: ["where", "household", "pay", "rent", "childcare", "childcare-subsidy", "head-start", "housing", "employer-coverage", "no-snap", "no-tanf", "no-medicaid", "no-wic", "self-employed", "disabled", "spouse-disabled"],
+  chipOrder: ["where", "household", "pay", "rent", "childcare", "childcare-subsidy", "head-start", "housing", "energy-assistance", "heat-in-rent", "employer-coverage", "no-snap", "no-tanf", "no-medicaid", "no-wic", "self-employed", "disabled", "spouse-disabled"],
 
   actions: {
     whatIf: "Add a what-if", whatIfShort: "What-if",
@@ -227,6 +228,16 @@ export const copy = {
     premiumLadder: (program: string) => `${program} is applied from a local ladder.`,
     premiumUnmodeled: (program: string) => `${program} exists but is not modeled on this sweep.`,
     premiumNone: "No state premium help applies.",
+    /* EligibilityBoundary (#23): the row at the limit, tagged, with the three facts and their vintage. */
+    ifYouApply: "if you apply",
+    liheapBoundary: (p: { limit: string; band: string | null; servedShare: number | null; readOn: string }) =>
+      `Above this the household can no longer apply: the state's limit is ${p.limit}.` +
+      (p.band ? ` Worth ${p.band} at that band if received.` : " The amount at that band was not read.") +
+      (p.servedShare === null ? " The FY2024 share of income-eligible households served was not read." : ` ${Math.round(p.servedShare * 100)}% of income-eligible households were served in FY2024.`) +
+      ` Not in net income unless the household says it gets it. Read ${p.readOn}.`,
+    liheapCounted: (amount: number, limit: string) =>
+      `Counted at the household's say-so: ${$(amount)} a year from HotGap's table of the state's published schedule, to the ${limit} limit. PolicyEngine serves no LIHEAP amount on this payload.`,
+    liheapBand: (min: number, max: number) => (min === max ? $(min) : `${$(min)}–${$(max)}`),
   },
 
   chart: {
@@ -274,6 +285,7 @@ export const copy = {
     takeUp: (on: string[], off: string[]) => `Take-up assumed for ${fmt.list(on)}${off.length ? `; not for ${fmt.list(off)}` : ""}.`,
     annualised: "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
     unmodeled: (state: string, program: string, note: string) => `Not modelled in ${state}: ${program}. ${note}`,
+    liheap: (state: string, note: string) => `Energy assistance (LIHEAP) in ${state}: ${note}`,
   },
 
   source: {

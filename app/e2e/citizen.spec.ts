@@ -286,3 +286,48 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-archetype.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
+
+/* EligibilityBoundary (#23, Plan 7): Texas and Massachusetts, the two renders the plan pins; then the toggle. */
+for (const [state, zip, expected] of [
+  ["Texas", "78701", "Above $40,000 a year, you can no longer apply for help with heating bills in Texas. It is called LIHEAP. It is worth $1,200 a winter if you get it. Fewer than 1 in 10 families who could get it here do. If you get it, turn it on to see it in your line."],
+  ["Massachusetts", "02108", "Above $83,500 a year, you can no longer apply for help with heating bills in Massachusetts. It is called LIHEAP. It is worth $355 to $430 a winter if you get it. About 2 in 10 families who could get it here do. If you get it, turn it on to see it in your line."],
+] as const) {
+  test(`${state}: where help with heating bills stops is one line under the key and a tick on the axis, never a drop (source ${EXPECT_SOURCE})`, async ({ page }) => {
+    // A household the droplet has not seen before can take over a minute (Massachusetts runs the TAFDC feedback loop).
+    test.setTimeout(300_000);
+    const errors = consoleErrors(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
+    await page.goto(`/?zip=${zip}&kids=3%2C7&pay=30000&unit=year`);
+    const ev = (await (await evaluated).json()) as { liheap: { earningsLimit: number; counted: boolean } | null; analysis: { cliffs: { programsLost: string[] }[] } };
+    await page.locator("#chart svg path").first().waitFor();
+    await expect(page.locator("#boundary")).toHaveText(expected);
+    await expect(page.locator("#boundary")).toHaveAttribute("data-counted", "false");
+    expect(ev.liheap?.counted).toBe(false);
+    // Not a cliff, not a mark: nothing on the picture at the limit but the axis tick.
+    expect(ev.analysis.cliffs.every((c) => !c.programsLost.includes("liheap"))).toBe(true);
+    // The tick is drawn only when the limit lies inside the crop (model.ts boundaryInWindow), and the key entry shows with it — never one without the other.
+    const ticks = await page.locator("#chart svg line[data-boundary]").count();
+    expect(ticks).toBeLessThanOrEqual(1);
+    await expect(page.locator("figure .hg-key li:not([hidden])", { hasText: "Where help with heating bills stops" })).toHaveCount(ticks);
+    expect(errors).toEqual([]);
+  });
+}
+
+test(`Texas: the toggle puts $1,200 into the line to the limit and the boundary line says it was counted (source ${EXPECT_SOURCE})`, async ({ page }) => {
+  test.skip(EXPECT_SOURCE !== "live", "the live proof");
+  test.setTimeout(300_000);
+  const errors = consoleErrors(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
+  await page.goto("/?zip=78701&kids=3%2C7&pay=30000&unit=year&energy-assistance=1");
+  const ev = (await (await evaluated).json()) as { liheap: { counted: boolean } | null; curve: { points: { earnings: number; programs: Record<string, number> }[] } };
+  const at = (e: number) => ev.curve.points.find((p) => p.earnings === e)!.programs.liheap;
+  expect([at(13000), at(19000), at(39000), at(40000)]).toEqual([1800, 1500, 1200, 0]);
+  expect(ev.liheap?.counted).toBe(true);
+  await page.locator("#chart svg path").first().waitFor();
+  await expect(page.locator("#boundary")).toHaveText("You said you get help with heating bills (LIHEAP). We put it in your line: about $1,200 a year, up to $40,000 a year.");
+  await expect(page.locator("#chart svg line[data-boundary]")).toHaveCount(0);
+  await expect(page.locator(".assumed")).toContainText("help with heating bills (LIHEAP energy assistance). We count each as if you get it.");
+  expect(errors).toEqual([]);
+});

@@ -213,6 +213,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     { kind: "toggle", id: "childcare-subsidy", label: copy.chips.childcareSubsidy, when: () => kids().some((a) => a <= CHILDCARE_MAX_AGE) },
     { kind: "toggle", id: "head-start", label: copy.chips.headStart, when: () => kids().some((a) => a <= HEAD_START_MAX_AGE) },
     { kind: "toggle", id: "housing", label: copy.chips.housing },
+    { kind: "toggle", id: "energy-assistance", label: copy.chips.energyAssistance },
+    // Heat in the rent halves Michigan's heating credit and changes what the toggle above counts, so it shows with either.
+    { kind: "toggle", id: "heat-in-rent", label: copy.chips.heatInRent, when: () => flags["energy-assistance"] === true || state() === "MI" },
     { kind: "toggle", id: "employer-coverage", label: copy.chips.employerCoverage },
     { kind: "toggle", id: "self-employed", label: copy.chips.selfEmployed },
     { kind: "toggle", id: "disabled", label: copy.chips.disabled },

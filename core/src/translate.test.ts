@@ -10,7 +10,7 @@ const base: HouseholdAnswers = {
   annualEarnings: 30000, spouseAnnualEarnings: 0, hoursPerWeek: null,
   youStatus: "citizen", spouseStatus: "citizen", youYearsInUs: null, spouseYearsInUs: null,
   selfEmployed: false, savings: 0,
-  getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, hasEmployerCoverage: false,
+  getsHeadStart: false, getsHousing: false, getsChildcareSubsidy: false, getsEnergyAssistance: false, heatInRent: false, hasEmployerCoverage: false,
   getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true,
   countyFips: null,
   ssdiMonthly: 0, childSupportMonthly: 0, unemploymentMonthly: 0,
@@ -376,5 +376,26 @@ describe("the child-care subsidy take-up toggle", () => {
 
   it("still sends $0 as the pre-subsidy bill for a household that reports no childcare", () => {
     expect(spmOf({ ...base, getsChildcareSubsidy: true }).spm_unit_pre_subsidy_childcare_expenses).toEqual({ "2026": 0 });
+  });
+});
+
+describe("the energy-assistance take-up toggle (Plan 7)", () => {
+  const spmOf = (a: HouseholdAnswers, opts = {}) =>
+    (buildPEPayload(a, opts).household as { spm_units: { spm_unit: Record<string, Record<string, unknown>> } }).spm_units.spm_unit;
+
+  it("asks for the state's modeled schedule only with the toggle on, the probe's say-so, and a state upstream models", () => {
+    const ma = { ...base, state: "MA" };
+    expect(spmOf(ma).ma_liheap).toBeUndefined();
+    expect(spmOf({ ...ma, getsEnergyAssistance: true }).ma_liheap).toBeUndefined();          // no probe answer yet
+    expect(spmOf({ ...ma, getsEnergyAssistance: true }, { liheap: true }).ma_liheap).toEqual({ "2026": null });
+    expect(spmOf({ ...base, state: "TX", getsEnergyAssistance: true }, { liheap: true })).not.toHaveProperty("tx_ceap");
+    // Michigan's credit is a tax-unit variable already read through stateCredits: nothing to ask for.
+    expect(Object.keys(spmOf({ ...base, state: "MI", getsEnergyAssistance: true }, { liheap: true })).filter((k) => /heating|liheap/.test(k))).toEqual([]);
+  });
+
+  it("sends heat-in-rent as the one household fact, when true, and stays byte-identical otherwise", () => {
+    expect(spmOf(base).heat_expense_included_in_rent).toBeUndefined();
+    expect(spmOf({ ...base, heatInRent: true }).heat_expense_included_in_rent).toEqual({ "2026": true });
+    expect(JSON.stringify(buildPEPayload({ ...base, getsEnergyAssistance: false, heatInRent: false }))).toBe(JSON.stringify(buildPEPayload(base)));
   });
 });

@@ -30,11 +30,13 @@ describe("committed data", () => {
     expect(Object.keys(summary.coverage ?? {}).sort()).toEqual([...STATE_CODES].sort());
     for (const state of STATE_CODES) {
       const c = summary.coverage![state];
-      expect(Object.keys(c).sort(), state).toEqual(["corrections", "otherBenefits", "unmodeled", "vintages"]);
-      expect(Object.keys(c.corrections).sort(), state).toEqual(["childcareSubsidy", "coverageGap", "maTafdc", "policyOverrides", "premiumAssistance"]);
+      expect(Object.keys(c).sort(), state).toEqual(["corrections", "liheap", "otherBenefits", "unmodeled", "vintages"]);
+      expect(Object.keys(c.corrections).sort(), state).toEqual(["childcareSubsidy", "coverageGap", "liheap", "maTafdc", "policyOverrides", "premiumAssistance"]);
       expect(Object.keys(c.vintages).sort(), state).toEqual(["childcare", "county", "model", "reach", "rent"]);
       expect(c.vintages.model, state).toEqual(summary.model ?? null);
-      expect(c.unmodeled.length, state).toBeGreaterThan(0);
+      // LIHEAP is a boundary in every state (Plan 7), never an unmodeled row; the list is empty where nothing else is missing.
+      expect(c.unmodeled.map((u) => u.program), state).not.toContain("LIHEAP");
+      expect(c.liheap?.readOn, state).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       // Nothing unlabeled: every remainder on the map has been traced to a variable.
       for (const o of c.otherBenefits) expect(o.variable, `${state} $${o.maxAnnualInSweep}`).not.toBeNull();
     }

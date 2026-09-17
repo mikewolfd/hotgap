@@ -1,3 +1,4 @@
+import { LIHEAP_UPSTREAM_VARIABLES } from "./liheap.js";
 import type { MaTafdcInputs } from "./maTafdc.js";
 import { STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
@@ -81,11 +82,21 @@ export interface ParseOptions {
    * live endpoint (probeChildcareSubsidyCounted) and passes its answer.
    */
   childcareSubsidyCounted?: boolean;
+  /**
+   * Whether the model that produced `body` counts its LIHEAP variables
+   * (dc_liheap_payment, ma_liheap, il_liheap) in `household_state_benefits`.
+   * None is on gov.household.household_state_benefits today, so the default
+   * is false and a served amount is added to net income here; client.ts
+   * probes the live endpoint (probeLiheapCounted) and passes its answer, so
+   * the addition retires by itself the day upstream lists them.
+   */
+  liheapCounted?: boolean;
 }
 
 export function parsePEResponse(body: unknown, expectedCount: number, opts: ParseOptions = {}): CurvePoint[] {
   const maTafdcDoubleCounted = opts.maTafdcDoubleCounted ?? false;
   const childcareSubsidyCounted = opts.childcareSubsidyCounted ?? false;
+  const liheapCounted = opts.liheapCounted ?? false;
   const b = body as { status?: string; result?: Record<string, unknown> };
   if (b?.status !== "ok" || !b.result) {
     throw new PEParseError(`PolicyEngine error: ${(b as { message?: string })?.message ?? "unknown"}`);
@@ -126,6 +137,10 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // (translate.ts), so absent on every other curve — including every committed
   // archetype — where it is simply 0.
   if ("child_care_subsidies" in spm) add(programSeries, "childcare", series(spm, "child_care_subsidies", expectedCount));
+  // The state's modeled LIHEAP schedule, asked for only when the household
+  // says it gets energy assistance and the endpoint has the variable
+  // (translate.ts), so absent on every other curve, where it is simply 0.
+  for (const variable of LIHEAP_UPSTREAM_VARIABLES) if (variable in spm) add(programSeries, "liheap", series(spm, variable, expectedCount));
   for (const [variable, id] of Object.entries(TAX_PROGRAMS)) add(programSeries, id, series(tax, variable, expectedCount));
   for (const person of Object.values(people)) {
     // Who is a child comes from the person's own `age`, never from the key:
@@ -180,10 +195,21 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // that never asked for one — every synthetic fixture, every curve swept
   // before this — does not have to carry a state to parse.
   const subsidyIsCounted = programSeries.has("childcare") && (childcareSubsidyCounted || childcareSubsidyInNetIncome(stateOf(household)));
-  const droppedSubsidy = (i: number) => (subsidyIsCounted ? 0 : (programSeries.get("childcare")?.[i] ?? 0));
+  // WORKAROUND — remove when upstream lists its LIHEAP variables on
+  // gov.household.household_state_benefits (docs/upstream/2026-09-16-liheap-
+  // net-income-issue.md); then `liheapCounted` is always true and this, the
+  // option and client.ts probeLiheapCounted go. The same shape as the
+  // child-care subsidy before #9503: computed, served, and never counted.
+  // Verified on the droplet (2.6.2) 2026-09-16: net income is $63,168.04 for
+  // a Massachusetts single parent of two at $30,000 whether ma_liheap is
+  // $814 or forced to $0.
+  const liheapIsCounted = !programSeries.has("liheap") || liheapCounted;
+  // The programs the model computed and dropped on the floor, per point:
+  // added to net income here, once, and held out of the remainder.
+  const dropped = (i: number) => (subsidyIsCounted ? 0 : (programSeries.get("childcare")?.[i] ?? 0)) + (liheapIsCounted ? 0 : (programSeries.get("liheap")?.[i] ?? 0));
   const trackedCash = (i: number) =>
     CASH_PROGRAMS.reduce(
-      (sum, id) => (id === "childcare" && !subsidyIsCounted ? sum : sum + (programSeries.get(id)?.[i] ?? 0)),
+      (sum, id) => ((id === "childcare" && !subsidyIsCounted) || (id === "liheap" && !liheapIsCounted) ? sum : sum + (programSeries.get(id)?.[i] ?? 0)),
       0,
     );
 
@@ -262,7 +288,7 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   return net.map((n, i) => ({
     ...(maTafdc ? { maTafdc: maTafdc[i] } : {}),
     earnings: axis.min + step * i,
-    netIncome: n + droppedSubsidy(i),
+    netIncome: n + dropped(i),
     medicalOOP: moop[i],
     ...(stateAssistance ? { statePremiumAssistance: stateAssistance[i] } : {}),
     programs: at(programSeries, i) as Record<ProgramId, number>,

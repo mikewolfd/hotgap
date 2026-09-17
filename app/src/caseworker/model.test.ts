@@ -119,9 +119,15 @@ describe("ThresholdLedger", () => {
       [54000, "wic", "Children", false],
       [55000, "childcare", "Household", false],
       [59000, "eitc", "Household", false],
+      // EligibilityBoundary (#23): Colorado's 60% of state median income for three, $69,935 — a row the household never crossed, off the axis grid.
+      [69935, "liheap", "Household", false],
       [73000, "chip", "Children", true],
       [107000, "aca", "Household", false],
     ]);
+    const boundary = rows.find((r) => r.id === "liheap")!;
+    expect(boundary.boundary).toBe(true);
+    expect(boundary.cliff).toBeUndefined();
+    expect(cite(co, boundary, cov)).toBe("Above this the household can no longer apply: the state's limit is 60% of state median income. Worth $200–$1,000 at that band if received. 16% of income-eligible households were served in FY2024. Not in net income unless the household says it gets it. Read 2026-09-16.");
   });
   it("cites what continues, what it was worth and the care price behind the child-care row", () => {
     const by = (id: string) => rows.find((r) => r.id === id)!;
@@ -186,8 +192,10 @@ describe("what the model does not include, and where the numbers came from", () 
     const lines = assumed(co, cov);
     expect(modeled(co).monthlyRent).toBe(1735);
     expect(lines[1]).toBe("Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage, and no other income; aged 30.");
-    expect(lines[2]).toBe("Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC, and CCDF child care subsidy; not for Head Start and Housing voucher.");
-    expect(lines[4]).toMatch(/^Not modelled in Colorado: LIHEAP\./);
+    expect(lines[2]).toBe("Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC, and CCDF child care subsidy; not for Head Start, Housing voucher, and LIHEAP energy assistance.");
+    // LIHEAP is a boundary on every block since Plan 7, never an unmodeled row: core's sentence on why, verbatim (#23).
+    expect(lines.some((l) => /Not modelled in Colorado: LIHEAP/.test(l))).toBe(false);
+    expect(lines.at(-1)).toMatch(/^Energy assistance \(LIHEAP\) in Colorado: HotGap shows where energy assistance \(LIHEAP\) stops in this state — 60% of state median income — .*16% of its income-eligible households in FY2024.*\.$/);
   });
   it("says which curve, in which words, and drops the county on an archetype", () => {
     const arche = sourceLine(co, { ...prov, county: "El Paso County" });

@@ -1,6 +1,6 @@
 # Component inventory
 
-Twenty-two components. C = citizen, W = caseworker, J = journalist. The tags
+Twenty-three components. C = citizen, W = caseworker, J = journalist. The tags
 were checked against the three sketches on 2026-09-16 (S13): a tag means the
 surface renders the component, not that it could.
 
@@ -28,6 +28,7 @@ surface renders the component, not that it could.
 | 20 | **Button** | One declaration, `.hg-button`; `--primary` for the one action a surface leads with; `--small` inside a source line. The CSV download and *Try again* are the base. The sketches' theme toggle is a demo control and no built surface carries one: `prefers-color-scheme` rules, and print is always light. | ● | ● | ● |
 | 21 | **FilterRow** | One row of `<select>`s above everything it scopes, plus the row's end slot for a download. `.hg-filters`. A control that scopes one component sits with that component in its own row — the table's order control under the table's heading — never in the shared row (places review S7). Never a filter inside a chart card. | | | ● |
 | 22 | **SkipLink** | The first focusable thing on the page, to the answer, the ledger or the table. `.hg-skip`. | ● | ● | ● |
+| 23 | **EligibilityBoundary** | A line a household never crossed: where a program it may not have stops. Three facts, never a drop (§ EligibilityBoundary). Today one program, energy assistance (LIHEAP), from `evaluation.liheap` / `coverage[ST].liheap`. | ● | ● | ● |
 
 ## Class map
 
@@ -48,6 +49,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row), `__top`, `__actions`, `__inputs`, `__note`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
 | FilterRow | `.hg-filters`, `.hg-filters__end`, `.hg-select` (or a bare `<select>` inside the row) |
 | SkipLink | `.hg-skip` |
+| EligibilityBoundary | citizen: `.hg-tick` for the axis mark, a `.hg-key` entry, one `<p>` in the figure; caseworker: a `.hg-rows`/`.hg-table` row with `.hg-tag` *if you apply* and `.hg-cite`; journalist: a `.hg-table` column and two CSV columns. No class of its own: it must not look like a cliff |
 | DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control (44px on screen, its own rhythm on paper); `.hg-scroll-x` around a wide table — an edge shadow on whichever side still has content, by CSS alone, and `data-more` for a page's own "swipe" words while it finds an overflow (places context-blind S10); `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print` |
@@ -238,8 +240,9 @@ prices care to) and every parent works, the premium entries for every
 household. That is the one rule; the page's `paysForCare` and the proof's
 `expectIncompleteFor` both derive from the constant (places review N8). The count of such
 states is **rendered** into the legend, the caption and the caseworker
-notice; it is never typed. LIHEAP is listed for all 51 states and is not a
-reason to hatch: it never reaches net income for anyone.
+notice; it is never typed. LIHEAP is no longer in `unmodeled[]` at all
+(Plan 7): it is a boundary on every block (`coverage[state].liheap`,
+§ EligibilityBoundary), and Michigan's is counted.
 
 ## Verdict catalog (M2)
 
@@ -269,7 +272,7 @@ between {exit} and {safeExit}." — see `charts.md` § 1 for the drawn rule.
 
 ## Program phrases (M3)
 
-One table, two registers, thirteen ids (`core/src/types.ts` `PROGRAM_IDS`).
+One table, two registers, fourteen ids (`core/src/types.ts` `PROGRAM_IDS`).
 A page never inlines a program phrasing: the citizen surface composes
 "{Phrase} ends. It is called {name}." (or "…would end…" above current pay),
 the caseworker and journalist use `name`. Every `phrase` is citizen copy and
@@ -292,6 +295,7 @@ the acronym is the aside the README's two-register rule asks for.
 | headstart | free early learning | Head Start |
 | schoolmeals | free school meals | School meals |
 | childcare | child care help | CCDF child care subsidy |
+| liheap | help with heating bills | LIHEAP energy assistance |
 
 "Tax break", not "tax credit", was a deliberate review change and stays.
 `medicaid` and `chip` take the sketch's reviewed phrases over the archive's
@@ -299,6 +303,71 @@ the acronym is the aside the README's two-register rule asks for.
 level program ends for one group, the sentence names the group from
 `programEndsByAge`: "Your own free state health plan ends" / "Your kids'
 health plan ends".
+
+## EligibilityBoundary (#23)
+
+The design system had no component for a boundary a household never
+crossed: IncompleteMarker is a data gap, DeferredBadge is a later loss, and
+the one convention (§ Where a program ends) is where a program the
+household *receives* ends. Energy assistance (LIHEAP) is none of those. It
+is a block grant that served 3–85% of eligible households in FY2024 (12%
+nationally), so a family under the limit is eligible to *apply*, and a
+drawn drop would draw a benefit most eligible families never receive
+(`docs/superpowers/plans/2026-09-16-hotgap-liheap-boundary.md`, the
+honesty rule). The component says three facts and draws nothing that
+looks like a loss.
+
+**What it says**, from `evaluation.liheap` (`core/src/liheap.ts`
+`LiheapBoundary`) on the household surfaces and `coverage[ST].liheap` on
+the journalist's:
+
+1. **The limit** — `earningsLimit` on the household surfaces (the earner's
+   own pay at the state's heating limit, other household income netted
+   out); `limitKind` in words on the journalist's ("150% of the poverty
+   guideline", "60% of state median income").
+2. **The worth if received** — `topBand.min`–`topBand.max`, the state's
+   published amount at its *top* income band, which is the smallest step of
+   every staircase and so what a household at the limit would actually
+   lose. One figure when min equals max; the citizen register says "a
+   winter" because it is one season's benefit.
+3. **The served share** — `servedShare` as "about N in 10" in the citizen
+   register (fewer than 1 in 10, almost all, or *we do not know* when the
+   profile was not read — Hawaii today), as a percentage with its vintage
+   (FY2024) for the caseworker and the journalist. Cross-sectional, never
+   this household's odds: the same discipline as reach.
+
+**Where it sits.**
+
+- *Citizen:* a tick on the x-axis at the limit — `.hg-tick`-sized, `--ink-3`,
+  8px up from the axis, inside the picture only when the limit is in the
+  window — with no dot, no connector and no drop; a `.hg-key` entry that
+  draws that tick ("Where help with heating bills stops"); and one
+  paragraph directly under the key, in the citizen register, with the three
+  facts and the invitation to the toggle ("If you get it, turn it on to see
+  it in your line."). Behind the toggle the tick and paragraph give way: the
+  amount is in the line, its end is a StepList row like any other
+  ("Help with heating bills ends. It is called LIHEAP."), and the paragraph
+  says only that it was counted.
+- *Caseworker:* a ThresholdLedger row at the limit, program "LIHEAP energy
+  assistance", who "Household", tagged `.hg-tag` *if you apply*, its
+  `.hg-cite` carrying the limit's basis, the worth, the served share with
+  its vintage, and the date read. Behind the toggle the row is the cliff's
+  own, and the cite says the amount was counted at the household's say-so
+  from HotGap's table. The "What this model does not include" list carries
+  `corrections.liheap.note` verbatim, and CorrectionsApplied's *checked and
+  not applying* line names it.
+- *Journalist:* a column in the state block — the limit in words, the worth,
+  the served share — and two CSV columns, `liheap_limit` (the household-
+  income limit for the archetype) and `liheap_served_share`, with the row's
+  sources in the provenance columns. (Pending: the places page is being
+  rebuilt under Plan 8; the column and CSV pair land after that merge.)
+
+**What it must never do.** Draw a drop, a dot, a connector or a wash. Enter
+any ranking, tile bin, or `summary.json` metric. Appear in `cliffs`,
+`programEnds`, `dangerZones`, the cliff count, `biggestLoss` or the leap.
+State the served share as this household's chance of being served. Hide
+the toggle: the served share is the honest probability and is printed
+beside the amount on every surface, toggle on or off.
 
 ## Pay in the person's unit (M5)
 
