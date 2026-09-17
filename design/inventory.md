@@ -226,9 +226,11 @@ Keyed off `coverage[state].unmodeled[]` — present for every state in
 `summary.json` today — never off `summary.childcareSubsidyUnmodeled`, which
 the pipeline omits when empty and which is absent from the 2026-09-16 sweep
 (B1). `coverage.ts` puts the child-care gap into `unmodeled[]` whenever that
-optional field returns, so keying here covers it and also covers the two
-states whose own premium program is unmodeled (NJ Health Plan Savings,
-Cascade Care Savings). The rule: a state is *incomplete* for a household
+optional field returns, so keying here covers it and also covers any state
+whose own premium program the sweep's endpoint did not serve — NJ Health
+Plan Savings and Cascade Care Savings were the two until the 2026-09-16
+resweep, which carries the engine's own figures for both; today no state
+is hatched. The rule: a state is *incomplete* for a household
 when any `unmodeled[]` entry other than LIHEAP could move that household's
 figures — the child-care entry only where a child is of child-care age
 (through 12: core's `CHILDCARE_MAX_AGE`, the CCDF ceiling, which the sweep

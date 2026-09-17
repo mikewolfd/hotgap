@@ -441,6 +441,18 @@ received), `--offline`, `--json`.
   itself models ConnectorCare 2B but not 3A–3C; before this, Massachusetts
   premiums above 200% FPL were overstated by up to $9,300 a year (external
   validation, `docs/reviews/2026-09-15-external-validation.md`).
+- Two more states pay a flat amount per person per month instead: New
+  Jersey's NJ Health Plan Savings ($20 to $100 by income band, to 600% FPL,
+  paid even where the federal credit is $0) and Washington's Cascade Care
+  Savings ($55 to 250% FPL). PolicyEngine models both since August 2026 and
+  the hosted engine serves them, so the sweep nets the engine's own figure
+  out of the premium (`core/src/statePremiumAssistance.ts`); on an endpoint
+  that predates those releases, the same schedules are applied locally from
+  `PER_MEMBER_PREMIUM_HELP` in `core/src/statePremiumWraps.ts`. Until
+  2026-09-16 neither was modeled anywhere and the two states were hatched
+  "figures incomplete" on the journalist map; the schedules, their sources
+  and the before/after are in
+  `docs/research/premium-assistance-nj-wa-2026-09-16.md`.
 - The childcare subsidy reaches PolicyEngine's net income in only 23 states.
   PolicyEngine models a CCDF child-care subsidy in every state, but only the
   states listed in `gov.household.household_state_benefits` flow into
