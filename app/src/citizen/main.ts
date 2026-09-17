@@ -76,6 +76,11 @@ async function run(flags: HouseholdFlags, { submitted, landing = false, retry = 
   }
 }
 
+/* The tab's own name is a message too: the skeleton's <title> is English so a
+   page has one before the catalog is in, and this replaces it in the active
+   language (the pseudo-locale gate reads document.title). */
+document.title = t("pageTitle");
+
 function start(): void {
   const flags = flagsFromSearchParams(new URLSearchParams(location.search));
   editor.setFlags(flags);

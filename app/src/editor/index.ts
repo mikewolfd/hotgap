@@ -35,7 +35,7 @@ import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
 import { coreText, fill } from "../lib/copy.js";
 import { languageSwitch } from "../lib/lang.js";
-import { stateName } from "../lib/names.js";
+import { countyBare, countyWords, stateName } from "../lib/names.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
@@ -191,8 +191,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
   /** An immigration status's words, the citizen's when none was given. */
   const status = (s: string | undefined): string => (copy.status as Record<string, string>)[s ?? "citizen"] ?? s ?? "";
+  /** The county the ZIP resolved to, as core's table writes it; the two places that print it say its kind their own way (names.ts countyWords / countyBare). */
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
-  const placeLabel = () => listOfItems([flags.zip, state(), countyLabel()].filter((x): x is string => Boolean(x))) || copy.chips.none;
+  const placeLabel = () => { const c = countyLabel(); return listOfItems([flags.zip, state(), c && countyWords(c)].filter((x): x is string => Boolean(x))) || copy.chips.none; };
 
   // ── The chips, in row order ──────────────────────────────────────────
   /* A dialog's field is labelled by the unit or the question, never by the chip's name again — that is the dialog's title (review N8). */
@@ -412,7 +413,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     for (const b of gated) b.disabled = !answered;
     /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9); the line and its separators are the summary's copy (N12). */
     const c = countyLabel(), S = copy.summary, st = state() ?? "";
-    const place = c ? fill(S.place.withCounty, { state: st, county: c.replace(/ County$/, "") }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
+    const place = c ? fill(S.place.withCounty, { state: st, county: countyBare(c) }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
     summaryText.textContent = answered ? fill(S.line, { place, household: householdLabel(), pay: payLabel() }) : S.none;
   }
 

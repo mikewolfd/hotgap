@@ -25,7 +25,7 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
-import { coreText, limitWords } from "../lib/copy.js";
+import { coreText, deferralUntil, limitWords } from "../lib/copy.js";
 import { careHousehold, incompleteFor, unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
@@ -204,7 +204,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
     if (r.id === "eitc") s.push(t("ledger.eitc", { min: usd(CLIFF_MIN) }));
     if (r.id === "chip" && pts[i].programs.aca > pts[before].programs.aca) s.push(t("ledger.chipEnds", { ptcRise: usd(pts[i].programs.aca - pts[before].programs.aca) }));
   }
-  if (r.deferred) s.push(t("ledger.deferredUntil", { when: r.deferred }));
+  if (r.deferred) s.push(t("ledger.deferredUntil", { when: deferralUntil(r.deferred) }));
   return s.join(" ");
 }
 
@@ -230,8 +230,8 @@ export function cliffSentence(c: Cliff): string {
   return [
     t("chart.cliff.lead", { from: usd(c.startEarnings), to: usd(c.endEarnings), drop: lossFigure(c.drop) }),
     t("chart.cliff.lost", { n: lost.length, programs: listOf(lost) }),
-    t("chart.cliff.driver", { driver: c.driver }),
-    ...(c.deferral ? [t("chart.cliff.deferred", { until: c.deferral.until })] : []),
+    t("chart.cliff.driver", { driver: t(`drops.drivers.${c.driver}`) }),
+    ...(c.deferral ? [t("chart.cliff.deferred", { until: deferralUntil(c.deferral.reason) })] : []),
   ].join(" ");
 }
 

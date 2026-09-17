@@ -130,10 +130,10 @@ export function reachText(s: Scene): string | null {
   return (n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params })) + t("reach.margin");
 }
 
-/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place; anything else as-is. */
+/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place (`reach.survey.*`); anything else as-is. */
 const surveyWord = (v: string): string => {
   const m = v.match(/^(\d{4})(?:-(\d{4}))?-(\d)yr$/);
-  return m ? `ACS ${m[2] ? `${m[1]}–${m[2]}` : m[1]}, ${m[3]}-year` : v;
+  return !m ? v : m[2] ? t("reach.survey.range", { from: m[1], to: m[2], n: m[3] }) : t("reach.survey.one", { year: m[1], n: m[3] });
 };
 
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {

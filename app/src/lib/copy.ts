@@ -245,6 +245,9 @@ export function coreText(m: Coded | undefined, fallback: string, overrides: Para
   return fill(s, params);
 }
 
+/** When a deferred loss lands, from its reason (core's Deferral.until, in the active language). */
+export const deferralUntil = (reason: string): string => (catalog.core.deferral as Record<string, string>)[reason];
+
 /** A LIHEAP limit in words, from the coverage block's structured limit (core's liheapLimitWords, in the active language). */
 export function limitWords(limit: LiheapLimit): string {
   const L = catalog.core.liheap.limit;

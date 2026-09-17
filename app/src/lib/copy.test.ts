@@ -1,4 +1,6 @@
+import { IntlMessageFormat } from "intl-messageformat";
 import { describe, expect, test } from "vitest";
+import coreEn from "../../../core/src/messages/en.json";
 import en from "../i18n/en.json";
 import { catalog, fill, loadCatalog, parts, resolveLocale, supported } from "./copy.js";
 import { pseudo } from "./pseudo.js";
@@ -49,6 +51,25 @@ describe("the locale", () => {
       const v = path.split(/[.[\]]+/).filter(Boolean).reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], es);
       expect(typeof v, path).toBe("string");
     }
+  });
+  test("es-US: every message parses as ICU and names the arguments and selectors its English does (a translator moved words, never slots)", async () => {
+    type El = { type: number; value?: string; options?: Record<string, { value: El[] }> };
+    const shape = (m: string): string => {
+      const args = new Set<string>(), selectors = new Set<string>();
+      const walk = (els: El[]) => { for (const el of els) { if (el.type === 0) continue; if (typeof el.value === "string") args.add(el.value); if (el.type === 5 || el.type === 6) { selectors.add(el.value!); for (const o of Object.values(el.options ?? {})) walk(o.value); } } };
+      walk(new IntlMessageFormat(m, "es-US", undefined, { ignoreTag: true }).getAst() as unknown as El[]);
+      return `${[...args].sort()} | ${[...selectors].sort()}`;
+    };
+    const es = await loadCatalog("es-US");
+    const enAll = leaves({ ...(en as unknown as Nest), core: coreEn as unknown as Nest }).filter(([p]) => !p.startsWith("_") && !p.startsWith("core._"));
+    let translated = 0;
+    for (const [path, m] of enAll) {
+      const v = path.split(/[.[\]]+/).filter(Boolean).reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], es) as string;
+      expect(shape(v), path).toBe(shape(m));
+      if (v !== m) translated++;
+    }
+    // Nearly everything reads differently; what does not is a name, a figure or a symbol ("HotGap", "SNAP", "{from} → {to}").
+    expect(translated / enAll.length).toBeGreaterThan(0.85);
   });
 });
 

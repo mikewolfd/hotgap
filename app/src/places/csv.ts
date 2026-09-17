@@ -7,7 +7,7 @@
 // in the method panel's download line.
 import type { SummaryJson } from "@hotgap/core";
 import { fill, limitWords } from "../lib/copy.js";
-import { correctionRows } from "../lib/corrections.js";
+import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { unmodeledName } from "../lib/coverage.js";
 import { listOf } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
@@ -54,7 +54,7 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       m.cliffCount, m.deferredCliffCount,
       m.leapIsLowerBound, none, r.kind === "shaded", missing.length ? fill(copy.table.floor, { programs: listOf(missing) }) : copy.table.complete,
       missing.join("; "),
-      correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? copy.detail.applied}`).join("; "),
+      correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ? sourceWord(c.source) : copy.detail.applied}`).join("; "),
       cov ? (cov.corrections.childcareSubsidy.source === "added by HotGap" ? copy.csv.subsidy.added : copy.csv.subsidy.inNetIncome) : "",
       /* EligibilityBoundary (#23): the heating limit in words and the served share as a fraction, both the block's — empty where the profile was not read (Hawaii), never a number. */
       cov?.liheap ? limitWords(cov.liheap.limit) : "", cov?.liheap?.servedShare ?? "",

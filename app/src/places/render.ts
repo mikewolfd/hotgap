@@ -5,7 +5,7 @@
 // word is copy.ts's; every number is read from the summary; nothing is typed.
 import { CLIFF_MIN, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { coreText, limitWords } from "../lib/copy.js";
-import { correctionRows } from "../lib/corrections.js";
+import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money } from "../lib/format.js";
@@ -395,7 +395,7 @@ export function renderDetail(s: Scene): void {
   const rows = correctionRows(cov.corrections);
   $("stateTitle").textContent = t("detail.heading", { state: stateName, n: rows.length });
   $("stateSub").textContent = `${t(rows.length ? "detail.changed" : "detail.unchanged", { state: stateName })} ${t(`detail.subsidy.${cov.corrections.childcareSubsidy.source === "added by HotGap" ? "added" : "inNetIncome"}`, { state: stateName })}`;
-  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ?? D.applied, r.note, r.href)).join("");
+  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ? sourceWord(r.source) : D.applied, r.note, r.href)).join("");
 
   const own = cov.unmodeled.filter((u) => u.scope !== "all");
   $("unmodTitle").hidden = $("unmod").hidden = own.length === 0;

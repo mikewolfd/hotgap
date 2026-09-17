@@ -67,5 +67,10 @@
   },
   "api": {
     "invalidJson": "invalid JSON"
+  },
+  "deferral": {
+    "head_start_program_year": "the end of the next Head Start program year (45 CFR 1302.12(j)(1))",
+    "child_continuous_eligibility": "the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342)",
+    "transitional_medical_assistance": "6 to 12 months of Transitional Medical Assistance run out (§1925 of the Social Security Act, 42 U.S.C. 1396r-6)"
   }
 }

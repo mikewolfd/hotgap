@@ -422,7 +422,11 @@
       "margin": " The count could be off by a few thousand dollars either way.",
       "note": "This says how common the pay is. It does not say what you will earn.",
       "source": "From U.S. Census Bureau survey data ({vintages}). Grown to {year} dollars.",
-      "sourceBare": "From U.S. Census Bureau survey data."
+      "sourceBare": "From U.S. Census Bureau survey data.",
+      "survey": {
+        "one": "ACS {year}, {n}-year",
+        "range": "ACS {from}–{to}, {n}-year"
+      }
     },
     "hours": {
       "heading": "The lowest legal pay",
@@ -474,7 +478,8 @@
       "childcare": "child care help",
       "liheap": "help with heating bills"
     },
-    "phraseAndName": "{phrase} ({name})"
+    "phraseAndName": "{phrase} ({name})",
+    "pageTitle": "HotGap — will I lose money if I earn more?"
   },
   "caseworker": {
     "editor": {
@@ -729,7 +734,13 @@
       "noneNamed": "none named",
       "deferred": "Deferred",
       "until": "until {when}",
-      "empty": "No step down of {min} or more anywhere on this curve."
+      "empty": "No step down of {min} or more anywhere on this curve.",
+      "drivers": {
+        "benefits": "benefits",
+        "credits": "credits",
+        "premiums": "premiums",
+        "other": "other"
+      }
     },
     "breakdown": {
       "idle": "Where a drop went",
@@ -958,7 +969,8 @@
         "dated": "Printed from HotGap. {year} rules. Sweep of {sweep}.",
         "undated": "Printed from HotGap. {year} rules."
       }
-    }
+    },
+    "pageTitle": "HotGap — caseworker"
   },
   "places": {
     "pageTitle": "HotGap — what a raise costs, state by state",
@@ -1402,6 +1414,29 @@
       "WV": "West Virginia",
       "WI": "Wisconsin",
       "WY": "Wyoming"
+    },
+    "correctionSource": {
+      "modeled": "modeled",
+      "ladder": "ladder",
+      "overridden": "overridden",
+      "added by HotGap": "added by HotGap",
+      "in net income": "in net income"
+    },
+    "county": {
+      "county": "{name} County",
+      "parish": "{name} Parish",
+      "municipio": "{name} Municipio",
+      "municipality": "{name} Municipality",
+      "cityAndBorough": "{name} City and Borough",
+      "borough": "{name} Borough",
+      "censusArea": "{name} Census Area",
+      "city": "{name} city"
+    },
+    "correctionProgram": {
+      "parentIncomeLimit": "{program} — parent income limit",
+      "basicHealthProgram": "Basic Health Program — expanded-limit states",
+      "premiumHelp": "State premium help",
+      "coverageGap": "{program} — coverage gap"
     }
   }
 }

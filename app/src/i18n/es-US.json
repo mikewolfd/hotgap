@@ -1381,6 +1381,22 @@
       "added by HotGap": "agregado por HotGap",
       "in net income": "en el ingreso neto"
     },
+    "county": {
+      "county": "Condado de {name}",
+      "parish": "Parroquia de {name}",
+      "municipio": "Municipio de {name}",
+      "municipality": "Municipio de {name}",
+      "cityAndBorough": "Ciudad y Distrito de {name}",
+      "borough": "Distrito de {name}",
+      "censusArea": "Área Censal de {name}",
+      "city": "Ciudad de {name}"
+    },
+    "correctionProgram": {
+      "parentIncomeLimit": "{program} — límite de ingresos para el padre o la madre",
+      "basicHealthProgram": "Basic Health Program — estados con límite ampliado",
+      "premiumHelp": "Ayuda estatal con la prima",
+      "coverageGap": "{program} — brecha de cobertura"
+    },
     "state": {
       "AL": "Alabama",
       "AK": "Alaska",
