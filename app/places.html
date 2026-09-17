@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="hg-dense">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,8 +11,8 @@
 <!-- The skeleton holds ids; every word is in src/places/copy.ts and is written in by render.ts (app/README.md § Languages). -->
 <a class="hg-skip" href="#table" id="skip"></a>
 
-<div class="page masthead">
-  <p class="wordmark" id="wordmark"></p>
+<div class="hg-page page masthead">
+  <p class="hg-wordmark wordmark" id="wordmark"></p>
   <h1 id="title"></h1>
   <!-- The counted sentence is written from the data once it is in (S6); until then the lede is the sentence that needs no number. -->
   <p class="lede"><span id="ledeCount"></span><span id="ledeFigure"></span></p>
@@ -21,9 +21,9 @@
 
 <!-- Loading and failure share one line: a status while the run loads, an alert if it does not.
      Everything below it stays hidden until the data is in, so neither state shows a skeleton (S6). -->
-<div class="page"><p class="hg-source" id="status" role="status"></p></div>
+<div class="hg-page page"><p class="hg-source" id="status" role="status"></p></div>
 
-<div class="page" id="main" hidden>
+<div class="hg-page page" id="main" hidden>
   <!-- The shared row: the two scopes the map, the ranking and the table all follow, and the download. -->
   <div class="hg-filters hg-no-print">
     <div>
@@ -47,7 +47,7 @@
         <div class="grid" id="grid" role="group" aria-labelledby="figTitle" aria-describedby="figDesc"></div>
         <div class="scale" id="scale" aria-hidden="true"></div>
         <div class="scale-labels" id="scaleLabels"></div>
-        <ul class="legend" id="legend"></ul>
+        <ul class="hg-key" id="legend"></ul>
         <!-- The state readout (B3, B4, S1): the selected state's figure with its step, its programs and its county, at the point of the click. -->
         <p class="hg-readout" id="readout" aria-live="polite"></p>
         <p class="hg-source" id="figSrc"></p>
@@ -59,13 +59,13 @@
         <h3 id="stateTitle" tabindex="-1"></h3>
         <p class="sub" id="stateStep" hidden></p>
         <p class="sub" id="stateSub"></p>
-        <ul class="hg-rows" id="corrections"></ul>
+        <ul class="hg-rows hg-rows--stack" id="corrections"></ul>
         <h4 id="unmodTitle" hidden></h4>
-        <ul class="hg-rows" id="unmod" hidden></ul>
+        <ul class="hg-rows hg-rows--stack" id="unmod" hidden></ul>
         <h4 id="otherTitle" hidden></h4>
-        <ul class="hg-rows" id="other" hidden></ul>
+        <ul class="hg-rows hg-rows--stack" id="other" hidden></ul>
         <!-- EligibilityBoundary (#23): one row in the ledger's shape — the three facts with their publishers; never a figure, a bin or a sort. -->
-        <ul class="hg-rows boundary" id="liheap" hidden></ul>
+        <ul class="hg-rows hg-rows--stack boundary" id="liheap" hidden></ul>
         <p class="hg-source" id="stateSrc"></p>
       </section>
     </div>

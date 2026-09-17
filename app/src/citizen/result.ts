@@ -56,8 +56,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   const again = h("p", { class: "answer-sub", hidden: true });
   const sub = h("p", { class: "answer-sub" });
   const alert = h("div", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
-  const body = h("div", { class: "page" });
-  root.append(h("section", { class: "band" }, h("div", { class: "page" }, masthead, status, whose, answer, again, sub, alert)), body);
+  const body = h("div", { class: "hg-page page" });
+  root.append(h("section", { class: "band" }, h("div", { class: "hg-page page" }, masthead, status, whose, answer, again, sub, alert)), body);
 
   const retryButton = () => {
     const b = h("button", { type: "button", class: "hg-button hg-button--small" }, t("tryAgain"));

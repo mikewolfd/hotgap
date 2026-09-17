@@ -173,7 +173,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     if (s.zone) {
       picture.append(svg("line", { x1: bx0, y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
       const peak = m.money(s.zone.peakNet);
-      picture.append(svg("text", { x: bx0 - 16, y: yPeak - 9, "text-anchor": "end", class: LOSS_LABEL, "font-weight": 500 }, peak));
+      picture.append(svg("text", { x: bx0 - 16, y: yPeak - 9, "text-anchor": "end", class: `${LOSS_LABEL} hg-label--med` }, peak));
       boxes.push(textBox(bx0 - 16, yPeak - 9, peak, "end"));
     }
 
@@ -182,13 +182,13 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     if (exitInWindow) {
       const ex = px(s.exit!);
       picture.append(svg("line", { x1: ex, y1: top, x2: ex, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      if (!narrow) picture.append(svg("text", { x: ex + 6, y: top + 12, class: LOSS_LABEL, "font-weight": 500 }, s.safeExit === s.exit ? copy.chart.labels.backToEvenSafe : copy.chart.labels.backToEven));
+      if (!narrow) picture.append(svg("text", { x: ex + 6, y: top + 12, class: `${LOSS_LABEL} hg-label--med` }, s.safeExit === s.exit ? copy.chart.labels.backToEvenSafe : copy.chart.labels.backToEven));
     }
     const safeInWindow = s.safeExit !== null && s.safeExit > 0 && s.safeExit !== s.exit && s.safeExit >= x0 && s.safeExit <= x1;
     if (safeInWindow) {
       const sx = px(s.safeExit!);
       picture.append(svg("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      if (!narrow) picture.append(svg("text", { x: sx + 6, y: top + 12, class: LOSS_LABEL, "font-weight": 500 }, copy.chart.labels.safe));
+      if (!narrow) picture.append(svg("text", { x: sx + 6, y: top + 12, class: `${LOSS_LABEL} hg-label--med` }, copy.chart.labels.safe));
     }
     /* Whether the words "safe from here" are on the picture: on a phone they are not, and the caption says it instead (S4). */
     const safeSaid = !narrow && ((exitInWindow && s.safeExit === s.exit) || safeInWindow);
@@ -224,7 +224,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       const bx = s.stuck ? W - pad.r : px(s.exit!);
       picture.append(svg("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (s.stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
       const leap = t(s.stuck ? "chart.labels.leapMore" : "chart.labels.leap", { leap: m.diff(s.current, s.stuck ? s.top : s.exit!) });
-      picture.append(svg("text", { x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: LOSS_LABEL, "font-weight": 600 }, leap));
+      picture.append(svg("text", { x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: `${LOSS_LABEL} hg-label--strong` }, leap));
       boxes.push(textBox((cx + bx) / 2, by - 5, leap, "middle"));
     }
 
@@ -239,7 +239,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       const waiting = cl.cliffs.some((c) => c.deferral !== null);
       if (waiting) {
         picture.append(svg("line", { x1: cl.x, y1: y - 22, x2: cl.x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-        picture.append(svg("text", { x: cl.x, y: y - 28, "text-anchor": "middle", class: "hg-label", "font-weight": 500 }, copy.chart.labels.later));
+        picture.append(svg("text", { x: cl.x, y: y - 28, "text-anchor": "middle", class: "hg-label hg-label--med" }, copy.chart.labels.later));
         boxes.push(textBox(cl.x, y - 28, copy.chart.labels.later, "middle"));
       }
       if (cl.later) {
@@ -261,7 +261,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
           [cl.x + 12, y - 9, "start"], [cl.x + 12, py(land) + 14, "start"], [cl.x - 12, y - 9, "end"], [cl.x - 12, py(land) + 14, "end"],
         ];
         const spot = spots.find(([x, yy, a]) => clear(textBox(x, yy, label, a))) ?? spots[0];
-        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": spot[2], class: LOSS_LABEL, "font-weight": 600 }, label));
+        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": spot[2], class: `${LOSS_LABEL} hg-label--strong` }, label));
         boxes.push(textBox(spot[0], spot[1], label, spot[2]));
       }
     }
@@ -269,7 +269,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     /* You are here: a diamond, so position survives greyscale — drawn last, on its own drop line. */
     picture.append(svg("line", { x1: cx, y1: cy, x2: cx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1 }));
     picture.append(svg("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
-    picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink", "font-weight": 600 }, copy.chart.labels.you));
+    picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink hg-label--strong" }, copy.chart.labels.you));
 
     /* The caption, from the values just computed (never typed). */
     let text = y0 > 0 ? t(L.maxDrop >= 0.1 * (y1 - y0) ? "chart.axisNote" : "chart.axisNoteBare", { floor: m.money(y0) }) : "";

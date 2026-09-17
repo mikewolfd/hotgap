@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="hg-dense">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,7 +12,7 @@
 <!-- The editor prepends the ScenarioBar, the four-facts screen and the one-value
      dialog to #app, so the sticky top row's containing block is the whole page (S1). -->
 <div id="app">
-<main class="page">
+<main class="hg-page page">
   <h1 class="hg-visually-hidden" id="pageTitle"></h1>
   <p class="hg-source" id="status" role="status"></p>
   <div class="hg-callout hg-callout--caution" id="alert" role="alert" hidden></div>
@@ -34,7 +34,7 @@
       </section>
       <section>
         <h2 id="correctionsHeading"></h2>
-        <ol class="hg-rows" id="corrections"></ol>
+        <ol class="hg-rows hg-rows--stack" id="corrections"></ol>
         <p class="hg-cite" id="correctionsRest"></p>
       </section>
     </div>

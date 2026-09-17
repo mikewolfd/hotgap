@@ -563,6 +563,30 @@ Panel padding is `--s4` once ✓. No page calls `matchMedia(prefers-reduced-
 motion)` ✓. No bare `font-size` attribute on SVG text (the citizen proof
 measures it) ✓.
 
+**Resolved** (one additive commit to `design/tokens.css`, each rule with
+its `inventory.md` § Class map row; rendered before and after at 390 and
+1280, light and dark, all three pages, and compared pixel for pixel — 12 of
+12 identical). F1 `.hg-rows--stack` (a modifier: the citizen's lists keep
+two columns until TODO(system) 13 is settled). F2 `.hg-scenario__note {
+max-width: none }` in the system rule — the citizen's archetype note is
+now the full-width line the inventory describes too. F3
+`.hg-mark__count--later`. F4 `.hg-chip[data-unset] .hg-chip__v`. F5
+`.hg-input` shares `.hg-select`'s rule; the editor's inputs take it and
+keep `editor__input--short` and the invalid edge page-side. F6 the map
+legend is a `.hg-key`; its column gap goes 24 → 16px when two entries
+show (safe exit, the leap), the one intentional difference, off the
+default view. F7 `.hg-page` with `--page-max` per page. F8 `.hg-dense` on
+`<html>` for the body size, the wide measure and the h3 margin; the h2
+margins differ between the two pages (--s6 / --s7) and stay page-side, as
+does `#status`. F9 **not done**: `.footnote` differs from `.hg-source` in
+line-height (1.55 → 1.45) and margin, so the swap moves five paragraphs —
+a rhythm the owner decides. F10 `.hg-wordmark` carries weight and size;
+the editor's −0.01em tracking and the two margins stay page-side (they
+differ). F11 `.hg-label--strong` and `--med`; the citizen chart's seven
+`font-weight` attributes and the caseworker's `.cw-label--strong` go.
+Page CSS: citizen 74 → 69 lines, caseworker 136 → 124, places 263 → 256,
+editor 69 → 57; tokens.css 671 → 722 with its comments.
+
 ---
 
 ## 7. Worker (`worker/src/index.ts`) — findings and the fix

@@ -179,7 +179,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     if (w) {
       const wm = marks.find((m) => m.members.includes(cliffs().indexOf(w)))!;
       const mid = (lifted[indexOf(ev, w.startEarnings)] + lifted[indexOf(ev, w.endEarnings)]) / 2;
-      const t = label(wm.x + 9, py(mid) + 4, fmt.loss(w.drop), {}, "hg-label--loss cw-label--strong");
+      const t = label(wm.x + 9, py(mid) + 4, fmt.loss(w.drop), {}, "hg-label--loss hg-label--strong");
       svg.append(t); clearRings(t, rings);
     }
     if (P.zone) {
@@ -191,7 +191,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       const lx0 = px(A.currentEarnings), lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
       svg.append(mk("path", { d: `M${lx0} ${yp - 4} V${yp + 4} M${lx0} ${yp} H${lx1}${P.raiseIsLowerBound ? "" : ` M${lx1} ${yp - 4} V${yp + 4}`}`, fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
       /* Below 520px the merged cliff mark sits on the peak, so the label starts under the bracket; either way it clears every ring. */
-      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, K.leap(P.raiseToClear ?? 0, P.raiseIsLowerBound), {}, "hg-label--loss cw-label--strong");
+      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, K.leap(P.raiseToClear ?? 0, P.raiseIsLowerBound), {}, "hg-label--loss hg-label--strong");
       svg.append(leap); clearRings(leap, rings);
       if (!P.raiseIsLowerBound) {
         svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));

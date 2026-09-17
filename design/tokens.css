@@ -366,6 +366,11 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    hatch stays legible. */
 .hg-label--loss { fill: var(--loss-ink); }
 .hg-label--ink  { fill: var(--ink); }
+/* A direct label's weight (audit F11): the largest drop, the leap and "you"
+   at --w-semi; the peak, the exit and "later" at --w-med. One rule for both
+   charts, never a bare font-weight attribute on <text>. */
+.hg-label--strong { font-weight: var(--w-semi); }
+.hg-label--med    { font-weight: var(--w-med); }
 .hg-label--halo { stroke: var(--surface); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 
 /* The one orchestrated moment (S13): a path with pathLength="1" draws itself
@@ -376,6 +381,27 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 @keyframes hg-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .hg-draw { stroke-dasharray: 1; stroke-dashoffset: 0;
            animation: hg-draw var(--dur-draw) var(--ease) both; }
+
+/* The two panel-bearing surfaces (caseworker, journalist) set a 15px base —
+   where 16px is one line-height, so a panel's text sits on the rhythm of
+   the rules around it — and the wider prose measure: `.hg-dense` on <html>
+   is that reset, once (audit F8). :where() keeps it at element specificity,
+   so a component rule such as `.hg-rows p { max-width: none }` still wins
+   as it did over a page's own `p` rule. */
+:where(.hg-dense) body { font-size: var(--t-small); }
+:where(.hg-dense) p { max-width: var(--measure-wide); }
+:where(.hg-dense) h3 { margin: 0 0 var(--s2); }
+
+/* The page column (audit F7): centred, the side gutter --s4, the foot --s8.
+   A page's width is its own by contract and is set as --page-max on the
+   page's own class (citizen 40rem, journalist 68rem, caseworker 76rem). */
+.hg-page { max-width: var(--page-max, 76rem); margin-inline: auto; padding: 0 var(--s4) var(--s8); }
+
+/* The wordmark's type (audit F10): the editor's sticky row and the
+   journalist masthead. Each keeps its own margin; the editor also tracks it
+   −0.01em, which the journalist masthead does not — one value once the
+   owner settles it. */
+.hg-wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); }
 
 /* ── Shared components ───────────────────────────────────────────────── */
 
@@ -440,6 +466,14 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 .hg-rows > [aria-current="true"] { background: var(--surface-sunk);
   box-shadow: var(--s2) 0 0 var(--surface-sunk), calc(-1 * var(--s2)) 0 0 var(--surface-sunk),
               calc(-1 * var(--s2) - 3px) 0 0 var(--ink); }
+/* Below 520px a row's two columns stack, so a cite has the whole line, not
+   170px — the caseworker's provenance rows and the journalist's state block
+   (audit F1; the reviews' TODO(system) 13). A modifier, because the
+   citizen's step and assumed lists keep the two columns until their own
+   review says otherwise. */
+@media (max-width: 519.98px) {
+  .hg-rows--stack > li, .hg-rows--stack > div { grid-template-columns: 1fr; gap: var(--s1); }
+}
 
 /* MarkKey (#5), one declaration (S13): each entry draws the actual mark. */
 .hg-key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: var(--s3) 0 0;
@@ -496,6 +530,9 @@ button.hg-chip { cursor: pointer; }
 .hg-chip__v { font-weight: var(--w-semi); font-variant-numeric: tabular-nums; }
 .hg-chip[aria-pressed="true"]  { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .hg-chip[aria-pressed="false"] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
+/* A value chip whose answer is still "none" reads a step lighter than an
+   answer, the way an off toggle does (caseworker review S2; audit F4). */
+.hg-chip[data-unset] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
 
 /* A data-hidden element stays hidden whatever display a class gives it — a
    key entry for a mark not on this chart, a verdict template, a source state. */
@@ -527,8 +564,9 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
 /* A full-width line of text inside the inputs row — what a take-up toggle
-   answers with. */
-.hg-scenario__note { flex: 1 1 100%; margin: 0; }
+   answers with; the whole line, never capped at .hg-source's measure
+   (caseworker review N2; audit F2). */
+.hg-scenario__note { flex: 1 1 100%; margin: 0; max-width: none; }
 .hg-scenario__summary { display: none; }
 @media (max-width: 719.98px) {
   .hg-scenario__inputs { display: none; }
@@ -537,6 +575,14 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
     padding: 0 var(--s4) var(--s3); color: var(--ink-2); font-size: var(--t-small); }
   .hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
 }
+/* A surface with no controls that change the answer keeps the phone rule
+   at every width — the summary line and Edit, the chips behind it (citizen
+   review S1): mountEditor's `collapse: "always"` sets data-collapse on the
+   block that holds the summary and the inputs. */
+.hg-scenario[data-collapse="always"] .hg-scenario__inputs:not([data-open="true"]) { display: none; }
+.hg-scenario[data-collapse="always"] .hg-scenario__summary { display: flex; align-items: center; gap: var(--s3);
+  padding: 0 var(--s4) var(--s3); color: var(--ink-2); font-size: var(--t-small); max-width: 76rem; margin: 0 auto; }
+.hg-scenario[data-collapse="always"] .hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
 
 /* FilterRow (#21), one row above everything it scopes (S13, S11). */
 .hg-filters { display: flex; gap: var(--s4); flex-wrap: wrap; align-items: flex-end;
@@ -544,7 +590,9 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-filters > div { min-width: 0; flex: 1 1 15rem; }
 .hg-filters label { display: block; color: var(--ink-3); font-size: var(--t-micro); }
 .hg-filters .hg-filters__end { margin-left: auto; display: flex; gap: var(--s2); flex: 0 0 auto; }
-.hg-select, .hg-filters select {
+/* A text or number input takes the select's rule (audit F5): the editor's
+   four-facts screen and its one-value dialog. */
+.hg-select, .hg-input, .hg-filters select {
   min-height: var(--touch); border: 1px solid var(--control-edge); background: var(--surface);
   color: var(--ink); border-radius: var(--r-control); padding: 0 var(--s3);
   width: 100%; max-width: 100%; font: inherit;
@@ -647,6 +695,9 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    drawn by the page as a --loss-4 dot with the count in --surface ink. */
 .hg-mark__count { position: absolute; inset: 0; display: grid; place-items: center;
                   font-size: var(--t-tick); font-weight: var(--w-semi); color: var(--surface); }
+/* A merged mark whose every cliff waits is a hollow dot, so its count is
+   --ink-3, not the surface ink (citizen review TODO(system) 20; audit F3). */
+.hg-mark__count--later { color: var(--ink-3); }
 
 /* ── Print (B2) ──────────────────────────────────────────────────────── */
 /* Paper is light. `color-scheme: light` flips every light-dark() token back

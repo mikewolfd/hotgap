@@ -1,20 +1,19 @@
 /* Only layout that is this page's own lives here (S13). Filters, selects,
    buttons, the table base, the scroller, the skip link, the callout, the
-   panel and the row button are the hg-* classes in design/tokens.css. */
-body { font-size: var(--t-small); }
-.page { max-width: 68rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+   panel, the row button, the page column, the map's legend (.hg-key) and
+   the 15px base (.hg-dense on <html>) are the hg-* classes in
+   design/tokens.css. */
+.page { --page-max: 68rem; }
 h1 { margin: 0 0 var(--s2); letter-spacing: -0.01em; }
 h2 { margin: var(--s7) 0 var(--s3); }
-h3 { margin: 0 0 var(--s2); }
 h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--lh-tight);
      margin: var(--s5) 0 0; }
-p { max-width: var(--measure-wide); }
 
 /* The masthead shares the page column's side gutter: `.page` carries it,
    so the headline never runs to the screen edge while the controls below
    keep theirs (N5 of the context-blind review). */
 .masthead { border-bottom: 1px solid var(--rule); padding-top: var(--s4); padding-bottom: var(--s4); }
-.wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 0 var(--s4); }
+.wordmark { margin: 0 0 var(--s4); }
 .lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
 /* The glossary sentence (S3) reads a step lighter than the lede, at the small size the rest of the page sets. */
 .glossary { font-size: var(--t-small); margin-bottom: 0; }
@@ -79,11 +78,6 @@ p { max-width: var(--measure-wide); }
 .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
                 font-size: var(--t-micro); font-variant-numeric: tabular-nums; }
 .scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
-/* The legend for the three states outside the ramp: each entry is the
-   tile's own class on a swatch, so the legend cannot drift from the map. */
-.legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: var(--s3) 0 0;
-          padding: 0; list-style: none; color: var(--ink-2); font-size: var(--t-micro); }
-.legend li { display: flex; align-items: center; gap: var(--s2); }
 
 /* The ranked reading. A dot on a shared, non-zero axis — never a bar, whose
    length would have to be read from zero and would make a $115k–$134k
@@ -159,7 +153,6 @@ p { max-width: var(--measure-wide); }
 .state .boundary .hg-tag { vertical-align: 2px; }
 .state .boundary .hg-cite { margin-top: var(--s1); }
 .state .hg-source { margin-top: var(--s5); }
-@media (max-width: 519.98px) { .state .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); } }
 
 /* The order control scopes the table alone, so it sits with the table (S7)
    and stays the width of its words; the line under it says so once (N3). */

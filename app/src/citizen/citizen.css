@@ -3,7 +3,7 @@
    here; every shared class is in design/tokens.css, and the editor's in
    app/src/editor/editor.css. This file loads after tokens.css, so anything
    that could meet an hg-* state class is declared at :where() specificity. */
-.page { max-width: 40rem; margin: 0 auto; padding: 0 var(--s4) var(--s8); }
+.page { --page-max: 40rem; }
 
 /* S1: this surface has no controls that change the answer (design/README.md
    § Where the personas conflict, 2), so the chips keep the phone rule at
@@ -67,8 +67,3 @@
 .result footer { color: var(--ink-3); font-size: var(--t-small); margin-top: var(--s7);
                  border-top: 1px solid var(--rule); padding-top: var(--s5); }
 .result footer p { max-width: var(--measure); }
-
-/* TODO(system): a merged mark whose every cliff waits is a hollow dot, so
-   its count cannot be --surface ink as .hg-mark__count is; tokens.css has
-   no modifier for it. */
-.hg-mark__count--later { color: var(--ink-3); }

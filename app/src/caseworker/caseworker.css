@@ -1,15 +1,13 @@
 /* Caseworker surface: dense, exact, printable (design/caseworker.html is the
-   brief). Body steps down to 15px — this reader is scanning thresholds, not
-   reading prose. Everything shared (chips, buttons, badges, tables, panels,
-   the chart's marks, the scenario bar) comes from design/tokens.css as an
-   hg-* class and the editor's from app/src/editor/editor.css; what is
-   declared here is layout that belongs to this page alone. Logical
-   properties throughout (app/README.md § Languages). */
-body { font-size: var(--t-small); }
-.page { max-width: 76rem; margin-inline: auto; padding: 0 var(--s4) var(--s8); }
-h2 { font-size: var(--t-h2); margin: var(--s6) 0 var(--s3); }
-h3 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
-p { max-width: var(--measure-wide); }
+   brief). The body steps down to 15px through .hg-dense on <html> — this
+   reader is scanning thresholds, not reading prose. Everything shared
+   (chips, buttons, badges, tables, panels, the chart's marks, the scenario
+   bar, the page column) comes from design/tokens.css as an hg-* class and
+   the editor's from app/src/editor/editor.css; what is declared here is
+   layout that belongs to this page alone. Logical properties throughout
+   (app/README.md § Languages). */
+.page { --page-max: 76rem; }
+h2 { margin: var(--s6) 0 var(--s3); }
 #status { margin: var(--s4) 0 0; }
 #alert { margin-block-start: var(--s4); }
 
@@ -32,14 +30,6 @@ p { max-width: var(--measure-wide); }
 .provenance .hg-rows .hg-cite { margin-block-start: 2px; }
 .provenance .hg-cite .hg-tag { margin-inline-end: var(--s2); vertical-align: 1px; }
 .provenance h2 { margin-block-start: var(--s5); }
-/* Page-side part of the review's S9 (TODO(system) 13): below 520px the
-   row's two columns stack, so a cite has the whole line, not 170px. */
-@media (max-width: 519.98px) {
-  .provenance .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); }
-}
-/* Page-side part of the review's N2 (TODO(system) 12): the note is the
-   full-width line the inventory describes, not capped at .hg-source's measure. */
-.hg-scenario__note { max-width: none; }
 
 /* Four grid items (B2): the curve with its drops leads and spans the right
    column's three rows; the ledger, the comparison and the assumptions stack
@@ -62,8 +52,6 @@ p { max-width: var(--measure-wide); }
 .curve { margin: 0; }
 .curve h2 { margin-block-start: var(--s5); }
 .ledger-section h2, .compare-section h2 { margin-block-start: var(--s5); }
-/* A direct label's weight (the largest drop and the leap); its ink and halo are the hg-label modifiers. */
-.cw-label--strong { font-weight: var(--w-semi); }
 
 .ledger .who { color: var(--ink-2); }
 .ledger .hg-badge { margin-inline-start: var(--s1); }

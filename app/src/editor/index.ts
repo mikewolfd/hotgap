@@ -245,19 +245,19 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   let noteContent: string | Node = "";
   const dialog = h("dialog", { class: "editor__dialog", "aria-labelledby": "dialog-title" });
 
-  const zipInput = h("input", { id: "f-zip", name: "zip", class: "editor__input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
+  const zipInput = h("input", { id: "f-zip", name: "zip", class: "hg-input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
   const zipHint = h("p", { class: "editor__hint", id: "h-zip", "aria-live": "polite" }, copy.place.zipHint);
   const stateSelect = h("select", { id: "f-state", name: "state", class: "hg-select" }, h("option", { value: "" }, copy.place.statePlaceholder),
     ...Object.entries(STATE_NAMES).map(([code, name]) => h("option", { value: code }, name)));
   const radio = (value: string, label: string) => h("label", { class: "editor__option" }, h("input", { type: "radio", name: "married", value }), label);
-  const kidsCount = h("input", { id: "f-kids", name: "kids-count", type: "number", min: "0", max: String(MAX_KIDS), inputmode: "numeric", class: "editor__input editor__input--short", "aria-describedby": "h-kids" });
+  const kidsCount = h("input", { id: "f-kids", name: "kids-count", type: "number", min: "0", max: String(MAX_KIDS), inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-kids" });
   const kidsRows = h("div", { class: "editor__kids" });
-  const payInput = h("input", { id: "f-pay", name: "pay", type: "number", min: "0", step: "0.01", inputmode: "decimal", required: true, class: "editor__input" });
+  const payInput = h("input", { id: "f-pay", name: "pay", type: "number", min: "0", step: "0.01", inputmode: "decimal", required: true, class: "hg-input" });
   const unitSelect = h("select", { id: "f-unit", name: "unit", class: "hg-select" }, ...PAY_UNITS.map((u) => h("option", { value: u }, copy.pay.units[u])));
-  const hoursInput = h("input", { id: "f-hours", name: "hours", type: "number", min: "1", max: "80", step: "1", inputmode: "numeric", class: "editor__input editor__input--short", "aria-describedby": "h-hours" });
-  const rentInput = h("input", { id: "f-rent", name: "rent", type: "number", min: "0", step: "1", inputmode: "numeric", class: "editor__input editor__input--short", "aria-describedby": "h-rent" });
+  const hoursInput = h("input", { id: "f-hours", name: "hours", type: "number", min: "1", max: "80", step: "1", inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-hours" });
+  const rentInput = h("input", { id: "f-rent", name: "rent", type: "number", min: "0", step: "1", inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-rent" });
   const rentHint = h("p", { class: "editor__hint", id: "h-rent" }, copy.costs.none);
-  const childcareInput = h("input", { id: "f-childcare", name: "childcare", type: "number", min: "0", step: "1", inputmode: "numeric", class: "editor__input editor__input--short", "aria-describedby": "h-childcare" });
+  const childcareInput = h("input", { id: "f-childcare", name: "childcare", type: "number", min: "0", step: "1", inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-childcare" });
   const childcareHint = h("p", { class: "editor__hint", id: "h-childcare" }, copy.costs.none);
   const childcareField = h("div", { class: "editor__field" }, h("label", { for: "f-childcare" }, copy.costs.childcare), childcareInput, childcareHint);
   const errorLine = h("p", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
@@ -295,7 +295,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   // child cannot outlive its parent's box — S1). An empty root sees no difference.
   root.prepend(
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
-      h("div", { class: "hg-scenario__top" }, h("p", { class: "editor-wordmark" }, copy.wordmark),
+      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark),
         h("div", { class: "hg-scenario__actions" }, ...actions))),
     h("header", { class: "hg-scenario" },
       h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),
@@ -356,7 +356,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     // Rows are rebuilt only when the count changes; otherwise each keeps its element.
     if (kidsRows.children.length !== k.length) {
       kidsRows.replaceChildren(...k.map((_, i) => {
-        const input = h("input", { id: `f-kid-${i}`, name: `kid-${i}`, type: "number", min: "0", max: "17", step: "1", inputmode: "numeric", required: true, class: "editor__input" });
+        const input = h("input", { id: `f-kid-${i}`, name: `kid-${i}`, type: "number", min: "0", max: "17", step: "1", inputmode: "numeric", required: true, class: "hg-input" });
         return field(`f-kid-${i}`, copy.household.kidAge(i + 1), input);
       }));
     }
@@ -537,7 +537,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
         // The default answer is not an answer: leave it out of the URL.
         controls.push({ field: f, read: () => (control.value === f.options?.[0] ? undefined : control.value) });
       } else {
-        control = h("input", { id, type: "number", class: "editor__input", min: f.min?.toString(), max: f.max?.toString(), step: f.step?.toString(), inputmode: "numeric" });
+        control = h("input", { id, type: "number", class: "hg-input", min: f.min?.toString(), max: f.max?.toString(), step: f.step?.toString(), inputmode: "numeric" });
         control.value = (flags[f.flag] as string | undefined) ?? "";
         controls.push({ field: f, read: () => control.value });
       }

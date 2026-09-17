@@ -38,21 +38,22 @@ layout that is genuinely its own (its column grid, its masthead).
 | Component | Classes in `tokens.css` |
 |---|---|
 | DeferredBadge | `.hg-badge` |
-| CorrectionsApplied, ThresholdLedger cite | `.hg-rows` (set `--col`), `.hg-rows__at`, `.hg-tag`, `.hg-cite` |
+| CorrectionsApplied, ThresholdLedger cite | `.hg-rows` (set `--col`), `.hg-rows__at`, `.hg-tag`, `.hg-cite`; `.hg-rows--stack` on a list whose rows stack below 520px so a cite has the whole line (the caseworker's provenance rows, the journalist's state block; TODO(system) 13 stands for the citizen's lists) |
 | StepList | `.hg-rows`, `.hg-rows__at`, `.hg-rows__loss` (the drop line); `[aria-current="true"]` on the open row |
 | MarkKey | `.hg-key` |
 | CurveReadout | `.hg-readout` |
-| MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch), `.hg-draw` |
-| StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete` (an SVG mask on a pseudo-element, so it prints — B1 of the places review); `.hg-swatch` with the same modifiers |
+| MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls; `--later` on a merged mark whose every cliff waits, whose hollow dot takes `--ink-3`), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch) and its weight `--strong` (the largest drop, the leap, "you") or `--med` (the peak, the exit, "later") — never a bare `font-weight` on `<text>`, `.hg-draw` |
+| StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete` (an SVG mask on a pseudo-element, so it prints — B1 of the places review); `.hg-swatch` with the same modifiers, in a `.hg-key` list |
 | Callout | `.hg-callout`, `--note`, `--caution` |
 | Button | `.hg-button`, `--primary`, `--small` |
-| ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row), `__top`, `__actions`, `__inputs`, `__note`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
+| ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row; `[data-collapse="always"]` on the block that holds the summary and the inputs, for a surface that keeps the phone rule at every width — `mountEditor`'s `collapse` option, the citizen page), `__top`, `__actions`, `__inputs`, `__note` (the full-width line, never capped at `.hg-source`'s measure), `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v`, `[data-unset]` on a value chip whose answer is still *none* (a step lighter); the four-facts screen's text and number inputs take `.hg-input`, the `.hg-select` rule; the wordmark in the top row takes `.hg-wordmark` |
 | FilterRow | `.hg-filters`, `.hg-filters__end`, `.hg-select` (or a bare `<select>` inside the row) |
 | SkipLink | `.hg-skip` |
 | EligibilityBoundary | citizen: `.hg-tick` for the axis mark, a `.hg-key` entry, one `<p>` in the figure; caseworker: a `.hg-rows`/`.hg-table` row with `.hg-tag` *if you apply* and `.hg-cite`; journalist: a `.hg-rows` row in the state block with `.hg-tag` and `.hg-cite`, and two CSV columns. No class of its own: it must not look like a cliff |
 | DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control (44px on screen, its own rhythm on paper); `.hg-scroll-x` around a wide table — an edge shadow on whichever side still has content, by CSS alone, and `data-more` for a page's own "swipe" words while it finds an overflow (places context-blind S10); `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
-| Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print` |
+| Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print`; `.hg-dense` on `<html>` is the two panel surfaces' 15px base and wider measure, once |
+| Page column, wordmark | `.hg-page` (centred, `--s4` gutters, `--s8` foot; the page sets `--page-max` on its own class: citizen 40rem, journalist 68rem, caseworker 76rem); `.hg-wordmark` (weight and size; the editor's row tracks it −0.01em, the journalist masthead does not — one value once settled) |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
 Four rules that go with the map:

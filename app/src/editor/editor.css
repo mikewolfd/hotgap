@@ -1,10 +1,8 @@
 /* The input editor's own layout. Everything shared — chips, buttons, the
-   scenario bar, the callout, the select — comes from design/tokens.css as an
-   hg-* class; what is declared here is the form's grid, its text and number
-   inputs, and the one-value dialog. A text input class is something the
-   system lacks (TODO(system) in the editor's report); until it has one,
-   .editor__input mirrors .hg-select. */
-.editor-wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); letter-spacing: -0.01em; margin: 0 var(--s3) 0 0; }
+   scenario bar, the callout, the select and the text input, the unset
+   value — comes from design/tokens.css as an hg-* class; what is declared
+   here is the form's grid and the one-value dialog. */
+.editor-wordmark { letter-spacing: -0.01em; margin: 0 var(--s3) 0 0; }
 
 .editor { background: var(--surface); border-bottom: 1px solid var(--rule); }
 .editor__form { max-width: 40rem; margin: 0 auto; padding: var(--s5) var(--s4) var(--s6); }
@@ -18,13 +16,8 @@
 .editor__group > legend { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 0 var(--s3); }
 .editor__field { margin: 0 0 var(--s4); min-width: 0; }
 .editor__field > label, .editor__field > legend { display: block; margin-bottom: var(--s1); font-weight: var(--w-med); }
-.editor__input {
-  min-height: var(--touch); width: 100%; max-width: 100%;
-  border: 1px solid var(--control-edge); border-radius: var(--r-control);
-  background: var(--surface); color: var(--ink); padding: 0 var(--s3); font: inherit;
-}
 .editor__input--short { max-width: 9rem; }
-.editor__input[aria-invalid="true"] { border-color: var(--caution); box-shadow: inset 0 0 0 1px var(--caution); }
+.hg-input[aria-invalid="true"] { border-color: var(--caution); box-shadow: inset 0 0 0 1px var(--caution); }
 .editor__hint { margin: var(--s1) 0 0; font-size: var(--t-small); color: var(--ink-3); max-width: var(--measure); }
 
 /* Amount beside its unit; two fields beside each other where there is room. */
@@ -62,8 +55,3 @@
    display:none keeps the hidden span out of the button's accessible name. */
 .editor-action__short { display: none; }
 @media (max-width: 719.98px) { .editor-action__short { display: inline; } .editor-action__full { display: none; } }
-
-/* A value chip whose answer is still "none" reads a step lighter than an
-   answer, the way an off toggle does (caseworker review S2) — until the
-   system names the state, this is the editor's own marker. */
-.hg-chip[data-unset] .hg-chip__v { color: var(--ink-3); font-weight: var(--w-reg); }
