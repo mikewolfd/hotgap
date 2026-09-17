@@ -117,7 +117,9 @@ describe("stateCoverage — unmodeled and otherBenefits", () => {
       const entries = stateCoverage(state, curves(), { childcareSubsidyUnmodeled: [state] }).unmodeled;
       for (const u of entries) expect(u.scope, `${state}: ${u.program}`).toBe(u.program === "LIHEAP" ? "all" : "state");
     }
-    expect(stateCoverage("NJ", curves()).unmodeled.map((u) => [u.program, u.scope])).toEqual([["NJ Health Plan Savings", "state"], ["LIHEAP", "all"]]);
+    // NJ's premium program is modeled since the NJ/WA pass, so the state-scoped entry here is the child-care gap.
+    expect(stateCoverage("NJ", curves(), { childcareSubsidyUnmodeled: ["NJ"] }).unmodeled.map((u) => [u.program, u.scope])).toEqual([["Child-care subsidy (CCDF)", "state"], ["LIHEAP", "all"]]);
+    expect(stateCoverage("NJ", curves()).unmodeled.map((u) => [u.program, u.scope])).toEqual([["LIHEAP", "all"]]);
   });
 
   it("labels the remainder from the traced table, reports an untraced one as such, and ignores noise", () => {
