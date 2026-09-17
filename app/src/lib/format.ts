@@ -1,8 +1,10 @@
 // Money and pay figures in the citizen register (design/inventory.md M5, W6):
 // every pay figure in the unit the person gave, rounded to a step that
 // unit is spoken in, and said as a phrase. Shared by the editor's chips and
-// any surface that quotes a pay figure.
-import { DEFAULT_HOURS, fromAnnual, type PayUnit } from "@hotgap/core";
+// any surface that quotes a pay figure. Below them, the word-level helpers
+// every surface needs (capitalize, a reach vintage as words, the model line,
+// an HTML escape): one home (audit D1).
+import { DEFAULT_HOURS, fromAnnual, type ModelRecord, type PayUnit } from "@hotgap/core";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
@@ -46,3 +48,22 @@ export const listOf = (items: string[]): string => conjunction.format(items);
 const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
 /** An ISO stamp as a date in words, "Sep 16, 2026". */
 export const dateWords = (iso: string): string => mediumDate.format(new Date(iso));
+
+export const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words; anything else as-is. */
+export function reachWord(s: string): string {
+  const m = s.match(/^(\d{4})(?:-(\d{4}))?-(\d)yr$/);
+  return m ? `ACS ${m[2] ? `${m[1]}–${m[2]}` : m[1]} ${m[3]}-year PUMS` : s;
+}
+
+/* N9: the model that produced the numbers, from the file, not the one installed.
+   When `version` is null (public API) the line names the endpoint. */
+export const modelLine = (model: ModelRecord | null | undefined): string =>
+  model?.version ? `policyengine-us ${model.version}`
+  : model ? `the PolicyEngine API at ${model.endpoint}`
+  : "PolicyEngine (version not recorded)";
+
+/** HTML-escape a data value before it goes into a template string. */
+export const esc = (s: unknown): string =>
+  String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch] as string);

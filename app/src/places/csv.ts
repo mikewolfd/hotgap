@@ -3,10 +3,9 @@
 // produced it, and the vintages behind each state's curve, all read from
 // summary.json. RFC 4180 quoting; a UTF-8 byte-order mark so a spreadsheet
 // keeps the dashes in core's notes.
-import type { SummaryJson } from "@hotgap/core";
-import { STATE_NAMES } from "../../../core/src/states.js";
-import { archLabel, correctionRows, type Archetype, type StateRow } from "./model.js";
-import { dateOf } from "./format.js";
+import { STATE_NAMES, type SummaryJson } from "@hotgap/core";
+import { correctionRows } from "../lib/corrections.js";
+import { archLabel, type Archetype, type StateRow } from "./model.js";
 
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
@@ -50,6 +49,6 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
   return "﻿" + lines.join("\r\n") + "\r\n";
 }
 
-/** Named by the household as the reader knows it, not by the archetype id (N7): "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv". */
+/** Named by the household as the reader knows it, not by the archetype id (N7), and the sweep's ISO date — a file name is a machine contract: "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv". */
 export const csvName = (a: Archetype, generated: string): string =>
-  `hotgap-${archLabel(a).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${dateOf(generated)}.csv`;
+  `hotgap-${archLabel(a).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${generated.slice(0, 10)}.csv`;

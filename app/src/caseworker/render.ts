@@ -5,8 +5,8 @@
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
 import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { esc } from "../places/format.js";
-import { correctionRows } from "../places/model.js";
+import { esc } from "../lib/format.js";
+import { correctionRows } from "../lib/corrections.js";
 import { copy, fmt, programName } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,

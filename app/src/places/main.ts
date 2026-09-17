@@ -4,11 +4,13 @@
 // The view lives in the query string so a link lands on exactly it.
 import "../../../design/tokens.css";
 import "./places.css";
-import type { SummaryJson } from "@hotgap/core";
+import { DEFAULT_ARCHETYPE, type SummaryJson } from "@hotgap/core";
+import { $ } from "../lib/dom.js";
+import { capitalize, esc } from "../lib/format.js";
 import { csvFor, csvName } from "./csv.js";
-import { capitalize, esc, word } from "./format.js";
-import { archLabel, group, MEASURES, measureByKey, PREFERRED_HOUSEHOLD, rowsFor, type SortKey, type StateRow } from "./model.js";
-import { $, applySelection, GROUPS, renderDetail, renderFigure, renderMethod, renderMethodSource, renderRank, renderTable, type Scene } from "./render.js";
+import { word } from "./format.js";
+import { archLabel, group, MEASURES, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
+import { applySelection, GROUPS, renderDetail, renderFigure, renderMethod, renderMethodSource, renderRank, renderTable, type Scene } from "./render.js";
 import { tileNeighbor } from "./tiles.js";
 import { parseView, viewQuery, type View } from "./url.js";
 
@@ -24,7 +26,8 @@ function main(summary: SummaryJson): void {
   let view: View = parseView(location.search, {
     households: arches.map((a) => a.id),
     states,
-    defaultHousehold: arches.some((a) => a.id === PREFERRED_HOUSEHOLD) ? PREFERRED_HOUSEHOLD : arches[0].id,
+    // core's default, when the sweep carries it; the file's first archetype otherwise.
+    defaultHousehold: arches.some((a) => a.id === DEFAULT_ARCHETYPE) ? DEFAULT_ARCHETYPE : arches[0].id,
   });
   let scene: Scene;
   /** The table's rows in the order shown — what the CSV and the row keys walk. */

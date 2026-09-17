@@ -2,14 +2,13 @@
 // DataTable, the method panel's per-view sentences, and the selected state's
 // detail (CorrectionsApplied, IncompleteMarker, otherBenefits, SourceNote).
 // Every string here is read from the summary; nothing is typed.
-import type { SummaryJson } from "@hotgap/core";
-import { CLIFF_MIN } from "../../../core/src/analyze.js";
-import { STATE_NAMES } from "../../../core/src/states.js";
-import { capitalize, dateOf, esc, fmt, list, modelLine, money, reachWord, word } from "./format.js";
-import { bites, correctionRows, type Archetype, type Grouped, type Measure, type SortKey, type StateRow, tableRows } from "./model.js";
+import { CLIFF_MIN, STATE_NAMES, type SummaryJson } from "@hotgap/core";
+import { $ } from "../lib/dom.js";
+import { capitalize, dateWords as dateOf, esc, listOf as list, modelLine, money, reachWord } from "../lib/format.js";
+import { fmt, word } from "./format.js";
+import { correctionRows } from "../lib/corrections.js";
+import { bites, type Archetype, type Grouped, type Measure, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
-
-export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 /** Everything one render pass reads. */
 export interface Scene {

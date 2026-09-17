@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
 import { parseCsv } from "../../e2e/parseCsv.mjs";
 import { CSV_HEADER, csvField, csvFor, csvName } from "./csv.js";
-import { group, measureByKey, PREFERRED_HOUSEHOLD, rowsFor, tableRows } from "./model.js";
+import { DEFAULT_ARCHETYPE } from "@hotgap/core";
+import { group, measureByKey, rowsFor, tableRows } from "./model.js";
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
-const arch = summary.archetypes.find((a) => a.id === PREFERRED_HOUSEHOLD) ?? summary.archetypes[0];
+const arch = summary.archetypes.find((a) => a.id === DEFAULT_ARCHETYPE) ?? summary.archetypes[0];
 const measure = measureByKey("biggestLoss")!;
 
 describe("csvField", () => {

@@ -2,18 +2,9 @@
 // household and a measure, the four tile states, the five bins, and the
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
-import type { StateCoverage, StateCorrections, StateMetrics, SummaryJson, UnmodeledProgram } from "@hotgap/core";
-// A runtime import from core by file: analyze.ts and everything it imports is
-// free of node:fs and node:crypto (named in the report for the shell contract).
-import { CLIFF_MIN } from "../../../core/src/analyze.js";
+import { CHILDCARE_MAX_AGE, CLIFF_MIN, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
 
 export type Archetype = SummaryJson["archetypes"][number];
-
-/* core's DEFAULT_ARCHETYPE. archetypes.ts cannot be imported here — it reaches
-   state-defaults.json through node:fs — so the id is repeated, and
-   model.test.ts checks the two agree. The page falls back to the file's
-   first archetype should this one ever leave the sweep. */
-export const PREFERRED_HOUSEHOLD = "single-2";
 
 export type MeasureKey = "biggestLoss" | "dangerWidth" | "leap" | "safeExit" | "cliffCount" | "deferredCliffCount";
 
@@ -48,7 +39,7 @@ export const measureByKey = (key: string): Measure | undefined => MEASURES.find(
 /* S10: the household list is the file's, labelled from `married`, `childAges`
    and the id — `-dual-` is the two-earner couple (core/src/archetypes.ts
    `spouseWorks`), and the earner count decides whether the household buys care. */
-export const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
+const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
 
 export function archLabel(a: Archetype): string {
   const adults = !a.married ? "1 adult" : worksBoth(a) ? "2 adults, both working" : "2 adults, one working";
@@ -57,14 +48,10 @@ export function archLabel(a: Archetype): string {
   return `${adults}, ${n === 0 ? "no children" : `${n} ${n === 1 ? "child" : "children"} (${ages})`}`;
 }
 
-/* core's CHILDCARE_MAX_AGE (stateDefaults.ts): the sweep prices care for every
-   child through 12 — school-age care included — and that module reaches
-   node:fs, so the number is repeated here and pinned in model.test.ts. */
-export const CHILDCARE_MAX_AGE = 12;
-
 /* A missing child-care subsidy can only move a household that pays for care:
-   a child of child-care age and every parent working (a single parent, or a
-   dual-earner couple; the single-earner couple has a parent at home and no
+   a child of child-care age (through core's CHILDCARE_MAX_AGE — the sweep
+   prices school-age care too) and every parent working (a single parent, or
+   a dual-earner couple; the single-earner couple has a parent at home and no
    bill). The same test the pipeline uses to flag a state's subsidy as
    unmodeled (build.ts: the archetypes whose monthlyChildcare is > 0). */
 export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || worksBoth(a));
@@ -191,42 +178,4 @@ export type SortKey = "state" | "measure";
 /** The table's order: postal code, or the ranking followed by the lifted-out groups in the rank strip's own order. */
 export function tableRows(rows: StateRow[], g: Grouped, sort: SortKey): StateRow[] {
   return sort === "measure" ? [...g.ranked, ...g.past, ...g.none, ...g.incomplete] : rows;
-}
-
-/* inventory.md § Program phrases, `name` register (M3) — the ids a correction
-   here can name. The journalist surface never uses the citizen phrase. */
-export const PROGRAM_NAME = {
-  childcare: "CCDF child care subsidy",
-  tanf: "TANF cash assistance",
-  medicaid: "Medicaid",
-  aca: "Premium tax credit",
-} as const;
-
-/** A policy override's program, from its parameter path. */
-export const overrideProgram = (parameter: string): string =>
-  /medicaid\..*parent/.test(parameter) ? `${PROGRAM_NAME.medicaid} — parent income limit`
-  : /basic_health_program/.test(parameter) ? "Basic Health Program — expanded-limit states"
-  : parameter.split(".").slice(-2).join(" ");
-
-export interface CorrectionRow {
-  program: string;
-  /** The `source` word for the chip, or null where the correction carries none (coverageGap, maTafdc). */
-  source: string | null;
-  note: string;
-  href?: string;
-}
-
-/* CorrectionsApplied (B3): coverage[state].corrections kept to applies === true,
-   in one order for the detail block and the CSV. The note is printed as core
-   wrote it; the published source it was read from (an override's `source`,
-   another correction's `cite`) is the cite's link; core's `code` pointer is
-   not a reader's fact and is not shown. */
-export function correctionRows(c: StateCorrections | undefined): CorrectionRow[] {
-  if (!c) return [];
-  const rows: CorrectionRow[] = c.policyOverrides.map((o) => ({ program: overrideProgram(o.parameter), source: "overridden", note: o.note, href: o.source }));
-  if (c.maTafdc.applies) rows.push({ program: PROGRAM_NAME.tanf, source: null, note: c.maTafdc.note, href: c.maTafdc.cite });
-  if (c.premiumAssistance.applies) rows.push({ program: c.premiumAssistance.program ?? "State premium help", source: c.premiumAssistance.source, note: c.premiumAssistance.note, href: c.premiumAssistance.cite });
-  if (c.childcareSubsidy.applies) rows.push({ program: PROGRAM_NAME.childcare, source: c.childcareSubsidy.source, note: c.childcareSubsidy.note });
-  if (c.coverageGap.applies) rows.push({ program: `${PROGRAM_NAME.aca} — coverage gap`, source: null, note: c.coverageGap.note });
-  return rows;
 }
