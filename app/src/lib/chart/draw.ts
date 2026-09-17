@@ -1,0 +1,165 @@
+// MoneyCurve (#3), CurveReadout (#4) and MarkKey (#5) primitives the two
+// charts share, as DOM (design/charts.md § 1 Marks; audit D10): the hatch,
+// the key entries that draw the actual mark, the series and its ghost, the
+// cliff marks in their two kinds, the household's diamond, the cursor, the
+// 44px .hg-mark control, the width watcher and the print redraw. Each page
+// composes these with its own layout, its own radii where the reviews set
+// them apart, and its own words; nothing here reads copy.
+import { h, svg } from "../dom.js";
+import { indexAtX, type Layer } from "./geometry.js";
+
+/** The one 45° hatch every zone takes, as <defs>, under the id the page's fills name. */
+export function hatchDefs(id: string): SVGDefsElement {
+  const defs = svg("defs");
+  const pat = svg("pattern", { id, width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  pat.append(svg("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
+  defs.append(pat);
+  return defs;
+}
+
+/** MarkKey (#5): each entry draws the actual mark, 22×12, never a swatch alone. */
+export const KEY_MARK = {
+  line: `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`,
+  band: `<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`,
+  other: `<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`,
+  drop: `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`,
+  later: `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`,
+  you: `<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`,
+  leap: `<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`,
+  safe: `<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`,
+  /* EligibilityBoundary (#23): the axis tick, and nothing that looks like a loss. */
+  boundary: `<line x1="1" y1="11" x2="21" y2="11" stroke="var(--axis)" stroke-width="1"/><line x1="11" y1="3" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2"/>`,
+} as const;
+
+/** One key entry: the mark, then its words. A hidden entry keeps its place for a mark not on this chart. */
+export function keyEntry(label: string, mark: string, hidden = false): HTMLLIElement {
+  const li = h("li", { hidden }, label);
+  const pic = svg("svg", { viewBox: "0 0 22 12", "aria-hidden": "true" });
+  pic.innerHTML = mark;   /* a static snippet, never data */
+  li.prepend(pic);
+  return li;
+}
+
+/** "M x y L x y …" through the points, in order. */
+export const pathD = (points: [number, number][]): string => points.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join("");
+
+/** The series: 2px, round join and cap, pathLength 1 so .hg-draw can draw it once (the first draw only). */
+export const seriesPath = (d: string, animate: boolean): SVGPathElement =>
+  svg("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1, class: animate ? "hg-draw" : undefined });
+
+/** The ghost: the real curve, 1.5px dashed --ink-3, drawn only when a deferred drop is visible at this range. */
+export const ghostPath = (d: string, dash: string): SVGPathElement =>
+  svg("path", { d, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": dash });
+
+/** A zone: the household's takes the wash and the hatch, any other the hatch alone (S7). */
+export function zoneRects(x0: number, x1: number, top: number, bottom: number, own: boolean, hatchId: string): SVGRectElement[] {
+  const rect = (fill: string) => svg("rect", { x: x0, y: top, width: x1 - x0, height: bottom - top, fill });
+  return own ? [rect("var(--loss-wash)"), rect(`url(#${hatchId})`)] : [rect(`url(#${hatchId})`)];
+}
+
+/** An immediate cliff: the solid --loss-4 dot with its surface ring and the connector down to where the line lands. */
+export function dropMark(x: number, y: number, landY: number, r: number): SVGElement[] {
+  return [
+    svg("line", { x1: x, y1: y, x2: x, y2: landY, stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }),
+    svg("circle", { cx: x, cy: y, r, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }),
+  ];
+}
+
+/** A deferred cliff's own channel: the dashed stub above the dot (`stub` px tall); the hollow dot is `waitDot`. */
+export const waitStub = (x: number, y: number, stub: number): SVGLineElement =>
+  svg("line", { x1: x, y1: y - stub, x2: x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" });
+export const waitDot = (x: number, y: number, r: number): SVGCircleElement =>
+  svg("circle", { cx: x, cy: y, r, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 });
+
+/** The household: a diamond in --ink with a surface ring, on its own drop line to the axis — a shape, so position survives greyscale. */
+export function household(x: number, y: number, bottom: number): SVGElement[] {
+  return [
+    svg("line", { x1: x, y1: y, x2: x, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1 }),
+    svg("path", { d: `M${x} ${y - 6} L${x + 6} ${y} L${x} ${y + 6} L${x - 6} ${y} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }),
+  ];
+}
+
+/** The cursor: a faint rule through the plot and a dot on the line. */
+export function cursorNodes(x: number, y: number, top: number, bottom: number, r: number): [SVGLineElement, SVGCircleElement] {
+  return [
+    svg("line", { x1: x, y1: top, x2: x, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 }),
+    svg("circle", { cx: x, cy: y, r, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 }),
+  ];
+}
+
+/** A cliff mark as a control (M6): a 44px .hg-mark button centred on the dot by percent of the box, with its count when merged (S8). */
+export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H">, label: string, count: number, later: boolean, attrs: Record<string, string> = {}): HTMLButtonElement {
+  const b = h("button", { type: "button", class: "hg-mark", tabindex: "-1", "aria-label": label, ...attrs });
+  b.style.left = `${(x / L.W) * 100}%`;
+  b.style.top = `${(y / L.H) * 100}%`;
+  if (count > 1) b.append(h("span", { class: later ? "hg-mark__count hg-mark__count--later" : "hg-mark__count", "aria-hidden": "true" }, String(count)));
+  return b;
+}
+
+/**
+ * A redraw when the wrapper's width changes (a resize, or the column changing
+ * under it — the caseworker's grid moves when a comparison widens), never on
+ * a height change alone, and never while the page is laid out for paper:
+ * the print layout changes the column too, and the width drawn on paper is
+ * redrawForPrint's, not the column's (caseworker review N6).
+ */
+export function watchWidth(el: HTMLElement, draw: () => void): () => void {
+  let last = 0;
+  const ro = new ResizeObserver(() => {
+    const w = el.clientWidth;
+    if (w > 0 && w !== last && !matchMedia("print").matches) { last = w; draw(); }
+  });
+  ro.observe(el);
+  return () => ro.disconnect();
+}
+
+/** Paper is one width, whatever the screen was: redraw at `width` before printing and back after (citizen review S2, caseworker N6). */
+export function redrawForPrint(draw: (width?: number) => void, width: number): () => void {
+  const before = () => draw(width), after = () => draw();
+  addEventListener("beforeprint", before);
+  addEventListener("afterprint", after);
+  return () => { removeEventListener("beforeprint", before); removeEventListener("afterprint", after); };
+}
+
+/** The keyboard and pointer model on the chart's wrapper (charts.md § Cliff marks as controls): ←/→ a point, shift more, Home/End the ends, ] and [ to a mark, Escape closes. */
+export interface CursorModel {
+  /** The index range the cursor moves in, and where it is. */
+  range(): [number, number];
+  cursor(): number;
+  /** Move the cursor and repaint. */
+  set(i: number): void;
+  /** How far shift+arrow moves. */
+  shift: number;
+  /** "hover": the pointer moves the cursor as it passes; "drag": only pressed, and never from a mark. */
+  pointer: "hover" | "drag";
+  /** ] or [ pressed with `target` in focus: the page's own rule for which mark comes next. */
+  bracket(key: "]" | "[", target: HTMLElement): void;
+  escape(): void;
+  /** The layer the pointer maps through, once one is drawn. */
+  layer(): Layer | null;
+  svg: SVGSVGElement;
+}
+
+export function attachCursor(wrapper: HTMLElement, m: CursorModel): void {
+  const move = (clientX: number): void => {
+    const L = m.layer();
+    if (!L) return;
+    const r = m.svg.getBoundingClientRect(), [lo, hi] = m.range();
+    m.set(indexAtX(L, clientX, r.left, r.width, lo, hi));
+  };
+  const onMark = (e: Event) => !!(e.target as HTMLElement).closest(".hg-mark");
+  wrapper.addEventListener("pointerdown", (e) => { if (m.pointer === "hover" || !onMark(e)) move(e.clientX); });
+  wrapper.addEventListener("pointermove", (e) => { if (m.pointer === "hover" || (e.buttons && !onMark(e))) move(e.clientX); });
+  wrapper.addEventListener("keydown", (e) => {
+    if (!m.layer()) return;
+    const [lo, hi] = m.range(), step = e.shiftKey ? m.shift : 1, at = m.cursor();
+    if (e.key === "ArrowRight") m.set(Math.min(hi, at + step));
+    else if (e.key === "ArrowLeft") m.set(Math.max(lo, at - step));
+    else if (e.key === "Home") m.set(lo);
+    else if (e.key === "End") m.set(hi);
+    else if (e.key === "]" || e.key === "[") m.bracket(e.key, e.target as HTMLElement);
+    else if (e.key === "Escape") m.escape();
+    else return;
+    e.preventDefault();
+  });
+}

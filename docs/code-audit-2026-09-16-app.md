@@ -258,6 +258,26 @@ measure the drawn result (marks vs cliff list, 44px targets, type floors,
 label/ring collisions, the `.hg-draw` count, print width 672) and
 `citizen/geometry.test.ts`. Do this one last (§ 8). ~200 lines.
 
+**Resolved** (`lib/chart/geometry.ts`: `niceStep`, `niceUp`, `niceTicks`,
+`clusterCliffs`, `layerFor`, `indexAtX`, with `geometry.test.ts`;
+`lib/chart/draw.ts`: the hatch, the seven key marks and `keyEntry`, the
+series and ghost paths, `zoneRects`, `dropMark`/`waitStub`/`waitDot`, the
+household diamond, `cursorNodes`, `markButton`, `watchWidth`,
+`redrawForPrint`, `attachCursor` — the keyboard and pointer model with the
+page's own bracket rule passed in, since the caseworker's N4 rule and the
+citizen's differ on purpose). The citizen chart 395 → 342 lines, the
+caseworker's 327 → 272, the citizen geometry 109 → 78; the caseworker's
+`mk()` is lib's `svg` (D2). Rendered at 390 and 1280, light and dark, on
+all three pages before and after: identical. Two rules became one where
+they had drifted, both toward the reviewed rule: the caseworker's marks
+merge whichever kind (the citizen's B1 rule — a deferred cliff within 10px
+of an immediate one joins its mark and keeps the waits channel, where two
+marks overlapped), and both charts redraw through a `ResizeObserver` (K9)
+that stands down while the page is laid out for paper, so the print width
+stays the one `redrawForPrint` drew (N6). The crop stays the citizen's
+(`windowFor`), the full axis the caseworker's, and each keeps its words,
+its radii and its bracket geometry.
+
 ### D11. Three render idioms
 
 `lib/dom.ts h()` (citizen result, editor); `innerHTML` + `esc` (places

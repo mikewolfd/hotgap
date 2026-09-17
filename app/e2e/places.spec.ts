@@ -9,7 +9,7 @@
 // takes; the PDF is printed from it, because that is the path a reporter's
 // "Save as PDF" takes, and a raster print check cannot see it (review B1).
 import { CHILDCARE_MAX_AGE, CLIFF_MIN, LIHEAP_VINTAGE, STATE_NAMES, type LiheapCoverage, type StateMetrics, type SummaryJson } from "@hotgap/core";
-import { expect, test, type Page } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { programName } from "../src/lib/programs.js";

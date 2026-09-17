@@ -1,10 +1,12 @@
-// The chart's arithmetic (design/charts.md § 1): the lift, the window, the
-// 2.5× y-range rule, nice ticks in the display unit, and the merge of
-// colliding marks.
+// The citizen chart's arithmetic (design/charts.md § 1): the lift, the
+// window, the 2.5× y-range rule, ticks in the display unit, and the layout's
+// clusters. The nice steps and the merge rule themselves are tested in
+// lib/chart/geometry.test.ts.
 import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
+import { clusterCliffs } from "../lib/chart/geometry.js";
 import { tickMoney } from "../lib/format.js";
-import { clusterCliffs, layout, niceStep, niceTicks, xTicks, yRange } from "./geometry.js";
+import { layout, xTicks, yRange } from "./geometry.js";
 import { sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
@@ -67,13 +69,6 @@ describe("axis honesty", () => {
 });
 
 describe("ticks", () => {
-  test("nice steps: 1, 2, 2.5 or 5 × 10^k", () => {
-    expect(niceStep(75_000, 5)).toBe(10_000);
-    expect(niceStep(75_000, 4)).toBe(20_000);
-    expect(niceStep(48_806, 4)).toBe(10_000);
-    expect(niceStep(37, 4)).toBe(10);
-    expect(niceTicks(23_000, 68_000, 20_000)).toEqual([40_000, 60_000]);
-  });
   test("x ticks are generated in the display unit and mapped back to annual for position", () => {
     const s = sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, hoursPerWeek: 40 } }), { unit: "hour" });
     const ticks = xTicks(s, 5);
@@ -90,14 +85,6 @@ describe("ticks", () => {
 });
 
 describe("marks", () => {
-  test("dots closer than 10px merge into one mark; farther apart stay separate", () => {
-    const s = sceneOf(makeEvaluation(), year);
-    const tight = clusterCliffs(s.immediate, () => 100);
-    expect(tight).toHaveLength(1);
-    expect(tight[0].cliffs).toHaveLength(2);
-    const loose = clusterCliffs(s.immediate, (e) => e / 100);
-    expect(loose).toHaveLength(2);
-  });
   test("a layout clusters every cliff in the window, a cluster of deferred cliffs alone is hollow, and the ghost follows its own test", () => {
     const s = sceneOf(makeEvaluation(), year);
     const L = layout(s, 800);

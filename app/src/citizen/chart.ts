@@ -1,5 +1,6 @@
 // MoneyCurve (#3), CurveReadout (#4) and MarkKey (#5) as DOM, drawn from a
-// Scene and the geometry in geometry.ts (design/charts.md § 1). The SVG is
+// Scene and the geometry in geometry.ts (design/charts.md § 1) with the
+// primitives both charts share (lib/chart/draw.ts; audit D10). The SVG is
 // aria-hidden; the wrapper is the chart's one tab stop (role="group" with
 // keys), and each cliff is a 44px .hg-mark button over the dot (M6). The
 // line animates through .hg-draw on the first draw of an evaluation only; a
@@ -8,6 +9,7 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import type { Cliff } from "@hotgap/core";
+import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
@@ -31,25 +33,21 @@ export interface Chart {
 }
 
 const LOSS_LABEL = "hg-label hg-label--loss hg-label--halo";
+/** The dot radii this chart draws at (the caseworker's are a half-pixel smaller): a merged mark is r6, a single r4.5. */
+const DOT = 4.5, DOT_MERGED = 6;
+/** Paper is the column's width, whatever the screen was: a 358px drawing stretched to Letter prints its 12px ticks at 1.7× (S2). */
+const PRINT_WIDTH = 640;
 
-/** The key entries: each draws the actual mark (never a swatch alone). */
+/** The key entries: each draws the actual mark (never a swatch alone); an entry for a mark not in this picture keeps its place, hidden. */
 function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean, hasBoundary: boolean): HTMLUListElement {
-  const entry = (label: string, inner: string, hidden = false) => {
-    const li = h("li", { hidden }, label);
-    const pic = svg("svg", { viewBox: "0 0 22 12", "aria-hidden": "true" });
-    pic.innerHTML = inner;
-    li.prepend(pic);
-    return li;
-  };
   return h("ul", { class: "hg-key" },
-    entry(copy.key.line, `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`),
-    entry(copy.key.band, `<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`, !s.zone),
-    entry(copy.key.other, `<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`, !hasOther),
-    entry(copy.key.drop, `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`, !hasDrop),
-    entry(copy.key.later, `<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`, !hasLater),
-    entry(copy.key.you, `<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`),
-    /* EligibilityBoundary (#23): the axis tick, and nothing that looks like a loss. */
-    entry(copy.key.boundary, `<line x1="1" y1="11" x2="21" y2="11" stroke="var(--axis)" stroke-width="1"/><line x1="11" y1="3" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2"/>`, !hasBoundary),
+    keyEntry(copy.key.line, KEY_MARK.line),
+    keyEntry(copy.key.band, KEY_MARK.band, !s.zone),
+    keyEntry(copy.key.other, KEY_MARK.other, !hasOther),
+    keyEntry(copy.key.drop, KEY_MARK.drop, !hasDrop),
+    keyEntry(copy.key.later, KEY_MARK.later, !hasLater),
+    keyEntry(copy.key.you, KEY_MARK.you),
+    keyEntry(copy.key.boundary, KEY_MARK.boundary, !hasBoundary),
   );
 }
 
@@ -134,25 +132,17 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     picture.setAttribute("width", String(W));
     picture.setAttribute("height", String(H));
     picture.textContent = "";
-
-    const defs = svg("defs");
-    const pat = svg("pattern", { id: "hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
-    pat.append(svg("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
-    defs.append(pat);
-    picture.append(defs);
+    picture.append(hatchDefs("hatch"));
 
     /* Zones: the household's gets the wash, every other one hatch alone (rule 1). */
     const clip = (z: { startEarnings: number; endEarnings: number | null }) => [px(Math.max(z.startEarnings, x0)), px(Math.min(z.endEarnings ?? x1, x1))];
     for (const z of s.otherZones) {
       if ((z.endEarnings ?? Infinity) < x0 || z.startEarnings > x1) continue;
       const [a, b] = clip(z);
-      picture.append(svg("rect", { x: a, y: top, width: b - a, height: bottom - top, fill: "url(#hatch)" }));
+      picture.append(...zoneRects(a, b, top, bottom, false, "hatch"));
     }
     const [bx0, bx1] = s.zone ? clip({ startEarnings: s.zone.startEarnings, endEarnings: s.stuck ? x1 : s.zone.endEarnings }) : [0, 0];
-    if (s.zone) {
-      picture.append(svg("rect", { x: bx0, y: top, width: bx1 - bx0, height: bottom - top, fill: "var(--loss-wash)" }));
-      picture.append(svg("rect", { x: bx0, y: top, width: bx1 - bx0, height: bottom - top, fill: "url(#hatch)" }));
-    }
+    if (s.zone) picture.append(...zoneRects(bx0, bx1, top, bottom, true, "hatch"));
 
     /* Gridlines on nice values; ticks take .hg-tick (S13). */
     for (const v of L.yTicks) {
@@ -194,16 +184,11 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const safeSaid = !narrow && ((exitInWindow && s.safeExit === s.exit) || safeInWindow);
 
     /* The line: one series, 2px, round caps, no fill; .hg-draw on the first draw only. */
-    let d = "";
-    for (let i = i0; i <= i1; i++) d += (i === i0 ? "M" : "L") + px(s.earningsAt(i)) + " " + py(s.lifted[i]);
-    picture.append(svg("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1, class: firstDraw ? "hg-draw" : undefined }));
+    const window = Array.from({ length: i1 - i0 + 1 }, (_, k) => i0 + k);
+    picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.lifted[i])])), firstDraw));
 
     /* The ghost: the real curve, only when a deferred drop is visible at this range. */
-    if (L.ghost) {
-      let g = "";
-      for (let i = i0; i <= i1; i++) g += (i === i0 ? "M" : "L") + px(s.earningsAt(i)) + " " + py(s.net[i]);
-      picture.append(svg("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }));
-    }
+    if (L.ghost) picture.append(ghostPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), "4 3"));
 
     /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
     /* The diamond sits at the household's own money today (analysis.currentNet is the real curve's), which is off the lifted line only past a deferred step, where the ghost shows why. */
@@ -234,21 +219,19 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
        stub and the word later — beside them, and alone it is the hollow dot
        (B1: a mixed cluster never hides the loss that waits). */
     for (const cl of clusters) {
-      const first = cl.cliffs[0], n = cl.cliffs.length;
-      const y = dotY(cl);
+      const y = dotY(cl), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
       const waiting = cl.cliffs.some((c) => c.deferral !== null);
       if (waiting) {
-        picture.append(svg("line", { x1: cl.x, y1: y - 22, x2: cl.x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+        picture.append(waitStub(cl.x, y, 22));
         picture.append(svg("text", { x: cl.x, y: y - 28, "text-anchor": "middle", class: "hg-label hg-label--med" }, copy.chart.labels.later));
         boxes.push(textBox(cl.x, y - 28, copy.chart.labels.later, "middle"));
       }
       if (cl.later) {
-        picture.append(svg("circle", { cx: cl.x, cy: y, r: n > 1 ? 6 : 4.5, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
+        picture.append(waitDot(cl.x, y, r));
         continue;
       }
       const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.lifted[s.idx(c.endEarnings)]));
-      picture.append(svg("line", { x1: cl.x, y1: y, x2: cl.x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
-      picture.append(svg("circle", { cx: cl.x, cy: y, r: n > 1 ? 6 : 4.5, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
+      picture.append(...dropMark(cl.x, y, py(land), r));
       /* The chart's other direct label: the biggest drop. Beside a tall
          connector first; else above the dot, below the landing, or on the
          other side of the connector — the first spot that lies on nothing
@@ -267,8 +250,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     }
 
     /* You are here: a diamond, so position survives greyscale — drawn last, on its own drop line. */
-    picture.append(svg("line", { x1: cx, y1: cy, x2: cx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 1 }));
-    picture.append(svg("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 }));
+    picture.append(...household(cx, cy, bottom));
     picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink hg-label--strong" }, copy.chart.labels.you));
 
     /* The caption, from the values just computed (never typed). */
@@ -295,11 +277,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     marksLayer.textContent = "";
     for (const cl of clusters) {
       const key = keyOf(cl.cliffs[0]);
-      const b = h("button", { type: "button", class: "hg-mark", tabindex: "-1", "data-key": key,
-        "aria-label": markLabel(s, cl), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
-      b.style.left = `${(cl.x / L.W) * 100}%`;
-      b.style.top = `${(L.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]) / L.H) * 100}%`;
-      if (cl.cliffs.length > 1) b.append(h("span", { class: cl.later ? "hg-mark__count hg-mark__count--later" : "hg-mark__count", "aria-hidden": "true" }, String(cl.cliffs.length)));
+      const b = markButton(cl.x, L.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
+        { "data-key": String(key), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
       b.addEventListener("click", () => {
         touched = true;
         cursor = s.idx(cl.cliffs[0].startEarnings);
@@ -323,10 +302,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const atYou = cursor === s.idx(s.current);
     const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.lifted[cursor];
     if (!atYou) {
-      const line = svg("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
-      const dot = svg("circle", { cx: px(e), cy: py(v), r: 4.5, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 });
-      picture.append(line, dot);
-      cursorNodes = [line, dot];
+      cursorNodes = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
+      picture.append(...cursorNodes);
     }
     const inYours = s.zone !== null && e > s.zone.startEarnings && e < (s.stuck ? Infinity : s.zone.endEarnings!);
     const inAny = s.ev.analysis.dangerZones.some((z) => e > z.startEarnings && e < (z.endEarnings ?? Infinity));
@@ -335,53 +312,23 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       t(inYours ? "chart.inYourZone" : inAny ? "chart.inZone" : "chart.outZone"),
     );
   }
-  function moveTo(clientX: number): void {
-    if (!L) return;
-    touched = true;
-    const r = picture.getBoundingClientRect();
-    const f = ((clientX - r.left) / r.width) * L.W;
-    cursor = Math.min(L.i1, Math.max(L.i0, Math.round(L.i0 + ((f - L.pad.l) / (L.W - L.pad.l - L.pad.r)) * (L.i1 - L.i0))));
-    paintCursor();
-  }
-  wrapper.addEventListener("pointermove", (ev) => moveTo(ev.clientX));
-  wrapper.addEventListener("pointerdown", (ev) => moveTo(ev.clientX));
-  wrapper.addEventListener("keydown", (ev) => {
-    if (!L) return;
-    const step = ev.shiftKey ? 5 : 1;
-    if (ev.key === "ArrowRight") cursor = Math.min(L.i1, cursor + step);
-    else if (ev.key === "ArrowLeft") cursor = Math.max(L.i0, cursor - step);
-    else if (ev.key === "Home") cursor = L.i0;
-    else if (ev.key === "End") cursor = L.i1;
-    else if (ev.key === "]" || ev.key === "[") {
-      /* Next or previous mark from the one that has focus; from the wrapper, ] goes to the first and [ to the last. */
+  /* The pointer moves the cursor as it passes (a phone drags, a mouse hovers); a key moves it a point, shift five; ] and [ walk the marks —
+     from the one that has focus, else from the wrapper ] goes to the first and [ to the last. */
+  attachCursor(wrapper, {
+    svg: picture, layer: () => L, range: () => [L!.i0, L!.i1], cursor: () => cursor, shift: 5, pointer: "hover",
+    set(i) { cursor = i; touched = true; paintCursor(); },
+    bracket(key) {
       const marks = [...marksLayer.querySelectorAll<HTMLButtonElement>(".hg-mark")];
       if (!marks.length) return;
       const at = marks.indexOf(document.activeElement as HTMLButtonElement);
-      const next = ev.key === "]" ? (at < 0 ? 0 : Math.min(marks.length - 1, at + 1)) : (at < 0 ? marks.length - 1 : Math.max(0, at - 1));
-      marks[next].focus();
-      ev.preventDefault();
-      return;
-    } else if (ev.key === "Escape") { hooks.onEscape(); ev.preventDefault(); return; }
-    else return;
-    ev.preventDefault();
-    touched = true;
-    paintCursor();
+      marks[key === "]" ? (at < 0 ? 0 : Math.min(marks.length - 1, at + 1)) : (at < 0 ? marks.length - 1 : Math.max(0, at - 1))].focus();
+    },
+    escape: () => hooks.onEscape(),
   });
 
-  /* A redraw for a resize re-creates the path without .hg-draw. */
-  let lastWidth = 0;
-  const ro = new ResizeObserver(() => {
-    const w = wrapper.clientWidth;
-    if (w > 0 && w !== lastWidth) { lastWidth = w; draw(); }
-  });
-  ro.observe(wrapper);
-
-  /* Paper is the column's width, whatever the screen was: a 358px drawing stretched to Letter prints its 12px ticks at 1.7× (S2). */
-  const PRINT_WIDTH = 640;
-  const onBeforePrint = () => draw(PRINT_WIDTH);
-  const onAfterPrint = () => draw();
-  addEventListener("beforeprint", onBeforePrint);
-  addEventListener("afterprint", onAfterPrint);
+  /* A redraw for a resize re-creates the path without .hg-draw; paper is one width. */
+  const unwatch = watchWidth(wrapper, () => draw());
+  const unprint = redrawForPrint(draw, PRINT_WIDTH);
 
   return {
     setOpen(key) {
@@ -390,6 +337,6 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       markFor(open)?.setAttribute("aria-expanded", "true");
     },
     focusMark(key) { (markFor(key) ?? wrapper).focus(); },
-    destroy() { ro.disconnect(); removeEventListener("beforeprint", onBeforePrint); removeEventListener("afterprint", onAfterPrint); },
+    destroy() { unwatch(); unprint(); },
   };
 }

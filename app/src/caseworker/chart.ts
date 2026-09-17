@@ -2,13 +2,17 @@
 // the full axis, the lifted line, the household's zone with its peak rule,
 // exit and leap bracket, every other zone as hatch, cliff marks as 44px
 // controls with the collision rule, and the keyboard model (design/charts.md
-// § 1, M6, S8, S12). One selection model: a mark and its DropLedger row
-// share `selected`, which main.ts owns; this module reports presses and
-// mirrors the selection onto the marks. Every word is copy.ts's.
+// § 1, M6, S8, S12), over the primitives both charts share (lib/chart;
+// audit D10). One selection model: a mark and its DropLedger row share
+// `selected`, which main.ts owns; this module reports presses and mirrors
+// the selection onto the marks. Every word is copy.ts's.
 //
-// A draw is O(points + cliffs + zones); a resize redraws once per frame;
-// print redraws synchronously at a fixed width (review N6).
+// A draw is O(points + cliffs + zones); a width change redraws once; print
+// redraws synchronously at a fixed width (review N6).
 import { immediateCurve, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
+import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { clusterCliffs, layerFor, niceStep, niceUp, type Cluster, type Layer } from "../lib/chart/geometry.js";
+import { svg as mk } from "../lib/dom.js";
 import { copy, fmt } from "./copy.js";
 import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
@@ -24,8 +28,8 @@ export interface Chart {
   say(text: string): void;
 }
 
-interface Mark { members: number[]; xLast: number; deferred: boolean; x: number; y: number; btn: HTMLButtonElement }
-interface Layer { px: (e: number) => number; py: (v: number) => number; pad: { t: number; r: number; b: number; l: number }; W: number; H: number }
+/** A mark on this chart: its cluster (the cliffs under it, by index into the cliff list) and its control. */
+interface Mark { cluster: Cluster; members: number[]; x: number; y: number; btn: HTMLButtonElement }
 
 /** The width the curve is drawn at on paper, whatever the screen was (review N6): 42rem at 16px. */
 const PRINT_WIDTH = 672;
@@ -33,20 +37,8 @@ const PRINT_WIDTH = 672;
 const RING = 10;
 /** One line of a 13px label, the step a colliding label is lifted by. */
 const LINE = 14;
-
-const NS = "http://www.w3.org/2000/svg";
-const mk = <K extends keyof SVGElementTagNameMap>(t: K, a: Record<string, string | number> = {}, text?: string): SVGElementTagNameMap[K] => {
-  const n = document.createElementNS(NS, t);
-  for (const k in a) n.setAttribute(k, String(a[k]));
-  if (text !== undefined) n.textContent = text;
-  return n;
-};
-
-/* Gridlines on nice values (N1): the step is range/n snapped to the nearest
-   of 1, 2, 2.5 or 5 × 10^k, stepped up while it would draw more than n+1 lines. */
-const NICE = [1, 2, 2.5, 5, 10];
-const nice = (raw: number): number => { const p = 10 ** Math.floor(Math.log10(raw)), m = raw / p; return NICE.reduce((b, v) => (Math.abs(v - m) < Math.abs(b - m) ? v : b)) * p; };
-const niceUp = (s: number): number => { const p = 10 ** Math.floor(Math.log10(s) + 1e-9), m = s / p; return (NICE.find((v) => v > m + 1e-9) ?? 10) * p; };
+/** The dot radii this chart draws at: a merged mark is r6, a single r4; the cursor's dot r4. */
+const DOT = 4, DOT_MERGED = 6;
 
 export function mountChart(host: ChartHost, on: { select(i: number, announce?: string): void; close(): void }): Chart {
   const { wrap, svg, marks: marksEl, readout } = host;
@@ -97,79 +89,55 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const maxDrop = Math.max(0, ...IMMEDIATE.map((c) => c.drop)), need = 2.5 * maxDrop;
     if (hi - lo < need) { const ext = (need - (hi - lo)) / 2; lo -= ext; hi += ext; }
     const n = narrow ? 3 : 5;
-    let step = nice((hi - lo) / n), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
+    let step = niceStep(hi - lo, n), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
     while ((y1 - y0) / step > n + 1) { step = niceUp(step); y0 = Math.floor(lo / step) * step; y1 = Math.ceil(hi / step) * step; }
-    const px = (e: number) => pad.l + ((e - x0) / (x1 - x0)) * (W - pad.l - pad.r);
-    const py = (v: number) => pad.t + ((y1 - v) / (y1 - y0)) * (H - pad.t - pad.b);
+    const L = layerFor(W, H, pad, x0, x1, y0, y1), { px, py } = L;
     const plotTop = pad.t, plotBot = H - pad.b;
 
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", String(H));
     svg.textContent = "";
-    const defs = mk("defs");
-    const pat = mk("pattern", { id: "cw-hatch", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
-    pat.append(mk("line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "var(--loss-hatch)", "stroke-width": 1.25 }));
-    defs.append(pat); svg.append(defs);
+    svg.append(hatchDefs("cw-hatch"));
 
     /* Zones: the household's own gets the wash, the peak rule, the exit and the
        bracket; every other zone is hatch alone (S7). */
-    for (const z of A.dangerZones) {
-      const zx0 = px(z.startEarnings), zx1 = px(z.endEarnings ?? x1);
-      if (isPersonal(z)) svg.append(mk("rect", { x: zx0, y: plotTop, width: zx1 - zx0, height: plotBot - plotTop, fill: "var(--loss-wash)" }));
-      svg.append(mk("rect", { x: zx0, y: plotTop, width: zx1 - zx0, height: plotBot - plotTop, fill: "url(#cw-hatch)" }));
-    }
+    for (const z of A.dangerZones) svg.append(...zoneRects(px(z.startEarnings), px(z.endEarnings ?? x1), plotTop, plotBot, isPersonal(z), "cw-hatch"));
     for (let v = y0; v <= y1 + 1; v += step) {
       svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
       svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, fmt.tick(v)));
     }
-    const xs = nice((x1 - x0) / (narrow ? 3 : 6));
+    const xs = niceStep(x1 - x0, narrow ? 3 : 6);
     for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, fmt.tick(e)));
     svg.append(mk("line", { x1: pad.l, y1: plotBot, x2: W - pad.r, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* The ghost (S14): the real curve, drawn only when a deferred drop would be
        visible; the caption sentence comes from the same test below. */
     const yRange = y1 - y0, ghost = DEFERRED.some((d) => d.drop / yRange > 0.015);
-    if (ghost) {
-      let g = "";
-      for (let i = 0; i < net.length; i++) g += `${i ? "L" : "M"}${px(earn[i])} ${py(net[i])}`;
-      svg.append(mk("path", { d: g, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": "5 4" }));
-    }
-    let d = "";
-    for (let i = 0; i < lifted.length; i++) d += `${i ? "L" : "M"}${px(earn[i])} ${py(lifted[i])}`;
-    const line = mk("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
-    if (!drawn) line.classList.add("hg-draw");   /* the one orchestrated moment, first draw only */
-    svg.append(line);
+    if (ghost) svg.append(ghostPath(pathD(net.map((v, i) => [px(earn[i]), py(v)])), "5 4"));
+    svg.append(seriesPath(pathD(lifted.map((v, i) => [px(earn[i]), py(v)])), !drawn));   /* the one orchestrated moment, first draw only */
 
     /* Cliff marks, with the collision rule (S8): adjacent dots closer than 10px
-       merge into one mark with a count; the ledger is where they separate. */
+       merge into one mark with a count — a mixed cluster keeps the waits
+       channel beside the drop, alone it is the hollow dot (citizen review
+       B1); the ledger is where they separate. */
     marks = [];
-    const pending: Omit<Mark, "x" | "y" | "btn">[] = [];
-    cliffs().forEach((c, i) => {
-      const x = px(c.startEarnings), last = pending[pending.length - 1];
-      if (last && !c.deferral && !last.deferred && x - last.xLast < 10) { last.members.push(i); last.xLast = x; }
-      else pending.push({ members: [i], xLast: x, deferred: !!c.deferral });
-    });
     marksEl.textContent = "";
-    for (const m of pending) {
-      const first = cliffs()[m.members[0]], si = indexOf(ev, first.startEarnings);
-      const x = m.members.reduce((s, i) => s + px(cliffs()[i].startEarnings), 0) / m.members.length, y = py(lifted[si]);
-      if (m.deferred) {
-        svg.append(mk("line", { x1: x, y1: y - 18, x2: x, y2: y - 2, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-dasharray": "4 3" }));
-        svg.append(mk("circle", { cx: x, cy: y, r: 4, fill: "var(--surface)", stroke: "var(--ink-3)", "stroke-width": 2 }));
+    for (const cl of clusterCliffs(cliffs(), px)) {
+      const members = cl.cliffs.map((c) => cliffs().indexOf(c));
+      const x = cl.x, y = py(lifted[indexOf(ev, cl.cliffs[0].startEarnings)]), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
+      if (cl.cliffs.some((c) => c.deferral)) {
+        svg.append(waitStub(x, y, 18));
         svg.append(label(x + 7, y - 8, K.later));
-      } else {
-        const land = Math.min(...m.members.map((i) => lifted[indexOf(ev!, cliffs()[i].endEarnings)]));
-        svg.append(mk("line", { x1: x, y1: y, x2: x, y2: py(land), stroke: "var(--loss-4)", "stroke-width": 2.5, "stroke-linecap": "round" }));
-        svg.append(mk("circle", { cx: x, cy: y, r: m.members.length > 1 ? 6 : 4, fill: "var(--loss-4)", stroke: "var(--surface)", "stroke-width": 2 }));
+      }
+      if (cl.later) svg.append(waitDot(x, y, r));
+      else {
+        const land = Math.min(...cl.cliffs.filter((c) => !c.deferral).map((c) => lifted[indexOf(ev!, c.endEarnings)]));
+        svg.append(...dropMark(x, y, py(land), r));
       }
       /* The marks layer: one 44px button per mark, over the SVG (M6). */
-      const btn = document.createElement("button");
-      btn.className = "hg-mark"; btn.type = "button"; btn.tabIndex = -1;
-      btn.style.left = `${(x / W) * 100}%`; btn.style.top = `${(y / H) * 100}%`;
-      const mark: Mark = { ...m, x, y, btn };
-      btn.setAttribute("aria-label", markSentence(mark));
-      if (m.members.length > 1) { const count = document.createElement("span"); count.className = "hg-mark__count"; count.setAttribute("aria-hidden", "true"); count.textContent = String(m.members.length); btn.append(count); }
-      btn.addEventListener("click", () => on.select(mark.members[0], markSentence(mark)));
-      marksEl.append(btn);
+      const mark: Mark = { cluster: cl, members, x, y, btn: null as unknown as HTMLButtonElement };
+      mark.btn = markButton(x, y, L, markSentence(mark), cl.cliffs.length, cl.later);
+      mark.btn.addEventListener("click", () => on.select(mark.members[0], markSentence(mark)));
+      marksEl.append(mark.btn);
       marks.push(mark);
     }
     const rings = marks.map((m) => ({ x: m.x, y: m.y }));
@@ -206,9 +174,9 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     }
     /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
     const cx = px(A.currentEarnings), cy = py(liftedAt(A.currentEarnings));
-    svg.append(mk("line", { x1: cx, y1: cy, x2: cx, y2: plotBot, stroke: "var(--ink-3)", "stroke-width": 1 }));
-    diamond = mk("path", { d: `M${cx} ${cy - 6} L${cx + 6} ${cy} L${cx} ${cy + 6} L${cx - 6} ${cy} Z`, fill: "var(--ink)", stroke: "var(--surface)", "stroke-width": 2 });
-    svg.append(diamond);
+    const [dropLine, diamondPath] = household(cx, cy, plotBot);
+    svg.append(dropLine, diamondPath);
+    diamond = diamondPath;
 
     /* The caption's clauses each come from their condition (review S5). */
     host.cap.textContent = [
@@ -217,24 +185,22 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       source,
     ].join(" ");
     renderKey(A.dangerZones.length > (P.zone ? 1 : 0), IMMEDIATE.length > 0, DEFERRED.length > 0, !!P.zone, safe !== null);
-    layer = { px, py, pad, W, H }; drawn = true;
+    layer = L; drawn = true;
     syncMarks(); paintCursor();
   }
 
   /* MarkKey (#5): each entry draws the actual mark; entries follow the marks drawn. */
   function renderKey(otherZones: boolean, immediate: boolean, deferred: boolean, zone: boolean, safe: boolean): void {
-    const sw = (inner: string) => `<svg viewBox="0 0 22 12" aria-hidden="true">${inner}</svg>`;
-    const k: [string, string][] = [
-      [K.key.net, sw(`<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`)],
-    ];
-    if (zone) k.push([K.key.ownZone, sw(`<rect x="1" y="1" width="20" height="10" fill="var(--loss-wash)" stroke="var(--loss-3)" stroke-width="1"/><path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
-    if (otherZones) k.push([zone ? K.key.otherZones : K.key.zones, sw(`<path d="M1 11 L11 1 M11 11 L21 1" stroke="var(--loss-hatch)" stroke-width="1.5"/>`)]);
-    if (immediate) k.push([K.key.immediate, sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--loss-4)" stroke-width="2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--loss-4)"/>`)]);
-    if (deferred) k.push([K.key.deferred, sw(`<line x1="11" y1="1" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2" stroke-dasharray="3 2.5"/><circle cx="11" cy="2.5" r="2.5" fill="var(--surface)" stroke="var(--ink-3)" stroke-width="1.5"/>`)]);
-    k.push([K.key.current, sw(`<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`)]);
-    if (zone) k.push([K.key.leap, sw(`<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`)]);
-    if (safe) k.push([K.key.safe, sw(`<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`)]);
-    host.key.innerHTML = k.map(([t, s]) => `<li>${s} ${t}</li>`).join("");
+    host.key.replaceChildren(
+      keyEntry(K.key.net, KEY_MARK.line),
+      ...(zone ? [keyEntry(K.key.ownZone, KEY_MARK.band)] : []),
+      ...(otherZones ? [keyEntry(zone ? K.key.otherZones : K.key.zones, KEY_MARK.other)] : []),
+      ...(immediate ? [keyEntry(K.key.immediate, KEY_MARK.drop)] : []),
+      ...(deferred ? [keyEntry(K.key.deferred, KEY_MARK.later)] : []),
+      keyEntry(K.key.current, KEY_MARK.you),
+      ...(zone ? [keyEntry(K.key.leap, KEY_MARK.leap)] : []),
+      ...(safe ? [keyEntry(K.key.safe, KEY_MARK.safe)] : []),
+    );
   }
 
   function paintCursor(): void {
@@ -242,8 +208,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     if (!layer || !ev) return;
     const { px, py, pad, H } = layer;
     const e = earn[cursor], v = lifted[cursor];
-    const l = mk("line", { x1: px(e), y1: pad.t, x2: px(e), y2: H - pad.b, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-opacity": 0.55 });
-    const dot = mk("circle", { cx: px(e), cy: py(v), r: 4, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 });
+    const [l, dot] = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
     svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
     cursorNodes = [l, dot];
     const z = zoneOf(e);
@@ -254,56 +219,35 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     for (const m of marks) m.btn.setAttribute("aria-expanded", String(selected !== null && m.members.includes(selected)));
   }
 
-  const move = (clientX: number) => {
-    if (!layer) return;
-    const r = svg.getBoundingClientRect(), { pad, W } = layer;
-    const f = (clientX - r.left - pad.l) / (W - pad.l - pad.r);
-    cursor = Math.min(earn.length - 1, Math.max(0, Math.round(f * (earn.length - 1))));
-    paintCursor();
-  };
-  wrap.addEventListener("pointerdown", (e) => { if (!(e.target as HTMLElement).closest(".hg-mark")) move(e.clientX); });
-  wrap.addEventListener("pointermove", (e) => { if (e.buttons && !(e.target as HTMLElement).closest(".hg-mark")) move(e.clientX); });
-  wrap.addEventListener("keydown", (e) => {
-    if (!ev) return;
-    const s = e.shiftKey ? 10 : 1, onMark = (e.target as HTMLElement).closest(".hg-mark");
-    if (e.key === "ArrowRight") cursor = Math.min(earn.length - 1, cursor + s);
-    else if (e.key === "ArrowLeft") cursor = Math.max(0, cursor - s);
-    else if (e.key === "Home") cursor = 0;
-    else if (e.key === "End") cursor = earn.length - 1;
-    else if (e.key === "]" || e.key === "[") {
-      /* Next or previous mark, from the mark in focus or else from the cursor —
-         a merged mark counts by any member, so one holding the cursor's own
-         cliff is the next stop, not skipped (review N4). */
+  /* The pointer drags the cursor (never from a mark); a key moves it a point, shift ten; ] and [ walk the marks from the
+     one in focus or else from the cursor — a merged mark counts by any member, so one holding the cursor's own cliff is
+     the next stop, not skipped (review N4). */
+  attachCursor(wrap, {
+    svg, layer: () => layer, range: () => [0, earn.length - 1], cursor: () => cursor, shift: 10, pointer: "drag",
+    set(i) { cursor = i; paintCursor(); },
+    bracket(key, target) {
+      const onMark = target.closest(".hg-mark");
       const here = onMark ? marks.findIndex((m) => m.btn === onMark) : -1;
       const at = earn[cursor];
-      const startsAfter = (m: Mark) => m.members.some((i) => cliffs()[i].startEarnings > at);
-      const startsBefore = (m: Mark) => m.members.some((i) => cliffs()[i].startEarnings < at);
-      const i = e.key === "]"
+      const startsAfter = (m: Mark) => m.cluster.cliffs.some((c) => c.startEarnings > at);
+      const startsBefore = (m: Mark) => m.cluster.cliffs.some((c) => c.startEarnings < at);
+      const i = key === "]"
         ? (here >= 0 ? here + 1 : marks.findIndex(startsAfter))
         : (here >= 0 ? here - 1 : marks.filter(startsBefore).length - 1);   /* marks are in axis order */
-      e.preventDefault();
       if (i < 0 || i >= marks.length) return;
-      marks[i].btn.focus(); cursor = indexOf(ev, cliffs()[marks[i].members[0]].startEarnings); paintCursor();
+      marks[i].btn.focus(); cursor = indexOf(ev!, cliffs()[marks[i].members[0]].startEarnings); paintCursor();
       readout.textContent = markSentence(marks[i]);
-      return;
-    }
-    else if (e.key === "Escape") { on.close(); e.preventDefault(); return; }
-    else return;
-    e.preventDefault(); paintCursor();
+    },
+    escape: () => on.close(),
   });
-  /* A resize redraws once per frame, and a mark that had focus keeps it across the rebuild. */
-  let raf = 0;
-  addEventListener("resize", () => {
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => {
-      const focused = marks.findIndex((m) => m.btn === document.activeElement);
-      draw();
-      if (focused >= 0) marks[focused]?.btn.focus();
-    });
+  /* A width change redraws once (the column, not only the window, can change under the chart — K9), and a mark that had
+     focus keeps it across the rebuild; paper is redrawn now, at one width, and back afterwards. */
+  watchWidth(wrap, () => {
+    const focused = marks.findIndex((m) => m.btn === document.activeElement);
+    draw();
+    if (focused >= 0) marks[focused]?.btn.focus();
   });
-  /* Paper: print layout does not wait for a frame, so the curve is redrawn now, at one width, and back afterwards. */
-  addEventListener("beforeprint", () => draw(PRINT_WIDTH));
-  addEventListener("afterprint", () => draw());
+  redrawForPrint(draw, PRINT_WIDTH);
 
   return {
     render(next, src) {
