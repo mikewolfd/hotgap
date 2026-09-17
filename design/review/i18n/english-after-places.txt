@@ -1,0 +1,750 @@
+HotGap — what a raise costs, state by state
+en
+---
+Skip to the data table
+
+HotGap
+
+Español
+What a raise costs, state by state
+
+Fifty states and the District of Columbia, eleven household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. Each figure is the worst single $1,000 step of earnings in that state's curve for that household — how much net income falls when pay goes up by a thousand dollars.
+
+A cliff is a $1,000 raise that cuts net income by $200 or more; a danger zone is a run of earnings across which the household never gets ahead. The figures come from PolicyEngine, an open-source tax-and-benefit calculator, run by HotGap. Estimates only.
+
+Household
+1 adult, no children
+1 adult, 1 child (3)
+1 adult, 2 children (3 and 7)
+1 adult, 3 children (1, 4, 9)
+2 adults, one working, no children
+2 adults, one working, 1 child (3)
+2 adults, one working, 2 children (3 and 7)
+2 adults, one working, 3 children (1, 4, 9)
+2 adults, both working, 1 child (3)
+2 adults, both working, 2 children (3 and 7)
+2 adults, both working, 3 children (1, 4, 9)
+Measure
+Largest one-step loss ($)
+Total width of the danger zones — every stretch where more pay leaves the household no better off, added together ($)
+The leap — the raise needed to clear the worst danger zone ($)
+Safe exit — earnings above which no danger zone remains ($)
+Number of cliffs
+Deferred cliffs — of the cliffs counted, those that land at a later renewal
+Download these rows (CSV)
+Largest one-step loss, by state
+
+1 adult, 2 children (3 and 7), renting in the state's most populous county. Net income lost in the worst single $1,000 step of earnings.
+
+AK
+ME
+VT
+NH
+WA
+ID
+MT
+ND
+MN
+IL
+WI
+MI
+NY
+MA
+OR
+NV
+WY
+SD
+IA
+IN
+OH
+PA
+NJ
+CT
+RI
+CA
+UT
+CO
+NE
+MO
+KY
+WV
+VA
+MD
+DE
+AZ
+NM
+KS
+AR
+TN
+NC
+SC
+DC
+OK
+LA
+MS
+AL
+GA
+HI
+TX
+FL
+$5,190
+$10,869
+$16,549
+$22,228
+$27,908
+$33,587
+No cliff found (1)
+
+Colorado — $25,449 lost at $54,000 → $55,000, when CCDF child care subsidy ends. Renter, El Paso County. Details below ↓
+
+HotGap, from PolicyEngine 2026 rules on policyengine-us 2.6.2. Weekly run of Sep 16, 2026. Net income after health-insurance premiums. Estimates only. Bins: five equal-width steps from $5,190 to $33,587 over the 50 states with a comparable figure; 1 with no cliff found.
+
+A grid of the fifty states and the District of Columbia, each a square in roughly its geographic position, shaded by the selected measure. A state with no cliff is an empty square; a state whose figure runs past the axis has a dashed edge; a state the model cannot complete is hatched rather than shaded. Each square is a button that opens that state's corrections under the map; the arrow keys move between squares and Enter selects. Every value is listed in the table below this figure.
+
+Corrections applied in Colorado (1)
+
+Colorado — $25,449 lost at $54,000 → $55,000, when CCDF child care subsidy ends. Renter, El Paso County.
+
+What HotGap changed on top of PolicyEngine before any figure for Colorado was read. Child-care subsidy: inside PolicyEngine's net income for Colorado.
+
+Colorado premium assistance
+modeled
+PolicyEngine computes Colorado premium assistance itself, and HotGap subtracts it from the premium the household pays, because the engine reports it as a health benefit rather than in the out-of-pocket premium HotGap reads; no local schedule is applied.
+Energy assistance (LIHEAP) not counted
+Stops at 60% of state median income, the heating limit for FY2026. Worth $200 to $1,000 a winter if received, at that top income band. About 2 in 10 income-eligible households were served in FY2024 (16%).
+Limit and amount: liheapch.acf.gov. Households served: liheappm.acf.gov. Read Sep 16, 2026.
+
+Estimates only. Rules: 2026. Rent: HUD Office of Policy Development and Research, Fair Market Rents; FY2026 revised schedule (effective 2025-10-01). County: El Paso County (the state's most populous; Vintage 2024 (July 1, 2024 estimates)). Child-care price: county price, 2015 study, carried to 2026 dollars by the BLS Employment Cost Index. Model: policyengine-us 2.6.2. Weekly run of Sep 16, 2026.
+
+Ranked
+$5,190
+$33,587
+1.
+MD
+$33,587 at $97,000
+2.
+NY
+$32,075 at $95,000
+3.
+MN
+$27,483 at $56,000
+4.
+NJ
+$26,206 at $54,000
+5.
+WI
+$25,833 at $54,000
+6.
+OR
+$25,745 at $54,000
+7.
+CO
+$25,449 at $54,000
+8.
+VA
+$21,204 at $99,000
+9.
+PA
+$20,128 at $54,000
+10.
+DC
+$19,928 at $81,000
+11.
+WA
+$19,614 at $70,000
+12.
+VT
+$18,890 at $106,000
+13.
+CT
+$18,701 at $77,000
+14.
+NH
+$17,959 at $108,000
+15.
+IL
+$17,288 at $61,000
+16.
+MI
+$17,255 at $53,000
+17.
+GA
+$16,978 at $46,000
+18.
+IA
+$16,819 at $43,000
+19.
+MO
+$16,428 at $40,000
+20.
+WV
+$16,167 at $106,000
+21.
+RI
+$16,132 at $71,000
+22.
+ID
+$15,624 at $47,000
+23.
+DE
+$15,590 at $54,000
+24.
+NE
+$15,336 at $49,000
+25.
+WY
+$14,448 at $106,000
+26.
+MT
+$14,381 at $40,000
+27.
+AK
+$14,365 at $105,000
+28.
+NV
+$13,977 at $34,000
+29.
+CA
+$13,974 at $91,000
+30.
+TX
+$13,938 at $77,000
+31.
+AL
+$12,584 at $47,000
+32.
+OH
+$12,062 at $38,000
+33.
+KY
+$11,922 at $72,000
+34.
+SC
+$11,497 at $73,000
+35.
+UT
+$11,432 at $86,000
+36.
+NC
+$11,153 at $54,000
+37.
+AZ
+$10,859 at $43,000
+38.
+ND
+$10,554 at $81,000
+39.
+MA
+$10,370 at $118,000
+40.
+AR
+$10,226 at $64,000
+41.
+KS
+$10,044 at $80,000
+42.
+LA
+$9,649 at $70,000
+43.
+ME
+$8,110 at $123,000
+44.
+HI
+$7,689 at $95,000
+45.
+IN
+$6,951 at $36,000
+46.
+MS
+$6,337 at $61,000
+47.
+SD
+$6,334 at $59,000
+48.
+OK
+$6,103 at $34,000
+49.
+FL
+$5,795 at $106,000
+50.
+TN
+$5,190 at $73,000
+No cliff found (1)
+NM
+no cliff
+
+No step down of $200 or more anywhere on this household's curve. A measurement of zero, not the smallest loss: these states are left out of the bins.
+
+Bins are recomputed for every measure — equal-width steps of a dollar measure, classes of whole numbers for a count — so a shade means nothing across two different measures. Read the bin bounds, not the colour.
+
+All 51, every measure
+Table order
+State, A to Z
+Largest one-step loss, largest first
+Total width of the danger zones, largest first
+The leap, largest first
+Safe exit, largest first
+Number of cliffs, most first
+Deferred cliffs, most first
+
+Orders this table only; the map and the ranking follow the Measure above.
+
+Largest one-step loss
+Net income lost in the worst single $1,000 step of earnings.
+Worst step
+The $1,000 step of earnings at which the largest one-step loss lands.
+Total width of the danger zones
+Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together.
+The leap
+The raise a household must clear in one move to get past its worst danger zone.
+Safe exit
+Earnings above which no danger zone remains: where the last one closes.
+Number of cliffs
+Steps down of $200 or more anywhere on the curve.
+Deferred cliffs
+Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance.
+Figures
+Complete, or the program the model cannot compute in that state, which makes the row's figures floors; and whether HotGap added the child-care subsidy to net income, where PolicyEngine had left it out.
+All six measures for 1 adult, 2 children (3 and 7), by state. PolicyEngine 2026 rules, run of Sep 16, 2026.
+State	Largest one-step loss	Worst step	Danger zones, total width	The leap	Safe exit	Cliffs	Deferred	Figures
+
+AK
+	$14,365	$105,000 → $106,000	$75,000	$45,000	$136,000	6	0	complete
+child-care subsidy added by HotGap
+
+
+AL
+	$12,584	$47,000 → $48,000	$57,000	$42,000	$113,000	6	1	complete
+
+AR
+	$10,226	$64,000 → $65,000	$48,000	$19,000	$120,000	7	0	complete
+
+AZ
+	$10,859	$43,000 → $44,000	$47,000	$40,000	$109,000	6	0	complete
+
+CA
+	$13,974	$91,000 → $92,000	$80,000	$55,000	$142,000	8	0	complete
+
+CO
+	$25,449	$54,000 → $55,000	$90,000	$73,000	$119,000	10	0	complete
+
+CT
+	$18,701	$77,000 → $78,000	$82,000	$54,000	$131,000	8	0	complete
+child-care subsidy added by HotGap
+
+
+DC
+	$19,928	$81,000 → $82,000	$83,000	$52,000	$133,000	7	0	complete
+
+DE
+	$15,590	$54,000 → $55,000	$66,000	$52,000	$117,000	6	1	complete
+
+FL
+	$5,795	$106,000 → $107,000	$43,000	$27,000	$116,000	7	0	complete
+child-care subsidy added by HotGap
+
+
+GA
+	$16,978	$46,000 → $47,000	$56,000	$48,000	$114,000	5	0	complete
+
+HI
+	$7,689	$95,000 → $96,000	$58,000	$37,000	$116,000	5	1	complete
+child-care subsidy added by HotGap
+
+
+IA
+	$16,819	$43,000 → $44,000	$46,000	$44,000	$108,000	5	1	complete
+child-care subsidy added by HotGap
+
+
+ID
+	$15,624	$47,000 → $48,000	$48,000	$34,000	$109,000	5	1	complete
+
+IL
+	$17,288	$61,000 → $62,000	$64,000	$32,000	$110,000	8	0	complete
+child-care subsidy added by HotGap
+
+
+IN
+	$6,951	$36,000 → $37,000	$47,000	$38,000	$108,000	9	0	complete
+
+KS
+	$10,044	$80,000 → $81,000	$56,000	$33,000	$113,000	8	0	complete
+child-care subsidy added by HotGap
+
+
+KY
+	$11,922	$72,000 → $73,000	$43,000	$22,000	$112,000	4	0	complete
+child-care subsidy added by HotGap
+
+
+LA
+	$9,649	$70,000 → $71,000	$51,000	$17,000	$114,000	10	0	complete
+child-care subsidy added by HotGap
+
+
+MA
+	$10,370	$118,000 → $119,000	$57,000	$18,000	$136,000	6	1	complete
+child-care subsidy added by HotGap
+
+
+MD
+	$33,587	$97,000 → $98,000	$62,000	≥ $53,000	past the axis	4	0	complete
+
+ME
+	$8,110	$123,000 → $124,000	$64,000	$22,000	$143,000	9	0	complete
+child-care subsidy added by HotGap
+
+
+MI
+	$17,255	$53,000 → $54,000	$63,000	$55,000	$110,000	6	0	complete
+child-care subsidy added by HotGap
+
+
+MN
+	$27,483	$56,000 → $57,000	$66,000	$66,000	$120,000	4	0	complete
+child-care subsidy added by HotGap
+
+
+MO
+	$16,428	$40,000 → $41,000	$61,000	$52,000	$110,000	12	0	complete
+
+MS
+	$6,337	$61,000 → $62,000	$38,000	$12,000	$113,000	7	0	complete
+child-care subsidy added by HotGap
+
+
+MT
+	$14,381	$40,000 → $41,000	$60,000	$54,000	$112,000	5	0	complete
+
+NC
+	$11,153	$54,000 → $55,000	$54,000	$47,000	$113,000	5	0	complete
+
+ND
+	$10,554	$81,000 → $82,000	$36,000	$18,000	$108,000	7	0	complete
+child-care subsidy added by HotGap
+
+
+NE
+	$15,336	$49,000 → $50,000	$74,000	$44,000	past the axis	9	0	complete
+
+NH
+	$17,959	$108,000 → $109,000	$44,000	$27,000	$135,000	4	1	complete
+child-care subsidy added by HotGap
+
+
+NJ
+	$26,206	$54,000 → $55,000	$75,000	$56,000	$114,000	7	1	complete
+child-care subsidy added by HotGap
+
+
+NM
+	none	none	none	none	none	0	0	complete
+child-care subsidy added by HotGap
+
+
+NV
+	$13,977	$34,000 → $35,000	$57,000	$55,000	$108,000	5	1	complete
+
+NY
+	$32,075	$95,000 → $96,000	$68,000	≥ $55,000	past the axis	4	1	complete
+
+OH
+	$12,062	$38,000 → $39,000	$57,000	$47,000	$110,000	10	0	complete
+
+OK
+	$6,103	$34,000 → $35,000	$44,000	$26,000	$112,000	9	0	complete
+
+OR
+	$25,745	$54,000 → $55,000	$81,000	$67,000	$120,000	15	1	complete
+child-care subsidy added by HotGap
+
+
+PA
+	$20,128	$54,000 → $55,000	$46,000	$34,000	$110,000	5	1	complete
+child-care subsidy added by HotGap
+
+
+RI
+	$16,132	$71,000 → $72,000	$59,000	$33,000	$110,000	8	0	complete
+child-care subsidy added by HotGap
+
+
+SC
+	$11,497	$73,000 → $74,000	$45,000	$22,000	$113,000	7	0	complete
+
+SD
+	$6,334	$59,000 → $60,000	$35,000	$14,000	$112,000	6	0	complete
+child-care subsidy added by HotGap
+
+
+TN
+	$5,190	$73,000 → $74,000	$35,000	$13,000	$114,000	6	1	complete
+child-care subsidy added by HotGap
+
+
+TX
+	$13,938	$77,000 → $78,000	$47,000	$24,000	$116,000	5	0	complete
+child-care subsidy added by HotGap
+
+
+UT
+	$11,432	$86,000 → $87,000	$48,000	$27,000	$113,000	7	0	complete
+child-care subsidy added by HotGap
+
+
+VA
+	$21,204	$99,000 → $100,000	$63,000	$37,000	$136,000	5	0	complete
+
+VT
+	$18,890	$106,000 → $107,000	$82,000	$42,000	$148,000	19	0	complete
+child-care subsidy added by HotGap
+
+
+WA
+	$19,614	$70,000 → $71,000	$60,000	$49,000	$119,000	6	1	complete
+
+WI
+	$25,833	$54,000 → $55,000	$86,000	$76,000	$116,000	7	1	complete
+child-care subsidy added by HotGap
+
+
+WV
+	$16,167	$106,000 → $107,000	$64,000	$30,000	$132,000	6	0	complete
+
+WY
+	$14,448	$106,000 → $107,000	$60,000	$23,000	$128,000	7	0	complete
+child-care subsidy added by HotGap
+
+Every row keeps the number the model returned, including the rows it cannot complete, because a reporter needs to see what came back. Those rows are flagged in the last column and are not shaded on the map or placed in the ranking. Select a state on the map or in this table to read the corrections behind its numbers under the map; the arrow keys move between states and Enter selects.
+
+How these numbers were made
+Every cell is one household shape run through PolicyEngine, an open-source tax-and-benefit calculator, at 2026 rules, earnings varied in $1,000 steps from $0 past 400% of the poverty guideline for that household size, plus $40,000 of room to recover.
+For 1 adult, 2 children (3 and 7) the axis runs from $0 to $150,000 ($175,000 in Alaska, $165,000 in Hawaii); a figure that runs past the axis runs past that.
+The money line is health-adjusted: household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included.
+Each household is a typical renter in the state's most populous county — named under the map for the selected state — with HUD Fair Market Rent, Census county estimates, and the DOL National Database of Childcare Prices preschool price for that county, carried to 2026 dollars by the BLS Employment Cost Index. The study year behind the price, and whether a state or national median stood in for a county the database lacks, differ by state and are printed in the source line under the map.
+The CCDF child care subsidy is on for this run and off for a household's own lookup. Head Start and housing vouchers are off in both: they are rationed, and assuming a family holds one inflates its numbers.
+Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in the deferred column and are lifted out of every other figure here. They are real losses; they do not land in the year of the raise.
+Where a state's figure needed a correction on top of PolicyEngine — a premium ladder applied locally, the child care subsidy added back into net income, a parent Medicaid limit taken from the state's handbook, a coverage-gap premium — it is listed under the map for the selected state, from the run's own coverage record, not from copy kept here.
+The download is the table's rows in the table's order, one per state, with these columns: state, state_name, archetype_id, archetype, biggest_one_step_loss, biggest_loss_at, biggest_loss_programs, danger_zone_width, leap, safe_exit, cliff_count, deferred_cliff_count, leap_is_lower_bound, no_cliff_found, comparable, figures, unmodeled_programs, corrections_applied, childcare_subsidy_footing, liheap_limit, liheap_served_share, county_name, county_fips, rent_vintage, county_vintage, childcare_price_vintage, policy_year, sweep_generated, model_label, model_endpoint, model_version, source. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds.
+What the model does not include
+Immigration status, assets, and household members aged 65 or over are not inputs.
+Alaska and Hawaii marketplace subsidies are computed upstream against the 48-state poverty guideline rather than their own higher ones (reported to PolicyEngine). HotGap does not correct this, so both states' premium-driven figures are understated.
+Energy assistance (LIHEAP) is in no figure on this page, except in Michigan, where it is paid as the Home Heating Credit and counted. It is a block grant, not an entitlement: in FY2024 the states served between 3% (Texas) and 85% (Michigan) of their income-eligible households, so a curve that assumed it would draw a benefit most eligible families never receive. Each state's block under the map says where it stops, what it pays there and the share served; the download carries the limit and the share.
+Nothing the model cannot compute would move this household's figures in any state, so no state is hatched for 1 adult, 2 children (3 and 7).
+
+Hatched is not low. A program the model cannot compute in a state is missing from every figure for it, so its numbers are floors, not measurements. Do not write that those states are gentler; the only honest claim is that this model cannot yet say. The flag is read from the run's own coverage record, not from a list kept here, so a state drops off it the day the engine starts modelling the program.
+
+Past the axis is not a number. Where a state's last danger zone runs off the top of the axis rather than closing, the safe exit is unknown; the leap is a lower bound only when the worst zone is the one that runs off. The two can differ, so a state can show an exact leap and no safe exit. Those cells read past the axis here and must not be charted as a value.
+
+Run of Sep 16, 2026 on policyengine-us 2.6.2. Licence: AGPL-3.0-only. Estimates only — a caseworker decides real benefits.
+
+Cite as: HotGap, What a raise costs, state by state, 2026 rules on PolicyEngine (policyengine-us 2.6.2), run of Sep 16, 2026, http://localhost:8800/places?household=single-2&measure=biggestLoss&sort=state&state=CO.
+--- attributes ---
+aria-label: Language
+aria-label: Alaska: $14,365
+title: Alaska: $14,365
+aria-label: Maine: $8,110
+title: Maine: $8,110
+aria-label: Vermont: $18,890
+title: Vermont: $18,890
+aria-label: New Hampshire: $17,959
+title: New Hampshire: $17,959
+aria-label: Washington: $19,614
+title: Washington: $19,614
+aria-label: Idaho: $15,624
+title: Idaho: $15,624
+aria-label: Montana: $14,381
+title: Montana: $14,381
+aria-label: North Dakota: $10,554
+title: North Dakota: $10,554
+aria-label: Minnesota: $27,483
+title: Minnesota: $27,483
+aria-label: Illinois: $17,288
+title: Illinois: $17,288
+aria-label: Wisconsin: $25,833
+title: Wisconsin: $25,833
+aria-label: Michigan: $17,255
+title: Michigan: $17,255
+aria-label: New York: $32,075
+title: New York: $32,075
+aria-label: Massachusetts: $10,370
+title: Massachusetts: $10,370
+aria-label: Oregon: $25,745
+title: Oregon: $25,745
+aria-label: Nevada: $13,977
+title: Nevada: $13,977
+aria-label: Wyoming: $14,448
+title: Wyoming: $14,448
+aria-label: South Dakota: $6,334
+title: South Dakota: $6,334
+aria-label: Iowa: $16,819
+title: Iowa: $16,819
+aria-label: Indiana: $6,951
+title: Indiana: $6,951
+aria-label: Ohio: $12,062
+title: Ohio: $12,062
+aria-label: Pennsylvania: $20,128
+title: Pennsylvania: $20,128
+aria-label: New Jersey: $26,206
+title: New Jersey: $26,206
+aria-label: Connecticut: $18,701
+title: Connecticut: $18,701
+aria-label: Rhode Island: $16,132
+title: Rhode Island: $16,132
+aria-label: California: $13,974
+title: California: $13,974
+aria-label: Utah: $11,432
+title: Utah: $11,432
+aria-label: Colorado: $25,449
+title: Colorado: $25,449
+aria-label: Nebraska: $15,336
+title: Nebraska: $15,336
+aria-label: Missouri: $16,428
+title: Missouri: $16,428
+aria-label: Kentucky: $11,922
+title: Kentucky: $11,922
+aria-label: West Virginia: $16,167
+title: West Virginia: $16,167
+aria-label: Virginia: $21,204
+title: Virginia: $21,204
+aria-label: Maryland: $33,587
+title: Maryland: $33,587
+aria-label: Delaware: $15,590
+title: Delaware: $15,590
+aria-label: Arizona: $10,859
+title: Arizona: $10,859
+aria-label: New Mexico: no cliff found
+title: New Mexico: no cliff found
+aria-label: Kansas: $10,044
+title: Kansas: $10,044
+aria-label: Arkansas: $10,226
+title: Arkansas: $10,226
+aria-label: Tennessee: $5,190
+title: Tennessee: $5,190
+aria-label: North Carolina: $11,153
+title: North Carolina: $11,153
+aria-label: South Carolina: $11,497
+title: South Carolina: $11,497
+aria-label: Washington, DC: $19,928
+title: Washington, DC: $19,928
+aria-label: Oklahoma: $6,103
+title: Oklahoma: $6,103
+aria-label: Louisiana: $9,649
+title: Louisiana: $9,649
+aria-label: Mississippi: $6,337
+title: Mississippi: $6,337
+aria-label: Alabama: $12,584
+title: Alabama: $12,584
+aria-label: Georgia: $16,978
+title: Georgia: $16,978
+aria-label: Hawaii: $7,689
+title: Hawaii: $7,689
+aria-label: Texas: $13,938
+title: Texas: $13,938
+aria-label: Florida: $5,795
+title: Florida: $5,795
+aria-label: 1. Maryland: $33,587, at $97,000
+aria-label: 2. New York: $32,075, at $95,000
+aria-label: 3. Minnesota: $27,483, at $56,000
+aria-label: 4. New Jersey: $26,206, at $54,000
+aria-label: 5. Wisconsin: $25,833, at $54,000
+aria-label: 6. Oregon: $25,745, at $54,000
+aria-label: 7. Colorado: $25,449, at $54,000
+aria-label: 8. Virginia: $21,204, at $99,000
+aria-label: 9. Pennsylvania: $20,128, at $54,000
+aria-label: 10. Washington, DC: $19,928, at $81,000
+aria-label: 11. Washington: $19,614, at $70,000
+aria-label: 12. Vermont: $18,890, at $106,000
+aria-label: 13. Connecticut: $18,701, at $77,000
+aria-label: 14. New Hampshire: $17,959, at $108,000
+aria-label: 15. Illinois: $17,288, at $61,000
+aria-label: 16. Michigan: $17,255, at $53,000
+aria-label: 17. Georgia: $16,978, at $46,000
+aria-label: 18. Iowa: $16,819, at $43,000
+aria-label: 19. Missouri: $16,428, at $40,000
+aria-label: 20. West Virginia: $16,167, at $106,000
+aria-label: 21. Rhode Island: $16,132, at $71,000
+aria-label: 22. Idaho: $15,624, at $47,000
+aria-label: 23. Delaware: $15,590, at $54,000
+aria-label: 24. Nebraska: $15,336, at $49,000
+aria-label: 25. Wyoming: $14,448, at $106,000
+aria-label: 26. Montana: $14,381, at $40,000
+aria-label: 27. Alaska: $14,365, at $105,000
+aria-label: 28. Nevada: $13,977, at $34,000
+aria-label: 29. California: $13,974, at $91,000
+aria-label: 30. Texas: $13,938, at $77,000
+aria-label: 31. Alabama: $12,584, at $47,000
+aria-label: 32. Ohio: $12,062, at $38,000
+aria-label: 33. Kentucky: $11,922, at $72,000
+aria-label: 34. South Carolina: $11,497, at $73,000
+aria-label: 35. Utah: $11,432, at $86,000
+aria-label: 36. North Carolina: $11,153, at $54,000
+aria-label: 37. Arizona: $10,859, at $43,000
+aria-label: 38. North Dakota: $10,554, at $81,000
+aria-label: 39. Massachusetts: $10,370, at $118,000
+aria-label: 40. Arkansas: $10,226, at $64,000
+aria-label: 41. Kansas: $10,044, at $80,000
+aria-label: 42. Louisiana: $9,649, at $70,000
+aria-label: 43. Maine: $8,110, at $123,000
+aria-label: 44. Hawaii: $7,689, at $95,000
+aria-label: 45. Indiana: $6,951, at $36,000
+aria-label: 46. Mississippi: $6,337, at $61,000
+aria-label: 47. South Dakota: $6,334, at $59,000
+aria-label: 48. Oklahoma: $6,103, at $34,000
+aria-label: 49. Florida: $5,795, at $106,000
+aria-label: 50. Tennessee: $5,190, at $73,000
+aria-label:  New Mexico: no cliff
+aria-label: What the columns mean
+aria-label: Alaska
+aria-label: Alabama
+aria-label: Arkansas
+aria-label: Arizona
+aria-label: California
+aria-label: Colorado
+aria-label: Connecticut
+aria-label: Washington, DC
+aria-label: Delaware
+aria-label: Florida
+aria-label: Georgia
+aria-label: Hawaii
+aria-label: Iowa
+aria-label: Idaho
+aria-label: Illinois
+aria-label: Indiana
+aria-label: Kansas
+aria-label: Kentucky
+aria-label: Louisiana
+aria-label: Massachusetts
+aria-label: Maryland
+aria-label: Maine
+aria-label: Michigan
+aria-label: Minnesota
+aria-label: Missouri
+aria-label: Mississippi
+aria-label: Montana
+aria-label: North Carolina
+aria-label: North Dakota
+aria-label: Nebraska
+aria-label: New Hampshire
+aria-label: New Jersey
+aria-label: New Mexico
+aria-label: Nevada
+aria-label: New York
+aria-label: Ohio
+aria-label: Oklahoma
+aria-label: Oregon
+aria-label: Pennsylvania
+aria-label: Rhode Island
+aria-label: South Carolina
+aria-label: South Dakota
+aria-label: Tennessee
+aria-label: Texas
+aria-label: Utah
+aria-label: Virginia
+aria-label: Vermont
+aria-label: Washington
+aria-label: Wisconsin
+aria-label: West Virginia
+aria-label: Wyoming
+title: policyengine-us #9482

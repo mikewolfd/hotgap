@@ -1,0 +1,144 @@
+HotGap — will I lose money if I earn more?
+en
+---
+HotGap
+
+Change my answers
+Print
+94110 · CA · 1 adult, kids 3 & 7 · $30,000 a year
+Edit
+Skip to the answer
+If your pay goes up, do you keep more?
+
+You are paid $30,000 a year. You keep $42,830. More pay does not add to that until you are paid $43,000: a raise of $13,000.
+
+It happens again from $106,000 to $119,000.
+
+You keep more than your pay because help and tax money are part of it. $1,142 of this is free school meals. It is not cash.
+
+Money you keep in a year, as your pay goes up
+Pay is by the year.
+$40k
+$45k
+$50k
+$55k
+$20k
+$30k
+$40k
+$50k
+$60k
+$45,020
+back to even
++$13,000
+you
+
+Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.
+
+Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.
+
+Money you keep
+Your flat stretch
+A drop this year
+You now
+
+Above $64,500 a year, you can no longer apply for help with heating bills in California. It is called LIHEAP. It is worth $283 to $594 a winter if you get it. About 1 in 10 families who could get it here do. If you get it, turn it on to see it in your line.
+
+The side numbers start at $40,000, not at $0, so the drops are easy to see. The biggest drop, about $7,100 a year at $107,000, is outside the picture. From $119,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.
+
+Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Money kept is what is left after taxes and health-plan premiums.
+
+Show the numbers
+What ends, and when
+$29,000
+
+Cash help ends. It is called TANF cash assistance.
+You keep about $2,400 less.
+
+$37,000
+
+Food help would end. It is called SNAP. Some goes on until $38,000: $413 of food help.
+You would keep about $600 less.
+
+$38,000
+
+Your own free state health plan would end. It is called Medicaid. Then help paying for health insurance would start. It is called the Premium tax credit.
+
+$40,000
+
+Your health plan would cost more here.
+You would keep about $700 less.
+
+$59,000
+
+A tax break for workers would end. It is called the Earned Income Tax Credit (EITC).
+
+$73,000
+
+Waits Your kids' free state health plan would end. It is called Medicaid. It does not end that day. Food help for moms and babies would end. It is called WIC.
+
+$107,000
+
+Help paying for health insurance would end. It is called the Premium tax credit.
+You would keep about $7,100 less. This is the biggest drop.
+
+One change waits
+
+At $73,000 a year your kids stop being able to get a free state health plan. But the law lets kids keep it for a full year at a time. So it ends at their next yearly check, up to 12 months later.
+
+We do not draw it as a drop today, because it is not one.
+
+What we assumed about you
+Rent
+
+None given. We counted no rent.
+
+Child care
+
+None. Nobody in the home pays for day care.
+
+Help you get
+
+Food help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), and food help for moms and babies (WIC). We count each as if you get it.
+
+Not counted
+
+Child care help (CCDF child care subsidy), housing help (Housing voucher), free early learning (Head Start), and help with heating bills (LIHEAP energy assistance). We count them as if you do not get them.
+
+You
+
+Age 30. A U.S. citizen. No one in the home has a disability.
+
+Other money
+
+Savings: None. No child support, SSDI or unemployment pay.
+
+Hours
+
+Not given. We assume full time.
+
+Health plan help
+
+California Premium Subsidy, up to $1,538 a year. It helps pay for health insurance. We counted it.
+
+How common is this pay?
+
+About 4 in 10 parents like you in California are paid $30,000 a year or less. The count could be off by a few thousand dollars either way.
+
+This says how common the pay is. It does not say what you will earn.
+
+From U.S. Census Bureau survey data (ACS 2024, 1-year). Grown to 2026 dollars.
+
+The lowest legal pay
+
+California's lowest legal pay is $16.90 an hour. Full-time work at that pay is about $35,000 a year.
+
+These are estimates. A case worker decides real help.
+
+We use 2026 rules. The list above says what we assumed. If any of it is wrong for you, these numbers are off too. We did not ask about anyone in the home aged 65 or more.
+
+We do not tell you what to do.
+--- attributes ---
+aria-label: A line of the money this household keeps as pay rises from $18,000 a year to $63,000 a year. It is flat from $28,000 to $43,000. It is flat again from $106,000 to $119,000. The biggest drop is at $107,000 a year, where help paying for health insurance ends. The household sits at $30,000 a year, inside a flat stretch.
+aria-label: A drop near $29,000 a year. You keep about $2,400 less a year here.
+aria-label: A drop near $37,000 a year. You would keep about $600 less a year here.
+aria-label: A drop near $40,000 a year. You would keep about $700 less a year here.

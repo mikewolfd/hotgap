@@ -1,0 +1,250 @@
+HotGap — caseworker
+en
+---
+Skip to the threshold ledger
+
+HotGap
+
+Español
+Add a what-if
+Print the client sheet
+
+Place
+80903, CO, El Paso County
+Household
+1 adult, kids 3 & 7
+Pay
+$38,000 a year
+Rent
+$1,735 a month
+Child care
+$2,773 a month
+CCDF subsidy
+on
+Head Start
+off
+Housing voucher
+off
+LIHEAP
+off
+Employer coverage
+off
+SNAP
+on
+TANF
+on
+Medicaid
+on
+WIC
+on
+Self-employed
+off
+Disability
+off
+Age
+30
+SSDI
+none
+Child support
+none
+Unemployment
+none
+Savings
+none
+Status
+US citizen
+Children with a disability
+none
+Benefits cliffs for one household, with what-ifs
+
+In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.
+
+It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.
+
+Net, after premiums
+$84,371
+at $38,000 earned
+Raise to clear the zone
+$7,000
+to $45,000 earned
+Largest single-step drop
+$25,449
+at $54,000 → $55,000
+Reach at current earnings
+40th
+percentile, ±$8,000 (n = 393)
+Model coverage in Colorado
+
+Figures complete for Colorado. Nothing this household would hold is unmodelled here.
+
+Corrections applied in Colorado
+Colorado premium assistance
+
+modeled
+PolicyEngine computes Colorado premium assistance itself, and HotGap subtracts it from the premium the household pays, because the engine reports it as a health benefit rather than in the out-of-pocket premium HotGap reads; no local schedule is applied.
+
+Checked and not applying here — TAFDC: Massachusetts only; PolicyEngine's TANF stands as served. CCDF child care subsidy: PolicyEngine already counts this state's child-care subsidy in net income, so HotGap only names it. Coverage gap: Expansion state: adults to 138% of the poverty line are on Medicaid, so the coverage-gap correction never fires. LIHEAP energy assistance: HotGap shows where energy assistance (LIHEAP) stops in this state — 60% of state median income — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served about 16% of its income-eligible households in FY2024, so a curve that assumed it would draw a benefit most eligible families never receive.
+
+Net income after premiums, $0–$150,000 of earnings
+$40k
+$60k
+$80k
+$100k
+$120k
+$0
+$25k
+$50k
+$75k
+$100k
+$125k
+$150k
+−$25,449
+$84,732
++$7,000
+back to even
+safe from here
+3
+
+Earnings $38,000 → net $84,371. Inside the household's danger zone (ends $45,000; peak $84,732 at $36,000).
+
+Net income
+This household's zone
+Other zones
+Immediate cliff
+Current earnings
+The leap, to the exit
+Safe from here
+The y-axis starts at $40,000, not $0; the visible range is 3.1× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.
+Every step down
+Select a row or its mark for the breakdown.
+Earnings	Drop	Programs lost	Driver
+
+$6,000 → $7,000
+	−$3,904	TANF cash assistance	benefits
+
+$26,000 → $27,000
+	−$627	none named	credits
+
+$37,000 → $38,000
+	−$219	Medicaid	premiums
+
+$41,000 → $42,000
+	−$305	none named	credits
+
+$46,000 → $47,000
+	−$361	none named	credits
+
+$51,000 → $52,000
+	−$780	none named	credits
+
+$53,000 → $54,000
+	−$2,444	SNAP, WIC	benefits
+
+$54,000 → $55,000
+	−$25,449	CCDF child care subsidy	benefits
+
+$60,000 → $61,000
+	−$857	none named	credits
+
+$106,000 → $107,000
+	−$3,821	Premium tax credit	premiums
+Where the $25,449 went — $54,000 to $55,000
+offsets the loss
+adds to the loss
+Benefits
++$25,794
+Credits
++$383
+Premiums
++$148
+Other
+−$875
+
+Sums to $25,449, the drop. Driver: benefits.
+
+The four shares sum to the drop exactly. A share right of zero adds to the loss; one left of it offsets the loss — here, a falling tax bill. Medicaid and CHIP never appear: their value is a coverage sticker price, never cash, so it cannot move net income. A child losing coverage shows in programs lost instead.
+
+Where each program ends
+A program ends at the first pay at which it is gone. Adults and children are reported separately — a parent usually loses coverage far below a child’s limit.
+Earnings	Program	Who
+$7,000	TANF cash assistance	Household
+$38,000	Medicaid
+Coverage ends with the raise (no deferral applies); the net premium rises $444 in the step.
+	Adult
+$41,000	Medicaid Deferred
+The children move to CHIP: $4,548 a year of coverage from $41,000. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342).
+	Children
+$54,000	SNAP
+$713 a year of SNAP continues at $54,000, none from $55,000.
+	Household
+$54,000	WIC
+$181 a year of WIC continues at $54,000, none from $55,000.
+	Children
+$55,000	CCDF child care subsidy
+Worth $24,899 a year at $54,000. Care priced at $2,773 a month for 2 children (county 2015 prices, carried to 2026 dollars by the BLS Employment Cost Index).
+	Household
+$59,000	Earned Income Tax Credit (EITC)
+Phases out; no step of $200 or more, so it is not a cliff.
+	Household
+$69,935	LIHEAP energy assistance if you apply
+60% of state median income, the heating limit. Worth $200–$1,000 at that band if received; 16% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.
+	Household
+$73,000	CHIP Deferred
+The premium tax credit rises $6,706 as it ends. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342).
+	Children
+$107,000	Premium tax credit
+Net premium rises $4,476 in one step; Colorado premium assistance ($1,656) ends with it.
+	Household
+
+Cash benefits never end inside this axis. Child coverage ends at $73,000, deferred. No coverage gap band: Expansion state: adults to 138% of the poverty line are on Medicaid, so the coverage-gap correction never fires. Colorado premium assistance is modeled: netted out of the premium, up to $1,656 a year.
+
+Compare
+The same rules asked of each what-if.
+	Now
+
+1 adult, $38,000
+	CCDF subsidy off
+
+1 adult, $38,000
+	Pay $55,000 a year
+
+1 adult, $55,000
+
+Net after premiums	$84,371	$60,045	$55,924
+Change from now	—	−$24,326	−$28,448
+In a danger zone	Yes	No	Yes
+Zone ends at	$45,000	—	$119,000
+Raise still needed	$7,000	—	$64,000
+Safe from	$119,000	$113,000	$119,000
+Largest drop	$25,449	$7,272	$25,449
+Adult Medicaid ends	$38,000	$38,000	$38,000
+Child coverage ends	$73,000	$73,000	$73,000
+Reach at these earnings	40th	40th	51st
+This what-if		
+Remove
+	
+Remove
+
+Reach is the share of households of the same shape in Colorado earning at or below this figure — it says how common the pay is, never the odds of getting there.
+
+What this model does not include
+Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.
+Assumed for this curve: a citizen, no savings, wages, not self-employment, no employer coverage, and no other income; aged 30.
+Take-up assumed for SNAP, TANF cash assistance, Medicaid, WIC, and CCDF child care subsidy; not for Head Start, Housing voucher, and LIHEAP energy assistance.
+Annualised current-rule scenarios, not prorated calendar-year benefit totals.
+Energy assistance (LIHEAP) in Colorado: HotGap shows where energy assistance (LIHEAP) stops in this state — 60% of state median income — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served about 16% of its income-eligible households in FY2024, so a curve that assumed it would draw a benefit most eligible families never receive.
+
+Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in El Paso County, Colorado. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2015, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.
+--- attributes ---
+aria-label: Language
+aria-label: Net income after premiums against earnings, $0 to $150,000. 4 danger zones. This household's runs from $36,000 to $45,000, cleared by a raise of $7,000. The largest step down is $25,449 at $54,000 where CCDF child care subsidy ends. Safe from $119,000.
+aria-label: Cliff at $6,000 to $7,000: −$3,904. TANF cash assistance ends. Driver: benefits.
+aria-label: Cliff at $26,000 to $27,000: −$627. No program named. Driver: credits.
+aria-label: Cliff at $37,000 to $38,000: −$219. Medicaid ends. Driver: premiums.
+aria-label: Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.
+aria-label: Cliff at $46,000 to $47,000: −$361. No program named. Driver: credits.
+aria-label: 3 drops between $51,000 and $55,000, together $28,673 a year.
+aria-label: Cliff at $60,000 to $61,000: −$857. No program named. Driver: credits.
+aria-label: Cliff at $106,000 to $107,000: −$3,821. Premium tax credit ends. Driver: premiums.
+aria-label: Remove the what-if CCDF subsidy off
+aria-label: Remove the what-if Pay $55,000 a year
