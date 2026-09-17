@@ -747,3 +747,73 @@ describe("LIHEAP boundary (Plan 7)", () => {
     expect(evaluateOn(tx, flat(30_000), 10000).liheap).toBeNull();
   });
 });
+
+describe("the energy-assistance toggle (Plan 7, Phase 3)", () => {
+  const tx = answersWith({ state: "TX", childAges: [3, 7], childDisabled: [false, false], annualEarnings: 30000 });
+  const on = { ...tx, getsEnergyAssistance: true };
+  // A curve rising $800 a step: the $1,200 the table pays below $39,975 makes the $39k → $40k step a $400 fall.
+  const rising = (top: number, over: (earnings: number) => PointOver = () => ({})) =>
+    Array.from({ length: top / 1000 + 1 }, (_, i) => pt(i * 1000, 20000 + i * 800, over(i * 1000)));
+  const stepAt = (ev: ReturnType<typeof evaluateOn>, start: number) => ev.analysis.cliffs.find((c) => c.startEarnings === start);
+  const benefitsDelta = (ev: ReturnType<typeof evaluateOn>, start: number) => {
+    const [a, b] = [ev.curve.points.find((p) => p.earnings === start)!, ev.curve.points.find((p) => p.earnings === start + 1000)!];
+    return (a.programs.snap ?? 0) + (a.programs.liheap ?? 0) - (b.programs.snap ?? 0) - (b.programs.liheap ?? 0);
+  };
+
+  it("puts Texas's $1,200 into the curve to $39,975 and takes it out at $40,000, where the ordinary cliff math counts it", () => {
+    const off = evaluateOn(tx, rising(150_000), 30000);
+    const with_ = evaluateOn(on, rising(150_000), 30000);
+    const at = (ev: typeof off, e: number) => ev.curve.points.find((p) => p.earnings === e)!;
+    expect(at(with_, 39000).programs.liheap).toBe(1200);
+    expect(at(with_, 40000).programs.liheap).toBe(0);
+    // The staircase below the top band: $1,800 to 50% FPG ($13,325), $1,500 to 75% ($19,988).
+    expect(at(with_, 13000).programs.liheap).toBe(1800);
+    expect(at(with_, 19000).programs.liheap).toBe(1500);
+    expect(at(with_, 20000).programs.liheap).toBe(1200);
+    const cliff = stepAt(with_, 39000)!;
+    expect(cliff.programsLost).toEqual(["liheap"]);
+    expect(cliff.drop).toBe(1200 - 800);
+    expect(cliff.breakdown.benefits - (stepAt(off, 39000)?.breakdown.benefits ?? benefitsDelta(off, 39000))).toBe(1200);
+    expect(with_.escape.programEnds.liheap).toBe(39000);
+    expect(with_.liheap?.counted).toBe(true);
+    expect(off.liheap?.counted).toBe(false);
+  });
+
+  it("shows one cliff carrying SNAP and energy assistance when the limit lands in the step SNAP ends", () => {
+    // $2,000 of SNAP to $39,000, in the money line as PolicyEngine would have it.
+    const snapTo39k = (e: number): PointOver => (e <= 39000 ? { programs: { snap: 2000 }, netIncome: 20000 + (e / 1000) * 800 + 2000 } : { programs: { snap: 0 } });
+    const off = evaluateOn(tx, rising(150_000, snapTo39k), 30000);
+    const with_ = evaluateOn(on, rising(150_000, snapTo39k), 30000);
+    expect(stepAt(off, 39000)!.programsLost).toEqual(["snap"]);
+    const both = stepAt(with_, 39000)!;
+    expect(both.programsLost).toEqual(["snap", "liheap"]);
+    expect(both.drop).toBe(2000 + 1200 - 800);
+    expect(both.breakdown.benefits).toBe(stepAt(off, 39000)!.breakdown.benefits + 1200);
+    expect(with_.analysis.cliffs).toHaveLength(1);
+  });
+
+  it("leaves the endpoint's own schedule alone where it served one, and applies the table where it served $0", () => {
+    const ma = answersWith({ ...tx, state: "MA", getsEnergyAssistance: true });
+    const served = rising(150_000, (e) => ({ programs: { liheap: e <= 83000 ? 814 : 0 } }));
+    const ev = evaluateOn(ma, served, 30000);
+    expect(ev.curve.points.find((p) => p.earnings === 30000)!.programs.liheap).toBe(814);
+    // What the droplet returns on HotGap's payload: the variable, at $0 everywhere.
+    const zero = rising(150_000, () => ({ programs: { liheap: 0 } }));
+    const table = evaluateOn(ma, zero, 30000);
+    expect(table.curve.points.find((p) => p.earnings === 30000)!.programs.liheap).toBe(460);   // 125% FPG band
+    expect(table.curve.points.find((p) => p.earnings === 83000)!.programs.liheap).toBe(355);   // the top band, to $83,641
+    expect(table.curve.points.find((p) => p.earnings === 84000)!.programs.liheap).toBe(0);
+    // Michigan's heating money is already in the curve as the credit: the toggle adds nothing.
+    const mi = evaluateOn(answersWith({ ...tx, state: "MI", getsEnergyAssistance: true }), rising(150_000), 30000);
+    expect(mi.curve.points.every((p) => (p.programs.liheap ?? 0) === 0)).toBe(true);
+    expect(mi.liheap?.counted).toBe(false);
+  });
+
+  it("changes nothing with the toggle off: the points, the cliffs and the ends are today's", () => {
+    const points = rising(150_000);
+    const off = evaluateOn(tx, points, 30000);
+    expect(off.curve.points).toEqual(points);
+    expect(off.analysis.cliffs).toEqual(analyzeCurve(points, 30000, { hasChildren: true, isAdultGroupLoss: () => false }).cliffs);
+    expect(off.escape.programEnds.liheap).toBeUndefined();
+  });
+});

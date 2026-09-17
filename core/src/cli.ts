@@ -36,6 +36,9 @@ const USAGE = `hotgap <command> [options]
     --head-start  --housing  --employer-coverage  take-up (default: not received)
     --childcare-subsidy           take-up of the state's CCDF child-care subsidy
                                   (default: not received; needs --childcare)
+    --energy-assistance           take-up of LIHEAP energy assistance (default: not
+                                  received; the report shows where it stops either way)
+    --heat-in-rent                heat is included in the rent (halves Michigan's credit)
     --no-snap  --no-tanf  --no-medicaid  --no-wic   not currently received (default: received);
                                   the report then shows what each would pay
     --offline                     use the committed archetype curve

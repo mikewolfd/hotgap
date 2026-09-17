@@ -61,6 +61,8 @@ describe("answersFor", () => {
       getsHeadStart: false,
       getsHousing: false,
       getsChildcareSubsidy: true,   // on for the sweep, off for a personal evaluation
+      getsEnergyAssistance: false,  // off for the sweep too: the map shows where it stops (liheap.ts)
+      heatInRent: false,
       hasEmployerCoverage: false,
       ssdiMonthly: 0,
       childSupportMonthly: 0,

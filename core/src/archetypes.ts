@@ -130,6 +130,11 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     // largest cliff most parents of young children face, so a map that omits
     // it understates every state. The personal default stays off.
     getsChildcareSubsidy: everyParentWorks,
+    // Energy assistance stays off for the sweep, like housing and Head Start:
+    // the map shows where it stops (liheap.ts), not a benefit most eligible
+    // households never receive.
+    getsEnergyAssistance: false,
+    heatInRent: false,
     hasEmployerCoverage: false,
     ssdiMonthly: 0,
     childSupportMonthly: 0,

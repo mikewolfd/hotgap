@@ -22,7 +22,7 @@ import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremi
 import { reachForHousehold } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
-import { liheapBoundary, type LiheapBoundary } from "./liheap.js";
+import { liheapAmount, liheapBoundary, type LiheapBoundary } from "./liheap.js";
 import { householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 /** Where the curve came from: a live PolicyEngine call, or the committed sweep. */
@@ -535,6 +535,36 @@ function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: 
   return { points: out, wrap };
 }
 
+/**
+ * Energy assistance (LIHEAP) in the money line, behind the household's own
+ * take-up toggle — the rule housing vouchers and the child-care subsidy
+ * follow, because a block grant that served 3–85% of eligible households is
+ * not something to assume for a family that never said it had it.
+ *
+ * The state's own modeled schedule is used where the endpoint served it with
+ * a real amount (parse.ts already put that series in `programs.liheap` and
+ * net income). Where it did not — every state today, because upstream's DC,
+ * MA and IL variables are capped at or keyed on a fuel and heating bill
+ * HotGap never asks for, and return $0 on its payload — the amount is
+ * HotGap's own sourced table: the family's band where the matrix gives an
+ * income-only staircase, else the top band's minimum, flat to the limit and
+ * zero above it. The drop lands in whichever step holds the limit, and
+ * analyzeCurve then counts it in that step's cliff, breakdown and
+ * programsLost exactly as it would a SNAP loss there: no new cliff logic.
+ * Live path only — the archetype sweep runs every take-up off, like housing.
+ */
+// WORKAROUND (the table half) — retire a state's amount here when the
+// endpoint serves that state's schedule with a non-zero series for HotGap's
+// household (docs/upstream/2026-09-15-local-corrections.md).
+function applyLiheap(points: CurvePoint[], a: HouseholdAnswers): CurvePoint[] {
+  if (!a.getsEnergyAssistance) return points;
+  if (points.some((p) => (p.programs.liheap ?? 0) > 0)) return points;
+  return points.map((p) => {
+    const amount = liheapAmount(a, p.earnings);
+    return { ...p, netIncome: p.netIncome + amount, programs: { ...p.programs, liheap: amount } };
+  });
+}
+
 function coverageGapSummary(points: CurvePoint[]): CoverageGapSummary | null {
   // The first contiguous band only: the summary must never span points that
   // are not in the gap.
@@ -641,7 +671,7 @@ export function evaluateCurve(
   // The child-care subsidy needs no step here: parse.ts already put it in net
   // income wherever the model dropped it (policyengine-us #9405), so a stored
   // curve and a live one both arrive with it counted once.
-  const corrected = source === "live" ? applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers) : tafdc.points;
+  const corrected = source === "live" ? applyLiheap(applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers), answers) : tafdc.points;
   // The archetype path measures the swept household, not the caller's: its
   // spouse pay, SSDI, unemployment and size decide the poverty-line tests.
   const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeledAnswers) : corrected;

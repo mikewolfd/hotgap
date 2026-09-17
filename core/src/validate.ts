@@ -118,6 +118,8 @@ export function validateAnswers(input: unknown): Validation {
       getsHeadStart: a.getsHeadStart === true,
       getsHousing: a.getsHousing === true,
       getsChildcareSubsidy: a.getsChildcareSubsidy === true,
+      getsEnergyAssistance: a.getsEnergyAssistance === true,
+      heatInRent: a.heatInRent === true,
       getsSnap: a.getsSnap !== false,
       getsTanf: a.getsTanf !== false,
       getsMedicaid: a.getsMedicaid !== false,

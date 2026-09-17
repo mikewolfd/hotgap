@@ -601,6 +601,19 @@ export function liheapRow(state: string): LiheapRow {
   return row;
 }
 
+/**
+ * The SPM-unit variable that models this state's schedule upstream and can
+ * be asked for as a program series — DC, MA, IL today — or null: Michigan's
+ * credit is a tax-unit variable HotGap already reads through stateCredits.
+ */
+export function liheapUpstreamVariable(state: string): string | null {
+  const { upstream } = liheapRow(state);
+  return upstream && upstream.counted === undefined ? upstream.variable : null;
+}
+
+/** Every such variable, so a response can be read without knowing its state first (parse.ts). */
+export const LIHEAP_UPSTREAM_VARIABLES: readonly string[] = LIHEAP_TABLE.flatMap((r) => (r.upstream && r.upstream.counted === undefined ? [r.upstream.variable] : []));
+
 interface SmiJson {
   read: string;
   fiscalYear: string;
@@ -683,6 +696,8 @@ export interface LiheapBoundary {
   shape: LiheapShape | null;
   servedShare: number | null;
   upstream: LiheapRow["upstream"];
+  /** True when the toggle put the dollars into the curve, so the marker reads as an end, not a boundary. */
+  counted: boolean;
   sources: LiheapRow["sources"];
   readOn: string;
   note: string;
@@ -707,6 +722,27 @@ export function liheapBoundary(answers: HouseholdAnswers, curve: CurveResponse):
     component: "heating",
     earningsLimit, householdIncomeLimit, limit,
     topBand: row.heating.topBand, shape: row.heating.shape, servedShare: row.servedShare, upstream: row.upstream,
+    counted: answers.getsEnergyAssistance && row.upstream?.counted !== "state credit",
     sources: row.sources, readOn: row.readOn, note: row.heating.note,
   };
+}
+
+/**
+ * What the toggle puts into the curve at this pay: the published amount for
+ * the family's band where the matrix gives an income-only staircase, else the
+ * top band's minimum flat to the limit; zero above the limit, zero with the
+ * toggle off, and zero in Michigan, whose heating money is already in the
+ * curve as the Home Heating Credit. Annual, one heating season. The dollars a
+ * points or burden state would really pay depend on facts HotGap never asks
+ * (fuel, bill, dwelling), so the minimum is the claim it can stand behind.
+ */
+export function liheapAmount(answers: HouseholdAnswers, earnings: number): number {
+  if (!answers.getsEnergyAssistance) return 0;
+  const row = liheapRow(answers.state);
+  if (row.upstream?.counted === "state credit" || !row.heating.topBand) return 0;
+  const size = householdSize(answers);
+  const income = earnings + otherHouseholdIncome(answers);
+  if (income > liheapLimitDollars(answers.state, heatingLimitFor(row, size), size)) return 0;
+  for (const band of row.heating.bands ?? []) if (income <= liheapLimitDollars(answers.state, band.upto, size)) return band.amount;
+  return row.heating.topBand.min;
 }

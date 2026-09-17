@@ -6,6 +6,7 @@
 // Nothing here imports a Node builtin: the hash is Web Crypto and the
 // endpoint comes from configurePolicyEngine or, on Node, the environment, so
 // the same module runs in a Worker and could run in a page.
+import { liheapUpstreamVariable } from "./liheap.js";
 import { maTafdcGrant, maTafdcResampleIndices } from "./maTafdc.js";
 import { parsePEResponse, PEParseError } from "./parse.js";
 import { SGA_ANNUAL } from "./policyYear.js";
@@ -116,6 +117,18 @@ export interface FetchCurveOptions extends RequestOptions {
    * per endpoint decides; tests set it explicitly.
    */
   parentLimitsUpstream?: boolean;
+  /**
+   * Whether to ask the endpoint for the state's modeled LIHEAP schedule
+   * (liheap.ts). Left unset, a household that says it gets energy assistance
+   * in one of those states triggers one cached probe for the variable.
+   */
+  liheap?: boolean;
+  /**
+   * Whether the endpoint counts its LIHEAP variables in
+   * household_state_benefits. Left unset, the same household triggers one
+   * cached probe (probeLiheapCounted); tests and fixtures set it explicitly.
+   */
+  liheapCounted?: boolean;
   /**
    * In-flight limit for the Massachusetts feedback loop's point requests.
    * Measured 2026-09-15 on fresh households (64 points): 49 s at 3, 27 s at
@@ -228,7 +241,7 @@ const ABOVE_SGA: PayloadOptions = { ssiPathway: false };
 
 /** What the payload builder needs to know of what the probes found; fetchCurve settles both on `opts` before any request. */
 const payloadOptionsOf = (opts: FetchCurveOptions): PayloadOptions =>
-  ({ statePremiumAssistance: opts.statePremiumAssistance === true, parentLimitsUpstream: opts.parentLimitsUpstream === true });
+  ({ statePremiumAssistance: opts.statePremiumAssistance === true, parentLimitsUpstream: opts.parentLimitsUpstream === true, liheap: opts.liheap === true });
 
 /**
  * The SSDI curve, spliced at substantial gainful activity.
@@ -359,15 +372,15 @@ function readBack(body: unknown, entity: "households" | "spm_units", variable: s
 }
 
 /**
- * Whether `peUrl()` knows a tax-unit variable: a bare household asking for
+ * Whether `peUrl()` knows a variable on `entity`: a bare household asking for
  * it comes back 200, or 400 "Unrecognized household variable" from a model
  * that predates it (the hosted API lacks every state premium-assistance
  * variable; the engine has them all). One request per endpoint and
  * variable per process; a failed probe is retried next time.
  */
-export function endpointHasTaxUnitVariable(variable: string, opts: RequestOptions = {}): Promise<boolean> {
+export function endpointHasVariable(entity: "tax_units" | "spm_units", variable: string, opts: RequestOptions = {}): Promise<boolean> {
   return probeOnce(variable, () =>
-    requestPE(bareHousehold("CA", { tax_units: { [variable]: { [YEAR]: null } } }), opts).then(
+    requestPE(bareHousehold("CA", { [entity]: { [variable]: { [YEAR]: null } } }), opts).then(
       () => true,
       (e) => {
         if (e instanceof PolicyEngineError && e.status === 400 && /unrecognized/i.test(e.message)) return false;
@@ -375,6 +388,8 @@ export function endpointHasTaxUnitVariable(variable: string, opts: RequestOption
       },
     ));
 }
+
+export const endpointHasTaxUnitVariable = (variable: string, opts: RequestOptions = {}): Promise<boolean> => endpointHasVariable("tax_units", variable, opts);
 
 /** A forced input large enough that no real benefit can be mistaken for it when it is read back. */
 export const PROBE_SENTINEL = 1_000_000;
@@ -446,6 +461,40 @@ export function childcareSubsidyProbePayload(): unknown {
   return bareHousehold("CT", {
     households: { household_state_benefits: { [YEAR]: null } },
     spm_units: { child_care_subsidies: { [YEAR]: PROBE_SENTINEL } },
+  });
+}
+
+/**
+ * WORKAROUND — goes with parse.ts's `liheapCounted`. Does this endpoint count
+ * its LIHEAP variables in `household_state_benefits`? None is on
+ * gov.household.household_state_benefits today (docs/upstream/2026-09-16-
+ * liheap-net-income-issue.md), so the answer is false everywhere, and this
+ * reads it from the model rather than assuming it: force `ma_liheap` to the
+ * sentinel on a bare Massachusetts household and see whether
+ * household_state_benefits absorbs it. Verified on the droplet (2.6.2)
+ * 2026-09-16: the sentinel comes back as itself and state benefits stay $0.
+ * A model that lists the variable returns the sentinel there; parse.ts then
+ * stops adding the amount, so the workaround retires itself per endpoint.
+ */
+export function probeLiheapCounted(opts: RequestOptions = {}): Promise<boolean> {
+  return probeOnce("liheap counted", async () => {
+    const body = await requestPE(liheapProbePayload(), opts);
+    const stateBenefits = readBack(body, "households", "household_state_benefits");
+    const served = readBack(body, "spm_units", "ma_liheap");
+    if (typeof stateBenefits !== "number" || typeof served !== "number") {
+      throw new PolicyEngineError("parse", "probe returned no LIHEAP aggregates");
+    }
+    // An ignored input would look exactly like an unlisted variable, so the
+    // forced amount has to come back as itself before its absence means anything.
+    if (served < PROBE_SENTINEL / 2) throw new PolicyEngineError("parse", "probe: forced ma_liheap was not read back");
+    return stateBenefits > PROBE_SENTINEL / 2;
+  });
+}
+
+export function liheapProbePayload(): unknown {
+  return bareHousehold("MA", {
+    households: { household_state_benefits: { [YEAR]: null } },
+    spm_units: { ma_liheap: { [YEAR]: PROBE_SENTINEL } },
   });
 }
 
@@ -522,6 +571,12 @@ export async function fetchCurve(answers: HouseholdAnswers, opts: FetchCurveOpti
   if (assistance && requestOpts.statePremiumAssistance === undefined) {
     requestOpts.statePremiumAssistance = await endpointHasTaxUnitVariable(assistance.variable, requestOpts);
   }
+  // Only a household that says it gets energy assistance, in a state whose
+  // schedule upstream models, has a LIHEAP variable to ask for — and only
+  // then does it matter whether the model counts it.
+  const liheap = answers.getsEnergyAssistance ? liheapUpstreamVariable(answers.state) : null;
+  if (liheap && requestOpts.liheap === undefined) requestOpts.liheap = await endpointHasVariable("spm_units", liheap, requestOpts);
+  if (liheap && requestOpts.liheap && requestOpts.liheapCounted === undefined) requestOpts.liheapCounted = await probeLiheapCounted(requestOpts);
   requestOpts.parentLimitsUpstream = parentLimitsUpstream;
   const swept = answers.ssdiMonthly > 0
     ? await fetchSplicedForSSDI(answers, axis, requestOpts)

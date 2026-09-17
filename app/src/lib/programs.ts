@@ -19,6 +19,7 @@ export const PROGRAMS: Record<ProgramId, { phrase: string; name: string }> = {
   headstart: { phrase: "free early learning", name: "Head Start" },
   schoolmeals: { phrase: "free school meals", name: "School meals" },
   childcare: { phrase: "child care help", name: "CCDF child care subsidy" },
+  liheap: { phrase: "help with heating bills", name: "LIHEAP energy assistance" },
 };
 
 export const programName = (id: ProgramId): string => PROGRAMS[id].name;

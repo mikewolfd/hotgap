@@ -317,6 +317,17 @@ All under `core/data/`:
   table, vintage, date read and exact arithmetic. Rebuild:
   `node scripts/build-state-defaults.mjs` — needs `ZYTE_TOKEN`, because
   huduser.gov answers a plain request with an empty HTTP 202 bot challenge.
+- `smi.json` — 60% of state median income for a four-person household, per
+  state, for LIHEAP FY2026 (and FY2025, which South Carolina's and West
+  Virginia's FY2026 tables still apply), with the 45 CFR 96.85 household-size
+  ladder (52% for one person, +16 points a person through six, +3 beyond).
+  The publisher of record is ACF's LIHEAP-IM-2025-02 Attachment 4, which
+  acf.gov will not serve to a plain request; the file is read from
+  policyengine-us's transcription of it (`parameters/gov/hhs/smi/`) at a
+  commit pinned in the file, so it can be re-derived byte for byte, and was
+  cross-checked to the dollar against 19 state matrices on 2026-09-16.
+  `liheapLimitDollars` (`core/src/liheap.ts`) turns it into the household's
+  limit. Rebuild: `node scripts/build-smi.mjs`.
 - `reach.json` — household earnings percentile ladders from
   [U.S. Census Bureau ACS PUMS](https://www.census.gov/programs-surveys/acs/microdata.html)
   microdata (public domain): the 2024 1-Year PUMS, with the 2020–2024 5-Year
@@ -460,6 +471,30 @@ received), `--offline`, `--json`.
   reports no subsidy there rather than inventing one; see
   [local corrections and evidence](docs/upstream/2026-09-15-local-corrections.md)
   for each cause.
+- Energy assistance (LIHEAP) is shown as an eligibility BOUNDARY, never
+  drawn into the money line by default. It is a block grant, not an
+  entitlement: a family under the state's limit is eligible to apply, and in
+  FY2024 the states served 3% (Texas) to 85% (Michigan) of their
+  income-eligible households, about 12% nationally. So every evaluation
+  carries `liheap` — the earner's pay at the state's heating limit, what the
+  state pays at that top income band, and the served share — from a 51-row
+  table hand-read from the LIHEAP Clearinghouse's FY2026 tables and matrices
+  and ACF's FY2024 state profiles (`core/src/liheap.ts`, one source URL and
+  date per row; 60% of state median income from `core/data/smi.json`, built
+  by `scripts/build-smi.mjs` from policyengine-us's transcription of ACF's
+  LIHEAP-IM-2025-02 table at a pinned commit). The dollars enter the curve
+  only behind `getsEnergyAssistance` (`--energy-assistance`), off by default
+  like housing and the child-care subsidy; on, the state's published amount
+  is a program series (`programs.liheap`) that ends at the limit, so its loss
+  joins whatever else ends in that step — one cliff, one breakdown. The
+  amount is HotGap's own table in every state today: PolicyEngine models
+  DC, MA and IL's schedules but none reaches its net income
+  (`docs/upstream/2026-09-16-liheap-net-income-issue.md`), and all of them
+  return $0 on HotGap's payload because each is capped at or keyed on a fuel
+  and heating bill HotGap never asks for. Michigan's heating money is the
+  refundable Home Heating Credit, which PolicyEngine models and HotGap
+  already counts in state credits; `--heat-in-rent` halves it, as the
+  state's form does. Plan 7, `docs/superpowers/plans/2026-09-16-hotgap-liheap-boundary.md`.
 - Alaska and Hawaii's marketplace subsidies are computed by PolicyEngine
   against the 48-contiguous-states poverty guideline, not their own higher
   guidelines (verified live 2026-09-15) — filed upstream as policyengine-us

@@ -51,6 +51,7 @@ export const copy = {
     childcare: "{amount} of this is child care help. It goes to your day care, not to you.",
     schoolmeals: "{amount} of this is free school meals. It is not cash.",
     headstart: "{amount} of this is free early learning. It is not cash.",
+    liheap: "{amount} of this is help with heating bills. It goes to your utility, not to you.",
   },
   health: "{amount} a year for your health plan comes out first.",
 
@@ -269,6 +270,7 @@ export const copy = {
     headstart: "free early learning",
     schoolmeals: "free school meals",
     childcare: "child care help",
+    liheap: "help with heating bills",
   },
 };
 
