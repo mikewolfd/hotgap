@@ -15,26 +15,26 @@ box**; the title names what is plotted. What *does* need a key is the set of
 non-series marks (band, cliff, deferred cliff, position), because those are
 meanings, not identities.
 
-### The lift — the rule that is easiest to get wrong
+### One curve — the rule that used to be easiest to get wrong
 
-`HouseholdEvaluation.analysis.dangerZones`, `.verdict`, `.escape` and
-`.personal` all describe a curve with **deferred drops removed**.
-`analysis.points` is the **real** curve (`evaluate.ts` puts the real points back
-on the analysis object). Plotting `analysis.points` under `analysis.dangerZones`
-draws two different curves.
+There is exactly one curve to draw, and it is the real one. Plot
+`analysis.points` under `analysis.dangerZones` and they agree, because since
+2026-09-17 `analysis` *is* the reading of the real points: a loss a federal
+rule defers to a later renewal counts in the verdict, the zones, the leap and
+the safe exit (README § Honesty; `inventory.md` #10).
 
-So the UI lifts the points itself, the same arithmetic as `immediateCurve()`:
-add each `deferred[i].drop` to every point above `deferred[i].startEarnings`.
-Both sketches do this in six lines and say so in a comment.
+Until then `.dangerZones`, `.verdict`, `.escape` and `.personal` described a
+curve with deferred drops removed, so the UI had to redo that arithmetic
+itself — add each `deferred[i].drop` to every point above
+`deferred[i].startEarnings` — and the real curve came back as a dashed
+**ghost** line labelled *if the later change happens*. All of it is gone:
+`immediateCurve()`, the six-line lift in each chart, the ghost, its 1.5%-of-
+y-range threshold, and the caption sentence rendered from that condition. A
+deferred drop is now a drop in the line like any other, and what marks it is
+the hollow dot and the dashed stub below — the label, not a second geometry.
 
-The real curve is then available as a **ghost**: the same line, 1.5px, dashed,
-`--ink-3`, labelled *if the later change happens*. It is drawn only when a
-deferred drop exceeds 1.5% of the y-range; below that it is a second line drawn
-on top of the first and adds nothing. **The caption sentence that describes the
-ghost is rendered from the same condition** (S14): when no ghost is drawn, the
-caption does not mention one. Today's Colorado curve has no deferred drop and
-no ghost; the 2026-09-15 sketch had a $219 drop on a $67,000 range and drew
-none either, while its caption said it had.
+If you find yourself computing a y-value the evaluation did not give you, stop:
+that is the lift growing back.
 
 ### Marks
 
@@ -48,7 +48,7 @@ none either, while its caption said it had.
 | The leap | a bracket along the peak rule from the diamond's x to the exit, 1px `--loss-3` with 4px end ticks, direct-labelled once with a plus sign: "+$7,000" (`personal.raiseToClear`) |
 | Safe from here | a second vertical rule, 1px `--loss-3`, full height, labelled *safe from here* (`escape.safeExitEarnings`) — see *More than one zone* |
 | Immediate cliff | filled dot r4–4.5 in `--loss-4` with a 2px `--surface` ring, and a 2.5px solid connector down to where the line lands |
-| Deferred cliff | **hollow** dot (2px `--ink-3` stroke, `--surface` fill), **dashed** 2px stub, and the word *later* |
+| Deferred cliff | **hollow** dot (2px `--ink-3` stroke, `--surface` fill), **dashed** 2px stub, and the word *later* — sitting on a real drop in the line, because the loss counts; only the timing is being marked |
 | The household | a **diamond** in `--ink` with a 2px surface ring and a drop line to the axis — a different *shape*, so position survives greyscale |
 | Reference line | 1px `--rule-strong` (present value) or `--loss-3` (the zone's peak). Solid: it is a real number, not a projection |
 | Gridlines | 1px solid, `--grid`, horizontal only, 3 on a phone and 4–5 on a desktop, on nice values (below) |
