@@ -147,7 +147,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       }
       if (cl.later) svg.append(waitDot(x, y, r));
       else {
-        const land = Math.min(...cl.cliffs.filter((c) => !c.deferral).map((c) => net[indexOf(ev!, c.endEarnings)]));
+        const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => net[indexOf(ev!, c.endEarnings)]));
         svg.append(...dropMark(x, y, py(land), r));
       }
       /* The marks layer: one 44px button per mark, over the SVG (M6). */

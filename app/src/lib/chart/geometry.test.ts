@@ -2,6 +2,7 @@
 // steps, the next step up, the ticks inside a range, the merge of colliding
 // marks, and the pixel maps.
 import { describe, expect, test } from "vitest";
+import type { Cliff } from "@hotgap/core";
 import { makeEvaluation } from "../../citizen/fixture.js";
 import { sceneOf } from "../../citizen/model.js";
 import { clusterCliffs, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow } from "./geometry.js";
@@ -37,6 +38,14 @@ describe("marks", () => {
     expect(mixed[0].cliffs).toHaveLength(3);
     expect(mixed[0].later).toBe(false);
     expect(clusterCliffs(s.deferred, () => 100)[0].later).toBe(true);
+  });
+  test("a wait sharing the step with an immediate loss keeps the solid mark", () => {
+    const mixed = {
+      startEarnings: 38_000, endEarnings: 39_000, drop: 16_700, programsLost: ["medicaid", "headstart"],
+      breakdown: { benefits: 16_700, credits: 0, premiums: 0, other: 0 }, driver: "benefits" as const,
+      deferral: { reason: "head_start_program_year" as const, until: "later", complete: false },
+    } satisfies Cliff;
+    expect(clusterCliffs([mixed], () => 100)[0].later).toBe(false);
   });
 });
 

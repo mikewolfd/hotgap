@@ -448,6 +448,7 @@ describe("deferred losses count, and carry their label", () => {
     expect(ev.deferred[0].deferral).toEqual({
       reason: "head_start_program_year",
       until: expect.stringContaining("45 CFR 1302.12(j)(1)"),
+      complete: true,
     });
   });
 

@@ -89,7 +89,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const wrapper = h("div", { class: "hg-chart hg-chart--scroll", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption chartKeys", "aria-label": ariaLabel(s) }, gutterSvg, scroll);
   const hint = h("p", { class: "hg-chart__hint", id: "chartRange", "aria-hidden": "true" });
   const hasOther = s.otherZones.length > 0;
-  const hasDrop = s.cliffs.some((c) => c.deferral === null);
+  const hasDrop = s.cliffs.some((c) => c.deferral?.complete !== true);
   const hasLater = s.deferred.length > 0;
   /* How the chart is operated: the readout says it until the first touch or key — the bracket keys only where there are marks and, at a
      desktop width, keys (N2) — and a visually hidden copy says all of it to a screen reader through aria-describedby. */
@@ -231,22 +231,22 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
         picture.append(waitDot(cl.x, y, r));
         continue;
       }
-      const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.net[s.idx(c.endEarnings)]));
+      const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => s.net[s.idx(c.endEarnings)]));
       picture.append(...dropMark(cl.x, y, py(land), r));
       /* The chart's other direct label: the biggest drop. Beside a tall
-         connector first; else above the dot, below the landing, or on the
-         other side of the connector — the first spot that lies on nothing
-         already drawn (S3). */
+         connector first; else above the dot or below the landing — always
+         to the right of the mark, so a connector flush with the left clip
+         cannot put the number in the gutter (S1). */
       if (L.labelled && cl.cliffs.includes(L.labelled)) {
         const label = t("chart.labels.drop", { drop: m.money(L.labelled.drop) });
         const tall = py(land) - y >= 24;
-        const spots: [number, number, "start" | "end"][] = [
-          ...(tall ? [[cl.x + 12, (y + py(land)) / 2 + 4, "start"] as [number, number, "start"]] : []),
-          [cl.x + 12, y - 9, "start"], [cl.x + 12, py(land) + 14, "start"], [cl.x - 12, y - 9, "end"], [cl.x - 12, py(land) + 14, "end"],
+        const spots: [number, number][] = [
+          ...(tall ? [[cl.x + 12, (y + py(land)) / 2 + 4] as [number, number]] : []),
+          [cl.x + 12, y - 9], [cl.x + 12, py(land) + 14],
         ];
-        const spot = spots.find(([x, yy, a]) => clear(textBox(x, yy, label, a))) ?? spots[0];
-        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": spot[2], class: `${LOSS_LABEL} hg-label--strong` }, label));
-        boxes.push(textBox(spot[0], spot[1], label, spot[2]));
+        const spot = spots.find(([x, yy]) => clear(textBox(x, yy, label, "start"))) ?? spots[0];
+        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": "start", class: `${LOSS_LABEL} hg-label--strong` }, label));
+        boxes.push(textBox(spot[0], spot[1], label, "start"));
       }
     }
 

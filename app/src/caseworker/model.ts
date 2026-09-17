@@ -196,7 +196,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
       const slots = { worth: usd(p[before]), at: usd(pts[before].earnings), monthly: usd(h.monthlyChildcare ?? 0), kids: t(`ledger.kids.${pluralKey(n)}`, { n }) };
       s.push(price ? t("ledger.careWorth.priced", { ...slots, price, year: ev.curve.year }) : t("ledger.careWorth.unpriced", slots));
     }
-    if (r.id === "medicaid" && !r.cliff.deferral) {
+    if (r.id === "medicaid" && r.cliff.deferral?.complete !== true) {
       const rise = r.cliff.breakdown.premiums;
       s.push(rise > 0 ? t("ledger.medicaidEnds.premium", { premiumRise: usd(rise) }) : t("ledger.medicaidEnds.flat"));
     }

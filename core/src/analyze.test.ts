@@ -226,6 +226,7 @@ describe("deferred cliffs", () => {
     expect(c.programsLost).toEqual(["headstart"]);
     expect(c.deferral?.reason).toBe("head_start_program_year");
     expect(c.deferral?.until).toContain("45 CFR 1302.12(j)(1)");
+    expect(c.deferral?.complete).toBe(true);
   });
 
   it("defers a child's Medicaid or CHIP end by 12-month continuous eligibility", () => {
@@ -263,14 +264,15 @@ describe("deferred cliffs", () => {
     expect(c.deferral?.reason).toBe("transitional_medical_assistance");
   });
 
-  it("does not defer a cliff that also loses something the household feels this month", () => {
+  it("labels a cliff that also loses something the household feels this month, without treating the whole drop as later", () => {
     const pts = [
       coverage({ programs: { headstart: 12000, snap: 3000 }, childPrograms: { headstart: 12000 } }),
       after({ programs: { snap: 0 }, childPrograms: {} }),
     ];
     const [c] = analyzeCurve(pts, 0, { hasChildren: true }).cliffs;
     expect(c.programsLost).toEqual(["snap", "headstart"]);
-    expect(c.deferral).toBeNull();
+    expect(c.deferral?.reason).toBe("head_start_program_year");
+    expect(c.deferral?.complete).toBe(false);
   });
 
   it("leaves an ordinary cliff undeferred", () => {

@@ -137,14 +137,16 @@ describe("runPipeline", () => {
       // leap is the $29k–$74k trough it opens (pinned 2026-09-15 at the $3,868
       // subsidy end at $84k, a $7,000 leap and an $18,000 danger width, with
       // the deferred drop lifted out); same under WY and VT answers since
-      // neither the wrap nor the coverage gap touches this fixture.
+      // neither the wrap nor the coverage gap touches this fixture. A second
+      // cliff on the curve names a waiting program beside an immediate loss;
+      // the label counts it (2026-09-17: a label, never an exemption).
       expect(result.summary!.states[state]["single-2"]).toEqual({
         biggestLoss: 22103,
         biggestLossAt: 30000,
         biggestLossPrograms: ["headstart"],
         dangerWidth: 57000,
         cliffCount: 4,
-        deferredCliffCount: 1,
+        deferredCliffCount: 2,
         safeExit: 91000,
         leap: 45000,
         leapIsLowerBound: false,

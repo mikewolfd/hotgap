@@ -31,7 +31,7 @@ export function niceTicks(lo: number, hi: number, step: number): number[] {
   return out;
 }
 
-/** One mark: the cliffs under it, its x, and whether every one of them waits for a renewal (a hollow dot). */
+/** One mark: the cliffs under it, its x, and whether every named loss under it waits (a hollow dot). */
 export interface Cluster { cliffs: Cliff[]; x: number; later: boolean }
 
 /**
@@ -48,7 +48,7 @@ export function clusterCliffs(cliffs: Cliff[], px: (earnings: number) => number,
   }
   for (const cl of out) {
     cl.x = cl.cliffs.reduce((sum, c) => sum + px(c.startEarnings), 0) / cl.cliffs.length;
-    cl.later = cl.cliffs.every((c) => c.deferral !== null);
+    cl.later = cl.cliffs.every((c) => c.deferral?.complete === true);
   }
   return out;
 }
