@@ -358,11 +358,13 @@ the journalist's:
   not applying* line names it.
 - *Journalist:* one row in the state block, in the ledger's shape — the
   program with its footing chip (*not counted*, or *in net income* where the
-  money is a counted state credit), the three facts as one sentence at the
-  row's own size (the limit in words, the worth by the schedule's shape, the
-  served share as "about N in 10" with the percentage and its vintage), and
-  the publishers as the cite with the day read — set off from the state's
-  lists by the 2px strong rule the rank groups use, before the source line.
+  money is a counted state credit), the three facts as one sentence in the
+  cite register the block's other rows use (the limit in words, the worth by
+  the schedule's shape, the served share as "about N in 10" with the
+  percentage and its vintage; a row that changed no figure never outweighs
+  the corrections, liheap review S1), and the publishers on a second cite
+  line with the day read — set off from the state's lists by the 2px strong
+  rule the rank groups use, before the source line.
   One row, not three, because the block shares a grid row with the ranked
   strip at 1280 and a taller block moves the table below with the selection.
   Two CSV columns, `liheap_limit` (the limit in words, the block's
@@ -370,6 +372,28 @@ the journalist's:
   was not read, never a number), beside the footing column. The method
   panel names it once for the page, from every block: the served range with
   its two states, and the states where it is counted.
+
+**A fourth state: the counted credit.** Where the state pays its heating
+help as a refundable credit PolicyEngine models and HotGap already counts
+(`upstream.counted === "state credit"` on the boundary and the block —
+Michigan's Home Heating Credit), there is nothing to apply for and the
+toggle adds nothing, so the boundary copy is wrong there (liheap review
+B1). The tick and the key entry stay: the limit is where the credit reaches
+$0, and the curve shows a taper, not a step. The citizen paragraph says the
+money is already in the line, names no worth and invites nothing ("Help
+with heating bills in Michigan is a tax credit. It is already in your line.
+It gets smaller as you earn more and runs out above $29,500 a year. About 9
+in 10 families who could get it here do."; `data-counted="credit"`), and
+the assumed list leaves heating help out of both take-up rows. The
+caseworker row sits at the limit untagged (`data-boundary="credit"`), and
+its cite says the credit is counted in state credits, tapers out by the
+limit so it is not a cliff, the served share with its vintage, what was
+assumed about heat in the rent, and the date read; the take-up sentence
+leaves it out. The journalist row's chip reads *in net income* and its
+sentence ends "Paid as the Home Heating Credit, which is counted in every
+figure for Michigan." The invitation, where there is one, is its own
+sentence in `.hg-no-print` (liheap review S2): on paper there is nothing to
+turn on.
 
 **What it must never do.** Draw a drop, a dot, a connector or a wash. Enter
 any ranking, tile bin, or `summary.json` metric. Appear in `cliffs`,

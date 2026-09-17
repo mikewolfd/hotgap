@@ -21,7 +21,8 @@ the household limit, so the earner's own limit is below $0 and there is no
 marker. On the journalist page: TX, MO, MI, HI. Every render, the PDFs and
 the measurement dump are under `design/review/liheap/`
 (`measurements.json`); the harness is `app/e2e/liheap-review.mjs` (386
-checks: 366 passing, the 20 failures all Michigan's, B1).
+checks: 366 passing before the fixes, the 20 failures all Michigan's, B1;
+387 passing after them, `design/review/liheap/after/`).
 
 Contrast figures were computed from the colours the browser painted with the
 audit's WCAG 2.x formula; positions, sizes and line counts are computed styles
@@ -122,7 +123,26 @@ times and is the ledger's tallest row at both widths.
   states. Both take-up lists leave heating help out where the credit is
   counted, so the toggle is not described as doing something. No core change:
   the boundary object already carries the fact.
-
+- **Resolved:** `53f3b6e`. The citizen paragraph in Michigan reads "Help
+  with heating bills in Michigan is a tax credit. It is already in your line.
+  It gets smaller as you earn more and runs out above $29,500 a year. About 9
+  in 10 families who could get it here do." — no worth, no invitation,
+  `data-counted="credit"`, the tick and key entry kept
+  (`after/citizen-1280-light-mi.png`); the credit is not named because the
+  chart mounts before the sweep's block (the only place the name lives) has
+  loaded, and "a tax credit" is true in the citizen register. The toggle on
+  renders the same paragraph, and the assumed list no longer lists heating
+  help under *Help you get* or *Not counted* there (`after/citizen-390-light-
+  miOn.png`). The caseworker row at $29,315 carries no tag and reads "Paid
+  as the Home Heating Credit, a refundable state credit PolicyEngine models
+  and HotGap counts in state credits; it tapers out by the state's limit,
+  110% of the poverty guideline, so it is not a cliff. 85% of income-eligible
+  households were served in FY2024. Assumes heat is not included in rent;
+  the credit halves when it is. Read 2026-09-16." (`after/caseworker-390-
+  light-mi-ledger.png`; a live household that said heat is in the rent reads
+  "Heat is included in the rent, so the credit is halved."), and the take-up
+  sentence leaves LIHEAP out. Pinned in `facts.test.ts` and `model.test.ts`
+  against the committed Michigan sweep; 20 harness checks turned.
 
 ---
 
@@ -148,7 +168,12 @@ times and is the ledger's tallest row at both widths.
 - **Smallest fix:** the facts in the cite register, the publishers on a second
   cite line; nothing else moves. It also takes ~40px off the row, which is
   headroom against the strip (see TODO 2).
-
+- **Resolved:** `53f3b6e`. The facts are a `.hg-cite` (13px, rgb 94,104,113
+  light — the same size and ink as the corrections' notes, measured) with the
+  publishers on a second cite line; the row is 121px at 1280 (was 161) and
+  the block's step sentence is again its only full-ink line
+  (`after/journalist-1280-light-TX.png`, `after/journalist-390-light-HI.png`).
+  The places proof reads the same fields from the two cite lines.
 
 ### S2. The citizen's invitation to a toggle prints on the client sheet
 
@@ -165,6 +190,11 @@ times and is the ledger's tallest row at both widths.
   printed it for them.
 - **Smallest fix:** the invitation, already its own sentence, in an
   `.hg-no-print` span; the three facts still print.
+- **Resolved:** `53f3b6e`. `boundaryText` returns `{ facts, invite }` and the
+  chart renders the invitation in a `<span class="hg-no-print">`; in print
+  media it computes `display: none` and the paragraph ends at the served
+  share (`after/citizen-tx-1280-print-from-dark.png`); on screen the
+  paragraph's text is unchanged, and the citizen spec pins the span.
 
 ### S3. The caseworker cite says the tag's meaning three times and is the ledger's tallest row
 
@@ -182,6 +212,17 @@ times and is the ledger's tallest row at both widths.
   state's heating limit. Worth $1,200 at that band if received; 3% of
   income-eligible households were served in FY2024. Not in net income unless
   the household says it gets it. Read 2026-09-16."
+- **Resolved:** `53f3b6e`, with one more clause cut than proposed: "150% of
+  the poverty guideline, the heating limit. Worth $1,200 at that band if
+  received; 3% of income-eligible households were served in FY2024. Not
+  counted unless the household says it gets it. Read 2026-09-16." — "apply"
+  is said once, by the tag. Measured: Texas's row is 116px at 1280 (was
+  135), level with the ledger's tallest other row, and 215px at 390 (was
+  234). At 390 it stays the tallest row by two lines, and Missouri's and
+  Hawaii's by one at 1280 (135 vs 116/97): the cite carries five sourced
+  facts — basis, worth, share with its vintage, footing, date — where the
+  Medicaid *Deferred* cite carries three, and none of the five is spare. The
+  harness checks the copy and logs the heights.
 
 ---
 
@@ -266,6 +307,21 @@ times and is the ledger's tallest row at both widths.
 
 ---
 
+## Resolution
+
+Every B and S above carries a **Resolved** line with its commit and the
+evidence under `design/review/liheap/after/`, re-rendered through the
+project's own runner against the same households at both widths, both
+schemes and on paper (`cd app && node e2e/liheap-review.mjs
+http://localhost:8798 ../design/review/liheap/after` — 387 checks, all
+passing). S3's height bar was not fully met and the line says by how much.
+N3's handout line and N6's assumption are left as noted; N1, N2, N4, N5 and
+N7 stand as the brief has them; N8 is fixed in the harness. One system
+document changed, because a rule was genuinely missing: `inventory.md` §
+EligibilityBoundary gains the counted-credit state (TODO 3), so the next
+counted state does not fall through to the boundary copy. Nothing was
+written into `tokens.css` or `charts.md`.
+
 ## TODO(system)
 
 1. `charts.md` § 1 / `inventory.md` § EligibilityBoundary: say whether the
@@ -284,6 +340,6 @@ times and is the ledger's tallest row at both widths.
    system, not in one row's word count.
 3. `inventory.md` § EligibilityBoundary: the counted-credit case (Michigan)
    is a fourth state of the component — not boundary, not toggle-on — and
-   the brief describes only three. Say what each surface prints for it (B1's
-   copy), so the next counted state does not fall through to the boundary
-   copy.
+   the brief described only three. **Done with the fixes:** the section now
+   says what each surface prints for it (B1's copy), so the next counted
+   state does not fall through to the boundary copy.

@@ -70,7 +70,7 @@ The design system has no component for "a boundary you never crossed": Incomplet
 - [x] Inventory entry: what it says (the three facts: the limit, the worth-if-received range, the served share as "about N in 10"), where it sits on each surface (citizen: one line under the curve's key, in the citizen register, and a tick on the x-axis with no drop drawn; caseworker: a ThresholdLedger row tagged *if you apply* with the cite; journalist: a column in the state block and a CSV pair `liheap_limit`, `liheap_served_share`), and what it must never do (draw a drop, enter a ranking, appear as a cliff count).
 - [x] Copy through each surface's copy module (languages rule, `app/README.md` § Languages): the served share is a plural-aware message; core emits the code and parameters.
 - [x] Citizen and caseworker pages: render from `evaluation.liheap` (2026-09-16). The journalist row and the places CSV pair (`liheap_limit`, `liheap_served_share`) landed after Plan 8's rebuild of `app/src/places/**`, with their e2e pins in `app/e2e/places.mjs` (2026-09-17).
-- [ ] Visual review (the `frontend-design` skill, B/S/N doc) before merge, as for every surface.
+- [x] Visual review (the `frontend-design` skill, B/S/N doc) before merge, as for every surface: `design/REVIEW-liheap-2026-09-17.md` (2026-09-17) — one blocker (Michigan's counted credit presented as a boundary) and three should-fixes, all resolved; the counted-credit state added to the inventory.
 
 ### Phase 3 — the take-up toggle: LIHEAP in the money line, in every state
 
