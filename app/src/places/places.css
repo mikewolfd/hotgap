@@ -210,6 +210,15 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .flag { color: var(--ink-2); white-space: nowrap; }
 .flag small { display: block; font-size: var(--t-micro); color: var(--ink-3); }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
+/* From 62rem the scroller is open (above) and the table's width is the
+   page's: an unbreakable reason and nine unbreakable headers have nowhere to
+   go but past the viewport, and a longer language than English finds that
+   edge — measured at 1280, es-US pushed the document 38px wide and the
+   pseudo-locale 296px, English fitting exactly. So they wrap here, the same
+   fix print already needed for the same reason (@media print below). Below
+   62rem they stay on one line: there the table scrolls in its own box and a
+   wrapped reason made the two incomplete rows 90px tall (N9). */
+@media (min-width: 62rem) { .flag, .hg-table thead th.num { white-space: normal; } }
 /* A group heading inside the sorted table (B1): the strip's h4, as a row.
    Its words, like the caption's, wrap inside the viewport and stay put while
    the 48rem table scrolls under them, so a heading is never clipped
