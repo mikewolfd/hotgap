@@ -15,7 +15,7 @@ LIHEAP is a block grant, not an entitlement: a family at the limit is eligible t
 ## Decisions (the research's ranked options, amended on review)
 
 1. **Marker by default, everywhere the household's income range crosses the state's heating limit.** The research's option (c). Never retires: it is the truthful representation of a non-entitlement.
-2. **Toggle on top, where a schedule exists** — DC, MA, IL via upstream's variables; MI is already in (the credit). The research's option (a) merged with (c): the toggle is HotGap's existing take-up pattern (`getsHousing`, `getsChildcareSubsidy`), not a new kind of thing. Upstream's LIHEAP variables are not on `household_state_benefits`, so the toggle path adds the served amount to net income the way the child-care subsidy was added before #9503 — a marked WORKAROUND with an upstream issue to retire it.
+2. **Toggle on top, in every state — because the cliff is the aggregate.** "I get energy assistance" is HotGap's existing take-up pattern (`getsHousing`, `getsChildcareSubsidy`), not a new kind of thing. When it is on, LIHEAP is a program series in the curve like SNAP: the state's schedule where upstream serves one (DC, MA, IL; MI is already in through the credit), and otherwise HotGap's own sourced table — the published amount for the family's band where the matrix is readable, else the top-band amount flat to the limit — dropping to zero above the limit. The drop lands in whichever $1,000 step holds the limit, so `analyzeCurve` counts it in that step's cliff, its `breakdown` and `programsLost`, exactly as it does for a SNAP loss in the same step. A family that loses SNAP and energy assistance in one step sees one number for both. Upstream's LIHEAP variables are not on `household_state_benefits`, so the toggle path adds the amount to net income the way the child-care subsidy was added before #9503 — a marked WORKAROUND with an upstream issue to retire it; the HotGap table retires per state as upstream's schedule is served.
 3. **Average benefit as a notch (option b) is not built.** Wrong shape, wrong probability.
 4. **The heating component is the marker's; cooling and crisis are named, not drawn**, in v1. Four states set different limits per component (IA, MI, NC, OH); Texas's cooling is the larger program. Revisit after v1 with the served shares per component.
 5. **60% SMI comes from upstream's parameter**, `gov/hhs/smi/amount.yaml` (four-person SMI by state through FY2027) with `household_size_adjustment.yaml`, pinned to a commit — not the ACF PDF the research could not fetch. FPG comes from HotGap's own `fpl2025` (FY2026 LIHEAP uses the 2025 guidelines: $26,650 for three).
@@ -33,6 +33,7 @@ The Clearinghouse tables are HTML and PDF, so this is a sourced TypeScript table
 | `heating.limit` | `{ kind: "fpg", pct: 150 }` or `{ kind: "smi", pct: 60 }` or `{ kind: "smi-by-size", pct: [39, …, 60] }` (MD) | Clearinghouse income-eligibility table, FY2026 (updated 2025-12-15, "Source: FY 2026 State Model Plans") |
 | `heating.sizeRule` | e.g. `{ aboveSize: 8, kind: "fpg", pct: 150 }` for the nine states that revert above a household size; null otherwise | same table's caveats |
 | `heating.topBand` | `{ min, max }` published amounts at the top income band (the notch is the *minimum*), or null where the state publishes no matrix | the state's FY2026 benefit matrix (Clearinghouse `docs/2026/benefits-matricies/`) |
+| `heating.bands` | the staircase where the matrix gives one by income band alone — `[{ uptoPct, amount }]` (TX 50/75/150% FPG → $1,800/$1,500/$1,200; MA six columns) — or null where the amount depends on fuel, points or burden (then Phase 3 uses `topBand.min`) | the matrix |
 | `heating.shape` | `"notch" \| "staircase" \| "points" \| "taper"` | the matrix |
 | `cooling`, `crisis` | limit only, where it differs from heating; else null | income-eligibility table |
 | `servedShare` | households served ÷ income-eligible households, FY2024, or null | ACF FY2024 state profile (`liheappm.acf.gov/…/profiles/2024/FY2024_<State>_Profile.pdf`) |
@@ -56,7 +57,7 @@ Tests: 51 rows, every state once; every `pct` within the statutory floor/ceiling
 ### Phase 1 — the boundary in the evaluation
 
 - [ ] `core/src/liheap.ts`: the table (above) and `liheapBoundary(answers, curve): LiheapBoundary | null` — resolves the household's limit in dollars (`householdSize` → FPG via `fpl2025(state, size)` or SMI via `smi.json` with the size adjustment; `sizeRule` applied), and returns `{ earningsLimit, component: "heating", topBand, shape, servedShare, upstream, source }` when the limit lies inside the curve's earnings range, else null. Pure; no request.
-- [ ] `HouseholdEvaluation.liheap: LiheapBoundary | null`, computed in `evaluateCurve` after the corrections (it reads the answers and the axis only, so it runs on both the live and archetype paths). **Not** a `Cliff`, not in `programEnds` (that convention is the last earnings at which a program *received* is still received), not in `dangerZones`, not in any metric.
+- [ ] `HouseholdEvaluation.liheap: LiheapBoundary | null`, computed in `evaluateCurve` after the corrections (it reads the answers and the axis only, so it runs on both the live and archetype paths). With the toggle off it is **not** a `Cliff`, not in `programEnds` (that convention is the last earnings at which a program *received* is still received), not in `dangerZones`, not in any metric: there is nothing to lose. With the toggle on (Phase 3) the amount is a program series and the loss is counted by the ordinary cliff math; the boundary object is still returned, and its copy changes to "this is where it ends".
 - [ ] `pipeline/src/metrics.ts`: unchanged — the summary carries no LIHEAP metric (a boundary is not a measure). `summary.coverage[ST]` gains `liheap: { limitKind, topBand, servedShare, upstream }` from the table so the journalist page can name it per state without loading the table.
 - [ ] `coverage.ts`: the LIHEAP `unmodeled` row becomes a `corrections.liheap` note: "eligibility boundary shown; amount not in net income" (or MI's counted note).
 - [ ] Tests: TX single-2 boundary at $39,975 with top band $1,200 and `servedShare` 0.03; MA at $83,641 (SMI); a household whose size trips MD's sliding scale; a curve that ends below the limit → null; the archetype path returns the same boundary as the live path for the same answers.
@@ -71,15 +72,17 @@ The design system has no component for "a boundary you never crossed": Incomplet
 - [ ] Citizen, caseworker, journalist pages: render from `evaluation.liheap` / `coverage[ST].liheap`; e2e per page pins the TX and MA renders; the places CSV gains the two columns with provenance.
 - [ ] Visual review (the `frontend-design` skill, B/S/N doc) before merge, as for every surface.
 
-### Phase 3 — the take-up toggle where a schedule is modeled
+### Phase 3 — the take-up toggle: LIHEAP in the money line, in every state
 
-- [ ] `HouseholdAnswers.getsEnergyAssistance: boolean` (default false), `flags.ts` `--energy-assistance` / `?energy-assistance=`, editor chip in the take-up group.
-- [ ] `translate.ts`: when on and the state has `upstream`, request the variable (DC/MA/IL) — and for MI, `mi_home_heating_credit_heat_included_in_rent` from a new answer `heatInRent` (default false, matching PolicyEngine) so the credit halves honestly.
-- [ ] `parse.ts`: a new `ProgramId` `"liheap"`, read from the state's variable; **added to net income** (upstream's LIHEAP variables are not on `household_state_benefits` — the #9405 shape). Gate it the same way: `ParseOptions.liheapCounted` from a probe (`probeOnce` in `client.ts`: force the variable to a sentinel on a bare MA household and read `household_state_benefits` back), so it retires by itself the day upstream lists them.
-- [ ] Program phrases (M3), `CASH_PROGRAMS`, StepList/ThresholdLedger naming, `unclaimed` (the second-curve figure already covers take-up switches — confirm `withEveryEntitlement` includes it).
-- [ ] The marker stays when the toggle is on: the line now shows the staircase and the notch; the marker's text changes to "this is where it ends".
+- [ ] `HouseholdAnswers.getsEnergyAssistance: boolean` (default false), `flags.ts` `--energy-assistance` / `?energy-assistance=`, editor chip in the take-up group; the marker's copy (Phase 2) invites it: "If you get energy assistance, turn it on to see it in your line."
+- [ ] `core/src/liheap.ts` gains the amount: `liheapAmount(answers, earnings): number` — upstream's schedule is not needed here; from the table, the published amount for the family's band where the matrix was read into the row (`bands: [{ uptoPctOfBase, amount }]`, TX/MA/IA-style staircases), else `topBand.min` flat to the limit; zero above the limit; zero when the toggle is off. Annual, one season.
+- [ ] `translate.ts`: when the toggle is on and the state has `upstream`, request the variable (DC/MA/IL); for MI, `mi_home_heating_credit_heat_included_in_rent` from a new answer `heatInRent` (default false, PolicyEngine's) so the credit halves honestly.
+- [ ] `parse.ts`: a new `ProgramId` `"liheap"`, read from the state's variable where requested; **added to net income** (upstream's LIHEAP variables are not on `household_state_benefits` — the #9405 shape), gated by `ParseOptions.liheapCounted` from a probe (`probeOnce` in `client.ts`: force the variable to a sentinel on a bare MA household and read `household_state_benefits` back), so it retires by itself the day upstream lists them.
+- [ ] `evaluate.ts` `applyLiheap` next to `applyPremiumWrap`: where the endpoint served no schedule, add `liheapAmount` to `programs.liheap` and `netIncome` at every point — on the live path only (the archetype sweep runs every take-up off, like housing). Then the existing `analyzeCurve` finds the drop at the limit and attributes it: no new cliff logic.
+- [ ] Program phrases (M3: "energy assistance"), `CASH_PROGRAMS`, StepList/ThresholdLedger naming, the one convention (`programEnds.liheap` is now a real end). `unclaimed`: keep LIHEAP **out** of `withEveryEntitlement` — the second curve says what a family would have "if it claimed", and with served shares under 30% that is not a claim HotGap can make; the marker's served share is the honest version.
+- [ ] Tests: TX single-2 with the toggle on — `programs.liheap` $1,200 at $39,000, $0 at $40,000, the $39k→$40k step's cliff `programsLost` contains `"liheap"` and its `breakdown.benefits` grew by exactly $1,200 over the toggle-off curve; a state whose limit coincides with a SNAP end shows one cliff with both; MA on the droplet uses `ma_liheap` (probe) and the table is not applied; toggle off → identical to today byte-for-byte.
 - [ ] Contract test: the probe's answer pinned per endpoint (false today on the droplet); the MA schedule at three band edges against `ma_liheap` live.
-- [ ] Upstream issue: "list the LIHEAP variables on `household_state_benefits`" with the CT-style evidence (net income does not move when `ma_liheap` is forced to zero). Retirement condition recorded in the corrections table.
+- [ ] Upstream issue: "list the LIHEAP variables on `household_state_benefits`" with the CT-style evidence (net income does not move when `ma_liheap` is forced to zero). Retirement conditions recorded in the corrections table: the probe retires the addition; a served upstream schedule retires that state's table amount.
 
 ### Phase 4 — upstream contributions (optional, later, one state per PR)
 
@@ -92,7 +95,7 @@ Missouri first (flat by fuel — the simplest matrix, and the research already h
 | 0 Michigan note | — | hours | one commit + `--from-data` |
 | 1 Table + SMI + boundary | 0 | 2–3 days (the 51 rows and 51 profiles are hand-read; the SMI builder and the boundary function are small) | one merge; resweep not needed (no curve changes) |
 | 2 Design brief + three pages | 1 | 2–3 days incl. review | design first, then one merge per page |
-| 3 Toggle for DC/MA/IL/MI | 1 | 2 days (the `ProgramId` touches fixtures' pins only through new fields) | one merge + a contract pin + an upstream issue |
+| 3 Toggle, all states | 1 | 3 days (the band amounts join the Phase 1 rows; the `ProgramId` touches fixtures' pins only through new fields) | one merge + a contract pin + an upstream issue |
 | 4 Upstream MO/TX | 3 | per state | PRs on the fork |
 
 Yearly refresh: December (Clearinghouse limits and matrices, from the new Model Plans), May (ACF profiles, served shares). Recorded in the table's header the way `statePremiumWraps.ts` says to re-read every bound when the policy year moves.
@@ -107,6 +110,6 @@ Yearly refresh: December (Clearinghouse limits and matrices, from the new Model 
 
 ## What this does not do
 
-- No LIHEAP dollars in the money line without the toggle, in any state, ever.
+- No LIHEAP dollars in the money line without the toggle, in any state, ever. With the toggle, in every state — a family that says it gets energy assistance sees the loss counted in the same step as everything else it loses there.
 - No composite "energy burden" score, no ranking by LIHEAP, no LIHEAP metric in `summary.json` (design § What was deliberately left out).
 - No claim about the odds of *being served*: "about N in 10 eligible households here do" is a served share, stated as such (the same discipline as reach: cross-sectional, never a probability for this family).
