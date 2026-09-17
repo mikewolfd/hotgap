@@ -42,9 +42,14 @@ export const copy = {
     in_danger_zone: "You are paid {pay}. You keep {kept}. More pay does not add to that until you are paid {exit}: a raise of {leap}.",
     "in_danger_zone:stuck": "You are paid {pay}. You keep {kept}. More pay does not add to that in the pay range we checked, up to {top}. We did not find a spot where you come out ahead again.",
     cliff_behind: "You are paid {pay}. You keep {kept}. The big drop is below your pay now. From here, more pay means more for you.",
-    // A deferred cliff at or above the person's pay (design/REVIEW-citizen B1; the
-    // catalog needs this clause, TODO(system) 16): the loss the lifted curve leaves out.
-    waits: " One more thing: at {at}, {phrase} stops, but not that day. Later, you would keep about {drop} less a year.",
+    // The timing clause (design/inventory.md M2, since 2026-09-17): a deferred loss at
+    // or above the person's pay is in the figures above; this says when it lands,
+    // keyed by the rule that defers it (Cliff.deferral.reason).
+    waits: {
+      head_start_program_year: " At {at}, {phrase} stops: about {drop} a year. But not that day. A child in it stays to the end of the next program year.",
+      child_continuous_eligibility: " At {at}, {phrase} stops: about {drop} a year. But not that day. Kids keep it to their next yearly check, up to 12 months later.",
+      transitional_medical_assistance: " At {at}, {phrase} stops: about {drop} a year. But not that day. You keep it for 6 to 12 more months.",
+    },
   },
   again: "It happens again from {from} to {to}.",
   againMany: "It happens {n} more times, between {from} and {to}.",
@@ -77,7 +82,7 @@ export const copy = {
     outZone: " Here, more pay means more money.",
     markWould: "A drop near {pay}. You would keep about {drop} less a year here.",
     markPast: "A drop near {pay}. You keep about {drop} less a year here.",
-    markLater: "A drop near {pay} that waits. Later, you would keep about {drop} less a year.",
+    markLater: "A drop near {pay}. You would keep about {drop} less a year here. It lands later, not that day.",
     markMerged: "{n} drops from {from} to {to}. Together, about {sum} a year.",
     markMergedWaits: "{n} drops from {from} to {to}. Together, about {sum} a year. Some of it waits for a later day.",
     axisNote: "The side numbers start at {floor}, not at $0, so the drops are easy to see.",
@@ -85,8 +90,6 @@ export const copy = {
     biggestBeyond: " The biggest drop, about {drop} a year at {pay}, is outside the picture.",
     safeBeyond: " From {safe} up, more pay always adds to what you keep.",
     safeNever: " In the pay range we checked, up to {top}, we did not find a spot past all the flat stretches.",
-    ghost: " The dashed line is what happens if the later change happens.",
-    ghostNow: " The dashed line is where you are now: the later change has already landed for you.",
     estimates: " These are estimates. They use the rules for {year} in {state}.",
     aria: "A line of the money this household keeps as pay rises from {from} to {to}. It is flat from {zoneFrom} to {zoneTo}.{more}{worst} The household sits at {pay}, inside a flat stretch.",
     ariaMore: " It is flat again from {from} to {to}.",
@@ -192,21 +195,19 @@ export const copy = {
     },
     loss: "You keep about {drop} less.",
     wouldLoss: "You would keep about {drop} less.",
-    laterLoss: "Later, you would keep about {drop} less a year.",
     biggest: " This is the biggest drop.",
     waitsBadge: "Waits",
-    waitsTail: " It does not end that day.",
+    // DeferredBadge (#10): the row's clause, keyed by the rule that defers the loss (Cliff.deferral.reason, or a
+    // child's coverage ending without a cliff, which waits under the same 12-month rule — core/src/escape.ts).
+    waits: {
+      head_start_program_year: " It does not end that day. A child in it stays to the end of the next program year.",
+      child_continuous_eligibility: " It does not end that day. Kids keep it to their next yearly check, up to 12 months later.",
+      transitional_medical_assistance: " It does not end that day. You keep it for 6 to 12 more months.",
+    },
     close: "Close",
   },
+  // Who loses a deferred program, for the answer's timing clause: read off the rule.
   waits: {
-    head: "One change waits",
-    headMany: "{n} changes wait",
-    reasons: {
-      child_continuous_eligibility: "At {at} your kids stop being able to get {phrase}. But the law lets kids keep it for a full year at a time. So it ends at their next yearly check, up to 12 months later.",
-      head_start_program_year: "At {at} your kids stop being able to get {phrase}. But a child in it stays to the end of the next program year.",
-      transitional_medical_assistance: "At {at} you stop being able to get {phrase}. But the law lets you keep it for 6 to 12 more months.",
-    },
-    foot: "We do not draw it as a drop today, because it is not one.",
     thisHelp: "this help",
     kids: "your kids' {noun}",
     own: "your own {noun}",
