@@ -31,6 +31,14 @@ export interface StateMetrics {
   // True when the widest danger zone runs past the sweep's axis, so `leap`
   // is a floor, not a measurement — rank such cells with care.
   leapIsLowerBound: boolean;
+  /**
+   * The top of the earnings axis this cell was swept to — the last point's
+   * earnings (axisSpec: $150,000 for most households, more for a larger one
+   * and in Alaska and Hawaii). A figure that "runs past the axis" runs past
+   * this, and a no-cliff verdict holds up to it, so a surface can say the
+   * dollar figure instead of "the axis" (places rerun S6, N9).
+   */
+  axisTop: number;
 }
 
 export interface SummaryJson {

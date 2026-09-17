@@ -41,7 +41,12 @@ const ohPoints = JSON.parse(readFileSync(resolve(ROOT, "core/data/states/OH.json
 const STEP = ohPoints[1].earnings - ohPoints[0].earnings;
 const STATE_NAME = Object.fromEntries([...readFileSync(resolve(ROOT, "core/src/states.ts"), "utf8").matchAll(/\b([A-Z]{2}): "([^"]+)"/g)].map((m) => [m[1], m[2]]));
 const money = (n) => "$" + n.toLocaleString("en-US");
-const dateWords = (iso) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(iso));
+/* The page prints the run date in the reader's own zone (rerun S2): every
+   context below is opened in this one, and the expected date is formatted
+   with it; the UTC date is computed only to show the check has teeth. */
+const TZ = "America/New_York";
+const dateIn = (iso, timeZone) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone }).format(new Date(iso));
+const dateWords = (iso) => dateIn(iso, TZ);
 const failures = [];
 const check = (ok, what, measured) => {
   console.log(`${ok ? "ok  " : "FAIL"} ${what}${measured !== undefined ? ` — ${typeof measured === "string" ? measured : JSON.stringify(measured)}` : ""}`);
@@ -71,7 +76,7 @@ const server = await serve();
 const browser = await chromium.launch();
 try {
   for (const [width, height] of [[390, 844], [1280, 900]]) {
-    const page = await browser.newPage({ viewport: { width, height } });
+    const page = await browser.newPage({ viewport: { width, height }, timezoneId: TZ });
     const errors = [];
     page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
     page.on("pageerror", (e) => errors.push(String(e)));
@@ -85,8 +90,9 @@ try {
     const status = await page.$eval("#status", (el) => el.hidden);
     check(status, "the load status line is hidden once the sweep is in");
     const lede = await page.$eval(".lede", (el) => el.textContent.replace(/\s+/g, " ").trim());
-    check(/^[A-Z][a-z-]+ sets of rules, [a-z-]+ household shapes, one earnings scale — from \$0 past 400% of the poverty line for that household\. Each figure/.test(lede),
-      "the lede's counted sentence is written whole from the data (S6), and says what the one axis is (N12)", lede.slice(0, 90));
+    const dc = STATES.includes("DC");
+    check((dc ? /^[A-Z][a-z-]+ states and the District of Columbia, / : /^[A-Z][a-z-]+ states, /).test(lede) && /household shapes, one earnings scale — from \$0 past 400% of the poverty line for that household\. Each figure/.test(lede),
+      "the lede's counted sentence is written whole from the data (S6), says what the one axis is (N12), and counts the states as a reader does (rerun N11)", lede.slice(0, 90));
     /* The glossary sentence (S3) from core's floor, and PolicyEngine introduced on first use (S6). */
     const glossary = await page.$eval("#glossary", (el) => el.textContent.replace(/\s+/g, " ").trim());
     check(glossary.startsWith(`A cliff is a $1,000 raise that cuts net income by ${money(CLIFF_MIN)} or more; a danger zone is a run of earnings`) && /PolicyEngine, an open-source tax-and-benefit calculator/.test(glossary),
@@ -94,6 +100,21 @@ try {
     const options = await page.$$eval("#metric option", (els) => els.map((el) => el.textContent));
     check(options.length === 6 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o)) && /worst danger zone/.test(options[2]) && /no danger zone remains/.test(options[3]),
       "every measure option stands on its own (S2)", options);
+    /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */
+    const widthTotal = STATES.filter((st) => summary.states[st]["single-2"].cliffCount > 0 && summary.states[st]["single-2"].dangerWidth > summary.states[st]["single-2"].leap).length;
+    check(widthTotal > 0 && /^Total width of the danger zones/.test(options[1]) && !/worst|widest/.test(options[1]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[1], statesWhereTotalExceedsLeap: widthTotal });
+    /* The household line above the map says the tenure every household shares (rerun N10). */
+    check(/, renting in the state's most populous county\. /.test(await page.$eval("#figSub", (el) => el.textContent)), "the map's household line says the household rents in the most populous county (rerun N10)");
+    /* The two controls are independent, said once where the order control is (rerun N3). */
+    check((await page.$eval("#sortHint", (el) => el.textContent)) === "Orders this table only; the map and the ranking follow the Measure above.", "the order control says it orders the table only (rerun N3)");
+    /* One sentence per column, where the headers are, and each header points at its own (rerun S3). */
+    const defs = await page.evaluate(() => ({
+      terms: [...document.querySelectorAll("#defs dt")].map((el) => el.textContent),
+      heads: [...document.querySelectorAll("thead th")].slice(1).map((th) => [th.textContent, document.getElementById(th.getAttribute("aria-describedby") ?? "")?.textContent ?? null]),
+    }));
+    check(defs.terms.length === 8 && defs.heads.every(([, d]) => d) && defs.heads.map(([t]) => t).join("|") === "Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs|Deferred|Figures"
+      && /worst danger zone/.test(defs.heads[3][1]) && /no danger zone remains/.test(defs.heads[4][1]) && /added together/.test(defs.heads[2][1]) && /floors/.test(defs.heads[7][1]),
+      "eight column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3)", defs.heads.map(([t, d]) => `${t}: ${d.slice(0, 40)}`));
     if (width === 390) {
       const gutter = await page.$eval("h1", (el) => el.getBoundingClientRect().left);
       check(gutter >= 16, "the phone masthead keeps the page's 16px side gutter (N5)", gutter);
@@ -162,15 +183,27 @@ try {
     await page.selectOption("#arch", "married-dual-2");
     await page.selectOption("#metric", "safeExit");
     await page.selectOption("#sort", "safeExit");
+    /* The tile's place in the viewport before the click is the measure of "no jump" (rerun S1): scrollY alone would
+       read Playwright's own scroll-into-view and the browser's scroll anchoring as the page's doing. */
+    const tileBefore = await page.$eval('.tile[data-st="TX"]', (el) => { el.scrollIntoView({ block: "center" }); return el.getBoundingClientRect().top; });
     await page.click('.tile[data-st="TX"]');
     const url = new URL(page.url());
     check(url.search === "?household=married-dual-2&measure=safeExit&sort=safeExit&state=TX", "the URL carries household, measure, sort and state", url.search);
-    /* The tile click has a visible answer (S1): the readout fills and the block is brought into view with focus on its heading. */
-    const afterTile = await page.evaluate(() => {
+    /* The tile click has a visible answer beside the map (S1) and moves nothing (rerun S1): the tile stays where it was, focus stays on it, the block's heading still updates. */
+    const afterTile = await page.evaluate(() => ({
+      top: document.querySelector('.tile[data-st="TX"]').getBoundingClientRect().top, focused: document.activeElement?.dataset?.st,
+      readout: document.querySelector("#readout").textContent, title: document.querySelector("#stateTitle").textContent,
+      current: document.querySelector('#tbody .hg-row-btn[aria-current="true"]')?.dataset.st,
+    }));
+    check(near(afterTile.top, tileBefore, 0.5) && afterTile.focused === "TX" && afterTile.readout.startsWith("Texas — ") && /^Corrections applied in Texas/.test(afterTile.title) && afterTile.current === "TX",
+      "a tile click fills the readout and the block's heading, keeps focus on the tile and does not move the page (rerun S1)", { ...afterTile, tileBefore });
+    /* The readout's link is the opt-in jump: it scrolls the block into view and hands focus to its heading. */
+    await page.click('#readout a[href="#stateTitle"]');
+    const afterLink = await page.evaluate(() => {
       const heading = document.querySelector("#stateTitle"), r = heading.getBoundingClientRect();
-      return { focused: document.activeElement === heading, inView: r.top >= 0 && r.bottom <= innerHeight, readout: document.querySelector("#readout").textContent };
+      return { scrollY, focused: document.activeElement === heading, inView: r.top >= 0 && r.bottom <= innerHeight };
     });
-    check(afterTile.focused && afterTile.inView && afterTile.readout.startsWith("Texas — "), "a tile click fills the readout and scrolls the corrections block into view with focus on its heading (S1)", afterTile);
+    check(afterLink.focused && afterLink.inView, "the readout's Details link scrolls the corrections block into view and focuses its heading (rerun S1)", afterLink);
     await page.goto(page.url(), { waitUntil: "networkidle" });
     await page.waitForSelector(".tile");
     const restored = await page.evaluate(() => ({
@@ -199,8 +232,8 @@ try {
     const expectedFirst = lowerBound.length ? lowerBound[0] : comparable.filter((st) => dual(st).safeExit !== null).sort((a, b) => dual(b).safeExit - dual(a).safeExit)[0];
     const tableOrder = await page.$$eval("#tbody tr:not(.group) .hg-row-btn", (els) => els.map((el) => el.dataset.st));
     const groupRows = await page.$$eval("#tbody tr.group th", (els) => els.map((el) => el.textContent));
-    check(restored.firstRow === expectedFirst && tableOrder.slice(0, lowerBound.length).sort().join() === lowerBound.sort().join() && groupRows[0] === `Past the top of the axis — no safe exit found on the scale (${lowerBound.length})`,
-      "sorted by safe exit, the lower-bound rows lead the table under their own heading, before the largest comparable exit (B1)", { firstRow: restored.firstRow, expectedFirst, lowerBound, groupRows });
+    check(restored.firstRow === expectedFirst && tableOrder.slice(0, lowerBound.length).sort().join() === lowerBound.sort().join() && groupRows[0] === `Ranks 1–${lowerBound.length} shared — past the top of the axis; no safe exit found on the scale (${lowerBound.length})`,
+      "sorted by safe exit, the lower-bound rows lead the table under a heading that says they share ranks 1–n, before the largest comparable exit (B1)", { firstRow: restored.firstRow, expectedFirst, lowerBound, groupRows });
     /* The child-care subsidy's footing is stated in every block, from the coverage record (B2). */
     const subsidyLine = (st) => `Child-care subsidy: ${summary.coverage[st].corrections.childcareSubsidy.source === "added by HotGap" ? `added by HotGap for ${STATE_NAME[st]}` : `inside PolicyEngine's net income for ${STATE_NAME[st]}`}.`;
     const txSub = await page.$eval("#stateSub", (el) => el.textContent);
@@ -239,19 +272,18 @@ try {
     check(rankSel.st === rankSel.tile && /3px 0px 0px 0px inset/.test(rankSel.shadow), "ArrowDown then Enter in the ranking selects that row's state; the row carries the 3px ink bar", { st: rankSel.st, shadow: rankSel.shadow });
     console.log(`     selected row: ink bar ${contrast(rgb(rankSel.ink), rgb(rankSel.bg))}:1 on its ground`);
 
-    /* Selecting from the table takes the reader to the block it drives (S1). */
+    /* Selecting from the table answers in the readout and moves nothing (rerun S1): focus stays on the row. */
     await page.focus('#tbody .hg-row-btn[tabindex="0"]');
     await page.keyboard.press("ArrowDown");
+    const beforeEnter = await page.evaluate(() => document.activeElement.getBoundingClientRect().top);
     await page.keyboard.press("Enter");
     const rowSel = await page.evaluate(() => {
-      const heading = document.querySelector("#stateTitle"), r = heading.getBoundingClientRect();
       const row = document.querySelector('#tbody .hg-row-btn[aria-current="true"]');
-      return { focused: document.activeElement === heading, top: r.top, inView: r.top >= 0 && r.bottom <= innerHeight,
-        row: row?.dataset.st, tile: document.querySelector('.tile[aria-current="true"]').dataset.st,
-        rowTab: row?.tabIndex, bar: getComputedStyle(row.closest("tr").firstElementChild).boxShadow };
+      return { top: row.getBoundingClientRect().top, focused: document.activeElement === row, row: row?.dataset.st, tile: document.querySelector('.tile[aria-current="true"]').dataset.st,
+        rowTab: row?.tabIndex, bar: getComputedStyle(row.closest("tr").firstElementChild).boxShadow, readout: document.querySelector("#readout").textContent.slice(0, 30) };
     });
-    check(rowSel.row === rowSel.tile && rowSel.focused && rowSel.inView && rowSel.rowTab === 0 && /3px 0px 0px 0px inset/.test(rowSel.bar),
-      "ArrowDown then Enter in the table selects on the map, scrolls the corrections heading into view and focuses it; the row keeps its tab stop and ink bar", rowSel);
+    check(rowSel.row === rowSel.tile && rowSel.focused && near(rowSel.top, beforeEnter, 0.5) && rowSel.rowTab === 0 && /3px 0px 0px 0px inset/.test(rowSel.bar) && rowSel.readout.startsWith(STATE_NAME[rowSel.row]),
+      "ArrowDown then Enter in the table selects on the map and fills the readout; the row stays where it was and keeps focus, its tab stop and its ink bar (rerun S1)", { ...rowSel, beforeEnter });
 
     /* The readout and the block's first line carry the figure with its step, its programs and its county (B3, B4), every value the file's. */
     await page.selectOption("#arch", "single-2");
@@ -268,6 +300,54 @@ try {
     }));
     check(ohText.readout === `${expectedOh} Details below ↓` && ohText.step === expectedOh, "Ohio's readout and block line are the summary's fields: the loss, the step it happens at, the programs it ends, the county (B3, B4)", { readout: ohText.readout, expectedOh });
     check(ohText.bold.join("|") === `Ohio|${money(oh.biggestLoss)}`, "the readout marks the state and the figure, as the CurveReadout marks its figure", ohText.bold);
+    /* The step's earnings ride beside the loss in the ranked row and in the table (rerun S5). */
+    const ohRank = await page.$eval('#rank .hg-row-btn[data-st="OH"]', (el) => ({ at: el.querySelector(".at")?.textContent, label: el.getAttribute("aria-label"), n: el.querySelector(".n").textContent }));
+    const ohRow = await page.$eval('#tbody .hg-row-btn[data-st="OH"]', (el) => [...el.closest("tr").children].map((td) => td.textContent.trim()));
+    check(ohRank.at === `at ${money(oh.biggestLossAt)}` && ohRank.label === `${ohRank.n} Ohio: ${money(oh.biggestLoss)}, at ${money(oh.biggestLossAt)}` && ohRow[2] === `${money(oh.biggestLossAt)} → ${money(oh.biggestLossAt + STEP)}`,
+      "Ohio's ranked row says where its step begins and the table's Worst step column prints the step, both from the file (rerun S5)", { rank: ohRank, cell: ohRow[2] });
+    /* The readout leads with the selected measure in its own sentence, then the worst step (rerun B2), every figure Ohio's own. */
+    const worst = `Worst step: ${money(oh.biggestLoss)} lost at ${money(oh.biggestLossAt)} → ${money(oh.biggestLossAt + STEP)}, when ${oh.biggestLossPrograms.map((id) => PROGRAM_NAME[id]).join(" and ")} ${oh.biggestLossPrograms.length === 1 ? "ends" : "end"}. Renter, ${ohCov.vintages.county.name}.`;
+    const leads = {
+      dangerWidth: oh.safeExit === null ? null : `Ohio — ${money(oh.dangerWidth)} of earnings lie inside danger zones.`,
+      leap: oh.leapIsLowerBound ? null : `Ohio — a raise of ${money(oh.leap)} clears the worst danger zone.`,
+      safeExit: oh.safeExit === null ? null : `Ohio — no danger zone left above ${money(oh.safeExit)}.`,
+      cliffCount: `Ohio — ${oh.cliffCount} cliffs on this household's curve, ${oh.deferredCliffCount === 0 ? "none deferred" : `and ${oh.deferredCliffCount} more deferred to a later renewal`}.`,
+      deferredCliffCount: oh.deferredCliffCount === 0 ? `Ohio — no cliff deferred to a later renewal; all ${oh.cliffCount} land with the raise.` : `Ohio — ${oh.deferredCliffCount} cliff deferred to a later renewal, on top of ${oh.cliffCount} that land with the raise.`,
+    };
+    const readoutFor = async (key) => { await page.selectOption("#metric", key); return page.evaluate(() => [document.querySelector("#readout").innerText.split("\n").map((l) => l.trim()), document.querySelector("#stateStep").innerText.split("\n").map((l) => l.trim())]); };
+    for (const [key, lead] of Object.entries(leads)) {
+      const [lines, block] = await readoutFor(key);
+      check(lead !== null && lines[0] === lead && lines[1] === `${worst} Details below ↓` && block[0] === lead && block[1] === worst,
+        `under ${key} Ohio's readout and block lead with that measure's sentence and put the worst step second (rerun B2)`, { lines, lead });
+    }
+    /* A figure the axis bounds says past what, in dollars from the file: Nebraska's safe exit and Maryland's leap (rerun B2, N9). */
+    const ne = summary.states.NE["single-2"], md = summary.states.MD["single-2"];
+    await page.selectOption("#metric", "safeExit");
+    await page.click('.tile[data-st="NE"]');
+    const neLine = await page.$eval("#readout", (el) => el.innerText.split("\n")[0].trim());
+    check(ne.safeExit === null && neLine === `Nebraska — no safe exit found: the last danger zone had not closed by ${money(ne.axisTop)}, the top of the axis.`, "Nebraska under safe exit: no exit found, said with the axis top in dollars (rerun B2)", neLine);
+    await page.selectOption("#metric", "leap");
+    await page.click('.tile[data-st="MD"]');
+    const mdLine = await page.$eval("#readout", (el) => el.innerText.split("\n")[0].trim());
+    check(md.leapIsLowerBound && mdLine === `Maryland — a raise of at least ${money(md.leap)} to clear the worst danger zone, which runs past ${money(md.axisTop)}, the top of the axis.`, "Maryland under the leap: at least the floor, past the axis top in dollars (rerun B2)", mdLine);
+    /* A no-cliff state says what the model found instead, up to the axis it was swept to (rerun S6): the floor from core, the step from the file, never a guessed cause. */
+    const nm = summary.states.NM["single-2"];
+    await page.click('.tile[data-st="NM"]');
+    const nmLine = await page.$eval("#readout", (el) => el.innerText.split("\n")[0].trim());
+    check(nm.cliffCount === 0 && nmLine === `New Mexico — no cliff found: no ${money(STEP)} step of earnings on this household's curve cut net income by ${money(CLIFF_MIN)} or more, up to ${money(nm.axisTop)}. Renter, ${summary.coverage.NM.vintages.county.name}. Details below ↓`,
+      "New Mexico's readout gives the data's reason for no cliff: no step cut net income by the floor, up to the axis top (rerun S6)", nmLine);
+    /* The axis in dollars in the method, per household, with the states whose guidelines lengthen it (rerun N9). */
+    const tops = new Map(); for (const st of STATES) { const t = summary.states[st]["single-2"].axisTop; tops.set(t, [...(tops.get(t) ?? []), st]); }
+    const [common] = [...tops].sort((a, b) => b[1].length - a[1].length)[0];
+    const exceptions = STATES.filter((st) => summary.states[st]["single-2"].axisTop !== common).map((st) => `${money(summary.states[st]["single-2"].axisTop)} in ${STATE_NAME[st]}`);
+    const axisLine = await page.$eval("#axisLine", (el) => el.textContent);
+    check(axisLine === `For 1 adult, 2 children (3 and 7) the axis runs from $0 to ${money(common)}${exceptions.length ? ` (${exceptions.join(", ")})` : ""}; a figure that runs past the axis runs past that.`, "the method names the household's axis top in dollars, and the exceptions (rerun N9)", axisLine);
+    /* Texas's three corrections each carry a chip, the coverage-gap one the CSV's own word (rerun N7). */
+    await page.click('.tile[data-st="TX"]');
+    const txChips = await page.$$eval("#corrections li", (lis) => lis.map((li) => [li.querySelector(".hg-rows__at").textContent, li.querySelector(".hg-tag")?.textContent ?? null]));
+    check(txChips.length === 3 && txChips.every(([, chip]) => chip) && txChips.some(([, chip]) => chip === "applied"), "every Texas correction carries a chip, the coverage-gap premium's reading applied (rerun N7)", txChips);
+    await page.selectOption("#metric", "biggestLoss");
+    await page.click('#rankList .hg-row-btn[data-st="OH"]');
     check(ohText.sub.endsWith(subsidyLine("OH")) && /the fixes other states need were not needed here/.test(ohText.sub), "Ohio's (0) block says the fixes were not needed and states the subsidy's footing (B2)", ohText.sub);
     check(ohText.src.includes(`County: ${ohCov.vintages.county.name} (the state's most populous; ${ohCov.vintages.county.vintage}).`) && !/Reach/.test(ohText.src),
       "the state's source line names the county (B4) and no longer describes reach (N9)", ohText.src);
@@ -277,6 +357,11 @@ try {
     const cite = await page.$eval("#cite", (el) => el.textContent);
     check(cite.startsWith("Cite as: HotGap, What a raise costs, state by state, ") && cite.includes(`${summary.year} rules on PolicyEngine (policyengine-us ${summary.model.version})`) && cite.includes(`run of ${dateWords(summary.generated)}`) && cite.includes(`${BASE}/places.html?household=single-2&measure=biggestLoss&sort=safeExit&state=OH`),
       "the Cite line carries the year, the model, the run date and this view's own URL (N13)", cite);
+    /* The run date is the reader's own (rerun S2): the page, opened in New York, prints the instant's New York date everywhere it prints one; the UTC date, where it differs, appears nowhere. */
+    const utcDate = dateIn(summary.generated, "UTC"), localDate = dateWords(summary.generated);
+    const dated = await page.evaluate(() => ["#figSrc", "#stateSrc", "#methodSrc", "#tabCap", "#cite"].map((id) => document.querySelector(id).textContent));
+    check(dated.every((t) => t.includes(localDate)) && (utcDate === localDate || dated.every((t) => !t.includes(utcDate))),
+      `every run date on the page is the reader's-zone date of ${summary.generated}${utcDate === localDate ? " (the same day in UTC on this run)" : `, not the UTC date ${utcDate}`} (rerun S2)`, { localDate, utcDate, tz: TZ });
     /* The page's own words carry no developer vocabulary (N7): core's notes and the machine columns are the exceptions and are excluded here. */
     const ownText = await page.evaluate(() => {
       const clone = document.body.cloneNode(true);
@@ -293,7 +378,7 @@ try {
     const split = STATES.filter((st) => single(st).cliffCount > 0 && single(st).safeExit === null && !single(st).leapIsLowerBound && !expectIncompleteFor(st, "single-2"));
     const splitCells = await page.evaluate((sts) => sts.map((st) => {
       const tr = document.querySelector(`#tbody .hg-row-btn[data-st="${st}"]`).closest("tr");
-      return { st, leap: tr.children[3].textContent.trim(), exit: tr.children[4].textContent.trim(), describedBy: tr.children[4].querySelector("[aria-describedby]")?.getAttribute("aria-describedby") };
+      return { st, leap: tr.children[4].textContent.trim(), exit: tr.children[5].textContent.trim(), describedBy: tr.children[5].querySelector("[aria-describedby]")?.getAttribute("aria-describedby") };
     }), split);
     const note = await page.$eval("#pastAxisNote", (el) => el.textContent);
     check(split.length > 0 && splitCells.every((c) => c.leap === money(single(c.st).leap) && c.exit === "past the axis" && c.describedBy === "pastAxisNote") && /last danger zone/.test(note) && /only when the worst zone/.test(note),
@@ -334,9 +419,10 @@ try {
     let same = body.length === rendered.length;
     for (let i = 0; same && i < body.length; i++) {
       const r = rendered[i], c = body[i];
-      same = c[col("state")] === r[0].replace(/floor$/, "") && num(r[1]) === c[col("biggest_one_step_loss")] && num(r[2]) === c[col("danger_zone_width")]
-        && num(r[3]) === c[col("leap")] && num(r[4]) === c[col("safe_exit")] && num(r[5]) === c[col("cliff_count")] && num(r[6]) === c[col("deferred_cliff_count")]
-        && r[7] === c[col("figures")];
+      same = c[col("state")] === r[0].replace(/floor$/, "") && num(r[1]) === c[col("biggest_one_step_loss")] && num(r[3]) === c[col("danger_zone_width")]
+        && (r[2] === "none" ? c[col("biggest_loss_at")] === "" : r[2].startsWith(`${money(Number(c[col("biggest_loss_at")]))} → `))
+        && num(r[4]) === c[col("leap")] && num(r[5]) === c[col("safe_exit")] && num(r[6]) === c[col("cliff_count")] && num(r[7]) === c[col("deferred_cliff_count")]
+        && r[8].startsWith(c[col("figures")]) && (c[col("childcare_subsidy_footing")] === "added by HotGap") === r[8].endsWith("child-care subsidy added by HotGap");
       if (!same) console.log("     mismatch at row", i, r, c);
     }
     check(same, `the CSV's ${body.length} rows equal the rendered table's ${rendered.length} rows, cell for cell`, download.suggestedFilename());
@@ -356,6 +442,13 @@ try {
     check(dcRow && dcRow.length === head.length && dcRow[col("state_name")] === STATE_NAME.DC && dcRow[col("source")] === "HotGap/PolicyEngine", "the DC row reads whole through an independent RFC 4180 parser, its source the one constant (N8)", { name: dcRow?.[col("state_name")], source: dcRow?.[col("source")] });
     const stepCols = body.every((c) => { const m = summary.states[c[col("state")]]["married-dual-2"]; return c[col("biggest_loss_at")] === (m.cliffCount === 0 ? "" : String(m.biggestLossAt)) && c[col("biggest_loss_programs")] === m.biggestLossPrograms.map((id) => PROGRAM_NAME[id]).join("; "); });
     check(stepCols, "every CSV row carries the worst step's earnings and programs from the file (B3)");
+    /* The child-care subsidy's footing on every row and in the Figures cell where HotGap added it (rerun S4): Ohio and Texas read on their footing without a click. */
+    const footing = (st) => (summary.coverage[st].corrections.childcareSubsidy.source === "added by HotGap" ? "added by HotGap" : "in PolicyEngine's net income");
+    const footingCol = body.every((c) => c[col("childcare_subsidy_footing")] === footing(c[col("state")]));
+    const figuresCells = await page.evaluate(() => Object.fromEntries(["OH", "TX"].map((st) => [st, document.querySelector(`#tbody .hg-row-btn[data-st="${st}"]`).closest("tr").lastElementChild.textContent])));
+    check(footingCol && head.includes("childcare_subsidy_footing") && footing("OH") !== footing("TX")
+      && (figuresCells.TX.endsWith("child-care subsidy added by HotGap")) === (footing("TX") === "added by HotGap") && (figuresCells.OH.endsWith("child-care subsidy added by HotGap")) === (footing("OH") === "added by HotGap"),
+      "every CSV row carries childcare_subsidy_footing from the coverage record, and the Figures cell says so where HotGap added it (rerun S4)", { OH: [footing("OH"), figuresCells.OH], TX: [footing("TX"), figuresCells.TX] });
 
     /* The incomplete rows carry their caveat in their own cells (S5), one bar means selection (S7), and the flag is on screen at any width (S10). */
     const incompleteRows = STATES.filter((st) => expectIncompleteFor(st, "married-dual-2"));
@@ -368,8 +461,8 @@ try {
         mark: mark && { text: mark.textContent, visible: getComputedStyle(mark).display !== "none", right: mark.getBoundingClientRect().right, edge: scroller.getBoundingClientRect().right, scrollLeft: scroller.scrollLeft } };
     }), incompleteRows);
     const programsOf = (st) => summary.coverage[st].unmodeled.filter((u) => u.scope !== "all").map((u) => u.program).join(" and ");
-    check(cells.every((c) => c.cells.slice(0, 6).every((v) => v === "none" || /\(floor\)$/.test(v) || v === "past the axis") && c.cells[6] === `floor: ${programsOf(c.st)} not modelled`),
-      "an incomplete row's cells carry the floor caveat and the Figures cell names the program (S5)", cells.map((c) => c.cells[6]));
+    check(cells.every((c) => [0, 2, 3, 4, 5, 6].every((i) => c.cells[i] === "none" || /\(floor\)$/.test(c.cells[i]) || c.cells[i] === "past the axis") && c.cells[7].startsWith(`floor: ${programsOf(c.st)} not modelled`)),
+      "an incomplete row's cells carry the floor caveat and the Figures cell names the program (S5)", cells.map((c) => c.cells[7]));
     /* A left bar is a positive inset x-offset (the sticky column's right-edge rule is a negative one); the only one allowed is the selection's, in ink, on the selected row. */
     const leftBar = (shadow) => shadow.split("),").map((part) => part.match(/^\s*(rgba?\([^)]*\)) (-?\d+)px -?\d+px -?\d+px -?\d+px inset/)).filter((m) => m && Number(m[2]) > 0).map((m) => m[1]);
     check(cells.every((c) => leftBar(c.bar).every((colour) => c.selected && colour === c.ink)), "an incomplete row carries no grey left bar; the only left bar is the selected row's, in ink (S7)", cells.map((c) => [c.st, c.selected, c.bar]));
@@ -377,6 +470,8 @@ try {
     if (width === 390) {
       check(cells.every((c) => c.mark && c.mark.visible && c.mark.text === "floor" && c.mark.scrollLeft === 0 && c.mark.right <= c.mark.edge), "at 390 the incomplete rows' amber mark sits in the state cell, on screen without a swipe (S10)", cells.map((c) => c.mark));
       check(scrollerState.over && scrollerState.gradients === 4 && scrollerState.more === "Swipe for more →", "at 390 the table overflows its scroller, the system's edge fade is drawn and the page's swipe words are set (S10)", scrollerState);
+      const hint = await page.$eval("#scroller", (el) => { const cs = getComputedStyle(el, "::before"); return { content: cs.content, before: getComputedStyle(el, "::after").content, top: el.getBoundingClientRect().top, table: el.querySelector("table").getBoundingClientRect().top }; });
+      check(hint.content === '"Swipe for more →"' && hint.before === "none" && hint.table > hint.top, "at 390 the swipe words are drawn at the top of the scroller, above the table, not after fifty rows (rerun N6)", hint);
       const stickyState = await page.$eval("#tbody th", (el) => ({ position: getComputedStyle(el).position, left: getComputedStyle(el).left }));
       check(stickyState.position === "sticky" && stickyState.left === "0px", "at 390 the state column is sticky (S10)", stickyState);
     } else {
@@ -411,8 +506,40 @@ try {
       before: document.querySelector("#lowerGroup").compareDocumentPosition(document.querySelector("#rank")) & Node.DOCUMENT_POSITION_FOLLOWING,
       first: document.querySelector("#rank .hg-row-btn")?.dataset.st,
     }));
-    check(strip.lower.map(([st]) => st).sort().join() === leapLower.sort().join() && strip.lower.every(([st, v]) => v === `≥ ${money(dual(st).leap)}`) && strip.title === `At least this much — the exact size runs past the axis (${leapLower.length})` && !strip.hidden && strip.before,
+    check(strip.lower.map(([st]) => st).sort().join() === leapLower.sort().join() && strip.lower.every(([st, v]) => v === `≥ ${money(dual(st).leap)}`) && strip.title === `Ranks 1–${leapLower.length} shared — at least this much; the exact size runs past the axis (${leapLower.length})` && !strip.hidden && strip.before,
       "for the leap, the lower-bound states lead the strip under their own heading with a ≥ figure, before the largest exact leap (B1)", strip);
+    /* The past-the-axis mark is a dashed square, the tile's own, not a dashed circle (rerun N2). */
+    const pastMark = await page.$eval("#rankLower .past", (el) => ({ radius: getComputedStyle(el).borderRadius, outline: getComputedStyle(el).outlineStyle }));
+    check(pastMark.radius === "0px" && pastMark.outline === "dashed", "the past-the-axis mark in the strip is a dashed square (rerun N2)", pastMark);
+    await page.selectOption("#metric", "safeExit");
+    /* The reviewer's case (rerun B1): 1 adult, 3 children on the leap — the lower-bound group shares ranks 1–n, its largest floor first, the largest measured leap takes rank n+1, and the note names both. */
+    const rankCase = async (archId, key) => {
+      await page.selectOption("#arch", archId);
+      await page.selectOption("#metric", key);
+      const m = (st) => summary.states[st][archId];
+      const comp = STATES.filter((st) => m(st).cliffCount > 0 && !expectIncompleteFor(st, archId));
+      const lower = comp.filter((st) => (key === "leap" ? m(st).leapIsLowerBound : m(st).safeExit === null || m(st).leapIsLowerBound));
+      const measured = comp.filter((st) => !lower.includes(st)).sort((a, b) => m(b)[key] - m(a)[key]);
+      const got = await page.evaluate(() => ({
+        lower: [...document.querySelectorAll("#rankLower .hg-row-btn")].map((el) => [el.dataset.st, el.querySelector(".n").textContent, el.querySelector(".v").textContent]),
+        first: (() => { const el = document.querySelector("#rank .hg-row-btn"); return [el.dataset.st, el.querySelector(".n").textContent, el.querySelector(".v").textContent]; })(),
+        title: document.querySelector("#lowerTitle").textContent, note: document.querySelector("#lowerNote").textContent,
+      }));
+      return { m, lower, measured, got };
+    };
+    const c3 = await rankCase("single-3", "leap");
+    const topFloor = c3.lower.slice().sort((a, b) => c3.m(b).leap - c3.m(a).leap)[0];
+    check(c3.lower.length > 1 && c3.got.lower[0][0] === topFloor && c3.got.lower.every(([, n]) => n === `1–${c3.lower.length}`) && c3.got.first[0] === c3.measured[0] && c3.got.first[1] === `${c3.lower.length + 1}.`
+      && c3.got.title.startsWith(`Ranks 1–${c3.lower.length} shared`)
+      && c3.got.note.includes(`The largest measured leap is ${STATE_NAME[c3.measured[0]]}'s ${money(c3.m(c3.measured[0]).leap)}; ${STATE_NAME[topFloor]}'s is ${c3.m(topFloor).leap >= c3.m(c3.measured[0]).leap ? "at least as large" : `at least ${money(c3.m(topFloor).leap)} and may be larger`}.`),
+      `1 adult, 3 children on the leap: the ${c3.lower.length} lower-bound states share ranks 1–${c3.lower.length}, ${topFloor}'s floor first, ${c3.measured[0]} takes rank ${c3.lower.length + 1}, and the note says which is at least as large (rerun B1)`,
+      { first: c3.got.lower[0], next: c3.got.first, note: c3.got.note });
+    const c2 = await rankCase("single-2", "safeExit");
+    check(c2.lower.length > 0 && c2.got.lower.every(([, n]) => n === (c2.lower.length === 1 ? "1." : `1–${c2.lower.length}`)) && c2.got.lower.every(([, , v]) => v === "past the axis")
+      && c2.got.first[0] === c2.measured[0] && c2.got.first[1] === `${c2.lower.length + 1}.` && c2.got.note.includes(`The highest measured safe exit is ${STATE_NAME[c2.measured[0]]}'s ${money(c2.m(c2.measured[0]).safeExit)}.`),
+      `1 adult, 2 children on safe exit: the ${c2.lower.length} past-the-axis states share ranks 1–${c2.lower.length} and ${c2.measured[0]} takes rank ${c2.lower.length + 1}, the note naming it as the highest measured (rerun B1)`,
+      { lower: c2.got.lower, next: c2.got.first, note: c2.got.note });
+    await page.selectOption("#arch", "married-dual-2");
     await page.selectOption("#metric", "safeExit");
 
     /* Screenshots beside the audit's, at the audit's views. */

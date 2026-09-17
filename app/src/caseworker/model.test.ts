@@ -29,7 +29,10 @@ describe("figures, through Intl in the locale", () => {
     expect(fmt.list(["SNAP"])).toBe("SNAP");
     expect(fmt.list(["SNAP", "WIC"])).toBe("SNAP and WIC");
     expect(fmt.list(["SNAP", "WIC", "TANF"])).toBe("SNAP, WIC, and TANF");
-    expect(fmt.date("2026-09-16T16:13:51.445Z")).toBe("Sep 16, 2026");
+    // The reader's own zone (the shell's dateWords): 01:16 UTC on the 17th is the 16th in New York, and the 17th only in UTC.
+    expect(fmt.date("2026-09-16T16:13:51.445Z", "America/New_York")).toBe("Sep 16, 2026");
+    expect(fmt.date("2026-09-17T01:16:58.798Z", "America/New_York")).toBe("Sep 16, 2026");
+    expect(fmt.date("2026-09-17T01:16:58.798Z", "UTC")).toBe("Sep 17, 2026");
   });
 });
 

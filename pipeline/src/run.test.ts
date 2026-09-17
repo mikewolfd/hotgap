@@ -146,6 +146,7 @@ describe("runPipeline", () => {
         safeExit: 91000,
         leap: 7000,
         leapIsLowerBound: false,
+        axisTop: 150000, // the fake fetch answers at the archetype's own axis (fixtureFor(axis.count, axis.max))
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
@@ -200,12 +201,14 @@ describe("runFromData", () => {
     return results;
   }
 
-  it("reconstructs results from stored state-file JSON and rebuilds only summary.json", async () => {
+  it("reconstructs results from stored state-file JSON and rebuilds only summary.json, stamped with the newest sweep read", async () => {
     const states = ["WY", "VT"];
     const results = syntheticResults(states);
     const storedStateFiles: Record<string, string> = {};
+    // Two sweeps on disk (a partial re-sweep leaves a mix): the summary's stamp is the newer one, never the rebuild's clock.
+    const stamps: Record<string, string> = { WY: "2026-09-16T20:15:49.275Z", VT: "2026-09-17T00:25:59.552Z" };
     for (const state of states) {
-      storedStateFiles[state] = JSON.stringify(buildStateFile("orig-generated-ts", state, results));
+      storedStateFiles[state] = JSON.stringify(buildStateFile(stamps[state], state, results));
     }
     const readStateFile = async (state: string): Promise<string> => {
       if (!(state in storedStateFiles)) throw new Error(`no on-disk fixture for ${state}`);
@@ -222,9 +225,9 @@ describe("runFromData", () => {
 
     // Exact identity: the sweep rounds each curve once at ingestion, so the
     // stored points ARE the points the summary was built from, and a summary
-    // rebuilt from disk equals one built in memory (ignoring the fresh stamp).
-    const expected = buildSummary("IGNORED", states, results);
-    expect({ ...result.summary, generated: "IGNORED" }).toEqual(expected);
+    // rebuilt from disk equals one built in memory, stamped by the newest file.
+    const expected = buildSummary(stamps.VT, states, results);
+    expect(result.summary).toEqual(expected);
   });
 
   it("reports gaps (not a throw) when a requested state's file can't be read, and returns no summary", async () => {

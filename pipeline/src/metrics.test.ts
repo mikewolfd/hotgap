@@ -30,6 +30,8 @@ describe("stateMetrics on the committed CA fixture", () => {
     // end at $84k, the immediate cliff, not the deferred Head Start one at $30k.
     expect(m.biggestLossAt).toBe(84000);
     expect(m.biggestLossPrograms).toEqual(["aca"]);
+    // The axis the cell was swept to, so "past the axis" can be said in dollars (places rerun S6, N9).
+    expect(m.axisTop).toBe(100000);
   });
 });
 
@@ -44,13 +46,14 @@ describe("stateMetrics on the committed Ohio file", () => {
     expect(m.biggestLoss).toBe(12062);
     expect(m.biggestLossAt).toBe(38000);
     expect(m.biggestLossPrograms).toEqual(["childcare"]);
+    expect(m.axisTop).toBe(file.archetypes["single-2"].points.at(-1)!.earnings);
   });
 });
 
 describe("stateMetrics on synthetic curves", () => {
   it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
-    expect(stateMetrics(evaluated(pts))).toEqual({ biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false });
+    expect(stateMetrics(evaluated(pts))).toEqual({ biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000 });
   });
 
   it("measures dangerWidth to the axis max when the zone never recovers, and reports safeExit null", () => {
@@ -63,5 +66,6 @@ describe("stateMetrics on synthetic curves", () => {
     expect(m.dangerWidth).toBe(50000); // from the $50k peak to the $100k axis end
     expect(m.safeExit).toBeNull(); // the zone never recovers within the sweep
     expect(m.leap).toBe(50000); // axisMax - zoneStart = 100000 - 50000
+    expect(m.axisTop).toBe(100000);
   });
 });

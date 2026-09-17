@@ -145,6 +145,31 @@ Would soften or check: "about $12,000 behind" — the page says net income after
 
 ## Findings
 
+**Resolution pass, 2026-09-16.** Every finding below carries a *Resolved*
+(or *Left*) line naming the commit and the evidence; the re-rendered
+evidence is under `design/review/places-context-blind-rerun/after/` (the
+originals' names where the content corresponds, plus
+`13-single-3-leap-ranked.png`, `03-measure-safeExit-ranked.png`,
+`12-after-details-link-laptop.png`, `14-definitions-and-table.png`,
+`10-method-axis.png`, `08-download-sample.csv`, and `measurements.txt`,
+the proof's own lines for every finding). Commits on the branch: core and
+pipeline `9b651bd` (the axis top per cell; a `--from-data` rebuild keeps
+the sweep's stamp), the shared date helper `7436a89`, the page `8719aec`,
+the proof `137b1c2`. Proofs on the final tree, through the project
+runners: `npm run typecheck` clean, `npx vitest run` 549 passed, `cd app
+&& npx vite build` clean, `app/e2e/places.mjs` 179 checks passing (136
+before), the PDF inspection included. Every number the page prints is
+read from `summary.json` or the coverage block.
+
+One finding the reviewer could not have made from the page: the measure
+labelled "Width of the worst danger zone" is every zone's width added
+together (`pipeline/src/metrics.ts` sums `dangerZones`; the widest zone's
+width is the leap, and in 49 of 50 states the total exceeds it). "Colorado's
+worst danger zone spans $90,000" would have been wrong. It is "Total width
+of the danger zones" everywhere now (`8719aec`; the proof reads the file to
+show why); the CSV header `danger_zone_width` is a machine contract and
+stays.
+
 ### B — wrong conclusion or task blocked
 
 **B1. The ranked "1." under The leap and Safe exit is a claim the page cannot make, and it appears on the same screen as the counter-evidence.**
@@ -152,10 +177,41 @@ Where: `03-measure-leap-a.png` — "At least this much — the exact size runs p
 A deadline reader answers "which state is worst?" with the "1." row. Nothing says the rank is among measured states only; the caption's "over the 48 states with a comparable figure" is about bins.
 Needed: the "Ranked" heading to say what is ranked — "Ranked, 48 of 51 (2 unranked above: exact size unknown)"; and when any "≥" lower bound reaches the top measured value, a one-line note in the ranked block: "CO's leap is at least as large as WI's; the largest cannot be named." In the table, "≥" and "past the axis" grouped *after* the measured rows, or the group label made explicit: "Unranked — lower bounds only".
 
+*Resolved* (`8719aec`): the lower-bound group shares ranks 1–n the way a
+tie shares one rank — "1–12 CO ≥ $129,000 … 1–12 NH ≥ $42,000", then
+"13. WI $129,000" — sorted by its floor on the leap so the strongest claim
+leads, under the heading "Ranks 1–12 shared — at least this much; the exact
+size runs past the axis (12)", with a note beneath: "Any of these could need
+the largest raise — the axis ends before the worst zone closes — so they
+share the top ranks the way a tie does. The largest measured leap is
+Wisconsin's $129,000; Colorado's is at least as large." On safe exit: "Ranks
+1–3 shared — past the top of the axis …", "4. VT $148,000", and "The highest
+measured safe exit is Vermont's $148,000." The sorted table's heading row is
+the same sentence (`after/13-single-3-leap.png`,
+`after/13-single-3-leap-ranked.png`, `after/03-measure-safeExit-ranked.png`,
+`after/07-sort-leap-top.png`; proof lines "rerun B1" on `single-3`/leap and
+`single-2`/safe exit, the worst state named from the file).
+
 **B2. The state sentence and the Corrections section describe the largest one-step loss no matter which Measure is selected, under a map titled for the other measure.**
 Where: `05-safeExit-NE.png` — map titled "Safe exit, by state … Earnings above which no danger zone remains", tile NE dashed "past the axis", and under it: "Nebraska — $15,336 lost at $49,000 → $50,000, when CCDF child care subsidy ends." `05-leap-MD.png` — "The leap, by state" with Maryland's "≥ $53,000" never put into words; the sentence is "$33,587 lost at $97,000 → $98,000". `05-safeExit-OH.png` — under "Safe exit, by state", "Ohio — $12,062 lost at $38,000 → $39,000".
 A reader who chose Safe exit and clicked Ohio can print "Ohio families are clear above $39,000"; Ohio's safe exit is $110,000. The tile's hover title *does* follow the measure ("Ohio: $110,000"), so the page knows the number; the sentence does not carry it.
 Needed: the sentence to lead with the selected measure and then the headline loss — "Ohio — safe exit $110,000: earnings above which no danger zone remains. Worst step: $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends." For a dashed state: "Nebraska — safe exit past the top of the axis: the last danger zone had not closed by $X. Worst step: …". For a "≥" state: "Maryland — leap at least $53,000 (the worst zone runs off the axis)."
+
+*Resolved* (`8719aec`): the readout and the block lead with the selected
+measure's own sentence and put the worst step second — "Ohio — no danger
+zone left above $110,000. / Worst step: $12,062 lost at $38,000 → $39,000,
+when CCDF child care subsidy ends. Renter, Franklin County."; "Ohio — a
+raise of $47,000 clears the worst danger zone."; "Ohio — 10 cliffs on this
+household's curve, none deferred."; "Ohio — $57,000 of earnings lie inside
+danger zones."; "Ohio — no cliff deferred to a later renewal; all 10 land
+with the raise." A bounded figure says past what, in dollars from the
+cell's own axis: "Nebraska — no safe exit found: the last danger zone had
+not closed by $150,000, the top of the axis."; "Maryland — a raise of at
+least $53,000 to clear the worst danger zone, which runs past $150,000, the
+top of the axis." (`after/05-safeExit-OH.png`, `after/05-safeExit-NE.png`,
+`after/05-leap-MD.png`, `after/05-cliffCount-OH.png`,
+`after/05-dangerWidth-OH.png`; proof lines "rerun B2", one per measure on
+Ohio, every figure the file's).
 
 ### S — had to guess, guessed right eventually
 
@@ -164,50 +220,163 @@ Where: `12-after-click-OH-no-rescroll-laptop.png` (scrollY 0 → 1201), `12-afte
 I thought I had left the page; comparing five states meant five scroll-backs. The information was correct, so I guessed the jump was on purpose.
 Needed: no scroll on select; the outline plus the sentence under the map are the feedback; "Details below ↓" remains the opt-in jump. If focus must move for screen readers, move it to the sentence under the map, not the H3 a screen away.
 
+*Resolved* (`8719aec`): a tile or row click moves nothing — the readout
+beside the map is the answer, focus stays on the control, `aria-current`
+and the block's heading still update; the readout's "Details below ↓" is
+the opt-in jump and scrolls the block into view with focus on its heading.
+Measured: laptop scrollY 338 → 338 and phone 506 → 506 across the click,
+focus on the OH tile both times (`after/12-after-click-OH-no-rescroll-
+laptop.png`, `after/12-after-click-OH-no-rescroll-phone.png`,
+`after/12-after-details-link-laptop.png`; proof lines "rerun S1", which
+measure the control's viewport position across the click rather than
+scrollY, since Playwright's scroll-into-view and the browser's scroll
+anchoring both move that).
+
 **S2. "Weekly run of Sep 17, 2026" on Sep 16.**
 Where: caption under the map, every state's source line, the footer, the "Cite as" line, the CSV filename. The CSV's `sweep_generated = 2026-09-17T01:16:58.798Z` shows it is a UTC date; the page never says so. A story filed Sep 16 citing a Sep 17 run will be bounced by an editor.
 Needed: the date in the reader's local date, or "Sep 17, 2026 (UTC)", or the full timestamp in the cite line.
 
+*Resolved* (`7436a89`, `9b651bd`): the date is the reader's own —
+`dateWords` formats through `Intl` with no zone named, so 00:25 UTC on the
+17th prints "Sep 16, 2026" to a reader in the United States, on the caption,
+the state's source line, the table caption, the footer and the Cite line
+(the caseworker page's own UTC copy of the formatter is deleted for the
+shared one; the citizen page already shared it). The stamp itself was also
+wrong in kind: Plan 8's `--from-data` rebuild had stamped the summary with
+the rebuild's clock (01:16 UTC), not a sweep's; `runFromData` now keeps the
+newest state file's stamp, and the summary carries the NJ/WA resweep's own
+instant, 2026-09-17T00:25:59Z. The CSV's file name keeps the stamp's ISO
+date (UTC) as a machine contract; its `sweep_generated` column carries the
+instant. (Proof line "rerun S2": the contexts open in America/New_York, and
+every run date on the page is that zone's date and not the UTC one, which
+differs on this run; `caseworker/model.test.ts` pins the instant in both
+zones.)
+
 **S3. "The leap", "Safe exit" and "Deferred" are undefined near the table and in the methodology; the only plain definitions are inside the Measure dropdown's option text, which the closed control truncates.**
 Where: table headers "The leap | Safe exit | Cliffs | Deferred | Figures" with no tooltips; "Past the axis is not a number" box uses "safe exit" and "the leap" without defining them; `14-measure-dropdown-truncated-zoom.png` ("…clear the worst danger zo"). I guessed "leap = raise needed to jump the gap" and "safe exit = income at which you're clear"; the map subtitle confirmed once each was selected.
 Needed: a one-line definition under each table header (or a title on the `th`), and the same two lines in "How these numbers were made". Short option labels ("The leap ($)") with the definition as the map subtitle, so the control is not the glossary.
+
+*Resolved* (`8719aec`): a definitions list sits above the table, in column
+order — the six measures' own sentences (the same ones the map subtitle
+shows), the step's and the flag's — and each column header's
+`aria-describedby` names its line (`after/14-definitions-and-table.png`;
+proof line "rerun S3"). The Measure options are unchanged: the definition a
+closed control truncates is now on the page beside the table that uses it.
 
 **S4. Whether Ohio's and Texas's figures are on the same footing is only discoverable by clicking each state.**
 Where: table rows OH and TX both read "complete" in Figures; only "Corrections applied in Ohio (0)" vs "Corrections applied in Texas (3)" and "Child-care subsidy: inside PolicyEngine's net income for Ohio" vs "added by HotGap for Texas" tell the difference — and Texas's headline cliff is the benefit HotGap added. The CSV already has `corrections_applied`.
 I guessed corrections *make* them comparable; the bullet "Where a state's figure needed a correction on top of PolicyEngine … it is listed under the map" supports that.
 Needed: a "Corrections" count in the table (0, 3) or a small chip beside the state, so the footing is visible without 51 clicks.
 
+*Resolved* (`8719aec`): every CSV row carries `childcare_subsidy_footing`
+("in PolicyEngine's net income" / "added by HotGap") from the coverage
+record, and the table's Figures cell says "child-care subsidy added by
+HotGap" on its own line where HotGap added it — Ohio reads "complete",
+Texas "complete / child-care subsidy added by HotGap" — so the two compare
+without a click (`after/08-download-sample.csv`,
+`after/14-definitions-and-table.png`; proof line "rerun S4";
+`csv.test.ts` pins OH and TX).
+
 **S5. The income at which the loss happens is missing from the ranked list and the table.**
 Where: "1. MD $33,587" and "32. OH $12,062" with nothing else; only the clicked sentence gives "$97,000 → $98,000" and "$38,000 → $39,000". For a local story the income is the other half of the number. The CSV has `biggest_loss_at`.
 Needed: an "At earnings of" column in the table and a second small line in each ranked row ("at $97,000").
+
+*Resolved* (`8719aec`): each ranked row on the one-step loss says where
+its step begins — "32. OH $12,062 at $38,000", "1. MD $33,587 at $97,000" —
+in the row's accessible name too, and the table gains a "Worst step" column
+("$38,000 → $39,000") beside the loss (`after/13-single-3-leap.png` for the
+strip's shape, `after/14-definitions-and-table.png`; proof line "rerun
+S5").
 
 **S6. New Mexico's "no cliff found" carries no reason.**
 Where: "New Mexico — no cliff found for this household. Renter, Bernalillo County." then "Corrections applied in New Mexico (2)" and "Child-care price: national median price". The most newsworthy tile on the map is the one the page explains least; I guessed a state child-care policy and cannot confirm it from the page.
 Needed: one sentence under the map for a no-cliff state saying what the model found instead ("No step down of $200 or more; the largest step down was $X at $Y" and, if known, the program that does not end).
 
+*Resolved* (`8719aec`, `9b651bd`): "New Mexico — no cliff found: no $1,000
+step of earnings on this household's curve cut net income by $200 or more,
+up to $150,000. Renter, Bernalillo County." — the floor from core, the step
+and the axis top from the file (`StateMetrics.axisTop`, new), never a
+guessed cause; a state whose only cliffs are deferred would say so instead
+(`after/04-click-NM-a.png`; proof line "rerun S6").
+
 ### N — friction
 
 **N1.** "Figures" column shows "complete" for all 51 rows in all 11 households; the footnote promises "rows it cannot complete … are flagged in the last column", but no other value ever appears, so the column reads as noise and the flag vocabulary is unlearnable. Needed: hide the column when every row is complete, or put the flag on the state cell.
 
+*Resolved* in effect (`8719aec`): the column now carries a second value
+on 28 of 51 rows ("child-care subsidy added by HotGap", S4) and its
+definition sits above the table (S3), so the vocabulary is on the page. The
+"floor" value still appears only when the data hatches a state.
+
 **N2.** The glyph in "past the axis" / "≥" rows (`06-past-axis-rows-zoom.png`) looks like a loading spinner; I waited for it. Needed: a dashed-outline dot to match the dashed tile, or no glyph.
+
+*Resolved* (`8719aec`): the mark is the tile's own — a dashed-edged
+square on the sunk ground at the far end of the track
+(`after/06-past-axis-rows-zoom.png`; proof line "rerun N2").
 
 **N3.** Measure and Table order are independent, and neither label says so; changing Measure to "Safe exit" leaves the table A–Z. Needed: "Table order" default "Same as the map" or a note "(the map's measure is set above)".
 
+*Resolved* (`8719aec`): one line under the order control — "Orders this
+table only; the map and the ranking follow the Measure above." (proof line
+"rerun N3").
+
 **N4.** `model_endpoint = 45.55.61.191.sslip.io` in the CSV; it reads as a developer's IP. Needed: a named host or drop the column from the public file. The CSV also lacks the page's "Cite as" line.
+
+*Left*: `model_endpoint` is the provenance, and a hostname for the engine
+is an ops decision (a domain), per the plan; the CSV carries `model_label`
+beside it. The Cite line stays on the page; the CSV's `source`, `model_*`
+and `sweep_generated` columns are enough to reconstruct one.
 
 **N5.** No navigation: "HotGap" at the top is not a link, there is no per-state page and no way to see "that state's curve" that the headline paragraph invokes. Needed: the state sentence to link to the curve for that state and household, if such a page exists.
 
+*Left*: the caseworker page is the curve (plan: "A per-state curve on
+this page … the caseworker page is the curve"); a link from the readout to
+it is the next plan's call, not a one-move fix here.
+
 **N6.** Phone table: The leap, Safe exit, Cliffs, Deferred and Figures are off-screen with no affordance that the table continues (`11-phone-table-unswiped.png`); the intro line above the table scrolls with the swipe. Needed: a "swipe for 5 more columns →" hint or a fade at the right edge; the intro line outside the scroll container.
+
+*Resolved* in its one-move part (`8719aec`, `design/tokens.css`): the
+"Swipe for more →" words are drawn at the top of the scroller, where a
+reader meets the table, not after fifty-one rows
+(`after/11-phone-table-unswiped.png`; proof line "rerun N6"). The intro line
+does not move with the swipe — it is sticky, and the left-edge fade
+overlapping it is what read as movement
+(`after/11-phone-table-swiped-end.png`).
 
 **N7.** Texas's third correction, "Premium tax credit — coverage gap", has no chip while the other two say "overridden" / "added by HotGap"; the CSV calls it "applied". Needed: the same chip vocabulary on all three.
 
+*Resolved* (`8719aec`): the coverage-gap correction carries the chip
+"applied", the CSV's own word, so all three Texas rows have one
+(`after/04-click-TX-b.png`; proof line "rerun N7").
+
 **N8.** "Ranked" under "Deferred cliffs" gives 14 states rank "1." and 36 rank "15." — a ranking of yes/no. Needed: for a 0/1 measure, two labelled groups ("Has a deferred cliff (14)", "None (36)").
+
+*Left*: a competition rank is honest for a 0/1 measure (ties share a
+rank), and the readout now says what the count means for the state ("no
+cliff deferred to a later renewal; all 10 land with the raise"). Two
+labelled groups is a chart-form decision for the design owner.
 
 **N9.** The axis top is never stated in dollars, so "past the axis" cannot be translated into "above $X" for a reader; the methodology gives it only as "400% of the poverty guideline … plus $40,000 of room to recover". Needed: the axis top as a number in the caption ("axis runs $0–$X").
 
+*Resolved* (`8719aec`, `9b651bd`): the method's axis bullet is followed by
+the household's own — "For 1 adult, 2 children (3 and 7) the axis runs from
+$0 to $150,000 ($175,000 in Alaska, $165,000 in Hawaii); a figure that runs
+past the axis runs past that." — and every past-the-axis sentence in the
+readout names the state's own top in dollars (`after/10-method-axis.png`;
+proof line "rerun N9").
+
 **N10.** Every household is a renter; a cold reader learns that only from "Renter, Franklin County" after a click, or from the third methodology bullet. Needed: "renting in the most populous county" in the map subtitle.
 
+*Resolved* (`8719aec`): the map's household line reads "1 adult, 2
+children (3 and 7), renting in the state's most populous county."
+(`after/01-laptop-above-fold.png`; proof line "rerun N10").
+
 **N11.** "Fifty-one sets of rules, eleven household shapes, one earnings scale" is the first sentence and had to be decoded (51 = 50 + DC; eleven = the dropdown). Needed: "Fifty states and DC, eleven household shapes…".
+
+*Resolved* (`8719aec`): "Fifty states and the District of Columbia, eleven
+household shapes, one earnings scale — …", the count of states and the
+presence of DC both read from the file (`after/01-laptop-above-fold.png`;
+proof line "rerun N11").
 
 ---
 
@@ -224,4 +393,4 @@ Needed: one sentence under the map for a no-cliff state saying what the model fo
 - Keyboard works on the map: arrows move between tiles, Enter selects (verified OH → PA).
 - Phone: no horizontal page scroll, the map stays legible at 28px tiles, and the State column is sticky while the table swipes.
 
-**Counts:** B 2 · S 6 · N 11.
+**Counts:** B 2 · S 6 · N 11. **Resolution pass:** B 2 of 2, S 6 of 6, N 8 of 11 resolved (N1 in effect, N6 in its one-move part); N4, N5 and N8 left, each with why.

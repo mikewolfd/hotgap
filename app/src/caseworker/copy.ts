@@ -6,13 +6,12 @@
 // from lib/programs.ts (M3) and state names from core. Numbers, money and
 // lists go through Intl with `locale`, the one place it is named.
 import type { PayUnit, ProgramId } from "@hotgap/core";
-import { money as usd, reachWord, unitPhrase } from "../lib/format.js";
+import { dateWords, money as usd, reachWord, unitPhrase } from "../lib/format.js";
 import { programName, programPhrase } from "../lib/programs.js";
 
 export const locale = "en-US";
 
 const listFormat = new Intl.ListFormat(locale, { type: "conjunction" });
-const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" });
 const ordinalRules = new Intl.PluralRules(locale, { type: "ordinal" });
 const ORDINAL: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
 
@@ -27,8 +26,8 @@ export const fmt = {
   ordinal: (n: number): string => `${n}${ORDINAL[ordinalRules.select(n)]}`,
   /** "a", "a and b", "a, b, and c". */
   list: (xs: string[]): string => listFormat.format(xs),
-  /** The sweep stamp as a date. */
-  date: (iso: string): string => dateFormat.format(new Date(iso)),
+  /** The sweep stamp as a date, in the reader's own zone (the shell's helper). */
+  date: dateWords,
   /** "$38,000 a year", "$18.50 an hour". */
   pay: (amount: number, unit: PayUnit): string => `${unit === "hour" ? `$${amount.toFixed(2)}` : usd(amount)} ${unitPhrase(unit)}`,
   /** A tick: "$0", "$60k". */

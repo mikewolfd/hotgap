@@ -22,5 +22,6 @@ export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
     safeExit: escape.safeExitEarnings,
     leap: escape.leap,
     leapIsLowerBound: escape.leapIsLowerBound,
+    axisTop: axisMax,
   };
 }

@@ -158,6 +158,7 @@ describe("buildSummary", () => {
       safeExit: 91000,
       leap: 7000,
       leapIsLowerBound: false,
+      axisTop: 100000,
     });
   });
 });

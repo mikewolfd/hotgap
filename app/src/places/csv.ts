@@ -14,7 +14,7 @@ import { archLabel, type Archetype, type StateRow } from "./model.js";
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
   "biggest_one_step_loss", "biggest_loss_at", "biggest_loss_programs", "danger_zone_width", "leap", "safe_exit", "cliff_count", "deferred_cliff_count",
-  "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied",
+  "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied", "childcare_subsidy_footing",
   "county_name", "county_fips", "rent_vintage", "county_vintage", "childcare_price_vintage",
   "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
 ] as const;
@@ -32,7 +32,8 @@ export const csvField = (v: unknown): string => {
  * `leap_is_lower_bound` set; the counts are always numbers; `figures`
  * carries the table's own floor wording for an incomplete row (S5); the
  * worst step's earnings and programs ride beside its figure (B3) and the
- * county is named, not only dated (B4).
+ * county is named, not only dated (B4); the child-care subsidy's footing
+ * rides on every row, so two states compare without a click (rerun S4).
  */
 export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): string {
   const label = archLabel(a);
@@ -49,7 +50,8 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       m.cliffCount, m.deferredCliffCount,
       m.leapIsLowerBound, none, r.kind === "shaded", missing.length ? copy.table.floor(missing) : copy.table.complete,
       missing.join("; "),
-      correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? "applied"}`).join("; "),
+      correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? copy.detail.applied}`).join("; "),
+      cov ? (cov.corrections.childcareSubsidy.source === "added by HotGap" ? copy.csv.subsidy.added : copy.csv.subsidy.inNetIncome) : "",
       v?.county.name ?? "", v?.county.fips ?? "",
       v?.rent.vintage ?? "", v?.county.vintage ?? "", v?.childcare.preschool ?? "",
       summary.year, summary.generated, fmt.modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",

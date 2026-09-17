@@ -93,10 +93,15 @@ p { max-width: var(--measure-wide); }
    and WCAG 2.5.8's floor is 24px — and the table keeps the 44px rows. */
 .rank { list-style: none; margin: 0; padding: 0; }
 .rank li { border-bottom: 1px solid var(--rule); }
-/* Four columns: the rank ordinal (N3; empty in the lifted-out groups, where
-   a rank would be a claim), the code, the track, the value. */
-.rank .hg-row-btn { display: grid; grid-template-columns: 1.8rem 2.1rem 1fr 5.4rem; gap: var(--s3);
+/* Four columns: the rank ordinal (N3; a shared range, "1–12", in the
+   lower-bound group, and empty in the other lifted-out groups, where a rank
+   would be a claim), the code, the track, the value. On the one-step loss
+   the value carries the step's earnings beside it ("$12,062 at $38,000",
+   rerun S5), and the value column widens for it. */
+.rank .hg-row-btn { display: grid; grid-template-columns: 2.4rem 2.1rem 1fr 5.4rem; gap: var(--s3);
                     align-items: center; }
+.rank.with-at .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 10.2rem; }
+.rank .at { color: var(--ink-3); font-size: var(--t-micro); white-space: nowrap; }
 @media (min-width: 62rem) { .rank .hg-row-btn { min-height: 26px; } }
 .rank .n { color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: right; grid-column: 1; }
 .rank .st { font-weight: var(--w-semi); grid-column: 2; }
@@ -105,8 +110,11 @@ p { max-width: var(--measure-wide); }
                        height: 2px; background: var(--surface-sunk); }
 .rank .dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px;
              border-radius: 50%; box-shadow: 0 0 0 2px var(--plane); }
-.rank .past { position: absolute; right: 0; top: 2px; width: 10px; height: 10px;
-              border: 2px dashed var(--loss-3); border-radius: 50%; }
+/* The past-the-axis mark is the tile's own: a dashed-edged square on the
+   sunk ground at the far end of the track (a dashed circle read as a
+   spinner, rerun N2). */
+.rank .past { position: absolute; right: 0; top: 2px; width: 10px; height: 10px; box-sizing: border-box;
+              background: var(--surface-sunk); outline: 1px dashed var(--control-edge); outline-offset: -1px; }
 .rank .incomplete-mark { position: absolute; left: 0; right: 0; top: 4px; height: 6px; }
 .rank .v { text-align: right; font-variant-numeric: tabular-nums; }
 /* The selected row: the sunk ground plus the 3px ink bar, the tile's mark in
@@ -114,7 +122,7 @@ p { max-width: var(--measure-wide); }
 .rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
 /* The axis bounds sit above the list, where a reader meets them first (N3). */
 .rank-axis { display: flex; justify-content: space-between; color: var(--ink-3);
-             font-size: var(--t-micro); padding: 0 0 var(--s1) 4.9rem;
+             font-size: var(--t-micro); padding: 0 0 var(--s1) 5.5rem;
              font-variant-numeric: tabular-nums; }
 /* The lifted-out blocks (B4, B1): never the tail of the order. The
    lower-bound block leads it (context-blind B1), under the strip's heading
@@ -124,7 +132,7 @@ p { max-width: var(--measure-wide); }
 .rank-group--lead { margin: 0 0 var(--s4); padding: 0 0 var(--s3); border-top: 0;
                     border-bottom: 2px solid var(--rule-strong); }
 .rank-group h4 { margin: 0 0 var(--s2); }
-.rank-group .rank .hg-row-btn { grid-template-columns: 1.8rem 2.1rem 1fr 8rem; }
+.rank-group .rank .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 8rem; }
 .rank-group p { color: var(--ink-2); font-size: var(--t-micro); margin: var(--s2) 0 0; }
 
 /* CorrectionsApplied (B3) and the state's SourceNote, under the map and
@@ -145,9 +153,23 @@ p { max-width: var(--measure-wide); }
 @media (max-width: 519.98px) { .state .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); } }
 
 /* The order control scopes the table alone, so it sits with the table (S7)
-   and stays the width of its words. */
+   and stays the width of its words; the line under it says so once (N3). */
 .table-order { padding-top: 0; border-bottom: 0; }
-.table-order > div { flex: 0 1 22rem; }
+.table-order > div { flex: 0 1 26rem; }
+.table-order .hg-source { margin: var(--s1) 0 0; }
+/* The column definitions (rerun S3): above the table, the term in ink and
+   its sentence a step lighter. A run-in list on a phone; from 62rem a
+   two-column grid, term beside sentence, so eight lines stay eight lines. */
+.defs { margin: 0 0 var(--s4); font-size: var(--t-small); color: var(--ink-2); max-width: var(--measure-wide); }
+.defs dt { display: inline; font-weight: var(--w-semi); color: var(--ink); }
+.defs dt::after { content: " — "; font-weight: var(--w-reg); color: var(--ink-2); }
+.defs dd { display: inline; margin: 0; }
+.defs dd::after { content: ""; display: block; height: var(--s1); }
+@media (min-width: 62rem) {
+  .defs { display: grid; grid-template-columns: 15rem 1fr; column-gap: var(--s4); row-gap: var(--s1); max-width: none; }
+  .defs dt::after, .defs dd::after { content: none; }
+  .defs dt, .defs dd { display: block; }
+}
 
 .hg-scroll-x table { min-width: 48rem; }
 /* Below 62rem the table scrolls sideways in its own box; from 62rem its
@@ -180,8 +202,10 @@ p { max-width: var(--measure-wide); }
              font-weight: var(--w-med); }
 @media (min-width: 62rem) { .flag-mark { display: none; } }
 /* One line, however narrow the viewport: the table already scrolls, and a
-   wrapped reason made the two incomplete rows 90px tall at 390 (N9). */
+   wrapped reason made the two incomplete rows 90px tall at 390 (N9). The
+   subsidy's footing (rerun S4) is its own second line, a step smaller. */
 .flag { color: var(--ink-2); white-space: nowrap; }
+.flag small { display: block; font-size: var(--t-micro); color: var(--ink-3); }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
 /* A group heading inside the sorted table (B1): the strip's h4, as a row.
    Its words, like the caption's, wrap inside the viewport and stay put while
@@ -205,7 +229,7 @@ p { max-width: var(--measure-wide); }
   }
   /* Paper does not scroll: the state column is a column again, and the swipe hint has nothing to say. */
   .hg-table th:first-child { position: static; box-shadow: none; }
-  .hg-scroll-x[data-more]::after { display: none; }
+  .hg-scroll-x[data-more]::before { display: none; }
   /* The lede and the glossary widen to about 90 characters a line, and an
      empty readout — "select a state" — has nothing to say on paper: together
      they keep the figure, which must not break, on the first page at Letter
@@ -217,9 +241,11 @@ p { max-width: var(--measure-wide); }
   .hg-scroll-x { overflow: visible; }
   .hg-scroll-x table { min-width: 0; font-size: var(--t-micro); }
   .hg-table thead th { position: static; }
-  /* On paper the flag wraps: an unbreakable reason pushed the table past the
-     page's width, and Chromium shrank the whole PDF to fit it. */
-  .flag { white-space: normal; }
+  /* On paper the flag and the column headers wrap: an unbreakable reason,
+     and then nine unbreakable headers, pushed the table past the page's
+     width, and Chromium shrank the whole PDF to fit it (measured at 816px:
+     808px of table in a 784px column with the headers on one line). */
+  .flag, .hg-table thead th.num { white-space: normal; }
   /* The method panel is taller than a page, so avoiding a break inside it
      only moved it to a fresh page behind a stranded heading (measured: a
      page holding one paragraph). Headings stay with what follows instead. */

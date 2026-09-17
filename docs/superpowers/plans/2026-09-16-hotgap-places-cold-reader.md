@@ -59,6 +59,7 @@
 - [x] `app/e2e/places.mjs` gains one check per finding above (the order of lower-bound rows; the subsidy line on OH and TX; the readout text for OH equals the summary's fields; the county name; the phone flag visibility; the Cite line; the glossary sentence), all reading their expected values from `summary.json`, never typed.
 - [x] The design system's visual review (the `frontend-design` skill, B/S/N) on the changed page before merge — the readout is a new element on the surface and must read as one of its own.
 - [ ] **The acceptance test is the review re-run:** a fresh context-blind agent, same eight tasks, same brief, on the redeployed preview — it must be able to write the Ohio lede with the program, the income step and the county, and its B count must be 0. Its S/N list is the next plan's input.
+  - Run once (`design/REVIEW-places-context-blind-rerun-2026-09-16.md`, `d6f43b4`): the lede was writable; B 2, both side effects of decisions above — the lower-bound group leading the strip (B1) left "1." on the largest *measured* state beneath an unranked "≥" row, and the readout (decision 1) described the one-step loss under every measure. Both fixed on the resolution branch (`8719aec`), with S1–S6 and eight N items; the review carries a *Resolved* line per finding. A third run is the owner's call.
 
 ## Order and effort
 

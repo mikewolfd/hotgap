@@ -8,7 +8,7 @@ import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForC
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
-  biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, ...over,
+  biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, axisTop: 150000, ...over,
 });
 const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({
@@ -67,7 +67,9 @@ describe("counts in words", () => {
     expect(count(ARCHETYPES.length)).toBe("eleven");
     expect(capitalize(count(STATE_CODES.length))).toBe("Fifty-one");
     expect([count(0), count(20), count(40), count(99), count(100), count(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
-    expect(copy.lede.counted(STATE_CODES.length, ARCHETYPES.length)).toMatch(/^Fifty-one sets of rules, eleven household shapes, one earnings scale/);
+    // The states counted as a reader counts them (rerun N11): fifty and DC when DC is in the file, a plain count otherwise.
+    expect(copy.lede.counted(STATE_CODES.length, ARCHETYPES.length, true)).toMatch(/^Fifty states and the District of Columbia, eleven household shapes, one earnings scale/);
+    expect(copy.lede.counted(50, ARCHETYPES.length, false)).toMatch(/^Fifty states, eleven household shapes/);
   });
 });
 
@@ -78,6 +80,11 @@ describe("the measures, from copy", () => {
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
     expect(measureByKey("leap")!.option).toContain("worst danger zone");
     expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
+    // dangerWidth is every zone's width added together (pipeline/src/metrics.ts); the widest one's width is the leap.
+    // The label must say "total", never "the worst zone", which is the leap's definition.
+    expect(measureByKey("dangerWidth")!.title).toBe("Total width of the danger zones");
+    expect(measureByKey("dangerWidth")!.describe).toMatch(/added together/);
+    expect(measureByKey("dangerWidth")!.describe).not.toMatch(/widest|worst/);
   });
 });
 
@@ -109,6 +116,18 @@ describe("rowsFor: the four tile states and their precedence", () => {
 });
 
 describe("bins and group", () => {
+  it("orders the lower-bound group by its floor, largest first, so the strongest claim leads (rerun B1)", () => {
+    const leap = measureByKey("leap")!;
+    const three: SummaryJson = { ...fixture, states: { ...fixture.states,
+      HH: { "single-1": metrics({ leapIsLowerBound: true, leap: 90000 }), "married-1": metrics() },
+      II: { "single-1": metrics({ leapIsLowerBound: true, leap: 30000 }), "married-1": metrics() } },
+      coverage: { ...fixture.coverage, HH: coverage(), II: coverage() } };
+    expect(group(rowsFor(three, single1, leap), leap).past.map((r) => [r.st, r.value])).toEqual([["HH", 90000], ["II", 30000], ["EE", 20000]]);
+    // A safe exit past the axis has no floor to sort by: postal order.
+    const exit = measureByKey("safeExit")!;
+    expect(group(rowsFor(three, single1, exit), exit).past.map((r) => r.st)).toEqual(["DD", "EE", "HH", "II"]);
+    expect(tableRows(three, single1, "leap").slice(0, 3).map((r) => r.st)).toEqual(["HH", "II", "EE"]);
+  });
   it("bins over the comparable states only: none and incomplete never set a bound", () => {
     const g = group(rowsFor(fixture, single1, loss), loss);
     expect(g.ranked.map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD"]);
@@ -153,14 +172,60 @@ describe("bins and group", () => {
   });
 });
 
+describe("the sentences, from copy", () => {
+  const R = copy.rank, S = copy.readout;
+  it("a lower-bound group shares ranks 1–n the way a tie shares one rank, and the note names the largest measured figure (rerun B1)", () => {
+    expect(fmt.rankRange(12)).toBe("1–12");
+    expect(fmt.rankRange(1)).toBe("1.");
+    expect(R.lower.leap(12)).toBe("Ranks 1–12 shared — at least this much; the exact size runs past the axis (12)");
+    expect(R.lower.leap(1)).toMatch(/^Rank 1 — /);
+    expect(R.lower.safeExit(3)).toBe("Ranks 1–3 shared — past the top of the axis; no safe exit found on the scale (3)");
+    expect(R.lower.note.leap(12, { state: "Wisconsin", v: "$129,000" }, { state: "Colorado", v: "$129,000", reaches: true }))
+      .toBe("Any of these could need the largest raise — the axis ends before the worst zone closes — so they share the top ranks the way a tie does. The largest measured leap is Wisconsin's $129,000; Colorado's is at least as large.");
+    expect(R.lower.note.leap(2, { state: "Wisconsin", v: "$76,000" }, { state: "New York", v: "$55,000", reaches: false })).toMatch(/New York's is at least \$55,000 and may be larger\.$/);
+    expect(R.lower.note.leap(2, null, { state: "New York", v: "$55,000", reaches: false })).not.toMatch(/measured/);
+    expect(R.lower.note.safeExit(3, { state: "Vermont", v: "$148,000" })).toBe("None of these had closed the last danger zone by the top of the axis, so any could be the highest; they share the top ranks the way a tie does. The highest measured safe exit is Vermont's $148,000.");
+    expect(R.row("32.", "Ohio", "$12,062", "at $38,000")).toBe("32. Ohio: $12,062, at $38,000");
+    expect(R.row("1–12", "Colorado", "≥ $129,000")).toBe("1–12 Colorado: ≥ $129,000");
+  });
+  it("the readout leads with the selected measure in its own sentence, then the worst step (rerun B2), and a no-cliff state says what was found up to the axis (S6)", () => {
+    const M = S.measure;
+    expect(M.safeExit("Ohio", "$110,000")).toBe("Ohio — no danger zone left above $110,000.");
+    expect(M.safeExitPast("Nebraska", "$150,000")).toBe("Nebraska — no safe exit found: the last danger zone had not closed by $150,000, the top of the axis.");
+    expect(M.leap("Ohio", "$47,000")).toBe("Ohio — a raise of $47,000 clears the worst danger zone.");
+    expect(M.leapAtLeast("Maryland", "$53,000", "$150,000")).toBe("Maryland — a raise of at least $53,000 to clear the worst danger zone, which runs past $150,000, the top of the axis.");
+    expect(M.dangerWidth("Ohio", "$57,000")).toBe("Ohio — $57,000 of earnings lie inside danger zones.");
+    expect(M.dangerWidthOpen("Nebraska", "$74,000", "$150,000")).toMatch(/^Nebraska — at least \$74,000 of earnings lie inside danger zones; the last one had not closed by \$150,000/);
+    expect(M.cliffCount("Ohio", 10, 0)).toBe("Ohio — 10 cliffs on this household's curve, none deferred.");
+    expect(M.cliffCount("Colorado", 14, 1)).toBe("Colorado — 14 cliffs on this household's curve, and 1 more deferred to a later renewal.");
+    expect(M.cliffCount("Alabama", 1, 0)).toMatch(/^Alabama — 1 cliff on/);
+    expect(M.deferred("Ohio", 0, 10)).toBe("Ohio — no cliff deferred to a later renewal; all 10 land with the raise.");
+    expect(M.deferred("Colorado", 1, 14)).toBe("Colorado — 1 cliff deferred to a later renewal, on top of 14 that land with the raise.");
+    expect(S.worstStep("$12,062", "$38,000 → $39,000", ["childcare"])).toBe("Worst step: $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends.");
+    expect(S.none("New Mexico", "$1,000", "$200", "$150,000")).toBe("New Mexico — no cliff found: no $1,000 step of earnings on this household's curve cut net income by $200 or more, up to $150,000.");
+    expect(S.noneDeferred("Nowhere", "$1,000", "$200", "$150,000", 1)).toMatch(/no cliff lands with the raise: .* 1 cliff is deferred to a later renewal\.$/);
+  });
+  it("the axis line names the common top and the exceptions in dollars (rerun N9)", () => {
+    expect(copy.method.axis("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))
+      .toBe("For 1 adult, 2 children (3 and 7) the axis runs from $0 to $150,000 ($175,000 in Alaska, $165,000 in Hawaii); a figure that runs past the axis runs past that.");
+    expect(copy.method.axis("h", "$150,000", [])).toBe("For h the axis runs from $0 to $150,000; a figure that runs past the axis runs past that.");
+  });
+});
+
 describe("the committed sweep", () => {
   const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
   const single2 = summary.archetypes.find((a) => a.id === "single-2")!;
-  it("for the leap, the lower-bound states precede the largest exact leap (B1); for one-step loss the order is the ranking", () => {
+  it("for the leap, the lower-bound states precede the largest exact leap (B1), the largest floor first; for one-step loss the order is the ranking", () => {
     const leap = tableRows(summary, single2, "leap");
     const lower = leap.filter((r) => r.kind === "past").map((r) => r.st);
     expect(lower.length).toBeGreaterThan(0);
     expect(leap.slice(0, lower.length).map((r) => r.st)).toEqual(lower);
+    const floors = leap.slice(0, lower.length).map((r) => r.m.leap);
+    expect(floors).toEqual([...floors].sort((a, z) => z - a));
+    // The reviewer's case (rerun B1): 1 adult, 3 children — Colorado's floor equals Wisconsin's exact leap, so Colorado leads and Wisconsin ranks after the group.
+    const single3 = summary.archetypes.find((a) => a.id === "single-3")!;
+    const g3 = group(rowsFor(summary, single3, measureByKey("leap")!), measureByKey("leap")!);
+    expect(g3.past[0].value!).toBeGreaterThanOrEqual(g3.ranked[0].value!);
     const largestExact = leap.find((r) => r.kind === "shaded")!;
     for (const st of lower) expect(leap.findIndex((r) => r.st === st)).toBeLessThan(leap.indexOf(largestExact));
     const loss = tableRows(summary, single2, "biggestLoss");

@@ -612,8 +612,11 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
     linear-gradient(to right, var(--scroll-shadow), transparent) left / 16px 100% no-repeat scroll,
     linear-gradient(to left, var(--scroll-shadow), transparent) right / 16px 100% no-repeat scroll;
 }
-.hg-scroll-x[data-more]::after { content: attr(data-more); display: block; text-align: end;
-                                 color: var(--ink-3); font-size: var(--t-micro); padding: var(--s2) 0 0; }
+/* The words sit at the top of the scroller, where a reader meets the table —
+   drawn after it they sat under fifty rows, and a reporter at the top saw
+   only the fade (places rerun N6). */
+.hg-scroll-x[data-more]::before { content: attr(data-more); display: block; text-align: end;
+                                  color: var(--ink-3); font-size: var(--t-micro); padding: 0 0 var(--s2); }
 
 /* ── Interactive chart (M6, S8, S12) ─────────────────────────────────── */
 

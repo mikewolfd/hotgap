@@ -74,6 +74,8 @@
       <div class="rank-group rank-group--lead" id="lowerGroup" hidden>
         <h4 id="lowerTitle"></h4>
         <ul class="rank" id="rankLower"></ul>
+        <!-- Why the ranks are shared, and what the data lets a reader say about the worst (rerun B1). -->
+        <p id="lowerNote"></p>
       </div>
       <div class="rank-axis" id="rankAxis"></div>
       <ul class="rank" id="rank"></ul>
@@ -97,14 +99,19 @@
     <div>
       <label for="sort" id="sortLabel"></label>
       <select id="sort" class="hg-select"></select>
+      <!-- Said once, where the control is: Measure and Table order are independent (rerun N3). -->
+      <p class="hg-source" id="sortHint"></p>
     </div>
   </div>
+  <!-- One sentence per column, where the headers are (rerun S3); each header's aria-describedby points at its line. -->
+  <dl class="defs" id="defs"></dl>
   <div class="hg-scroll-x" id="scroller">
     <table class="hg-table">
       <caption id="tabCap"></caption>
       <thead>
         <tr><th scope="col" id="colState"></th>
             <th scope="col" class="num" id="colBiggestLoss"></th>
+            <th scope="col" class="num" id="colBiggestLossAt"></th>
             <th scope="col" class="num" id="colDangerWidth"></th>
             <th scope="col" class="num" id="colLeap"></th>
             <th scope="col" class="num" id="colSafeExit"></th>
