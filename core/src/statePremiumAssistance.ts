@@ -21,6 +21,17 @@
 // FamilyCare — and $1,800 above 400% FPL; WA pays $660 ($55 × 12 for the one
 // adult who buys a plan) from $38,000 to the 250%-FPL ceiling and $0 above it.
 // Both were "figures incomplete" on the map until that day.
+//
+// Connecticut and Massachusetts followed the same evening: upstream's models
+// (1.795.0 and 1.799.0, issues #9481's two halves) are served by the same
+// engine. Measured against the local ladders on live curves, every archetype,
+// every point: Connecticut agrees except at two single points on the 175%
+// edge, where the engine's two-decimal MAGI share lands inside and the
+// ladder's exact one does not. Massachusetts' engine model is the better of
+// the two — it charges ConnectorCare's per-person premium to every enrollee
+// (a lone parent at 319% FPL owes $235 × 3 once the children leave
+// MassHealth, where the ladder charged × 1) and pays where the federal
+// credit is $0, which the ladder's credit guard skipped.
 
 export interface StatePremiumAssistance {
   state: string;
@@ -31,6 +42,8 @@ export interface StatePremiumAssistance {
 
 export const STATE_PREMIUM_ASSISTANCE: readonly StatePremiumAssistance[] = [
   { state: "CA", variable: "assigned_ca_premium_subsidy", program: "California Premium Subsidy" },
+  { state: "CT", variable: "ct_covered_connecticut", program: "Covered Connecticut Program" },
+  { state: "MA", variable: "ma_connector_care", program: "ConnectorCare" },
   { state: "NJ", variable: "nj_njhps", program: "NJ Health Plan Savings" },
   { state: "NM", variable: "assigned_nm_premium_assistance", program: "New Mexico Premium Assistance" },
   { state: "MD", variable: "md_premium_assistance", program: "Maryland Young Adult Premium Assistance" },

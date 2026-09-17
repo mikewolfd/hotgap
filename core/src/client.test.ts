@@ -255,6 +255,10 @@ describe("Massachusetts TAFDC feedback loop", () => {
     let probes = 0;
     const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
       const payload = JSON.parse(init!.body as string);
+      // The ConnectorCare variable probe (statePremiumAssistance.ts): a bare
+      // household asking for `ma_connector_care`; "unrecognized" stands the
+      // request down, and this test is about the TAFDC loop.
+      if (payload.household.tax_units.tax_unit?.ma_connector_care) return new Response(JSON.stringify({ status: "error", message: "Unrecognized household variable `ma_connector_care`" }), { status: 400 });
       if (!payload.household.axes) { probes++; return new Response(probeBody(PROBE_SENTINEL), { status: 200 }); }
       if (payload.household.axes[0][0].count === 2) { pointRequests++; return new Response(pointBody({ household: { ...payload.household, axes: [[{ ...payload.household.axes[0][0], min: 24000 + (payload.household.axes[0][0].min % 11000) }]] } }).replace(/"min":24000/, `"min":${payload.household.axes[0][0].min}`), { status: 200 }); }
       const body = stretch(maFixture) as any;
@@ -464,6 +468,8 @@ describe("the child-care subsidy probe (policyengine-us #9503)", () => {
       if (!init?.body) return new Response("{}", { status: 200 }); // a /healthz read, if the state's overrides ask for one
       const payload = JSON.parse(init.body as string);
       if (payload.household.spm_units.spm_unit?.child_care_subsidies?.[YEAR] === PROBE_SENTINEL) { probes++; return new Response(probeBody(0), { status: 200 }); }
+      // The Covered Connecticut variable probe: this old model lacks it.
+      if (payload.household.tax_units.tax_unit?.ct_covered_connecticut) return new Response(JSON.stringify({ status: "error", message: "Unrecognized household variable `ct_covered_connecticut`" }), { status: 400 });
       curves++;
       return new Response(JSON.stringify(curveBody), { status: 200 });
     }) as unknown as typeof fetch;

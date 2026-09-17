@@ -1,10 +1,15 @@
-// WORKAROUND — remove when upstream models state premium wraps (policyengine-us #9481).
+// WORKAROUND — remove when every endpoint serves each state's own variable
+// (policyengine-us #9481: `ct_covered_connecticut` 1.795.0, `ma_connector_care`
+// 1.799.0, `assigned_nm_premium_assistance`, `assigned_ca_premium_subsidy`;
+// statePremiumAssistance.ts). The hosted engine at 2.6.2 serves all four, so
+// on the committed sweep this table never fires; it stands in on the public
+// API (1.764.6), which has none of them.
 //
 // PolicyEngine charges every marketplace enrollee the benchmark premium net of
 // the federal premium tax credit. Four states pay that remainder off entirely
-// for their lowest-income enrollees, so PolicyEngine's Medicaid → marketplace
-// step is overstated there by the whole net premium. This table is the $0 tier
-// and nothing else.
+// for their lowest-income enrollees, so a model without the state's program
+// overstates the Medicaid → marketplace step there by the whole net premium.
+// This table is the $0 tier and nothing else.
 //
 // SCOPE: only the $0-premium tiers. Every one of these states also runs a
 // reduced-premium sliding scale ABOVE its $0 tier — Massachusetts' $53 at
@@ -39,8 +44,10 @@ export interface PremiumWrap {
    * The state's reduced-premium tier just above the $0 band, where one exists,
    * so the band edge steps to the real next price rather than to the full
    * federal net premium (a manufactured cliff). `annualPremium` is what the
-   * enrollee pays at a given MAGI and FPL share inside (zeroPremiumUpToFpl,
-   * upToFpl]. Connecticut has none: Covered Connecticut is a hard cutoff.
+   * household pays at a given MAGI and FPL share inside (zeroPremiumUpToFpl,
+   * upToFpl], for `enrollees` people on the plan — every one of them, since
+   * Massachusetts' table is per person and a child off MassHealth pays it
+   * too. Connecticut has none: Covered Connecticut is a hard cutoff.
    */
   tiers?: PremiumTier[];
 }
@@ -48,7 +55,7 @@ export interface PremiumWrap {
 /** One reduced-premium band above the $0 tier: (previous bound, upToFpl]. */
 export interface PremiumTier {
   upToFpl: number;
-  annualPremium: (magi: number, fplShare: number, adults: number) => number;
+  annualPremium: (magi: number, fplShare: number, enrollees: number) => number;
   source: string;
 }
 
@@ -94,10 +101,10 @@ export const STATE_PREMIUM_WRAPS: readonly PremiumWrap[] = [
     // PolicyEngine models 2B itself but not 3A–3C (external validation,
     // docs/reviews/2026-09-15-external-validation.md, finding 2).
     tiers: [
-      { upToFpl: 2.00, annualPremium: (_m, _s, adults) => 53 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
-      { upToFpl: 2.50, annualPremium: (_m, _s, adults) => 103 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
-      { upToFpl: 3.00, annualPremium: (_m, _s, adults) => 152 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
-      { upToFpl: 4.00, annualPremium: (_m, _s, adults) => 235 * 12 * adults, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 2.00, annualPremium: (_m, _s, enrollees) => 53 * 12 * enrollees, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 2.50, annualPremium: (_m, _s, enrollees) => 103 * 12 * enrollees, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 3.00, annualPremium: (_m, _s, enrollees) => 152 * 12 * enrollees, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
+      { upToFpl: 4.00, annualPremium: (_m, _s, enrollees) => 235 * 12 * enrollees, source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans" },
     ],
     source: "https://www.mahealthconnector.org/learn/plan-information/connectorcare-plans",
     readOn: "2026-09-15",

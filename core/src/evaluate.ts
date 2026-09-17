@@ -490,6 +490,21 @@ function applyStatePremiumAssistance(points: CurvePoint[], a: HouseholdAnswers):
   return { points: out, assistance: maxAnnual > 0 ? { ...program, maxAnnual: Math.round(maxAnnual) } : null };
 }
 
+/**
+ * How many people this household actually buys a marketplace plan for at this
+ * point: the adults, plus every child without Medicaid or CHIP. Both
+ * per-member programs pay by the member, so the count is the whole benefit —
+ * New Jersey's $100 band is $1,200 a year for a lone parent whose children
+ * are on FamilyCare and $3,600 once they age out of it.
+ *
+ * Called only where the adult is off Medicaid and a credit and a premium both
+ * exist, so the adults are enrollees by construction; "one child covered is
+ * all children covered" is the same reading esiTierAt takes, for the same
+ * reason (children share a MAGI and, nearly everywhere, one limit).
+ */
+const marketplaceEnrolleesAt = (p: CurvePoint, a: HouseholdAnswers): number =>
+  (a.married ? 2 : 1) + (childrenCoveredAt(p) ? 0 : a.childAges.length);
+
 // WORKAROUND — remove when upstream models state premium wraps (policyengine-us
 // #9481). A marketplace enrollee inside the state's $0-premium tier pays
 // nothing: the state tops up the federal credit. Modeled as the benchmark or
@@ -505,20 +520,30 @@ function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: 
   const otherMagi = magiBesidesEarnings(a);
   let wrap: PremiumWrap | null = null;
   const out = points.map((p) => {
-    if (adultOnMedicaidAt(p) || (p.programs.aca ?? 0) <= PROGRAM_END_MIN || p.medicalOOP <= 0) return p;
+    if (adultOnMedicaidAt(p) || p.medicalOOP <= 0) return p;
     const magi = p.earnings + otherMagi;
     const share = magi / povertyLine;
-    const w = premiumWrapFor(a.state, share);
+    // The $0 band needs a credit to top up: every one of these programs
+    // conditions on federal credit eligibility, and inside its band the
+    // credit is never $0 (the required contribution is a few percent of a
+    // low income, always under the benchmark).
+    const w = (p.programs.aca ?? 0) > PROGRAM_END_MIN ? premiumWrapFor(a.state, share) : null;
     if (w) {
       wrap = w;
       return { ...p, netIncome: p.netIncome + p.medicalOOP, medicalOOP: 0 };
     }
     // Just above the $0 band the state still caps the premium; without this
     // the band edge would step to the full federal net premium, a cliff the
-    // state's own sliding scale does not have.
+    // state's own sliding scale does not have. No credit test here: a
+    // ConnectorCare enrollee who "elects the full amount of APTC available"
+    // (956 CMR 12.04(3)(c)) has done so when that amount is $0, and the
+    // engine's own model pays there — measured 2026-09-16, a lone parent at
+    // 274% FPL with a cheap benchmark, $0 credit, still capped at $152. The
+    // cap is per person on the plan (the Connector's table is "per person"),
+    // so it counts every enrollee, not the adults.
     const t = premiumTierAbove(a.state, share);
     if (!t) return p;
-    const cap = Math.round(t.tier.annualPremium(magi, share, a.married ? 2 : 1));
+    const cap = Math.round(t.tier.annualPremium(magi, share, marketplaceEnrolleesAt(p, a)));
     if (cap >= p.medicalOOP) return p;
     wrap = t.wrap;
     return { ...p, netIncome: p.netIncome + p.medicalOOP - cap, medicalOOP: cap };
@@ -532,20 +557,6 @@ export interface PerMemberPremiumHelpSummary extends PerMemberPremiumHelp {
   maxAnnual: number;
 }
 
-/**
- * How many people this household actually buys a marketplace plan for at this
- * point: the adults, plus every child without Medicaid or CHIP. Both
- * per-member programs pay by the member, so the count is the whole benefit —
- * New Jersey's $100 band is $1,200 a year for a lone parent whose children
- * are on FamilyCare and $3,600 once they age out of it.
- *
- * Called only where the adult is off Medicaid and a credit and a premium both
- * exist, so the adults are enrollees by construction; "one child covered is
- * all children covered" is the same reading esiTierAt takes, for the same
- * reason (children share a MAGI and, nearly everywhere, one limit).
- */
-const marketplaceEnrolleesAt = (p: CurvePoint, a: HouseholdAnswers): number =>
-  (a.married ? 2 : 1) + (childrenCoveredAt(p) ? 0 : a.childAges.length);
 
 // WORKAROUND — remove when every endpoint serves the state's own variable
 // (policyengine-us #9224 for New Jersey, #9222 for Washington; shipped in

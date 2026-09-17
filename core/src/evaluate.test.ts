@@ -648,8 +648,8 @@ describe("Head Start and a childcare subsidy together", () => {
 });
 
 describe("state premium wraps", () => {
-  const enrollee = (earnings: number, moop: number) => pt(earnings, 30000 - moop, { medicalOOP: moop, programs: { aca: 4000 } });
-  const single = (state: string) => answersWith({ state, childAges: [], childDisabled: [], annualEarnings: 23000 });
+  const enrollee = (earnings: number, moop: number, over: PointOver = {}) => pt(earnings, 30000 - moop, { medicalOOP: moop, programs: { aca: 4000 }, ...over });
+  const single = (state: string, annualEarnings = 23000) => answersWith({ state, childAges: [], childDisabled: [], annualEarnings });
 
   it("zeroes the premium inside the $0 band on the archetype path too", () => {
     // CT single at $23,000 is 147% FPL: inside Covered Connecticut's 175% band.
@@ -674,6 +674,23 @@ describe("state premium wraps", () => {
     // A premium already under the cap is left alone.
     const cheap = evaluateCurve(single("MA"), { year: "2026", currentEarnings: 25000, points: [enrollee(23000, 900), enrollee(25000, 300)] }, "archetype");
     expect(cheap.curve.points[1].medicalOOP).toBe(300);
+  });
+
+  it("prices Massachusetts' tiers per person on the plan, and caps a premium the federal credit left at $0 too", () => {
+    // Family of three at $85,000 = 319% FPL on $26,650: Plan Type 3C, $235 a month for each of
+    // the three once the children are off MassHealth (300%), $235 for the parent alone while they are on it.
+    const family = answersWith({ state: "MA", childAges: [3, 7], childDisabled: [false, false], annualEarnings: 85000 });
+    const kidsOn = enrollee(85000, 9000, { childPrograms: { medicaid: 6000 } });
+    const kidsOff = enrollee(85000, 9000, { childPrograms: {} });
+    const on = evaluateCurve(family, { year: "2026", currentEarnings: 85000, points: [enrollee(40000, 900), kidsOn] }, "archetype");
+    const off = evaluateCurve(family, { year: "2026", currentEarnings: 85000, points: [enrollee(40000, 900), kidsOff] }, "archetype");
+    expect(on.curve.points[1].medicalOOP).toBe(235 * 12);
+    expect(off.curve.points[1].medicalOOP).toBe(235 * 12 * 3);
+    // No federal credit at all — a cheap benchmark against a 9.96% required contribution — and
+    // the state still caps the bill: electing "the full amount of APTC available" includes $0.
+    const noCredit = evaluateCurve(single("MA", 43000), { year: "2026", currentEarnings: 43000, points: [enrollee(40000, 900), enrollee(43000, 5244, { programs: { aca: 0 } })] }, "archetype");
+    expect(noCredit.curve.points[1].medicalOOP).toBe(152 * 12); // $43,000 = 275% FPL: Plan Type 3B
+    expect(noCredit.premiumWrap?.state).toBe("MA");
   });
 });
 
