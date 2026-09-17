@@ -430,17 +430,21 @@ received), `--offline`, `--json`.
   below a state-specific share of the poverty line: Connecticut's Covered
   Connecticut Program (175% FPL), Massachusetts' ConnectorCare Plan Type 2A
   (150%), New Mexico's Premium Assistance program (200%), and California's
-  Premium Subsidy (150%). HotGap zeroes the net premium in that band, each
-  bound read from the state's own page — a WORKAROUND (the table in
-  `core/src/statePremiumWraps.ts`, applied by `evaluate.ts`'s
-  `applyPremiumWrap`) until PolicyEngine models the wraps itself
-  (policyengine-us #9481). The reduced-premium tiers above the $0 band are
-  modeled where the state publishes them — Massachusetts' ConnectorCare
-  Plan Types 2B–3C to 400% FPL, California's scale to 165%, New Mexico's to
-  250% — so a band edge steps to the state's real next price. PolicyEngine
-  itself models ConnectorCare 2B but not 3A–3C; before this, Massachusetts
+  Premium Subsidy (150%). PolicyEngine models all four since August 2026
+  and the hosted engine serves them (`core/src/statePremiumAssistance.ts`:
+  nine states in all), so the sweep nets the engine's own figure out of the
+  premium; on an endpoint that predates those releases HotGap zeroes the net
+  premium in that band itself, each bound read from the state's own page
+  (the table in `core/src/statePremiumWraps.ts`, applied by `evaluate.ts`'s
+  `applyPremiumWrap`). The reduced-premium tiers above the $0 band are in
+  that table too where the state publishes them — Massachusetts'
+  ConnectorCare Plan Types 2B–3C to 400% FPL, priced per person on the
+  plan, California's scale to 165%, New Mexico's to 250% — so a band edge
+  steps to the state's real next price. Before 2026-09-15 Massachusetts
   premiums above 200% FPL were overstated by up to $9,300 a year (external
-  validation, `docs/reviews/2026-09-15-external-validation.md`).
+  validation, `docs/reviews/2026-09-15-external-validation.md`); before
+  2026-09-16 a Massachusetts family's were understated once the children
+  left MassHealth, because the ladder charged the parent's premium alone.
 - Two more states pay a flat amount per person per month instead: New
   Jersey's NJ Health Plan Savings ($20 to $100 by income band, to 600% FPL,
   paid even where the federal credit is $0) and Washington's Cascade Care

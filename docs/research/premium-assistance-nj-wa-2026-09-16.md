@@ -245,12 +245,36 @@ never a `PATH` binary. Not pushed; not opened as PRs. State median income
 (`parameters/gov/hhs/smi/amount.yaml`) is not referenced by either program — both are
 keyed to the federal poverty line via `aca_magi_fraction` — so it played no part here.
 
-## 7. A finding outside the brief: Connecticut and Massachusetts
+## 7. The follow-up: Connecticut and Massachusetts, done the same evening
 
-The engine at 2.6.2 also serves `ct_covered_connecticut` and `ma_connector_care`, with real
-amounts (single parent of two: CT pays the whole residual, $2,162 at $44,000; MA up to
-$4,008). `docs/upstream/2026-09-15-local-corrections.md` said "CT and MA have no upstream
-model (issue #9481)"; that sentence is corrected there. Adding them to
-`STATE_PREMIUM_ASSISTANCE` would stand their ladders down where served and is the same
-one-line change as NJ and WA — but it moves their curves and needs a CT/MA resweep, so it
-is left as the next job rather than smuggled into this one.
+The engine at 2.6.2 also serves `ct_covered_connecticut` (1.795.0) and `ma_connector_care`
+(1.799.0) — issue #9481's two halves, shipped in August, which
+`docs/upstream/2026-09-15-local-corrections.md` had said did not exist. Both joined
+`STATE_PREMIUM_ASSISTANCE` on the `ct-ma-premium-help` branch after a measurement, not
+before: engine against HotGap's ladder on live curves, every archetype, every point.
+
+**Connecticut** agrees to the dollar except one point each on married-3 ($66,000) and
+married-dual-3 ($51,000), where the engine's two-decimal `aca_magi_fraction` lands at or
+under 1.75 and the ladder's exact share does not. The resweep left every CT summary row
+unchanged.
+
+**Massachusetts**: the engine is the better model on two counts, both the ladder's fault.
+Upstream's `ma_connector_care` is the full 2026 ladder — $0 to 150% FPL, then $53 / $103 /
+$152 / $235 a month to 400% (ConnectorCare Overview 2026, Table 3; 956 CMR 12.12(9)), the
+same figures HotGap's table holds — but it charges the enrollee premium **per person on the
+plan**, and it pays **where the federal credit is $0**. HotGap's ladder counted adults only
+(its own note says "per enrollee per month"; its code said `a.married ? 2 : 1`), so a lone
+parent of two at 319% FPL, children off MassHealth at 300%, was charged $235 × 12 instead of
+$235 × 12 × 3 — summed over a sweep, $137,000–$284,000 of understated premium per family
+archetype. And its "a credit and a premium both exist" guard skipped every point where a
+cheap benchmark against a 9.96% required contribution left the credit at $0, leaving the full
+premium in place where ConnectorCare caps it (956 CMR 12.04(3)(c)'s "elects the full amount
+of APTC available" is satisfied by $0; the engine pays there). Both are fixed on the ladder
+so the public-API fallback agrees with the engine; re-measured, the residue is one-step band
+edges and MassHealth's $28-a-child monthly CHIP premium, which sits inside `medicalOOP` and
+which the ladder's cap swallows while the engine nets only ConnectorCare.
+
+Resweep (`--states CT,MA`, engine 2.6.2): both blocks `modeled`; a Massachusetts single
+adult's safe exit $55,000 → $66,000; a lone parent of two's leap $38,000 → $18,000; a couple
+with two children's largest loss $10,220 → $4,580. Only the CT and MA rows changed. On the
+committed sweep, no local premium table of either shape fires in any state.
