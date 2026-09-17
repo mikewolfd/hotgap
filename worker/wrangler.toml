@@ -33,6 +33,9 @@ run_worker_first = ["/api/*"]
 name = "RATE_LIMIT"
 namespace_id = "1001"
 simple = { limit = 20, period = 60 }
+# The proofs run `wrangler dev --var HOTGAP_RATE_LIMIT_OFF:1` to switch the
+# brake off for a local run (app/playwright.config.ts). Never a [vars] entry
+# here and never a deployed var: with it, production would have no brake.
 
 [observability]
 enabled = true

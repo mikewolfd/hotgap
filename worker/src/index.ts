@@ -179,8 +179,23 @@ const fallbackLimiter = localRateLimiter();
 /** The two secrets (`wrangler secret put`, or worker/.dev.vars locally). Not in wrangler.toml, so not in the generated Env. */
 type Secrets = { HOTGAP_PE_URL?: string; HOTGAP_PE_TOKEN?: string };
 
+/**
+ * Which brake this deployment has: the rate-limit binding when the plan
+ * provides it, the in-isolate counter otherwise — or none, when
+ * HOTGAP_RATE_LIMIT_OFF is "1". That var exists for the proofs only: three
+ * Playwright specs back to back trip the 20-a-minute budget against
+ * `wrangler dev`, so app/playwright.config.ts passes it on the command line
+ * (`--var HOTGAP_RATE_LIMIT_OFF:1`). It is never in wrangler.toml and never
+ * a deployed var; a deploy that carried it would run with no brake at all.
+ */
+export function rateLimiterFor(env: { RATE_LIMIT?: Pick<RateLimit, "limit">; HOTGAP_RATE_LIMIT_OFF?: string }, fallback = fallbackLimiter): (key: string) => Promise<boolean> {
+  if (env.HOTGAP_RATE_LIMIT_OFF === "1") return async () => true;
+  const binding = env.RATE_LIMIT;
+  return binding ? async (key) => (await binding.limit({ key })).success : fallback;
+}
+
 export default {
-  async fetch(req: Request, env: Env & Secrets, ctx: ExecutionContext): Promise<Response> {
+  async fetch(req: Request, env: Env & Secrets & { HOTGAP_RATE_LIMIT_OFF?: string }, ctx: ExecutionContext): Promise<Response> {
     // Secrets are bindings, not config; an unset pair leaves core on the public API.
     configurePolicyEngine({ url: env.HOTGAP_PE_URL, token: env.HOTGAP_PE_TOKEN });
     // Bound, because workerd's fetch checks its receiver and a bare reference
@@ -193,8 +208,7 @@ export default {
         const res = await env.ASSETS.fetch(new URL(`/data/states/${state}.json`, req.url));
         return res.ok ? ((await res.json()) as StateFileJson) : null;
       },
-      // The binding when the plan provides it; the in-isolate counter otherwise.
-      allow: env.RATE_LIMIT ? async (key) => (await env.RATE_LIMIT.limit({ key })).success : fallbackLimiter,
+      allow: rateLimiterFor(env),
     });
   },
 } satisfies ExportedHandler<Env>;
