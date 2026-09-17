@@ -9,12 +9,16 @@
 // app/src/citizen/copy.ts) or of arrow functions that interpolate their
 // arguments (as app/src/editor/copy.ts); a function is graded on what it
 // returns for placeholder arguments. Limits are the archive's: corpus grade
-// ≤ 5.9, every string ≤ 8.0. One refinement: Flesch–Kincaid is defined on
-// sentences, and a one-word label ("Edit", two syllables) grades 8.4 on the
-// formula alone, so the per-string limit binds on strings of four or more
-// words; shorter ones are still graded and listed when over, as notes. What
-// this cannot see: a hard word in a three-word label. Exit 1 when a limit
-// is over, so CI can gate.
+// ≤ 5.9, every string ≤ 8.0. Two refinements, both because Flesch–Kincaid
+// is defined on sentences: a one-word label ("Edit", two syllables) grades
+// 8.4 on the formula alone, so the per-string limit binds on strings of
+// four or more words (shorter ones are still graded and listed when over,
+// as notes); and the corpus counts a catalog entry with no terminal
+// punctuation as one sentence — joined bare, the editor's twenty-six chip
+// labels read as one sixty-word sentence and its corpus sat at 6.1 from the
+// day the gate was ported, which no rewrite of the five strings that were
+// over could cure. What this cannot see: a hard word in a three-word label.
+// Exit 1 when a limit is over, so CI can gate.
 import { pathToFileURL } from "node:url";
 
 // Every copy module is graded and reported. `gate` says whether the limits
@@ -79,7 +83,7 @@ for (const { path: rel, gate } of MODULES) {
   const seen = strings(copy);
   const unread = seen.filter((s) => s.text === null);
   const all = seen.filter((s) => s.text !== null && /[a-zA-Z]/.test(s.text));
-  const corpus = grade(all.map((s) => s.text).join(" "));
+  const corpus = grade(all.map((s) => s.text.trim()).map((t) => (/[.!?…]$/.test(t) ? t : `${t}.`)).join(" "));
   const worst = all.reduce((a, b) => (grade(b.text) > grade(a.text) ? b : a));
   console.log(`${rel}: corpus grade ${corpus.toFixed(2)} (limit ${CORPUS_LIMIT}${gate ? "" : ", reported only"}), ${all.length} strings, worst ${grade(worst.text).toFixed(1)} at ${worst.key}`);
   if (unread.length) console.log(`  not graded (a list or record argument, which a placeholder cannot stand in for): ${unread.map((s) => s.key).join(", ")}`);

@@ -28,7 +28,7 @@ describe("a what-if as a diff from the base", () => {
     expect(whatIfLabel({ rent: "1200" }, base)).toBe("Rent $1,200 a month");
     expect(whatIfLabel({ savings: "5000" }, base)).toBe("Savings $5,000");
     expect(whatIfLabel({ kids: "3,7,9" }, base)).toBe("Children 3 & 7 & 9");
-    expect(whatIfLabel({ status: "lpr", "years-in-us": "3" }, base)).toBe("Status Green card (permanent resident), Years in the US 3");
+    expect(whatIfLabel({ status: "lpr", "years-in-us": "3" }, base)).toBe("Status Has a green card (permanent resident), Years in the US 3");
     expect(whatIfLabel({ ssdi: null }, base)).toBe("SSDI cleared");
     expect(whatIfLabel({ zip: null, state: "tx" }, { ...base, zip: undefined, state: "tx" })).toBe("Place TX");
     expect(whatIfLabel({ zip: "78701" }, { ...base, zip: "78701" })).toBe("Place 78701");

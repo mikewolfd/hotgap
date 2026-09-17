@@ -1,8 +1,8 @@
 // Every string the editor shows, in one place, in the citizen register
-// (short words, one thought a line). The readability gate the design asks
-// for (design/PORT-FROM-ARCHIVE-2026-09-16.md, M1) is not ported yet; when
-// it is, this is the file it reads. Program and field names a caseworker
-// uses (SNAP, TANF, CCDF) appear only after the plain phrase.
+// (short words, one thought a line). The readability gate
+// (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
+// reads this object. Program and field names a caseworker uses (SNAP, TANF,
+// CCDF, "permanent resident") appear only after the plain phrase.
 export const copy = {
   wordmark: "HotGap",
   actions: { change: "Change my answers", print: "Print" },
@@ -48,11 +48,11 @@ export const copy = {
     where: "Where", household: "Home", pay: "Pay", rent: "Rent", childcare: "Child care",
     age: "Your age", spouseAge: "Spouse's age", spousePay: "Spouse's pay",
     ssdi: "SSDI", childSupport: "Child support", unemployment: "Unemployment pay", savings: "Savings",
-    status: "Your status", spouseStatus: "Spouse's status", kidsDisabled: "Kids with a disability",
+    status: "Your status", spouseStatus: "Spouse's status", kidsDisabled: "Kids who have a disability",
     childcareSubsidy: "Child care help", headStart: "Head Start", housing: "Housing help",
     energyAssistance: "Heating bill help", heatInRent: "Heat is in my rent",
     employerCoverage: "Health plan from a job", selfEmployed: "Self-employed",
-    disabled: "You have a disability", spouseDisabled: "Spouse has a disability",
+    disabled: "You live with a disability", spouseDisabled: "Spouse lives with a disability",
     snap: "Gets food help (SNAP)", tanf: "Gets cash help (TANF)", medicaid: "Gets Medicaid", wic: "Gets WIC",
     on: "on", off: "off", yes: "yes", no: "no", none: "none",
     aYear: "a year", aMonth: "a month",
@@ -64,10 +64,10 @@ export const copy = {
     yearly: "Dollars a year",
     years: "Years in the US",
     yearsHint: "Only if you are not a citizen.",
-    hasDisability: (n: number, age: string) => `Kid ${n} (age ${age}) has a disability`,
+    hasDisability: (n: number, age: string) => `Kid ${n}, who is ${age}, lives with a disability`,
   },
   status: {
-    citizen: "US citizen", lpr: "Green card (permanent resident)", refugee: "Refugee", asylee: "Asylee",
+    citizen: "US citizen", lpr: "Has a green card (permanent resident)", refugee: "Refugee", asylee: "Asylee",
     deportation_withheld: "Deportation withheld", cuban_haitian_entrant: "Cuban or Haitian entrant",
     conditional_entrant: "Conditional entrant", paroled_one_year: "Paroled for a year or more",
     daca: "DACA", tps: "TPS", undocumented: "No papers",
