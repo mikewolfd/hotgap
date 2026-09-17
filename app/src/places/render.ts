@@ -399,11 +399,13 @@ export function renderDetail(s: Scene): void {
 
   /* EligibilityBoundary (#23): one row in the ledger's shape from
      coverage[state].liheap — the program with its footing chip in the name
-     column, the three facts as a sentence at the row's own size (in Michigan
-     with the credit core names), and the publishers as the cite with the day
-     read. Absent on a file written before Plan 7, and then the block says
-     nothing. Its own list, after the state's other lists, under the block's
-     one heading: a boundary is not a correction and is not counted there. */
+     column, the three facts as one sentence in the cite register the block's
+     other rows use (a row that changed no figure must not outweigh the
+     corrections; liheap review S1), in Michigan with the credit core names,
+     and the publishers on a second cite line with the day read. Absent on a
+     file written before Plan 7, and then the block says nothing. Its own
+     list, after the state's other lists, under the block's one heading: a
+     boundary is not a correction and is not counted there. */
   const b = cov.liheap, note = cov.corrections.liheap, L = D.liheap;
   const hasBoundary = b !== undefined && note !== undefined;
   $("liheap").hidden = !hasBoundary;
@@ -413,7 +415,7 @@ export function renderDetail(s: Scene): void {
       (counted ? L.counted(stateName, note.program) : "");
     $("liheap").dataset.footing = note.source;
     $("liheap").innerHTML = `<li><span class="hg-rows__at">${esc(L.program)} <span class="hg-tag">${esc(counted ? L.footing.inNetIncome : L.footing.boundary)}</span></span>` +
-      `<div><p>${esc(facts)}</p><span class="hg-cite">${rich(L.cite({ ...b.sources, readOn: b.readOn }))}</span></div></li>`;
+      `<div><span class="hg-cite">${esc(facts)}</span><span class="hg-cite">${rich(L.cite({ ...b.sources, readOn: b.readOn }))}</span></div></li>`;
   }
 
   /* SourceNote (#17) from vintages and model, in the inventory's shape, the county named. */

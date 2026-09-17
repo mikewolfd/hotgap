@@ -144,20 +144,34 @@ describe("EligibilityBoundary (#23)", () => {
     topBand: { min: 1200, max: 1200 }, shape: "staircase" as const, servedShare: 0.03, upstream: null, counted: false,
     sources: { limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: null, served: null }, readOn: "2026-09-16", note: "", ...over,
   });
-  test("says the three facts and invites the toggle; a range, a flat figure or an unread amount; the served share as families in ten", () => {
-    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary() }), year)))
-      .toBe("Above $40,000 a year, you can no longer apply for help with heating bills in Colorado. It is called LIHEAP. It is worth $1,200 a winter if you get it. Fewer than 1 in 10 families who could get it here do. If you get it, turn it on to see it in your line.");
-    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: { min: 355, max: 430 }, servedShare: 0.18 }) }), year)))
+  /* The paragraph as the page prints it: the facts, then the invitation when there is one. */
+  const said = (b: ReturnType<typeof boundaryText>) => (b ? b.facts + (b.invite ? ` ${b.invite}` : "") : null);
+  test("says the three facts and invites the toggle as its own sentence; a range, a flat figure or an unread amount; the served share as families in ten", () => {
+    const tx = boundaryText(sceneOf(makeEvaluation({ liheap: boundary() }), year))!;
+    expect(tx.facts).toBe("Above $40,000 a year, you can no longer apply for help with heating bills in Colorado. It is called LIHEAP. It is worth $1,200 a winter if you get it. Fewer than 1 in 10 families who could get it here do.");
+    expect(tx.invite).toBe("If you get it, turn it on to see it in your line.");
+    expect(said(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: { min: 355, max: 430 }, servedShare: 0.18 }) }), year))))
       .toContain("It is worth $355 to $430 a winter if you get it. About 2 in 10 families who could get it here do.");
-    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.85 }) }), year))).toContain("About 9 in 10 families who could get it here do.");
-    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.96 }) }), year))).toContain("Almost all families who could get it here do.");
-    expect(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: null, servedShare: null }) }), year)))
+    expect(said(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.85 }) }), year)))).toContain("About 9 in 10 families who could get it here do.");
+    expect(said(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ servedShare: 0.96 }) }), year)))).toContain("Almost all families who could get it here do.");
+    expect(said(boundaryText(sceneOf(makeEvaluation({ liheap: boundary({ topBand: null, servedShare: null }) }), year))))
       .toContain("We could not read what it pays. We do not know how many families who could get it here do.");
     expect(boundaryText(sceneOf(makeEvaluation({ liheap: null }), year))).toBeNull();
   });
+  test("where the state pays its heating help as a credit already in the line (Michigan), says so, names no worth and invites nothing; the take-up list leaves it out (review B1)", () => {
+    const mi = boundary({ earningsLimit: 29_315, limit: { kind: "fpg" as const, pct: 110 }, topBand: { min: 1, max: 2205 }, shape: "taper" as const, servedShare: 0.85, upstream: { variable: "mi_home_heating_credit", counted: "state credit" as const } });
+    const s = sceneOf(makeEvaluation({ liheap: mi }), year);
+    expect(boundaryText(s)).toEqual({ facts: "Help with heating bills in Colorado is a tax credit. It is already in your line. It gets smaller as you earn more and runs out above $29,500 a year. About 9 in 10 families who could get it here do.", invite: null });
+    const rows = assumedRows(s).map((r) => r.text);
+    expect(rows.find((t) => t.startsWith("Child care help"))).toBe("Child care help (CCDF child care subsidy), housing help (Housing voucher), and free early learning (Head Start). We count them as if you do not get them.");
+    expect(rows.join(" ")).not.toContain("heating");
+    // The toggle on adds nothing there, so the list still does not say heating help is counted as if got.
+    const on = sceneOf(makeEvaluation({ liheap: mi, answers: { ...makeEvaluation().answers, getsEnergyAssistance: true } }), year);
+    expect(assumedRows(on).map((r) => r.text).join(" ")).not.toContain("heating");
+  });
   test("with the toggle on, says only that it was counted, and the tick leaves the picture", () => {
     const s = sceneOf(makeEvaluation({ liheap: boundary({ counted: true }) }), year);
-    expect(boundaryText(s)).toMatch(/^You said you get help with heating bills \(LIHEAP\)\. We put it in your line: about \$\d[\d,]* a year, up to \$40,000 a year\.$/);
+    expect(said(boundaryText(s))).toMatch(/^You said you get help with heating bills \(LIHEAP\)\. We put it in your line: about \$\d[\d,]* a year, up to \$40,000 a year\.$/);
     expect(s.boundaryInWindow).toBe(false);
     expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryInWindow).toBe(true);
   });

@@ -127,7 +127,23 @@ describe("ThresholdLedger", () => {
     const boundary = rows.find((r) => r.id === "liheap")!;
     expect(boundary.boundary).toBe(true);
     expect(boundary.cliff).toBeUndefined();
-    expect(cite(co, boundary, cov)).toBe("Above this the household can no longer apply: the state's limit is 60% of state median income. Worth $200–$1,000 at that band if received. 16% of income-eligible households were served in FY2024. Not in net income unless the household says it gets it. Read 2026-09-16.");
+    expect(boundary.credit).toBeUndefined();
+    // The tag says "if you apply"; the cite leads with the basis and does not say it again (liheap review S3).
+    expect(cite(co, boundary, cov)).toBe("60% of state median income, the heating limit. Worth $200–$1,000 at that band if received; 16% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.");
+  });
+  it("in Michigan the row is where the counted Home Heating Credit tapers out: no tag, a cite that says it is counted, and a take-up sentence that leaves it out (liheap review B1)", () => {
+    const mi = evaluateOffline(answers({ state: "MI", kids: "3,7", earnings: "20000" }))!, miCov = summary.coverage!.MI;
+    const row = ledgerRows(mi).find((r) => r.id === "liheap")!;
+    expect(mi.liheap?.upstream?.counted).toBe("state credit");
+    expect([row.boundary, row.credit, row.cliff]).toEqual([true, true, undefined]);
+    expect(cite(mi, row, miCov)).toBe("Paid as the Home Heating Credit, a refundable state credit PolicyEngine models and HotGap counts in state credits; it tapers out by the state's limit, 110% of the poverty guideline, so it is not a cliff. 85% of income-eligible households were served in FY2024. Assumes heat is not included in rent; the credit halves when it is. Read 2026-09-16.");
+    expect(cite(mi, row, undefined)).toMatch(/^Paid as a refundable state credit PolicyEngine models/);
+    // On the archetype path the swept household (heat not in rent) is what was modelled; a live household that said heat is in the rent reads its own answer.
+    const withHeat = { ...mi, source: "live" as const, answers: { ...mi.answers, heatInRent: true } };
+    expect(cite(withHeat, row, miCov)).toContain("Heat is included in the rent, so the credit is halved.");
+    const takeUp = assumed(mi, miCov).find((t) => /^Take-up assumed/.test(t))!;
+    expect(takeUp).not.toContain("LIHEAP");
+    expect(assumed(co, cov).find((t) => /^Take-up assumed/.test(t))).toContain("LIHEAP");
   });
   it("cites what continues, what it was worth and the care price behind the child-care row", () => {
     const by = (id: string) => rows.find((r) => r.id === id)!;

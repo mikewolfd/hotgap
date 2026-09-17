@@ -143,7 +143,13 @@ export interface LedgerRow {
   deferred: string | null;
   /** EligibilityBoundary (#23): a limit the household never crossed, tagged *if you apply*; never a cliff. */
   boundary?: true;
+  /** The state pays its heating help as a tax credit already in net income (Michigan): the row is where it tapers out, untagged (liheap review B1). */
+  credit?: true;
 }
+
+/** Whether this state's heating help is a counted state credit, from the evaluation's boundary or the sweep's block. */
+export const liheapCredit = (ev: HouseholdEvaluation, cov: StateCoverage | undefined): boolean =>
+  (ev.liheap?.upstream ?? cov?.liheap?.upstream)?.counted === "state credit";
 
 /**
  * Every program's end, from the cliff list first (the landing point of the
@@ -175,7 +181,7 @@ export function ledgerRows(ev: HouseholdEvaluation): LedgerRow[] {
   for (const [id, at] of Object.entries(ends.programEnds) as [ProgramId, number][])
     if (![...seen].some((k) => k.startsWith(`${id}|`))) out.push({ at: at + step, id, group: "Household", deferred: null });
   // Where energy assistance stops, with the toggle off: the earner's own pay at the state's limit, not a step of the axis.
-  if (ev.liheap && !ev.liheap.counted) out.push({ at: ev.liheap.earningsLimit, id: "liheap", group: "Household", deferred: null, boundary: true });
+  if (ev.liheap && !ev.liheap.counted) out.push({ at: ev.liheap.earningsLimit, id: "liheap", group: "Household", deferred: null, boundary: true, ...(liheapCredit(ev, undefined) ? { credit: true as const } : {}) });
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 }
 
@@ -196,6 +202,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
   const b = ev.liheap;
   if (r.id === "liheap" && b) {
     const limit = cov?.liheap?.limitKind ?? liheapLimitWords(b.limit);
+    if (r.credit) return L.liheapCredit({ program: cov?.corrections.liheap?.program ?? null, limit, servedShare: b.servedShare, heatInRent: h.heatInRent, readOn: b.readOn });
     if (r.boundary) return L.liheapBoundary({ limit, band: b.topBand ? L.liheapBand(b.topBand.min, b.topBand.max) : null, servedShare: b.servedShare, readOn: b.readOn });
     if (r.cliff) return L.liheapCounted(pts[before].programs.liheap ?? 0, limit);
   }
@@ -288,8 +295,9 @@ export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluati
 // ── What the model does not include ─────────────────────────────────────
 export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined): string[] {
   const h = modeled(ev), on: string[] = [], off: string[] = [], A = copy.assumed;
+  // Heating help is neither assumed nor not where the state pays it as a credit already in net income (liheap review B1): the toggle adds nothing there.
   const takeUp: [boolean, ProgramId][] = [[h.getsSnap, "snap"], [h.getsTanf, "tanf"], [h.getsMedicaid, "medicaid"], [h.getsWic, "wic"],
-    [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"], [h.getsEnergyAssistance, "liheap"]];
+    [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"], ...(liheapCredit(ev, cov) ? [] : [[h.getsEnergyAssistance, "liheap"] as [boolean, ProgramId]])];
   for (const [gets, id] of takeUp) (gets ? on : off).push(programName(id));
   const facts = [h.youStatus === "citizen" ? A.citizen : A.status(h.youStatus), h.savings ? A.savings(h.savings) : A.noSavings,
     h.selfEmployed ? A.selfEmployed : A.wages, h.hasEmployerCoverage ? A.esi : A.noEsi,

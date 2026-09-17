@@ -303,6 +303,8 @@ for (const [state, zip, expected] of [
     await page.locator("#chart svg path").first().waitFor();
     await expect(page.locator("#boundary")).toHaveText(expected);
     await expect(page.locator("#boundary")).toHaveAttribute("data-counted", "false");
+    // The invitation is its own sentence and stays off paper (liheap review S2).
+    await expect(page.locator("#boundary .hg-no-print")).toHaveText("If you get it, turn it on to see it in your line.");
     expect(ev.liheap?.counted).toBe(false);
     // Not a cliff, not a mark: nothing on the picture at the limit but the axis tick.
     expect(ev.analysis.cliffs.every((c) => !c.programsLost.includes("liheap"))).toBe(true);

@@ -8,7 +8,7 @@
 // Evidence lands in design/review/liheap/ (or the directory given), and the
 // review's findings are checked here so the after-render is a proof.
 //
-//   cd app && node e2e/liheap-review.mjs http://localhost:8798 [outDir]
+//   cd app && node e2e/liheap-review.mjs http://localhost:8798 [../design/review/liheap/after]
 //
 // The URL is a Worker on the live engine (wrangler dev on 8798 with the rate
 // limiter off). Prints every measurement and exits non-zero when a check fails.
@@ -19,7 +19,8 @@ import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
 
 const { chromium } = createRequire(import.meta.url)("@playwright/test");
 const [BASE = "http://localhost:8798", OUT_ARG] = process.argv.slice(2);
-const OUT = resolve(import.meta.dirname, OUT_ARG ?? "../../design/review/liheap");
+/* A given directory is the shell's (relative to the working directory, as a CLI argument is); the default is the review's own folder. */
+const OUT = OUT_ARG ? resolve(process.cwd(), OUT_ARG) : resolve(import.meta.dirname, "../../design/review/liheap");
 mkdirSync(OUT, { recursive: true });
 
 /* The households the brief names; the same flags drive the citizen and caseworker pages. */
@@ -83,7 +84,7 @@ async function measureCaseworker(page) {
   return page.evaluate(() => {
     const cs = (el) => getComputedStyle(el);
     const rows = [...document.querySelectorAll("#ledgerRows tr")].map((tr) => ({
-      boundary: tr.dataset.boundary === "true", at: tr.children[0].textContent, program: tr.children[1].firstChild.textContent.trim(), tag: tr.querySelector(".hg-tag")?.textContent ?? null, badge: tr.querySelector(".hg-badge")?.textContent ?? null,
+      boundary: tr.dataset.boundary !== undefined, credit: tr.dataset.boundary === "credit", at: tr.children[0].textContent, program: tr.children[1].firstChild.textContent.trim(), tag: tr.querySelector(".hg-tag")?.textContent ?? null, badge: tr.querySelector(".hg-badge")?.textContent ?? null,
       cite: tr.querySelector(".hg-cite")?.textContent ?? null, who: tr.children[2].textContent, atColor: cs(tr.children[0]).color, bg: cs(tr).backgroundColor, tagColor: tr.querySelector(".hg-tag") ? cs(tr.querySelector(".hg-tag")).color : null, tagBorder: tr.querySelector(".hg-tag") ? cs(tr.querySelector(".hg-tag")).borderColor : null,
       height: tr.getBoundingClientRect().height, citeWidth: tr.querySelector(".hg-cite")?.getBoundingClientRect().width ?? null,
     }));
@@ -94,6 +95,7 @@ async function measureCaseworker(page) {
     return {
       rows, liheapRow, boundaryRows: rows.filter((r) => r.boundary).length, drops, dropsAboutLiheap: drops.filter((d) => /LIHEAP|energy/i.test(d)), tiles, marks, marksAboutLiheap: marks.filter((m) => /LIHEAP|energy/i.test(m ?? "")),
       assumed: [...document.querySelectorAll("#assumed li")].map((li) => li.textContent).filter((t) => /LIHEAP|energy/i.test(t)),
+      takeUp: [...document.querySelectorAll("#assumed li")].map((li) => li.textContent).find((t) => /^Take-up assumed/.test(t)) ?? "",
       correctionsRest: document.querySelector("#correctionsRest")?.textContent ?? "", coverage: document.querySelector("#coverage")?.textContent ?? "",
       chartAria: document.querySelector("#chartWrap").getAttribute("aria-label"), ledgerNote: document.querySelector("#ledgerNote").textContent,
       curveTicks: [...document.querySelectorAll("#curve text")].map((t) => t.textContent), bodyBg: cs(document.body).backgroundColor, scrollW: document.documentElement.scrollWidth, innerW: innerWidth,
@@ -108,10 +110,10 @@ async function measureJournalist(page, st) {
   return page.evaluate(() => {
     const cs = (el) => getComputedStyle(el);
     const list = document.querySelector("#liheap"), li = list.querySelector("li");
-    const at = li.querySelector(".hg-rows__at"), chip = at.querySelector(".hg-tag"), p = li.querySelector("p"), cite = li.querySelector(".hg-cite");
+    const at = li.querySelector(".hg-rows__at"), chip = at.querySelector(".hg-tag"), [p, cite] = li.querySelectorAll(".hg-cite"), note = document.querySelector("#corrections .hg-cite, #unmod .hg-cite, #other .hg-cite");
     return {
       hidden: list.hidden, footing: list.dataset.footing, name: at.firstChild.textContent.trim(), chip: chip?.textContent ?? null, facts: p.textContent, cite: cite.textContent, links: [...cite.querySelectorAll("a")].map((a) => a.href),
-      rule: cs(list).borderTopWidth + " " + cs(list).borderTopColor, factsSize: parseFloat(cs(p).fontSize), factsColor: cs(p).color, citeSize: parseFloat(cs(cite).fontSize), citeColor: cs(cite).color, chipColor: chip ? cs(chip).color : null, chipBorder: chip ? cs(chip).borderColor : null,
+      rule: cs(list).borderTopWidth + " " + cs(list).borderTopColor, factsSize: parseFloat(cs(p).fontSize), factsColor: cs(p).color, citeSize: parseFloat(cs(cite).fontSize), citeColor: cs(cite).color, noteSize: note ? parseFloat(cs(note).fontSize) : null, noteColor: note ? cs(note).color : null, chipColor: chip ? cs(chip).color : null, chipBorder: chip ? cs(chip).borderColor : null,
       bg: cs(document.body).backgroundColor, height: list.getBoundingClientRect().height, lossInk: /loss/.test(p.className + at.className), atWidth: at.getBoundingClientRect().width, pWidth: p.getBoundingClientRect().width,
       stateSub: document.querySelector("#stateSub").textContent, rankText: document.querySelector("#rankList").textContent, legend: document.querySelector("#legend").textContent,
     };
@@ -133,6 +135,7 @@ try {
         await page.goto(`${BASE}/${q}`);
         const ev = await (await evaluated).json();
         await page.locator("#chart svg path").first().waitFor({ timeout: 60_000 });
+        await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
         const m = await measureCitizen(page);
         m.evaluation = { liheap: ev.liheap, cliffsAtLimit: ev.liheap ? ev.analysis.cliffs.filter((c) => c.endEarnings >= ev.liheap.earningsLimit && c.startEarnings < ev.liheap.earningsLimit).map((c) => ({ start: c.startEarnings, end: c.endEarnings, drop: c.drop, lost: c.programsLost })) : null };
         measurements[`citizen-${width}-${scheme}-${key}`] = m;
@@ -159,8 +162,8 @@ try {
             `${width} ${scheme} ${key}: the tick is --ink-3, 2px wide, 8px tall, with no dot within 12px${inWindow ? "" : " (the limit is outside the window; the tick is not drawn)"}`, m.tick);
           check(m.keyBoundary !== null && m.keyBoundary.hidden === !inWindow && !m.keyBoundary.strokes.some((s) => /loss/.test(s)) && !m.keyBoundary.fills.some((s) => /loss/.test(s)),
             `${width} ${scheme} ${key}: the key entry is shown exactly when the tick is, and draws no loss ink`, m.keyBoundary);
-          check(m.boundary !== null && m.boundary.counted === "false" && !m.lossInkOnBoundary && m.boundary.top > m.keyTop && m.boundary.top < m.captionTop,
-            `${width} ${scheme} ${key}: the paragraph sits between the key and the caption, in no loss ink, and says it is a boundary`, m.boundary && { top: m.boundary.top, keyTop: m.keyTop, captionTop: m.captionTop });
+          check(m.boundary !== null && m.boundary.counted === (b.upstream?.counted === "state credit" ? "credit" : "false") && !m.lossInkOnBoundary && m.boundary.top > m.keyTop && m.boundary.top < m.captionTop,
+            `${width} ${scheme} ${key}: the paragraph sits between the key and the caption, in no loss ink, and says which state it is in`, m.boundary && { counted: m.boundary.counted, top: m.boundary.top, keyTop: m.keyTop, captionTop: m.captionTop });
           check(m.liheapSteps.length === 0 && m.marksAboutHeating.length === 0 && m.evaluation.cliffsAtLimit.every((c) => !c.lost.includes("liheap")),
             `${width} ${scheme} ${key}: no StepList row, no mark and no cliff names heating help with the toggle off (never a cliff)`, { steps: m.liheapSteps.length, marks: m.marksAboutHeating.length, cliffsAtLimit: m.evaluation.cliffsAtLimit });
           /* Register: second person, the served share as odds a person understands, the invitation to the toggle — except where the money is already in the line (Michigan). */
@@ -218,19 +221,23 @@ try {
         }
         if (!b) { check(false, `${width} ${scheme} ${key}: the evaluation carries the boundary`); continue; }
         if (!b.counted) {
-          check(r !== null && r.boundary && r.tag === "if you apply" && r.badge === null && r.who === "Household" && r.at === `$${b.earningsLimit.toLocaleString("en-US")}`,
-            `${width} ${scheme} ${key}: the ledger row sits at the earner's own limit, tagged if you apply, no badge, who Household`, r && { at: r.at, tag: r.tag, who: r.who });
+          const credit = b.upstream?.counted === "state credit";
+          check(r !== null && r.boundary && r.credit === credit && r.tag === (credit ? null : "if you apply") && r.badge === null && r.who === "Household" && r.at === `$${b.earningsLimit.toLocaleString("en-US")}`,
+            `${width} ${scheme} ${key}: the ledger row sits at the earner's own limit, ${credit ? "untagged where the credit is counted" : "tagged if you apply"}, no badge, who Household`, r && { at: r.at, tag: r.tag, who: r.who });
+          /* S3's measure, logged: the row's height against the ledger's tallest other row. The cite carries five sourced facts (basis, worth,
+             share with its vintage, footing, date), so at 390 it stays the tallest by about two lines; the check is on the copy, below. */
+          const tallest = Math.max(...m.rows.filter((x) => !x.boundary).map((x) => x.height));
+          console.log(`     ${credit ? "credit" : "boundary"} row ${Math.round(r.height)}px, tallest other ${Math.round(tallest)}px`);
           check(r !== null && !/loss/.test(r.atColor) && r.atColor === m.rows.find((x) => !x.boundary)?.atColor && m.boundaryRows === 1,
             `${width} ${scheme} ${key}: the row carries no loss ink and is the ledger's one boundary row`, r && { atColor: r.atColor });
           check(m.dropsAboutLiheap.length === 0 && m.marksAboutLiheap.length === 0 && !m.tiles.some((t) => /LIHEAP|energy/i.test(t)) && ev.analysis.cliffs.every((c) => !c.programsLost.includes("liheap")),
             `${width} ${scheme} ${key}: not in the DropLedger, not a mark, not in a tile, not in a cliff (never a cliff count)`, { drops: m.dropsAboutLiheap, marks: m.marksAboutLiheap });
-          const credit = b.upstream?.counted === "state credit";
           if (credit) {
-            check(r !== null && !/Not in net income/.test(r.cite) && /Home Heating Credit/.test(r.cite) && !/can no longer apply/.test(r.cite),
-              `${width} ${scheme} ${key}: Michigan's cite says the credit is counted, not "not in net income" (B1)`, r?.cite);
+            check(r !== null && !/Not in net income/.test(r.cite) && /Home Heating Credit/.test(r.cite) && /counts in state credits/.test(r.cite) && /heat is not included in rent/.test(r.cite) && !/can no longer apply/.test(r.cite) && !/LIHEAP/.test(m.takeUp),
+              `${width} ${scheme} ${key}: Michigan's cite says the credit is counted, not "not in net income", and the take-up sentence leaves it out (B1)`, { cite: r?.cite, takeUp: m.takeUp });
           } else {
-            check(r !== null && /^Above this the household can no longer apply: the state's limit is /.test(r.cite) && /FY2024/.test(r.cite) && /Read 2026-\d\d-\d\d\.$/.test(r.cite) && (b.servedShare === null ? /was not read/.test(r.cite) : new RegExp(`${Math.round(b.servedShare * 100)}% of income-eligible households were served`).test(r.cite)),
-              `${width} ${scheme} ${key}: the cite carries the limit's basis, the served share with its vintage and the date read`, r?.cite);
+            check(r !== null && /^\d+% of (the poverty guideline|state median income)[^.]*, the heating limit\. /.test(r.cite) && !/can no longer apply/.test(r.cite) && /FY2024/.test(r.cite) && /Not counted unless the household says it gets it\. Read 2026-\d\d-\d\d\.$/.test(r.cite) && (b.servedShare === null ? /was not read/.test(r.cite) : new RegExp(`${Math.round(b.servedShare * 100)}% of income-eligible households were served`).test(r.cite)),
+              `${width} ${scheme} ${key}: the cite leads with the limit's basis, says the tag's meaning once, and carries the served share with its vintage and the date read (S3)`, r?.cite);
           }
           check(m.assumed.some((t) => /^Energy assistance \(LIHEAP\) in /.test(t)) && /LIHEAP/.test(m.correctionsRest), `${width} ${scheme} ${key}: the not-included list carries core's note verbatim and CorrectionsApplied's checked line names it`, { assumed: m.assumed.map((t) => t.slice(0, 60)), rest: m.correctionsRest.slice(0, 80) });
         } else {
@@ -250,8 +257,8 @@ try {
         console.log(`  ${st}: [${m.chip}] ${m.facts}`);
         await page.$eval("#stateDetail", (el) => el.scrollIntoView());
         await (await page.$("#stateDetail")).screenshot({ path: `${OUT}/journalist-${width}-${scheme}-${st}.png` });
-        check(!m.hidden && m.name === "Energy assistance (LIHEAP)" && !m.lossInk && m.factsSize > m.citeSize && m.links.length >= 1 && m.rule.startsWith("2px"),
-          `${width} ${scheme} ${st}: one row named for the program, facts at the row's size, publishers linked, no loss ink, set off by the strong rule`, { chip: m.chip, factsSize: m.factsSize, citeSize: m.citeSize, links: m.links.length, rule: m.rule });
+        check(!m.hidden && m.name === "Energy assistance (LIHEAP)" && !m.lossInk && (m.noteSize === null || (m.factsSize === m.noteSize && m.factsColor === m.noteColor)) && m.links.length >= 1 && m.rule.startsWith("2px"),
+          `${width} ${scheme} ${st}: one row named for the program, its facts in the register and ink of the block's other notes (S1), publishers linked, no loss ink, set off by the strong rule`, { chip: m.chip, factsSize: m.factsSize, noteSize: m.noteSize, factsColor: m.factsColor, noteColor: m.noteColor, links: m.links.length, rule: m.rule });
         check(!/liheap|energy|heating/i.test(m.rankText + m.legend), `${width} ${scheme} ${st}: nothing about it in the ranked strip or the legend`);
         const chipC = m.chip ? contrast(rgb(m.chipColor), rgb(m.bg)) : null;
         check(chipC === null || chipC >= 4.5, `${width} ${scheme} ${st}: the chip's ink on the page ground ≥ 4.5:1`, chipC);
@@ -287,9 +294,11 @@ try {
   const cp = await paper("citizen-tx", `/${HOUSEHOLDS.tx}`, () => page.locator("#chart svg path").first().waitFor(), () => page.evaluate(() => {
     const tick = document.querySelector("#chart svg line[data-boundary]"), b = document.querySelector("#boundary"), key = [...document.querySelectorAll(".hg-key li")].find((li) => /heating/.test(li.textContent));
     const cs = (el) => getComputedStyle(el);
-    return { tick: tick && { stroke: cs(tick).stroke, display: cs(tick).display }, boundary: b && { color: cs(b).color, display: cs(b).display, text: b.textContent.slice(0, 60) }, key: key && { hidden: key.hidden, display: cs(key).display } };
+    const invite = b?.querySelector(".hg-no-print");
+    return { tick: tick && { stroke: cs(tick).stroke, display: cs(tick).display }, boundary: b && { color: cs(b).color, display: cs(b).display, text: b.textContent.slice(0, 60), invite: invite ? cs(invite).display : "absent" }, key: key && { hidden: key.hidden, display: cs(key).display } };
   }));
   check(cp.tick && cp.tick.display !== "none" && cp.boundary && cp.boundary.display !== "none" && cp.key && !cp.key.hidden, "citizen paper: the tick, its key entry and the paragraph are on the page in print media", cp);
+  check(cp.boundary && cp.boundary.invite === "none", "citizen paper: the invitation to the toggle is not on the page in print media (S2)", cp.boundary?.invite);
   const wp = await paper("caseworker-tx", `/caseworker.html${HOUSEHOLDS.tx}`, () => page.locator("#content:not([hidden]) #ledgerRows tr").first().waitFor(), () => page.evaluate(() => {
     const tr = document.querySelector("#ledgerRows tr[data-boundary]"), cs = (el) => getComputedStyle(el);
     return tr && { display: cs(tr).display, tag: tr.querySelector(".hg-tag") && { display: cs(tr.querySelector(".hg-tag")).display, border: cs(tr.querySelector(".hg-tag")).borderColor, color: cs(tr.querySelector(".hg-tag")).color }, cite: cs(tr.querySelector(".hg-cite")).color, handout: document.querySelector("#handout").textContent.replace(/\s+/g, " ").slice(0, 400) };

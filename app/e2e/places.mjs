@@ -368,8 +368,8 @@ try {
           hidden: list.hidden, footing: list.dataset.footing, rows: list.querySelectorAll("li").length, rule: getComputedStyle(list).borderTopWidth,
           after: list.compareDocumentPosition(document.querySelector("#stateSrc")) & Node.DOCUMENT_POSITION_FOLLOWING,
           name: li.querySelector(".hg-rows__at").firstChild.textContent.trim(), chip: li.querySelector(".hg-rows__at .hg-tag")?.textContent ?? null,
-          facts: li.querySelector("p").textContent, cite: li.querySelector(".hg-cite").textContent, links: [...li.querySelectorAll(".hg-cite a")].map((a) => a.href),
-          factsSize: parseFloat(getComputedStyle(li.querySelector("p")).fontSize), citeSize: parseFloat(getComputedStyle(li.querySelector(".hg-cite")).fontSize),
+          facts: li.querySelectorAll(".hg-cite")[0].textContent, cite: li.querySelectorAll(".hg-cite")[1].textContent, links: [...li.querySelectorAll(".hg-cite a")].map((a) => a.href),
+          factsSize: parseFloat(getComputedStyle(li.querySelectorAll(".hg-cite")[0]).fontSize), noteSize: parseFloat(getComputedStyle(document.querySelector("#corrections .hg-cite, #unmod .hg-cite, #other .hg-cite") ?? li.querySelectorAll(".hg-cite")[0]).fontSize),
         };
       });
     };
@@ -383,8 +383,8 @@ try {
     check(!txBoundary.hidden && txBoundary.rows === 1 && txBoundary.after > 0 && txBoundary.rule === "2px" && txBoundary.name === "Energy assistance (LIHEAP)" && txBoundary.chip === "not counted" && txBoundary.footing === "boundary" && txN.source === "boundary"
       && txB.topBand.min === txB.topBand.max && txB.servedShare < 0.05 && txBoundary.facts === factsOf(txB)
       && txBoundary.cite === `Limit and amount: ${host(txB.sources.limits)}. Households served: ${host(txB.sources.served)}. Read ${dayWords(txB.readOn)}.` && txBoundary.links.join() === [txB.sources.limits, txB.sources.served].join()
-      && txBoundary.factsSize > txBoundary.citeSize,
-      "Texas's block: one row whose three facts equal coverage.TX.liheap at the row's own size, the publishers linked in its cite with the day read in the reader's zone, the chip saying not counted, set off by the strong rule before the source line (#23)", txBoundary);
+      && txBoundary.factsSize === txBoundary.noteSize,
+      "Texas's block: one row whose three facts equal coverage.TX.liheap in the cite register the corrections use (liheap review S1), the publishers linked on its second line with the day read in the reader's zone, the chip saying not counted, set off by the strong rule before the source line (#23)", txBoundary);
     const miB = summary.coverage.MI.liheap, miN = summary.coverage.MI.corrections.liheap;
     const miBoundary = await boundaryOf("MI");
     check(miN.source === "in net income" && miB.upstream?.counted === "state credit" && miBoundary.chip === "in net income" && miBoundary.footing === "in net income"

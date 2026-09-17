@@ -110,6 +110,10 @@ export const copy = {
 
   // EligibilityBoundary (#23): three facts and an invitation, never a drop.
   // {pay} is in the person's own unit; {min}, {max}, {amount} are yearly money.
+  // The invitation is its own sentence so the page can keep it off paper
+  // (liheap review S2). Where the state pays its heating help as a tax credit
+  // HotGap already counts (Michigan), there is nothing to apply for and
+  // nothing to turn on: the paragraph says it is in the line (review B1).
   boundary: {
     line: "Above {pay}, you can no longer apply for help with heating bills in {state}. It is called LIHEAP.",
     worth: " It is worth {min} to {max} a winter if you get it.",
@@ -121,7 +125,8 @@ export const copy = {
       most: " Almost all families who could get it here do.",
       unknown: " We do not know how many families who could get it here do.",
     },
-    invite: " If you get it, turn it on to see it in your line.",
+    invite: "If you get it, turn it on to see it in your line.",
+    credit: "Help with heating bills in {state} is a tax credit. It is already in your line. It gets smaller as you earn more and runs out above {pay}.",
     counted: "You said you get help with heating bills (LIHEAP). We put it in your line: about {amount} a year, up to {pay}.",
   },
 

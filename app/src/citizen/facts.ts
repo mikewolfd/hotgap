@@ -35,6 +35,9 @@ const TAKE_UP: [keyof Scene["modeled"], ProgramId][] = [
   ["getsChildcareSubsidy", "childcare"], ["getsHousing", "housing"], ["getsHeadStart", "headstart"], ["getsEnergyAssistance", "liheap"],
 ];
 
+/** The state pays its heating help as a tax credit HotGap already counts (Michigan): nothing to apply for, nothing to turn on. */
+export const creditCounted = (s: Scene): boolean => s.boundary?.upstream?.counted === "state credit";
+
 const kidsWord = (n: number): string =>
   n === 1 ? copy.assumed.kids.one : n === 2 ? copy.assumed.kids.two : n === 3 ? copy.assumed.kids.three : fill(copy.assumed.kids.many, { n });
 
@@ -54,8 +57,10 @@ export function assumedRows(s: Scene): Fact[] {
     : A.monthlyChildcare === typicalCare ? t("assumed.childcareTypical", { amount: m.money(A.monthlyChildcare), kids, state })
     : t("assumed.childcare", { amount: m.money(A.monthlyChildcare), kids }) });
 
-  const on = TAKE_UP.filter(([k]) => A[k]).map(([, id]) => phraseAndName(id));
-  const off = TAKE_UP.filter(([k]) => !A[k]).map(([, id]) => phraseAndName(id));
+  // Heating help is neither got nor not got where the state pays it as a credit already in the line (review B1): the toggle adds nothing there.
+  const takeUp = creditCounted(s) ? TAKE_UP.filter(([, id]) => id !== "liheap") : TAKE_UP;
+  const on = takeUp.filter(([k]) => A[k]).map(([, id]) => phraseAndName(id));
+  const off = takeUp.filter(([k]) => !A[k]).map(([, id]) => phraseAndName(id));
   if (on.length) rows.push({ label: L.help, text: t("assumed.help", { list: capitalize(listOf(on)) }) });
   if (off.length) rows.push({ label: L.notCounted, text: t("assumed.notCounted", { list: capitalize(listOf(off)) }) });
 
@@ -165,18 +170,21 @@ export function hoursText(s: Scene): string | null {
  * EligibilityBoundary (#23) under the key: where help with heating bills
  * stops, what it is worth if received, and the share of eligible families
  * the state served — "about N in 10", never this family's odds — then the
- * invitation to the toggle. With the toggle on, only that it was counted.
+ * invitation to the toggle, its own sentence so the page keeps it off paper
+ * (review S2). With the toggle on, only that it was counted; where the money
+ * is a counted state credit, that it is already in the line (review B1).
  */
-export function boundaryText(s: Scene): string | null {
+export function boundaryText(s: Scene): { facts: string; invite: string | null } | null {
   const b = s.boundary;
   if (!b) return null;
   const { m } = s;
   if (b.counted) {
     const at = s.ev.curve.points.filter((p) => p.earnings <= b.earningsLimit).pop();
-    return t("boundary.counted", { amount: m.about(at?.programs.liheap ?? 0), pay: m.payUnit(b.earningsLimit) });
+    return { facts: t("boundary.counted", { amount: m.about(at?.programs.liheap ?? 0), pay: m.payUnit(b.earningsLimit) }), invite: null };
   }
-  let out = t("boundary.line", { pay: m.payUnit(b.earningsLimit), state: s.stateName });
-  out += !b.topBand ? t("boundary.worthUnknown")
+  const credit = creditCounted(s);
+  let out = credit ? t("boundary.credit", { state: s.stateName, pay: m.payUnit(b.earningsLimit) }) : t("boundary.line", { pay: m.payUnit(b.earningsLimit), state: s.stateName });
+  if (!credit) out += !b.topBand ? t("boundary.worthUnknown")
     : b.topBand.min === b.topBand.max ? t("boundary.worthFlat", { amount: m.money(b.topBand.min) })
     : t("boundary.worth", { min: m.money(b.topBand.min), max: m.money(b.topBand.max) });
   if (b.servedShare === null) out += t("boundary.served.unknown");
@@ -184,7 +192,7 @@ export function boundaryText(s: Scene): string | null {
     const served = servedTenths(b.servedShare);
     out += served.kind === "some" ? t("boundary.served.some", { n: served.n }) : t(`boundary.served.${served.kind}`);
   }
-  return out + t("boundary.invite");
+  return { facts: out, invite: credit ? null : t("boundary.invite") };
 }
 
 /** The phrase for a cliff's first named program, for the chart's spoken label. */

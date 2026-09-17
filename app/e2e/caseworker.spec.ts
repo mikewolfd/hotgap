@@ -438,7 +438,8 @@ test("Texas: the ledger carries the LIHEAP boundary as a row tagged 'if you appl
   await expect(row).toContainText("$39,975");
   await expect(row).toContainText("LIHEAP energy assistance");
   await expect(row.locator(".hg-tag")).toHaveText("if you apply");
-  await expect(row.locator(".hg-cite")).toHaveText("Above this the household can no longer apply: the state's limit is 150% of the poverty guideline. Worth $1,200 at that band if received. 3% of income-eligible households were served in FY2024. Not in net income unless the household says it gets it. Read 2026-09-16.");
+  // The tag says "if you apply"; the cite leads with the basis and does not say it again (liheap review S3).
+  await expect(row.locator(".hg-cite")).toHaveText("150% of the poverty guideline, the heating limit. Worth $1,200 at that band if received; 3% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.");
   await expect(page.locator("#assumed")).toContainText("Energy assistance (LIHEAP) in Texas: HotGap shows where energy assistance (LIHEAP) stops in this state");
   await expect(page.locator("#correctionsRest")).toContainText("LIHEAP energy assistance: HotGap shows where energy assistance");
   measured["P7-TX-ledger-boundary"] = await row.textContent();

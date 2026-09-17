@@ -11,7 +11,7 @@ import type { Cliff } from "@hotgap/core";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
-import { boundaryText, worstPhrase } from "./facts.js";
+import { boundaryText, creditCounted, worstPhrase } from "./facts.js";
 import { layout, type Cluster, type Layout } from "./geometry.js";
 import type { Scene } from "./model.js";
 
@@ -92,15 +92,18 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint") + (s.inWindow.length && innerWidth >= 720 ? t("chart.readoutMarks") : ""));
   const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.inWindow.length ? t("chart.readoutMarks") : ""));
   const caption = h("figcaption", { id: "curveCaption" });
-  /* EligibilityBoundary (#23): one line under the key, whether or not the tick is in the window; nothing when the curve ends below the limit. */
+  /* EligibilityBoundary (#23): one line under the key, whether or not the tick is in the window; nothing when the curve ends below the
+     limit. The invitation to the toggle is its own sentence and stays off paper, where there is nothing to turn on (liheap review S2);
+     data-counted says which of the three states the paragraph is in — a boundary, the toggle's end, or a state credit already in the line (B1). */
   const boundary = boundaryText(s);
+  const boundaryState = s.boundary?.counted ? "true" : creditCounted(s) ? "credit" : "false";
   /* The readout paints the caret only once a person has moved it; before that it holds the hint. */
   let touched = false;
   figure.append(
     h("div", { class: "chart-head" }, h("span", { class: "chart-title" }, t("chart.title")),
       h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
     wrapper, readout, keys, keyList(s, hasOther, hasLater, hasDrop, s.boundaryInWindow),
-    ...(boundary ? [h("p", { class: "boundary", id: "boundary", "data-counted": String(s.boundary!.counted) }, boundary)] : []),
+    ...(boundary ? [h("p", { class: "boundary", id: "boundary", "data-counted": boundaryState }, boundary.facts, ...(boundary.invite ? [" ", h("span", { class: "hg-no-print" }, boundary.invite)] : []))] : []),
     caption,
   );
 

@@ -228,13 +228,21 @@ export const copy = {
     premiumLadder: (program: string) => `${program} is applied from a local ladder.`,
     premiumUnmodeled: (program: string) => `${program} exists but is not modeled on this sweep.`,
     premiumNone: "No state premium help applies.",
-    /* EligibilityBoundary (#23): the row at the limit, tagged, with the three facts and their vintage. */
+    /* EligibilityBoundary (#23): the row at the limit, tagged, with the three facts and their vintage — the tag says "if you apply" once,
+       so the cite leads with the basis rather than saying it again (liheap review S3). */
     ifYouApply: "if you apply",
     liheapBoundary: (p: { limit: string; band: string | null; servedShare: number | null; readOn: string }) =>
-      `Above this the household can no longer apply: the state's limit is ${p.limit}.` +
-      (p.band ? ` Worth ${p.band} at that band if received.` : " The amount at that band was not read.") +
+      `${p.limit}, the heating limit.` +
+      (p.band ? ` Worth ${p.band} at that band if received;` : " The amount at that band was not read;") +
+      (p.servedShare === null ? ` the ${LIHEAP_VINTAGE.served} share of income-eligible households served was not read.` : ` ${Math.round(p.servedShare * 100)}% of income-eligible households were served in ${LIHEAP_VINTAGE.served}.`) +
+      ` Not counted unless the household says it gets it. Read ${p.readOn}.`,
+    /* Where the state pays its heating help as a refundable credit PolicyEngine models and HotGap already counts (Michigan): the row is where it
+       tapers out, not a boundary and not a cliff, and the cite says what the model assumed about heat in the rent (liheap review B1). */
+    liheapCredit: (p: { program: string | null; limit: string; servedShare: number | null; heatInRent: boolean; readOn: string }) =>
+      `Paid as ${p.program ? `the ${p.program}, ` : ""}a refundable state credit PolicyEngine models and HotGap counts in state credits; it tapers out by the state's limit, ${p.limit}, so it is not a cliff.` +
       (p.servedShare === null ? ` The ${LIHEAP_VINTAGE.served} share of income-eligible households served was not read.` : ` ${Math.round(p.servedShare * 100)}% of income-eligible households were served in ${LIHEAP_VINTAGE.served}.`) +
-      ` Not in net income unless the household says it gets it. Read ${p.readOn}.`,
+      (p.heatInRent ? " Heat is included in the rent, so the credit is halved." : " Assumes heat is not included in rent; the credit halves when it is.") +
+      ` Read ${p.readOn}.`,
     liheapCounted: (amount: number, limit: string) =>
       `Counted at the household's say-so: ${$(amount)} a year from HotGap's table of the state's published schedule, to the ${limit} limit. PolicyEngine serves no LIHEAP amount on this payload.`,
     liheapBand: (min: number, max: number) => (min === max ? $(min) : `${$(min)}–${$(max)}`),
