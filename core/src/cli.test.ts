@@ -94,7 +94,7 @@ describe("CLI correction notices", () => {
   it("prints the same approximation with the summary rankings", async () => {
     vi.mocked(loadSummary).mockReturnValue({
       generated: "g", year: "2026", archetypes: [], states: { MA: { "married-3": {
-        biggestLoss: 0, dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false,
+        biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false,
         maTafdc: ev.maTafdc!,
       } } },
     });

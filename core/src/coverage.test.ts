@@ -95,10 +95,18 @@ describe("stateCoverage — corrections", () => {
 
 describe("stateCoverage — unmodeled and otherBenefits", () => {
   it("always names LIHEAP, and the child-care subsidy only where the sweep found it unmodeled", () => {
-    expect(stateCoverage("TX", curves()).unmodeled).toEqual([{ program: "LIHEAP", note: expect.any(String) }]);
+    expect(stateCoverage("TX", curves()).unmodeled).toEqual([{ program: "LIHEAP", note: expect.any(String), scope: "all" }]);
     const flagged = stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["TX"] }).unmodeled.map((u) => u.program);
     expect(flagged).toEqual(["Child-care subsidy (CCDF)", "LIHEAP"]);
     expect(stateCoverage("TX", curves(), { childcareSubsidyUnmodeled: ["MA"] }).unmodeled).toHaveLength(1);
+  });
+
+  it("scopes a gap every state shares as `all` and a state's own as `state` (places review S8)", () => {
+    for (const state of STATE_CODES) {
+      const entries = stateCoverage(state, curves(), { childcareSubsidyUnmodeled: [state] }).unmodeled;
+      for (const u of entries) expect(u.scope, `${state}: ${u.program}`).toBe(u.program === "LIHEAP" ? "all" : "state");
+    }
+    expect(stateCoverage("NJ", curves()).unmodeled.map((u) => [u.program, u.scope])).toEqual([["NJ Health Plan Savings", "state"], ["LIHEAP", "all"]]);
   });
 
   it("labels the remainder from the traced table, reports an untraced one as such, and ignores noise", () => {
@@ -118,12 +126,30 @@ describe("stateCoverage — vintages", () => {
     expect(vintages.rent.vintage).toContain("FY2026");
     expect(vintages.county.publisher).toContain("Census");
     expect(vintages.county.vintage).toContain("Vintage 2024");
+    // Connecticut's most populous "county" is a planning region the 2020 gazetteer predates: the FIPS is there, the name is not.
+    expect(vintages.county).toMatchObject({ fips: "09110", name: null });
     // Connecticut's planning regions post-date the NDCP, so its price is the state-median rule.
     expect(vintages.childcare).toEqual({ infant: "stateMedianCounty 2018", toddler: "stateMedianCounty 2018", preschool: "stateMedianCounty 2018", schoolAge: "stateMedianCounty 2018" });
     expect(vintages.reach).toEqual({ basis: expect.stringContaining("PUMS"), vintages: ["2024-1yr"], growthFactor: 1.067533 });
     // A small state's cells lean on the 5-Year file; the block says so.
     expect(stateCoverage("WY", curves()).vintages.reach.vintages).toEqual(["2020-2024-5yr", "2024-1yr"]);
     expect(stateCoverage("WY", curves()).vintages.model).toBeNull();
+  });
+});
+
+describe("stateCoverage — the county named (places review B4)", () => {
+  it("names the archetypes' county from the gazetteer, keeping a parish, a municipality and the District as published", () => {
+    const county = (state: string) => stateCoverage(state, curves()).vintages.county;
+    expect(county("OH")).toMatchObject({ fips: "39049", name: "Franklin County" });
+    expect(county("LA").name).toBe("East Baton Rouge Parish");
+    expect(county("AK").name).toBe("Anchorage Municipality");
+    expect(county("DC").name).toBe("District of Columbia");
+    // Every state but Connecticut has a name; every state has its FIPS.
+    for (const state of STATE_CODES) {
+      const c = county(state);
+      expect(c.fips, state).toMatch(/^\d{5}$/);
+      expect(c.name !== null, state).toBe(state !== "CT");
+    }
   });
 });
 

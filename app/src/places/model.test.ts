@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import type { StateCoverage, StateMetrics, SummaryJson } from "@hotgap/core";
+import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from "@hotgap/core";
 import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize } from "../lib/format.js";
 import { word } from "./format.js";
@@ -8,9 +8,9 @@ import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForC
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
-  biggestLoss: 1000, dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, ...over,
+  biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, ...over,
 });
-const liheap = { program: "LIHEAP", note: "never reaches net income" };
+const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({
   corrections: {
     policyOverrides: [],
@@ -21,7 +21,7 @@ const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCovera
   },
   unmodeled,
   otherBenefits: [],
-  vintages: { model: null, rent: { publisher: "HUD", vintage: "FY2026" }, county: { publisher: "Census", vintage: "V2024" }, childcare: { preschool: "county 2018" }, reach: { basis: "", vintages: ["2024-1yr"], growthFactor: 1 } },
+  vintages: { model: null, rent: { publisher: "HUD", vintage: "FY2026" }, county: { publisher: "Census", vintage: "V2024", fips: "00000", name: "Any County" }, childcare: { preschool: "county 2018" }, reach: { basis: "", vintages: ["2024-1yr"], growthFactor: 1 } },
 });
 const single1 = { id: "single-1", married: false, childAges: [3] };
 const married1 = { id: "married-1", married: true, childAges: [3] };
@@ -31,7 +31,7 @@ const fixture: SummaryJson = {
   states: {
     AA: { "single-1": metrics({ biggestLoss: 9000 }), "married-1": metrics({ biggestLoss: 9000 }) },          // shaded, the top
     BB: { "single-1": metrics({ biggestLoss: 3000 }), "married-1": metrics({ biggestLoss: 3000 }) },          // shaded
-    CC: { "single-1": metrics({ cliffCount: 0, biggestLoss: 0, dangerWidth: 0, safeExit: 0, leap: 0 }), "married-1": metrics() }, // none for single-1
+    CC: { "single-1": metrics({ cliffCount: 0, biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, safeExit: 0, leap: 0 }), "married-1": metrics() }, // none for single-1
     DD: { "single-1": metrics({ safeExit: null, biggestLoss: 500 }), "married-1": metrics({ safeExit: null }) }, // null exit, flag false (NE today)
     EE: { "single-1": metrics({ leapIsLowerBound: true, biggestLoss: 12000 }), "married-1": metrics() },       // lower-bound leap
     FF: { "single-1": metrics({ biggestLoss: 20000 }), "married-1": metrics({ biggestLoss: 20000 }) },        // incomplete: premium program
@@ -39,8 +39,8 @@ const fixture: SummaryJson = {
   },
   coverage: {
     AA: coverage(), BB: coverage(), CC: coverage(), DD: coverage(), EE: coverage(),
-    FF: coverage([{ program: "FF Premium Savings", note: "no upstream variable" }, liheap]),
-    GG: coverage([{ program: "Child-care subsidy (CCDF)", note: "the engine paid $0" }, liheap]),
+    FF: coverage([{ program: "FF Premium Savings", note: "no upstream variable", scope: "state" }, liheap]),
+    GG: coverage([{ program: "Child-care subsidy (CCDF)", note: "the engine paid $0", scope: "state" }, liheap]),
   },
 };
 const loss = measureByKey("biggestLoss")!;
