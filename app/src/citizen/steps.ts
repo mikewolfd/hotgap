@@ -1,11 +1,11 @@
-// StepList (#6): one row per threshold, from the cliff list and
-// escape.programEnds under the one convention (design/inventory.md § Where
-// a program ends): a program ends at the first pay at which it is gone —
-// cliff.endEarnings, or programEnds[id] + one axis step. A row is the card
-// a cliff mark opens (M6). Pure: rows and sentences, no DOM.
+// StepList (#6): one row per threshold, from the one walk of the cliff list
+// and escape.programEnds (lib/thresholds.ts, the ledger's too — design/
+// inventory.md § Where a program ends): a program ends at the first pay at
+// which it is gone. A row is the card a cliff mark opens (M6). Pure: rows and
+// sentences, no DOM.
 import { COVERAGE_PROGRAMS, type Cliff, type ProgramId } from "@hotgap/core";
-import { listOf } from "../lib/format.js";
-import { capitalize } from "../lib/format.js";
+import { capitalize, listOf } from "../lib/format.js";
+import { thresholds } from "../lib/thresholds.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { called, NAMES_ITS_GROUP, noun, phrase } from "./programs.js";
@@ -33,33 +33,22 @@ export interface StepRow {
 const childCoverageWaits = (p: { id: ProgramId; group: Group | null }): boolean =>
   p.group === "children" && (COVERAGE_PROGRAMS as ProgramId[]).includes(p.id);
 
-/** The rows, sorted by pay. O(cliffs × programs). */
+/**
+ * The rows, sorted by pay: the thresholds grouped by the pay they land at,
+ * plus a row for a cliff that names no program. A cliff's program names its
+ * group only when the program ends twice (once per group) — "Your own …" /
+ * "Your kids' …" — a program that ends without a cliff always names who
+ * held it. O(cliffs × programs).
+ */
 export function stepRows(s: Scene): StepRow[] {
   const byAge = s.ev.escape.programEndsByAge;
-  const ends = s.ev.escape.programEnds;
   const split = (id: ProgramId) => byAge.adults[id] !== undefined && byAge.children[id] !== undefined;   // one program, two endings
-  const groupOf = (id: ProgramId, at: number): Group | null =>
-    (["adults", "children"] as Group[]).find((g) => byAge[g][id] !== undefined && byAge[g][id]! + s.step === at) ?? null;
   const rows = new Map<number, StepRow>();
   const rowAt = (at: number): StepRow => rows.get(at) ?? rows.set(at, { at, cliff: null, programs: [], future: at > s.current, waits: false }).get(at)!;
-  for (const c of s.cliffs) {
-    const r = rowAt(c.endEarnings);
-    r.cliff = c;
-    for (const id of c.programsLost) r.programs.push({ id, group: split(id) ? groupOf(id, c.endEarnings) : null, onCliff: true });
-  }
-  const placed = new Set(s.cliffs.flatMap((c) => c.programsLost));
-  // A person-level program is listed per group — a parent's Medicaid can end
-  // while the children's runs past the axis, when the household total never
-  // ends and programEnds has no entry — and any other by its household end.
-  const personLevel = new Set<ProgramId>([...Object.keys(byAge.adults), ...Object.keys(byAge.children)] as ProgramId[]);
-  for (const g of ["adults", "children"] as Group[]) {
-    for (const [id, last] of Object.entries(byAge[g]) as [ProgramId, number][]) {
-      const at = last + s.step;
-      if (!rowAt(at).programs.some((p) => p.id === id)) rowAt(at).programs.push({ id, group: g, onCliff: false });
-    }
-  }
-  for (const [id, last] of Object.entries(ends) as [ProgramId, number][]) {
-    if (!personLevel.has(id) && !placed.has(id)) rowAt(last + s.step).programs.push({ id, group: null, onCliff: false });
+  for (const c of s.cliffs) rowAt(c.endEarnings).cliff = c;
+  for (const t of thresholds(s.ev)) {
+    const group = t.holder === "household" || (t.cliff && !split(t.id)) ? null : t.holder;
+    rowAt(t.at).programs.push({ id: t.id, group, onCliff: t.cliff !== null });
   }
   for (const r of rows.values()) r.waits = (r.cliff !== null && r.cliff.deferral !== null) || r.programs.some(childCoverageWaits);
   return [...rows.values()].sort((a, b) => a.at - b.at);

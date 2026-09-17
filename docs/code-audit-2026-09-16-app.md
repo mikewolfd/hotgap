@@ -194,6 +194,18 @@ waits }`; each surface keeps its words and its extra fields. Proves:
 pay…" and `citizen/steps.test.ts` (nine cases, including the split-program
 and child-coverage-waits rules). ~25 lines.
 
+**Resolved** (`lib/thresholds.ts thresholds(ev)` → `{ at, id, holder,
+cliff, deferred }` in walk order, with `stepOf` and `thresholds.test.ts`;
+`ledgerRows` maps holder → group and adds the LIHEAP row, `stepRows` groups
+by pay and keeps its own group and waits rules — each surface its words and
+extra fields). One walk means one dedupe rule — a program once per holder
+and once per pay — which changes two cases no committed household reaches:
+the citizen page no longer lists a second row where a person-level program
+a cliff already named finally ends (the cliff's row says what goes on,
+under the convention), and the ledger no longer lists a program three
+times when both halves end at the same step. The nine `steps.test.ts`
+cases and the ledger's ten rows are byte for byte as before.
+
 ### D9. `correctionRows` lives in the journalist page; the caseworker imports it
 
 `caseworker/render.ts:9` imports from `../places/model.js`. Vite therefore

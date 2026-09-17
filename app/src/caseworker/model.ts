@@ -10,8 +10,6 @@
 // table against the file. Every word is copy.ts's.
 import {
   CLIFF_MIN,
-  COVERAGE_PROGRAMS,
-  DEFERRAL_UNTIL,
   liheapLimitWords,
   modeledAnswers,
   pickArchetypeId,
@@ -29,12 +27,11 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { againText, verdictText } from "../citizen/verdict.js";
 import { careHousehold, incompleteFor } from "../lib/coverage.js";
+import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
 import { copy, fmt, programName } from "./copy.js";
 
 export const stateName = (st: string): string => STATE_NAMES[st] ?? st;
 
-/** The axis step between consecutive points ($1,000 on the sweep). */
-export const stepOf = (ev: HouseholdEvaluation): number => ev.curve.points[1].earnings - ev.curve.points[0].earnings;
 /** The index of an earnings figure on the axis. */
 export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
   Math.round((earnings - ev.curve.points[0].earnings) / stepOf(ev));
@@ -127,35 +124,11 @@ export interface LedgerRow {
 export const liheapCredit = (ev: HouseholdEvaluation, cov: StateCoverage | undefined): boolean =>
   (ev.liheap?.upstream ?? cov?.liheap?.upstream)?.counted === "state credit";
 
-/**
- * Every program's end, from the cliff list first (the landing point of the
- * step that removes it) and then escape.programEnds + one axis step for a
- * program that ends without a cliff. Sorted by earnings. O(cliffs × programs).
- */
+const GROUP: Record<Holder, LedgerRow["group"]> = { adults: "Adult", children: "Children", household: "Household" };
+
+/** Every program's end under the one convention (lib/thresholds.ts), plus the LIHEAP boundary row, sorted by earnings then program. */
 export function ledgerRows(ev: HouseholdEvaluation): LedgerRow[] {
-  const step = stepOf(ev), ends = ev.escape, adults = ends.programEndsByAge.adults, children = ends.programEndsByAge.children;
-  const who = (id: ProgramId, start: number): LedgerRow["group"] => {
-    const a = adults[id], c = children[id];
-    if (a !== undefined && c === undefined) return "Adult";
-    if (c !== undefined && a === undefined) return "Children";
-    if (a === start && c !== start) return "Adult";
-    if (c === start && a !== start) return "Children";
-    return "Household";
-  };
-  const seen = new Set<string>(), out: LedgerRow[] = [];
-  for (const c of ev.analysis.cliffs) for (const id of c.programsLost) {
-    const group = who(id, c.startEarnings);
-    seen.add(`${id}|${group}`);
-    out.push({ at: c.endEarnings, id, group, cliff: c, deferred: c.deferral?.until ?? null });
-  }
-  for (const [group, map] of [["Adult", adults], ["Children", children]] as const)
-    for (const [id, at] of Object.entries(map) as [ProgramId, number][]) if (!seen.has(`${id}|${group}`)) {
-      seen.add(`${id}|${group}`);
-      // A child's coverage end is deferred by continuous eligibility whether or not it is a cliff (analyze.ts).
-      out.push({ at: at + step, id, group, deferred: group === "Children" && COVERAGE_PROGRAMS.includes(id) ? DEFERRAL_UNTIL.child_continuous_eligibility : null });
-    }
-  for (const [id, at] of Object.entries(ends.programEnds) as [ProgramId, number][])
-    if (![...seen].some((k) => k.startsWith(`${id}|`))) out.push({ at: at + step, id, group: "Household", deferred: null });
+  const out: LedgerRow[] = thresholds(ev).map((t) => ({ at: t.at, id: t.id, group: GROUP[t.holder], ...(t.cliff ? { cliff: t.cliff } : {}), deferred: t.deferred }));
   // Where energy assistance stops, with the toggle off: the earner's own pay at the state's limit, not a step of the axis.
   if (ev.liheap && !ev.liheap.counted) out.push({ at: ev.liheap.earningsLimit, id: "liheap", group: "Household", deferred: null, boundary: true, ...(liheapCredit(ev, undefined) ? { credit: true as const } : {}) });
   return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
