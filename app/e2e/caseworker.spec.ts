@@ -66,7 +66,9 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     await expect(page.locator("#tiles")).toContainText("percentile, ±$8,000 (n = 393)");
     // IncompleteMarker and CorrectionsApplied from coverage.CO — the count of states rendered, never typed; the notes core's own.
     await expect(page.locator("#coverage")).toContainText("Figures complete for Colorado.");
-    await expect(page.locator("#coverage")).toContainText(/In \d+ states? \([A-Z]{2}(, [A-Z]{2})*\) this line would carry the/);
+    // The count of incomplete states is rendered from the sweep, never typed: since NJ/WA/CT/MA
+    // and the LIHEAP boundary landed, no state is incomplete, and the line says so instead.
+    await expect(page.locator("#coverage")).toContainText(/In \d+ states? \([A-Z]{2}(, [A-Z]{2})*\) this line would carry the|Nothing this household would hold is unmodelled here\./);
     await expect(page.locator("#corrections li")).toHaveCount(1);
     await expect(page.locator("#corrections .hg-rows__at")).toHaveText("Colorado premium assistance");
     await expect(page.locator("#corrections .hg-tag")).toHaveText("modeled");
