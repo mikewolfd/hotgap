@@ -10,14 +10,21 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
      margin: var(--s5) 0 0; }
 p { max-width: var(--measure-wide); }
 
-.masthead { border-bottom: 1px solid var(--rule); padding: var(--s4) 0; }
+/* The masthead shares the page column's side gutter: `.page` carries it,
+   so the headline never runs to the screen edge while the controls below
+   keep theirs (N5 of the context-blind review). */
+.masthead { border-bottom: 1px solid var(--rule); padding-top: var(--s4); padding-bottom: var(--s4); }
 .wordmark { font-weight: var(--w-semi); font-size: var(--t-h3); margin: 0 0 var(--s4); }
 .lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
+/* The glossary sentence (S3) reads a step lighter than the lede, at the small size the rest of the page sets. */
+.glossary { font-size: var(--t-small); margin-bottom: 0; }
 
 /* The load line: a status while the sweep arrives, an alert if it does not,
    gone once the page is filled. */
 #status { margin: var(--s4) 0 0; }
 #status[role="alert"] { color: var(--caution); }
+/* Gone once the page is filled: its column's bottom padding would otherwise stand as a blank band between the masthead and the filters. */
+.page:has(> #status[hidden]) { display: none; }
 
 .split { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s5);
          align-items: start; }
@@ -32,6 +39,10 @@ p { max-width: var(--measure-wide); }
 .figure { background: var(--surface); border: 1px solid var(--rule); padding: var(--s5); margin: 0; }
 .figure h3 { font-size: var(--t-body); }
 .figure .sub { color: var(--ink-2); margin: 0 0 var(--s4); }
+/* The state readout (B3, B4, S1) sits under the legend, above the source
+   line: the CurveReadout's shape (.hg-readout), one rule above it so it
+   reads as the figure's own answer and not as a legend entry. */
+.figure .hg-readout { border-top: 1px solid var(--rule); padding-top: var(--s3); margin-top: var(--s3); max-width: none; }
 @media (max-width: 519.98px) {
   .figure { padding: var(--s3); margin: 0 calc(-1 * var(--s4)); border-left: 0; border-right: 0; }
 }
@@ -82,10 +93,13 @@ p { max-width: var(--measure-wide); }
    and WCAG 2.5.8's floor is 24px — and the table keeps the 44px rows. */
 .rank { list-style: none; margin: 0; padding: 0; }
 .rank li { border-bottom: 1px solid var(--rule); }
-.rank .hg-row-btn { display: grid; grid-template-columns: 2.1rem 1fr 5.4rem; gap: var(--s3);
+/* Four columns: the rank ordinal (N3; empty in the lifted-out groups, where
+   a rank would be a claim), the code, the track, the value. */
+.rank .hg-row-btn { display: grid; grid-template-columns: 1.8rem 2.1rem 1fr 5.4rem; gap: var(--s3);
                     align-items: center; }
 @media (min-width: 62rem) { .rank .hg-row-btn { min-height: 26px; } }
-.rank .st { font-weight: var(--w-semi); }
+.rank .n { color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: right; grid-column: 1; }
+.rank .st { font-weight: var(--w-semi); grid-column: 2; }
 .rank .track { position: relative; height: 14px; }
 .rank .track::before { content: ""; position: absolute; left: 0; right: 0; top: 6px;
                        height: 2px; background: var(--surface-sunk); }
@@ -100,13 +114,17 @@ p { max-width: var(--measure-wide); }
 .rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
 /* The axis bounds sit above the list, where a reader meets them first (N3). */
 .rank-axis { display: flex; justify-content: space-between; color: var(--ink-3);
-             font-size: var(--t-micro); padding: 0 0 var(--s1) 2.6rem;
+             font-size: var(--t-micro); padding: 0 0 var(--s1) 4.9rem;
              font-variant-numeric: tabular-nums; }
-/* The two lifted-out blocks (B4, B1): never the tail of the order. */
+/* The lifted-out blocks (B4, B1): never the tail of the order. The
+   lower-bound block leads it (context-blind B1), under the strip's heading
+   and above the axis, closed by the same rule the others open with. */
 .rank-group { margin: var(--s5) 0 0; padding-top: var(--s3);
               border-top: 2px solid var(--rule-strong); }
+.rank-group--lead { margin: 0 0 var(--s4); padding: 0 0 var(--s3); border-top: 0;
+                    border-bottom: 2px solid var(--rule-strong); }
 .rank-group h4 { margin: 0 0 var(--s2); }
-.rank-group .rank .hg-row-btn { grid-template-columns: 2.1rem 1fr 8rem; }
+.rank-group .rank .hg-row-btn { grid-template-columns: 1.8rem 2.1rem 1fr 8rem; }
 .rank-group p { color: var(--ink-2); font-size: var(--t-micro); margin: var(--s2) 0 0; }
 
 /* CorrectionsApplied (B3) and the state's SourceNote, under the map and
@@ -121,6 +139,8 @@ p { max-width: var(--measure-wide); }
 .state .hg-rows { --col: 11rem; margin-top: var(--s3); }
 .state .hg-rows > li > div > .hg-tag { margin-bottom: var(--s1); }
 .state .sub { color: var(--ink-2); margin: 0; }
+/* The step sentence leads the block (B3): the same sentence as the readout, in ink. */
+.state #stateStep { color: var(--ink); margin-bottom: var(--s2); }
 .state .hg-source { margin-top: var(--s5); }
 @media (max-width: 519.98px) { .state .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); } }
 
@@ -144,13 +164,33 @@ p { max-width: var(--measure-wide); }
    its box: the first column keeps that much clear of the scroller's clip edge. */
 .hg-table tbody th { padding: 0 var(--s3) 0 var(--s1); }
 .hg-table thead th:first-child { padding-left: var(--s1); }
-/* An incomplete row's grey bar, in the slot the selected row's ink bar takes;
-   :where keeps it under the system's selection rule (tokens.css). */
-.hg-table :where(tr.incomplete) th { box-shadow: inset 4px 0 0 0 var(--rule-strong); }
+/* The state column stays put while the rest scrolls sideways (S10), on the
+   page's ground so the cells passing under it do not show through; the
+   inline padding is the focus ring's room, the rule its right edge. */
+.hg-table th:first-child { position: sticky; left: 0; z-index: 1; background: var(--plane);
+                           box-shadow: inset -1px 0 0 var(--rule); }
+.hg-table thead th:first-child { z-index: 2; }
+/* The selected row's ground travels with its sticky cell; the ink bar is the system's (tokens.css). */
+.hg-table tr:has(> * > [aria-current="true"]) > th:first-child { background: var(--surface-sunk); }
+/* One left bar, one meaning — selection (S7): an incomplete row is flagged
+   by its cells' own words, and at a narrow width by the amber word beside
+   its code, on screen without a swipe (S10). Hidden from 62rem, where the
+   Figures column is in view. */
+.flag-mark { display: inline-block; margin-left: var(--s2); color: var(--caution); font-size: var(--t-micro);
+             font-weight: var(--w-med); }
+@media (min-width: 62rem) { .flag-mark { display: none; } }
 /* One line, however narrow the viewport: the table already scrolls, and a
    wrapped reason made the two incomplete rows 90px tall at 390 (N9). */
 .flag { color: var(--ink-2); white-space: nowrap; }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
+/* A group heading inside the sorted table (B1): the strip's h4, as a row.
+   Its words, like the caption's, wrap inside the viewport and stay put while
+   the 48rem table scrolls under them, so a heading is never clipped
+   mid-word on a phone. */
+.hg-table tr.group th { font-size: var(--t-small); font-weight: var(--w-semi); color: var(--ink);
+                        padding-top: var(--s4); border-bottom-color: var(--rule-strong); position: static; box-shadow: none; }
+.hg-table tr.group th > span, .hg-table caption > span { display: block; position: sticky; left: 0;
+                                                           max-width: calc(100vw - 2 * var(--s4)); }
 
 .method ul { margin: 0 0 var(--s4); padding-left: var(--s5); max-width: var(--measure-wide); }
 .method li { margin-bottom: var(--s2); }
@@ -160,9 +200,19 @@ p { max-width: var(--measure-wide); }
    this page only keeps its inks on the marks it draws itself, opens the
    scroller so the table is not clipped, and keeps the two columns. */
 @media print {
-  .tile, .scale .sw, .rank .dot, .rank .past, .rank .hg-row-btn[aria-current="true"], .hg-table tr.incomplete th {
+  .tile, .scale .sw, .rank .dot, .rank .past, .rank .hg-row-btn[aria-current="true"] {
     print-color-adjust: exact; -webkit-print-color-adjust: exact;
   }
+  /* Paper does not scroll: the state column is a column again, and the swipe hint has nothing to say. */
+  .hg-table th:first-child { position: static; box-shadow: none; }
+  .hg-scroll-x[data-more]::after { display: none; }
+  /* The lede and the glossary widen to about 90 characters a line, and an
+     empty readout — "select a state" — has nothing to say on paper: together
+     they keep the figure, which must not break, on the first page at Letter
+     (measured at 816px: a 379px masthead pushed the 723px figure whole onto
+     page 2; at 68ch the masthead is 306px and the figure ends at 1002px). */
+  .lede { max-width: 68ch; }
+  #readout:not(:has(b)) { display: none; }
   .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); }
   .hg-scroll-x { overflow: visible; }
   .hg-scroll-x table { min-width: 0; font-size: var(--t-micro); }

@@ -8,11 +8,19 @@
 //   zip5-county.json    ZIP → county FIPS (Census ZCTA relationship file)
 //   county-names.json   county FIPS → name (Census 2020 gazetteer)
 import type { MaTafdcCorrection } from "./maTafdc.js";
-import type { CurvePoint } from "./types.js";
+import type { CurvePoint, ProgramId } from "./types.js";
 
 export interface StateMetrics {
   maTafdc?: MaTafdcCorrection;
   biggestLoss: number;
+  /**
+   * Where `biggestLoss` happens: the worst step's starting earnings (the
+   * step is `biggestLossAt` → `biggestLossAt` + the sweep's $1,000) and the
+   * programs that step ends, in PROGRAM_IDS order — so a figure never travels
+   * without its cause (places review B3). Null and empty when cliffCount is 0.
+   */
+  biggestLossAt: number | null;
+  biggestLossPrograms: ProgramId[];
   dangerWidth: number;
   cliffCount: number;
   // Cliffs whose loss is deferred to a future renewal (Head Start, children's
@@ -130,6 +138,14 @@ export interface PolicyOverrideRecord {
 export interface UnmodeledProgram {
   program: string;
   note: string;
+  /**
+   * "state": a gap particular to this state, listed under it and a reason to
+   * mark its figures incomplete. "all": a gap every state shares (LIHEAP
+   * today), which a comparison lists once, in the method, never under one
+   * state as if it were that state's (places review S8). Absent on files
+   * written before it was recorded, which means "state".
+   */
+  scope?: "state" | "all";
 }
 
 export interface OtherBenefit {
@@ -144,7 +160,8 @@ export interface StateVintages {
   model: ModelRecord | null;
   /** Read from state-defaults.json `sources`, never retyped. */
   rent: SourceVintage;
-  county: SourceVintage;
+  /** The county the archetypes rent in — its FIPS and its gazetteer name, so a page prints "Franklin County" where a name belongs (places review B4). */
+  county: SourceVintage & { fips: string; name: string | null };
   /** Rule and NDCP study year behind each child-care price band (state-defaults.json `childcareBasis.byState`). */
   childcare: Record<string, string>;
   /** reach.json: the earnings basis, the PUMS vintage(s) this state's cells came from, and the ECI growth factor to 2026. */

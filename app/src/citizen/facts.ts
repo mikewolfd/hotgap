@@ -9,7 +9,7 @@ import {
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { dateWords, listOf, unitFigure } from "../lib/format.js";
-import { capitalize, modelLine } from "../places/format.js";
+import { capitalize, modelLine } from "../lib/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { NONCASH, phrase, phraseAndName } from "./programs.js";

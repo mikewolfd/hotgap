@@ -231,9 +231,12 @@ is the shape — and none inline in render code):
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then
 `HOTGAP_BASE_URL=http://localhost:8787 HOTGAP_EXPECT_SOURCE=archetype npx
-playwright test`. The local rate-limit binding persists its counts under
-`worker/.wrangler/state`; delete that directory if a run trips 429 after
-several runs in one minute.
+playwright test`. The config's own `wrangler dev` runs with
+`--var HOTGAP_RATE_LIMIT_OFF:1`, because the three specs back to back are
+more than the 20 evaluations a minute the limiter allows; a server you run
+yourself needs the same flag, or a fresh `worker/.wrangler/state` (the local
+binding persists its counts there). The var is honoured only when it reads
+`1`, is never in `wrangler.toml`, and must never be deployed.
 
 Deploying (`cd worker && npx wrangler deploy`) replaces the public site and
 is the owner's call.

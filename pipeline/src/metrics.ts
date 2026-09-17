@@ -11,6 +11,9 @@ export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
   const axisMax = points[points.length - 1].earnings;
   return {
     biggestLoss: Math.round(analysis.worstCliff?.drop ?? 0),
+    // The worst step's own facts travel with its figure (places review B3).
+    biggestLossAt: analysis.worstCliff?.startEarnings ?? null,
+    biggestLossPrograms: analysis.worstCliff?.programsLost ?? [],
     dangerWidth: Math.round(
       analysis.dangerZones.reduce((w, z) => w + (z.endEarnings ?? axisMax) - z.startEarnings, 0),
     ),

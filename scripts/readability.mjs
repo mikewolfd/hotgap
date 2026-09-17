@@ -17,7 +17,15 @@
 // is over, so CI can gate.
 import { pathToFileURL } from "node:url";
 
-const MODULES = ["app/src/editor/copy.ts", "app/src/citizen/copy.ts"];
+// Every copy module is graded and reported. `gate` says whether the limits
+// block: the citizen-register modules (editor, citizen) carry the 5th-grade
+// promise; the journalist register (places) is written for a reporter, so its
+// grade is a note, not a gate, until the site decides a threshold for it.
+const MODULES = [
+  { path: "app/src/editor/copy.ts", gate: true },
+  { path: "app/src/citizen/copy.ts", gate: true },
+  { path: "app/src/places/copy.ts", gate: false },
+];
 const CORPUS_LIMIT = 5.9;
 const STRING_LIMIT = 8.0;
 const SENTENCE_WORDS = 4;
@@ -40,13 +48,25 @@ export function grade(text) {
   return 0.39 * (words.length / sentences) + 11.8 * (syl / words.length) - 15.59;
 }
 
-/** Every string a copy object can produce, keyed by its path; a function is called with "money" for each argument. */
+/**
+ * Every string a copy object can produce, keyed by its path; a function is
+ * called with "money" for each argument. A function that takes a shape a
+ * string cannot stand in for (a list, a record) is returned with `text:
+ * null`, so the report names what the gate could not read rather than
+ * grading a sentence it never saw.
+ */
 export function strings(copy, path = "") {
   const out = [];
   for (const [k, v] of Object.entries(copy)) {
     const key = path ? `${path}.${k}` : k;
     if (typeof v === "string") out.push({ key, text: v });
-    else if (typeof v === "function") out.push({ key, text: String(v(...Array.from({ length: v.length }, () => "money"))) });
+    else if (typeof v === "function") {
+      try {
+        const r = v(...Array.from({ length: v.length }, () => "money"));
+        if (Array.isArray(r)) r.forEach((t, i) => out.push({ key: `${key}[${i}]`, text: String(t) }));
+        else out.push({ key, text: String(r) });
+      } catch { out.push({ key, text: null }); }
+    }
     else if (v && typeof v === "object") out.push(...strings(v, key));
   }
   return out;
@@ -54,13 +74,18 @@ export function strings(copy, path = "") {
 
 const root = new URL("../", import.meta.url);
 let failed = false;
-for (const rel of MODULES) {
+for (const { path: rel, gate } of MODULES) {
   const { copy } = await import(pathToFileURL(new URL(rel, root).pathname).href);
-  const all = strings(copy).filter((s) => /[a-zA-Z]/.test(s.text));
+  const seen = strings(copy);
+  const unread = seen.filter((s) => s.text === null);
+  const all = seen.filter((s) => s.text !== null && /[a-zA-Z]/.test(s.text));
   const corpus = grade(all.map((s) => s.text).join(" "));
   const worst = all.reduce((a, b) => (grade(b.text) > grade(a.text) ? b : a));
-  console.log(`${rel}: corpus grade ${corpus.toFixed(2)} (limit ${CORPUS_LIMIT}), ${all.length} strings, worst ${grade(worst.text).toFixed(1)} at ${worst.key}`);
-  for (const s of all.filter((s) => grade(s.text) > STRING_LIMIT)) {
+  console.log(`${rel}: corpus grade ${corpus.toFixed(2)} (limit ${CORPUS_LIMIT}${gate ? "" : ", reported only"}), ${all.length} strings, worst ${grade(worst.text).toFixed(1)} at ${worst.key}`);
+  if (unread.length) console.log(`  not graded (a list or record argument, which a placeholder cannot stand in for): ${unread.map((s) => s.key).join(", ")}`);
+  const over = all.filter((s) => grade(s.text) > STRING_LIMIT);
+  if (!gate) { console.log(`  ${over.length} of ${all.length} strings over ${STRING_LIMIT}; not gated`); continue; }
+  for (const s of over) {
     const sentence = s.text.split(/\s+/).filter((w) => /[a-zA-Z]/.test(w)).length >= SENTENCE_WORDS;
     console[sentence ? "error" : "log"](`  ${sentence ? "FAIL" : "note"} grade ${grade(s.text).toFixed(1)} > ${STRING_LIMIT}: ${s.key} = "${s.text}"`);
     if (sentence) failed = true;

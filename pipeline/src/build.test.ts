@@ -150,6 +150,8 @@ describe("buildSummary", () => {
     // leap is the zone that end opens, not the Head Start one.
     expect(summary.states.CA["single-1"]).toEqual({
       biggestLoss: 3868,
+      biggestLossAt: 84000,
+      biggestLossPrograms: ["aca"],
       dangerWidth: expect.any(Number),
       cliffCount: 3,
       deferredCliffCount: 1,

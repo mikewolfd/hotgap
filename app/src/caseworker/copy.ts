@@ -6,9 +6,8 @@
 // from lib/programs.ts (M3) and state names from core. Numbers, money and
 // lists go through Intl with `locale`, the one place it is named.
 import type { PayUnit, ProgramId } from "@hotgap/core";
-import { money as usd, unitPhrase } from "../lib/format.js";
+import { money as usd, reachWord, unitPhrase } from "../lib/format.js";
 import { programName, programPhrase } from "../lib/programs.js";
-import { reachWord } from "../places/format.js";
 
 export const locale = "en-US";
 

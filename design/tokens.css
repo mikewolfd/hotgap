@@ -592,8 +592,28 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-panel > :first-child { margin-top: 0; }
 .hg-panel > :last-child { margin-bottom: 0; }
 
-/* A horizontal scroller for a wide table; the min-width is the table's job. */
-.hg-scroll-x { overflow-x: auto; }
+/* A horizontal scroller for a wide table; the min-width is the table's job.
+   The edges say there is more (places context-blind review S10): a shadow
+   on whichever side still has content, drawn as a background behind the
+   cells — the covering gradients scroll with the content (`local`), the
+   shadows do not, so each shadow shows only until its edge is reached and
+   never when the table fits. No script, no measurement, every surface. The
+   ground is the surface's page ground; a scroller inside a panel sets
+   --scroll-ground to the panel's. A page may also name the gesture:
+   `data-more="Swipe for more →"` (its own copy) prints under the table in
+   the source line's voice, and only while the page finds an overflow. */
+.hg-scroll-x {
+  overflow-x: auto;
+  --scroll-ground: var(--plane);
+  --scroll-shadow: color-mix(in srgb, var(--ink) 22%, transparent);
+  background:
+    linear-gradient(to right, var(--scroll-ground) 40%, transparent) left / 48px 100% no-repeat local,
+    linear-gradient(to left, var(--scroll-ground) 40%, transparent) right / 48px 100% no-repeat local,
+    linear-gradient(to right, var(--scroll-shadow), transparent) left / 16px 100% no-repeat scroll,
+    linear-gradient(to left, var(--scroll-shadow), transparent) right / 16px 100% no-repeat scroll;
+}
+.hg-scroll-x[data-more]::after { content: attr(data-more); display: block; text-align: end;
+                                 color: var(--ink-3); font-size: var(--t-micro); padding: var(--s2) 0 0; }
 
 /* ── Interactive chart (M6, S8, S12) ─────────────────────────────────── */
 

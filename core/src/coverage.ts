@@ -10,13 +10,14 @@
 // retirement conditions, is docs/upstream/2026-09-15-local-corrections.md.
 import { PROGRAM_END_MIN } from "./analyze.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
+import { countyName } from "./county.js";
 import type { CorrectionNote, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
 import { MA_TAFDC_SOURCES } from "./maTafdc.js";
 import { BHP_EXPANDED_STATES, POLICY_OVERRIDE_SOURCES, policyOverridesFor } from "./policyOverrides.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
 import { reachProvenance } from "./reachLookup.js";
 import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
-import { stateDefaultsProvenance } from "./stateDefaults.js";
+import { stateDefaults, stateDefaultsProvenance } from "./stateDefaults.js";
 import { otherBenefitSourcesFor } from "./stateOtherBenefits.js";
 import { PER_MEMBER_PREMIUM_HELP, STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
 import { statePremiumAssistanceFor, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
@@ -120,16 +121,16 @@ function unmodeled(state: string, premium: StateCorrections["premiumAssistance"]
   if (premium.source === "none" && premium.program) {
     const known = UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state);
     out.push({
-      program: premium.program,
+      program: premium.program, scope: "state",
       note: known
         ? `${premium.program} (${known.note}) is not computed by PolicyEngine, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.`
         : `PolicyEngine models ${premium.program}, but this sweep's endpoint did not serve it and HotGap has no schedule of its own for it, so the premiums here are overstated by it.`,
     });
   }
   if (ctx.childcareSubsidyUnmodeled?.includes(state)) {
-    out.push({ program: "Child-care subsidy (CCDF)", note: "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news." });
+    out.push({ program: "Child-care subsidy (CCDF)", scope: "state", note: "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news." });
   }
-  out.push({ program: "LIHEAP", note: "Not counted anywhere: HotGap does not request LIHEAP from PolicyEngine, and the few state programs the engine models never reach its net income figure." });
+  out.push({ program: "LIHEAP", scope: "all", note: "Not counted anywhere: HotGap does not request LIHEAP from PolicyEngine, and the few state programs the engine models never reach its net income figure." });
   return out;
 }
 
@@ -149,6 +150,10 @@ function otherBenefits(state: string, curves: Record<string, CurvePoint[]>): Oth
 /** Everything a reader of this state's summary row should know first, from the swept curves and the tables that shaped them. */
 export function stateCoverage(state: string, curves: Record<string, CurvePoint[]>, ctx: CoverageContext = {}): StateCoverage {
   const premium = premiumAssistance(state, curves);
+  const provenance = stateDefaultsProvenance(state);
+  // The county named, not only dated (places review B4). Null where the gazetteer
+  // has no row: Connecticut's planning regions post-date it.
+  const fips = stateDefaults(state).countyFips;
   return {
     corrections: {
       policyOverrides: policyOverrideRecords(state),
@@ -159,6 +164,6 @@ export function stateCoverage(state: string, curves: Record<string, CurvePoint[]
     },
     unmodeled: unmodeled(state, premium, ctx),
     otherBenefits: otherBenefits(state, curves),
-    vintages: { model: ctx.model ?? null, ...stateDefaultsProvenance(state), reach: reachProvenance(state) },
+    vintages: { model: ctx.model ?? null, ...provenance, county: { ...provenance.county, fips, name: countyName(fips) }, reach: reachProvenance(state) },
   };
 }

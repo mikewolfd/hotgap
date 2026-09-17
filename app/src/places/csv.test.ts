@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
 import { parseCsv } from "../../e2e/parseCsv.mjs";
 import { CSV_HEADER, csvField, csvFor, csvName } from "./csv.js";
-import { group, measureByKey, PREFERRED_HOUSEHOLD, rowsFor, tableRows } from "./model.js";
+import { DEFAULT_ARCHETYPE, STATE_NAMES } from "@hotgap/core";
+import { programName } from "../lib/programs.js";
+import { measureByKey, rowsFor, tableRows } from "./model.js";
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
-const arch = summary.archetypes.find((a) => a.id === PREFERRED_HOUSEHOLD) ?? summary.archetypes[0];
+const arch = summary.archetypes.find((a) => a.id === DEFAULT_ARCHETYPE) ?? summary.archetypes[0];
 const measure = measureByKey("biggestLoss")!;
 
 describe("csvField", () => {
@@ -32,12 +34,20 @@ describe("csvFor on the committed sweep", () => {
     expect(body.map((r) => r[col("state")])).toEqual(rows.map((r) => r.st));
     for (const r of body) expect(r.length).toBe(head.length);
   });
-  it("follows the table's order when the table is sorted by the measure", () => {
-    const sorted = tableRows(rows, group(rows, measure), "measure");
+  it("follows the table's order when the table is sorted by a measure", () => {
+    const sorted = tableRows(summary, arch, "leap");
     const [, ...sortedBody] = parseCsv(csvFor(summary, arch, sorted).replace(/^﻿/, ""));
     expect(sortedBody.map((r) => r[col("state")])).toEqual(sorted.map((r) => r.st));
   });
-  it("carries provenance from the file on every row: the sweep stamp, the model, the vintages", () => {
+  it("round-trips the comma in \"Washington, DC\" and reads one source constant on every row (N8)", () => {
+    const dc = body.find((r) => r[col("state")] === "DC")!;
+    expect(dc[col("state_name")]).toBe(STATE_NAMES.DC);
+    expect(STATE_NAMES.DC).toContain(",");
+    expect(dc.length).toBe(head.length);
+    expect(new Set(body.map((r) => r[col("source")]))).toEqual(new Set(["HotGap/PolicyEngine"]));
+    expect(new Set(body.map((r) => r[col("model_label")]))).toEqual(new Set([`HotGap hosted engine, policyengine-us ${summary.model!.version}`]));
+  });
+  it("carries provenance from the file on every row: the run stamp, the model, the vintages, the county named (B4)", () => {
     for (const r of body) {
       const cov = summary.coverage![r[col("state")]];
       expect(r[col("sweep_generated")]).toBe(summary.generated);
@@ -46,10 +56,20 @@ describe("csvFor on the committed sweep", () => {
       expect(r[col("policy_year")]).toBe(summary.year);
       expect(r[col("rent_vintage")]).toBe(cov.vintages.rent.vintage);
       expect(r[col("county_vintage")]).toBe(cov.vintages.county.vintage);
+      expect(r[col("county_name")]).toBe(cov.vintages.county.name ?? "");
+      expect(r[col("county_fips")]).toBe(cov.vintages.county.fips);
       expect(r[col("childcare_price_vintage")]).toBe(cov.vintages.childcare.preschool);
-      expect(r[col("reach_vintages")]).toBe(cov.vintages.reach.vintages.join("; "));
       expect(r[col("archetype_id")]).toBe(arch.id);
     }
+    expect(head).not.toContain("reach_vintages");
+  });
+  it("carries the worst step's earnings and programs beside its figure (B3): Ohio's row is the readout's sentence, cell by cell", () => {
+    const oh = body.find((r) => r[col("state")] === "OH")!;
+    const m = summary.states.OH[arch.id];
+    expect(Number(oh[col("biggest_one_step_loss")])).toBe(m.biggestLoss);
+    expect(Number(oh[col("biggest_loss_at")])).toBe(m.biggestLossAt);
+    expect(oh[col("biggest_loss_programs")]).toBe(m.biggestLossPrograms.map(programName).join("; "));
+    expect(oh[col("county_name")]).toBe(summary.coverage!.OH.vintages.county.name);
   });
   it("prints the model's numbers where there is a cliff, and leaves the dollar cells empty where there is none", () => {
     for (const [i, r] of body.entries()) {
@@ -64,7 +84,8 @@ describe("csvFor on the committed sweep", () => {
       }
       expect(Number(r[col("cliff_count")])).toBe(m.cliffCount);
       expect(r[col("comparable")]).toBe(String(rows[i].kind === "shaded"));
-      expect(r[col("figures")]).toBe(rows[i].incomplete.length ? "incomplete" : "complete");
+      // The floor wording travels with the row (S5), so a spreadsheet reads the caveat without the page.
+      expect(r[col("figures")]).toBe(rows[i].incomplete.length ? `floor: ${rows[i].incomplete.map((u) => u.program).join(" and ")} not modelled` : "complete");
     }
   });
   it("names the file after the household as the reader knows it, and the sweep date", () => {
