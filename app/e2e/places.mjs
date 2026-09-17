@@ -97,14 +97,23 @@ try {
     const measureContrast = async (mode) => {
       const c = await page.evaluate(() => {
         const cs = (el, pseudo) => getComputedStyle(el, pseudo);
-        const swatch = document.querySelector(".hg-swatch--incomplete");
+        /* The legend draws its hatch swatch only while some state is
+           incomplete — none is, since NJ and WA became complete on 2026-09-16
+           — so measure the stylesheet's treatment on a probe carrying the
+           same classes, removed once read. The contrast is the CSS's, not
+           the data's. */
+        let swatch = document.querySelector(".hg-swatch--incomplete");
+        const probe = !swatch;
+        if (probe) { swatch = document.createElement("span"); swatch.className = "hg-swatch hg-swatch--incomplete hg-hatch-incomplete"; document.querySelector(".figure").append(swatch); }
         const fig = cs(document.querySelector(".figure")).backgroundColor;
         const ramp = [...document.querySelectorAll(".scale .sw")].map((el) => cs(el).backgroundColor);
         const shaded = [...document.querySelectorAll(".tile")].filter((el) => !/hg-tile--/.test(el.className)).map((el) => [cs(el).backgroundColor, cs(el).color]);
         const byBin = ramp.map((bg) => shaded.find(([b]) => b === bg));
         const none = document.querySelector(".hg-tile--none");
-        return { fig, stripe: cs(swatch, "::after").backgroundColor, ground: cs(swatch).backgroundColor, ramp, byBin,
+        const out = { fig, stripe: cs(swatch, "::after").backgroundColor, ground: cs(swatch).backgroundColor, ramp, byBin,
           noneEdge: none && cs(none).outlineColor };
+        if (probe) swatch.remove();
+        return out;
       });
       const out = {
         hatchStripeOnGround: contrast(rgb(c.stripe), rgb(c.ground)),
@@ -288,15 +297,26 @@ try {
 }
 
 /**
- * Print from OS dark to Letter and read the PDF's own drawing ops (B1): the
- * WA tile must be drawn as a form whose stripes are an --ink-3 fill through
- * a striped soft mask, on the light sunk ground, and the NM (no-cliff) tile
- * must carry no such form. Positions come from the print layout, so the
- * check finds the tile, not a tile.
+ * Print from OS dark to Letter and read the PDF's own drawing ops (B1): a
+ * hatched tile must be drawn as a form whose stripes are an --ink-3 fill
+ * through a striped soft mask, on the light sunk ground, and the NM
+ * (no-cliff) tile must carry no such form. Positions come from the print
+ * layout, so the check finds the tile, not a tile.
+ *
+ * The subject is the first state the data hatches for the archetype shown.
+ * When the sweep hatches none — the case since 2026-09-16, when NJ and WA
+ * became complete — the hatch classes are put on the WA tile for the print
+ * alone, and every check says so: the print path is what B1 is about, and
+ * a proof with no subject would otherwise pass by saying nothing.
  */
 async function checkPdf(page) {
   await page.goto(`${BASE}/places.html`, { waitUntil: "networkidle" });
   await page.waitForSelector(".tile");
+  const shownArch = await page.$eval("#arch", (el) => el.value);
+  const fromData = STATES.find((st) => expectIncompleteFor(st, shownArch));
+  const subject = fromData ?? "WA";
+  if (!fromData) await page.$eval(`.tile[data-st="${subject}"]`, (el) => el.classList.add("hg-tile--incomplete", "hg-hatch-incomplete"));
+  const label = fromData ? `the ${subject} tile (hatched by the data)` : `the ${subject} tile (hatched for the print only: no state is incomplete on this sweep)`;
   /* OS dark with no data-theme attribute: the path the audit's B2 proof did
      not take (it printed through the theme button), and the one on which
      tokens.css's print rule lost to its own OS-dark rule until 30d7e99. */
@@ -310,12 +330,12 @@ async function checkPdf(page) {
      page to fit an overflowing table, and every position with it. */
   await page.emulateMedia({ media: "print" });
   await page.setViewportSize({ width: 816, height: 1056 });
-  const want = await page.evaluate(() => {
+  const want = await page.evaluate((subject) => {
     const at = (st) => { const r = document.querySelector(`.tile[data-st="${st}"]`).getBoundingClientRect(); return { x: r.x, y: r.y + scrollY, w: r.width, h: r.height }; };
-    const hatched = document.querySelector(".hg-hatch-incomplete");
-    return { WA: at("WA"), NM: at("NM"), stripe: getComputedStyle(hatched, "::after").backgroundColor, ground: getComputedStyle(hatched).backgroundColor,
+    const hatched = document.querySelector(`.tile[data-st="${subject}"].hg-hatch-incomplete`);
+    return { WA: at(subject), NM: at("NM"), stripe: getComputedStyle(hatched, "::after").backgroundColor, ground: getComputedStyle(hatched).backgroundColor,
       scrollWidth: document.documentElement.scrollWidth };
-  });
+  }, subject);
   check(want.scrollWidth <= 816, "the print layout fits Letter's width, so the PDF is not shrunk to fit", want.scrollWidth);
   const lightInk = await page.$eval("body", (el) => getComputedStyle(el).color);
   const objects = pdfObjects(pdf);
@@ -331,10 +351,10 @@ async function checkPdf(page) {
   const fills = inner.filter((o) => o.stream).flatMap((o) => [...o.stream.toString("latin1").matchAll(/([\d.]+) ([\d.]+) ([\d.]+) rg/g)].map((m) => m.slice(1, 4).map((c) => Math.round(c * 255)).join()));
   const masks = inner.filter((o) => /\/Subtype \/Image/.test(o.dict) && /\/DeviceGray/.test(o.dict)).map(greyRowTransitions);
   const found = { pages: pages.length, formsOnPage1: forms.length, wa: wa && { x: wa.x.toFixed(1), y: wa.y.toFixed(1), ground: wa.ground?.fill?.join() }, fills: [...new Set(fills)], maskTransitions: masks, nm: atTile(want.NM).length };
-  check(pages.length >= 2 && wa !== undefined, "the PDF's first page draws a form at the WA tile's print position", found);
-  check(wa?.ground && wa.ground.fill.join() === rgb(want.ground).join() && near(wa.ground.w, want.WA.w) && near(wa.ground.h, want.WA.h), "the WA tile's ground is the light sunk colour, at the tile's size (print from dark is light)", { pdf: wa?.ground, want: [want.ground, want.WA.w] });
-  check(fills.includes(rgb(want.stripe).join()), "the WA form fills in the light --ink-3 the stripes are drawn in", { fills: found.fills, want: rgb(want.stripe).join() });
-  check(masks.some((n) => n >= 4), "the WA form's soft mask alternates along its middle row: stripes, not a smear", masks);
+  check(pages.length >= 2 && wa !== undefined, `the PDF's first page draws a form at ${label}'s print position`, found);
+  check(wa?.ground && wa.ground.fill.join() === rgb(want.ground).join() && near(wa.ground.w, want.WA.w) && near(wa.ground.h, want.WA.h), `${label}'s ground is the light sunk colour, at the tile's size (print from dark is light)`, { pdf: wa?.ground, want: [want.ground, want.WA.w] });
+  check(fills.includes(rgb(want.stripe).join()), `${label}'s form fills in the light --ink-3 the stripes are drawn in`, { fills: found.fills, want: rgb(want.stripe).join() });
+  check(masks.some((n) => n >= 4), `${label}'s soft mask alternates along its middle row: stripes, not a smear`, masks);
   check(atTile(want.NM).length === 0, "the NM (no-cliff) tile draws no such form", found.nm);
 }
 
