@@ -10,7 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hotgap/core": "*"
+    "@hotgap/core": "*",
+    "intl-messageformat": "^12.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
