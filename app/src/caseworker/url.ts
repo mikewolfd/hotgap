@@ -6,6 +6,7 @@
 // removes the base's answer). Landing on it evaluates the base and every
 // what-if.
 import { flagsFromSearchParams, HOUSEHOLD_FLAGS, searchParamsFromFlags, type HouseholdFlagName, type HouseholdFlags } from "@hotgap/core";
+import { withLang } from "../lib/copy.js";
 import type { Diff } from "./scenarios.js";
 
 const WHAT_IF = "whatif";
@@ -36,9 +37,9 @@ export function parsePage(search: string): PageState {
   return { base: flagsFromSearchParams(q), whatIfs: q.getAll(WHAT_IF).map(parseDiff).filter((d) => Object.keys(d).length > 0) };
 }
 
-/** The query for a page state, always beginning with "?". */
+/** The query for a page state, always beginning with "?", the language carried. */
 export function pageQuery(s: PageState): string {
   const q = searchParamsFromFlags(s.base);
   for (const d of s.whatIfs) q.append(WHAT_IF, diffQuery(d));
-  return `?${q.toString()}`;
+  return `?${withLang(q).toString()}`;
 }

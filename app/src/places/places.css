@@ -13,7 +13,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    so the headline never runs to the screen edge while the controls below
    keep theirs (N5 of the context-blind review). */
 .masthead { border-bottom: 1px solid var(--rule); padding-top: var(--s4); padding-bottom: var(--s4); }
-.wordmark { margin: 0 0 var(--s4); }
+.masthead__top { display: flex; align-items: baseline; gap: var(--s3); margin: 0 0 var(--s4); }
+.wordmark { margin: 0; }
 .lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
 /* The glossary sentence (S3) reads a step lighter than the lede, at the small size the rest of the page sets. */
 .glossary { font-size: var(--t-small); margin-bottom: 0; }

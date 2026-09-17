@@ -561,6 +561,13 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-scenario__top { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
   max-width: 76rem; margin: 0 auto; }
 .hg-scenario__actions { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+/* The language switch (app/README.md § Languages; lib/lang.ts): one word per
+   language in its own language, the active one plain, the rest links; in
+   the ScenarioBar's top row after the wordmark and in the journalist
+   masthead. Small, because it is chrome, and never on paper. */
+.hg-lang { display: flex; flex-wrap: wrap; gap: var(--s2); font-size: var(--t-small); color: var(--ink-3); min-width: 0; }
+.hg-lang [aria-current] { color: var(--ink-1); font-weight: var(--w-semi); }
+.hg-lang a { color: var(--ink-2); }
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
 /* A full-width line of text inside the inputs row — what a take-up toggle

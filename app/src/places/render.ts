@@ -9,6 +9,7 @@ import { correctionRows } from "../lib/corrections.js";
 import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money } from "../lib/format.js";
+import { languageSwitch } from "../lib/lang.js";
 import { stateName } from "../lib/names.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
@@ -71,6 +72,7 @@ export function renderStatic(): void {
     ["colFigures", C.figures, copy.table.defs.figures],
   ];
   $("defs").setAttribute("aria-label", copy.table.defs.label);
+  $("lang").replaceWith(languageSwitch());
   $("defs").innerHTML = defs.map(([id, term, def]) => `<dt>${esc(term)}</dt><dd id="def-${id}">${esc(def)}</dd>`).join("");
   for (const [id] of defs) $(id).setAttribute("aria-describedby", `def-${id}`);
   $("pastAxisNote").innerHTML = rich(copy.method.pastAxisCaution);

@@ -34,6 +34,7 @@ import {
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
 import { coreText, fill } from "../lib/copy.js";
+import { languageSwitch } from "../lib/lang.js";
 import { stateName } from "../lib/names.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
@@ -312,7 +313,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   // child cannot outlive its parent's box — S1). An empty root sees no difference.
   root.prepend(
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
-      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark),
+      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark), languageSwitch(),
         h("div", { class: "hg-scenario__actions" }, ...actions))),
     h("header", { class: "hg-scenario", "data-collapse": opts.collapse },
       h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),

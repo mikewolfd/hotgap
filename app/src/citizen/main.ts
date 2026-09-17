@@ -10,6 +10,7 @@ import "./citizen.css";
 import { axisSpec, flagsFromSearchParams, rawAnswersFromFlags, searchParamsFromFlags, validateAnswers, type HouseholdFlags } from "@hotgap/core";
 import { evaluate } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
+import { withLang } from "../lib/copy.js";
 import { h } from "../lib/dom.js";
 import { t } from "./copy.js";
 import { mountResult } from "./result.js";
@@ -42,7 +43,7 @@ let latest = 0;
  * a landing on a shared link closes the screen and leaves focus alone.
  */
 async function run(flags: HouseholdFlags, { submitted, landing = false, retry = false }: { submitted: boolean; landing?: boolean; retry?: boolean }): Promise<void> {
-  const url = `?${searchParamsFromFlags(flags)}`;
+  const url = `?${withLang(searchParamsFromFlags(flags))}`;
   if (submitted && url !== location.search) history.pushState(null, "", url);
   else history.replaceState(null, "", url);
   const v = validateAnswers(rawAnswersFromFlags(flags));

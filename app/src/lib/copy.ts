@@ -124,9 +124,11 @@ export async function loadCatalog(tag: string): Promise<Catalog> {
 }
 
 const inBrowser = typeof document !== "undefined" && typeof location !== "undefined";
+/** Whether this page load was asked for a language (`?lang=`): that is the viewer's choice, the one thing remembered, and the one link parameter carried on. */
+const asked = inBrowser && supported(new URLSearchParams(location.search).get(LANG_PARAM)) !== null;
 active = inBrowser ? resolveLocale(location.search, remembered(), navigator.languages ?? []) : "en";
 if (inBrowser) {
-  remember(active);
+  if (asked) remember(active);
   document.documentElement.lang = active;
   document.documentElement.dir = direction(active);
 }
@@ -143,10 +145,9 @@ export function direction(tag: string): "ltr" | "rtl" {
   return /^(ar|he|fa|ur|ps|sd|ug|yi|dv)(-|$)/i.test(tag) ? "rtl" : "ltr";
 }
 
-/** `search` with the active locale carried, so every link a page builds keeps the language; English, the default, is carried only when it was asked for. */
+/** `params` with the language carried, so every address a page writes keeps it: the tag that was asked for, or the one a remembered choice or the browser resolved when it is not English. */
 export function withLang(params: URLSearchParams): URLSearchParams {
-  const asked = inBrowser && new URLSearchParams(location.search).has(LANG_PARAM);
-  if (active !== "en" || asked) params.set(LANG_PARAM, active); else params.delete(LANG_PARAM);
+  if (asked || active !== "en") params.set(LANG_PARAM, active); else params.delete(LANG_PARAM);
   return params;
 }
 
