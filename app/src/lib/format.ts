@@ -1,15 +1,19 @@
-// Every figure a surface prints, through Intl in the one LOCALE (audit D1,
-// D13): money and pay figures in the person's unit (design/inventory.md M5,
-// W6 — rounded to a step that unit is spoken in), a loss, a signed share,
-// an ordinal, lists, dates, and the word-level helpers every surface needs
-// (capitalize, a count in words, a reach vintage as words, the model line,
-// an HTML escape). A copy module holds no formatter: a slot's value is
-// formatted here and handed to the message (lib/copy.ts).
+// Every figure a surface prints, through Intl in the active locale (audit
+// D1, D13; app/README.md § Languages): money and pay figures in the
+// person's unit (design/inventory.md M5, W6 — rounded to a step that unit
+// is spoken in), a loss, a signed share, an ordinal, lists, dates, and the
+// word-level helpers every surface needs (capitalize, a count in words, a
+// reach vintage as words, the model line, an HTML escape). A message holds
+// no formatter: an argument's value is formatted here and handed to it
+// (lib/copy.ts); the words a formatter needs (the pay unit, an ordinal's
+// suffix, the number words) are `shared.*` in the locale file, never typed
+// here. Money is always US dollars, formatted the locale's way.
 import { DEFAULT_HOURS, fromAnnual, type ModelRecord, type PayUnit } from "@hotgap/core";
-import { intlLocale } from "./copy.js";
+import { catalog, fill, intlLocale } from "./copy.js";
 
 /** The locale this page load formats in, fixed once the catalog is loaded (lib/copy.ts resolves it before any importer runs). */
 const LOCALE = intlLocale();
+const S = catalog.shared;
 
 const usd = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdCents = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
@@ -19,10 +23,6 @@ export const money = (n: number): string => usd.format(Math.round(n));
 
 /** The step each unit is spoken in: $0.25 an hour, $10 a week, $50 a month, $500 a year. */
 const STEP: Record<PayUnit, number> = { hour: 0.25, week: 10, month: 50, year: 500 };
-const PHRASE: Record<PayUnit, string> = { hour: "an hour", week: "a week", month: "a month", year: "a year" };
-
-/** "an hour", "a week", "a month", "a year". */
-export const unitPhrase = (unit: PayUnit): string => PHRASE[unit];
 
 /** The unit's own rounding: an annual figure to the step that unit is spoken in, still in that unit. */
 export const payRounded = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): number =>
@@ -37,10 +37,10 @@ export const payFigure = (annual: number, unit: PayUnit, hoursPerWeek: number = 
 
 /** An annual figure in the person's own unit, rounded to that unit's step: "$14.50 an hour", "$30,000 a year". */
 export const payPhrase = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
-  `${payFigure(annual, unit, hoursPerWeek)} ${PHRASE[unit]}`;
+  payInUnit(payRounded(annual, unit, hoursPerWeek), unit);
 
 /** A pay figure already in the person's unit, as that unit is said: "$38,000 a year", "$18.50 an hour" (the editor's chip, a what-if's name). */
-export const payInUnit = (inUnit: number, unit: PayUnit): string => `${unitFigure(inUnit, unit)} ${PHRASE[unit]}`;
+export const payInUnit = (inUnit: number, unit: PayUnit): string => fill(S.pay[unit], { figure: unitFigure(inUnit, unit) });
 
 /** A drop in the citizen "about" grain: whole hundreds. */
 export const moneyAbout = (n: number): string => usd.format(Math.round(n / 100) * 100);
@@ -50,14 +50,12 @@ export const lossFigure = (n: number): string => `−${money(Math.abs(n))}`;
 /** "+$1,590" / "−$875": a signed share. */
 export const signedMoney = (n: number): string => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
 
-const ordinalRules = new Intl.PluralRules(LOCALE, { type: "ordinal" });
-const ORDINAL: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
-/** "40th". */
-export const ordinal = (n: number): string => `${n}${ORDINAL[ordinalRules.select(n)]}`;
+/** "40th": the locale's ordinal rule chooses the suffix. */
+export const ordinal = (n: number): string => fill(S.ordinal, { n });
 
 /** A chart tick: "$40k" by the year, "$2,500" by the month or week, "$20" or "$17.50" by the hour. */
 export const tickMoney = (v: number, unit: PayUnit): string =>
-  unit === "year" && v >= 1000 ? `${usd.format(v / 1000)}k` : unit === "hour" && !Number.isInteger(v) ? usdCents.format(v) : usd.format(v);
+  unit === "year" && v >= 1000 ? fill(S.tickThousands, { amount: usd.format(v / 1000) }) : unit === "hour" && !Number.isInteger(v) ? usdCents.format(v) : usd.format(v);
 
 const conjunction = new Intl.ListFormat(LOCALE, { style: "long", type: "conjunction" });
 /** "a", "a and b", "a, b, and c" — the locale's list, not a hand-joined one. */
@@ -69,18 +67,20 @@ const units = new Intl.ListFormat(LOCALE, { style: "long", type: "unit" });
 /** "a", "a, b", "a, b, c" — a list of items with no conjunction: the ages of three children, the states whose axis differs. */
 export const listOfItems = (items: string[]): string => units.format(items);
 
-const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
-const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 /**
  * A count in words, up to ninety-nine ("eleven", "fifty-one"); larger, or
- * not a whole number, as digits. English: Intl has no spellout, so this is
- * the one formatter the locale-file migration replaces per locale.
+ * not a whole number, as digits. Intl has no spellout, so the words are the
+ * locale file's (`shared.numbers`: the ones to nineteen, the tens, how a
+ * compound joins, and any exact form that wins over the join — Spanish's
+ * "veintiuno"), and only the arithmetic is here.
  */
 export function numberWords(n: number): string {
   if (!Number.isInteger(n) || n < 0 || n > 99) return String(n);
-  if (n < 20) return ONES[n];
-  return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+  const N = S.numbers, exact = (N.exact as Record<string, string>)[String(n)];
+  if (exact) return exact;
+  if (n < 20) return N.ones[n];
+  const tens = N.tens[Math.floor(n / 10) - 2];
+  return n % 10 ? fill(N.compound, { tens, ones: N.ones[n % 10] }) : tens;
 }
 
 const mediumDate = new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium" });
@@ -102,20 +102,20 @@ export const dateWords = (iso: string, timeZone?: string): string =>
 export const dayWords = (isoDay: string): string =>
   new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${isoDay}T00:00:00Z`));
 
-export const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
+export const capitalize = (s: string): string => (s ? s[0].toLocaleUpperCase(LOCALE) + s.slice(1) : s);
 
 /** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words; anything else as-is. */
 export function reachWord(s: string): string {
   const m = s.match(/^(\d{4})(?:-(\d{4}))?-(\d)yr$/);
-  return m ? `ACS ${m[2] ? `${m[1]}–${m[2]}` : m[1]} ${m[3]}-year PUMS` : s;
+  return !m ? s : m[2] ? fill(S.reachVintage.range, { from: m[1], to: m[2], n: m[3] }) : fill(S.reachVintage.one, { year: m[1], n: m[3] });
 }
 
 /* N9: the model that produced the numbers, from the file, not the one installed.
    When `version` is null (public API) the line names the endpoint. */
 export const modelLine = (model: ModelRecord | null | undefined): string =>
-  model?.version ? `policyengine-us ${model.version}`
-  : model ? `the PolicyEngine API at ${model.endpoint}`
-  : "PolicyEngine (version not recorded)";
+  model?.version ? fill(S.model.versioned, { version: model.version })
+  : model ? fill(S.model.endpoint, { endpoint: model.endpoint })
+  : S.model.unrecorded;
 
 /** HTML-escape a data value before it goes into a template string. */
 export const esc = (s: unknown): string =>

@@ -1,104 +1,20 @@
-// Every string the editor shows, in one place, in the citizen register
-// (short words, one thought a line), in the one copy shape (lib/copy.ts):
-// whole messages with {slots}, variants keyed by what chooses them. The
-// readability gate (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-
-// 2026-09-16.md M1) reads this object. Program and field names a caseworker
+// Every string the editor shows: `editor.*` in src/i18n/<locale>.json (the
+// shape and the reader are lib/copy.ts), written in the citizen register
+// (short words, one thought a line). The readability gate
+// (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
+// grades this namespace in en.json. Program and field names a caseworker
 // uses (SNAP, TANF, CCDF, "permanent resident") appear only after the plain
 // phrase. A surface lays its own register over any part of it two levels
 // deep (mountEditor's `copy`).
-export const copy = {
-  wordmark: "HotGap",
-  actions: { change: "Change my answers", print: "Print" },
-  summary: {
-    none: "Tell us about your home to see your answer.",
-    edit: "Edit",
-    /* The one-line summary of the four facts (design/inventory.md § ScenarioBar); its separators are this line's (citizen review N12). */
-    line: "{place} · {household} · {pay}",
-    place: { withCounty: "{state} · {county}", withZip: "{zip} · {state}", stateOnly: "{state}" },
-    household: { alone: "{adults}", withKids: "{adults}, {kids}" },
-    adults: { one: "1 adult", two: "2 adults" },
-    kids: { one: "kid {ages}", other: "kids {ages}" },
-  },
-  heading: "If your pay goes up, do you keep more?",
-  lead: "Answer four things. We check your help at every pay level and tell you what happens.",
-  privacy: "We do not save what you type. No sign up. No tracking.",
-  place: {
-    legend: "Where you live",
-    zip: "Your ZIP code",
-    zipHint: "Five digits. We use it to find your state and county.",
-    or: "Or pick your state",
-    statePlaceholder: "Choose a state",
-    inState: "That is in {state}.",
-  },
-  household: {
-    legend: "Who lives with you",
-    adults: "Adults",
-    single: "Just me",
-    married: "Me and my spouse",
-    kids: "How many kids live with you?",
-    kidsHint: "Kids under 18. Up to six.",
-    kidAge: "How old is kid {n}?",
-  },
-  pay: {
-    legend: "What you are paid",
-    amount: "Your pay, before taxes",
-    unit: "Per",
-    units: { hour: "hour", week: "week", month: "month", year: "year" },
-    hours: "Hours you work a week",
-    hoursHint: "Leave it blank if you are not sure. We then assume 40.",
-  },
-  costs: {
-    legend: "What you pay each month",
-    rent: "Rent or house payment",
-    childcare: "Child care",
-    typical: "Typical in {where}: {amount} a month. Change it if yours is different.",
-    none: "Put 0 if you pay nothing.",
-  },
-  submit: "See my answer",
-  close: "Close",
-  chips: {
-    where: "Where", household: "Home", pay: "Pay", rent: "Rent", childcare: "Child care",
-    age: "Your age", spouseAge: "Spouse's age", spousePay: "Spouse's pay",
-    ssdi: "SSDI", childSupport: "Child support", unemployment: "Unemployment pay", savings: "Savings",
-    status: "Your status", spouseStatus: "Spouse's status", kidsDisabled: "Kids who have a disability",
-    childcareSubsidy: "Child care help", headStart: "Head Start", housing: "Housing help",
-    energyAssistance: "Heating bill help", heatInRent: "Heat is in my rent",
-    employerCoverage: "Health plan from a job", selfEmployed: "Self-employed",
-    disabled: "You live with a disability", spouseDisabled: "Spouse lives with a disability",
-    snap: "Gets food help (SNAP)", tanf: "Gets cash help (TANF)", medicaid: "Gets Medicaid", wic: "Gets WIC",
-    on: "on", off: "off", yes: "yes", no: "no", none: "none",
-    aYear: "{amount} a year", aMonth: "{amount} a month",
-  },
-  /* The one-value dialog: its title is the chip's name, so its one label carries the unit or the question instead of the name again (citizen review N8). */
-  dialog: {
-    save: "Save",
-    cancel: "Cancel",
-    age: "Age in years",
-    monthly: "Dollars a month",
-    yearly: "Dollars a year",
-    dollars: "Dollars",
-    choose: "Choose one",
-    years: "Years in the US",
-    yearsHint: "Only if you are not a citizen.",
-    hasDisability: "Kid {n}, who is {age}, lives with a disability",
-  },
-  status: {
-    citizen: "US citizen", lpr: "Has a green card (permanent resident)", refugee: "Refugee", asylee: "Asylee",
-    deportation_withheld: "Deportation withheld", cuban_haitian_entrant: "Cuban or Haitian entrant",
-    conditional_entrant: "Conditional entrant", paroled_one_year: "Paroled for a year or more",
-    daca: "DACA", tps: "TPS", undocumented: "No papers",
-  } as Record<string, string>,
-  errors: {
-    checkThis: "Check this.",
-    check: "Please check {label}.",
-    fields: {
-      zip: "your ZIP code", state: "your ZIP code or state", annualEarnings: "your pay", hoursPerWeek: "your hours",
-      childAges: "your kids' ages", age: "your age", spouseAge: "your spouse's age",
-      monthlyRent: "your rent", monthlyChildcare: "your child care cost",
-      spouseAnnualEarnings: "your spouse's pay", ssdiMonthly: "SSDI", childSupportMonthly: "child support",
-      unemploymentMonthly: "unemployment pay", savings: "savings", youStatus: "your status",
-      spouseStatus: "your spouse's status", youYearsInUs: "years in the US", spouseYearsInUs: "your spouse's years in the US",
-      childDisabled: "which kids have a disability", countyFips: "your county",
-    } as Record<string, string>,
-  },
-};
+//
+// The decisions the messages carry, by key:
+//   summary.line — the one-line summary of the four facts (design/inventory.md
+//     § ScenarioBar); its separators are this line's, not code's (citizen review N12).
+//   summary.kids — a plural on the count of ages, the locale's rule choosing.
+//   dialog.* — the one-value dialog's title is the chip's name, so its one label
+//     carries the unit or the question instead of the name again (citizen review N8).
+//   errors.fields.* — keyed by validateAnswers' field name (core/src/validate.ts).
+import { bind, catalog } from "../lib/copy.js";
+
+export const copy = catalog.editor;
+export const t = bind(copy);

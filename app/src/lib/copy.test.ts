@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import en from "../i18n/en.json";
-import { catalog, fill, loadCatalog, parts, pluralKey, resolveLocale, supported } from "./copy.js";
+import { catalog, fill, loadCatalog, parts, resolveLocale, supported } from "./copy.js";
 import { pseudo } from "./pseudo.js";
 
 type Nest = { [k: string]: string | string[] | Nest };
@@ -24,10 +24,6 @@ describe("the reader", () => {
     expect(parts("{n, plural, one {Paid {pay}.} other {Paid {pay}, {n} times.}}", { n: 2, pay: "$1" })).toEqual([
       { text: "Paid " }, { slot: "pay", text: "$1" }, { text: ", 2 times." },
     ]);
-  });
-  test("pluralKey is the active locale's category", () => {
-    expect(pluralKey(1)).toBe("one");
-    expect(pluralKey(2)).toBe("other");
   });
 });
 

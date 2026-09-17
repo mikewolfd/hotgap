@@ -5,11 +5,10 @@
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
 import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { pluralKey } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
 import { $, fillText } from "../lib/dom.js";
 import { esc, listOf, listOfItems, lossFigure, money as usd, signedMoney } from "../lib/format.js";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
@@ -51,7 +50,7 @@ export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | und
   const h = modeled(ev);
   const mine = incompleteHere(cov, h);
   const states = summary ? incompleteStates(summary, h) : [];
-  const elsewhere = t(`coverage.elsewhere.${pluralKey(states.length)}`, { ...(states.length === 1 ? {} : { n: states.length }), states: listOfItems(states) });
+  const elsewhere = t("coverage.elsewhere", { n: states.length, states: listOfItems(states) });
   $("coverage").innerHTML = mine.length
     ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>${esc(t("coverage.incomplete", { state: st }))}</strong> ${esc(t("coverage.incompleteBody", { programs: listOf(mine) }))}</p></div>`
     : `<div class="hg-callout"><p><strong>${esc(t("coverage.complete", { state: st }))}</strong> ${esc(C.completeBody)}` +

@@ -216,9 +216,6 @@ export function parts(text: string, params: Params = {}): Part[] {
   return out;
 }
 
-/** The CLDR plural category a count falls in, in the active locale — for a variant nest the code still picks from; a plural message chooses its own branch. */
-export const pluralKey = (n: number): string => new Intl.PluralRules(intlLocale()).select(n);
-
 /** The message at a dotted key ("steps.ends") in `copy`, filled; a key that is not a message throws. */
 export function bind(copy: object): (key: string, params?: Params) => string {
   return (key, params) => {

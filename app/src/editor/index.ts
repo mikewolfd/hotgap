@@ -32,7 +32,7 @@ import {
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
-import { fill, pluralKey } from "../lib/copy.js";
+import { fill } from "../lib/copy.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
@@ -182,9 +182,11 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const householdLabel = () => {
     const k = kids(), S = copy.summary;
     const adults = married() ? S.adults.two : S.adults.one;
-    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids[pluralKey(k.length) as "one" | "other"], { ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
+    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids, { n: k.length, ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
   };
   const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
+  /** An immigration status's words, the citizen's when none was given. */
+  const status = (s: string | undefined): string => (copy.status as Record<string, string>)[s ?? "citizen"] ?? s ?? "";
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
   const placeLabel = () => listOfItems([flags.zip, state(), countyLabel()].filter((x): x is string => Boolean(x))) || copy.chips.none;
 
@@ -208,8 +210,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     { kind: "value", id: "child-support", label: copy.chips.childSupport, value: () => monthly(flags["child-support"]), fields: [monthlyField("child-support")] },
     { kind: "value", id: "unemployment", label: copy.chips.unemployment, value: () => monthly(flags.unemployment), fields: [monthlyField("unemployment")] },
     { kind: "value", id: "savings", label: copy.chips.savings, value: () => (flags.savings ? money(Number(flags.savings)) : copy.chips.none), fields: [{ flag: "savings", label: copy.dialog.dollars, kind: "number", min: 0, max: 10_000_000, step: 1 }] },
-    { kind: "value", id: "status", label: copy.chips.status, value: () => copy.status[flags.status ?? "citizen"], fields: statusFields("status", "years-in-us") },
-    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => copy.status[flags["spouse-status"] ?? "citizen"], fields: statusFields("spouse-status", "spouse-years-in-us"), when: married },
+    { kind: "value", id: "status", label: copy.chips.status, value: () => status(flags.status), fields: statusFields("status", "years-in-us") },
+    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => status(flags["spouse-status"]), fields: statusFields("spouse-status", "spouse-years-in-us"), when: married },
     { kind: "value", id: "kids-disabled", label: copy.chips.kidsDisabled, value: () => { const n = flagList(flags["kids-disabled"]).filter((x) => x === "1").length; return n ? String(n) : copy.chips.none; }, fields: [{ flag: "kids-disabled", label: copy.chips.kidsDisabled, kind: "kids-disabled" }], when: () => kids().length > 0 },
     { kind: "toggle", id: "childcare-subsidy", label: copy.chips.childcareSubsidy, when: () => kids().some((a) => a <= CHILDCARE_MAX_AGE) },
     { kind: "toggle", id: "head-start", label: copy.chips.headStart, when: () => kids().some((a) => a <= HEAD_START_MAX_AGE) },
@@ -495,7 +497,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   });
 
   function showError(detail: string): void {
-    const label = copy.errors.fields[detail];
+    const label = (copy.errors.fields as Record<string, string>)[detail];
     errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : detail);
     errorLine.hidden = false;
     // A field name points at its control; a sentence about a ZIP points at the ZIP.
@@ -544,7 +546,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       }
       let control: HTMLInputElement | HTMLSelectElement;
       if (f.kind === "select") {
-        control = h("select", { id, class: "hg-select" }, ...(f.options ?? []).map((o) => h("option", { value: o }, copy.status[o] ?? o)));
+        control = h("select", { id, class: "hg-select" }, ...(f.options ?? []).map((o) => h("option", { value: o }, status(o))));
         control.value = (flags[f.flag] as string | undefined) ?? f.options?.[0] ?? "";
         // The default answer is not an answer: leave it out of the URL.
         controls.push({ field: f, read: () => (control.value === f.options?.[0] ? undefined : control.value) });

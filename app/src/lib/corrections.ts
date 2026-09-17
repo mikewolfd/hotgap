@@ -6,7 +6,7 @@
 // correction's `cite`) is the cite's link; core's `code` pointer is not a
 // reader's fact and is not shown. Program names are the `name` register (M3).
 import type { StateCorrections } from "@hotgap/core";
-import { programName } from "./programs.js";
+import { programName } from "./names.js";
 
 export interface CorrectionRow {
   program: string;

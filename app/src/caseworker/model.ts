@@ -27,10 +27,9 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
-import { pluralKey } from "../lib/copy.js";
 import { careHousehold, incompleteFor } from "../lib/coverage.js";
 import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
 import { copy, SERVED_VINTAGE, t } from "./copy.js";
 
@@ -187,7 +186,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
     }
     if (r.id === "childcare" && p) {
       const price = cov?.vintages.childcare.preschool, n = h.childAges.length;
-      const slots = { worth: usd(p[before]), at: usd(pts[before].earnings), monthly: usd(h.monthlyChildcare ?? 0), kids: t(`ledger.kids.${pluralKey(n)}`, { n }) };
+      const slots = { worth: usd(p[before]), at: usd(pts[before].earnings), monthly: usd(h.monthlyChildcare ?? 0), kids: t("ledger.kids", { n }) };
       s.push(price ? t("ledger.careWorth.priced", { ...slots, price, year: ev.curve.year }) : t("ledger.careWorth.unpriced", slots));
     }
     if (r.id === "medicaid" && !r.cliff.deferral) {
@@ -231,7 +230,7 @@ export function cliffSentence(c: Cliff): string {
   const lost = c.programsLost.map(programName);
   return [
     t("chart.cliff.lead", { from: usd(c.startEarnings), to: usd(c.endEarnings), drop: lossFigure(c.drop) }),
-    lost.length ? t(`chart.cliff.lost.${pluralKey(lost.length)}`, { programs: listOf(lost) }) : copy.chart.cliff.lost.none,
+    t("chart.cliff.lost", { n: lost.length, programs: listOf(lost) }),
     t("chart.cliff.driver", { driver: c.driver }),
     ...(c.deferral ? [t("chart.cliff.deferred", { until: c.deferral.until })] : []),
   ].join(" ");
@@ -248,9 +247,9 @@ export function chartLabel(ev: HouseholdEvaluation): string {
   const lost = w ? w.programsLost.map(programName) : [];
   return [
     t("chart.label.lead", { from: usd(ev.curve.points[0].earnings), to: usd(top(ev)) }),
-    n === 0 ? copy.chart.label.zones.none : t(`chart.label.zones.${pluralKey(n)}`, { n }),
+    t("chart.label.zones", { n }),
     own,
-    w ? t(`chart.label.worst.${lost.length ? pluralKey(lost.length) : "none"}`, { drop: usd(w.drop), at: usd(w.startEarnings), ...(lost.length ? { programs: listOf(lost) } : {}) }) : null,
+    w ? t("chart.label.worst", { n: lost.length, drop: usd(w.drop), at: usd(w.startEarnings), programs: listOf(lost) }) : null,
     ev.escape.safeExitEarnings === null ? copy.chart.label.safe.none : t("chart.label.safe.from", { safe: usd(ev.escape.safeExitEarnings) }),
   ].filter((x): x is string => x !== null).join(" ");
 }
@@ -284,7 +283,7 @@ export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluati
   const other = others.find((o) => archetypeOf(o) !== archetypeOf(base) && o.reach.current !== null && base.reach.current !== null);
   if (other) s.push(t("compare.ladderNote", { other: archetypeOf(other), base: archetypeOf(base) }));
   if (others.some((o) => o.source === "archetype")) s.push(C.archetypeNote);
-  if (unanswered) s.push(t(`compare.unansweredNote.${pluralKey(unanswered)}`, unanswered === 1 ? {} : { n: unanswered }));
+  if (unanswered) s.push(t("compare.unansweredNote", { n: unanswered }));
   return s.join(" ");
 }
 
@@ -350,12 +349,12 @@ export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): {
   if (cc > 0) p.push(t("handout.careShare", { amount: usd(cc), phrase: phrase("childcare") }));
   if (w) {
     const lost = w.programsLost.map(phrase), slots = { at: usd(w.endEarnings), drop: usd(w.drop) };
-    const biggest = lost.length ? t(`handout.biggestDrop.${pluralKey(lost.length)}`, { ...slots, phrases: listOf(lost) }) : t("handout.biggestDrop.none", slots);
+    const biggest = t("handout.biggestDrop", { ...slots, n: lost.length, phrases: listOf(lost) });
     p.push(biggest + (snapEnd && snapEnd.at !== w.endEarnings ? ` ${t("handout.snapEnds", { at: usd(snapEnd.at) })}` : ""));
   }
   if (child !== null && kids) p.push(t("handout.kidsCoverage", { at: usd(child + step) }));
   p.push(H.estimates, summary ? t("handout.printed.dated", { year: ev.curve.year, sweep: dateWords(summary.generated) }) : t("handout.printed.undated", { year: ev.curve.year }));
-  const children = kids === 0 ? H.children.none : kids === 1 ? H.children.one : t("handout.children.other", { count: numberWords(kids) });
+  const children = t("handout.children", { n: kids, words: numberWords(kids) });
   return { title: t("handout.title", { state: stateName(ev.answers.state), parents: H.parents[h.married ? "two" : "one"], children }), paragraphs: p };
 }
 

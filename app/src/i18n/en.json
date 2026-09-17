@@ -449,7 +449,32 @@
       "schoolmeals": "free school meals",
       "childcare": "child care help",
       "liheap": "help with heating bills"
-    }
+    },
+    "called": {
+      "eitc": "the Earned Income Tax Credit (EITC)",
+      "ctc": "the Child Tax Credit",
+      "aca": "the Premium tax credit",
+      "housing": "the Housing voucher",
+      "childcare": "the CCDF child care subsidy",
+      "liheap": "LIHEAP"
+    },
+    "noun": {
+      "snap": "food help",
+      "medicaid": "free state health plan",
+      "chip": "health plan for kids",
+      "eitc": "tax break for workers",
+      "ctc": "child tax break",
+      "aca": "help paying for health insurance",
+      "tanf": "cash help",
+      "housing": "housing help",
+      "wic": "food help for moms and babies",
+      "ssi": "SSI cash help",
+      "headstart": "free early learning",
+      "schoolmeals": "free school meals",
+      "childcare": "child care help",
+      "liheap": "help with heating bills"
+    },
+    "phraseAndName": "{phrase} ({name})"
   },
   "caseworker": {
     "editor": {
@@ -923,7 +948,7 @@
         "one": "one parent",
         "two": "two parents"
       },
-      "children": "{count, plural, =0 {no children} one {one child} other {{count} children}}",
+      "children": "{n, plural, =0 {no children} one {one child} other {{words} children}}",
       "careShare": "{amount} of what you keep is {phrase} paid straight to your day care.",
       "biggestDrop": "{n, plural, =0 {The biggest drop is at {at} of pay: your tax break shrinks and you keep {drop} less.} one {The biggest drop is at {at} of pay: {phrases} ends and you keep {drop} less.} other {The biggest drop is at {at} of pay: {phrases} end and you keep {drop} less.}}",
       "snapEnds": "Food help ends at {at}.",
@@ -1324,6 +1349,59 @@
     "tickThousands": "{amount}k",
     "language": {
       "label": "Language"
+    },
+    "state": {
+      "AL": "Alabama",
+      "AK": "Alaska",
+      "AZ": "Arizona",
+      "AR": "Arkansas",
+      "CA": "California",
+      "CO": "Colorado",
+      "CT": "Connecticut",
+      "DE": "Delaware",
+      "DC": "Washington, DC",
+      "FL": "Florida",
+      "GA": "Georgia",
+      "HI": "Hawaii",
+      "ID": "Idaho",
+      "IL": "Illinois",
+      "IN": "Indiana",
+      "IA": "Iowa",
+      "KS": "Kansas",
+      "KY": "Kentucky",
+      "LA": "Louisiana",
+      "ME": "Maine",
+      "MD": "Maryland",
+      "MA": "Massachusetts",
+      "MI": "Michigan",
+      "MN": "Minnesota",
+      "MS": "Mississippi",
+      "MO": "Missouri",
+      "MT": "Montana",
+      "NE": "Nebraska",
+      "NV": "Nevada",
+      "NH": "New Hampshire",
+      "NJ": "New Jersey",
+      "NM": "New Mexico",
+      "NY": "New York",
+      "NC": "North Carolina",
+      "ND": "North Dakota",
+      "OH": "Ohio",
+      "OK": "Oklahoma",
+      "OR": "Oregon",
+      "PA": "Pennsylvania",
+      "RI": "Rhode Island",
+      "SC": "South Carolina",
+      "SD": "South Dakota",
+      "TN": "Tennessee",
+      "TX": "Texas",
+      "UT": "Utah",
+      "VT": "Vermont",
+      "VA": "Virginia",
+      "WA": "Washington",
+      "WV": "West Virginia",
+      "WI": "Wisconsin",
+      "WY": "Wyoming"
     }
   }
 }

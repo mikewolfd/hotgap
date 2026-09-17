@@ -426,7 +426,7 @@ export function renderDetail(s: Scene): void {
   /* SourceNote (#17) from vintages and model, in the inventory's shape, the county named. */
   const v = cov.vintages;
   const [careBasis, careYear] = (v.childcare?.preschool ?? "").split(" ");
-  const care = D.care[careBasis] ?? careBasis ?? D.care.unknown;
+  const care = (D.care as Record<string, string>)[careBasis] ?? careBasis ?? D.care.unknown;
   $("stateSrc").textContent = t("detail.source", {
     year: summary.year, rentPublisher: v.rent.publisher, rentVintage: v.rent.vintage,
     county: v.county.name ? t("detail.sourceCounty.named", { county: v.county.name, vintage: v.county.vintage }) : t("detail.sourceCounty.unnamed", { vintage: v.county.vintage }),

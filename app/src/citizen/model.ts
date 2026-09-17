@@ -7,7 +7,7 @@ import {
   DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
-import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
+import { money, moneyAbout, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
 
 /** The unit the person gave and the hours an hourly figure converts through. */
 export interface Pay { unit: PayUnit; hours: number }
@@ -36,7 +36,7 @@ function moneyFor({ unit, hours }: Pay): Money {
   return {
     pay: (a) => (withUnit ? payPhrase(a, unit, hours) : payFigure(a, unit, hours)),
     payUnit: (a) => payPhrase(a, unit, hours),
-    diff: (a, b, say = withUnit) => unitFigure(payRounded(b, unit, hours) - payRounded(a, unit, hours), unit) + (say ? ` ${unitPhrase(unit)}` : ""),
+    diff: (a, b, say = withUnit) => { const d = payRounded(b, unit, hours) - payRounded(a, unit, hours); return say ? payInUnit(d, unit) : unitFigure(d, unit); },
     money,
     about: moneyAbout,
   };

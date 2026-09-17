@@ -9,7 +9,7 @@ import { STATE_NAMES, type SummaryJson } from "@hotgap/core";
 import { fill } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
 import { listOf } from "../lib/format.js";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { copy } from "./copy.js";
 import { archLabel, type Archetype, type StateRow } from "./model.js";
 import { modelLabel } from "./words.js";
