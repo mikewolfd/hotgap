@@ -1,12 +1,18 @@
 // Every string the citizen result shows, in one catalog, in the citizen
-// register (short words, one thought a line). Slots are {name}; t() fills
-// them and throws on a missing key, an unknown param or a slot left over,
-// as the archive's t.ts did (design/PORT-FROM-ARCHIVE-2026-09-16.md M1), so
-// a sentence can never reach the page half-filled. The readability gate
-// (scripts/readability.mjs) reads this object: nothing a person reads is
-// composed anywhere else. Program names an office uses appear only after
-// the plain phrase (design/inventory.md M3); those names live in
+// register (short words, one thought a line), in the one copy shape
+// (lib/copy.ts — this module was its model): whole messages with {slots},
+// variants keyed by what chooses them; t() fills a message and throws on a
+// missing key, an unknown param or a slot left over, as the archive's t.ts
+// did (design/PORT-FROM-ARCHIVE-2026-09-16.md M1), so a sentence can never
+// reach the page half-filled. The readability gate (scripts/readability.mjs)
+// reads this object: nothing a person reads is composed anywhere else.
+// Program names an office uses appear only after the plain phrase
+// (design/inventory.md M3); those names live in lib/programs.ts and
 // programs.ts and are not gated.
+import { bind, fill, parts, type Part } from "../lib/copy.js";
+
+export { fill, parts, type Part };
+
 export const copy = {
   loading: "Doing the math… We check your help at {count} pay levels. This can take a few seconds.",
   errorTitle: "We could not get your answer.",
@@ -297,37 +303,5 @@ export const copy = {
   },
 };
 
-type Params = Record<string, string | number>;
-
-/** Fill {slots} in a template; every slot must be given and every param must be a slot. */
-export function fill(text: string, params: Params = {}): string {
-  const out = text.replace(/\{([A-Za-z]+)\}/g, (_, k: string) => {
-    if (!(k in params)) throw new Error(`missing param {${k}} in "${text}"`);
-    return String(params[k]);
-  });
-  for (const k in params) if (!text.includes(`{${k}}`)) throw new Error(`unknown param ${k} for "${text}"`);
-  return out;
-}
-
-export type Part = { text: string } | { slot: string; text: string };
-
-/** A template as parts, each slot its own part, so a renderer can mark a slot up; the same checks as fill(). */
-export function parts(text: string, params: Params = {}): Part[] {
-  fill(text, params);
-  const out: Part[] = [];
-  let last = 0;
-  for (const m of text.matchAll(/\{([A-Za-z]+)\}/g)) {
-    if (m.index! > last) out.push({ text: text.slice(last, m.index) });
-    out.push({ slot: m[1], text: String(params[m[1]]) });
-    last = m.index! + m[0].length;
-  }
-  if (last < text.length) out.push({ text: text.slice(last) });
-  return out;
-}
-
 /** The string at a dotted key ("steps.ends"), filled. */
-export function t(key: string, params?: Params): string {
-  const s = key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], copy);
-  if (typeof s !== "string") throw new Error(`missing string ${key}`);
-  return fill(s, params);
-}
+export const t = bind(copy);

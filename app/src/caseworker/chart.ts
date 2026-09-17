@@ -13,7 +13,8 @@ import { immediateCurve, type Cliff, type HouseholdEvaluation } from "@hotgap/co
 import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { clusterCliffs, layerFor, niceStep, niceUp, type Cluster, type Layer } from "../lib/chart/geometry.js";
 import { svg as mk } from "../lib/dom.js";
-import { copy, fmt } from "./copy.js";
+import { lossFigure, money as usd, tickMoney } from "../lib/format.js";
+import { copy, t } from "./copy.js";
 import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
 export interface ChartHost { wrap: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
@@ -51,7 +52,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
 
   const cliffs = (): Cliff[] => ev!.analysis.cliffs;
   const markSentence = (m: Mark): string => m.members.length === 1 ? cliffSentence(cliffs()[m.members[0]])
-    : K.merged(m.members.length, cliffs()[m.members[0]].startEarnings, cliffs()[m.members[m.members.length - 1]].endEarnings, m.members.reduce((s, i) => s + cliffs()[i].drop, 0));
+    : t("chart.merged", { n: m.members.length, from: usd(cliffs()[m.members[0]].startEarnings), to: usd(cliffs()[m.members[m.members.length - 1]].endEarnings), sum: usd(m.members.reduce((s, i) => s + cliffs()[i].drop, 0)) });
   const zoneOf = (e: number) => ev!.analysis.dangerZones.find((z) => e > z.startEarnings && (z.endEarnings === null || e < z.endEarnings)) ?? null;
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
   const label = (x: number, y: number, text: string, extra: Record<string, string | number> = {}, cls = "") =>
@@ -103,10 +104,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     for (const z of A.dangerZones) svg.append(...zoneRects(px(z.startEarnings), px(z.endEarnings ?? x1), plotTop, plotBot, isPersonal(z), "cw-hatch"));
     for (let v = y0; v <= y1 + 1; v += step) {
       svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-      svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, fmt.tick(v)));
+      svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, tickMoney(v, "year")));
     }
     const xs = niceStep(x1 - x0, narrow ? 3 : 6);
-    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, fmt.tick(e)));
+    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, tickMoney(e, "year")));
     svg.append(mk("line", { x1: pad.l, y1: plotBot, x2: W - pad.r, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* The ghost (S14): the real curve, drawn only when a deferred drop would be
@@ -147,19 +148,19 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     if (w) {
       const wm = marks.find((m) => m.members.includes(cliffs().indexOf(w)))!;
       const mid = (lifted[indexOf(ev, w.startEarnings)] + lifted[indexOf(ev, w.endEarnings)]) / 2;
-      const t = label(wm.x + 9, py(mid) + 4, fmt.loss(w.drop), {}, "hg-label--loss hg-label--strong");
-      svg.append(t); clearRings(t, rings);
+      const worstLabel = label(wm.x + 9, py(mid) + 4, lossFigure(w.drop), {}, "hg-label--loss hg-label--strong");
+      svg.append(worstLabel); clearRings(worstLabel, rings);
     }
     if (P.zone) {
       const bx0 = px(P.zone.startEarnings), bx1 = px(P.zone.endEarnings ?? x1), yp = py(P.zone.peakNet);
       svg.append(mk("line", { x1: bx0, y1: yp, x2: bx1, y2: yp, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      const peak = label(bx0 - 4, yp - 6, fmt.money(P.zone.peakNet), { "text-anchor": "end" }, "hg-label--loss");
+      const peak = label(bx0 - 4, yp - 6, usd(P.zone.peakNet), { "text-anchor": "end" }, "hg-label--loss");
       svg.append(peak); clearRings(peak, rings);
       /* The leap: a bracket along the peak rule from the diamond to the exit, labelled once. */
       const lx0 = px(A.currentEarnings), lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
       svg.append(mk("path", { d: `M${lx0} ${yp - 4} V${yp + 4} M${lx0} ${yp} H${lx1}${P.raiseIsLowerBound ? "" : ` M${lx1} ${yp - 4} V${yp + 4}`}`, fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
       /* Below 520px the merged cliff mark sits on the peak, so the label starts under the bracket; either way it clears every ring. */
-      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, K.leap(P.raiseToClear ?? 0, P.raiseIsLowerBound), {}, "hg-label--loss hg-label--strong");
+      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, t(`chart.leap.${P.raiseIsLowerBound ? "atLeast" : "exact"}`, { raise: usd(P.raiseToClear ?? 0) }), {}, "hg-label--loss hg-label--strong");
       svg.append(leap); clearRings(leap, rings);
       if (!P.raiseIsLowerBound) {
         svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
@@ -180,7 +181,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
 
     /* The caption's clauses each come from their condition (review S5). */
     host.cap.textContent = [
-      K.axis(y0, (yRange / Math.max(1, maxDrop)).toFixed(1)),
+      t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
       DEFERRED.length ? (ghost ? K.liftedGhost : K.liftedNoGhost) : K.noneDeferred,
       source,
     ].join(" ");
@@ -212,7 +213,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
     cursorNodes = [l, dot];
     const z = zoneOf(e);
-    readout.textContent = K.readout(e, v, z ? { own: isPersonal(z), end: z.endEarnings, peak: z.peakNet, start: z.startEarnings } : null);
+    const R = copy.chart.readout, lead = t("chart.readout.lead", { earnings: usd(e), net: usd(v) });
+    const zone = !z ? R.outside
+      : isPersonal(z) ? (z.endEarnings === null ? t("chart.readout.own.toTop", { peak: usd(z.peakNet), start: usd(z.startEarnings) }) : t("chart.readout.own.toExit", { end: usd(z.endEarnings), peak: usd(z.peakNet), start: usd(z.startEarnings) }))
+      : z.endEarnings === null ? t("chart.readout.other.toTop", { start: usd(z.startEarnings) }) : t("chart.readout.other.toExit", { start: usd(z.startEarnings), end: usd(z.endEarnings) });
+    readout.textContent = `${lead} ${zone}`;
   }
 
   function syncMarks(): void {

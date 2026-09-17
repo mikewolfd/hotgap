@@ -7,7 +7,8 @@
 // modeledAnswers); the IncompleteMarker rule is lib/coverage.ts's. No DOM,
 // no fetch — vitest covers it directly (model.test.ts).
 // Every figure is annual (design/inventory.md M5): this reader checks the
-// table against the file. Every word is copy.ts's.
+// table against the file. Every word is copy.ts's, every figure formatted
+// here through lib/format.ts before it fills a slot (lib/copy.ts).
 import {
   CLIFF_MIN,
   liheapLimitWords,
@@ -24,13 +25,18 @@ import {
   type SummaryJson,
 } from "@hotgap/core";
 import { sceneOf } from "../citizen/model.js";
+import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
+import { pluralKey } from "../lib/copy.js";
 import { careHousehold, incompleteFor } from "../lib/coverage.js";
-import { modelLine } from "../lib/format.js";
+import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
+import { programName } from "../lib/programs.js";
 import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
-import { copy, fmt, programName } from "./copy.js";
+import { copy, SERVED_VINTAGE, t } from "./copy.js";
 
 export const stateName = (st: string): string => STATE_NAMES[st] ?? st;
+/** A share of eligible households as the whole-number percent the profiles print. */
+const pct = (share: number): number => Math.round(share * 100);
 
 /** The index of an earnings figure on the axis. */
 export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
@@ -62,15 +68,15 @@ export interface Verdict { line: string; sub: string; /** "It happens again…",
 export function verdict(ev: HouseholdEvaluation): Verdict {
   const a = ev.analysis, p = ev.personal, e = ev.escape, v = copy.verdict;
   const next = cliffAt(ev, a.nextCliff);
-  const start = p.zone?.startEarnings ?? 0, peak = p.zone?.peakNet ?? 0, exit = p.escapeEarnings ?? 0;
+  const start = usd(p.zone?.startEarnings ?? 0), peak = usd(p.zone?.peakNet ?? 0), exit = usd(p.escapeEarnings ?? 0);
   const again = a.verdict === "in_danger_zone" && !p.raiseIsLowerBound && e.safeExitEarnings !== null && e.safeExitEarnings !== p.escapeEarnings
-    ? v.again(exit, e.safeExitEarnings) : "";
+    ? t("verdict.again", { exit, safe: usd(e.safeExitEarnings) }) : "";
   const line = a.verdict === "always_up" ? v.alwaysUp
-    : a.verdict === "cliff_ahead" ? v.cliffAhead(next!.endEarnings, next!.drop)
+    : a.verdict === "cliff_ahead" ? t("verdict.cliffAhead", { at: usd(next!.endEarnings), drop: usd(next!.drop) })
     : a.verdict === "cliff_behind" ? v.cliffBehind
-    : p.raiseIsLowerBound ? v.stuck(start, top(ev), peak)
-    : v.inZone(start, exit, peak, p.raiseToClear ?? 0);
-  const sub = again ? `${again} ${v.safeFrom(e.safeExitEarnings!, e.leap, e.leapIsLowerBound)}`
+    : p.raiseIsLowerBound ? t("verdict.stuck", { start, top: usd(top(ev)), peak })
+    : t("verdict.inZone", { start, exit, peak, raise: usd(p.raiseToClear ?? 0) });
+  const sub = again ? `${again} ${t(`verdict.safeFrom.${e.leapIsLowerBound ? "atLeast" : "exact"}`, { safe: usd(e.safeExitEarnings!), leap: usd(e.leap) })}`
     : e.safeExitEarnings === null ? v.neverSafe : "";
   return { line, sub, again };
 }
@@ -80,19 +86,19 @@ export interface Tile { label: string; value: string; sub: string }
 
 /** Reach's margin is the 90% MoE of the ladder point the percentile sits on (reach.json), never a probability. */
 export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[] {
-  const a = ev.analysis, p = ev.personal, t = copy.tiles;
-  const out: Tile[] = [{ label: t.net, value: fmt.money(a.currentNet), sub: t.netSub(a.currentEarnings) }];
+  const a = ev.analysis, p = ev.personal, T = copy.tiles;
+  const out: Tile[] = [{ label: T.net, value: usd(a.currentNet), sub: t("tiles.netSub", { earned: usd(a.currentEarnings) }) }];
   if (a.verdict === "in_danger_zone") out.push({
-    label: t.raise, value: p.raiseIsLowerBound ? t.atLeast(p.raiseToClear ?? 0) : fmt.money(p.raiseToClear ?? 0),
-    sub: p.raiseIsLowerBound ? t.raiseNotFound(top(ev)) : t.raiseTo(p.escapeEarnings ?? 0),
+    label: T.raise, value: p.raiseIsLowerBound ? t("tiles.atLeast", { n: usd(p.raiseToClear ?? 0) }) : usd(p.raiseToClear ?? 0),
+    sub: p.raiseIsLowerBound ? t("tiles.raiseNotFound", { top: usd(top(ev)) }) : t("tiles.raiseTo", { exit: usd(p.escapeEarnings ?? 0) }),
   });
-  if (a.worstCliff) out.push({ label: t.drop, value: fmt.money(a.worstCliff.drop), sub: t.dropAt(a.worstCliff.startEarnings, a.worstCliff.endEarnings) });
-  const pct = ev.reach.current;
-  if (pct !== null && cell) {
+  if (a.worstCliff) out.push({ label: T.drop, value: usd(a.worstCliff.drop), sub: t("tiles.dropAt", { from: usd(a.worstCliff.startEarnings), to: usd(a.worstCliff.endEarnings) }) });
+  const reach = ev.reach.current;
+  if (reach !== null && cell) {
     /* The ladder point at or below the percentile: the ladder is sampled at REACH_PERCENTILES. */
-    const above = REACH_PERCENTILES.findIndex((q) => q > pct);
+    const above = REACH_PERCENTILES.findIndex((q) => q > reach);
     const i = above < 0 ? REACH_PERCENTILES.length - 1 : Math.max(0, above - 1);
-    out.push({ label: t.reach, value: fmt.ordinal(Math.round(pct)), sub: t.reachSub(cell.moe[i], cell.n) });
+    out.push({ label: T.reach, value: ordinal(Math.round(reach)), sub: t("tiles.reachSub", { moe: usd(cell.moe[i]), n: cell.n }) });
   }
   return out;
 }
@@ -144,69 +150,109 @@ function series(ev: HouseholdEvaluation, r: LedgerRow): number[] | null {
   return pts.map((p) => p.programs[r.id]);
 }
 
-/** The cite line under a ledger row: what remains, what it was worth, what moved with it — all from the curve. */
+/** The served share as one of two sentences: the profile's percent, or that it was not read. */
+const servedSentence = (share: number | null): string =>
+  share === null ? t("ledger.liheapServed.unread", { vintage: SERVED_VINTAGE }) : t("ledger.liheapServed.known", { pct: pct(share), vintage: SERVED_VINTAGE });
+
+/** The cite line under a ledger row: what remains, what it was worth, what moved with it — all from the curve. One sentence per fact, joined. */
 export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage | undefined): string {
-  const pts = ev.curve.points, i = indexOf(ev, r.at), before = i - 1, p = series(ev, r), s: string[] = [], L = copy.ledger;
+  const pts = ev.curve.points, i = indexOf(ev, r.at), before = i - 1, p = series(ev, r), s: string[] = [];
   const h = modeled(ev);
   const b = ev.liheap;
   if (r.id === "liheap" && b) {
     const limit = cov?.liheap?.limitKind ?? liheapLimitWords(b.limit);
-    if (r.credit) return L.liheapCredit({ program: cov?.corrections.liheap?.program ?? null, limit, servedShare: b.servedShare, heatInRent: h.heatInRent, readOn: b.readOn });
-    if (r.boundary) return L.liheapBoundary({ limit, band: b.topBand ? L.liheapBand(b.topBand.min, b.topBand.max) : null, servedShare: b.servedShare, readOn: b.readOn });
-    if (r.cliff) return L.liheapCounted(pts[before].programs.liheap ?? 0, limit);
+    if (r.credit) {
+      const program = cov?.corrections.liheap?.program ?? null;
+      return t("ledger.liheapCredit", {
+        paidAs: program ? t("ledger.liheapPaidAs.named", { program, limit }) : t("ledger.liheapPaidAs.unnamed", { limit }),
+        served: servedSentence(b.servedShare),
+        heat: t(`ledger.liheapHeat.${h.heatInRent ? "inRent" : "notInRent"}`),
+        readOn: b.readOn,
+      });
+    }
+    if (r.boundary) {
+      const band = b.topBand ? (b.topBand.min === b.topBand.max ? t("ledger.liheapBand.flat", { min: usd(b.topBand.min) }) : t("ledger.liheapBand.range", { min: usd(b.topBand.min), max: usd(b.topBand.max) })) : null;
+      const key = `${band ? "band" : "unread"}${b.servedShare === null ? "Unread" : "Known"}`;
+      const worthServed = t(`ledger.liheapWorthServed.${key}`, { ...(band ? { band } : {}), ...(b.servedShare === null ? {} : { pct: pct(b.servedShare) }), vintage: SERVED_VINTAGE });
+      return t("ledger.liheapBoundary", { limit, worthServed, readOn: b.readOn });
+    }
+    if (r.cliff) return t("ledger.liheapCounted", { amount: usd(pts[before].programs.liheap ?? 0), limit });
   }
   if (r.cliff) {
     const left = p ? p[i] : 0;
     if (left > 0) {
       const goneAt = p!.findIndex((v, k) => k > i && v <= 0);
-      s.push(L.continues(left, programName(r.id), r.at, goneAt > 0 ? pts[goneAt].earnings : null));
+      const slots = { left: usd(left), program: programName(r.id), at: usd(r.at) };
+      s.push(goneAt > 0 ? t("ledger.continues.closed", { ...slots, goneAt: usd(pts[goneAt].earnings) }) : t("ledger.continues.open", slots));
     }
-    if (r.id === "childcare" && p) s.push(L.careWorth(p[before], pts[before].earnings, h.monthlyChildcare ?? 0, h.childAges.length, cov?.vintages.childcare.preschool, ev.curve.year));
-    if (r.id === "medicaid" && !r.cliff.deferral) s.push(L.medicaidEnds(r.cliff.breakdown.premiums));
+    if (r.id === "childcare" && p) {
+      const price = cov?.vintages.childcare.preschool, n = h.childAges.length;
+      const slots = { worth: usd(p[before]), at: usd(pts[before].earnings), monthly: usd(h.monthlyChildcare ?? 0), kids: t(`ledger.kids.${pluralKey(n)}`, { n }) };
+      s.push(price ? t("ledger.careWorth.priced", { ...slots, price, year: ev.curve.year }) : t("ledger.careWorth.unpriced", slots));
+    }
+    if (r.id === "medicaid" && !r.cliff.deferral) {
+      const rise = r.cliff.breakdown.premiums;
+      s.push(rise > 0 ? t("ledger.medicaidEnds.premium", { premiumRise: usd(rise) }) : t("ledger.medicaidEnds.flat"));
+    }
     if (r.id === "aca") {
-      const spaBefore = pts[before].statePremiumAssistance ?? 0, spaAt = pts[i].statePremiumAssistance ?? 0;
-      s.push(L.acaEnds(r.cliff.breakdown.premiums, spaBefore > 0 && spaAt === 0 && ev.statePremiumAssistance ? { program: ev.statePremiumAssistance.program, amount: spaBefore } : null));
+      const spaBefore = pts[before].statePremiumAssistance ?? 0, spaAt = pts[i].statePremiumAssistance ?? 0, rise = usd(r.cliff.breakdown.premiums);
+      s.push(spaBefore > 0 && spaAt === 0 && ev.statePremiumAssistance
+        ? t("ledger.acaEnds.withHelp", { premiumRise: rise, program: ev.statePremiumAssistance.program, amount: usd(spaBefore) })
+        : t("ledger.acaEnds.alone", { premiumRise: rise }));
     }
   } else {
     const kidsChip = pts[i].childPrograms.chip ?? 0;
-    if (r.id === "medicaid" && r.group === "Children" && kidsChip > 0) s.push(L.toChip(kidsChip, r.at));
-    if (r.id === "eitc") s.push(L.eitc(CLIFF_MIN));
-    if (r.id === "chip" && pts[i].programs.aca > pts[before].programs.aca) s.push(L.chipEnds(pts[i].programs.aca - pts[before].programs.aca));
+    if (r.id === "medicaid" && r.group === "Children" && kidsChip > 0) s.push(t("ledger.toChip", { amount: usd(kidsChip), at: usd(r.at) }));
+    if (r.id === "eitc") s.push(t("ledger.eitc", { min: usd(CLIFF_MIN) }));
+    if (r.id === "chip" && pts[i].programs.aca > pts[before].programs.aca) s.push(t("ledger.chipEnds", { ptcRise: usd(pts[i].programs.aca - pts[before].programs.aca) }));
   }
-  if (r.deferred) s.push(L.deferredUntil(r.deferred));
+  if (r.deferred) s.push(t("ledger.deferredUntil", { when: r.deferred }));
   return s.join(" ");
 }
 
 /** The ledger's footnote: cash benefits, child coverage, the coverage gap and the state's premium help — what the coverage block says, never copy. */
 export function ledgerNote(ev: HouseholdEvaluation, cov: StateCoverage | undefined): string {
   const e = ev.escape, step = stepOf(ev), s: string[] = [], L = copy.ledger;
-  s.push(e.benefitsEndEarnings === null ? L.cashNever : L.cashEnds(e.benefitsEndEarnings + step));
-  if (e.childCoverageEndEarnings !== null) s.push(L.childCoverageEnds(e.childCoverageEndEarnings + step));
+  s.push(e.benefitsEndEarnings === null ? L.cashNever : t("ledger.cashEnds", { at: usd(e.benefitsEndEarnings + step) }));
+  if (e.childCoverageEndEarnings !== null) s.push(t("ledger.childCoverageEnds", { at: usd(e.childCoverageEndEarnings + step) }));
   if (cov) {
     const c = cov.corrections, pa = c.premiumAssistance;
-    s.push(c.coverageGap.applies ? L.gapApplies(c.coverageGap.note) : L.gapNone(c.coverageGap.note));
-    s.push(pa.source === "modeled" ? L.premiumModeled(pa.program ?? "", ev.statePremiumAssistance?.maxAnnual ?? 0)
-      : pa.source === "ladder" ? L.premiumLadder(pa.program ?? "")
-      : pa.program ? L.premiumUnmodeled(pa.program) : L.premiumNone);
+    s.push(t(c.coverageGap.applies ? "ledger.gapApplies" : "ledger.gapNone", { note: c.coverageGap.note }));
+    s.push(pa.source === "modeled" ? t("ledger.premiumModeled", { program: pa.program ?? "", max: usd(ev.statePremiumAssistance?.maxAnnual ?? 0) })
+      : pa.source === "ladder" ? t("ledger.premiumLadder", { program: pa.program ?? "" })
+      : pa.program ? t("ledger.premiumUnmodeled", { program: pa.program }) : L.premiumNone);
   }
   return s.join(" ");
 }
 
 // ── The chart's words ───────────────────────────────────────────────────
-export const cliffSentence = (c: Cliff): string =>
-  copy.chart.cliff(c.startEarnings, c.endEarnings, c.drop, c.programsLost.map(programName), c.driver, c.deferral?.until ?? null);
+/** A cliff mark's sentence: the step and its drop, what ends, the driver, and when the loss lands if not now. */
+export function cliffSentence(c: Cliff): string {
+  const lost = c.programsLost.map(programName);
+  return [
+    t("chart.cliff.lead", { from: usd(c.startEarnings), to: usd(c.endEarnings), drop: lossFigure(c.drop) }),
+    lost.length ? t(`chart.cliff.lost.${pluralKey(lost.length)}`, { programs: listOf(lost) }) : copy.chart.cliff.lost.none,
+    t("chart.cliff.driver", { driver: c.driver }),
+    ...(c.deferral ? [t("chart.cliff.deferred", { until: c.deferral.until })] : []),
+  ].join(" ");
+}
 
-export const curveTitle = (ev: HouseholdEvaluation): string => copy.chart.title(ev.curve.points[0].earnings, top(ev));
+export const curveTitle = (ev: HouseholdEvaluation): string => t("chart.title", { from: usd(ev.curve.points[0].earnings), to: usd(top(ev)) });
 
-/** The chart wrapper's aria-label: the shape in words. */
+/** The chart wrapper's aria-label: the shape in words, one sentence per fact. */
 export function chartLabel(ev: HouseholdEvaluation): string {
-  const a = ev.analysis, p = ev.personal, w = cliffAt(ev, a.worstCliff);
-  return copy.chart.label({
-    from: ev.curve.points[0].earnings, to: top(ev), zones: a.dangerZones.length,
-    own: p.zone ? { start: p.zone.startEarnings, exit: p.raiseIsLowerBound ? null : p.escapeEarnings, raise: p.raiseIsLowerBound ? null : p.raiseToClear } : null,
-    worst: w ? { drop: w.drop, at: w.startEarnings, lost: w.programsLost.map(programName) } : null,
-    safe: ev.escape.safeExitEarnings,
-  });
+  const a = ev.analysis, p = ev.personal, w = cliffAt(ev, a.worstCliff), n = a.dangerZones.length;
+  const own = p.zone ? t(`chart.label.own.${p.raiseIsLowerBound ? "toTop" : "toExit"}${p.raiseIsLowerBound || p.raiseToClear === null ? "" : "Raise"}`, {
+    start: usd(p.zone.startEarnings), ...(p.raiseIsLowerBound ? {} : { exit: usd(p.escapeEarnings ?? 0), ...(p.raiseToClear === null ? {} : { raise: usd(p.raiseToClear) }) }),
+  }) : null;
+  const lost = w ? w.programsLost.map(programName) : [];
+  return [
+    t("chart.label.lead", { from: usd(ev.curve.points[0].earnings), to: usd(top(ev)) }),
+    n === 0 ? copy.chart.label.zones.none : t(`chart.label.zones.${pluralKey(n)}`, { n }),
+    own,
+    w ? t(`chart.label.worst.${lost.length ? pluralKey(lost.length) : "none"}`, { drop: usd(w.drop), at: usd(w.startEarnings), ...(lost.length ? { programs: listOf(lost) } : {}) }) : null,
+    ev.escape.safeExitEarnings === null ? copy.chart.label.safe.none : t("chart.label.safe.from", { safe: usd(ev.escape.safeExitEarnings) }),
+  ].filter((x): x is string => x !== null).join(" ");
 }
 
 // ── CompareTable (#12) ──────────────────────────────────────────────────
@@ -214,30 +260,31 @@ export interface CompareRow { label: string; cell: (ev: HouseholdEvaluation) => 
 
 /** The rows every scenario answers; `base` is the column "Change from now" is measured against. A threshold takes its own curve's step (a wider axis has a wider one). */
 export function compareRows(base: HouseholdEvaluation): CompareRow[] {
-  const C = copy.compare, R = C.rows, usd = fmt.money;
+  const C = copy.compare, R = C.rows;
   return [
     { label: R.net, cell: (ev) => usd(ev.analysis.currentNet), money: true },
-    { label: R.change, cell: (ev) => (ev === base ? C.dash : fmt.signed(ev.analysis.currentNet - base.analysis.currentNet)) },
+    { label: R.change, cell: (ev) => (ev === base ? C.dash : signedMoney(ev.analysis.currentNet - base.analysis.currentNet)) },
     { label: R.inZone, cell: (ev) => (ev.analysis.verdict === "in_danger_zone" ? C.yes : C.no) },
     { label: R.zoneEnds, cell: (ev) => (ev.personal.raiseIsLowerBound ? C.pastAxis : ev.personal.escapeEarnings === null ? C.dash : usd(ev.personal.escapeEarnings)) },
-    { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? copy.tiles.atLeast(ev.personal.raiseToClear ?? 0) : usd(ev.personal.raiseToClear ?? 0)) },
+    { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? t("tiles.atLeast", { n: usd(ev.personal.raiseToClear ?? 0) }) : usd(ev.personal.raiseToClear ?? 0)) },
     { label: R.safe, cell: (ev) => (ev.escape.safeExitEarnings === null ? C.pastAxis : usd(ev.escape.safeExitEarnings)) },
     { label: R.drop, cell: (ev) => (ev.analysis.worstCliff ? usd(ev.analysis.worstCliff.drop) : C.none) },
     { label: R.adultMedicaid, cell: (ev) => { const at = ev.escape.programEndsByAge.adults.medicaid; return at === undefined ? C.dash : usd(at + stepOf(ev)); } },
     { label: R.childCoverage, cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? C.pastAxis : usd(ev.escape.childCoverageEndEarnings + stepOf(ev))) },
-    { label: R.reach, cell: (ev) => (ev.reach.current === null ? C.dash : fmt.ordinal(Math.round(ev.reach.current))) },
+    { label: R.reach, cell: (ev) => (ev.reach.current === null ? C.dash : ordinal(Math.round(ev.reach.current))) },
   ];
 }
 
 /** A column's sub-line: the household shape and earnings the column was evaluated at. */
-export const columnSub = (ev: HouseholdEvaluation): string => copy.compare.sub(ev.answers.married, ev.analysis.currentEarnings);
+export const columnSub = (ev: HouseholdEvaluation): string =>
+  t("compare.sub", { adults: copy.compare.adults[ev.answers.married ? "two" : "one"], earnings: usd(ev.analysis.currentEarnings) });
 
 export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluation[], unanswered = 0): string {
-  const C = copy.compare, s = [C.reachNote(stateName(base.answers.state))];
+  const C = copy.compare, s = [t("compare.reachNote", { state: stateName(base.answers.state) })];
   const other = others.find((o) => archetypeOf(o) !== archetypeOf(base) && o.reach.current !== null && base.reach.current !== null);
-  if (other) s.push(C.ladderNote(archetypeOf(other), archetypeOf(base)));
+  if (other) s.push(t("compare.ladderNote", { other: archetypeOf(other), base: archetypeOf(base) }));
   if (others.some((o) => o.source === "archetype")) s.push(C.archetypeNote);
-  if (unanswered) s.push(C.unansweredNote(unanswered));
+  if (unanswered) s.push(t(`compare.unansweredNote.${pluralKey(unanswered)}`, unanswered === 1 ? {} : { n: unanswered }));
   return s.join(" ");
 }
 
@@ -248,15 +295,17 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
   const takeUp: [boolean, ProgramId][] = [[h.getsSnap, "snap"], [h.getsTanf, "tanf"], [h.getsMedicaid, "medicaid"], [h.getsWic, "wic"],
     [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"], ...(liheapCredit(ev, cov) ? [] : [[h.getsEnergyAssistance, "liheap"] as [boolean, ProgramId]])];
   for (const [gets, id] of takeUp) (gets ? on : off).push(programName(id));
-  const facts = [h.youStatus === "citizen" ? A.citizen : A.status(h.youStatus), h.savings ? A.savings(h.savings) : A.noSavings,
+  const facts = [h.youStatus === "citizen" ? A.citizen : t("assumed.status", { status: h.youStatus }), h.savings ? t("assumed.savings", { amount: usd(h.savings) }) : A.noSavings,
     h.selfEmployed ? A.selfEmployed : A.wages, h.hasEmployerCoverage ? A.esi : A.noEsi,
     h.ssdiMonthly || h.childSupportMonthly || h.unemploymentMonthly ? A.otherIncome : A.noOtherIncome];
   const st = stateName(ev.answers.state);
   return [
-    A.health, A.facts(facts, h.age), A.takeUp(on, off), A.annualised,
-    ...(cov?.unmodeled ?? []).map((u) => A.unmodeled(st, u.program, u.note)),
+    A.health, t("assumed.facts", { facts: listOf(facts), age: h.age }),
+    off.length ? t("assumed.takeUp.some", { on: listOf(on), off: listOf(off) }) : t("assumed.takeUp.all", { on: listOf(on) }),
+    A.annualised,
+    ...(cov?.unmodeled ?? []).map((u) => t("assumed.unmodeled", { state: st, program: u.program, note: u.note })),
     // EligibilityBoundary (#23): core's one sentence on why the money is not in net income, verbatim.
-    ...(cov?.corrections.liheap ? [A.liheap(st, cov.corrections.liheap.note)] : []),
+    ...(cov?.corrections.liheap ? [t("assumed.liheap", { state: st, note: cov.corrections.liheap.note })] : []),
   ];
 }
 
@@ -264,18 +313,20 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
 export interface Provenance { cov: StateCoverage | undefined; summary: SummaryJson | null; /** The county's name, live only; the archetype has none (M4). */ county: string | null }
 
 export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
-  const { cov, summary } = prov, S = copy.source;
+  const { cov, summary } = prov, year = ev.curve.year;
   const clamped = ev.analysis.currentEarnings !== ev.answers.annualEarnings ? ev.analysis.currentEarnings : null;
+  const id = archetypeOf(ev), generated = summary ? dateWords(summary.generated) : null;
   const curve = ev.source === "archetype"
-    ? S.archetype(archetypeOf(ev), summary ? fmt.date(summary.generated) : null, clamped)
-    : S.live(prov.county ? S.inPlace(prov.county, stateName(ev.answers.state)) : null);
+    ? [generated ? t("source.archetype.dated", { id, generated }) : t("source.archetype.undated", { id }), ...(clamped === null ? [] : [t("source.clamped", { clamped: usd(clamped) })])].join(" ")
+    : prov.county ? t("source.live.inPlace", { where: t("source.inPlace", { county: prov.county, state: stateName(ev.answers.state) }) }) : copy.source.live.anywhere;
   const v = cov?.vintages;
-  return S.line({
-    year: ev.curve.year, curve,
-    vintages: v ? { rent: `${v.rent.publisher} ${v.rent.vintage}`, care: v.childcare.preschool, reach: S.reachVintages(v.reach.basis, v.reach.vintages) } : null,
-    other: cov?.otherBenefits.length ? cov.otherBenefits.map((o) => S.otherBenefit(o.label, o.maxAnnualInSweep)).join("; ") : null,
-    model: modelLine(cov?.vintages.model ?? summary?.model),
-  });
+  return [
+    t("source.lead", { year, curve }),
+    v ? t("source.vintages", { rent: t("source.rent", { publisher: v.rent.publisher, vintage: v.rent.vintage }), care: v.childcare.preschool, year,
+      reach: t("source.reachVintages", { basis: v.reach.basis, vintages: listOf(v.reach.vintages.map(reachWord)) }) }) : null,
+    cov?.otherBenefits.length ? t("source.other", { other: cov.otherBenefits.map((o) => t("source.otherBenefit", { label: o.label, max: usd(o.maxAnnualInSweep) })).join("; ") }) : null,
+    t("source.model", { model: modelLine(cov?.vintages.model ?? summary?.model) }),
+  ].filter((x): x is string => x !== null).join(" ");
 }
 
 // ── The client sheet (citizen register, from the same objects) ──────────
@@ -296,15 +347,20 @@ export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): {
   const snapEnd = ledgerRows(ev).find((r) => r.id === "snap"), child = ev.escape.childCoverageEndEarnings;
   const scene = sceneOf(ev, { unit: "year" }), again = againText(scene);
   const p: string[] = [verdictText(scene) + (again ? ` ${again}` : "")];
-  if (cc > 0) p.push(H.careShare(cc));
-  if (w) p.push(H.biggestDrop(w.endEarnings, w.programsLost, w.drop) + (snapEnd && snapEnd.at !== w.endEarnings ? ` ${H.snapEnds(snapEnd.at)}` : ""));
-  if (child !== null && kids) p.push(H.kidsCoverage(child + step));
-  p.push(H.estimates, H.printed(ev.curve.year, summary ? fmt.date(summary.generated) : null));
-  return { title: H.title(stateName(ev.answers.state), h.married, kids), paragraphs: p };
+  if (cc > 0) p.push(t("handout.careShare", { amount: usd(cc), phrase: phrase("childcare") }));
+  if (w) {
+    const lost = w.programsLost.map(phrase), slots = { at: usd(w.endEarnings), drop: usd(w.drop) };
+    const biggest = lost.length ? t(`handout.biggestDrop.${pluralKey(lost.length)}`, { ...slots, phrases: listOf(lost) }) : t("handout.biggestDrop.none", slots);
+    p.push(biggest + (snapEnd && snapEnd.at !== w.endEarnings ? ` ${t("handout.snapEnds", { at: usd(snapEnd.at) })}` : ""));
+  }
+  if (child !== null && kids) p.push(t("handout.kidsCoverage", { at: usd(child + step) }));
+  p.push(H.estimates, summary ? t("handout.printed.dated", { year: ev.curve.year, sweep: dateWords(summary.generated) }) : t("handout.printed.undated", { year: ev.curve.year }));
+  const children = kids === 0 ? H.children.none : kids === 1 ? H.children.one : t("handout.children.other", { count: numberWords(kids) });
+  return { title: t("handout.title", { state: stateName(ev.answers.state), parents: H.parents[h.married ? "two" : "one"], children }), paragraphs: p };
 }
 
 /** What a take-up state means for this household: the programs turned off that would pay at current earnings (evaluation.unclaimed). */
 export function unclaimedNote(ev: HouseholdEvaluation): string {
   if (!ev.unclaimed?.length) return "";
-  return copy.source.unclaimed(ev.unclaimed.map((u) => copy.source.wouldPay(programName(u.program), u.annual)), ev.analysis.currentEarnings);
+  return t("source.unclaimed", { items: listOf(ev.unclaimed.map((u) => t("source.wouldPay", { program: programName(u.program), annual: usd(u.annual) }))), earnings: usd(ev.analysis.currentEarnings) });
 }

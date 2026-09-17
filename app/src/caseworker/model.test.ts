@@ -4,7 +4,7 @@
 // mockup's audit screenshots carry and a reader can check against the file.
 import { evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
 import { describe, expect, it } from "vitest";
-import { fmt } from "./copy.js";
+import { dateWords, listOf, lossFigure, ordinal, signedMoney } from "../lib/format.js";
 import {
   assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
   modeled, notInSweep, sourceLine, tiles, unclaimedNote, verdict,
@@ -20,19 +20,19 @@ const summary = loadSummary();
 const cov = summary.coverage!.CO;
 const prov = { cov, summary, county: null };
 
-describe("figures, through Intl in the locale", () => {
+describe("figures, through Intl in the locale (lib/format.ts)", () => {
   it("prints a loss with a true minus, a share with its sign, an ordinal, a list and a date", () => {
-    expect(fmt.loss(25449.4)).toBe("−$25,449");
-    expect(fmt.signed(-874.6)).toBe("−$875");
-    expect(fmt.signed(383)).toBe("+$383");
-    expect([1, 2, 3, 4, 11, 12, 13, 21, 40, 51, 83, 100].map(fmt.ordinal)).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "40th", "51st", "83rd", "100th"]);
-    expect(fmt.list(["SNAP"])).toBe("SNAP");
-    expect(fmt.list(["SNAP", "WIC"])).toBe("SNAP and WIC");
-    expect(fmt.list(["SNAP", "WIC", "TANF"])).toBe("SNAP, WIC, and TANF");
+    expect(lossFigure(25449.4)).toBe("−$25,449");
+    expect(signedMoney(-874.6)).toBe("−$875");
+    expect(signedMoney(383)).toBe("+$383");
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 40, 51, 83, 100].map(ordinal)).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "40th", "51st", "83rd", "100th"]);
+    expect(listOf(["SNAP"])).toBe("SNAP");
+    expect(listOf(["SNAP", "WIC"])).toBe("SNAP and WIC");
+    expect(listOf(["SNAP", "WIC", "TANF"])).toBe("SNAP, WIC, and TANF");
     // The reader's own zone (the shell's dateWords): 01:16 UTC on the 17th is the 16th in New York, and the 17th only in UTC.
-    expect(fmt.date("2026-09-16T16:13:51.445Z", "America/New_York")).toBe("Sep 16, 2026");
-    expect(fmt.date("2026-09-17T01:16:58.798Z", "America/New_York")).toBe("Sep 16, 2026");
-    expect(fmt.date("2026-09-17T01:16:58.798Z", "UTC")).toBe("Sep 17, 2026");
+    expect(dateWords("2026-09-16T16:13:51.445Z", "America/New_York")).toBe("Sep 16, 2026");
+    expect(dateWords("2026-09-17T01:16:58.798Z", "America/New_York")).toBe("Sep 16, 2026");
+    expect(dateWords("2026-09-17T01:16:58.798Z", "UTC")).toBe("Sep 17, 2026");
   });
 });
 
@@ -153,7 +153,8 @@ describe("ThresholdLedger", () => {
 describe("the chart's words", () => {
   it("says a cliff and the whole shape", () => {
     expect(cliffSentence(co.analysis.cliffs[7])).toBe("Cliff at $54,000 to $55,000: −$25,449. CCDF child care subsidy ends. Driver: benefits.");
-    expect(chartLabel(co)).toBe("Net income after premiums against earnings, $0 to $150,000. 4 danger zones; this household's runs from $36,000 to $45,000, cleared by a raise of $7,000. The largest step down is $25,449 at $54,000 where CCDF child care subsidy ends. Safe from $119,000.");
+    // One sentence per fact since the copy shape landed (audit D13): the zone count and the household's own zone are two sentences, not a semicolon.
+    expect(chartLabel(co)).toBe("Net income after premiums against earnings, $0 to $150,000. 4 danger zones. This household's runs from $36,000 to $45,000, cleared by a raise of $7,000. The largest step down is $25,449 at $54,000 where CCDF child care subsidy ends. Safe from $119,000.");
     expect(cliffSentence(co.analysis.cliffs[6])).toBe("Cliff at $53,000 to $54,000: −$2,444. SNAP and WIC end. Driver: benefits.");
   });
 });

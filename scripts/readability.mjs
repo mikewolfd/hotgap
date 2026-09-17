@@ -5,10 +5,11 @@
 //
 //   npm run readability                     # through the repo's own tsx, never a bare node
 //
-// Each module exports `copy`, a nest of strings (with {slot} templates, as
-// app/src/citizen/copy.ts) or of arrow functions that interpolate their
-// arguments (as app/src/editor/copy.ts); a function is graded on what it
-// returns for placeholder arguments. Limits are the archive's: corpus grade
+// Each module exports `copy` in the one copy shape (app/src/lib/copy.ts):
+// a nest of whole messages with {slot} placeholders, a variant object where
+// a message has plural or select forms — never a function. A slot is graded
+// as "money" (a value, not prose); a function anywhere in the nest is a
+// shape violation the gate names and fails on. Limits are the archive's: corpus grade
 // ≤ 5.9, every string ≤ 8.0. Two refinements, both because Flesch–Kincaid
 // is defined on sentences: a one-word label ("Edit", two syllables) grades
 // 8.4 on the formula alone, so the per-string limit binds on strings of
@@ -23,11 +24,16 @@ import { pathToFileURL } from "node:url";
 
 // Every copy module is graded and reported. `gate` says whether the limits
 // block: the citizen-register modules (editor, citizen) carry the 5th-grade
-// promise; the journalist register (places) is written for a reporter, so its
-// grade is a note, not a gate, until the site decides a threshold for it.
+// promise, and so does the caseworker's client sheet (`handout`, the citizen
+// register per the caseworker review's S8 — `only` reads that subtree); the
+// caseworker's own register and the journalist's (places) are written for a
+// professional and a reporter, so their grades are notes, not gates, until
+// the site decides a threshold for them.
 const MODULES = [
   { path: "app/src/editor/copy.ts", gate: true },
   { path: "app/src/citizen/copy.ts", gate: true },
+  { path: "app/src/caseworker/copy.ts", gate: true, only: "handout" },
+  { path: "app/src/caseworker/copy.ts", gate: false },
   { path: "app/src/places/copy.ts", gate: false },
 ];
 const CORPUS_LIMIT = 5.9;
@@ -53,24 +59,18 @@ export function grade(text) {
 }
 
 /**
- * Every string a copy object can produce, keyed by its path; a function is
- * called with "money" for each argument. A function that takes a shape a
- * string cannot stand in for (a list, a record) is returned with `text:
- * null`, so the report names what the gate could not read rather than
- * grading a sentence it never saw.
+ * Every message a copy object holds, keyed by its path. A function is not a
+ * message: it is returned with `text: null`, so the report names the shape
+ * violation and the gate fails on it (the locale-file migration cannot read
+ * a function either).
  */
 export function strings(copy, path = "") {
   const out = [];
   for (const [k, v] of Object.entries(copy)) {
     const key = path ? `${path}.${k}` : k;
     if (typeof v === "string") out.push({ key, text: v });
-    else if (typeof v === "function") {
-      try {
-        const r = v(...Array.from({ length: v.length }, () => "money"));
-        if (Array.isArray(r)) r.forEach((t, i) => out.push({ key: `${key}[${i}]`, text: String(t) }));
-        else out.push({ key, text: String(r) });
-      } catch { out.push({ key, text: null }); }
-    }
+    else if (typeof v === "function") out.push({ key, text: null });
+    else if (Array.isArray(v)) v.forEach((item, i) => out.push(...(typeof item === "string" ? [{ key: `${key}[${i}]`, text: item }] : strings(item, `${key}[${i}]`))));
     else if (v && typeof v === "object") out.push(...strings(v, key));
   }
   return out;
@@ -78,15 +78,16 @@ export function strings(copy, path = "") {
 
 const root = new URL("../", import.meta.url);
 let failed = false;
-for (const { path: rel, gate } of MODULES) {
+for (const { path: rel, gate, only } of MODULES) {
   const { copy } = await import(pathToFileURL(new URL(rel, root).pathname).href);
-  const seen = strings(copy);
+  const seen = strings(only ? copy[only] : copy, only ?? "");
   const unread = seen.filter((s) => s.text === null);
+  if (unread.length) failed = true;
   const all = seen.filter((s) => s.text !== null && /[a-zA-Z]/.test(s.text));
   const corpus = grade(all.map((s) => s.text.trim()).map((t) => (/[.!?…]$/.test(t) ? t : `${t}.`)).join(" "));
   const worst = all.reduce((a, b) => (grade(b.text) > grade(a.text) ? b : a));
-  console.log(`${rel}: corpus grade ${corpus.toFixed(2)} (limit ${CORPUS_LIMIT}${gate ? "" : ", reported only"}), ${all.length} strings, worst ${grade(worst.text).toFixed(1)} at ${worst.key}`);
-  if (unread.length) console.log(`  not graded (a list or record argument, which a placeholder cannot stand in for): ${unread.map((s) => s.key).join(", ")}`);
+  console.log(`${rel}${only ? ` (${only})` : ""}: corpus grade ${corpus.toFixed(2)} (limit ${CORPUS_LIMIT}${gate ? "" : ", reported only"}), ${all.length} strings, worst ${grade(worst.text).toFixed(1)} at ${worst.key}`);
+  if (unread.length) console.error(`  FAIL not a message (a function in the copy shape): ${unread.map((s) => s.key).join(", ")}`);
   const over = all.filter((s) => grade(s.text) > STRING_LIMIT);
   if (!gate) { console.log(`  ${over.length} of ${all.length} strings over ${STRING_LIMIT}; not gated`); continue; }
   for (const s of over) {

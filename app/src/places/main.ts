@@ -7,7 +7,7 @@ import "../../../design/tokens.css";
 import "./places.css";
 import { DEFAULT_ARCHETYPE, type SummaryJson } from "@hotgap/core";
 import { $ } from "../lib/dom.js";
-import { copy } from "./copy.js";
+import { copy, t } from "./copy.js";
 import { csvFor, csvName } from "./csv.js";
 import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
 import { applySelection, GROUPS, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
@@ -16,7 +16,7 @@ import { parseView, viewQuery, type View } from "./url.js";
 
 async function load(): Promise<SummaryJson> {
   const res = await fetch("/data/summary.json");
-  if (!res.ok) throw new Error(copy.status.http(res.status));
+  if (!res.ok) throw new Error(t("status.http", { status: res.status }));
   return res.json() as Promise<SummaryJson>;
 }
 
@@ -158,5 +158,5 @@ load().then((summary) => {
 }).catch((err: unknown) => {
   const status = $("status");
   status.setAttribute("role", "alert");
-  status.textContent = copy.status.failed(err instanceof Error ? err.message : String(err));
+  status.textContent = t("status.failed", { reason: err instanceof Error ? err.message : String(err) });
 });

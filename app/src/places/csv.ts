@@ -6,10 +6,13 @@
 // and stay English (app/README.md § Languages); the header order is printed
 // in the method panel's download line.
 import { STATE_NAMES, type SummaryJson } from "@hotgap/core";
+import { fill } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
+import { listOf } from "../lib/format.js";
 import { programName } from "../lib/programs.js";
-import { copy, fmt } from "./copy.js";
+import { copy } from "./copy.js";
 import { archLabel, type Archetype, type StateRow } from "./model.js";
+import { modelLabel } from "./words.js";
 
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
@@ -48,7 +51,7 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       dollars(m.biggestLoss), dollars(m.biggestLossAt), m.biggestLossPrograms.map(programName).join("; "),
       dollars(m.dangerWidth), dollars(m.leap), dollars(m.safeExit),
       m.cliffCount, m.deferredCliffCount,
-      m.leapIsLowerBound, none, r.kind === "shaded", missing.length ? copy.table.floor(missing) : copy.table.complete,
+      m.leapIsLowerBound, none, r.kind === "shaded", missing.length ? fill(copy.table.floor, { programs: listOf(missing) }) : copy.table.complete,
       missing.join("; "),
       correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? copy.detail.applied}`).join("; "),
       cov ? (cov.corrections.childcareSubsidy.source === "added by HotGap" ? copy.csv.subsidy.added : copy.csv.subsidy.inNetIncome) : "",
@@ -56,7 +59,7 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       cov?.liheap?.limitKind ?? "", cov?.liheap?.servedShare ?? "",
       v?.county.name ?? "", v?.county.fips ?? "",
       v?.rent.vintage ?? "", v?.county.vintage ?? "", v?.childcare.preschool ?? "",
-      summary.year, summary.generated, fmt.modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",
+      summary.year, summary.generated, modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",
       "HotGap/PolicyEngine",
     ].map(csvField).join(","));
   }

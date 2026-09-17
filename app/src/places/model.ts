@@ -2,9 +2,12 @@
 // household and a measure, the four tile states, the five bins, and the
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
-import { CHILDCARE_MAX_AGE, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { CHILDCARE_MAX_AGE, CLIFF_MIN, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { fill } from "../lib/copy.js";
 import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, type CareHousehold } from "../lib/coverage.js";
+import { money } from "../lib/format.js";
 import { copy } from "./copy.js";
+import { householdLabel } from "./words.js";
 
 export type Archetype = SummaryJson["archetypes"][number];
 
@@ -20,9 +23,12 @@ export interface Measure {
   describe: string;
 }
 
-/* The six measures pipeline/src/metrics.ts writes, in the FilterRow's order; their words are copy's. A count has no unit. */
+/* The six measures pipeline/src/metrics.ts writes, in the FilterRow's order; their words are copy's, the cliff floor core's. A count has no unit. */
 const COUNTS: ReadonlySet<MeasureKey> = new Set(["cliffCount", "deferredCliffCount"]);
-export const MEASURES: readonly Measure[] = (Object.keys(copy.measures) as MeasureKey[]).map((key) => ({ key, unit: COUNTS.has(key) ? "" : "$", ...copy.measures[key] }));
+export const MEASURES: readonly Measure[] = (Object.keys(copy.measures) as MeasureKey[]).map((key) => {
+  const { title, option, describe } = copy.measures[key];
+  return { key, unit: COUNTS.has(key) ? "" : "$", title, option, describe: describe.includes("{floor}") ? fill(describe, { floor: money(CLIFF_MIN) }) : describe };
+});
 
 export const measureByKey = (key: string): Measure | undefined => MEASURES.find((m) => m.key === key);
 
@@ -31,7 +37,7 @@ export const measureByKey = (key: string): Measure | undefined => MEASURES.find(
    `spouseWorks`), and the earner count decides whether the household buys care. */
 const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
 
-export const archLabel = (a: Archetype): string => copy.household(a.married, worksBoth(a), a.childAges);
+export const archLabel = (a: Archetype): string => householdLabel(a.married, worksBoth(a), a.childAges);
 
 /* A missing child-care subsidy can only move a household that pays for care:
    a child of child-care age (through core's CHILDCARE_MAX_AGE — the sweep

@@ -5,7 +5,8 @@
 // the base, so changing the base re-asks every what-if of the new one.
 import { HOUSEHOLD_FLAGS, PAY_UNITS, type HouseholdFlagName, type HouseholdFlags, type PayUnit } from "@hotgap/core";
 import { copy as editorCopy } from "../editor/copy.js";
-import { copy } from "./copy.js";
+import { money as usd, payInUnit, shortList } from "../lib/format.js";
+import { copy, t } from "./copy.js";
 
 /** The answers a what-if changes; null removes the base's answer (a toggle off, a figure cleared). */
 export type Diff = { [K in HouseholdFlagName]?: HouseholdFlags[K] | null };
@@ -62,26 +63,27 @@ const flagName = (f: HouseholdFlagName): string => {
 /** A what-if's name from its diff, against the flags it was applied to: "CCDF subsidy on", "Pay $55,000 a year", "Married". */
 export function whatIfLabel(diff: Diff, flags: HouseholdFlags): string {
   const W = copy.whatIf, parts: string[] = [];
+  const toggled = (label: string, on: boolean) => t(`whatIf.toggled.${on ? "on" : "off"}`, { label });
   /* The screen swaps a ZIP for a state (or back): one move, one part. */
   const moved = diff.state ?? diff.zip;
-  if (moved) parts.push(W.place(moved.toUpperCase()));
+  if (moved) parts.push(t("whatIf.place", { where: moved.toUpperCase() }));
   for (const [f, v] of Object.entries(diff) as [HouseholdFlagName, string | boolean | null][]) {
-    if (f === "zip" || f === "state") { if (!moved) parts.push(W.cleared(flagName(f))); continue; }
+    if (f === "zip" || f === "state") { if (!moved) parts.push(t("whatIf.cleared", { label: flagName(f) })); continue; }
     if (f === "married") { parts.push(v === true ? W.married : W.single); continue; }
-    if (TOGGLES.has(f)) { parts.push(W.toggled(flagName(f), v === true)); continue; }
-    if (INVERTED.has(f)) { parts.push(W.toggled(flagName(f), v !== true)); continue; }
+    if (TOGGLES.has(f)) { parts.push(toggled(flagName(f), v === true)); continue; }
+    if (INVERTED.has(f)) { parts.push(toggled(flagName(f), v !== true)); continue; }
     const label = flagName(f);
-    if (v === null || v === false) { parts.push(W.cleared(label)); continue; }
+    if (v === null || v === false) { parts.push(t("whatIf.cleared", { label })); continue; }
     const s = String(v);
     if (f === "pay") {
       const unit = (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
-      parts.push(W.payOf(Number(s), unit));
-    } else if (MONTHLY.has(f)) parts.push(W.monthly(label, Number(s)));
-    else if (YEARLY.has(f)) parts.push(W.yearly(label, Number(s)));
-    else if (f === "savings") parts.push(W.figure(label, Number(s)));
-    else if (f === "kids") parts.push(W.children(s.split(",")));
-    else if (f === "status" || f === "spouse-status") parts.push(W.valued(label, editorCopy.status[s] ?? s));
-    else parts.push(W.valued(label, s));
+      parts.push(t("whatIf.pay", { pay: payInUnit(Number(s), unit) }));
+    } else if (MONTHLY.has(f)) parts.push(t("whatIf.monthly", { label, amount: usd(Number(s)) }));
+    else if (YEARLY.has(f)) parts.push(t("whatIf.yearly", { label, amount: usd(Number(s)) }));
+    else if (f === "savings") parts.push(t("whatIf.figure", { label, amount: usd(Number(s)) }));
+    else if (f === "kids") parts.push(t("whatIf.children", { ages: shortList(s.split(",")) }));
+    else if (f === "status" || f === "spouse-status") parts.push(t("whatIf.valued", { label, value: editorCopy.status[s] ?? s }));
+    else parts.push(t("whatIf.valued", { label, value: s }));
   }
   return parts.join(", ");
 }

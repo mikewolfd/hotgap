@@ -178,8 +178,26 @@ county, `county-names.json` at runtime.
 The site must take a new language as one file, not a rewrite. The rules,
 decided 2026-09-16, that every surface builds to (the migration of what
 exists is a single pass after the three pages land; until then each surface
-keeps every user-facing string in its own copy module — `src/editor/copy.ts`
-is the shape — and none inline in render code):
+keeps every user-facing string in its own copy module and none inline in
+render code):
+
+- **The copy shape, decided 2026-09-17 (audit D13) so the migration inherits
+  one shape.** All four copy modules (`src/editor/copy.ts`,
+  `src/citizen/copy.ts`, `src/caseworker/copy.ts`, `src/places/copy.ts`) are
+  the shape `src/lib/copy.ts` records at its top: one `copy` object, a nest
+  of whole messages with `{slot}` placeholders and nothing else — no function,
+  no formatter, no number. Where a message has plural or select forms, they
+  are an object of whole messages keyed by the CLDR category (`one`, `other`
+  — `pluralKey(n)`) or the select value the model names, and the code picks
+  the key. That maps mechanically onto a locale file: a leaf is an ICU message
+  with the same slots, a variant object is one ICU `plural`/`select` with the
+  same keys, the key path is the message id, and the code that picks a key is
+  the code that hands ICU its argument. Every slot value arrives formatted by
+  `src/lib/format.ts` through `Intl` in `LOCALE`; only whole sentences are
+  ever joined (with a space, in reading order) and only lists (through
+  `Intl.ListFormat`); a clause is never a slot. One reader, `bind(copy)` →
+  `t(key, params)`, which throws on a slot left unfilled or a param with no
+  slot. The readability gate walks the same nest and fails on a function.
 
 - **Strings.** Every string a person can see lives in a locale file
   (`src/i18n/<locale>.json`, one file per locale, namespaced by surface),

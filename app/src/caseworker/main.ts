@@ -15,7 +15,7 @@ import { axisSpec, countyName, pickArchetypeId, provideData, rawAnswersFromFlags
 import { evaluate, type EvaluateResult } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
-import { copy } from "./copy.js";
+import { CHIP_ORDER, copy, t } from "./copy.js";
 import { chartLabel, curveTitle, notInSweep, sourceLine, unclaimedNote, type Provenance } from "./model.js";
 import { $ } from "../lib/dom.js";
 import { renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderStatic, renderVerdict, syncDrops, type Column } from "./render.js";
@@ -29,7 +29,7 @@ interface WhatIf { diff: Diff; ev: HouseholdEvaluation | null; state: "computing
 const fresh = (diff: Diff): WhatIf => ({ diff, ev: null, state: "computing", reason: "", seq: 0 });
 
 const errorText = (r: Extract<EvaluateResult, { ok: false }>): string =>
-  r.error === "bad_input" && r.detail ? S.errors.badInput(r.detail) : r.error === "rate_limited" ? S.errors.rate_limited : r.error === "busy" ? S.errors.busy : S.errors.other;
+  r.error === "bad_input" && r.detail ? t("status.errors.badInput", { detail: r.detail }) : r.error === "rate_limited" ? S.errors.rate_limited : r.error === "busy" ? S.errors.busy : S.errors.other;
 
 // ── Data the page reads beside the evaluation ──────────────────────────
 const fetchJson = async <T>(url: string): Promise<T | null> => {
@@ -66,7 +66,7 @@ const editor = mountEditor($("app"), {
   onClose: () => { if (baseFlags) editor.setFlags(baseFlags); },
   /* The caseworker register, and the counselor's order: facts, the take-up toggles, then the rest (review S1, S2). */
   copy: copy.editor,
-  order: copy.chipOrder,
+  order: CHIP_ORDER,
   actions: [
     /* "Add a what-if" opens the screen led by "Add as a what-if", so it always ends in a what-if (review S3). */
     { label: copy.actions.whatIf, short: copy.actions.whatIfShort, needsAnswers: true, onClick: () => editor.open("pay", { lead: "alt" }) },
@@ -131,7 +131,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   const id = ++latest;
   baseInFlight = true;
   alert.hidden = true;
-  status.textContent = S.loading(axisSpec(v.value).count);
+  status.textContent = t("status.loading", { count: axisSpec(v.value).count });
   const r = await evaluate(flags);
   if (id !== latest) return;
   baseInFlight = false;
@@ -185,13 +185,13 @@ function addWhatIf(flags: HouseholdFlags): void {
   editor.setFlags(baseFlags!);
   if (Object.keys(diff).length === 0) return;
   const label = whatIfLabel(diff, flags);
-  if (whatIfs.some((w) => sameDiff(w.diff, diff))) { editor.setNote(W.already(label)); return; }
+  if (whatIfs.some((w) => sameDiff(w.diff, diff))) { editor.setNote(t("whatIf.already", { label })); return; }
   whatIfs.push(fresh(diff));
   /* The reply says where the column went and takes the reader there (the mockup's own link to #compare). */
   const note = document.createDocumentFragment();
   const link = document.createElement("a");
   link.href = "#compare"; link.textContent = W.compareLink;
-  note.append(`${W.added(label)} `, link, W.addedAfterLink, baseEv ? ` ${unclaimedNote(baseEv)}` : "");
+  note.append(`${t("whatIf.added", { label })} `, link, W.addedAfterLink, baseEv ? ` ${unclaimedNote(baseEv)}` : "");
   editor.setNote(note);
   writeUrl(false);
   renderCompareTable();
@@ -217,7 +217,7 @@ async function runWhatIf(i: number): Promise<void> {
 
 function removeWhatIf(i: number): void {
   const [w] = whatIfs.splice(i, 1);
-  editor.setNote(W.removed(whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff))));
+  editor.setNote(t("whatIf.removed", { label: whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff)) }));
   writeUrl(false);
   renderCompareTable();
   $("compare").focus();

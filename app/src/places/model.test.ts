@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from "@hotgap/core";
 import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
-import { capitalize } from "../lib/format.js";
-import { copy, fmt } from "./copy.js";
+import { capitalize, numberWords } from "../lib/format.js";
+import { copy, t } from "./copy.js";
 import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForCare, rowsFor, tableRows } from "./model.js";
+import { axisLine, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -61,15 +62,14 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
   });
 });
 
-describe("counts in words", () => {
+describe("counts in words (lib/format.ts numberWords)", () => {
   it("spells the counts the lede uses and falls back to digits beyond ninety-nine", () => {
-    const { count } = fmt;
-    expect(count(ARCHETYPES.length)).toBe("eleven");
-    expect(capitalize(count(STATE_CODES.length))).toBe("Fifty-one");
-    expect([count(0), count(20), count(40), count(99), count(100), count(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
+    expect(numberWords(ARCHETYPES.length)).toBe("eleven");
+    expect(capitalize(numberWords(STATE_CODES.length))).toBe("Fifty-one");
+    expect([0, 20, 40, 99, 100, 1.5].map(numberWords)).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
     // The states counted as a reader counts them (rerun N11): fifty and DC when DC is in the file, a plain count otherwise.
-    expect(copy.lede.counted(STATE_CODES.length, ARCHETYPES.length, true)).toMatch(/^Fifty states and the District of Columbia, eleven household shapes, one earnings scale/);
-    expect(copy.lede.counted(50, ARCHETYPES.length, false)).toMatch(/^Fifty states, eleven household shapes/);
+    expect(countedLede(STATE_CODES.length, ARCHETYPES.length, true)).toMatch(/^Fifty states and the District of Columbia, eleven household shapes, one earnings scale/);
+    expect(countedLede(50, ARCHETYPES.length, false)).toMatch(/^Fifty states, eleven household shapes/);
   });
 });
 
@@ -88,30 +88,32 @@ describe("the measures, from copy", () => {
   });
 });
 
-describe("the boundary's sentences, from copy (#23)", () => {
+describe("the boundary's sentences, from copy through words.ts (#23)", () => {
   it("says the served share as the citizen hears it with the figure a reporter quotes, a null share or amount in words, the worth by the schedule's shape, and never types a vintage", () => {
-    const L = copy.detail.liheap;
-    expect(L.served(0.03)).toBe("Fewer than 1 in 10 income-eligible households were served in FY2024 (3%).");
-    expect(L.served(0.22)).toBe("About 2 in 10 income-eligible households were served in FY2024 (22%).");
-    expect(L.served(0.85)).toBe("About 9 in 10 income-eligible households were served in FY2024 (85%).");
-    expect(L.facts({ limit: "150% of the poverty guideline", worth: { lo: "$1,200", hi: null, shape: "staircase" }, share: 0.03 }))
+    expect(servedLine(0.03)).toBe("Fewer than 1 in 10 income-eligible households were served in FY2024 (3%).");
+    expect(servedLine(0.22)).toBe("About 2 in 10 income-eligible households were served in FY2024 (22%).");
+    expect(servedLine(0.85)).toBe("About 9 in 10 income-eligible households were served in FY2024 (85%).");
+    expect(boundaryFacts({ limit: "150% of the poverty guideline", worth: { lo: "$1,200", hi: null, shape: "staircase" }, share: 0.03 }))
       .toBe("Stops at 150% of the poverty guideline, the heating limit for FY2026. Worth $1,200 a winter if received, at that top income band. Fewer than 1 in 10 income-eligible households were served in FY2024 (3%).");
-    expect(L.facts({ limit: "60% of state median income", worth: { lo: "$318", hi: "$495", shape: "notch" }, share: 0.18 })).toContain("Worth $318 to $495 a winter if received, flat to the limit. About 2 in 10");
-    expect(L.facts({ limit: "110% of the poverty guideline", worth: { lo: "$1", hi: "$2,205", shape: "taper" }, share: 0.85 })).toContain("Worth $1 to $2,205 a winter if received; the amount tapers toward the limit. About 9 in 10");
-    expect(L.facts({ limit: "60% of state median income", worth: { lo: "$375", hi: "$1,400", shape: "points" }, share: null }))
+    expect(boundaryFacts({ limit: "60% of state median income", worth: { lo: "$318", hi: "$495", shape: "notch" }, share: 0.18 })).toContain("Worth $318 to $495 a winter if received, flat to the limit. About 2 in 10");
+    expect(boundaryFacts({ limit: "110% of the poverty guideline", worth: { lo: "$1", hi: "$2,205", shape: "taper" }, share: 0.85 })).toContain("Worth $1 to $2,205 a winter if received; the amount tapers toward the limit. About 9 in 10");
+    expect(boundaryFacts({ limit: "60% of state median income", worth: { lo: "$375", hi: "$1,400", shape: "points" }, share: null }))
       .toBe("Stops at 60% of state median income, the heating limit for FY2026. Worth $375 to $1,400 a winter if received, at that top income band. The share of income-eligible households served is not published for FY2024.");
-    expect(L.facts({ limit: "150% of the poverty guideline", worth: null, share: 0.1 })).toContain("The state's matrix prints no amount at that band. About 1 in 10");
-    expect(L.counted("Michigan", "Home Heating Credit")).toBe(" Paid as the Home Heating Credit, which is counted in every figure for Michigan.");
-    expect(L.cite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/docs/2026/x.pdf", served: "https://liheappm.acf.gov/p.pdf", readOn: "2026-09-16" }))
+    expect(boundaryFacts({ limit: "150% of the poverty guideline", worth: null, share: 0.1 })).toContain("The state's matrix prints no amount at that band. About 1 in 10");
+    // A whole sentence (the render joins it with a space), no longer a fragment with a leading space.
+    expect(boundaryCounted("Michigan", "Home Heating Credit")).toBe("Paid as the Home Heating Credit, which is counted in every figure for Michigan.");
+    expect(boundaryCite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/docs/2026/x.pdf", served: "https://liheappm.acf.gov/p.pdf", readOn: "2026-09-16" }))
       .toBe("Limit and amount: [liheapch.acf.gov](https://liheapch.acf.gov/delivery/income_eligibility.htm). Households served: [liheappm.acf.gov](https://liheappm.acf.gov/p.pdf). Read Sep 16, 2026.");
-    expect(L.cite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/tables/benefits.htm", served: null, readOn: "2026-09-16" }))
+    expect(boundaryCite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/tables/benefits.htm", served: null, readOn: "2026-09-16" }))
       .toBe("Limit and amount: [liheapch.acf.gov](https://liheapch.acf.gov/delivery/income_eligibility.htm). Read Sep 16, 2026.");
-    expect(L.footing).toEqual({ boundary: "not counted", inNetIncome: "in net income" });
+    expect(boundaryCite({ limits: "https://a.gov/limits", amounts: "https://b.gov/amounts", served: null, readOn: "2026-09-16" }))
+      .toBe("Limit: [a.gov](https://a.gov/limits). Amount: [b.gov](https://b.gov/amounts). Read Sep 16, 2026.");
+    expect(copy.detail.liheap.footing).toEqual({ boundary: "not counted", inNetIncome: "in net income" });
   });
   it("names the served range and the counted states once for the page, from the blocks", () => {
-    const line = copy.method.excludes.liheap({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [{ state: "Michigan", program: "Home Heating Credit" }]);
+    const line = liheapMethodLine({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [{ state: "Michigan", program: "Home Heating Credit" }]);
     expect(line).toMatch(/^Energy assistance \(LIHEAP\) is in no figure on this page, except in Michigan, where it is paid as the Home Heating Credit and counted\. It is a block grant, not an entitlement: in FY2024 the states served between 3% \(Texas\) and 85% \(Michigan\)/);
-    expect(copy.method.excludes.liheap({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [])).toMatch(/^Energy assistance \(LIHEAP\) is in no figure on this page\. It is a block grant/);
+    expect(liheapMethodLine({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [])).toMatch(/^Energy assistance \(LIHEAP\) is in no figure on this page\. It is a block grant/);
   });
 });
 
@@ -199,43 +201,43 @@ describe("bins and group", () => {
   });
 });
 
-describe("the sentences, from copy", () => {
-  const R = copy.rank, S = copy.readout;
+describe("the sentences, from copy through words.ts", () => {
   it("a lower-bound group shares ranks 1–n the way a tie shares one rank, and the note names the largest measured figure (rerun B1)", () => {
-    expect(fmt.rankRange(12)).toBe("1–12");
-    expect(fmt.rankRange(1)).toBe("1.");
-    expect(R.lower.leap(12)).toBe("Ranks 1–12 shared — at least this much; the exact size runs past the axis (12)");
-    expect(R.lower.leap(1)).toMatch(/^Rank 1 — /);
-    expect(R.lower.safeExit(3)).toBe("Ranks 1–3 shared — past the top of the axis; no safe exit found on the scale (3)");
-    expect(R.lower.note.leap(12, { state: "Wisconsin", v: "$129,000" }, { state: "Colorado", v: "$129,000", reaches: true }))
+    expect(rankRange(12)).toBe("1–12");
+    expect(rankRange(1)).toBe("1.");
+    expect(lowerTitle("leap", 12)).toBe("Ranks 1–12 shared — at least this much; the exact size runs past the axis (12)");
+    expect(lowerTitle("leap", 1)).toMatch(/^Rank 1 — /);
+    expect(lowerTitle("safeExit", 3)).toBe("Ranks 1–3 shared — past the top of the axis; no safe exit found on the scale (3)");
+    expect(lowerNote("leap", 12, { state: "Wisconsin", v: "$129,000" }, { state: "Colorado", v: "$129,000", reaches: true }))
       .toBe("Any of these could need the largest raise — the axis ends before the worst zone closes — so they share the top ranks the way a tie does. The largest measured leap is Wisconsin's $129,000; Colorado's is at least as large.");
-    expect(R.lower.note.leap(2, { state: "Wisconsin", v: "$76,000" }, { state: "New York", v: "$55,000", reaches: false })).toMatch(/New York's is at least \$55,000 and may be larger\.$/);
-    expect(R.lower.note.leap(2, null, { state: "New York", v: "$55,000", reaches: false })).not.toMatch(/measured/);
-    expect(R.lower.note.safeExit(3, { state: "Vermont", v: "$148,000" })).toBe("None of these had closed the last danger zone by the top of the axis, so any could be the highest; they share the top ranks the way a tie does. The highest measured safe exit is Vermont's $148,000.");
-    expect(R.row("32.", "Ohio", "$12,062", "at $38,000")).toBe("32. Ohio: $12,062, at $38,000");
-    expect(R.row("1–12", "Colorado", "≥ $129,000")).toBe("1–12 Colorado: ≥ $129,000");
+    expect(lowerNote("leap", 2, { state: "Wisconsin", v: "$76,000" }, { state: "New York", v: "$55,000", reaches: false })).toMatch(/New York's is at least \$55,000 and may be larger\.$/);
+    expect(lowerNote("leap", 2, null, { state: "New York", v: "$55,000", reaches: false })).not.toMatch(/measured/);
+    expect(lowerNote("safeExit", 3, { state: "Vermont", v: "$148,000" })).toBe("None of these had closed the last danger zone by the top of the axis, so any could be the highest; they share the top ranks the way a tie does. The highest measured safe exit is Vermont's $148,000.");
+    expect(rowLabel("32.", "Ohio", "$12,062", "at $38,000")).toBe("32. Ohio: $12,062, at $38,000");
+    expect(rowLabel("1–12", "Colorado", "≥ $129,000")).toBe("1–12 Colorado: ≥ $129,000");
   });
   it("the readout leads with the selected measure in its own sentence, then the worst step (rerun B2), and a no-cliff state says what was found up to the axis (S6)", () => {
-    const M = S.measure;
-    expect(M.safeExit("Ohio", "$110,000")).toBe("Ohio — no danger zone left above $110,000.");
-    expect(M.safeExitPast("Nebraska", "$150,000")).toBe("Nebraska — no safe exit found: the last danger zone had not closed by $150,000, the top of the axis.");
-    expect(M.leap("Ohio", "$47,000")).toBe("Ohio — a raise of $47,000 clears the worst danger zone.");
-    expect(M.leapAtLeast("Maryland", "$53,000", "$150,000")).toBe("Maryland — a raise of at least $53,000 to clear the worst danger zone, which runs past $150,000, the top of the axis.");
-    expect(M.dangerWidth("Ohio", "$57,000")).toBe("Ohio — $57,000 of earnings lie inside danger zones.");
-    expect(M.dangerWidthOpen("Nebraska", "$74,000", "$150,000")).toMatch(/^Nebraska — at least \$74,000 of earnings lie inside danger zones; the last one had not closed by \$150,000/);
-    expect(M.cliffCount("Ohio", 10, 0)).toBe("Ohio — 10 cliffs on this household's curve, none deferred.");
-    expect(M.cliffCount("Colorado", 14, 1)).toBe("Colorado — 14 cliffs on this household's curve, and 1 more deferred to a later renewal.");
-    expect(M.cliffCount("Alabama", 1, 0)).toMatch(/^Alabama — 1 cliff on/);
-    expect(M.deferred("Ohio", 0, 10)).toBe("Ohio — no cliff deferred to a later renewal; all 10 land with the raise.");
-    expect(M.deferred("Colorado", 1, 14)).toBe("Colorado — 1 cliff deferred to a later renewal, on top of 14 that land with the raise.");
-    expect(S.worstStep("$12,062", "$38,000 → $39,000", ["childcare"])).toBe("Worst step: $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends.");
-    expect(S.none("New Mexico", "$1,000", "$200", "$150,000")).toBe("New Mexico — no cliff found: no $1,000 step of earnings on this household's curve cut net income by $200 or more, up to $150,000.");
-    expect(S.noneDeferred("Nowhere", "$1,000", "$200", "$150,000", 1)).toMatch(/no cliff lands with the raise: .* 1 cliff is deferred to a later renewal\.$/);
+    expect(t("readout.measure.safeExit", { state: "Ohio", exit: "$110,000" })).toBe("Ohio — no danger zone left above $110,000.");
+    expect(t("readout.measure.safeExitPast", { state: "Nebraska", top: "$150,000" })).toBe("Nebraska — no safe exit found: the last danger zone had not closed by $150,000, the top of the axis.");
+    expect(t("readout.measure.leap", { state: "Ohio", leap: "$47,000" })).toBe("Ohio — a raise of $47,000 clears the worst danger zone.");
+    expect(t("readout.measure.leapAtLeast", { state: "Maryland", leap: "$53,000", top: "$150,000" })).toBe("Maryland — a raise of at least $53,000 to clear the worst danger zone, which runs past $150,000, the top of the axis.");
+    expect(t("readout.measure.dangerWidth", { state: "Ohio", width: "$57,000" })).toBe("Ohio — $57,000 of earnings lie inside danger zones.");
+    expect(t("readout.measure.dangerWidthOpen", { state: "Nebraska", width: "$74,000", top: "$150,000" })).toMatch(/^Nebraska — at least \$74,000 of earnings lie inside danger zones; the last one had not closed by \$150,000/);
+    expect(cliffCountLine("Ohio", 10, 0)).toBe("Ohio — 10 cliffs on this household's curve, none deferred.");
+    expect(cliffCountLine("Colorado", 14, 1)).toBe("Colorado — 14 cliffs on this household's curve, and 1 more deferred to a later renewal.");
+    expect(cliffCountLine("Alabama", 1, 0)).toMatch(/^Alabama — 1 cliff on/);
+    expect(deferredLine("Ohio", 0, 10)).toBe("Ohio — no cliff deferred to a later renewal; all 10 land with the raise.");
+    expect(deferredLine("Colorado", 1, 14)).toBe("Colorado — 1 cliff deferred to a later renewal, on top of 14 that land with the raise.");
+    expect(deferredLine("Alabama", 0, 1)).toBe("Alabama — no cliff deferred to a later renewal; its one cliff lands with the raise.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["childcare"], [])).toBe("Worst step: $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["snap", "wic"], ["X Premium Savings"])).toBe("Worst step: at least $12,062 lost at $38,000 → $39,000, when SNAP and WIC end; a floor, because X Premium Savings is not modelled.");
+    expect(noneLine("New Mexico", "$1,000", "$200", "$150,000", 0)).toBe("New Mexico — no cliff found: no $1,000 step of earnings on this household's curve cut net income by $200 or more, up to $150,000.");
+    expect(noneLine("Nowhere", "$1,000", "$200", "$150,000", 1)).toMatch(/no cliff lands with the raise: .* 1 cliff is deferred to a later renewal\.$/);
   });
   it("the axis line names the common top and the exceptions in dollars (rerun N9)", () => {
-    expect(copy.method.axis("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))
+    expect(axisLine("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))
       .toBe("For 1 adult, 2 children (3 and 7) the axis runs from $0 to $150,000 ($175,000 in Alaska, $165,000 in Hawaii); a figure that runs past the axis runs past that.");
-    expect(copy.method.axis("h", "$150,000", [])).toBe("For h the axis runs from $0 to $150,000; a figure that runs past the axis runs past that.");
+    expect(axisLine("h", "$150,000", [])).toBe("For h the axis runs from $0 to $150,000; a figure that runs past the axis runs past that.");
   });
 });
 

@@ -334,6 +334,30 @@ half-filled sentence); the arrow-function shape cannot be read by a locale
 file. Decision for the migration, not a change now: the citizen shape is
 the target, and `scripts/readability.mjs` already grades both. 0 lines now.
 
+**Resolved** (the decision is recorded at the top of `lib/copy.ts` and in
+`app/README.md` § Languages, and all four modules are in the shape): one
+`copy` per module, a nest of whole messages with `{slot}`s and nothing else;
+plural and select variants as objects of whole messages keyed by the CLDR
+category (`pluralKey(n)`) or the select value, the code picking the key;
+every slot value formatted by `lib/format.ts` (which gained `payInUnit`,
+`lossFigure`, `signedMoney`, `ordinal`, `numberWords`, `shortList`,
+`listOfItems` — the formatters the two `fmt` bags held); only whole
+sentences joined, only lists through `Intl.ListFormat`; one reader,
+`bind(copy)` → `t()`, with the citizen's `fill`/`parts` moved to lib. The
+caseworker module went from ~120 arrow functions to messages (332 lines),
+the journalist's from ~90 (356 lines, its variant-bearing sentences
+composed in `places/words.ts`, 135 lines, which `model.test.ts` pins in
+place of the copy functions), the editor's from 7. Rendered text changed
+in four places, each said in the commit: the caseworker chart's
+aria-label splits the zone count and the household's own zone into two
+sentences; a what-if named after three children reads "3, 7, & 9" (the
+locale's short list); a client sheet for four or more children spells the
+count; the journalist's *Hatched is not low* caution no longer carries a
+dangling em dash when no program is hatched. The readability gate walks
+the same shape and fails on a function; it now gates the caseworker's
+client sheet (`handout`, citizen register) and reports the caseworker's
+own register (3.82, not gated) beside the journalist's.
+
 ### D14. Page constants that repeat core, and deep imports into core
 
 `places/model.ts:16 PREFERRED_HOUSEHOLD` repeats `DEFAULT_ARCHETYPE`;
@@ -525,6 +549,13 @@ and `citizen/copy.ts` only. Ungated citizen-register text today:
 phrases (used by `caseworker/copy.ts:302–304`), and `caseworker/copy.ts
 handout.*` (citizen register per review S8). Add them to `MODULES` (D3, D4
 make the first two one place).
+
+**Resolved** (D13): the gate reads `caseworker/copy.ts` — the `handout`
+subtree gated in the citizen register (2.02), the rest reported (3.82) —
+beside the editor (1.07), citizen (1.47) and places (5.75, reported). The
+verdict table is the citizen catalog's (D4) and the phrases are the citizen
+module's; `lib/programs.ts` holds the `name` register only, which the
+inventory says is not gated.
 
 **Layout.** `caseworker.css` uses logical properties throughout ✓;
 `places.css` has seven physical ones (`:90–97 left/right`, `:92 margin-left`,

@@ -1,12 +1,24 @@
 // Every string the editor shows, in one place, in the citizen register
-// (short words, one thought a line). The readability gate
-// (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
-// reads this object. Program and field names a caseworker uses (SNAP, TANF,
-// CCDF, "permanent resident") appear only after the plain phrase.
+// (short words, one thought a line), in the one copy shape (lib/copy.ts):
+// whole messages with {slots}, variants keyed by what chooses them. The
+// readability gate (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-
+// 2026-09-16.md M1) reads this object. Program and field names a caseworker
+// uses (SNAP, TANF, CCDF, "permanent resident") appear only after the plain
+// phrase. A surface lays its own register over any part of it two levels
+// deep (mountEditor's `copy`).
 export const copy = {
   wordmark: "HotGap",
   actions: { change: "Change my answers", print: "Print" },
-  summary: { none: "Tell us about your home to see your answer.", edit: "Edit" },
+  summary: {
+    none: "Tell us about your home to see your answer.",
+    edit: "Edit",
+    /* The one-line summary of the four facts (design/inventory.md § ScenarioBar); its separators are this line's (citizen review N12). */
+    line: "{place} · {household} · {pay}",
+    place: { withCounty: "{state} · {county}", withZip: "{zip} · {state}", stateOnly: "{state}" },
+    household: { alone: "{adults}", withKids: "{adults}, {kids}" },
+    adults: { one: "1 adult", two: "2 adults" },
+    kids: { one: "kid {ages}", other: "kids {ages}" },
+  },
   heading: "If your pay goes up, do you keep more?",
   lead: "Answer four things. We check your help at every pay level and tell you what happens.",
   privacy: "We do not save what you type. No sign up. No tracking.",
@@ -16,7 +28,7 @@ export const copy = {
     zipHint: "Five digits. We use it to find your state and county.",
     or: "Or pick your state",
     statePlaceholder: "Choose a state",
-    inState: (state: string) => `That is in ${state}.`,
+    inState: "That is in {state}.",
   },
   household: {
     legend: "Who lives with you",
@@ -25,7 +37,7 @@ export const copy = {
     married: "Me and my spouse",
     kids: "How many kids live with you?",
     kidsHint: "Kids under 18. Up to six.",
-    kidAge: (n: number) => `How old is kid ${n}?`,
+    kidAge: "How old is kid {n}?",
   },
   pay: {
     legend: "What you are paid",
@@ -39,7 +51,7 @@ export const copy = {
     legend: "What you pay each month",
     rent: "Rent or house payment",
     childcare: "Child care",
-    typical: (amount: string, where: string) => `Typical in ${where}: ${amount} a month. Change it if yours is different.`,
+    typical: "Typical in {where}: {amount} a month. Change it if yours is different.",
     none: "Put 0 if you pay nothing.",
   },
   submit: "See my answer",
@@ -55,7 +67,7 @@ export const copy = {
     disabled: "You live with a disability", spouseDisabled: "Spouse lives with a disability",
     snap: "Gets food help (SNAP)", tanf: "Gets cash help (TANF)", medicaid: "Gets Medicaid", wic: "Gets WIC",
     on: "on", off: "off", yes: "yes", no: "no", none: "none",
-    aYear: "a year", aMonth: "a month",
+    aYear: "{amount} a year", aMonth: "{amount} a month",
   },
   dialog: {
     save: "Save",
@@ -64,7 +76,7 @@ export const copy = {
     yearly: "Dollars a year",
     years: "Years in the US",
     yearsHint: "Only if you are not a citizen.",
-    hasDisability: (n: number, age: string) => `Kid ${n}, who is ${age}, lives with a disability`,
+    hasDisability: "Kid {n}, who is {age}, lives with a disability",
   },
   status: {
     citizen: "US citizen", lpr: "Has a green card (permanent resident)", refugee: "Refugee", asylee: "Asylee",
@@ -73,7 +85,8 @@ export const copy = {
     daca: "DACA", tps: "TPS", undocumented: "No papers",
   } as Record<string, string>,
   errors: {
-    check: (label: string) => `Please check ${label}.`,
+    checkThis: "Check this.",
+    check: "Please check {label}.",
     fields: {
       zip: "your ZIP code", state: "your ZIP code or state", annualEarnings: "your pay", hoursPerWeek: "your hours",
       childAges: "your kids' ages", age: "your age", spouseAge: "your spouse's age",

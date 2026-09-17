@@ -5,10 +5,12 @@
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
 import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { pluralKey } from "../lib/copy.js";
 import { correctionRows } from "../lib/corrections.js";
 import { $, fillText } from "../lib/dom.js";
-import { esc } from "../lib/format.js";
-import { copy, fmt, programName } from "./copy.js";
+import { esc, listOf, listOfItems, lossFigure, money as usd, signedMoney } from "../lib/format.js";
+import { programName } from "../lib/programs.js";
+import { copy, t } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
   modeled, sourceLine, stateName, tiles, verdict, type Provenance,
@@ -38,21 +40,22 @@ export function renderVerdict(ev: HouseholdEvaluation, cell: ReachLadder | null)
 /** IncompleteMarker (#16): from coverage[state].unmodeled[] and every state's block — the count is rendered, never typed. */
 export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | undefined, summary: SummaryJson | null): void {
   const st = stateName(ev.answers.state), C = copy.coverage;
-  $("coverageHeading").textContent = copy.page.coverageHeading(st);
-  $("correctionsHeading").textContent = copy.page.correctionsHeading(st);
+  $("coverageHeading").textContent = t("page.coverageHeading", { state: st });
+  $("correctionsHeading").textContent = t("page.correctionsHeading", { state: st });
   const swatch = `<span class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete" aria-hidden="true"></span>`;
   if (!cov) {
-    $("coverage").innerHTML = `<div class="hg-callout hg-callout--caution"><p><strong>${esc(C.unknown(st))}</strong> ${esc(summary ? C.noBlock : C.notLoaded)}</p></div>`;
+    $("coverage").innerHTML = `<div class="hg-callout hg-callout--caution"><p><strong>${esc(t("coverage.unknown", { state: st }))}</strong> ${esc(summary ? C.noBlock : C.notLoaded)}</p></div>`;
     return;
   }
   /* Against the household the curve models (an archetype curve is the swept renter, not the flags typed). */
   const h = modeled(ev);
   const mine = incompleteHere(cov, h);
   const states = summary ? incompleteStates(summary, h) : [];
+  const elsewhere = t(`coverage.elsewhere.${pluralKey(states.length)}`, { ...(states.length === 1 ? {} : { n: states.length }), states: listOfItems(states) });
   $("coverage").innerHTML = mine.length
-    ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>${esc(C.incomplete(st))}</strong> ${esc(C.incompleteBody(mine))}</p></div>`
-    : `<div class="hg-callout"><p><strong>${esc(C.complete(st))}</strong> ${esc(C.completeBody)}` +
-      (states.length ? ` ${esc(C.elsewhere(states))} ${swatch} ${esc(C.elsewhereAfterMark)}` : "") + `</p></div>`;
+    ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>${esc(t("coverage.incomplete", { state: st }))}</strong> ${esc(t("coverage.incompleteBody", { programs: listOf(mine) }))}</p></div>`
+    : `<div class="hg-callout"><p><strong>${esc(t("coverage.complete", { state: st }))}</strong> ${esc(C.completeBody)}` +
+      (states.length ? ` ${esc(elsewhere)} ${swatch} ${esc(C.elsewhereAfterMark)}` : "") + `</p></div>`;
 }
 
 /** CorrectionsApplied (#18): coverage[state].corrections, applies === true; the rest named as checked. */
@@ -67,27 +70,28 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
         `<span class="hg-cite">${esc(r.note)}${r.href ? ` <a href="${esc(r.href)}">${esc(C.source)}</a>` : ""}</span></p></li>`).join("")
     : `<li><span class="hg-rows__at">${esc(cov ? C.none : C.unknown)}</span><p class="hg-cite">${esc(cov ? C.noneBody : C.unknownBody)}</p></li>`;
   const rest: string[] = [];
+  const checked = (program: string, note: string) => rest.push(t("corrections.checked", { program, note }));
   if (c) {
-    if (!c.maTafdc.applies) rest.push(C.checked(C.tafdcChecked, c.maTafdc.note));
-    if (!c.premiumAssistance.applies) rest.push(C.checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance.note));
-    if (!c.childcareSubsidy.applies) rest.push(C.checked(programName("childcare"), c.childcareSubsidy.note));
-    if (!c.coverageGap.applies) rest.push(C.checked(C.coverageGap, c.coverageGap.note));
-    if (c.liheap && !c.liheap.applies) rest.push(C.checked(programName("liheap"), c.liheap.note));
+    if (!c.maTafdc.applies) checked(C.tafdcChecked, c.maTafdc.note);
+    if (!c.premiumAssistance.applies) checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance.note);
+    if (!c.childcareSubsidy.applies) checked(programName("childcare"), c.childcareSubsidy.note);
+    if (!c.coverageGap.applies) checked(C.coverageGap, c.coverageGap.note);
+    if (c.liheap && !c.liheap.applies) checked(programName("liheap"), c.liheap.note);
   }
-  $("correctionsRest").textContent = rest.length ? C.rest(rest) : "";
+  $("correctionsRest").textContent = rest.length ? t("corrections.rest", { items: rest.join(" ") }) : "";
 }
 
 /** DropLedger (#8): every cliff as a row whose button selects it. */
 export function renderDrops(ev: HouseholdEvaluation, onSelect: (i: number) => void): void {
   const rows = $("dropRows"), D = copy.drops;
   rows.innerHTML = ev.analysis.cliffs.map((c) =>
-    `<tr><td><button class="hg-row-btn" type="button">${esc(D.range(c.startEarnings, c.endEarnings))}</button></td>` +
-    `<td class="num money">${esc(fmt.loss(c.drop))}</td>` +
-    `<td>${c.programsLost.length ? esc(c.programsLost.map(programName).join(", ")) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
-    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(D.until(c.deferral.until))}</span>` : "") + `</td>` +
+    `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button></td>` +
+    `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
+    `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
+    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: c.deferral.until }))}</span>` : "") + `</td>` +
     `<td>${esc(c.driver)}</td></tr>`).join("");
   rows.querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => b.addEventListener("click", () => onSelect(i)));
-  $("dropsEmpty").textContent = D.empty(CLIFF_MIN);
+  $("dropsEmpty").textContent = t("drops.empty", { min: usd(CLIFF_MIN) });
   $("dropsEmpty").hidden = ev.analysis.cliffs.length > 0;
 }
 
@@ -108,16 +112,16 @@ export function renderBreakdown(ev: HouseholdEvaluation, selected: number | null
     return;
   }
   const c = ev.analysis.cliffs[selected];
-  $("bdTitle").textContent = B.title(c.drop, c.startEarnings, c.endEarnings);
+  $("bdTitle").textContent = t("breakdown.title", { drop: usd(c.drop), from: usd(c.startEarnings), to: usd(c.endEarnings) });
   const parts: [string, number][] = [[B.parts.benefits, c.breakdown.benefits], [B.parts.credits, c.breakdown.credits], [B.parts.premiums, c.breakdown.premiums], [B.parts.other, c.breakdown.other]];
   const max = Math.max(...parts.map((p) => Math.abs(p[1])), 1);
   host.innerHTML = `<div class="bd-row bd-axis" aria-hidden="true"><span class="bd-track"><span>${esc(B.offsets)}</span><span>${esc(B.adds)}</span></span></div>` +
     parts.map(([label, v]) => {
       const w = (Math.abs(v) / max) * 50;
-      return `<div class="bd-row"><span class="bd-label">${esc(label)}</span><span class="bd-val">${esc(fmt.signed(v))}</span><span class="bd-track"><span class="bd-zero"></span>` +
+      return `<div class="bd-row"><span class="bd-label">${esc(label)}</span><span class="bd-val">${esc(signedMoney(v))}</span><span class="bd-track"><span class="bd-zero"></span>` +
         `<span class="bd-fill${v < 0 ? " neg" : ""}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%;background:var(--loss-${v < 0 ? 2 : 4})"></span></span></div>`;
     }).join("") +
-    `<p class="footnote bd-sum">${esc(B.sum(c.drop, c.driver))}</p>`;
+    `<p class="footnote bd-sum">${esc(t("breakdown.sum", { drop: usd(c.drop), driver: c.driver }))}</p>`;
 }
 
 /** ThresholdLedger (#7): every program's end, its cite from the curve and the coverage block. */
@@ -125,7 +129,7 @@ export function renderLedger(ev: HouseholdEvaluation, cov: StateCoverage | undef
   const L = copy.ledger;
   $("ledgerRows").innerHTML = ledgerRows(ev).map((r) => {
     const note = cite(ev, r, cov);
-    return `<tr${r.boundary ? ` data-boundary="${r.credit ? "credit" : "true"}"` : ""}><td class="num money">${esc(fmt.money(r.at))}</td><td>${esc(programName(r.id))}` +
+    return `<tr${r.boundary ? ` data-boundary="${r.credit ? "credit" : "true"}"` : ""}><td class="num money">${esc(usd(r.at))}</td><td>${esc(programName(r.id))}` +
       (r.boundary && !r.credit ? ` <span class="hg-tag">${esc(L.ifYouApply)}</span>` : "") +
       (r.deferred ? ` <span class="hg-badge">${esc(L.deferred)}</span>` : "") +
       (note ? `<span class="hg-cite">${esc(note)}</span>` : "") + `</td><td class="who">${esc(L.who[r.group])}</td></tr>`;
@@ -162,7 +166,7 @@ export function renderCompare(base: HouseholdEvaluation, cols: Column[], on: { r
   foot.innerHTML = foot.hidden ? "" : `<tr class="hg-no-print"><th scope="row">${esc(W.thisWhatIf)}</th>` + cols.map((c) => `<td ${cls(c)}>` + (what(c)
     ? (c.state === "failed" ? `<span class="hg-cite">${esc(c.reason)}</span>` : "") + `<span class="col-actions">` +
       (c.ev === null && c.state !== "computing" ? `<button type="button" class="hg-button" data-retry="${c.index}">${esc(copy.status.tryAgain)}</button>` : "") +
-      `<button type="button" class="hg-button" data-remove="${c.index}" aria-label="${esc(W.removeAria(c.title))}">${esc(W.remove)}</button></span>`
+      `<button type="button" class="hg-button" data-remove="${c.index}" aria-label="${esc(t("whatIf.removeAria", { title: c.title }))}">${esc(W.remove)}</button></span>`
     : "") + `</td>`).join("") + "</tr>";
   foot.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => on.remove(Number(b.dataset.remove))));
   foot.querySelectorAll<HTMLButtonElement>("[data-retry]").forEach((b) => b.addEventListener("click", () => on.retry(Number(b.dataset.retry))));

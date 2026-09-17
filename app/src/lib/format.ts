@@ -1,13 +1,15 @@
-// Money and pay figures in the citizen register (design/inventory.md M5, W6):
-// every pay figure in the unit the person gave, rounded to a step that
-// unit is spoken in, and said as a phrase. Shared by the editor's chips and
-// any surface that quotes a pay figure. Below them, the word-level helpers
-// every surface needs (capitalize, a reach vintage as words, the model line,
-// an HTML escape): one home (audit D1).
+// Every figure a surface prints, through Intl in the one LOCALE (audit D1,
+// D13): money and pay figures in the person's unit (design/inventory.md M5,
+// W6 — rounded to a step that unit is spoken in), a loss, a signed share,
+// an ordinal, lists, dates, and the word-level helpers every surface needs
+// (capitalize, a count in words, a reach vintage as words, the model line,
+// an HTML escape). A copy module holds no formatter: a slot's value is
+// formatted here and handed to the message (lib/copy.ts).
 import { DEFAULT_HOURS, fromAnnual, type ModelRecord, type PayUnit } from "@hotgap/core";
+import { LOCALE } from "./copy.js";
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const usdCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+const usd = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const usdCents = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 /** Whole dollars, "$1,234". */
 export const money = (n: number): string => usd.format(Math.round(n));
@@ -34,18 +36,51 @@ export const payFigure = (annual: number, unit: PayUnit, hoursPerWeek: number = 
 export const payPhrase = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
   `${payFigure(annual, unit, hoursPerWeek)} ${PHRASE[unit]}`;
 
+/** A pay figure already in the person's unit, as that unit is said: "$38,000 a year", "$18.50 an hour" (the editor's chip, a what-if's name). */
+export const payInUnit = (inUnit: number, unit: PayUnit): string => `${unitFigure(inUnit, unit)} ${PHRASE[unit]}`;
+
 /** A drop in the citizen "about" grain: whole hundreds. */
 export const moneyAbout = (n: number): string => usd.format(Math.round(n / 100) * 100);
+
+/** "−$25,449": a loss, with a true minus. */
+export const lossFigure = (n: number): string => `−${money(Math.abs(n))}`;
+/** "+$1,590" / "−$875": a signed share. */
+export const signedMoney = (n: number): string => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
+
+const ordinalRules = new Intl.PluralRules(LOCALE, { type: "ordinal" });
+const ORDINAL: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
+/** "40th". */
+export const ordinal = (n: number): string => `${n}${ORDINAL[ordinalRules.select(n)]}`;
 
 /** A chart tick: "$40k" by the year, "$2,500" by the month or week, "$20" or "$17.50" by the hour. */
 export const tickMoney = (v: number, unit: PayUnit): string =>
   unit === "year" && v >= 1000 ? `${usd.format(v / 1000)}k` : unit === "hour" && !Number.isInteger(v) ? usdCents.format(v) : usd.format(v);
 
-const conjunction = new Intl.ListFormat("en-US", { style: "long", type: "conjunction" });
+const conjunction = new Intl.ListFormat(LOCALE, { style: "long", type: "conjunction" });
 /** "a", "a and b", "a, b, and c" — the locale's list, not a hand-joined one. */
 export const listOf = (items: string[]): string => conjunction.format(items);
+const short = new Intl.ListFormat(LOCALE, { style: "short", type: "conjunction" });
+/** "3 & 7", "3, 7, & 9" — the locale's short list: the kids' ages in the ScenarioBar and a what-if's name. */
+export const shortList = (items: string[]): string => short.format(items);
+const units = new Intl.ListFormat(LOCALE, { style: "long", type: "unit" });
+/** "a", "a, b", "a, b, c" — a list of items with no conjunction: the ages of three children, the states whose axis differs. */
+export const listOfItems = (items: string[]): string => units.format(items);
 
-const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+/**
+ * A count in words, up to ninety-nine ("eleven", "fifty-one"); larger, or
+ * not a whole number, as digits. English: Intl has no spellout, so this is
+ * the one formatter the locale-file migration replaces per locale.
+ */
+export function numberWords(n: number): string {
+  if (!Number.isInteger(n) || n < 0 || n > 99) return String(n);
+  if (n < 20) return ONES[n];
+  return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+}
+
+const mediumDate = new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium" });
 /**
  * An ISO stamp as a date in words, "Sep 16, 2026", in the reader's own time
  * zone — a sweep stamped 01:16 UTC is the evening before to a reader in the
@@ -53,7 +88,7 @@ const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
  * rerun S2). A zone can be named for a test or a fixed-zone surface.
  */
 export const dateWords = (iso: string, timeZone?: string): string =>
-  (timeZone ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone }) : mediumDate).format(new Date(iso));
+  (timeZone ? new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeZone }) : mediumDate).format(new Date(iso));
 
 /**
  * A calendar day ("2026-09-16", the date a table row was read) as words. It
@@ -62,7 +97,7 @@ export const dateWords = (iso: string, timeZone?: string): string =>
  * would print Sep 15 to a reader west of Greenwich.
  */
 export const dayWords = (isoDay: string): string =>
-  new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${isoDay}T00:00:00Z`));
+  new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${isoDay}T00:00:00Z`));
 
 export const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 

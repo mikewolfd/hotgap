@@ -32,8 +32,9 @@ import {
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
+import { fill, pluralKey } from "../lib/copy.js";
 import { h } from "../lib/dom.js";
-import { money, unitFigure, unitPhrase } from "../lib/format.js";
+import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
 
 // The two small tables the editor reads through core: a state's typical rent
@@ -167,15 +168,17 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const place = () => resolvePlace({ zip: flags.zip, state: flags.state?.toUpperCase() });
   const state = (): string | undefined => stateOf(flags);
   const unit = (): PayUnit => (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
-  const monthly = (v: string | undefined) => (v ? `${money(Number(v))} ${copy.chips.aMonth}` : copy.chips.none);
-  const yearly = (v: string | undefined) => (v ? `${money(Number(v))} ${copy.chips.aYear}` : copy.chips.none);
+  const monthly = (v: string | undefined) => (v ? fill(copy.chips.aMonth, { amount: money(Number(v)) }) : copy.chips.none);
+  const yearly = (v: string | undefined) => (v ? fill(copy.chips.aYear, { amount: money(Number(v)) }) : copy.chips.none);
+  /** "1 adult, kids 3 & 7": the adults by the marriage answer, the kids' ages as the locale's short list. */
   const householdLabel = () => {
-    const k = kids();
-    return `${married() ? "2 adults" : "1 adult"}${k.length ? `, kid${k.length > 1 ? "s" : ""} ${k.join(" & ")}` : ""}`;
+    const k = kids(), S = copy.summary;
+    const adults = married() ? S.adults.two : S.adults.one;
+    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids[pluralKey(k.length)], { ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
   };
-  const payLabel = () => (flags.pay ? `${unitFigure(Number(flags.pay), unit())} ${unitPhrase(unit())}` : copy.chips.none);
+  const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
-  const placeLabel = () => [flags.zip, state(), countyLabel()].filter(Boolean).join(", ") || copy.chips.none;
+  const placeLabel = () => listOfItems([flags.zip, state(), countyLabel()].filter((x): x is string => Boolean(x))) || copy.chips.none;
 
   // ── The chips, in row order ──────────────────────────────────────────
   const monthlyField = (flag: HouseholdFlagName, label: string): DialogField => ({ flag, label, kind: "number", min: 0, max: 20000, step: 1, hint: copy.dialog.monthly });
@@ -344,7 +347,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(stateSelect, st ?? "");
     const p = place();
     if (flags.zip) {
-      zipHint.textContent = p.ok && p.state ? copy.place.inState(STATE_NAMES[p.state]) : p.ok ? copy.place.zipHint : p.detail;
+      zipHint.textContent = p.ok && p.state ? fill(copy.place.inState, { state: STATE_NAMES[p.state] }) : p.ok ? copy.place.zipHint : p.detail;
       zipInput.setAttribute("aria-invalid", p.ok ? "false" : "true");
     } else {
       zipHint.textContent = copy.place.zipHint;
@@ -357,7 +360,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     if (kidsRows.children.length !== k.length) {
       kidsRows.replaceChildren(...k.map((_, i) => {
         const input = h("input", { id: `f-kid-${i}`, name: `kid-${i}`, type: "number", min: "0", max: "17", step: "1", inputmode: "numeric", required: true, class: "hg-input" });
-        return field(`f-kid-${i}`, copy.household.kidAge(i + 1), input);
+        return field(`f-kid-${i}`, fill(copy.household.kidAge, { n: i + 1 }), input);
       }));
     }
     k.forEach((age, i) => write(kidsRows.querySelector<HTMLInputElement>(`#f-kid-${i}`)!, String(age)));
@@ -368,8 +371,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(childcareInput, flags.childcare ?? "");
     childcareField.hidden = !k.some((a) => a <= CHILDCARE_MAX_AGE);
     const where = st ? STATE_NAMES[st] : null;
-    rentHint.textContent = where && prefilled.rent ? copy.costs.typical(money(Number(prefilled.rent)), where) : copy.costs.none;
-    childcareHint.textContent = where && prefilled.childcare ? copy.costs.typical(money(Number(prefilled.childcare)), where) : copy.costs.none;
+    rentHint.textContent = where && prefilled.rent ? fill(copy.costs.typical, { amount: money(Number(prefilled.rent)), where }) : copy.costs.none;
+    childcareHint.textContent = where && prefilled.childcare ? fill(copy.costs.typical, { amount: money(Number(prefilled.childcare)), where }) : copy.costs.none;
   }
 
   function renderChips(): void {
@@ -392,10 +395,10 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     /* No household, no chips: a row of controls for answers that do not exist yet (caseworker review S10). */
     inputsRow.hidden = !answered;
     for (const b of gated) b.disabled = !answered;
-    /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9). */
-    const c = countyLabel();
-    const place = c ? [state(), c.replace(/ County$/, "")] : [flags.zip, state()];
-    summaryText.textContent = answered ? [...place, householdLabel(), payLabel()].filter(Boolean).join(" · ") : copy.summary.none;
+    /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9); the line and its separators are the summary's copy (N12). */
+    const c = countyLabel(), S = copy.summary, st = state() ?? "";
+    const place = c ? fill(S.place.withCounty, { state: st, county: c.replace(/ County$/, "") }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
+    summaryText.textContent = answered ? fill(S.line, { place, household: householdLabel(), pay: payLabel() }) : S.none;
   }
 
   function render(): void {
@@ -484,7 +487,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
 
   function showError(detail: string): void {
     const label = copy.errors.fields[detail];
-    errorLine.replaceChildren(h("strong", {}, "Check this."), " ", label ? copy.errors.check(label) : detail);
+    errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : detail);
     errorLine.hidden = false;
     // A field name points at its control; a sentence about a ZIP points at the ZIP.
     const fieldId = FIELD_OF[detail] ?? (/ZIP|territor/i.test(detail) ? "zip" : null);
@@ -525,7 +528,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
         const boxes = kids().map((age, k) => {
           const box = h("input", { type: "checkbox" });
           box.checked = flagsNow[k] === "1";
-          return { box, label: h("label", {}, box, copy.dialog.hasDisability(k + 1, String(age))) };
+          return { box, label: h("label", {}, box, fill(copy.dialog.hasDisability, { n: k + 1, age })) };
         });
         controls.push({ field: f, read: () => (boxes.some((b) => b.box.checked) ? boxes.map((b) => (b.box.checked ? "1" : "0")).join(",") : undefined) });
         return h("div", { class: "editor__checks" }, ...boxes.map((b) => b.label));
