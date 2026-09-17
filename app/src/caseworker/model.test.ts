@@ -94,9 +94,14 @@ describe("IncompleteMarker", () => {
   it("reads the state's block and counts the states that would mark this household, from the file", () => {
     expect(incompleteHere(cov, co.answers)).toEqual([]);
     expect(incompleteHere({ ...cov, unmodeled: [premium, liheap] }, co.answers)).toEqual(["NJ Health Plan Savings"]);
+    /* The committed sweep hatches nobody since 2026-09-16 (NJ and WA became
+       complete), so the count is exercised on a copy with one state marked
+       and the empty answer is read from the file rather than typed. */
+    const marked = { ...summary, coverage: { ...summary.coverage!, NJ: { ...cov, unmodeled: [premium, liheap] } } };
+    expect(incompleteStates(marked, co.answers)).toEqual(["NJ"]);
     const states = incompleteStates(summary, co.answers);
-    expect(states.length).toBeGreaterThan(0);   /* today: the two states whose own premium program is unmodeled */
     expect(states).toEqual(Object.entries(summary.coverage!).filter(([, c]) => c.unmodeled.some((u) => u.program !== "LIHEAP")).map(([st]) => st).sort());
+    expect(states).toEqual([]);
   });
 });
 
