@@ -17,9 +17,32 @@ const PHRASE: Record<PayUnit, string> = { hour: "an hour", week: "a week", month
 /** "an hour", "a week", "a month", "a year". */
 export const unitPhrase = (unit: PayUnit): string => PHRASE[unit];
 
+/** The unit's own rounding: an annual figure to the step that unit is spoken in, still in that unit. */
+export const payRounded = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): number =>
+  Math.round(fromAnnual(annual, unit, hoursPerWeek) / STEP[unit]) * STEP[unit];
+
+/** A figure already in the unit, printed as that unit is: cents by the hour, whole dollars otherwise. */
+export const unitFigure = (inUnit: number, unit: PayUnit): string => (unit === "hour" ? usdCents.format(inUnit) : usd.format(inUnit));
+
+/** An annual figure in the person's own unit, rounded, without the unit phrase: "$14.50", "$30,000". */
+export const payFigure = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
+  unitFigure(payRounded(annual, unit, hoursPerWeek), unit);
+
 /** An annual figure in the person's own unit, rounded to that unit's step: "$14.50 an hour", "$30,000 a year". */
-export function payPhrase(annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string {
-  const inUnit = fromAnnual(annual, unit, hoursPerWeek);
-  const rounded = Math.round(inUnit / STEP[unit]) * STEP[unit];
-  return `${unit === "hour" ? usdCents.format(rounded) : usd.format(rounded)} ${PHRASE[unit]}`;
-}
+export const payPhrase = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): string =>
+  `${payFigure(annual, unit, hoursPerWeek)} ${PHRASE[unit]}`;
+
+/** A drop in the citizen "about" grain: whole hundreds. */
+export const moneyAbout = (n: number): string => usd.format(Math.round(n / 100) * 100);
+
+/** A chart tick: "$40k" by the year, "$2,500" by the month or week, "$20" or "$17.50" by the hour. */
+export const tickMoney = (v: number, unit: PayUnit): string =>
+  unit === "year" && v >= 1000 ? `${usd.format(v / 1000)}k` : unit === "hour" && !Number.isInteger(v) ? usdCents.format(v) : usd.format(v);
+
+const conjunction = new Intl.ListFormat("en-US", { style: "long", type: "conjunction" });
+/** "a", "a and b", "a, b, and c" — the locale's list, not a hand-joined one. */
+export const listOf = (items: string[]): string => conjunction.format(items);
+
+const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
+/** An ISO stamp as a date in words, "Sep 16, 2026". */
+export const dateWords = (iso: string): string => mediumDate.format(new Date(iso));

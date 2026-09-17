@@ -1,0 +1,158 @@
+{
+ "390": {
+  "ms": 1569,
+  "source": "archetype",
+  "sourceText": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.Try againSource: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what is left after taxes and health-plan premiums.",
+  "sourceBox": {
+   "y": 1209.59375,
+   "h": 145.0625
+  },
+  "tryAgain": {
+   "w": 79.203125,
+   "h": 32,
+   "text": "Try again"
+  },
+  "answer": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "sub": [
+   "It happens 5 more times, between $39,000 and $142,000.",
+   "You keep more than your pay because help and tax money are part of it. $29,880 of this is child care help. It goes to your day care, not to you."
+  ],
+  "summary": "94110 · CA · 1 adult, kids 3 & 7 · $30,000 a year",
+  "chips": [
+   "Where94110, CA",
+   "Home1 adult, kids 3 & 7",
+   "Pay$30,000 a year",
+   "Rentnone",
+   "Child carenone",
+   "Your age30",
+   "SSDInone",
+   "Child supportnone",
+   "Unemployment paynone",
+   "Savingsnone",
+   "Your statusUS citizen",
+   "Kids with a disabilitynone",
+   "Child care helpoff",
+   "Head Startoff",
+   "Housing helpoff",
+   "Health plan from a joboff",
+   "Self-employedoff",
+   "You have a disabilityoff",
+   "Gets food help (SNAP)yes",
+   "Gets cash help (TANF)yes",
+   "Gets Medicaidyes",
+   "Gets WICyes"
+  ],
+  "assumed": [
+   "Rent$2,903 a month. The usual rent in California.",
+   "Child care$2,578 a month for two kids. The usual price of day care in California.",
+   "Help you getFood help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), food help for moms and babies (WIC), and child care help (CCDF child care subsidy). We count each as if you get it.",
+   "Not countedHousing help (Housing voucher) and free early learning (Head Start). We count them as if you do not get them.",
+   "YouAge 30. A U.S. citizen. No one in the home has a disability.",
+   "Other moneySavings: None. No child support, SSDI or unemployment pay.",
+   "HoursNot given. We assume full time.",
+   "Health plan helpCalifornia Premium Subsidy, up to $1,538 a year. California helps pay for health insurance. We counted it."
+  ],
+  "caption": "The side numbers start at $60,000, not at $0, so the drops are easy to see. The biggest drop, about $14,000 a year at $92,000 a year, is outside the picture. From $142,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "aria": "A line of the money this household keeps as pay rises from $7,000 a year to $82,000 a year. It is flat from $28,000 to $37,000. It is flat again from $39,000 to $44,000. It is flat again from $44,000 to $47,000. It is flat again from $48,000 to $53,000. It is flat again from $72,000 to $75,000. It is flat again from $87,000 to $142,000. The biggest drop is at $92,000 a year, where child care help ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "steps": [
+   "$29,000Cash help ends. It is called TANF cash assistance. You keep about $2,400 less.",
+   "$38,000Your own free state health plan would end. It is called Medicaid. Then help paying for health insurance would start. It is called the Premium tax credit.",
+   "$40,000Your health plan would cost more here. You would keep about $900 less.",
+   "$45,000Your health plan would cost more here. You would keep about $200 less.",
+   "$49,000Food help would end. It is called SNAP. Some goes on until $51,000: $464 of food help. You would keep about $800 less.",
+   "$59,000A tax break for workers would end. It is called the Earned Income Tax Credit (EITC).",
+   "$73,000Waits Your kids' free state health plan would end. It is called Medicaid. Food help for moms and babies would end. It is called WIC. Then help paying for health insurance would start. It is called the Premium tax credit. You would keep about $1,000 less.",
+   "$88,000Child care help would end. It is called the CCDF child care subsidy. Some goes on until $92,000: $14,500 of child care help. You would keep about $12,400 less.",
+   "$92,000Child care help would end. It is called the CCDF child care subsidy. You would keep about $14,000 less. This is the biggest drop.",
+   "$107,000Help paying for health insurance would end. It is called the Premium tax credit. You would keep about $1,900 less."
+  ],
+  "yratio": "16.82",
+  "reach": "About 4 in 10 parents like you in California are paid $30,000 a year or less. The count could be off by a few thousand dollars either way.",
+  "pageH": 5254,
+  "errors": [],
+  "afterTryAgainStatus": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "afterTryAgain": {
+   "source": "archetype",
+   "focused": "BODY ",
+   "status": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000."
+  }
+ },
+ "1280": {
+  "ms": 1553,
+  "source": "archetype",
+  "sourceText": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.Try againSource: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what is left after taxes and health-plan premiums.",
+  "sourceBox": {
+   "y": 1293.125,
+   "h": 126.21875
+  },
+  "tryAgain": {
+   "w": 79.203125,
+   "h": 32,
+   "text": "Try again"
+  },
+  "answer": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "sub": [
+   "It happens 5 more times, between $39,000 and $142,000.",
+   "You keep more than your pay because help and tax money are part of it. $29,880 of this is child care help. It goes to your day care, not to you."
+  ],
+  "summary": "94110 · CA · 1 adult, kids 3 & 7 · $30,000 a year",
+  "chips": [
+   "Where94110, CA",
+   "Home1 adult, kids 3 & 7",
+   "Pay$30,000 a year",
+   "Rentnone",
+   "Child carenone",
+   "Your age30",
+   "SSDInone",
+   "Child supportnone",
+   "Unemployment paynone",
+   "Savingsnone",
+   "Your statusUS citizen",
+   "Kids with a disabilitynone",
+   "Child care helpoff",
+   "Head Startoff",
+   "Housing helpoff",
+   "Health plan from a joboff",
+   "Self-employedoff",
+   "You have a disabilityoff",
+   "Gets food help (SNAP)yes",
+   "Gets cash help (TANF)yes",
+   "Gets Medicaidyes",
+   "Gets WICyes"
+  ],
+  "assumed": [
+   "Rent$2,903 a month. The usual rent in California.",
+   "Child care$2,578 a month for two kids. The usual price of day care in California.",
+   "Help you getFood help (SNAP), cash help (TANF cash assistance), a free state health plan (Medicaid), food help for moms and babies (WIC), and child care help (CCDF child care subsidy). We count each as if you get it.",
+   "Not countedHousing help (Housing voucher) and free early learning (Head Start). We count them as if you do not get them.",
+   "YouAge 30. A U.S. citizen. No one in the home has a disability.",
+   "Other moneySavings: None. No child support, SSDI or unemployment pay.",
+   "HoursNot given. We assume full time.",
+   "Health plan helpCalifornia Premium Subsidy, up to $1,538 a year. California helps pay for health insurance. We counted it."
+  ],
+  "caption": "The side numbers start at $60,000, not at $0, so the drops are easy to see. The biggest drop, about $14,000 a year at $92,000 a year, is outside the picture. From $142,000 up, more pay always adds to what you keep. These are estimates. They use the rules for 2026 in California.",
+  "aria": "A line of the money this household keeps as pay rises from $7,000 a year to $82,000 a year. It is flat from $28,000 to $37,000. It is flat again from $39,000 to $44,000. It is flat again from $44,000 to $47,000. It is flat again from $48,000 to $53,000. It is flat again from $72,000 to $75,000. It is flat again from $87,000 to $142,000. The biggest drop is at $92,000 a year, where child care help ends. The household sits at $30,000 a year, inside a flat stretch.",
+  "steps": [
+   "$29,000Cash help ends. It is called TANF cash assistance. You keep about $2,400 less.",
+   "$38,000Your own free state health plan would end. It is called Medicaid. Then help paying for health insurance would start. It is called the Premium tax credit.",
+   "$40,000Your health plan would cost more here. You would keep about $900 less.",
+   "$45,000Your health plan would cost more here. You would keep about $200 less.",
+   "$49,000Food help would end. It is called SNAP. Some goes on until $51,000: $464 of food help. You would keep about $800 less.",
+   "$59,000A tax break for workers would end. It is called the Earned Income Tax Credit (EITC).",
+   "$73,000Waits Your kids' free state health plan would end. It is called Medicaid. Food help for moms and babies would end. It is called WIC. Then help paying for health insurance would start. It is called the Premium tax credit. You would keep about $1,000 less.",
+   "$88,000Child care help would end. It is called the CCDF child care subsidy. Some goes on until $92,000: $14,500 of child care help. You would keep about $12,400 less.",
+   "$92,000Child care help would end. It is called the CCDF child care subsidy. You would keep about $14,000 less. This is the biggest drop.",
+   "$107,000Help paying for health insurance would end. It is called the Premium tax credit. You would keep about $1,900 less."
+  ],
+  "yratio": "16.82",
+  "reach": "About 4 in 10 parents like you in California are paid $30,000 a year or less. The count could be off by a few thousand dollars either way.",
+  "pageH": 4137,
+  "errors": [],
+  "afterTryAgainStatus": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000.",
+  "afterTryAgain": {
+   "source": "archetype",
+   "focused": "BODY ",
+   "status": "You are paid $30,000 a year. You keep $75,484. More pay does not add to that until you are paid $37,000: a raise of $7,000."
+  }
+ }
+}
