@@ -5,7 +5,7 @@
 // a cliff mark opens (M6). Pure: rows and sentences, no DOM.
 import { COVERAGE_PROGRAMS, type Cliff, type ProgramId } from "@hotgap/core";
 import { listOf } from "../lib/format.js";
-import { capitalize } from "../places/format.js";
+import { capitalize } from "../lib/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { called, NAMES_ITS_GROUP, noun, phrase } from "./programs.js";

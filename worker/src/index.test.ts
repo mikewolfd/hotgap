@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { axisSpec, configurePolicyEngine, loadStateFile, validateAnswers, type ApiErrorBody, type CurveCache, type CurveResponse, type HouseholdEvaluation } from "@hotgap/core";
 import { CA_SINGLE_ONE_KID as raw, peBody, respond } from "../../core/src/testing.js";
-import { curveCache, handleRequest, localRateLimiter, type Deps } from "./index.js";
+import { curveCache, handleRequest, localRateLimiter, rateLimiterFor, type Deps } from "./index.js";
 
 const v = validateAnswers(raw);
 if (!v.ok) throw new Error(v.detail);
@@ -153,6 +153,23 @@ describe("localRateLimiter", () => {
     expect(await allow("b")).toBe(true);
     t = 1000;
     expect(await allow("a")).toBe(true);
+  });
+});
+
+describe("rateLimiterFor", () => {
+  const refusing = { limit: async () => ({ success: false }) };
+  it("uses the binding when the plan provides it, and the in-isolate counter otherwise", async () => {
+    expect(await rateLimiterFor({ RATE_LIMIT: refusing })("a")).toBe(false);
+    const fallback = async () => true;
+    expect(rateLimiterFor({}, fallback)).toBe(fallback);
+  });
+  it("honours HOTGAP_RATE_LIMIT_OFF=1 — the proofs' dev-only escape — over the binding", async () => {
+    expect(await rateLimiterFor({ RATE_LIMIT: refusing, HOTGAP_RATE_LIMIT_OFF: "1" })("a")).toBe(true);
+  });
+  it("ignores the var when it is absent or anything but \"1\"", async () => {
+    expect(await rateLimiterFor({ RATE_LIMIT: refusing })("a")).toBe(false);
+    expect(await rateLimiterFor({ RATE_LIMIT: refusing, HOTGAP_RATE_LIMIT_OFF: "true" })("a")).toBe(false);
+    expect(await rateLimiterFor({ RATE_LIMIT: refusing, HOTGAP_RATE_LIMIT_OFF: "" })("a")).toBe(false);
   });
 });
 

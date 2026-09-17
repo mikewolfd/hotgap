@@ -138,6 +138,8 @@ describe("runPipeline", () => {
       // the coverage gap touches this fixture.
       expect(result.summary!.states[state]["single-2"]).toEqual({
         biggestLoss: 3868,
+        biggestLossAt: 84000,
+        biggestLossPrograms: ["aca"],
         dangerWidth: 18000,
         cliffCount: 3,
         deferredCliffCount: 1,

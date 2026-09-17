@@ -1,15 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import type { StateCoverage, StateMetrics, SummaryJson } from "@hotgap/core";
-import { ARCHETYPES, CHILDCARE_MAX_AGE as CORE_CHILDCARE_MAX_AGE, DEFAULT_ARCHETYPE, STATE_CODES, answersFor } from "@hotgap/core";
-import { capitalize, word } from "./format.js";
-import { archLabel, bins, CHILDCARE_MAX_AGE, correctionRows, group, incompleteFor, MEASURES, measureByKey, paysForCare, PREFERRED_HOUSEHOLD, rowsFor, tableRows } from "./model.js";
+import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from "@hotgap/core";
+import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
+import { capitalize } from "../lib/format.js";
+import { copy, fmt } from "./copy.js";
+import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForCare, rowsFor, tableRows } from "./model.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
-  biggestLoss: 1000, dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, ...over,
+  biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, ...over,
 });
-const liheap = { program: "LIHEAP", note: "never reaches net income" };
+const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({
   corrections: {
     policyOverrides: [],
@@ -20,7 +21,7 @@ const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCovera
   },
   unmodeled,
   otherBenefits: [],
-  vintages: { model: null, rent: { publisher: "HUD", vintage: "FY2026" }, county: { publisher: "Census", vintage: "V2024" }, childcare: { preschool: "county 2018" }, reach: { basis: "", vintages: ["2024-1yr"], growthFactor: 1 } },
+  vintages: { model: null, rent: { publisher: "HUD", vintage: "FY2026" }, county: { publisher: "Census", vintage: "V2024", fips: "00000", name: "Any County" }, childcare: { preschool: "county 2018" }, reach: { basis: "", vintages: ["2024-1yr"], growthFactor: 1 } },
 });
 const single1 = { id: "single-1", married: false, childAges: [3] };
 const married1 = { id: "married-1", married: true, childAges: [3] };
@@ -30,7 +31,7 @@ const fixture: SummaryJson = {
   states: {
     AA: { "single-1": metrics({ biggestLoss: 9000 }), "married-1": metrics({ biggestLoss: 9000 }) },          // shaded, the top
     BB: { "single-1": metrics({ biggestLoss: 3000 }), "married-1": metrics({ biggestLoss: 3000 }) },          // shaded
-    CC: { "single-1": metrics({ cliffCount: 0, biggestLoss: 0, dangerWidth: 0, safeExit: 0, leap: 0 }), "married-1": metrics() }, // none for single-1
+    CC: { "single-1": metrics({ cliffCount: 0, biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, safeExit: 0, leap: 0 }), "married-1": metrics() }, // none for single-1
     DD: { "single-1": metrics({ safeExit: null, biggestLoss: 500 }), "married-1": metrics({ safeExit: null }) }, // null exit, flag false (NE today)
     EE: { "single-1": metrics({ leapIsLowerBound: true, biggestLoss: 12000 }), "married-1": metrics() },       // lower-bound leap
     FF: { "single-1": metrics({ biggestLoss: 20000 }), "married-1": metrics({ biggestLoss: 20000 }) },        // incomplete: premium program
@@ -38,8 +39,8 @@ const fixture: SummaryJson = {
   },
   coverage: {
     AA: coverage(), BB: coverage(), CC: coverage(), DD: coverage(), EE: coverage(),
-    FF: coverage([{ program: "FF Premium Savings", note: "no upstream variable" }, liheap]),
-    GG: coverage([{ program: "Child-care subsidy (CCDF)", note: "the engine paid $0" }, liheap]),
+    FF: coverage([{ program: "FF Premium Savings", note: "no upstream variable", scope: "state" }, liheap]),
+    GG: coverage([{ program: "Child-care subsidy (CCDF)", note: "the engine paid $0", scope: "state" }, liheap]),
   },
 };
 const loss = measureByKey("biggestLoss")!;
@@ -55,21 +56,28 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
     // The pipeline's own test for a household that buys care: a positive
     // child-care bill under the state's defaults, i.e. any child through 12.
     for (const a of ARCHETYPES) expect(paysForCare(a)).toBe((answersFor("CA", a).monthlyChildcare ?? 0) > 0);
-    expect(CHILDCARE_MAX_AGE).toBe(CORE_CHILDCARE_MAX_AGE);
     expect(paysForCare({ id: "x", married: false, childAges: [12] })).toBe(true);
     expect(paysForCare({ id: "x", married: false, childAges: [13] })).toBe(false);
-  });
-  it("prefers the household core prefers — the one id repeated on this side of the browser seam", () => {
-    expect(PREFERRED_HOUSEHOLD).toBe(DEFAULT_ARCHETYPE);
-    expect(ARCHETYPES.some((a) => a.id === PREFERRED_HOUSEHOLD)).toBe(true);
   });
 });
 
 describe("counts in words", () => {
   it("spells the counts the lede uses and falls back to digits beyond ninety-nine", () => {
-    expect(word(ARCHETYPES.length)).toBe("eleven");
-    expect(capitalize(word(STATE_CODES.length))).toBe("Fifty-one");
-    expect([word(0), word(20), word(40), word(99), word(100), word(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
+    const { count } = fmt;
+    expect(count(ARCHETYPES.length)).toBe("eleven");
+    expect(capitalize(count(STATE_CODES.length))).toBe("Fifty-one");
+    expect([count(0), count(20), count(40), count(99), count(100), count(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
+    expect(copy.lede.counted(STATE_CODES.length, ARCHETYPES.length)).toMatch(/^Fifty-one sets of rules, eleven household shapes, one earnings scale/);
+  });
+});
+
+describe("the measures, from copy", () => {
+  it("are the six pipeline keys in the FilterRow's order, the two counts without a unit, each option naming its own referent (S2)", () => {
+    expect(MEASURES.map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(MEASURES.map((m) => m.unit)).toEqual(["$", "$", "$", "$", "", ""]);
+    for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
+    expect(measureByKey("leap")!.option).toContain("worst danger zone");
+    expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
   });
 });
 
@@ -134,45 +142,41 @@ describe("bins and group", () => {
     expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, lo: 3, hi: 3 }]);
     expect(bins([], "").classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }]);
   });
-  it("orders the table by state, or by the ranking followed by past, none and incomplete", () => {
-    const exit = measureByKey("safeExit")!;
-    const rows = rowsFor(fixture, single1, exit);
-    const g = group(rows, exit);
-    expect(tableRows(rows, g, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
-    expect(tableRows(rows, g, "measure").map((r) => r.st)).toEqual(["AA", "BB", "DD", "EE", "CC", "FF", "GG"]);
-  });
-});
-
-describe("correctionRows", () => {
-  it("keeps only the corrections that apply, in one order, with the source word as the chip", () => {
-    const c = coverage().corrections;
-    expect(correctionRows(c)).toEqual([]);
-    expect(correctionRows(undefined)).toEqual([]);
-    const applied = correctionRows({
-      ...c,
-      policyOverrides: [{ parameter: "gov.hhs.medicaid.eligibility.categories.parent.income_limit.TX", period: "2026", values: {}, source: "https://fhb.hhs.texas.gov/x", note: "parent limit" }],
-      childcareSubsidy: { applies: true, source: "added by HotGap", note: "added" },
-      coverageGap: { applies: true, note: "gap" },
-    });
-    expect(applied.map((r) => [r.program, r.source])).toEqual([
-      ["Medicaid — parent income limit", "overridden"],
-      ["CCDF child care subsidy", "added by HotGap"],
-      ["Premium tax credit — coverage gap", null],
-    ]);
-    expect(applied[0].href).toBe("https://fhb.hhs.texas.gov/x");
-    // A correction's published source (core's `cite`) is the link; its `code` pointer is not a reader's fact and never reaches a row.
-    const cited = correctionRows({
-      ...c,
-      maTafdc: { applies: true, note: "tafdc", code: "maTafdc.ts", cite: "https://www.mass.gov/x" },
-      premiumAssistance: { applies: true, source: "ladder", program: "ConnectorCare", note: "ladder", code: "statePremiumWraps.ts", cite: "https://www.mahealthconnector.org/x" },
-    });
-    expect(cited.map((r) => [r.program, r.href])).toEqual([["TANF cash assistance", "https://www.mass.gov/x"], ["ConnectorCare", "https://www.mahealthconnector.org/x"]]);
-    expect(JSON.stringify(cited)).not.toContain(".ts");
+  it("orders the table by state, or by one measure: its lower-bound rows first (B1), then its ranking, then none and incomplete", () => {
+    expect(tableRows(fixture, single1, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
+    // Safe exit: DD and EE run past the axis and lead; AA and BB rank; CC has no cliff; FF and GG are incomplete.
+    expect(tableRows(fixture, single1, "safeExit").map((r) => r.st)).toEqual(["DD", "EE", "AA", "BB", "CC", "FF", "GG"]);
+    // The leap: only EE's is a lower bound; DD's is a plain figure and ranks.
+    expect(tableRows(fixture, single1, "leap").map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD", "CC", "FF", "GG"]);
+    // A dollar measure nothing bounds: the ranking alone, largest first.
+    expect(tableRows(fixture, single1, "biggestLoss").map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD", "CC", "FF", "GG"]);
   });
 });
 
 describe("the committed sweep", () => {
   const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
+  const single2 = summary.archetypes.find((a) => a.id === "single-2")!;
+  it("for the leap, the lower-bound states precede the largest exact leap (B1); for one-step loss the order is the ranking", () => {
+    const leap = tableRows(summary, single2, "leap");
+    const lower = leap.filter((r) => r.kind === "past").map((r) => r.st);
+    expect(lower.length).toBeGreaterThan(0);
+    expect(leap.slice(0, lower.length).map((r) => r.st)).toEqual(lower);
+    const largestExact = leap.find((r) => r.kind === "shaded")!;
+    for (const st of lower) expect(leap.findIndex((r) => r.st === st)).toBeLessThan(leap.indexOf(largestExact));
+    const loss = tableRows(summary, single2, "biggestLoss");
+    expect(loss.filter((r) => r.kind === "past")).toEqual([]);
+    const g = group(rowsFor(summary, single2, measureByKey("biggestLoss")!), measureByKey("biggestLoss")!);
+    expect(loss.map((r) => r.st)).toEqual([...g.ranked, ...g.none, ...g.incomplete].map((r) => r.st));
+  });
+  it("a state whose worst zone closes but whose last zone runs off the axis has an exact leap and no safe exit (S9)", () => {
+    const rows = rowsFor(summary, single2, measureByKey("safeExit")!);
+    const split = rows.filter((r) => r.m.safeExit === null && !r.m.leapIsLowerBound && r.m.cliffCount > 0);
+    expect(split.length).toBeGreaterThan(0);
+    for (const r of split) {
+      expect(r.kind).toBe("past");
+      expect(rowsFor(summary, single2, measureByKey("leap")!).find((x) => x.st === r.st)!.kind).toBe("shaded");
+    }
+  });
   it("yields a row for every state on every measure and archetype, with no NaN bin", () => {
     for (const a of summary.archetypes) for (const m of MEASURES) {
       const rows = rowsFor(summary, a, m);

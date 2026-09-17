@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { answersFor, archetypeById, evaluateCurve, parsePEResponse, type CurvePoint } from "@hotgap/core";
+import { answersFor, archetypeById, evaluateCurve, loadStateFile, parsePEResponse, type CurvePoint } from "@hotgap/core";
 import { point as flat } from "../../core/src/testing.js";
 import { stateMetrics } from "./metrics.js";
 
@@ -26,19 +26,39 @@ describe("stateMetrics on the committed CA fixture", () => {
     expect(m.dangerWidth).toBeGreaterThan(0);
     expect(m.safeExit).toBe(91000);
     expect(m.leap).toBe(7000);
+    // The worst step carries its own facts (places review B3): the subsidy
+    // end at $84k, the immediate cliff, not the deferred Head Start one at $30k.
+    expect(m.biggestLossAt).toBe(84000);
+    expect(m.biggestLossPrograms).toEqual(["aca"]);
+  });
+});
+
+describe("stateMetrics on the committed Ohio file", () => {
+  // Pinned from the committed sweep, read at test time, so the figure the
+  // places page prints for its default household ("$12,062 lost at $38,000
+  // → $39,000, when the CCDF child care subsidy ends") is the file's.
+  it("reads the worst step's earnings and programs off the single-parent curve", () => {
+    const file = loadStateFile("OH")!;
+    const single2 = archetypeById("single-2");
+    const m = stateMetrics(evaluateCurve(answersFor("OH", single2), { year: file.year, currentEarnings: 0, points: file.archetypes["single-2"].points }, "archetype"));
+    expect(m.biggestLoss).toBe(12062);
+    expect(m.biggestLossAt).toBe(38000);
+    expect(m.biggestLossPrograms).toEqual(["childcare"]);
   });
 });
 
 describe("stateMetrics on synthetic curves", () => {
   it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
-    expect(stateMetrics(evaluated(pts))).toEqual({ biggestLoss: 0, dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false });
+    expect(stateMetrics(evaluated(pts))).toEqual({ biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false });
   });
 
   it("measures dangerWidth to the axis max when the zone never recovers, and reports safeExit null", () => {
     const pts = [flat(0, 20000), flat(50000, 30000), flat(100000, 22000)];
     const m = stateMetrics(evaluated(pts));
     expect(m.biggestLoss).toBe(8000);
+    expect(m.biggestLossAt).toBe(50000);
+    expect(m.biggestLossPrograms).toEqual([]); // a drop no program explains still names its step
     expect(m.cliffCount).toBe(1);
     expect(m.dangerWidth).toBe(50000); // from the $50k peak to the $100k axis end
     expect(m.safeExit).toBeNull(); // the zone never recovers within the sweep

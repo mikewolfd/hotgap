@@ -1,86 +1,105 @@
-// The places surface (design/journalist.html made real): the committed sweep
+// The places surface (design/journalist.html made real): the committed run
 // read once from /data/summary.json, filtered by household, measure and
-// table order, with one selected state whose corrections open under the map.
-// The view lives in the query string so a link lands on exactly it.
+// table order, with one selected state whose readout fills beside the map
+// and whose corrections open under it. The view lives in the query string
+// so a link lands on exactly it.
 import "../../../design/tokens.css";
 import "./places.css";
-import type { SummaryJson } from "@hotgap/core";
+import { DEFAULT_ARCHETYPE, type SummaryJson } from "@hotgap/core";
+import { $ } from "../lib/dom.js";
+import { copy } from "./copy.js";
 import { csvFor, csvName } from "./csv.js";
-import { capitalize, esc, word } from "./format.js";
-import { archLabel, group, MEASURES, measureByKey, PREFERRED_HOUSEHOLD, rowsFor, type SortKey, type StateRow } from "./model.js";
-import { $, applySelection, GROUPS, renderDetail, renderFigure, renderMethod, renderMethodSource, renderRank, renderTable, type Scene } from "./render.js";
+import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
+import { applySelection, GROUPS, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
 import { tileNeighbor } from "./tiles.js";
 import { parseView, viewQuery, type View } from "./url.js";
 
 async function load(): Promise<SummaryJson> {
   const res = await fetch("/data/summary.json");
-  if (!res.ok) throw new Error(`the data file answered HTTP ${res.status}`);
+  if (!res.ok) throw new Error(copy.status.http(res.status));
   return res.json() as Promise<SummaryJson>;
 }
 
 function main(summary: SummaryJson): void {
   const arches = summary.archetypes;
   const states = Object.keys(summary.states).sort();
-  let view: View = parseView(location.search, {
+  const domain = {
     households: arches.map((a) => a.id),
     states,
-    defaultHousehold: arches.some((a) => a.id === PREFERRED_HOUSEHOLD) ? PREFERRED_HOUSEHOLD : arches[0].id,
-  });
+    // core's default, when the run carries it; the file's first archetype otherwise.
+    defaultHousehold: arches.some((a) => a.id === DEFAULT_ARCHETYPE) ? DEFAULT_ARCHETYPE : arches[0].id,
+  };
+  let view: View = parseView(location.search, domain);
   let scene: Scene;
   /** The table's rows in the order shown — what the CSV and the row keys walk. */
   let tableOrder: StateRow[] = [];
 
-  /* Everything that is the same for every view, once. The counted sentence
-     of the lede is written whole, from the data (S6): a skeleton with holes
-     is not a sentence. */
-  $<HTMLSelectElement>("arch").innerHTML = arches.map((a) => `<option value="${a.id}">${esc(archLabel(a))}</option>`).join("");
-  $<HTMLSelectElement>("metric").innerHTML = MEASURES.map((m) => `<option value="${m.key}">${esc(m.option)}</option>`).join("");
-  $("ledeCount").textContent = `${capitalize(word(states.length))} sets of rules, ${word(arches.length)} household shapes, one axis. `;
-  $("tableCount").textContent = String(states.length);
-  for (const el of document.querySelectorAll(".year")) el.textContent = summary.year;
-  renderMethodSource(summary);
+  renderOnce(summary);
 
   const syncControls = () => {
     $<HTMLSelectElement>("arch").value = view.household;
     $<HTMLSelectElement>("metric").value = view.measure;
     $<HTMLSelectElement>("sort").value = view.sort;
   };
-  /* The URL is left as it came until something changes; then every key is written. */
-  const writeUrl = () => history.replaceState(null, "", viewQuery(view));
+  /* The address of this view, for the bar and the Cite line: the page's own
+     origin and path, never typed. Filter changes replace the entry (N1,
+     declined: history spam makes Back useless for leaving); selecting a
+     state pushes one, so Back from a shared deep link returns to the
+     unselected view — the one undo a person expects. */
+  const viewUrl = () => `${location.origin}${location.pathname}${viewQuery(view)}`;
+  const writeUrl = (push = false) => {
+    history[push ? "pushState" : "replaceState"](null, "", viewQuery(view));
+    renderCite(summary, viewUrl());
+  };
 
-  /* A full pass: O(states log states) for the ranking, O(states) for the rest. */
+  /* A full pass: O(states log states) for the ranking and the table's order, O(states) for the rest. */
   const render = () => {
     const arch = arches.find((a) => a.id === view.household)!;
     const measure = measureByKey(view.measure)!;
     const rows = rowsFor(summary, arch, measure);
     scene = { summary, arch, archLabel: archLabel(arch), measure, rows, g: group(rows, measure), sel: view.state };
     renderFigure(scene);
+    renderReadout(scene);
     renderRank(scene);
     tableOrder = renderTable(scene, view.sort);
     renderMethod(scene);
     renderDetail(scene);
+    swipeHint();
   };
 
-  /* Selecting a state rebuilds nothing but the detail block. From the
-     table, a viewport or more below the block it drives, the page also takes
-     the reader there and hands focus to its heading (S1) — the rule a chart
-     mark follows when it opens its row (charts.md § M6); the row keeps
-     aria-current, so the table's tab stop is still that row on the way back. */
+  /* Selecting a state rebuilds nothing but the readout and the detail block.
+     From a tile or the table the page also takes the reader to the block and
+     hands focus to its heading (S1) — the rule a chart mark follows when it
+     opens its row (charts.md § M6); the control keeps aria-current, so its
+     group's tab stop is still that control on the way back. A rank row is
+     beside the map, where the readout answers in place. */
   const select = (st: string, from: (typeof GROUPS)[number]) => {
     view = { ...view, state: st };
     scene.sel = st;
     applySelection(st);
+    renderReadout(scene);
     renderDetail(scene);
-    writeUrl();
-    if (from === "tbody") {
+    writeUrl(true);
+    if (from !== "rankList") {
       const heading = $("stateTitle");
       heading.scrollIntoView({ block: "start" });
       heading.focus();
     }
   };
 
+  /* The table's scroller says when there is more to the side (S10): the
+     system draws the edge fade; the words are this page's. Re-read when the
+     column changes width, which the observer sees and a resize event may not. */
+  const scroller = $("scroller");
+  const swipeHint = () => {
+    if (scroller.scrollWidth > scroller.clientWidth) scroller.dataset.more = copy.table.swipe; else delete scroller.dataset.more;
+  };
+  // Next frame, not inside the delivery: the hint changes the scroller's own height.
+  new ResizeObserver(() => requestAnimationFrame(swipeHint)).observe(scroller);
+
   syncControls();
   render();
+  renderCite(summary, viewUrl());
   $("main").hidden = false;
 
   const onChange = (id: string, apply: (value: string) => void) =>
@@ -88,6 +107,12 @@ function main(summary: SummaryJson): void {
   onChange("arch", (household) => { view = { ...view, household }; render(); });
   onChange("metric", (measure) => { view = { ...view, measure: measure as View["measure"] }; render(); });
   onChange("sort", (sort) => { view = { ...view, sort: sort as SortKey }; tableOrder = renderTable(scene, view.sort); });
+  /* Back from a pushed selection: the view the URL names, rendered whole. */
+  window.addEventListener("popstate", () => {
+    view = parseView(location.search, domain);
+    syncControls();
+    render();
+  });
 
   /* The controls: a tile, a rank row and a table row are all buttons that
      select their state; each group is one tab stop with a roving tabindex
@@ -124,11 +149,12 @@ function main(summary: SummaryJson): void {
   });
 }
 
+renderStatic();
 load().then((summary) => {
   $("status").hidden = true;
   main(summary);
 }).catch((err: unknown) => {
   const status = $("status");
   status.setAttribute("role", "alert");
-  status.textContent = `We could not load the weekly sweep: ${err instanceof Error ? err.message : String(err)}. Reload to try again.`;
+  status.textContent = copy.status.failed(err instanceof Error ? err.message : String(err));
 });

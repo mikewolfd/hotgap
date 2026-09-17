@@ -1,0 +1,74 @@
+== 390px ==
+ok   the lede's counted sentence is written whole from the data (S6), and says what the one axis is (N12) — Fifty-one sets of rules, eleven household shapes, one earnings scale — from $0 past 400% o
+ok   the glossary sentence defines cliff and danger zone from core's floor (S3) and introduces PolicyEngine (S6) — A cliff is a $1,000 raise that cuts net income by $200 or more; a danger zone is
+ok   every measure option stands on its own (S2) — ["Largest one-step loss ($)","Width of the worst danger zone ($)","The leap — the raise needed to clear the worst danger zone ($)","Safe exit — earnings above which no danger zone remains ($)","Number of cliffs","Deferred cliffs — of the cliffs counted, those that land at a later renewal"]
+ok   the phone masthead keeps the page's 16px side gutter (N5) — 16
+ok   light: the no-cliff tile's edge ≥ 3:1 on the map ground (N10) — 3.49
+ok   a tile click fills the readout and scrolls the corrections block into view with focus on its heading (S1) — {"focused":true,"inView":true,"readout":"Texas — $13,087 lost at $76,000 → $77,000, when CCDF child care subsidy ends. Renter, Harris County. Details below ↓"}
+ok   a gap every state shares is listed once under the method, never under a state; a state's own gaps stay in its block (S8) — {"txAll":["LIHEAP"],"txOwn":[],"unmod":[]}
+ok   every correction note is a sentence with its issue number and no code pointer (S9) — HotGap sends the state's own published parent Medicaid income limit for this household's size, as a share of the 2026 poverty line including the MAGI disregard, because PolicyEngine's figure is five years out of date (policyengine-us #9474; fixed upstream in PR #9475). fhb.hhs.texas.gov
+ok   sorted by safe exit, the lower-bound rows lead the table under their own heading, before the largest comparable exit (B1) — {"firstRow":"NY","expectedFirst":"NY","lowerBound":["NY","VT"],"groupRows":["Past the top of the axis — no safe exit found on the scale (2)","No cliff found (1)","Not ranked — figures incomplete (2)"]}
+ok   Texas's block states the child-care subsidy's footing from corrections.childcareSubsidy (B2) — What HotGap changed on top of PolicyEngine before any figure for Texas was read. Child-care subsidy: added by HotGap for Texas.
+ok   Ohio's readout and block line are the summary's fields: the loss, the step it happens at, the programs it ends, the county (B3, B4) — {"readout":"Ohio — $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends. Renter, Franklin County. Details below ↓","expectedOh":"Ohio — $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends. Renter, Franklin County."}
+ok   Ohio's (0) block says the fixes were not needed and states the subsidy's footing (B2) — PolicyEngine's own figures for Ohio stand as served; HotGap changed nothing on top of them — the fixes other states need were not needed here. Child-care subsidy: inside PolicyEngine's net income for Ohio.
+ok   the state's source line names the county (B4) and no longer describes reach (N9) — Estimates only. Rules: 2026. Rent: HUD Office of Policy Development and Research, Fair Market Rents; FY2026 revised schedule (effective 2025-10-01). County: Franklin County (the state's most populous; Vintage 2024 (July 1, 2024 estimates)). Child-care price: county price, 2018 study, carried to 2026 dollars by the BLS Employment Cost Index. Model: policyengine-us 2.6.2. Weekly run of Sep 17, 2026.
+ok   Ohio's block lists no universal gap under the state (S8) — []
+ok   the Cite line carries the year, the model, the run date and this view's own URL (N13) — Cite as: HotGap, What a raise costs, state by state, 2026 rules on PolicyEngine (policyengine-us 2.6.2), run of Sep 17, 2026, http://127.0.0.1:5199/places.html?household=single-2&measure=biggestLoss&sort=safeExit&state=OH.
+ok   no sweep, endpoint, issue number or variable name in the page's own words (N7)
+ok   the other-benefit variable lives in the cite's title, not in the prose (N7) — ["PolicyEngine variable: nj_property_tax_relief"]
+ok   the keyboard note says Enter selects (N10)
+ok   a state whose last zone runs off the axis prints an exact leap and a safe exit that points at the box saying why (S9) — {"split":["NE"],"splitCells":[{"st":"NE","leap":"$44,000","exit":"past the axis","describedBy":"pastAxisNote"}],"note":"Past the axis is not a number. Where a state's last danger zone runs off the top of the axis rather than closing, the sa"}
+ok   the near-monochrome deferred map explains itself in the caption (N11) — {"expectOneClass":"45 of the 48 comparable states have none."}
+ok   the deferred map's subtitle names the three mechanisms (S4) — 2 adults, both working, 2 children (3 and 7). Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance.
+ok   the CSV is named by the household as the reader knows it (N7) — hotgap-2-adults-both-working-2-children-3-and-7-2026-09-17.csv
+ok   every CSV row's provenance columns equal summary.json's generated, model, county and vintages; the model has a label; reach is gone (B4, N8, N9)
+ok   the DC row reads whole through an independent RFC 4180 parser, its source the one constant (N8) — {"name":"Washington, DC","source":"HotGap/PolicyEngine"}
+ok   every CSV row carries the worst step's earnings and programs from the file (B3)
+ok   an incomplete row's cells carry the floor caveat and the Figures cell names the program (S5) — ["floor: NJ Health Plan Savings not modelled","floor: Cascade Care Savings not modelled"]
+ok   an incomplete row carries no grey left bar; the only left bar is the selected row's, in ink (S7) — [["NJ",true,"rgb(18, 23, 28) 3px 0px 0px 0px inset"],["WA",false,"rgb(211, 216, 222) -1px 0px 0px 0px inset"]]
+ok   at 390 the incomplete rows' amber mark sits in the state cell, on screen without a swipe (S10) — [{"text":"floor","visible":true,"right":74.328125,"edge":374,"scrollLeft":0},{"text":"floor","visible":true,"right":78.984375,"edge":374,"scrollLeft":0}]
+ok   at 390 the table overflows its scroller, the system's edge fade is drawn and the page's swipe words are set (S10) — {"over":true,"more":"Swipe for more →","gradients":4,"overflow":"auto"}
+ok   at 390 the state column is sticky (S10) — {"position":"sticky","left":"0px"}
+ok   the table order control offers every measure, and sorts the table by it without changing the map (N2) — {"options":["state","biggestLoss","dangerWidth","leap","safeExit","cliffCount","deferredCliffCount"],"first":["VT","LA","MO"]}
+ok   the ranked strip prints each state's rank, ties sharing one (N3) — [["29.","AL"],["30.","NV"],["31.","OH"]]
+ok   on a count measure every state at the top value is first, and the first at the next value takes the rank after them (N3) — {"firstZero":3,"sample":[["1.","1"],["4.","0"]]}
+ok   for the leap, the lower-bound states lead the strip under their own heading with a ≥ figure, before the largest exact leap (B1) — {"lower":[["NY","≥ $72,000"],["VT","≥ $57,000"]],"title":"At least this much — the exact size runs past the axis (2)","hidden":false,"before":4,"first":"CO"}
+ok   dark: the no-cliff tile's edge ≥ 3:1 on the map ground (N10) — 3.74
+== 1280px ==
+ok   the lede's counted sentence is written whole from the data (S6), and says what the one axis is (N12) — Fifty-one sets of rules, eleven household shapes, one earnings scale — from $0 past 400% o
+ok   the glossary sentence defines cliff and danger zone from core's floor (S3) and introduces PolicyEngine (S6) — A cliff is a $1,000 raise that cuts net income by $200 or more; a danger zone is
+ok   every measure option stands on its own (S2) — ["Largest one-step loss ($)","Width of the worst danger zone ($)","The leap — the raise needed to clear the worst danger zone ($)","Safe exit — earnings above which no danger zone remains ($)","Number of cliffs","Deferred cliffs — of the cliffs counted, those that land at a later renewal"]
+ok   light: the no-cliff tile's edge ≥ 3:1 on the map ground (N10) — 3.49
+ok   a tile click fills the readout and scrolls the corrections block into view with focus on its heading (S1) — {"focused":true,"inView":true,"readout":"Texas — $13,087 lost at $76,000 → $77,000, when CCDF child care subsidy ends. Renter, Harris County. Details below ↓"}
+ok   a gap every state shares is listed once under the method, never under a state; a state's own gaps stay in its block (S8) — {"txAll":["LIHEAP"],"txOwn":[],"unmod":[]}
+ok   every correction note is a sentence with its issue number and no code pointer (S9) — HotGap sends the state's own published parent Medicaid income limit for this household's size, as a share of the 2026 poverty line including the MAGI disregard, because PolicyEngine's figure is five years out of date (policyengine-us #9474; fixed upstream in PR #9475). fhb.hhs.texas.gov
+ok   sorted by safe exit, the lower-bound rows lead the table under their own heading, before the largest comparable exit (B1) — {"firstRow":"NY","expectedFirst":"NY","lowerBound":["NY","VT"],"groupRows":["Past the top of the axis — no safe exit found on the scale (2)","No cliff found (1)","Not ranked — figures incomplete (2)"]}
+ok   Texas's block states the child-care subsidy's footing from corrections.childcareSubsidy (B2) — What HotGap changed on top of PolicyEngine before any figure for Texas was read. Child-care subsidy: added by HotGap for Texas.
+ok   Ohio's readout and block line are the summary's fields: the loss, the step it happens at, the programs it ends, the county (B3, B4) — {"readout":"Ohio — $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends. Renter, Franklin County. Details below ↓","expectedOh":"Ohio — $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends. Renter, Franklin County."}
+ok   Ohio's (0) block says the fixes were not needed and states the subsidy's footing (B2) — PolicyEngine's own figures for Ohio stand as served; HotGap changed nothing on top of them — the fixes other states need were not needed here. Child-care subsidy: inside PolicyEngine's net income for Ohio.
+ok   the state's source line names the county (B4) and no longer describes reach (N9) — Estimates only. Rules: 2026. Rent: HUD Office of Policy Development and Research, Fair Market Rents; FY2026 revised schedule (effective 2025-10-01). County: Franklin County (the state's most populous; Vintage 2024 (July 1, 2024 estimates)). Child-care price: county price, 2018 study, carried to 2026 dollars by the BLS Employment Cost Index. Model: policyengine-us 2.6.2. Weekly run of Sep 17, 2026.
+ok   Ohio's block lists no universal gap under the state (S8) — []
+ok   the Cite line carries the year, the model, the run date and this view's own URL (N13) — Cite as: HotGap, What a raise costs, state by state, 2026 rules on PolicyEngine (policyengine-us 2.6.2), run of Sep 17, 2026, http://127.0.0.1:5199/places.html?household=single-2&measure=biggestLoss&sort=safeExit&state=OH.
+ok   no sweep, endpoint, issue number or variable name in the page's own words (N7)
+ok   the other-benefit variable lives in the cite's title, not in the prose (N7) — ["PolicyEngine variable: nj_property_tax_relief"]
+ok   the keyboard note says Enter selects (N10)
+ok   a state whose last zone runs off the axis prints an exact leap and a safe exit that points at the box saying why (S9) — {"split":["NE"],"splitCells":[{"st":"NE","leap":"$44,000","exit":"past the axis","describedBy":"pastAxisNote"}],"note":"Past the axis is not a number. Where a state's last danger zone runs off the top of the axis rather than closing, the sa"}
+ok   the near-monochrome deferred map explains itself in the caption (N11) — {"expectOneClass":"45 of the 48 comparable states have none."}
+ok   the deferred map's subtitle names the three mechanisms (S4) — 2 adults, both working, 2 children (3 and 7). Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance.
+ok   the CSV is named by the household as the reader knows it (N7) — hotgap-2-adults-both-working-2-children-3-and-7-2026-09-17.csv
+ok   every CSV row's provenance columns equal summary.json's generated, model, county and vintages; the model has a label; reach is gone (B4, N8, N9)
+ok   the DC row reads whole through an independent RFC 4180 parser, its source the one constant (N8) — {"name":"Washington, DC","source":"HotGap/PolicyEngine"}
+ok   every CSV row carries the worst step's earnings and programs from the file (B3)
+ok   an incomplete row's cells carry the floor caveat and the Figures cell names the program (S5) — ["floor: NJ Health Plan Savings not modelled","floor: Cascade Care Savings not modelled"]
+ok   an incomplete row carries no grey left bar; the only left bar is the selected row's, in ink (S7) — [["NJ",true,"rgb(18, 23, 28) 3px 0px 0px 0px inset"],["WA",false,"rgb(211, 216, 222) -1px 0px 0px 0px inset"]]
+ok   at 1280 the table fits and no swipe words are set (S10) — {"over":false,"more":null,"gradients":4,"overflow":"visible"}
+ok   the table order control offers every measure, and sorts the table by it without changing the map (N2) — {"options":["state","biggestLoss","dangerWidth","leap","safeExit","cliffCount","deferredCliffCount"],"first":["VT","LA","MO"]}
+ok   the ranked strip prints each state's rank, ties sharing one (N3) — [["29.","AL"],["30.","NV"],["31.","OH"]]
+ok   on a count measure every state at the top value is first, and the first at the next value takes the rank after them (N3) — {"firstZero":3,"sample":[["1.","1"],["4.","0"]]}
+ok   for the leap, the lower-bound states lead the strip under their own heading with a ≥ figure, before the largest exact leap (B1) — {"lower":[["NY","≥ $72,000"],["VT","≥ $57,000"]],"title":"At least this much — the exact size runs past the axis (2)","hidden":false,"before":4,"first":"CO"}
+ok   dark: the no-cliff tile's edge ≥ 3:1 on the map ground (N10) — 3.74
+ok   the PDF's first page draws a form at the WA tile's print position — {"pages":6,"formsOnPage1":3,"wa":{"x":"41.0","y":"505.9","ground":"241,243,246"},"fills":["94,104,113","0,0,0"],"maskTransitions":[6,0,7],"nm":0}
+ok   the WA tile's ground is the light sunk colour, at the tile's size (print from dark is light) — {"pdf":{"x":40.999998291666664,"y":505.99997891666663,"w":27.99999883333333,"h":27.999998833333336,"fill":[241,243,246]},"want":["rgb(241, 243, 246)",27.53125]}
+all checks passed
+
+Table order options: State, A to Z | Largest one-step loss, largest first | Width of the worst danger zone, largest first | The leap, largest first | Safe exit, largest first | Number of cliffs, most first | Deferred cliffs, most first
