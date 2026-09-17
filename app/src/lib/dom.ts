@@ -28,3 +28,8 @@ export function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Attrs =
 
 /** The element the page's skeleton names by id; the page owns the skeleton, so a miss is a bug, not a null. */
 export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+/** The skeleton's fixed words: each id's text, from the surface's copy module, once (audit K8). */
+export function fillText(text: Record<string, string>): void {
+  for (const [id, t] of Object.entries(text)) $(id).textContent = t;
+}
