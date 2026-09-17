@@ -12,7 +12,7 @@ import { PROGRAM_END_MIN } from "./analyze.js";
 import { ARCHETYPES, answersFor } from "./archetypes.js";
 import { countyName } from "./county.js";
 import type { CorrectionNote, LiheapCoverage, ModelRecord, OtherBenefit, PolicyOverrideRecord, StateCorrections, StateCoverage, UnmodeledProgram } from "./data.js";
-import { liheapLimitWords, liheapRow } from "./liheap.js";
+import { LIHEAP_VINTAGE, liheapLimitWords, liheapRow } from "./liheap.js";
 import { MA_TAFDC_SOURCES } from "./maTafdc.js";
 import { BHP_EXPANDED_STATES, POLICY_OVERRIDE_SOURCES, policyOverridesFor } from "./policyOverrides.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
@@ -161,7 +161,7 @@ function liheapNote(state: string): StateCorrections["liheap"] {
       note: "Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is.",
     };
   }
-  const served = row.servedShare === null ? "a share of eligible households the FY2024 profile does not give" : `about ${Math.round(row.servedShare * 100)}% of its income-eligible households in FY2024`;
+  const served = row.servedShare === null ? `a share of eligible households the ${LIHEAP_VINTAGE.served} profile does not give` : `about ${Math.round(row.servedShare * 100)}% of its income-eligible households in ${LIHEAP_VINTAGE.served}`;
   return {
     applies: false, source: "boundary", program: "LIHEAP", code: "liheap.ts liheapBoundary", cite: row.sources.limits,
     note: `HotGap shows where energy assistance (LIHEAP) stops in this state — ${liheapLimitWords(row.heating.limit)} — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served ${served}, so a curve that assumed it would draw a benefit most eligible families never receive.`,

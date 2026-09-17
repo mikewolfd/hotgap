@@ -149,6 +149,15 @@ p { max-width: var(--measure-wide); }
 .state .sub { color: var(--ink-2); margin: 0; }
 /* The step sentence leads the block (B3): the same sentence as the readout, in ink. */
 .state #stateStep { color: var(--ink); margin-bottom: var(--s2); }
+/* EligibilityBoundary (#23): one row after the state's lists, set off by the
+   lifted-out mark the rank groups use (a 2px strong rule), because it is
+   not one more correction; the chip sits after the name in the name
+   column, the way the ledger tags its row, and the row's sentence is at the
+   row's own size — the facts are the content, the publishers the cite. */
+.state .boundary { margin-top: var(--s4); border-top: 2px solid var(--rule-strong); }
+.state .boundary > li { border-top: 0; }
+.state .boundary .hg-tag { vertical-align: 2px; }
+.state .boundary .hg-cite { margin-top: var(--s1); }
 .state .hg-source { margin-top: var(--s5); }
 @media (max-width: 519.98px) { .state .hg-rows > li { grid-template-columns: 1fr; gap: var(--s1); } }
 

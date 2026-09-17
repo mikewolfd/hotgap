@@ -79,6 +79,22 @@ describe("csvFor on the committed sweep", () => {
     expect(body.find((r) => r[col("state")] === "OH")![col("childcare_subsidy_footing")]).toBe("in PolicyEngine's net income");
     expect(body.find((r) => r[col("state")] === "TX")![col("childcare_subsidy_footing")]).toBe("added by HotGap");
   });
+  it("carries the LIHEAP boundary's two facts from every block (#23): Ohio's limit in words and its served share as a fraction, Hawaii's share empty, never a number", () => {
+    for (const r of body) {
+      const b = summary.coverage![r[col("state")]].liheap!;
+      expect(r[col("liheap_limit")]).toBe(b.limitKind);
+      expect(r[col("liheap_served_share")]).toBe(b.servedShare === null ? "" : String(b.servedShare));
+    }
+    const oh = body.find((r) => r[col("state")] === "OH")!;
+    expect(oh[col("liheap_limit")]).toBe("175% of the poverty guideline");
+    expect(oh[col("liheap_served_share")]).toBe("0.22");
+    const hi = body.find((r) => r[col("state")] === "HI")!;
+    expect(summary.coverage!.HI.liheap!.servedShare).toBeNull();
+    expect(hi[col("liheap_served_share")]).toBe("");
+    // A boundary, not a measure: no column ranks or bins it, and the two sit with the footing columns, before the county.
+    expect(head.indexOf("liheap_limit")).toBe(head.indexOf("childcare_subsidy_footing") + 1);
+    expect(head.indexOf("liheap_served_share")).toBe(head.indexOf("county_name") - 1);
+  });
   it("prints the model's numbers where there is a cliff, and leaves the dollar cells empty where there is none", () => {
     for (const [i, r] of body.entries()) {
       const m = rows[i].m;

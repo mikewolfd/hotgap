@@ -55,6 +55,15 @@ const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 export const dateWords = (iso: string, timeZone?: string): string =>
   (timeZone ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone }) : mediumDate).format(new Date(iso));
 
+/**
+ * A calendar day ("2026-09-16", the date a table row was read) as words. It
+ * is a day, not an instant, so it is the same day in every zone: parsed as
+ * UTC midnight and printed in UTC, where `new Date("2026-09-16")` alone
+ * would print Sep 15 to a reader west of Greenwich.
+ */
+export const dayWords = (isoDay: string): string =>
+  new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${isoDay}T00:00:00Z`));
+
 export const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 /** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words; anything else as-is. */

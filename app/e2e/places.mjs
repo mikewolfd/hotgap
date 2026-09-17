@@ -36,6 +36,10 @@ const STATES = Object.keys(summary.states).sort();
    same way; the step between points is measured off a committed state file. */
 const CHILDCARE_MAX_AGE = Number(readFileSync(resolve(ROOT, "core/src/stateDefaults.ts"), "utf8").match(/export const CHILDCARE_MAX_AGE = (\d+)/)[1]);
 const CLIFF_MIN = Number(readFileSync(resolve(ROOT, "core/src/analyze.ts"), "utf8").match(/export const CLIFF_MIN = (\d+)/)[1]);
+/* The LIHEAP table's vintages (#23), read from core's source the same way, so the boundary's sentences cannot carry a typed year. */
+const LIHEAP_VINTAGE = Object.fromEntries([...readFileSync(resolve(ROOT, "core/src/liheap.ts"), "utf8").match(/export const LIHEAP_VINTAGE = \{([^}]*)\}/)[1].matchAll(/(\w+): "([^"]+)"/g)].map((m) => [m[1], m[2]]));
+/* A calendar day as the page prints it: the same day in every zone (a naive Date parse would print the day before, west of Greenwich). */
+const dayWords = (isoDay) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${isoDay}T00:00:00Z`));
 const PROGRAM_NAME = Object.fromEntries([...readFileSync(resolve(ROOT, "app/src/lib/programs.ts"), "utf8").matchAll(/^\s+(\w+): \{ phrase: "[^"]*", name: "([^"]*)" \}/gm)].map((m) => [m[1], m[2]]));
 const ohPoints = JSON.parse(readFileSync(resolve(ROOT, "core/data/states/OH.json"), "utf8")).archetypes["single-2"].points;
 const STEP = ohPoints[1].earnings - ohPoints[0].earnings;
@@ -349,6 +353,69 @@ try {
     await page.click('.tile[data-st="TX"]');
     const txChips = await page.$$eval("#corrections li", (lis) => lis.map((li) => [li.querySelector(".hg-rows__at").textContent, li.querySelector(".hg-tag")?.textContent ?? null]));
     check(txChips.length === 3 && txChips.every(([, chip]) => chip) && txChips.some(([, chip]) => chip === "applied"), "every Texas correction carries a chip, the coverage-gap premium's reading applied (rerun N7)", txChips);
+
+    /* EligibilityBoundary (#23) in the state block: one row in the ledger's
+       shape whose three facts equal the coverage block's fields, at the row's
+       own size, with the publishers as its cite and the day read in the
+       reader's zone; the footing chip beside the name. Michigan reads as
+       counted, Hawaii's null share as not published, Missouri's flat schedule
+       as flat; and nothing about it is a measure anywhere. */
+    const boundaryOf = async (st) => {
+      await page.click(`.tile[data-st="${st}"]`);
+      return page.evaluate(() => {
+        const list = document.querySelector("#liheap"), li = list.querySelector("li");
+        return {
+          hidden: list.hidden, footing: list.dataset.footing, rows: list.querySelectorAll("li").length, rule: getComputedStyle(list).borderTopWidth,
+          after: list.compareDocumentPosition(document.querySelector("#stateSrc")) & Node.DOCUMENT_POSITION_FOLLOWING,
+          name: li.querySelector(".hg-rows__at").firstChild.textContent.trim(), chip: li.querySelector(".hg-rows__at .hg-tag")?.textContent ?? null,
+          facts: li.querySelector("p").textContent, cite: li.querySelector(".hg-cite").textContent, links: [...li.querySelectorAll(".hg-cite a")].map((a) => a.href),
+          factsSize: parseFloat(getComputedStyle(li.querySelector("p")).fontSize), citeSize: parseFloat(getComputedStyle(li.querySelector(".hg-cite")).fontSize),
+        };
+      });
+    };
+    const tenths = (share) => { const n = Math.round(share * 10); return n <= 0 ? "Fewer than 1 in 10" : n >= 10 ? "Almost all" : `About ${n} in 10`; };
+    const servedLine = (b) => (b.servedShare === null ? `The share of income-eligible households served is not published for ${LIHEAP_VINTAGE.served}.` : `${tenths(b.servedShare)} income-eligible households were served in ${LIHEAP_VINTAGE.served} (${Math.round(b.servedShare * 100)}%).`);
+    const worthLine = (b) => `Worth ${b.topBand.min === b.topBand.max ? money(b.topBand.min) : `${money(b.topBand.min)} to ${money(b.topBand.max)}`} a winter if received${b.shape === "taper" ? "; the amount tapers toward the limit." : b.shape === "notch" ? ", flat to the limit." : ", at that top income band."}`;
+    const factsOf = (b) => `Stops at ${b.limitKind}, the heating limit for ${LIHEAP_VINTAGE.limits}. ${worthLine(b)} ${servedLine(b)}`;
+    const host = (u) => new URL(u).hostname;
+    const txB = summary.coverage.TX.liheap, txN = summary.coverage.TX.corrections.liheap;
+    const txBoundary = await boundaryOf("TX");
+    check(!txBoundary.hidden && txBoundary.rows === 1 && txBoundary.after > 0 && txBoundary.rule === "2px" && txBoundary.name === "Energy assistance (LIHEAP)" && txBoundary.chip === "not counted" && txBoundary.footing === "boundary" && txN.source === "boundary"
+      && txB.topBand.min === txB.topBand.max && txB.servedShare < 0.05 && txBoundary.facts === factsOf(txB)
+      && txBoundary.cite === `Limit and amount: ${host(txB.sources.limits)}. Households served: ${host(txB.sources.served)}. Read ${dayWords(txB.readOn)}.` && txBoundary.links.join() === [txB.sources.limits, txB.sources.served].join()
+      && txBoundary.factsSize > txBoundary.citeSize,
+      "Texas's block: one row whose three facts equal coverage.TX.liheap at the row's own size, the publishers linked in its cite with the day read in the reader's zone, the chip saying not counted, set off by the strong rule before the source line (#23)", txBoundary);
+    const miB = summary.coverage.MI.liheap, miN = summary.coverage.MI.corrections.liheap;
+    const miBoundary = await boundaryOf("MI");
+    check(miN.source === "in net income" && miB.upstream?.counted === "state credit" && miBoundary.chip === "in net income" && miBoundary.footing === "in net income"
+      && miB.shape === "taper" && miBoundary.facts === `${factsOf(miB)} Paid as the ${miN.program}, which is counted in every figure for ${STATE_NAME.MI}.` && /Home Heating Credit/.test(miBoundary.facts),
+      "Michigan reads as counted: the chip says in net income, the row names the Home Heating Credit as counted in every figure, and the taper's worth says it tapers (#23)", { chip: miBoundary.chip, facts: miBoundary.facts });
+    const hiB = summary.coverage.HI.liheap;
+    const hiBoundary = await boundaryOf("HI");
+    check(hiB.servedShare === null && hiB.sources.served === null && hiBoundary.facts === factsOf(hiB) && hiBoundary.facts.endsWith(`served is not published for ${LIHEAP_VINTAGE.served}.`) && !/\d+%\)\.$/.test(hiBoundary.facts)
+      && hiBoundary.links.length === 1 && hiBoundary.chip === "not counted",
+      "Hawaii's null served share prints as not published — no percentage, no served link — and the row still says not counted (#23)", { facts: hiBoundary.facts, links: hiBoundary.links });
+    const moB = summary.coverage.MO.liheap;
+    const moBoundary = await boundaryOf("MO");
+    check(moB.shape === "notch" && moBoundary.facts.includes(`Worth ${money(moB.topBand.min)} to ${money(moB.topBand.max)} a winter if received, flat to the limit.`) && moBoundary.facts === factsOf(moB),
+      "Missouri's flat schedule reads as flat to the limit, its range the block's (#23)", moBoundary.facts);
+    /* A boundary, not a measure: nothing about it in the ranked strip, the map, its legend or scale, the tiles, the table's columns or any control. */
+    const noMeasure = await page.evaluate(() => ({
+      rank: document.querySelector("#rankList").textContent, figure: document.querySelector("#legend").textContent + document.querySelector("#scaleLabels").textContent + document.querySelector("#figSrc").textContent + document.querySelector("#figSub").textContent,
+      controls: [...document.querySelectorAll("#sort option, #metric option, #arch option")].map((o) => o.textContent).join("|"),
+      table: [...document.querySelectorAll("thead th")].map((th) => th.textContent).join("|") + document.querySelector("#defs").textContent,
+      tiles: [...document.querySelectorAll(".tile")].map((t) => t.getAttribute("aria-label")).join("|"),
+    }));
+    check(Object.values(noMeasure).every((t) => !/liheap|energy|heating/i.test(t)), "nothing about LIHEAP in the ranked strip, the map, its legend, the tiles, the table's columns or any sort or measure control (#23: a boundary is not a measure)");
+    /* The method says it once for the page, from every block: the served range with its two states, and the states where the money is counted. */
+    const shares = STATES.filter((st) => summary.coverage[st].liheap.servedShare !== null).sort((a, b) => summary.coverage[a].liheap.servedShare - summary.coverage[b].liheap.servedShare);
+    const lo = shares[0], hi = shares[shares.length - 1];
+    const countedStates = STATES.filter((st) => summary.coverage[st].corrections.liheap.source === "in net income");
+    const liheapMethod = (await page.$$eval("#excludes li", (els) => els.map((el) => el.textContent))).find((t) => t.startsWith("Energy assistance (LIHEAP)"));
+    check(liheapMethod !== undefined && liheapMethod.includes(`the states served between ${Math.round(summary.coverage[lo].liheap.servedShare * 100)}% (${STATE_NAME[lo]}) and ${Math.round(summary.coverage[hi].liheap.servedShare * 100)}% (${STATE_NAME[hi]})`)
+      && (countedStates.length === 0 ? !/except in/.test(liheapMethod) : liheapMethod.includes(`except in ${countedStates.map((st) => STATE_NAME[st]).join(" and ")}, where it is paid as the ${summary.coverage[countedStates[0]].corrections.liheap.program} and counted`)),
+      "the method names LIHEAP once for the page with the served range and its two states from every block, and the states where it is counted (#23)", liheapMethod?.slice(0, 160));
+    await page.click('.tile[data-st="TX"]');
     await page.selectOption("#metric", "biggestLoss");
     await page.click('#rankList .hg-row-btn[data-st="OH"]');
     check(ohText.sub.endsWith(subsidyLine("OH")) && /the fixes other states need were not needed here/.test(ohText.sub), "Ohio's (0) block says the fixes were not needed and states the subsidy's footing (B2)", ohText.sub);
@@ -452,6 +519,14 @@ try {
     check(footingCol && head.includes("childcare_subsidy_footing") && footing("OH") !== footing("TX")
       && (figuresCells.TX.endsWith("child-care subsidy added by HotGap")) === (footing("TX") === "added by HotGap") && (figuresCells.OH.endsWith("child-care subsidy added by HotGap")) === (footing("OH") === "added by HotGap"),
       "every CSV row carries childcare_subsidy_footing from the coverage record, and the Figures cell says so where HotGap added it (rerun S4)", { OH: [footing("OH"), figuresCells.OH], TX: [footing("TX"), figuresCells.TX] });
+    /* The boundary's CSV pair (#23): Ohio's two cells equal its block on the page and in the file; Hawaii's share is empty, never a number; every row is its block's. */
+    const ohCsv = body.find((c) => c[col("state")] === "OH"), hiCsv = body.find((c) => c[col("state")] === "HI");
+    const ohBoundary = await boundaryOf("OH");
+    const liheapCols = body.every((c) => c[col("liheap_limit")] === summary.coverage[c[col("state")]].liheap.limitKind && c[col("liheap_served_share")] === String(summary.coverage[c[col("state")]].liheap.servedShare ?? ""));
+    check(liheapCols && ohCsv[col("liheap_limit")] === summary.coverage.OH.liheap.limitKind && Number(ohCsv[col("liheap_served_share")]) === summary.coverage.OH.liheap.servedShare
+      && ohBoundary.facts.startsWith(`Stops at ${ohCsv[col("liheap_limit")]}, `) && ohBoundary.facts.endsWith(` (${Math.round(Number(ohCsv[col("liheap_served_share")]) * 100)}%).`)
+      && hiCsv[col("liheap_served_share")] === "" && head.indexOf("liheap_limit") === head.indexOf("childcare_subsidy_footing") + 1,
+      "the CSV's liheap_limit and liheap_served_share equal Ohio's block on the page and in the file, sit with the footing columns, and Hawaii's share is empty (#23)", { OH: [ohCsv[col("liheap_limit")], ohCsv[col("liheap_served_share")]], HI: hiCsv[col("liheap_served_share")], facts: ohBoundary.facts });
 
     /* The incomplete rows carry their caveat in their own cells (S5), one bar means selection (S7), and the flag is on screen at any width (S10). */
     const incompleteRows = STATES.filter((st) => expectIncompleteFor(st, "married-dual-2"));

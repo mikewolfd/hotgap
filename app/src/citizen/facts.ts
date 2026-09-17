@@ -10,6 +10,7 @@ import {
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { dateWords, listOf, unitFigure } from "../lib/format.js";
 import { capitalize, modelLine } from "../lib/format.js";
+import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { NONCASH, phrase, phraseAndName } from "./programs.js";
@@ -180,8 +181,8 @@ export function boundaryText(s: Scene): string | null {
     : t("boundary.worth", { min: m.money(b.topBand.min), max: m.money(b.topBand.max) });
   if (b.servedShare === null) out += t("boundary.served.unknown");
   else {
-    const n = Math.round(b.servedShare * 10);
-    out += n <= 0 ? t("boundary.served.few") : n >= 10 ? t("boundary.served.most") : t("boundary.served.some", { n });
+    const served = servedTenths(b.servedShare);
+    out += served.kind === "some" ? t("boundary.served.some", { n: served.n }) : t(`boundary.served.${served.kind}`);
   }
   return out + t("boundary.invite");
 }

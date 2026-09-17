@@ -5,7 +5,7 @@
 // over the citizen editor's words (mountEditor's `copy`); program names come
 // from lib/programs.ts (M3) and state names from core. Numbers, money and
 // lists go through Intl with `locale`, the one place it is named.
-import type { PayUnit, ProgramId } from "@hotgap/core";
+import { LIHEAP_VINTAGE, type PayUnit, type ProgramId } from "@hotgap/core";
 import { dateWords, money as usd, reachWord, unitPhrase } from "../lib/format.js";
 import { programName, programPhrase } from "../lib/programs.js";
 
@@ -233,7 +233,7 @@ export const copy = {
     liheapBoundary: (p: { limit: string; band: string | null; servedShare: number | null; readOn: string }) =>
       `Above this the household can no longer apply: the state's limit is ${p.limit}.` +
       (p.band ? ` Worth ${p.band} at that band if received.` : " The amount at that band was not read.") +
-      (p.servedShare === null ? " The FY2024 share of income-eligible households served was not read." : ` ${Math.round(p.servedShare * 100)}% of income-eligible households were served in FY2024.`) +
+      (p.servedShare === null ? ` The ${LIHEAP_VINTAGE.served} share of income-eligible households served was not read.` : ` ${Math.round(p.servedShare * 100)}% of income-eligible households were served in ${LIHEAP_VINTAGE.served}.`) +
       ` Not in net income unless the household says it gets it. Read ${p.readOn}.`,
     liheapCounted: (amount: number, limit: string) =>
       `Counted at the household's say-so: ${$(amount)} a year from HotGap's table of the state's published schedule, to the ${limit} limit. PolicyEngine serves no LIHEAP amount on this payload.`,

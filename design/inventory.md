@@ -49,7 +49,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | ScenarioBar | `.hg-scenario` (+ `--sticky` on the block that holds the top row), `__top`, `__actions`, `__inputs`, `__note`, `__summary`; `.hg-chip`, `.hg-chip__k`, `.hg-chip__v` |
 | FilterRow | `.hg-filters`, `.hg-filters__end`, `.hg-select` (or a bare `<select>` inside the row) |
 | SkipLink | `.hg-skip` |
-| EligibilityBoundary | citizen: `.hg-tick` for the axis mark, a `.hg-key` entry, one `<p>` in the figure; caseworker: a `.hg-rows`/`.hg-table` row with `.hg-tag` *if you apply* and `.hg-cite`; journalist: a `.hg-table` column and two CSV columns. No class of its own: it must not look like a cliff |
+| EligibilityBoundary | citizen: `.hg-tick` for the axis mark, a `.hg-key` entry, one `<p>` in the figure; caseworker: a `.hg-rows`/`.hg-table` row with `.hg-tag` *if you apply* and `.hg-cite`; journalist: a `.hg-rows` row in the state block with `.hg-tag` and `.hg-cite`, and two CSV columns. No class of its own: it must not look like a cliff |
 | DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control (44px on screen, its own rhythm on paper); `.hg-scroll-x` around a wide table — an edge shadow on whichever side still has content, by CSS alone, and `data-more` for a page's own "swipe" words while it finds an overflow (places context-blind S10); `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print` |
@@ -356,11 +356,20 @@ the journalist's:
   from HotGap's table. The "What this model does not include" list carries
   `corrections.liheap.note` verbatim, and CorrectionsApplied's *checked and
   not applying* line names it.
-- *Journalist:* a column in the state block — the limit in words, the worth,
-  the served share — and two CSV columns, `liheap_limit` (the household-
-  income limit for the archetype) and `liheap_served_share`, with the row's
-  sources in the provenance columns. (Pending: the places page is being
-  rebuilt under Plan 8; the column and CSV pair land after that merge.)
+- *Journalist:* one row in the state block, in the ledger's shape — the
+  program with its footing chip (*not counted*, or *in net income* where the
+  money is a counted state credit), the three facts as one sentence at the
+  row's own size (the limit in words, the worth by the schedule's shape, the
+  served share as "about N in 10" with the percentage and its vintage), and
+  the publishers as the cite with the day read — set off from the state's
+  lists by the 2px strong rule the rank groups use, before the source line.
+  One row, not three, because the block shares a grid row with the ranked
+  strip at 1280 and a taller block moves the table below with the selection.
+  Two CSV columns, `liheap_limit` (the limit in words, the block's
+  `limitKind`) and `liheap_served_share` (a fraction; empty where the profile
+  was not read, never a number), beside the footing column. The method
+  panel names it once for the page, from every block: the served range with
+  its two states, and the states where it is counted.
 
 **What it must never do.** Draw a drop, a dot, a connector or a wash. Enter
 any ranking, tile bin, or `summary.json` metric. Appear in `cliffs`,

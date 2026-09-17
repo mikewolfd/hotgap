@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { heatingLimitFor, LIHEAP_TABLE, liheapBoundary, liheapLimitDollars, liheapRow, smiLimit, smiProvenance, type LiheapLimit } from "./liheap.js";
+import { heatingLimitFor, LIHEAP_TABLE, LIHEAP_VINTAGE, liheapBoundary, liheapLimitDollars, liheapRow, smiLimit, smiProvenance, type LiheapLimit } from "./liheap.js";
 import { fpl2025 } from "./policyYear.js";
 import { STATE_CODES } from "./states.js";
 import { answersWith, point } from "./testing.js";
@@ -20,6 +20,9 @@ describe("LIHEAP table — every state, every row sourced", () => {
       if (r.sources.served !== null) expect(r.sources.served, r.state).toMatch(/^https:\/\/liheappm\.acf\.gov\/.*FY2024_.*_Profile\.pdf$/);
       expect(r.readOn, r.state).toBe("2026-09-16");
       expect(r.heating.note.length, r.state).toBeGreaterThan(40);
+      // The vintages a surface prints are the ones in the rows' own source URLs: the profiles' year, the matrices' fiscal year.
+      if (r.sources.served !== null) expect(r.sources.served, r.state).toContain(`/profiles/${LIHEAP_VINTAGE.served.slice(2)}/${LIHEAP_VINTAGE.served}_`);
+      if (r.sources.amounts?.includes("/benefits-matricies/")) expect(r.sources.amounts, r.state).toContain(`/docs/${LIHEAP_VINTAGE.limits.slice(2)}/`);
     }
   });
 

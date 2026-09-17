@@ -11,9 +11,10 @@
 // A sentence may carry a link or an emphasis as `[text](url "title")`,
 // `*em*` or `**strong**`; render.ts's `rich()` is the only reader of that
 // notation, and it escapes everything else.
-import { CLIFF_MIN, type ProgramId } from "@hotgap/core";
-import { capitalize, dateWords, listOf, modelLine, money } from "../lib/format.js";
+import { CLIFF_MIN, LIHEAP_VINTAGE, type LiheapShape, type ProgramId } from "@hotgap/core";
+import { capitalize, dateWords, dayWords, listOf, modelLine, money } from "../lib/format.js";
 import { programName } from "../lib/programs.js";
+import { servedTenths } from "../lib/served.js";
 
 export const locale = "en-US";
 
@@ -49,6 +50,13 @@ export const fmt = {
   /** "HotGap hosted engine, policyengine-us 2.6.2" — the model as a label a spreadsheet can carry (N8). */
   modelLabel: (model: { endpoint: string; version: string | null } | null | undefined): string =>
     model?.version ? `HotGap hosted engine, ${modelLine(model)}` : model ? `PolicyEngine public API (${model.endpoint})` : modelLine(model),
+};
+
+/** EligibilityBoundary (#23): the served share as the citizen hears it, with the figure a reporter quotes — "About 2 in 10 income-eligible households were served in FY2024 (22%)." */
+const servedLine = (share: number): string => {
+  const s = servedTenths(share);
+  const lead = s.kind === "few" ? "Fewer than 1 in 10" : s.kind === "most" ? "Almost all" : `About ${s.n} in 10`;
+  return `${lead} income-eligible households were served in ${LIHEAP_VINTAGE.served} (${Math.round(share * 100)}%).`;
 };
 
 export const copy = {
@@ -256,6 +264,33 @@ export const copy = {
     other: (state: string, n: number) => `Also in ${state}'s net income (${n})`,
     otherNote: (max: string) => `Up to ${max} a year on this run.`,
     variable: (name: string) => `PolicyEngine variable: ${name}`,
+    /* EligibilityBoundary (#23): where energy assistance stops in the selected
+       state, as one row in the ledger's shape — the program with its footing
+       chip, three sentences (the limit in words, the worth if received, the
+       share served as "about N in 10" with the figure), and the publishers as
+       the cite with the day read. One row, because the block sits beside the
+       ranked strip at 1280 and a taller block moves the table below with the
+       selection. Never a measure, a bin or a sort. */
+    liheap: {
+      program: "Energy assistance (LIHEAP)",
+      /** The chip beside the name: the row's footing, from corrections.liheap.source. */
+      footing: { boundary: "not counted", inNetIncome: "in net income" } as const,
+      /** The three facts, whole; a null amount or share says so in words, never as a number. */
+      facts: (p: { limit: string; worth: { lo: string; hi: string | null; shape: LiheapShape | null } | null; share: number | null }) =>
+        `Stops at ${p.limit}, the heating limit for ${LIHEAP_VINTAGE.limits}. ` +
+        (p.worth === null ? "The state's matrix prints no amount at that band. "
+          : `Worth ${p.worth.hi === null ? p.worth.lo : `${p.worth.lo} to ${p.worth.hi}`} a winter if received${p.worth.shape === "taper" ? "; the amount tapers toward the limit. " : p.worth.shape === "notch" ? ", flat to the limit. " : ", at that top income band. "}`) +
+        (p.share === null ? `The share of income-eligible households served is not published for ${LIHEAP_VINTAGE.served}.` : servedLine(p.share)),
+      served: servedLine,
+      /** Michigan: the money is in every figure, as the credit core names. */
+      counted: (state: string, program: string) => ` Paid as the ${program}, which is counted in every figure for ${state}.`,
+      /** The publishers behind the row's figures, with the day they were read. */
+      cite: (p: { limits: string; amounts: string | null; served: string | null; readOn: string }) => {
+        const host = (u: string) => `[${new URL(u).hostname}](${u})`;
+        const limitAndAmount = p.amounts && new URL(p.amounts).hostname === new URL(p.limits).hostname ? `Limit and amount: ${host(p.limits)}.` : `Limit: ${host(p.limits)}.${p.amounts ? ` Amount: ${host(p.amounts)}.` : ""}`;
+        return `${limitAndAmount}${p.served ? ` Households served: ${host(p.served)}.` : ""} Read ${dayWords(p.readOn)}.`;
+      },
+    },
     care: { county: "county price", stateMedianCounty: "state median county price", nationalMedian: "national median price", unknown: "not recorded" } as Record<string, string>,
     /** SourceNote (#17), the county named (B4) and reach gone from this page (N9). */
     source: (v: { year: string; rentPublisher: string; rentVintage: string; county: string | null; countyVintage: string; care: string; careYear: string | null; model: string; date: string }) =>
@@ -288,6 +323,11 @@ export const copy = {
       alaskaHawaii: `Alaska and Hawaii marketplace subsidies are computed upstream against the 48-state poverty guideline rather than their own higher ones ([reported to PolicyEngine](https://github.com/PolicyEngine/policyengine-us/issues/9482 "policyengine-us #9482")). HotGap does not correct this, so both states' premium-driven figures are understated.`,
       /** A gap every state shares, listed once here and never under a state (S8). */
       everywhere: (program: string, note: string) => `${program}, in every state: ${note}`,
+      /** EligibilityBoundary (#23), once for the page: the served range with its two states and the states where the money is counted, from every block. */
+      liheap: (lo: { state: string; share: number }, hi: { state: string; share: number }, counted: { state: string; program: string }[]) =>
+        `Energy assistance (LIHEAP) is in no figure on this page${counted.length ? `, except in ${fmt.list(counted.map((c) => c.state))}, where it is paid as ${fmt.list([...new Set(counted.map((c) => `the ${c.program}`))])} and counted` : ""}. ` +
+        `It is a block grant, not an entitlement: in ${LIHEAP_VINTAGE.served} the states served between ${Math.round(lo.share * 100)}% (${lo.state}) and ${Math.round(hi.share * 100)}% (${hi.state}) of their income-eligible households, ` +
+        "so a curve that assumed it would draw a benefit most eligible families never receive. Each state's block under the map says where it stops, what it pays there and the share served; the download carries the limit and the share.",
       hatched: (household: string, where: string[]) =>
         `A program the model cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For ${household} today that is ${fmt.list(where)}.`,
       whereItem: (programs: string[], state: string) => `${programs.join(" and ")} in ${state}`,

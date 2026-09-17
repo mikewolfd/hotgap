@@ -122,6 +122,15 @@ const matrix = (file: string) => `${CH}/docs/2026/benefits-matricies/${file}`;
 const profile = (name: string) => `https://liheappm.acf.gov/sites/default/files/private/congress/profiles/2024/FY2024_${name}_Profile.pdf`;
 const READ_ON = "2026-09-16";
 
+/**
+ * The vintages every row was read at, for a surface's provenance line: the
+ * fiscal year of the limits and matrices (the header's first publisher) and
+ * the year of the ACF profiles the served shares come from (the third).
+ * Moving either means re-reading every row, so they live beside READ_ON and
+ * nowhere else; liheap.test.ts pins them to the rows' own source URLs.
+ */
+export const LIHEAP_VINTAGE = { limits: "FY2026", served: "FY2024" } as const;
+
 const fpg = (pct: number): LiheapLimit => ({ kind: "fpg", pct });
 const smi = (pct: number): LiheapLimit => ({ kind: "smi", pct });
 const FPG150 = fpg(150);

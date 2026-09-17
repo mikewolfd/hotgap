@@ -84,7 +84,12 @@ export function renderOnce(summary: SummaryJson): void {
   const coverage = summary.coverage ?? {};
   const everywhere = new Map<string, string>();
   for (const st of states) for (const u of coverage[st]?.unmodeled ?? []) if (u.scope === "all" && !everywhere.has(u.program)) everywhere.set(u.program, u.note);
-  $("excludes").innerHTML = [copy.method.excludes.inputs, copy.method.excludes.alaskaHawaii, ...[...everywhere].map(([p, n]) => copy.method.excludes.everywhere(p, n))]
+  /* EligibilityBoundary (#23), once for the page: the served range across the
+     blocks, its two states named, and the states where the money is counted. */
+  const served = states.flatMap((st) => { const s = coverage[st]?.liheap?.servedShare; return s === null || s === undefined ? [] : [{ state: name(st), share: s }]; }).sort((a, z) => a.share - z.share);
+  const counted = states.flatMap((st) => { const c = coverage[st]?.corrections.liheap; return c?.source === "in net income" ? [{ state: name(st), program: c.program }] : []; });
+  const liheap = served.length ? [copy.method.excludes.liheap(served[0], served[served.length - 1], counted)] : [];
+  $("excludes").innerHTML = [copy.method.excludes.inputs, copy.method.excludes.alaskaHawaii, ...liheap, ...[...everywhere].map(([p, n]) => copy.method.excludes.everywhere(p, n))]
     .map((t) => `<li>${rich(t)}</li>`).join("") + `<li id="unmodSummary"></li>`;
   $("methodSrc").textContent = copy.method.source(fmt.date(summary.generated), modelLine(summary.model));
 }
@@ -352,6 +357,7 @@ const detailRow = (at: string, tag: string | null, note: string, href?: string, 
   (tag ? `<span class="hg-tag">${esc(tag)}</span>` : "") +
   `<span class="hg-cite"${title ? ` title="${esc(title)}"` : ""}>${esc(note)}${href ? ` <a href="${esc(href)}">${esc(new URL(href).hostname)}</a>` : ""}</span></div></li>`;
 
+
 /**
  * The selected state's block: its step sentence (B3), CorrectionsApplied
  * from coverage[state].corrections kept to applies === true with the
@@ -369,8 +375,9 @@ export function renderDetail(s: Scene): void {
   if (!sel || !cov) {
     $("stateTitle").textContent = sel ? D.heading(name(sel), 0) : D.choose;
     $("stateSub").textContent = sel ? D.noBlock : D.chooseSub;
-    for (const id of ["corrections", "unmod", "other"]) $(id).textContent = "";
+    for (const id of ["corrections", "unmod", "other", "liheap"]) $(id).textContent = "";
     $("unmodTitle").hidden = $("unmod").hidden = $("otherTitle").hidden = $("other").hidden = true;
+    $("liheap").hidden = true;
     $("stateSrc").textContent = "";
     return;
   }
@@ -389,6 +396,25 @@ export function renderDetail(s: Scene): void {
   $("otherTitle").hidden = $("other").hidden = other.length === 0;
   $("otherTitle").textContent = D.other(stateName, other.length);
   $("other").innerHTML = other.map((o) => detailRow(o.label, null, D.otherNote(fmt.money(o.maxAnnualInSweep)), undefined, o.variable ? D.variable(o.variable) : undefined)).join("");
+
+  /* EligibilityBoundary (#23): one row in the ledger's shape from
+     coverage[state].liheap — the program with its footing chip in the name
+     column, the three facts as a sentence at the row's own size (in Michigan
+     with the credit core names), and the publishers as the cite with the day
+     read. Absent on a file written before Plan 7, and then the block says
+     nothing. Its own list, after the state's other lists, under the block's
+     one heading: a boundary is not a correction and is not counted there. */
+  const b = cov.liheap, note = cov.corrections.liheap, L = D.liheap;
+  const hasBoundary = b !== undefined && note !== undefined;
+  $("liheap").hidden = !hasBoundary;
+  if (hasBoundary) {
+    const counted = note.source === "in net income";
+    const facts = L.facts({ limit: b.limitKind, worth: b.topBand ? { lo: fmt.money(b.topBand.min), hi: b.topBand.max === b.topBand.min ? null : fmt.money(b.topBand.max), shape: b.shape } : null, share: b.servedShare }) +
+      (counted ? L.counted(stateName, note.program) : "");
+    $("liheap").dataset.footing = note.source;
+    $("liheap").innerHTML = `<li><span class="hg-rows__at">${esc(L.program)} <span class="hg-tag">${esc(counted ? L.footing.inNetIncome : L.footing.boundary)}</span></span>` +
+      `<div><p>${esc(facts)}</p><span class="hg-cite">${rich(L.cite({ ...b.sources, readOn: b.readOn }))}</span></div></li>`;
+  }
 
   /* SourceNote (#17) from vintages and model, in the inventory's shape, the county named. */
   const v = cov.vintages;

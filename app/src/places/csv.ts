@@ -14,7 +14,7 @@ import { archLabel, type Archetype, type StateRow } from "./model.js";
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
   "biggest_one_step_loss", "biggest_loss_at", "biggest_loss_programs", "danger_zone_width", "leap", "safe_exit", "cliff_count", "deferred_cliff_count",
-  "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied", "childcare_subsidy_footing",
+  "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied", "childcare_subsidy_footing", "liheap_limit", "liheap_served_share",
   "county_name", "county_fips", "rent_vintage", "county_vintage", "childcare_price_vintage",
   "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
 ] as const;
@@ -52,6 +52,8 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       missing.join("; "),
       correctionRows(cov?.corrections).map((c) => `${c.program}: ${c.source ?? copy.detail.applied}`).join("; "),
       cov ? (cov.corrections.childcareSubsidy.source === "added by HotGap" ? copy.csv.subsidy.added : copy.csv.subsidy.inNetIncome) : "",
+      /* EligibilityBoundary (#23): the heating limit in words and the served share as a fraction, both the block's — empty where the profile was not read (Hawaii), never a number. */
+      cov?.liheap?.limitKind ?? "", cov?.liheap?.servedShare ?? "",
       v?.county.name ?? "", v?.county.fips ?? "",
       v?.rent.vintage ?? "", v?.county.vintage ?? "", v?.childcare.preschool ?? "",
       summary.year, summary.generated, fmt.modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",

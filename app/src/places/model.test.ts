@@ -88,6 +88,33 @@ describe("the measures, from copy", () => {
   });
 });
 
+describe("the boundary's sentences, from copy (#23)", () => {
+  it("says the served share as the citizen hears it with the figure a reporter quotes, a null share or amount in words, the worth by the schedule's shape, and never types a vintage", () => {
+    const L = copy.detail.liheap;
+    expect(L.served(0.03)).toBe("Fewer than 1 in 10 income-eligible households were served in FY2024 (3%).");
+    expect(L.served(0.22)).toBe("About 2 in 10 income-eligible households were served in FY2024 (22%).");
+    expect(L.served(0.85)).toBe("About 9 in 10 income-eligible households were served in FY2024 (85%).");
+    expect(L.facts({ limit: "150% of the poverty guideline", worth: { lo: "$1,200", hi: null, shape: "staircase" }, share: 0.03 }))
+      .toBe("Stops at 150% of the poverty guideline, the heating limit for FY2026. Worth $1,200 a winter if received, at that top income band. Fewer than 1 in 10 income-eligible households were served in FY2024 (3%).");
+    expect(L.facts({ limit: "60% of state median income", worth: { lo: "$318", hi: "$495", shape: "notch" }, share: 0.18 })).toContain("Worth $318 to $495 a winter if received, flat to the limit. About 2 in 10");
+    expect(L.facts({ limit: "110% of the poverty guideline", worth: { lo: "$1", hi: "$2,205", shape: "taper" }, share: 0.85 })).toContain("Worth $1 to $2,205 a winter if received; the amount tapers toward the limit. About 9 in 10");
+    expect(L.facts({ limit: "60% of state median income", worth: { lo: "$375", hi: "$1,400", shape: "points" }, share: null }))
+      .toBe("Stops at 60% of state median income, the heating limit for FY2026. Worth $375 to $1,400 a winter if received, at that top income band. The share of income-eligible households served is not published for FY2024.");
+    expect(L.facts({ limit: "150% of the poverty guideline", worth: null, share: 0.1 })).toContain("The state's matrix prints no amount at that band. About 1 in 10");
+    expect(L.counted("Michigan", "Home Heating Credit")).toBe(" Paid as the Home Heating Credit, which is counted in every figure for Michigan.");
+    expect(L.cite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/docs/2026/x.pdf", served: "https://liheappm.acf.gov/p.pdf", readOn: "2026-09-16" }))
+      .toBe("Limit and amount: [liheapch.acf.gov](https://liheapch.acf.gov/delivery/income_eligibility.htm). Households served: [liheappm.acf.gov](https://liheappm.acf.gov/p.pdf). Read Sep 16, 2026.");
+    expect(L.cite({ limits: "https://liheapch.acf.gov/delivery/income_eligibility.htm", amounts: "https://liheapch.acf.gov/tables/benefits.htm", served: null, readOn: "2026-09-16" }))
+      .toBe("Limit and amount: [liheapch.acf.gov](https://liheapch.acf.gov/delivery/income_eligibility.htm). Read Sep 16, 2026.");
+    expect(L.footing).toEqual({ boundary: "not counted", inNetIncome: "in net income" });
+  });
+  it("names the served range and the counted states once for the page, from the blocks", () => {
+    const line = copy.method.excludes.liheap({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [{ state: "Michigan", program: "Home Heating Credit" }]);
+    expect(line).toMatch(/^Energy assistance \(LIHEAP\) is in no figure on this page, except in Michigan, where it is paid as the Home Heating Credit and counted\. It is a block grant, not an entitlement: in FY2024 the states served between 3% \(Texas\) and 85% \(Michigan\)/);
+    expect(copy.method.excludes.liheap({ state: "Texas", share: 0.03 }, { state: "Michigan", share: 0.85 }, [])).toMatch(/^Energy assistance \(LIHEAP\) is in no figure on this page\. It is a block grant/);
+  });
+});
+
 describe("rowsFor: the four tile states and their precedence", () => {
   it("classifies each state from the data, never from a list", () => {
     const kinds = Object.fromEntries(rowsFor(fixture, single1, loss).map((r) => [r.st, r.kind]));
