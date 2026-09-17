@@ -4,7 +4,7 @@
 // the chart geometry can be tested from a fixture. O(points × programs)
 // once per evaluation; nothing here is repeated per component.
 import {
-  DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
+  DEFAULT_HOURS, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
@@ -52,9 +52,8 @@ export interface Scene {
   /** Axis step and the last swept pay. */
   step: number;
   top: number;
-  /** The REAL curve's net income per point, and the same with deferred drops lifted out (charts.md § The lift: core's immediateCurve). */
+  /** The curve's net income per point — the one line every figure describes (a deferred loss counts, 2026-09-17). */
   net: number[];
-  lifted: number[];
   idx(earnings: number): number;
   earningsAt(i: number): number;
   current: number;
@@ -68,10 +67,9 @@ export interface Scene {
   safeExit: number | null;
   otherZones: DangerZone[];
   cliffs: Cliff[];
-  /** Cliffs that land now, and the ones a federal rule defers to a renewal. */
-  immediate: Cliff[];
+  /** The cliffs a federal rule defers to a later renewal: counted like the rest, badged (Cliff.deferral says when). */
   deferred: Cliff[];
-  /** The largest immediate drop: the one direct label, the one "biggest" row. */
+  /** The largest drop: the one direct label, the one "biggest" row. */
   worst: Cliff | null;
   next: Cliff | null;
   /** The crop the citizen chart shows, in annual dollars, and the cliffs inside it. */
@@ -122,13 +120,9 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
   const net = points.map((p) => p.netIncome);
   const a = ev.analysis;
   const deferred = a.cliffs.filter((c) => c.deferral !== null);
-  const immediate = a.cliffs.filter((c) => c.deferral === null);
   const zone = ev.personal.zone;
   const stuck = zone !== null && ev.personal.raiseIsLowerBound;
-  const worst = immediate.length ? immediate.reduce((x, y) => (y.drop > x.drop ? y : x)) : null;
-  // nextCliff is computed on the lifted curve and is never an entry of
-  // cliffs (evaluate.ts); the real cliff is found by its step.
-  const next = a.nextCliff ? a.cliffs.find((c) => c.startEarnings === a.nextCliff!.startEarnings) ?? a.nextCliff : null;
+  const { worstCliff: worst, nextCliff: next } = a;
   const pay = payOf(ev, flags);
   const base = {
     step, top, current: a.currentEarnings, zone, stuck,
@@ -147,12 +141,12 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
 
   return {
     ...base,
-    ev, pay, m: moneyFor(pay), net, lifted: immediateCurve(points, ev.deferred).map((p) => p.netIncome), idx, earningsAt: (i) => points[i].earnings,
+    ev, pay, m: moneyFor(pay), net, idx, earningsAt: (i) => points[i].earnings,
     currentNet: a.currentNet,
     state: ev.answers.state, stateName: STATE_NAMES[ev.answers.state] ?? ev.answers.state,
     safeExit: ev.escape.safeExitEarnings,
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
-    cliffs: a.cliffs, immediate, deferred,
+    cliffs: a.cliffs, deferred,
     window, inWindow: a.cliffs.filter((c) => c.startEarnings >= window[0] && c.endEarnings <= window[1]),
     boundary: ev.liheap,
     boundaryInWindow: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit >= window[0] && ev.liheap.earningsLimit <= window[1],

@@ -9,7 +9,7 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import type { Cliff } from "@hotgap/core";
-import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
@@ -185,19 +185,15 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
 
     /* The line: one series, 2px, round caps, no fill; .hg-draw on the first draw only. */
     const window = Array.from({ length: i1 - i0 + 1 }, (_, k) => i0 + k);
-    picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.lifted[i])])), firstDraw));
-
-    /* The ghost: the real curve, only when a deferred drop is visible at this range. */
-    if (L.ghost) picture.append(ghostPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), "4 3"));
+    picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), firstDraw));
 
     /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
-    /* The diamond sits at the household's own money today (analysis.currentNet is the real curve's), which is off the lifted line only past a deferred step, where the ghost shows why. */
     const cx = px(s.current);
     let cy = py(s.currentNet);
     clusters = L.clusters;
     /* The diamond must not cover a mark (B1): within a dot's reach of one, it slides down its own drop line. */
     const RING = 10;
-    const dotY = (cl: Cluster) => py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]);
+    const dotY = (cl: Cluster) => py(s.net[s.idx(cl.cliffs[0].startEarnings)]);
     if (clusters.some((cl) => Math.abs(cl.x - cx) < RING && Math.abs(dotY(cl) - cy) < RING)) cy += 2 * RING;
     const diamond: Box = { x: cx - 7, y: cy - 7, w: 14, h: 14 };
     for (const cl of clusters) boxes.push({ x: cl.x - RING, y: dotY(cl) - RING, w: 2 * RING, h: 2 * RING });
@@ -230,7 +226,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
         picture.append(waitDot(cl.x, y, r));
         continue;
       }
-      const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.lifted[s.idx(c.endEarnings)]));
+      const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.net[s.idx(c.endEarnings)]));
       picture.append(...dropMark(cl.x, y, py(land), r));
       /* The chart's other direct label: the biggest drop. Beside a tall
          connector first; else above the dot, below the landing, or on the
@@ -258,8 +254,6 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     if (s.worst && !L.labelled) text += t("chart.biggestBeyond", { drop: m.about(s.worst.drop), pay: m.pay(s.worst.endEarnings) });
     if (s.safeExit === null) text += t("chart.safeNever", { top: m.pay(s.top) });
     else if (s.safeExit > 0 && !safeSaid) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
-    // A household already past a deferred step is on the dashed line today (evaluate.ts: currentNet stays the real curve's).
-    if (L.ghost) text += t(s.deferred.some((c) => c.startEarnings < s.current) ? "chart.ghostNow" : "chart.ghost");
     caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
 
     wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
@@ -277,7 +271,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     marksLayer.textContent = "";
     for (const cl of clusters) {
       const key = keyOf(cl.cliffs[0]);
-      const b = markButton(cl.x, L.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
+      const b = markButton(cl.x, L.py(s.net[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
         { "data-key": String(key), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
       b.addEventListener("click", () => {
         touched = true;
@@ -300,7 +294,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const { px, py, pad, H } = L;
     /* At the household's own point the diamond is the cursor: the readout gives the person's pay and money, not the nearest sampled point's. */
     const atYou = cursor === s.idx(s.current);
-    const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.lifted[cursor];
+    const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.net[cursor];
     if (!atYou) {
       cursorNodes = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
       picture.append(...cursorNodes);

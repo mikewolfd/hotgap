@@ -1,6 +1,6 @@
 // MoneyCurve (#3), CurveReadout (#4) and MarkKey (#5) primitives the two
 // charts share, as DOM (design/charts.md § 1 Marks; audit D10): the hatch,
-// the key entries that draw the actual mark, the series and its ghost, the
+// the key entries that draw the actual mark, the series, the
 // cliff marks in their two kinds, the household's diamond, the cursor, the
 // 44px .hg-mark control, the width watcher and the print redraw. Each page
 // composes these with its own layout, its own radii where the reviews set
@@ -46,10 +46,6 @@ export const pathD = (points: [number, number][]): string => points.map(([x, y],
 /** The series: 2px, round join and cap, pathLength 1 so .hg-draw can draw it once (the first draw only). */
 export const seriesPath = (d: string, animate: boolean): SVGPathElement =>
   svg("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1, class: animate ? "hg-draw" : undefined });
-
-/** The ghost: the real curve, 1.5px dashed --ink-3, drawn only when a deferred drop is visible at this range. */
-export const ghostPath = (d: string, dash: string): SVGPathElement =>
-  svg("path", { d, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-dasharray": dash });
 
 /** A zone: the household's takes the wash and the hatch, any other the hatch alone (S7). */
 export function zoneRects(x0: number, x1: number, top: number, bottom: number, own: boolean, hatchId: string): SVGRectElement[] {

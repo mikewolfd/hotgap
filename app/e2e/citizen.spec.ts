@@ -27,11 +27,8 @@ interface Ev {
   escape: { safeExitEarnings: number | null };
 }
 
-/** The plotted curve: the real points with each deferred drop added back above its step — charts.md's lift, done again here so the table is checked against a second implementation of it. */
-const plotted = (ev: Ev): Map<number, number> => {
-  const deferred = ev.analysis.cliffs.filter((c) => c.deferral !== null);
-  return new Map(ev.curve.points.map((p) => [p.earnings, p.netIncome + deferred.filter((d) => d.startEarnings < p.earnings).reduce((sum, d) => sum + d.drop, 0)]));
-};
+/** The plotted curve: the points as they came — a deferred loss is in the line like any other (2026-09-17). */
+const plotted = (ev: Ev): Map<number, number> => new Map(ev.curve.points.map((p) => [p.earnings, p.netIncome]));
 const dollars = (text: string) => [...text.matchAll(/\$([\d,]+)/g)].map((m) => Number(m[1].replace(/,/g, "")));
 
 /** Land on the household and keep the evaluation the page rendered: the measure for the marks and the table. */
@@ -103,7 +100,7 @@ for (const scheme of ["light", "dark"] as const) {
       expect(tickRatio).toBeGreaterThanOrEqual(2.5);
       expect(Number(await page.locator("#chart").getAttribute("data-yratio"))).toBeGreaterThanOrEqual(tickRatio);
       /* The one drop label is the curve's biggest drop, and it agrees with the row that says so; if the biggest drop is out of the picture, the caption says where it is. */
-      const worst = ev.analysis.cliffs.filter((c) => c.deferral === null).reduce((a, b) => (b.drop > a.drop ? b : a));
+      const worst = ev.analysis.cliffs.reduce((a, b) => (b.drop > a.drop ? b : a));
       const biggestRow = page.locator(".hg-rows__loss", { hasText: "This is the biggest drop." });
       await expect(biggestRow).toHaveCount(1);
       expect(dollars((await page.locator(`#step-${worst.endEarnings} .hg-rows__loss`).textContent())!)[0]).toBe(Math.round(worst.drop / 100) * 100);

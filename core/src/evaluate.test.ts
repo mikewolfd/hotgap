@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { analyzeCurve } from "./analyze.js";
 import { PolicyEngineError } from "./client.js";
 import { loadStateFile as loadStateFile_ } from "./data.js";
-import { evaluateCurve, evaluateHousehold, evaluateOffline, immediateCurve, modeledAnswers } from "./evaluate.js";
+import { evaluateCurve, evaluateHousehold, evaluateOffline, modeledAnswers } from "./evaluate.js";
 import { parsePEResponse } from "./parse.js";
 import { axisSpec } from "./translate.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, fpl2025, MEDICARE_PART_B_ANNUAL } from "./policyYear.js";
@@ -21,23 +21,23 @@ describe("evaluateCurve", () => {
   const curve: CurveResponse = { year: "2026", currentEarnings: 30000, points: fixturePoints };
   const ev = evaluateCurve(answers, curve, "live");
 
-  it("keeps the real cliffs, defers the Head Start one, and reads the verdict from the immediate curve", () => {
+  it("keeps every cliff, labels the Head Start one deferred, and reads the verdict from the real curve", () => {
     // Just past the Head Start step, against the corrected curve (California's
     // premium wrap zeroes the net premium through 150% FPL, which adds a small
     // real cliff where it ends).
     const at31k = evaluateCurve(answers, { year: "2026", currentEarnings: 31000, points: fixturePoints }, "live");
     const direct = analyzeCurve(at31k.curve.points, 31000, { hasChildren: true });
-    // Every cliff on the real curve is still reported…
+    // Every cliff on the real curve is reported, and the zones are the real
+    // curve's: the $30k Head Start loss lands at the next program year, so it
+    // is labelled deferred — and still counted (2026-09-17). Until then it was
+    // lifted out of the zones, and the trough that runs to $74k here ended at
+    // $34k, where only the $31k premium step had to be recovered.
     expect(at31k.analysis.cliffs.map((c) => [c.startEarnings, Math.round(c.drop)])).toEqual(direct.cliffs.map((c) => [c.startEarnings, Math.round(c.drop)]));
-    // …but the $30k Head Start loss lands at the next program year, so it is
-    // listed as deferred and lifted out of the zones: the trough that ran to
-    // $74k on the raw reading ends at $34k, where only the real step at $31k
-    // (California's $0 band ending at 150% FPL, capped at the next tier's
-    // 3.19% of income) still has to be recovered.
     expect(at31k.deferred.map((c) => [c.startEarnings, c.deferral?.reason])).toEqual([[30000, "head_start_program_year"]]);
-    const zoneFrom30k = (zones: { startEarnings: number; endEarnings: number | null }[]) => zones.find((z) => z.startEarnings === 30000)!.endEarnings;
-    expect(zoneFrom30k(direct.dangerZones)).toBe(74000);
-    expect(zoneFrom30k(at31k.analysis.dangerZones)).toBe(34000);
+    expect(at31k.analysis.dangerZones).toEqual(direct.dangerZones);
+    expect(at31k.analysis.dangerZones.find((z) => z.startEarnings === 30000)!.endEarnings).toBe(74000);
+    expect(at31k.analysis.worstCliff).toBe(at31k.deferred[0]);
+    expect(at31k.analysis.verdict).toBe("in_danger_zone");
   });
 
   it("places current earnings in the state's reach distribution", () => {
@@ -64,19 +64,6 @@ describe("evaluateCurve", () => {
     expect(safe.escape.safeExitEarnings).toBe(0);
     expect(safe.reach.safeExit).toBeNull();
     expect(safe.reach.current).toBeTypeOf("number");
-  });
-});
-
-describe("the lift (immediateCurve)", () => {
-  it("is the same points when nothing is deferred, and adds each deferred drop back to every point above its step and only there", () => {
-    const points = [pt(0, 100), pt(1000, 200), pt(2000, 50), pt(3000, 150), pt(4000, 250)];
-    expect(immediateCurve(points, [])).toBe(points);
-    const deferred = { startEarnings: 1000, endEarnings: 2000, drop: 150, programsLost: [], driver: "benefits" as const, breakdown: { benefits: 150, credits: 0, premiums: 0, other: 0 }, deferral: { reason: "head_start_program_year" as const, until: "later" } };
-    const lifted = immediateCurve(points, [deferred]).map((p) => p.netIncome);
-    // The drop happens BETWEEN $1,000 and $2,000, so $1,000 itself is untouched and everything from $2,000 up is lifted.
-    expect(lifted).toEqual([100, 200, 200, 300, 400]);
-    // The real points are never mutated: evaluateCurve reports them as they came.
-    expect(points.map((p) => p.netIncome)).toEqual([100, 200, 50, 150, 250]);
   });
 });
 
@@ -428,48 +415,52 @@ describe("Head Start (finding 9)", () => {
   });
 });
 
-describe("deferred losses stay out of the headline", () => {
+describe("deferred losses count, and carry their label", () => {
   // The same shape three times: a $18,000 fall at $20,000 that the curve only
-  // climbs back out of at $50,000. Whether that is a hole the household has to
-  // leap depends entirely on whether the loss arrives with the raise.
+  // climbs back out of at $50,000. Since 2026-09-17 that is a hole the
+  // household has to leap whether or not the loss arrives with the raise: the
+  // family will lose the money, and the deferral is the label that says when.
+  // (From 2026-09-15 to 2026-09-17 the deferred reading lifted the drop out and
+  // these households read always_up with a leap of $0.)
   const withCliff = (over: PointOver, after: PointOver = {}) => [
     pt(0, 40000, over), pt(10000, 45000, over), pt(20000, 27000, after),
     pt(30000, 33000, after), pt(40000, 39000, after), pt(50000, 46000, after),
   ];
-  // The same household if the loss simply never happened.
-  const noCliff = [pt(0, 40000), pt(10000, 45000), pt(20000, 45000), pt(30000, 51000), pt(40000, 57000), pt(50000, 64000)];
+  // The same fall with nothing to defer it: SNAP ending.
+  const snapCliff = withCliff({ programs: { snap: 4000 } });
 
-  it("gives a Head Start household the leap it would have without Head Start", () => {
+  it("gives a Head Start household the leap the same fall gives a SNAP household", () => {
     const a = answersWith({ getsHeadStart: true, monthlyChildcare: 1200, annualEarnings: 10000 });
     const hs = { programs: { headstart: 12000 }, childPrograms: { headstart: 12000 } };
     const ev = evaluateOn(a, withCliff(hs), 10000);
-    const control = evaluateOn(answersWith({ annualEarnings: 10000 }), noCliff, 10000);
+    const control = evaluateOn(answersWith({ annualEarnings: 10000 }), snapCliff, 10000);
+    expect(control.deferred).toEqual([]);
     expect(ev.escape.leap).toBe(control.escape.leap);
-    expect(ev.escape.leap).toBe(0);
-    expect(ev.escape.safeExitEarnings).toBe(0);
-    expect(ev.personal.zone).toBeNull();
-    // Still reported, in full, with what carries them past it.
-    expect(ev.deferred).toHaveLength(1);
-    expect(ev.deferred[0]).toMatchObject({ startEarnings: 10000, endEarnings: 20000, drop: 18000 });
+    expect(ev.escape.leap).toBe(40000);
+    expect(ev.escape.safeExitEarnings).toBe(50000);
+    expect(ev.analysis.dangerZones).toEqual(control.analysis.dangerZones);
+    expect(ev.analysis.verdict).toBe(control.analysis.verdict);
+    expect(ev.analysis.verdict).toBe("cliff_ahead");
+    // The cliff is the worst one, and it is the same object `deferred` lists, with what carries them past it.
+    expect(ev.analysis.worstCliff).toMatchObject({ startEarnings: 10000, endEarnings: 20000, drop: 18000 });
+    expect(ev.deferred).toEqual([ev.analysis.worstCliff]);
+    expect(ev.analysis.nextCliff).toBe(ev.analysis.worstCliff);
     expect(ev.deferred[0].deferral).toEqual({
       reason: "head_start_program_year",
       until: expect.stringContaining("45 CFR 1302.12(j)(1)"),
     });
-    expect(ev.analysis.cliffs).toContain(ev.deferred[0]);
-    // The verdict describes the year of the raise, not the renewal after it.
-    expect(ev.analysis.verdict).toBe("always_up");
-    expect(ev.analysis.worstCliff).toBeNull();
   });
 
-  it("defers a child's CHIP end by the 12-month continuous-eligibility rule", () => {
+  it("labels a child's CHIP end by the 12-month continuous-eligibility rule, and counts it", () => {
     const covered = { programs: { chip: 4000 }, childPrograms: { chip: 4000 } };
     const ev = evaluateOn(answersWith({ annualEarnings: 30000 }), withCliff(covered, { medicalOOP: 5000 }), 30000);
     expect(ev.deferred.map((c) => c.deferral!.reason)).toEqual(["child_continuous_eligibility"]);
-    expect(ev.escape.leap).toBe(0);
-    expect(ev.analysis.verdict).toBe("always_up");
+    expect(ev.escape.leap).toBe(40000);
+    expect(ev.analysis.verdict).toBe("in_danger_zone");
+    expect(ev.personal).toMatchObject({ escapeEarnings: 50000, raiseToClear: 20000, raiseIsLowerBound: false });
   });
 
-  it("defers a parent's Medicaid end in a non-expansion state by transitional Medical Assistance", () => {
+  it("labels a parent's Medicaid end in a non-expansion state by transitional Medical Assistance", () => {
     // Texas, one parent one child: the parent is cut off far below the child.
     const tx = answersWith({ state: "TX", annualEarnings: 30000 });
     const covered = { programs: { medicaid: 15000, chip: 3000 }, childPrograms: { medicaid: 6000, chip: 3000 } };
@@ -477,18 +468,18 @@ describe("deferred losses stay out of the headline", () => {
     const ev = evaluateOn(tx, withCliff(covered, after), 30000);
     expect(ev.deferred.map((c) => c.deferral!.reason)).toEqual(["transitional_medical_assistance"]);
     expect(ev.deferred[0].deferral!.until).toContain("42 U.S.C. 1396r-6");
-    expect(ev.escape.leap).toBe(0);
-    // A childless adult in the same state gets no §1925 continuation, so the
-    // same fall is immediate and the leap comes back.
+    // A childless adult in the same state gets no §1925 continuation: the same
+    // fall, unlabelled — and the same leap, because the label changes nothing else.
     const childless = answersWith({ state: "TX", childAges: [], childDisabled: [], annualEarnings: 30000 });
     const soloCovered = { programs: { medicaid: 9000 } };
     const soloAfter = { programs: {}, medicalOOP: 5000 };
     const solo = evaluateOn(childless, withCliff(soloCovered, soloAfter), 30000);
     expect(solo.deferred).toEqual([]);
     expect(solo.escape.leap).toBe(40000);
+    expect(ev.escape.leap).toBe(40000);
   });
 
-  it("keeps an immediate cliff in the headline while neutralizing the deferred one below it", () => {
+  it("reads a deferred cliff below an immediate one as one trough, and the worst as the bigger of the two", () => {
     const hs = { programs: { headstart: 12000 }, childPrograms: { headstart: 12000 } };
     const points = [
       pt(0, 40000, hs), pt(10000, 45000, hs),
@@ -501,21 +492,18 @@ describe("deferred losses stay out of the headline", () => {
     const ev = evaluateOn(a, points, 35000);
     expect(ev.analysis.cliffs.map((c) => c.startEarnings)).toEqual([10000, 30000]);
     expect(ev.deferred.map((c) => c.startEarnings)).toEqual([10000]);
-    expect(ev.analysis.worstCliff).toMatchObject({ startEarnings: 30000, drop: 5000, programsLost: ["snap"] });
-    // The immediate curve lifts everything above the deferred step by its drop,
-    // so the SNAP dip above it is still a dip and still opens a zone.
-    expect(ev.analysis.dangerZones).toEqual([{ startEarnings: 30000, endEarnings: 50000, peakNet: 51000 }]);
-    expect(ev.escape.leap).toBe(20000);
-    // …and the money line at this household's own pay is the REAL curve's, not
-    // the counterfactual's: they really are $18,000 below what the lift says.
+    expect(ev.analysis.worstCliff).toMatchObject({ startEarnings: 10000, drop: 18000, programsLost: ["headstart"] });
+    // The curve never climbs back past its $45,000 peak until $50,000: one zone, one leap.
+    expect(ev.analysis.dangerZones).toEqual([{ startEarnings: 10000, endEarnings: 50000, peakNet: 45000 }]);
+    expect(ev.escape.leap).toBe(40000);
     expect(ev.analysis.currentNet).toBe(30500);
   });
 
-  it("will not excuse a parent's Medicaid end on a curve that cannot say who held it", () => {
+  it("will not label a parent's Medicaid end on a curve that cannot say who held it", () => {
     // Committed curves swept before childPrograms existed. Treating the split
-    // as empty would hand every child's Medicaid to the parent and then excuse
+    // as empty would hand every child's Medicaid to the parent and then label
     // the cliff under §1925 — the same conflation the coverage-gap guard
-    // refuses to make. Excusing a cliff is the strong claim, so it is withheld.
+    // refuses to make. The label is a claim about the rule, so it is withheld.
     const covered = { programs: { medicaid: 15000 } };
     const after = { programs: {}, medicalOOP: 5000 };
     const legacy = withCliff(covered, after).map((p) => {
@@ -524,7 +512,7 @@ describe("deferred losses stay out of the headline", () => {
     });
     const ev = evaluateCurve(answersWith({ annualEarnings: 30000 }), { year: "2026", currentEarnings: 30000, points: legacy }, "archetype");
     expect(ev.deferred).toEqual([]);
-    expect(ev.escape.leap).toBe(40000);
+    expect(ev.analysis.cliffs).toHaveLength(1);
   });
 
   it("leaves a curve with nothing deferred exactly as it was", () => {

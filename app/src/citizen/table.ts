@@ -1,14 +1,14 @@
 // DataTable (#15), the chart's table twin: the points the picture marks,
 // as numbers (N3). The words for each threshold live once, in the StepList;
 // a row here says only which mark it is. Every `keep` is read off the
-// plotted (lifted) curve, so the table and the picture cannot disagree.
+// plotted curve, so the table and the picture cannot disagree.
 import { t } from "./copy.js";
 import type { Scene } from "./model.js";
 
 export interface TableRow { at: number; keep: number; drop?: number; mark: string }
 
 export function tableRows(s: Scene): TableRow[] {
-  const keepAt = (e: number) => s.lifted[s.idx(e)];
+  const keepAt = (e: number) => s.net[s.idx(e)];
   const rows: TableRow[] = [];
   if (s.zone) rows.push({ at: s.zone.startEarnings, keep: s.zone.peakNet, mark: t("table.marks.peak") });
   rows.push({ at: s.current, keep: s.currentNet, mark: t("table.marks.you") });

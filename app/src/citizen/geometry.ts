@@ -15,11 +15,10 @@ import type { Scene } from "./model.js";
  */
 export function yRange(s: Scene, narrow: boolean): { y0: number; y1: number; stepY: number; maxDrop: number } {
   const [i0, i1] = [s.idx(s.window[0]), s.idx(s.window[1])];
-  const slice = s.lifted.slice(i0, i1 + 1);
+  const slice = s.net.slice(i0, i1 + 1);
   const maxDrop = Math.max(0, ...s.inWindow.map((c) => c.drop));
   const need = 2.5 * maxDrop;
-  // The real curve (the ghost, and the diamond at the household's own money) is never above the lifted one and must stay in the picture.
-  const lo = Math.min(...slice, ...s.net.slice(i0, i1 + 1), s.currentNet), hi = Math.max(...slice, s.currentNet);
+  const lo = Math.min(...slice, s.currentNet), hi = Math.max(...slice, s.currentNet);
   const padY = (hi - lo) * 0.14;
   let y0 = lo - padY, y1 = hi + padY;
   if (y1 - y0 < need) { const ext = (need - (y1 - y0)) / 2; y0 -= ext; y1 += ext; }
@@ -51,7 +50,6 @@ export interface Layout extends Layer {
    * caption says where it is.
    */
   labelled: Cliff | null;
-  ghost: boolean;
 }
 
 /** Everything a draw needs, from the scene and the wrapper's width. */
@@ -69,10 +67,5 @@ export function layout(s: Scene, width: number): Layout {
     xTicks: xTicks(s, narrow ? 4 : 5),
     clusters: clusterCliffs(s.inWindow, layer.px),
     labelled: s.worst && s.inWindow.includes(s.worst) ? s.worst : null,
-    // The ghost is drawn only when a deferred drop that starts before the
-    // window's right edge exceeds 1.5% of the y-range — past the edge the
-    // real curve lies on the line; the caption sentence comes from the same
-    // test (S14).
-    ghost: s.deferred.some((c) => c.startEarnings < x1 && c.drop > 0.015 * (y1 - y0)),
   };
 }

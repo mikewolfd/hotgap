@@ -2,8 +2,9 @@ import type { HouseholdEvaluation, StateMetrics } from "@hotgap/core";
 
 /**
  * Summary metrics come from the shared evaluation, so a state's ranking
- * reads the same curve a household sees offline: verdicts from the immediate
- * curve (deferred losses lifted out), the real cliffs counted separately.
+ * reads the same curve a household sees offline: every cliff counts, and
+ * the ones a federal rule defers to a later renewal are counted again in
+ * `deferredCliffCount`, as a label (evaluate.ts, 2026-09-17).
  */
 export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
   const { analysis, escape, deferred } = ev;
@@ -17,7 +18,7 @@ export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
     dangerWidth: Math.round(
       analysis.dangerZones.reduce((w, z) => w + (z.endEarnings ?? axisMax) - z.startEarnings, 0),
     ),
-    cliffCount: analysis.cliffs.length - deferred.length,
+    cliffCount: analysis.cliffs.length,
     deferredCliffCount: deferred.length,
     safeExit: escape.safeExitEarnings,
     leap: escape.leap,

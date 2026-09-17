@@ -3,8 +3,8 @@
 // the verdict in the caseworker register, the tiles, the IncompleteMarker
 // count, the ThresholdLedger under the one threshold convention, the
 // CompareTable rows, the assumed list, the SourceNote and the client sheet.
-// The lift and the modeled household are core's (immediateCurve,
-// modeledAnswers); the IncompleteMarker rule is lib/coverage.ts's. No DOM,
+// The modeled household is core's (modeledAnswers); the IncompleteMarker
+// rule is lib/coverage.ts's. No DOM,
 // no fetch — vitest covers it directly (model.test.ts).
 // Every figure is annual (design/inventory.md M5): this reader checks the
 // table against the file. Every word is copy.ts's, every figure formatted
@@ -43,7 +43,7 @@ export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
   Math.round((earnings - ev.curve.points[0].earnings) / stepOf(ev));
 const top = (ev: HouseholdEvaluation): number => ev.curve.points[ev.curve.points.length - 1].earnings;
 
-/** The cliff object `nextCliff`/`worstCliff` name — they are never the same object as a `cliffs` entry (evaluate.ts). */
+/** The `cliffs` entry a `nextCliff`/`worstCliff` reference names, found by its step (the same object since 2026-09-17; kept for a reference that is not). */
 export const cliffAt = (ev: HouseholdEvaluation, ref: { startEarnings: number } | null): Cliff | null =>
   ref ? ev.analysis.cliffs.find((c) => c.startEarnings === ref.startEarnings) ?? null : null;
 

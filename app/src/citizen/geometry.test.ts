@@ -1,6 +1,6 @@
-// The citizen chart's arithmetic (design/charts.md § 1): the lift, the
-// window, the 2.5× y-range rule, ticks in the display unit, and the layout's
-// clusters. The nice steps and the merge rule themselves are tested in
+// The citizen chart's arithmetic (design/charts.md § 1): the window, the
+// 2.5× y-range rule, ticks in the display unit, and the layout's clusters.
+// The nice steps and the merge rule themselves are tested in
 // lib/chart/geometry.test.ts.
 import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
@@ -10,21 +10,6 @@ import { layout, xTicks, yRange } from "./geometry.js";
 import { sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
-
-describe("the lift", () => {
-  test("a deferred drop is added back to every point above its step, and only there (core's immediateCurve, on the scene)", () => {
-    const s = sceneOf(makeEvaluation(), year);
-    const d = s.deferred[0];
-    expect(d.startEarnings).toBe(71_000);
-    const i = s.idx(d.startEarnings);
-    expect(s.lifted[i]).toBe(s.net[i]);
-    expect(s.lifted[i + 1] - s.net[i + 1]).toBeCloseTo(d.drop);
-    expect(s.lifted[s.lifted.length - 1] - s.net[s.net.length - 1]).toBeCloseTo(d.drop);
-    // The lifted curve no longer steps down there.
-    expect(s.net[i + 1]).toBeLessThan(s.net[i]);
-    expect(s.lifted[i + 1]).toBeGreaterThanOrEqual(s.lifted[i]);
-  });
-});
 
 describe("the window", () => {
   test("is what the picture exists to show — the zone, the exit, the nearby biggest drop — plus the margin, and nothing of the axis", () => {
@@ -61,7 +46,7 @@ describe("axis honesty", () => {
       expect(y0 % (stepY / 4)).toBe(0);
       expect(y1 % (stepY / 4)).toBe(0);
       expect(y0).toBeGreaterThan(0);
-      const slice = s.lifted.slice(s.idx(s.window[0]), s.idx(s.window[1]) + 1);
+      const slice = s.net.slice(s.idx(s.window[0]), s.idx(s.window[1]) + 1);
       expect(y0).toBeLessThanOrEqual(Math.min(...slice));
       expect(y1).toBeGreaterThanOrEqual(Math.max(...slice));
     }
@@ -85,11 +70,10 @@ describe("ticks", () => {
 });
 
 describe("marks", () => {
-  test("a layout clusters every cliff in the window, a cluster of deferred cliffs alone is hollow, and the ghost follows its own test", () => {
+  test("a layout clusters every cliff in the window, and a cluster of deferred cliffs alone is hollow", () => {
     const s = sceneOf(makeEvaluation(), year);
     const L = layout(s, 800);
     expect(L.clusters.map((c) => [c.cliffs.map((x) => x.startEarnings), c.later])).toEqual([[[41_000], false], [[54_000], false], [[71_000], true]]);
-    expect(L.ghost).toBe(s.deferred[0].drop > 0.015 * (L.y1 - L.y0));
     expect(L.narrow).toBe(false);
     expect(layout(s, 358).narrow).toBe(true);
     // A deferred cliff and an immediate one under 10px apart share one solid mark.
@@ -106,11 +90,5 @@ describe("marks", () => {
     expect(far.window[0]).toBeGreaterThan(55_000);
     expect(far.worst?.startEarnings).toBe(54_000);
     expect(layout(far, 800).labelled).toBeNull();
-  });
-  test("a deferred step at or past the window's right edge draws no ghost, however big the drop", () => {
-    const s = sceneOf(makeEvaluation(), year);
-    expect(layout(s, 800).ghost).toBe(true);
-    const cropped = { ...s, window: [20_000, 60_000] as [number, number], inWindow: s.inWindow.filter((c) => c.endEarnings <= 60_000) };
-    expect(layout(cropped, 800).ghost).toBe(false);
   });
 });

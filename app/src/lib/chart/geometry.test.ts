@@ -28,10 +28,10 @@ describe("nice values", () => {
 describe("marks", () => {
   test("dots closer than 10px merge into one mark, whichever kind; farther apart stay separate; a cluster of deferred cliffs alone is hollow", () => {
     const s = sceneOf(makeEvaluation(), { unit: "year" });
-    const tight = clusterCliffs(s.immediate, () => 100);
+    const tight = clusterCliffs(s.cliffs.filter((c) => !c.deferral), () => 100);
     expect(tight).toHaveLength(1);
     expect(tight[0].cliffs).toHaveLength(2);
-    expect(clusterCliffs(s.immediate, (e) => e / 100)).toHaveLength(2);
+    expect(clusterCliffs(s.cliffs.filter((c) => !c.deferral), (e) => e / 100)).toHaveLength(2);
     const mixed = clusterCliffs(s.inWindow, () => 100);
     expect(mixed).toHaveLength(1);
     expect(mixed[0].cliffs).toHaveLength(3);

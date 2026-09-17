@@ -35,8 +35,10 @@ export interface CliffBreakdown {
  * Three federal rules carry a household past the income threshold that ends a
  * program, so the money does not change the month the raise lands — it changes
  * at a renewal that can be up to a year away. A cliff carrying one of these is
- * still a real loss and still reported; it just must not drive the verdict,
- * the danger zones, or the leap (see evaluate.ts).
+ * a real loss and counts like any other — in the verdict, the danger zones,
+ * the leap and every summary metric (evaluate.ts, the owner's rule of
+ * 2026-09-17); the deferral is the label a surface puts on it: when the loss
+ * lands, and under which rule.
  */
 export type DeferralReason =
   | "head_start_program_year"
@@ -72,7 +74,7 @@ export interface Cliff {
   // with no nameable program (an SSDI stop lives in otherBenefits; a premium
   // jump is not a program) still says what it was.
   driver: keyof CliffBreakdown;
-  /** Set when nothing this cliff costs is lost in the year of the raise. */
+  /** Set when nothing this cliff costs is lost in the year of the raise: a label, never an exemption. */
   deferral: Deferral | null;
 }
 export interface DangerZone {

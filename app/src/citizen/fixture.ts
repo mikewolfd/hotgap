@@ -4,7 +4,7 @@
 // shape the components branch on, small enough to read. Built through
 // core's own analyzeCurve and escapeAnalysis, so the fixture cannot drift
 // from what the Worker returns.
-import { analyzeCurve, escapeAnalysis, immediateCurve, type Cliff, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
+import { analyzeCurve, escapeAnalysis, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
 
 const ANSWERS: HouseholdAnswers = {
   state: "CO", married: false, age: 30, spouseAge: null, youStatus: "citizen", spouseStatus: "citizen",
@@ -64,12 +64,9 @@ function makePoints({ snapCliff = true, snapTail = false, careCliff = true, defe
 
 export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, current = 43_000, shape: Shape = {}): HouseholdEvaluation {
   const points = makePoints(shape);
-  const opts = { hasChildren: true, isAdultGroupLoss: () => true };
-  const full = analyzeCurve(points, current, opts);
-  const deferred: Cliff[] = full.cliffs.filter((c) => c.deferral !== null);
-  // The lift evaluate.ts makes before the verdict is read — its own function.
-  const immediate = analyzeCurve(immediateCurve(points, deferred), current, opts);
-  const analysis = { ...immediate, points, cliffs: full.cliffs, currentNet: full.currentNet };
+  // The one reading evaluate.ts makes: every cliff counts, the deferred one labelled (2026-09-17).
+  const analysis = analyzeCurve(points, current, { hasChildren: true, isAdultGroupLoss: () => true });
+  const deferred = analysis.cliffs.filter((c) => c.deferral !== null);
   const escape = escapeAnalysis(points, analysis);
   const zone = analysis.dangerZones.find((z) => current > z.startEarnings && (z.endEarnings === null || current < z.endEarnings)) ?? null;
   return {

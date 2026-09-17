@@ -254,8 +254,8 @@ export const copy = {
     },
     /** S5: the "not $0" clause only when the floor is above zero. */
     axis: { fromZero: "The y-axis starts at {floor}; the visible range is {ratio}× the largest drop.", aboveZero: "The y-axis starts at {floor}, not $0; the visible range is {ratio}× the largest drop." },
-    liftedGhost: "Deferred drops are lifted out of the plotted line, which is what analysis.dangerZones describes; the real curve including them is the dashed ghost.",
-    liftedNoGhost: "Deferred drops are lifted out of the plotted line, which is what analysis.dangerZones describes; here they are too small to draw.",
+    /* A deferred cliff counts in every figure (2026-09-17); the hollow dot and dashed connector are its label. */
+    deferred: { one: "{n} cliff lands at a later renewal (hollow dot, dashed connector); it counts in every figure here.", other: "{n} cliffs land at a later renewal (hollow dots, dashed connectors); they count in every figure here." },
     noneDeferred: "No cliff on this curve is deferred.",
   },
 
