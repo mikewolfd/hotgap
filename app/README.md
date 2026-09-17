@@ -179,66 +179,97 @@ county, `county-names.json` at runtime.
 
 ## Languages
 
-The site must take a new language as one file, not a rewrite. The rules,
-decided 2026-09-16, that every surface builds to (the migration of what
-exists is a single pass after the three pages land; until then each surface
-keeps every user-facing string in its own copy module and none inline in
-render code):
+The site takes a new language as one file. Two of them exist: English, the
+source, and Spanish (`es-US`), a draft. Migrated 2026-09-17 against the rules
+decided 2026-09-16; what follows is what is there.
 
-- **The copy shape, decided 2026-09-17 (audit D13) so the migration inherits
-  one shape.** All four copy modules (`src/editor/copy.ts`,
-  `src/citizen/copy.ts`, `src/caseworker/copy.ts`, `src/places/copy.ts`) are
-  the shape `src/lib/copy.ts` records at its top: one `copy` object, a nest
-  of whole messages with `{slot}` placeholders and nothing else — no function,
-  no formatter, no number. Where a message has plural or select forms, they
-  are an object of whole messages keyed by the CLDR category (`one`, `other`
-  — `pluralKey(n)`) or the select value the model names, and the code picks
-  the key. That maps mechanically onto a locale file: a leaf is an ICU message
-  with the same slots, a variant object is one ICU `plural`/`select` with the
-  same keys, the key path is the message id, and the code that picks a key is
-  the code that hands ICU its argument. Every slot value arrives formatted by
-  `src/lib/format.ts` through `Intl` in `LOCALE`; only whole sentences are
-  ever joined (with a space, in reading order) and only lists (through
-  `Intl.ListFormat`); a clause is never a slot. One reader, `bind(copy)` →
-  `t(key, params)`, which throws on a slot left unfilled or a param with no
-  slot. The readability gate walks the same nest and fails on a function.
+**Where the words are.** `src/i18n/en.json` holds all 1,076 messages a person
+can read, namespaced by surface — `editor` 124, `citizen` 253, `caseworker`
+369, `places` 207, `shared` 123 — and `src/i18n/es-US.json` holds a Spanish
+message for every one of them. `core/src/messages/<locale>.json` holds the 37
+sentences core writes for a person to read (`coverage`, `program`, `liheap`,
+`validate`, `place`, `api`, `deferral`), which every surface renders in its own
+language. A file's `_` key is its own record — its language, its status, its
+date — never a message. The four `copy` modules are typed views into the
+catalog, not stores: `export const copy = catalog.citizen`.
 
-- **Strings.** Every string a person can see lives in a locale file
-  (`src/i18n/<locale>.json`, one file per locale, namespaced by surface),
-  written as ICU MessageFormat so plurals, selects and numbers are the
-  locale's business (`{kids, plural, one {# child} other {# children}}`),
-  rendered through one `t(key, params)` bound to the active locale. No
-  string concatenation of translated fragments; a sentence is one message.
-- **core's prose is a code, not a sentence.** Where a surface prints what
-  core wrote verbatim — coverage notes, unmodeled programs, the
-  other-benefits label, `validateAnswers` details, `/api` error details,
-  program names — core emits a message code with parameters and ships the
-  English table; the surface renders it in the active locale and falls
-  back to core's English. `summary.json` carries both the code and the
-  rendered English so a CSV or a script never needs the app.
-- **Numbers, money, dates** go through `Intl.*` with the active locale.
-  Money is always US dollars (`currency: "USD"`), formatted the locale's way
-  (`es-US`, not `es-ES`, for a US household).
-- **The locale travels.** `?lang=` in the URL (a caseworker can send a
-  client a link in the client's language), else `navigator.languages`, else
-  `en`; `<html lang dir>` is set from it; the viewer's choice is remembered
-  in `localStorage` as a convenience only.
-- **Layout allows for it.** Text expands (~30% for Spanish; the pseudo-locale
-  below does 40%); CSS uses logical properties (`margin-inline`,
-  `text-align: start`), never left/right, so `dir="rtl"` works without a
-  second stylesheet. Archivo carries Latin and Latin Extended; a language in
-  another script adds its subset next to `design/fonts/` when it ships.
-- **The gate.** A pseudo-locale (`qps-ploc`: every `en` message accented,
-  bracketed and lengthened) is generated at test time; the e2e renders every
-  page in it and fails on any visible English source string (a hard-coded
-  one) and on horizontal scroll at 390 (an expansion overflow). The
-  readability gate (`scripts/readability.mjs`) runs on English only.
-- **What stays English.** CSV column headers and URL parameter names are
-  machine contracts and do not localize; the download's label does.
-- **The second language ships with the migration:** Spanish (`es-US`),
-  drafted by the model and marked in the file header as a draft until a
-  native speaker reviews it, so the path is proven with a language people
-  in this audience actually read, not a placeholder.
+**How to add a language.** Copy `en.json` to `<tag>.json`, translate it, and
+add the tag to `LANGUAGES` in `src/lib/copy.ts`. That is all: the switch, the
+lazy chunk, `?lang=`, `<html lang dir>` and every `Intl` call read that list.
+Copy `core/src/messages/en.json` the same way for the sentences core writes. A
+message the new file lacks renders in English, so a partial translation ships
+and the gate names what is left.
+
+**The shape** is `src/lib/copy.ts`'s header, in full. A leaf is a whole ICU
+message with its values as named arguments; variants are one ICU `plural` or
+`select` and the locale's own CLDR rules choose the branch, never the code
+(there is no `if (n === 1)` in the app); a nest keyed by a data value stays a
+nest and the key path is the message id. Every argument arrives already
+formatted by `src/lib/format.ts` through `Intl` in the active locale — money,
+dates, lists, a pay figure in the person's unit — and a raw number is handed
+over only as a plural's selector. Only whole sentences are joined, and only
+lists, through `Intl.ListFormat`; a clause is never an argument.
+
+**The reader** is `fill` / `parts` / `bind(copy)` → `t(key, params)`, over
+`intl-messageformat` (measured against `@messageformat/core` and chosen in the
+first commit of the migration). It throws on an argument left unfilled and on a
+param with no argument, so a sentence cannot reach the page half-filled, and it
+caches each compiled message, so a render is O(messages), not O(parses).
+
+**core's prose is a code.** Coverage notes, unmodeled programs, the
+other-benefits label, `validateAnswers` details, `/api` error details, program
+names and a deferral's date are `{ code, params }` beside the English core
+still writes, so the CLI, `summary.json` and the CSV never need the app;
+`coreText` renders the code in the active locale and falls back to core's
+English.
+
+**Numbers, money, dates** are `Intl`'s, in the active locale. Money is always
+US dollars formatted the locale's way — `es-US`, not `es-ES`, for a US
+household, which is the same `$30,000` English writes; dates and lists are not
+("16 sept 2026", "3 y 7"). The number words `Intl` has no spellout for are the
+catalog's (`shared.numbers`), including the exact forms a language needs that
+English composes ("veintiuno").
+
+**The locale travels.** `?lang=` in the URL — kept by every address a page
+writes, so a caseworker can send a client a link in the client's language —
+else the viewer's remembered choice, else `navigator.languages`, else `en`.
+`<html lang dir>` is set from it, the choice is remembered in `localStorage`
+inside a try/catch as a convenience only, and the switch sits in the
+ScenarioBar's top row and the places masthead, each language naming itself.
+Every locale is a lazy chunk, `en` included, so a page ships no catalog it does
+not read.
+
+**Layout allows for expansion.** `design/tokens.css` and the page CSS use
+logical properties (`margin-inline`, `padding-inline-start`, `text-align:
+start`), so `dir="rtl"` needs no second stylesheet; labels wrap rather than
+clip. Archivo carries Latin and Latin Extended; a language in another script
+adds its subset beside `design/fonts/` when it ships.
+
+**The gate** is `e2e/i18n.spec.ts`, in two halves. `qps-ploc` — every English
+message accented, bracketed and two fifths longer, generated at load time by
+`src/lib/pseudo.ts`, never a file — renders every page at 390 and 1280: a
+string without the catalog's accent is hard-coded and the check names it and
+the element holding it, and the document must not scroll sideways. Then `es-US`
+renders every page and must show none of the 589 English phrases the gate
+builds from `en.json`, must say `lang="es-US"`, and must carry the locale's own
+dates, lists and dollars. Both halves were proved to fail before they were
+trusted. `npm run readability` runs on English only.
+
+**What stays English, on purpose.** The CSV's column headers and the URL's
+parameter names — machine contracts, asserted identical in both languages
+(the download's file name follows the language). A program's acronym (SNAP,
+WIC, Medicaid, CHIP) and a program's name as the office wrote it, including a
+state's own ("ConnectorCare", "Cascade Care Savings"), because a name is the
+office's (`design/inventory.md` M3); the plain phrase beside it translates
+("ayuda para la comida"). A county's name is a name and its kind is a common
+noun, so `shared.county.*` says the kind ("Condado de El Paso"). The language
+switch, where a language names itself. A citation's hostname.
+
+**Spanish is a draft.** `es-US.json` says so in its `_` record, with the date
+it was written (2026-09-17) and `reviewed: null`. It was drafted by the model
+in each persona's register — the citizen plain and in `usted`, the caseworker
+professional, the journalist quotable — and no native speaker has read it.
+`design/README.md` § Languages says what a reviewer should look at first.
 
 ## Proofs
 
@@ -246,8 +277,9 @@ render code):
     npx vitest run                     # unit tests, worker/src/index.test.ts included
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
-    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts — the editor, citizen, caseworker and places proofs (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/; the shared harness is e2e/support.ts)
-    npm run readability                # Flesch–Kincaid over app/src/*/copy.ts (design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
+    cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts — the editor, citizen, caseworker and places proofs, and the languages gate i18n.spec.ts (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/; the shared harness is e2e/support.ts)
+    npm run readability                # Flesch–Kincaid over src/i18n/en.json, English only (design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
+    node e2e/text-dump.mjs <dir> <url> [lang]   # every page's text at 1280, one file each: diff two builds to prove a rendered string did not move
 
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then
