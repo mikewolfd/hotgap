@@ -136,6 +136,8 @@ Counts: **2 B, 6 S, 12 N.**
   along the drop line (it already carries one) rather than over the dot. The
   verdict catalog itself needs the clause written down (TODO(system) 16).
 
+  **Resolved** (`a82c6db`, `headstart-390-light.png`, `-1280-`, `-chart.png`): the answer now ends "One more thing: at $31,000, free early learning stops, but not that day. Later, you would keep about $16,600 less a year." — `copy.verdict.waits`, filled from the first deferred cliff at or above current pay (`steps.ts waitingAhead`), with who loses it read off the deferral's reason. A cluster that holds a deferred cliff keeps the *waits* channel whatever else is under it: the dashed stub and *later* are drawn beside the solid dot (measured: one stub, one *later* on the merged mark at both widths) and the mark's label says "Some of it waits for a later day." The diamond, when it falls within a dot's reach, slides down its own drop line: 2–3px from the mark's centre before, **20.5px** at 390 and **20.0px** at 1280 after. The catalog clause stays TODO(system) 16 — `inventory.md` is outside this branch.
+
 ### B2. The crop shows the climb, not the step: the y-range is 11× to 390× the drop and the caption says the drops are easy to see
 
 - **Where:** `app/src/citizen/model.ts:102–117` (`windowFor`, line 110: `span
@@ -188,6 +190,7 @@ Counts: **2 B, 6 S, 12 N.**
   y-range, else the bare axis sentence. The crop rule belongs in `charts.md` § Phone
   (TODO(system) 18).
 
+  **Resolved** (`a82c6db`, `*-chart.png`, `measurements.json`): `windowFor` lost the `top / 2` floor: the window is what the picture exists to show — the zone, the exit, the next cliff, and the biggest drop when it is within `WINDOW_MARGIN` ($30,000) — plus that margin, a third before and two thirds after. Measured at 390, the y-axis range and the tallest drop drawn: the proof household $30k–$80k → **$40k–$55k**, ratio 20.95 → **7.33**, its drops 9/2/3px → **26.7/6.7/7.6px**; the $125,000 household $40k–$120k → **$70k–$90k**, 11.33 → **4.25**, 46.1px; New Jersey $20k–$80k → **$40k–$50k**, 41.07 → **10.27**, 14/30.6px; Head Start 4.82 → **2.71**; hourly 5.19 → **3.90**; Texas 83.69 → **49.69**; the monthly Coloradan 390 → **244**. No axis starts at $0 now (the floor snaps outward on a quarter of the gridline step, not a whole one): Texas $0 → **$17,500**, monthly $0 → **$15,000**. "so the drops are easy to see" is said only when the biggest drop in the window is at least a tenth of the y-range, so Texas, Massachusetts, New Jersey at 390 and the monthly household get the bare axis sentence. **Left:** three drops are still under 10px — Massachusetts $400, Texas $1,000, monthly $205 — because the window must hold the person's zone and next cliff while their curve climbs $15,000–$25,000 across it: those drops are small in the money, not only in the picture, and the caption no longer claims otherwise. On the archetype path the $14,000 drop at $92,000 is $55,000 past that household's exit, outside the margin, so the caption names it ("The biggest drop, about $14,000 a year at $92,000, is outside the picture") instead of the crop stretching to it.
 ---
 
 ## Should fix
@@ -214,6 +217,7 @@ at every width — the summary line and *Edit*, the chips behind it — by
 setting the collapse as an option of `mountEditor` rather than a media query;
 and `#inputs` stays hidden until `hasAnswers(flags)`.
 
+  **Resolved** (`a82c6db`, `ca-1280-light.png`, `landing-1280-light.png`): the chips stay behind *Edit* at every width on this surface (`citizen.css`, at zero specificity, since `tokens.css` shows the row from 720px for the counselor), and the editor's own `inputsRow.hidden = !hasAnswers(flags)` — added on main for the caseworker — leaves the landing with no chips at all. Measured at 1280: the answer starts at y=339 → **y=185**, the same as the phone, and the 212px chip row is gone until *Edit*. **Not done:** the collapse is a page CSS rule rather than a `mountEditor` option; that belongs to the editor and is in the report.
 ### S2. On paper the page opens with the chips, carries no name, and leaves half its first page blank
 
 `design/tokens.css:634–648` (the print block hides `.hg-button` and the
@@ -244,6 +248,7 @@ the result with the wordmark and the summary sentence; `#inputs` and
 paper; and the fixed-width redraw on `beforeprint` the caseworker review
 asked for.
 
+  **Resolved** (`a82c6db`, `print-letter-390-dark.pdf`, `print-letter-1280-dark.pdf`, `print-390-dark.png`, `print-1280-dark.png`): a `.hg-print-only` masthead opens the paper — "HotGap  A parent with 2 kids, ages 3 and 7, in California." (`facts.ts whoText`, from the household the curve was run for, so the archetype path says whose numbers these are) — `#inputs`, `.hg-readout` and the disclosure's summary leave paper, `figure { break-inside: avoid }` keeps the chart's title with its drawing, and the chart redraws at a 640px column on `beforeprint` and back on `afterprint`. Measured from OS dark at both widths: masthead y=34, answer y=105 (390) / y=81 (1280), the title and the SVG adjacent, `svgW` **640** from either width, the numbers open, five Letter pages → **four**, and every text ink in both PDFs the light scheme's, none the dark's. The two editor selectors stay in the page's CSS until `tokens.css` carries them (TODO 26).
 ### S3. Three label collisions: the drop label on the diamond, the peak label on the first dot and its ring, the drop label inside the ring
 
 `app/src/citizen/chart.ts:147` (the peak label ends 6px left of the band's
@@ -264,6 +269,7 @@ diamond — the test the caseworker review asked `charts.md` to record (TODO
 15) — and when it hits, place the label on the other side of the connector
 or a line up; the peak label goes 10px further left, or above the rule.
 
+  **Resolved** (`a82c6db`, `past-390-light-chart.png`, `monthly-390-light-chart.png`, `measurements.json` `*.collisions`): one overlap test in `chart.ts`: each dot carries a 10px box (the open mark's ring), the diamond its own, and a direct label takes the first of five spots that lies on nothing already drawn — beside a tall connector, above the dot, below the landing, or either of those on the other side of the connector. The peak label moved from 6px to 16px left of the band. Measured across all eighteen renders: **zero collisions**, against "−$7,059" across the diamond and "−$205" inside the ring before.
 ### S4. On a phone the safe-from-here rule is a plum line with no label, no key entry and no sentence
 
 `app/src/citizen/chart.ts:157–162` (the *safe from here* label is drawn only
@@ -282,6 +288,7 @@ rule is off the picture; the same for *back to even* on the in-zone shapes at
 narrow, where the sentence's {exit} underline carries it and the caption need
 not.
 
+  **Resolved** (`a82c6db`, `hourly-390-light-chart.png`, `past-390-light-chart.png`): the caption emits `chart.safeBeyond` whenever the words are not drawn on the picture, not only when the rule is off it. Measured at 390: the Boston hourly household now reads "From $50.50 an hour up, more pay always adds to what you keep." and the $125,000 household "From $119,000 up, …", where both were silent.
 ### S5. On the archetype path the chips contradict the assumed list, and the sentence that reconciles them is 13px grey a thousand pixels down
 
 `app/src/citizen/model.ts:140–141` (`modeled` is core's swept household on the
@@ -309,6 +316,7 @@ the same verdict, and focus falls to `body` (`archetype.json`
 `afterTryAgain`); the reply should be "We still could not…" and focus should
 stay on the line.
 
+  **Resolved** (`a82c6db`, `archetype-390-light.png`, `archetype-390-light-after-try-again.png`): the M4 sentence now stands above the answer as a caution callout (`#whose`), where the numbers are met, as well as in the source line, and the chips row's `.hg-scenario__note` — the inventory's slot — carries the same sentence with its own *Try again*. A *Try again* that still cannot reach the engine answers "We still could not get your exact numbers. …" and focus stays on the source line's button (measured: focus "Try again", inside `#source`). **Not done:** the value chips still read the person's own answers, not the swept household's — the chips are the editor's, and rewriting them would put the bar at odds with the URL and with what *Change my answers* reopens; the note now says which numbers the page is showing.
 ### S6. The incomplete-state caution sits three screens down, after the drops it qualifies
 
 `app/src/citizen/result.ts:173, 181–184` (the `#incomplete` callout is
@@ -328,6 +336,7 @@ the SourceNote's slot, which is where the same fact lives on the caseworker
 page ("every figure on the page is a floor") — and record the citizen tag in
 the inventory (TODO(system) 19).
 
+  **Resolved** (`a82c6db`, `nj-390-light.png`, `nj-390-light-chart.png`): the `#incomplete` callout moved inside the figure, between the caption and the SourceNote. Measured on New Jersey at 390: y=2,746 → **y=1,305**, with the caption at 1,165 and the source line at 1,443 — it qualifies the picture before the drops are read. The inventory tag stays TODO(system) 19.
 ---
 
 ## Nits
@@ -336,15 +345,18 @@ the inventory (TODO(system) 19).
   outside the picture." — the unit twice in one clause on every annual
   household (`copy.ts:64` `{pay}` filled with `m.payUnit` at `chart.ts:224`).
   M5 says "a year" once per sentence: `m.pay`.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): `m.pay`: "The biggest drop, about $7,100 a year at $107,000, is outside the picture."
 - **N2.** The readout hint "Press ] and [ to jump between drops." prints
   under a chart with no marks (`nocliff-390-light.png`) and, on every phone,
   names two keys a phone does not have; three lines under the chart at 390
   (`copy.ts:53`, `chart.ts:85–87`). Say the second sentence only when marks
   exist and only above 720px; the visually hidden copy keeps both.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): the bracket sentence is its own string, said only where marks exist and the viewport is at least 720px; the visually hidden copy keeps both. Measured: absent at 390 and on the no-cliff household at 1280, present on the proof household at 1280.
 - **N3.** "2 changes wait" lists its paragraphs out of pay order — $97,000
   before $41,000 on New Jersey (`nj-390-light-incomplete.png`;
   `steps.ts:108–122` appends the non-cliff endings after the deferred
   cliffs). Sort by `at`.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): `waitsText` sorts its paragraphs by pay before rendering.
 - **N4.** A section headed *Hours* whose one sentence is about the minimum
   wage ("California's lowest legal pay is $16.90 an hour. Full-time work at
   that pay is about $35,000 a year.") sits directly under an assumed row
@@ -352,14 +364,17 @@ the inventory (TODO(system) 19).
   `result.ts:187`; `ca-1280-light.png`). Inherited from the mockup. A heading
   is a label with a job: "The lowest legal pay", or fold the sentence into
   *How common is this pay?*.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): the heading is "The lowest legal pay".
 - **N5.** "Your kids' food help for moms and babies would end. It is called
   WIC." (San Francisco, Massachusetts; `steps.ts:73–75`): the group template
   is guarded only for phrases ending in "kids". Guard any phrase that names
   its own group, or give WIC the plain template.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): `programs.ts NAMES_ITS_GROUP` — CHIP and WIC, the two phrases that name their own holder — takes the plain template.
 - **N6.** `facts.ts:115–119` scopes the child-care entry to "a child under 6"
   (`age < 6`) where the places review's N8 settled one rule, core's
   `CHILDCARE_MAX_AGE` (through 12), and the editor on the same page already
   uses it (`editor/index.ts:142`). Read the constant.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): `CHILDCARE_MAX_AGE` read from core (the app audit's D7), with the test the audit says was missing: a 7-year-old and a 12-year-old in paid care flag the state, a 13-year-old and a household paying nothing do not (`citizen/facts.test.ts`).
 - **N7.** The reach source line is in the journalist's words on the citizen
   page — "From U.S. Census Bureau survey data, ACS 2024 1-year PUMS." — via
   `places/format.ts:31–34` `reachWord` (`facts.ts:135–138`); the mockup said
@@ -368,25 +383,30 @@ the inventory (TODO(system) 19).
   the page says "The count could be off by a few thousand dollars either
   way." for every household (`copy.ts:225`). The margin is in `reach.cell`
   today; say the number.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): the source line is in the citizen's own words now — "From U.S. Census Bureau survey data (ACS 2024, 1-year). Grown to 2026 dollars." — with its own vintage helper rather than the journalist's `reachWord`. **Left:** the cell's `n` and `moe` are not on `HouseholdEvaluation` (`ReachSummary` is two percentiles), so the fixed margin sentence stands; a core item, in the report.
 - **N8.** The one-value dialog's title and its only label are the same word
   — *Savings* / *Savings* (`dialog-390-light.png`; `editor/index.ts:436`,
   `:143–149`). Let the label carry the unit ("Dollars") or the question.
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): **not done** — `app/src/editor/**` is outside this branch; listed for the editor.
 - **N9.** § Languages, mostly done — every result string is in `copy.ts` and
   lists and dates go through `Intl` — with four leftovers: the `h1` is a
   literal in `main.ts:27`; `programs.ts:26` concatenates "the " onto a name;
   the editor's "Check this." is a literal in `index.ts:376`, and its
   household, place and summary labels are joined from fragments
   (`index.ts:124–129, 306`: "1 adult", "kids 3 & 7", " · ").
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): the `h1` reads `copy.heading`, and `programs.ts` holds a `called` string per program instead of gluing "the " onto a name. The editor's three are **not done** (boundary; listed).
 - **N10.** "California Premium Subsidy, up to $1,538 a year. California helps
   pay for health insurance. We counted it." — the state twice in a row, on
   Massachusetts too ("ConnectorCare Plan Type 2A. Massachusetts helps…")
   (`copy.ts:198–199`, `facts.ts:82–83`). "It helps pay…".
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): "It helps pay for health insurance. We counted it."
 - **N11.** The table's *Your pay* column is annual for an hourly or monthly
   person — "$33,670" for someone who said $18.50 an hour
   (`hourly-390-light.png`; `table.ts:10–19`, `result.ts:157`, caption "in
   dollars a year" `copy.ts:109`). The mockup did the same; M5 says "every
   pay figure on the citizen surface". Print the unit figure, or both
   (TODO(system) 21).
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): the *Your pay* column prints the person's unit ("$18.50 an hour"), and the caption says which column is annual: "The points the picture marks. Money kept is in dollars a year." TODO(system) 21 stands for the inventory's ruling.
 - **N12.** The summary line wraps to two lines at 390 — "94110 · CA · 1
   adult, kids 3 & 7 · $30,000 a year" is 49 characters against the
   inventory's 41 — and the ZIP says nothing to the person who typed it
@@ -394,6 +414,7 @@ the inventory (TODO(system) 19).
   the one place on the surface joined with middle dots, which the README's
   type rules forbid and the inventory's ScenarioBar example prescribes
   (TODO(system) 25).
+  **Resolved** (`a82c6db`, `design/review/citizen/after/`): **not done** — the summary line is the editor's, and TODO(system) 25 is the rule it waits on.
 
 ---
 
@@ -465,6 +486,19 @@ the inventory (TODO(system) 19).
   cliff, the citizen-register caution for an incomplete state — stand.
 
 ---
+
+## Resolution
+
+Every finding above carries a **Resolved** line with its commit and the evidence
+under `design/review/citizen/after/`, re-rendered through the project's own
+runner against the same nine households at both widths and the archetype path on
+a dead engine (`cd app && node e2e/citizen-review.mjs http://localhost:8787
+http://localhost:8788` — 139 checks, all passing). What was deliberately left is
+said in the line that left it: three households whose drop is small in the money
+as well as in the picture (B2), the archetype path's chips (S5), and the items
+that belong to `app/src/editor/**` or to core (S1's editor option, N7's margin,
+N8, N9's editor strings, N12). No system item below was written into
+`tokens.css`, `inventory.md` or `charts.md` from here.
 
 ## TODO(system)
 
