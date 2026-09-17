@@ -5,7 +5,7 @@
 // inlines a program phrasing.
 import type { ProgramId } from "@hotgap/core";
 
-export const PROGRAMS: Record<ProgramId, { phrase: string; name: string }> = {
+const PROGRAMS: Record<ProgramId, { phrase: string; name: string }> = {
   snap: { phrase: "food help", name: "SNAP" },
   medicaid: { phrase: "a free state health plan", name: "Medicaid" },
   chip: { phrase: "a health plan for kids", name: "CHIP" },

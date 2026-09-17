@@ -18,7 +18,6 @@ import {
   type Cliff,
   type HouseholdAnswers,
   type HouseholdEvaluation,
-  type ModelRecord,
   type ProgramId,
   type ReachLadder,
   type StateCoverage,
@@ -27,6 +26,7 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { againText, verdictText } from "../citizen/verdict.js";
 import { careHousehold, incompleteFor } from "../lib/coverage.js";
+import { modelLine } from "../lib/format.js";
 import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
 import { copy, fmt, programName } from "./copy.js";
 
@@ -44,7 +44,7 @@ export const cliffAt = (ev: HouseholdEvaluation, ref: { startEarnings: number } 
 /** The household the curve actually models: core's reading (the swept renter on the archetype path), which every sentence about rent, care or take-up describes. */
 export const modeled = (ev: HouseholdEvaluation): HouseholdAnswers => modeledAnswers(ev);
 
-export const archetypeOf = (ev: HouseholdEvaluation): string => pickArchetypeId(ev.answers);
+const archetypeOf = (ev: HouseholdEvaluation): string => pickArchetypeId(ev.answers);
 
 /**
  * Whether a what-if's reply is the base's own committed curve again (B1): the
@@ -214,17 +214,17 @@ export interface CompareRow { label: string; cell: (ev: HouseholdEvaluation) => 
 
 /** The rows every scenario answers; `base` is the column "Change from now" is measured against. A threshold takes its own curve's step (a wider axis has a wider one). */
 export function compareRows(base: HouseholdEvaluation): CompareRow[] {
-  const C = copy.compare, R = C.rows, $ = fmt.money;
+  const C = copy.compare, R = C.rows, usd = fmt.money;
   return [
-    { label: R.net, cell: (ev) => $(ev.analysis.currentNet), money: true },
+    { label: R.net, cell: (ev) => usd(ev.analysis.currentNet), money: true },
     { label: R.change, cell: (ev) => (ev === base ? C.dash : fmt.signed(ev.analysis.currentNet - base.analysis.currentNet)) },
     { label: R.inZone, cell: (ev) => (ev.analysis.verdict === "in_danger_zone" ? C.yes : C.no) },
-    { label: R.zoneEnds, cell: (ev) => (ev.personal.raiseIsLowerBound ? C.pastAxis : ev.personal.escapeEarnings === null ? C.dash : $(ev.personal.escapeEarnings)) },
-    { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? copy.tiles.atLeast(ev.personal.raiseToClear ?? 0) : $(ev.personal.raiseToClear ?? 0)) },
-    { label: R.safe, cell: (ev) => (ev.escape.safeExitEarnings === null ? C.pastAxis : $(ev.escape.safeExitEarnings)) },
-    { label: R.drop, cell: (ev) => (ev.analysis.worstCliff ? $(ev.analysis.worstCliff.drop) : C.none) },
-    { label: R.adultMedicaid, cell: (ev) => { const at = ev.escape.programEndsByAge.adults.medicaid; return at === undefined ? C.dash : $(at + stepOf(ev)); } },
-    { label: R.childCoverage, cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? C.pastAxis : $(ev.escape.childCoverageEndEarnings + stepOf(ev))) },
+    { label: R.zoneEnds, cell: (ev) => (ev.personal.raiseIsLowerBound ? C.pastAxis : ev.personal.escapeEarnings === null ? C.dash : usd(ev.personal.escapeEarnings)) },
+    { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? copy.tiles.atLeast(ev.personal.raiseToClear ?? 0) : usd(ev.personal.raiseToClear ?? 0)) },
+    { label: R.safe, cell: (ev) => (ev.escape.safeExitEarnings === null ? C.pastAxis : usd(ev.escape.safeExitEarnings)) },
+    { label: R.drop, cell: (ev) => (ev.analysis.worstCliff ? usd(ev.analysis.worstCliff.drop) : C.none) },
+    { label: R.adultMedicaid, cell: (ev) => { const at = ev.escape.programEndsByAge.adults.medicaid; return at === undefined ? C.dash : usd(at + stepOf(ev)); } },
+    { label: R.childCoverage, cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? C.pastAxis : usd(ev.escape.childCoverageEndEarnings + stepOf(ev))) },
     { label: R.reach, cell: (ev) => (ev.reach.current === null ? C.dash : fmt.ordinal(Math.round(ev.reach.current))) },
   ];
 }
@@ -262,10 +262,6 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
 
 // ── SourceNote (#17, M4, N9): every fact from the data ──────────────────
 export interface Provenance { cov: StateCoverage | undefined; summary: SummaryJson | null; /** The county's name, live only; the archetype has none (M4). */ county: string | null }
-
-/** N9: the model that produced the numbers, from the file, not the one installed. */
-export const modelLine = (m: ModelRecord | null | undefined): string =>
-  m?.version ? copy.source.modelVersion(m.version) : m ? copy.source.modelEndpoint(m.endpoint) : copy.source.modelUnknown;
 
 export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
   const { cov, summary } = prov, S = copy.source;

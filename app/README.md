@@ -107,7 +107,6 @@ mountEditor(root, {
   order: ["where", "household", "pay", "rent", "childcare", "childcare-subsidy"],   // chip ids first; the rest follow in the citizen order
 });
 editor.open("pay", { lead: "alt" });   // the screen led by the alternate exit: it is the primary button and what Enter presses
-editor.openInputs("housing");          // show the chips row (hidden behind Edit below 720px) and focus a chip
 editor.setNote(textOrFragment);        // the .hg-scenario__note line, first in the row (a live region, placed on first use); "" empties it
 editor.setCounty(zip, name);           // the county the Worker resolved, beside the place while that ZIP stands
 ```
@@ -169,10 +168,10 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 - `pickArchetypeId`, `ARCHETYPES`, `answersFor` (the swept household an archetype curve models), `countyName`, `DEFERRAL_UNTIL`, `COVERAGE_PROGRAMS`, `PROGRAM_END_MIN`
 - `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
 
-The citizen bundle today is 99 KB (31 KB gzip) with the two small tables inlined.
-The caseworker page loads the shared editor chunk (57 KB, core and the two
-tables) plus its own 40 KB (14.5 KB gzip), and fetches `summary.json`,
-`reach.json` and, for a live household with a county, `county-names.json`.
+`cd app && npx vite build` prints each page's chunks with their gzip sizes;
+the two small tables are inlined into the shared chunk, and the caseworker
+page fetches `summary.json`, `reach.json` and, for a live household with a
+county, `county-names.json` at runtime.
 
 ## Languages
 

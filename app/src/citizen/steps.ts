@@ -92,15 +92,16 @@ export function stepLoss(s: Scene, r: StepRow): string | null {
 /**
  * The deferred callout: one paragraph per deferred cliff, and one per
  * child's coverage ending that is not a cliff (the same continuous-
- * eligibility rule, said the same way), or none.
+ * eligibility rule, said the same way), or none. `rows` are the render's
+ * own step rows, so they are computed once per render (audit K4).
  */
-export function waitsText(s: Scene): { head: string; body: string[]; foot: string } | null {
+export function waitsText(s: Scene, rows: StepRow[] = stepRows(s)): { head: string; body: string[]; foot: string } | null {
   const items = s.deferred.map((c) => ({ at: c.endEarnings, text: fill(copy.waits.reasons[c.deferral!.reason], {
     at: s.m.payUnit(c.endEarnings),
     phrase: c.programsLost.length ? phrase(c.programsLost[0]) : copy.waits.thisHelp,
   }) }));
   const deferredAt = new Set(s.deferred.map((c) => c.endEarnings));
-  for (const r of stepRows(s)) {
+  for (const r of rows) {
     if (r.cliff?.deferral || deferredAt.has(r.at)) continue;
     for (const p of r.programs.filter(childCoverageWaits)) {
       items.push({ at: r.at, text: fill(copy.waits.reasons.child_continuous_eligibility, { at: s.m.payUnit(r.at), phrase: phrase(p.id) }) });

@@ -4,7 +4,7 @@
 // column is named after; the what-if's own flags are always rebuilt from
 // the base, so changing the base re-asks every what-if of the new one.
 import { HOUSEHOLD_FLAGS, PAY_UNITS, type HouseholdFlagName, type HouseholdFlags, type PayUnit } from "@hotgap/core";
-import { copy as citizen } from "../editor/copy.js";
+import { copy as editorCopy } from "../editor/copy.js";
 import { copy } from "./copy.js";
 
 /** The answers a what-if changes; null removes the base's answer (a toggle off, a figure cleared). */
@@ -54,7 +54,7 @@ const MONTHLY = new Set<HouseholdFlagName>(["rent", "childcare", "ssdi", "child-
 const YEARLY = new Set<HouseholdFlagName>(["earnings", "spouse-earnings"]);
 
 /** The control's name for a flag: its chip's, else the copy's name for a dialog field. */
-export const flagName = (f: HouseholdFlagName): string => {
+const flagName = (f: HouseholdFlagName): string => {
   const key = CHIP_OF[f];
   return (key ? copy.editor.chips[key] : undefined) ?? copy.whatIf.names[f] ?? f;
 };
@@ -80,7 +80,7 @@ export function whatIfLabel(diff: Diff, flags: HouseholdFlags): string {
     else if (YEARLY.has(f)) parts.push(W.yearly(label, Number(s)));
     else if (f === "savings") parts.push(W.figure(label, Number(s)));
     else if (f === "kids") parts.push(W.children(s.split(",")));
-    else if (f === "status" || f === "spouse-status") parts.push(W.valued(label, citizen.status[s] ?? s));
+    else if (f === "status" || f === "spouse-status") parts.push(W.valued(label, editorCopy.status[s] ?? s));
     else parts.push(W.valued(label, s));
   }
   return parts.join(", ");

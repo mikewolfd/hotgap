@@ -32,7 +32,8 @@ import {
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
-import { money, unitPhrase } from "../lib/format.js";
+import { h } from "../lib/dom.js";
+import { money, unitFigure, unitPhrase } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
 
 // The two small tables the editor reads through core: a state's typical rent
@@ -89,8 +90,6 @@ export interface Editor {
   close(): void;
   /** Show a validation detail — core's, from the page or the API — beside the field it names. */
   showError(detail: string): void;
-  /** Show the chips row (it hides behind Edit below 720px) and focus one chip — a given id, else the first take-up toggle. */
-  openInputs(chip?: string): void;
   /** The full-width line, first in the chips row, that a press answers with (§ ScenarioBar): text or a fragment with a link; "" empties it. */
   setNote(content: string | Node): void;
   /** The county the evaluation resolved for a ZIP, shown beside the place while that ZIP stands; undefined clears it. */
@@ -129,17 +128,7 @@ const FIELD_OF: Record<string, string> = {
   monthlyRent: "rent", monthlyChildcare: "childcare",
 };
 
-type Attrs = Record<string, string | boolean | undefined>;
-function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Attrs = {}, ...children: (Node | string | null | undefined)[]): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v === undefined || v === false) continue;
-    if (k === "class") el.className = String(v);
-    else el.setAttribute(k, v === true ? "" : v);
-  }
-  for (const c of children) if (c !== null && c !== undefined) el.append(c);
-  return el;
-}
+type Attrs = Parameters<typeof h>[1];
 
 const chip = (id: string, key: string, value: string, attrs: Attrs) =>
   h("button", { type: "button", class: "hg-chip", "data-chip": id, ...attrs },
@@ -184,7 +173,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     const k = kids();
     return `${married() ? "2 adults" : "1 adult"}${k.length ? `, kid${k.length > 1 ? "s" : ""} ${k.join(" & ")}` : ""}`;
   };
-  const payLabel = () => (flags.pay ? `${unit() === "hour" ? `$${Number(flags.pay).toFixed(2)}` : money(Number(flags.pay))} ${unitPhrase(unit())}` : copy.chips.none);
+  const payLabel = () => (flags.pay ? `${unitFigure(Number(flags.pay), unit())} ${unitPhrase(unit())}` : copy.chips.none);
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
   const placeLabel = () => [flags.zip, state(), countyLabel()].filter(Boolean).join(", ") || copy.chips.none;
 
@@ -640,10 +629,6 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     open(field, o = {}) { open(field, o.lead === "alt" && document.activeElement instanceof HTMLElement ? document.activeElement : null, o.lead); },
     close,
     showError,
-    openInputs(id) {
-      showInputs(true);
-      (inputsRow.querySelector<HTMLElement>(id ? `[data-chip="${id}"]` : "[aria-pressed]") ?? inputsBtn).focus();
-    },
     setNote(content) {
       noteContent = content;
       const fill = () => note.replaceChildren(noteContent);

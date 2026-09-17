@@ -5,28 +5,26 @@
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
 import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { esc } from "../lib/format.js";
 import { correctionRows } from "../lib/corrections.js";
+import { $, fillText } from "../lib/dom.js";
+import { esc } from "../lib/format.js";
 import { copy, fmt, programName } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
   modeled, sourceLine, stateName, tiles, verdict, type Provenance,
 } from "./model.js";
 
-export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
-
 /** The page's fixed words — headings, captions, column heads — from copy.ts into the skeleton, once. */
 export function renderStatic(): void {
   const P = copy.page;
-  const text: Record<string, string> = {
+  fillText({
     pageTitle: P.title, skip: P.skip, readout: P.readoutHint, drops: P.dropsHeading, dropsCaption: P.dropsCaption,
     colEarnings: P.dropsCols.earnings, colDrop: P.dropsCols.drop, colLost: P.dropsCols.lost, colDriver: P.dropsCols.driver,
     bdFootnote: P.breakdownFootnote, ledger: P.ledgerHeading, ledgerCaption: P.ledgerCaption,
     lColEarnings: P.ledgerCols.earnings, lColProgram: P.ledgerCols.program, lColWho: P.ledgerCols.who,
     compare: P.compareHeading, compareCaption: P.compareCaption, compareEmpty: P.compareEmpty, assumptionsHeading: P.assumptionsHeading,
     retrySource: copy.status.tryAgain,
-  };
-  for (const [id, t] of Object.entries(text)) $(id).textContent = t;
+  });
 }
 
 export function renderVerdict(ev: HouseholdEvaluation, cell: ReachLadder | null): void {

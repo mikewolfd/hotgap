@@ -17,18 +17,19 @@ import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
 import { copy } from "./copy.js";
 import { chartLabel, curveTitle, notInSweep, sourceLine, unclaimedNote, type Provenance } from "./model.js";
-import { $, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderStatic, renderVerdict, syncDrops, type Column } from "./render.js";
+import { $ } from "../lib/dom.js";
+import { renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderStatic, renderVerdict, syncDrops, type Column } from "./render.js";
 import { applyDiff, diffFlags, sameDiff, whatIfLabel, type Diff } from "./scenarios.js";
 import { pageQuery, parsePage } from "./url.js";
 
-const text = copy.status, W = copy.whatIf;
+const S = copy.status, W = copy.whatIf;
 
 /** A what-if column's state: the diff, and either its evaluation or why there is none. */
 interface WhatIf { diff: Diff; ev: HouseholdEvaluation | null; state: "computing" | "ok" | "failed" | "unanswered"; reason: string; seq: number }
 const fresh = (diff: Diff): WhatIf => ({ diff, ev: null, state: "computing", reason: "", seq: 0 });
 
 const errorText = (r: Extract<EvaluateResult, { ok: false }>): string =>
-  r.error === "bad_input" && r.detail ? text.errors.badInput(r.detail) : r.error === "rate_limited" ? text.errors.rate_limited : r.error === "busy" ? text.errors.busy : text.errors.other;
+  r.error === "bad_input" && r.detail ? S.errors.badInput(r.detail) : r.error === "rate_limited" ? S.errors.rate_limited : r.error === "busy" ? S.errors.busy : S.errors.other;
 
 // ── Data the page reads beside the evaluation ──────────────────────────
 const fetchJson = async <T>(url: string): Promise<T | null> => {
@@ -106,9 +107,9 @@ const writeUrl = (push: boolean): void => {
 function showError(r: Extract<EvaluateResult, { ok: false }>): void {
   status.textContent = "";
   const strong = document.createElement("strong");
-  strong.textContent = text.errorTitle;
+  strong.textContent = S.errorTitle;
   const retry = document.createElement("button");
-  retry.type = "button"; retry.className = "hg-button hg-button--small"; retry.textContent = text.tryAgain;
+  retry.type = "button"; retry.className = "hg-button hg-button--small"; retry.textContent = S.tryAgain;
   retry.addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false, push: false }); });
   alert.replaceChildren(strong, " ", errorText(r), " ", retry);
   alert.hidden = false;
@@ -130,7 +131,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   const id = ++latest;
   baseInFlight = true;
   alert.hidden = true;
-  status.textContent = text.loading(axisSpec(v.value).count);
+  status.textContent = S.loading(axisSpec(v.value).count);
   const r = await evaluate(flags);
   if (id !== latest) return;
   baseInFlight = false;

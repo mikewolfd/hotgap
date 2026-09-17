@@ -6,7 +6,7 @@
 // from what the Worker returns.
 import { analyzeCurve, escapeAnalysis, immediateCurve, type Cliff, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
 
-export const ANSWERS: HouseholdAnswers = {
+const ANSWERS: HouseholdAnswers = {
   state: "CO", married: false, age: 30, spouseAge: null, youStatus: "citizen", spouseStatus: "citizen",
   youYearsInUs: null, spouseYearsInUs: null, childAges: [3, 7], youDisabled: false, spouseDisabled: false, childDisabled: [false, false],
   monthlyRent: 1735, monthlyChildcare: null, annualEarnings: 43000, spouseAnnualEarnings: 0, selfEmployed: false, savings: 0,
@@ -35,7 +35,7 @@ export interface Shape {
 }
 
 /** Net income rises $800 a step from $20,000; the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
-export function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt }: Shape = {}): CurvePoint[] {
+function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt }: Shape = {}): CurvePoint[] {
   const points: CurvePoint[] = [];
   let net = 20_000;
   for (let e = 0; e <= TOP; e += STEP) {

@@ -6,12 +6,11 @@
 // from lib/programs.ts (M3) and state names from core. Numbers, money and
 // lists go through Intl with `locale`, the one place it is named.
 import { LIHEAP_VINTAGE, type PayUnit, type ProgramId } from "@hotgap/core";
-import { dateWords, money as usd, reachWord, unitPhrase } from "../lib/format.js";
+import { dateWords, listOf, money as usd, reachWord, tickMoney, unitFigure, unitPhrase } from "../lib/format.js";
 import { programName, programPhrase } from "../lib/programs.js";
 
 export const locale = "en-US";
 
-const listFormat = new Intl.ListFormat(locale, { type: "conjunction" });
 const ordinalRules = new Intl.PluralRules(locale, { type: "ordinal" });
 const ORDINAL: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
 
@@ -24,14 +23,12 @@ export const fmt = {
   signed: (n: number): string => `${n < 0 ? "−" : "+"}${usd(Math.abs(n))}`,
   /** "40th". */
   ordinal: (n: number): string => `${n}${ORDINAL[ordinalRules.select(n)]}`,
-  /** "a", "a and b", "a, b, and c". */
-  list: (xs: string[]): string => listFormat.format(xs),
-  /** The sweep stamp as a date, in the reader's own zone (the shell's helper). */
+  /** "a", "a and b", "a, b, and c"; the sweep stamp as a date in the reader's zone; a tick "$0", "$60k" — the shell's helpers (lib/format.ts). */
+  list: listOf,
   date: dateWords,
-  /** "$38,000 a year", "$18.50 an hour". */
-  pay: (amount: number, unit: PayUnit): string => `${unit === "hour" ? `$${amount.toFixed(2)}` : usd(amount)} ${unitPhrase(unit)}`,
-  /** A tick: "$0", "$60k". */
-  tick: (v: number): string => (v === 0 ? "$0" : `$${Math.round(v / 1000)}k`),
+  tick: (v: number): string => tickMoney(v, "year"),
+  /** "$38,000 a year", "$18.50 an hour": a figure already in the unit, printed as that unit is. */
+  pay: (amount: number, unit: PayUnit): string => `${unitFigure(amount, unit)} ${unitPhrase(unit)}`,
   adults: (married: boolean): string => (married ? "2 adults" : "1 adult"),
   kids: (n: number): string => (n === 1 ? "1 child" : `${n} children`),
   count: (n: number): string => ["no", "one", "two", "three"][n] ?? String(n),
@@ -131,7 +128,7 @@ export const copy = {
     ellipsis: "…",
     dash: "—",
     /* A what-if's name from what it changes (scenarios.ts). */
-    on: "on", off: "off", married: "Married", single: "Single",
+    married: "Married", single: "Single",
     cleared: (label: string) => `${label} cleared`,
     place: (where: string) => `Place ${where}`,
     payOf: (amount: number, unit: PayUnit) => `Pay ${fmt.pay(amount, unit)}`,
@@ -307,9 +304,6 @@ export const copy = {
     inPlace: (county: string, state: string) => `${county}, ${state}`,
     reachVintages: (basis: string, vintages: string[]) => `${basis} Vintages used: ${fmt.list(vintages.map(reachWord))}.`,
     otherBenefit: (label: string, max: number) => `${label} (up to ${$(max)})`,
-    modelVersion: (version: string) => `policyengine-us ${version}`,
-    modelEndpoint: (endpoint: string) => `the PolicyEngine API at ${endpoint}`,
-    modelUnknown: "PolicyEngine (version not recorded)",
     unclaimed: (items: string[], earnings: number) => `Off for this household: ${fmt.list(items)} at ${$(earnings)}.`,
     wouldPay: (program: string, annual: number) => `${program} would pay ${$(annual)} a year`,
   },

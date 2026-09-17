@@ -54,6 +54,13 @@ accept: the places page's lists gain the Oxford comma on 3+ items and its
 prose dates become "Sep 16, 2026" (the languages rule asks for `Intl`).
 No test pins either. ~42 lines.
 
+**Resolved** for the surfaces Plan 8 left: the caseworker's `fmt.list`,
+`fmt.date`, `fmt.pay` and `fmt.tick` are `listOf`, `dateWords`,
+`unitFigure` + `unitPhrase` and `tickMoney(v, "year")` (output identical on
+every gridline the chart draws: steps are multiples of $1,000); the
+editor's `payLabel` is `unitFigure` + `unitPhrase`; the caseworker's
+`modelLine` is lib's (N10).
+
 ### D2. Two element builders, two `$`
 
 - `editor/index.ts:132–142 h()` duplicates `lib/dom.ts:13 h()` (the lib one
@@ -65,6 +72,10 @@ No test pins either. ~42 lines.
 Fix: import from `lib/dom.ts`; add `$` there. Proves: `e2e/editor.spec.ts`
 (every control it fills is built by `h`), `e2e/caseworker.spec.ts` (every
 mark and label by `mk`). ~20 lines.
+
+**Resolved** for the surfaces Plan 8 left: the editor's `h()` is
+`lib/dom.ts`'s; the caseworker's `$` is lib's (`render.ts`, `main.ts`);
+its `mk()` goes with D10.
 
 ### D3. The program table, three times (M3 says one)
 
@@ -82,6 +93,12 @@ only `called`/`noun`/`phraseAndName`/`NONCASH` over the lib table;
 `places/model.ts` reads `programName`. Proves: `citizen/steps.test.ts` (every
 "It is called …" sentence), `caseworker/model.test.ts` ledger and client-sheet
 tests, `places/model.test.ts` "correctionRows". ~35 lines.
+
+**Resolved** in two parts: Plan 8 (4ed97d6) pointed the places page at
+`lib/programs.ts`; D4's commit folded the citizen's `NAME` table onto it
+(only the six article forms stay in `citizen/programs.ts`). The phrases
+stay in `citizen/copy.ts` — the gated register — and `lib/programs.ts` is
+the `name` register; D13 records that split for the migration.
 
 ### D4. The verdict, twice, and they disagree
 
@@ -352,6 +369,17 @@ See § 6 (CSS) — F6, F7, F8.
   `window.resize` + `requestAnimationFrame`. One mechanism when D10 lands
   (the observer: it also fires when the column, not the window, changes).
 
+**Resolved.** K1 `openInputs` and its README line deleted (no caller). K2
+`fetchImpl` dropped. K3 `whatIf.on/off` deleted (`toggled` keeps its own
+words until D13 makes them one template). K4 `waitsText(s, rows)` takes the
+render's rows (`stepRows` once per render). K5 a `placed` Set in
+`lib/thresholds.ts` (D8). K6 was already gone (Plan 8 rewrote
+`places/render.ts`). K7 `export` dropped on `archetypeOf`, `flagName`,
+`WHAT_IF`, `moneyFor`, `verdictSlots`, `SLOT_KEY`, `PROGRAMS` and the
+fixture's `ANSWERS`/`makePoints`; `stepOf` moved to lib (D8), `modelLine`
+is lib's (N10). K8 `lib/dom.ts fillText` — the caseworker's `renderStatic`
+uses it (the places page already did). K9 → D10.
+
 ---
 
 ## 3. Big O — every render and event path, by input
@@ -434,6 +462,14 @@ unbounded input was found; three things are repeated per item and named.
   lib/programs.ts (M3) and state names from core" — true; add "list, date
   and money from lib/format.ts" once D1 lands so the next reader does not
   re-add `fmt.list`.
+
+**Resolved.** N1 `editorCopy`. N2 `S`. N3 `usd` in `compareRows` (the
+copy module's `$` goes with D13's reshaping). N4 gone with `lib/verdict.ts`
+(D4). N5 fixed with the readability commit. N6 was already gone (Plan 8).
+N7 with K1. N8 the README points at `vite build`'s own lines. N9 was fixed
+in the citizen review (N6 there). N10 all four gone; the caseworker's
+`modelLine` is `lib/format.ts`'s (byte-identical output). N11 fixed in the
+audit. N12 the header is rewritten by D13.
 
 ---
 

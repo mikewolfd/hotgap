@@ -19,7 +19,7 @@ export function verdictKey(s: Scene): VerdictKey {
 }
 
 /** The slot values for this scene's shape, every pay figure in the person's unit. */
-export function verdictSlots(s: Scene): Record<string, string> {
+function verdictSlots(s: Scene): Record<string, string> {
   const { m } = s;
   const key = verdictKey(s);
   const slots: Record<string, string> = { pay: m.payUnit(s.current), kept: m.money(s.currentNet) };
@@ -36,7 +36,7 @@ export function verdictSlots(s: Scene): Record<string, string> {
 }
 
 /** The mark each slot is keyed to (a class on the span), or none. */
-export const SLOT_KEY: Record<string, string> = {
+const SLOT_KEY: Record<string, string> = {
   pay: "amt", kept: "amt amt-keep", wage: "amt amt-cliff", exit: "amt amt-gap", leap: "amt amt-gap",
 };
 

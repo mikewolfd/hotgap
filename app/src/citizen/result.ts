@@ -185,7 +185,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         if (loss) p.append(" ", h("span", { class: "hg-rows__loss" }, loss));
         return h("li", { id: `step-${r.at}` }, h("span", { class: "hg-rows__at" }, m.pay(r.at)), p);
       }));
-      const waits = waitsText(s);
+      const waits = waitsText(s, steps);
       const waitsBox = waits && h("div", { class: "hg-callout hg-callout--note" }, h("h3", {}, waits.head), ...waits.body.map((x) => h("p", {}, x)), h("p", {}, waits.foot));
 
       /* What we assumed (S6), reach, hours, footer. */

@@ -31,7 +31,7 @@ export interface Money {
   about(n: number): string;
 }
 
-export function moneyFor({ unit, hours }: Pay): Money {
+function moneyFor({ unit, hours }: Pay): Money {
   const withUnit = unit !== "year";
   return {
     pay: (a) => (withUnit ? payPhrase(a, unit, hours) : payFigure(a, unit, hours)),

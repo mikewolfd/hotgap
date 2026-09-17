@@ -11,10 +11,10 @@ export type EvaluateResult =
 // bounds each upstream request at 60 s, so the whole call needs longer.
 const TIMEOUT_MS = 180_000;
 
-export async function evaluate(flags: HouseholdFlags, fetchImpl: typeof fetch = fetch): Promise<EvaluateResult> {
+export async function evaluate(flags: HouseholdFlags): Promise<EvaluateResult> {
   let res: Response;
   try {
-    res = await fetchImpl("/api/evaluate", {
+    res = await fetch("/api/evaluate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(rawAnswersFromFlags(flags)),

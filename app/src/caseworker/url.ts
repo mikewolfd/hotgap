@@ -8,7 +8,7 @@
 import { flagsFromSearchParams, HOUSEHOLD_FLAGS, searchParamsFromFlags, type HouseholdFlagName, type HouseholdFlags } from "@hotgap/core";
 import type { Diff } from "./scenarios.js";
 
-export const WHAT_IF = "whatif";
+const WHAT_IF = "whatif";
 
 export interface PageState { base: HouseholdFlags; whatIfs: Diff[] }
 
