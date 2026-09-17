@@ -18,7 +18,7 @@ import { fullTimeEarningsAt, minWageContext, minWageFor } from "./minWage.js";
 import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_B_ANNUAL, NON_EXPANSION_STATES, fpl2026 } from "./policyYear.js";
 import { stateDefaults } from "./stateDefaults.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
-import { premiumTierAbove, premiumWrapFor, type PremiumWrap } from "./statePremiumWraps.js";
+import { perMemberPremiumHelpFor, premiumTierAbove, premiumWrapFor, type PerMemberPremiumHelp, type PremiumWrap } from "./statePremiumWraps.js";
 import { reachForHousehold } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
@@ -110,6 +110,8 @@ export interface HouseholdEvaluation {
   maTafdc: MaTafdcCorrection | null;
   /** The state $0-premium tier this household's curve fell inside, if any (local ladder). */
   premiumWrap: PremiumWrap | null;
+  /** The state's flat per-member help, applied locally because the endpoint served no figure (NJ, WA). */
+  perMemberPremiumHelp: PerMemberPremiumHelpSummary | null;
   /** The state's modeled premium assistance netted out of the premium, when the endpoint served it. */
   statePremiumAssistance: StatePremiumAssistanceSummary | null;
   /**
@@ -524,6 +526,59 @@ function applyPremiumWrap(points: CurvePoint[], a: HouseholdAnswers): { points: 
   return { points: out, wrap };
 }
 
+/** The state's own flat per-member help, worked out locally and netted out of the premium on this curve. */
+export interface PerMemberPremiumHelpSummary extends PerMemberPremiumHelp {
+  /** The largest annual amount on the curve. */
+  maxAnnual: number;
+}
+
+/**
+ * How many people this household actually buys a marketplace plan for at this
+ * point: the adults, plus every child without Medicaid or CHIP. Both
+ * per-member programs pay by the member, so the count is the whole benefit —
+ * New Jersey's $100 band is $1,200 a year for a lone parent whose children
+ * are on FamilyCare and $3,600 once they age out of it.
+ *
+ * Called only where the adult is off Medicaid and a credit and a premium both
+ * exist, so the adults are enrollees by construction; "one child covered is
+ * all children covered" is the same reading esiTierAt takes, for the same
+ * reason (children share a MAGI and, nearly everywhere, one limit).
+ */
+const marketplaceEnrolleesAt = (p: CurvePoint, a: HouseholdAnswers): number =>
+  (a.married ? 2 : 1) + (childrenCoveredAt(p) ? 0 : a.childAges.length);
+
+// WORKAROUND — remove when every endpoint serves the state's own variable
+// (policyengine-us #9224 for New Jersey, #9222 for Washington; shipped in
+// 1.801.0 and 1.797.0 and served by the engine at 2.6.2, absent from the
+// public API at 1.764.6). Where the amount is served, applyStatePremiumAssistance
+// above has already netted it out and this is a no-op; where it is not, this
+// pays the published per-member schedule instead, so the two endpoints do not
+// disagree about what a New Jersey or Washington household pays for a plan.
+function applyPerMemberPremiumHelp(points: CurvePoint[], a: HouseholdAnswers): { points: CurvePoint[]; help: PerMemberPremiumHelpSummary | null } {
+  if (a.hasEmployerCoverage) return { points, help: null };
+  // The model's own amounts, when served, replace the local schedule.
+  if (points.every((p) => p.statePremiumAssistance !== undefined)) return { points, help: null };
+  const povertyLine = fpl2025(a.state, householdSize(a));
+  const otherMagi = magiBesidesEarnings(a);
+  let table: PerMemberPremiumHelp | null = null;
+  let maxAnnual = 0;
+  const out = points.map((p) => {
+    if (adultOnMedicaidAt(p) || (p.programs.aca ?? 0) <= PROGRAM_END_MIN || p.medicalOOP <= 0) return p;
+    const share = (p.earnings + otherMagi) / povertyLine;
+    const band = perMemberPremiumHelpFor(a.state, share);
+    if (!band) return p;
+    // The state pays the carrier on top of the federal credit, so it can never
+    // take the bill below zero: capped at what is left of the premium, exactly
+    // as upstream's own formula caps it at the post-credit residual.
+    const paid = Math.min(12 * band.monthlyPerMember * marketplaceEnrolleesAt(p, a), p.medicalOOP);
+    if (paid <= 0) return p;
+    table = band.help;
+    maxAnnual = Math.max(maxAnnual, paid);
+    return { ...p, netIncome: p.netIncome + paid, medicalOOP: p.medicalOOP - paid };
+  });
+  return { points: out, help: table ? { ...(table as PerMemberPremiumHelp), maxAnnual: Math.round(maxAnnual) } : null };
+}
+
 function coverageGapSummary(points: CurvePoint[]): CoverageGapSummary | null {
   // The first contiguous band only: the summary must never span points that
   // are not in the gap.
@@ -636,10 +691,14 @@ export function evaluateCurve(
   const gapped = knowsWhoHolds ? applyCoverageGap(corrected, modeledAnswers) : corrected;
   const { points: assisted, assistance: statePremiumAssistance } = knowsWhoHolds ? applyStatePremiumAssistance(gapped, modeledAnswers) : { points: gapped, assistance: null };
   const { points: wrapped, wrap: premiumWrap } = knowsWhoHolds ? applyPremiumWrap(assisted, modeledAnswers) : { points: assisted, wrap: null };
+  // The two local tables are disjoint by state (statePremiumWraps.test.ts), so
+  // the order between them never decides an amount; both stand down wherever
+  // the endpoint served the state's own figure.
+  const { points: helped, help: perMemberPremiumHelp } = knowsWhoHolds ? applyPerMemberPremiumHelp(wrapped, modeledAnswers) : { points: wrapped, help: null };
   // Medicare last: it is the only correction that reads the coverage-gap
   // verdict's own output (a married couple whose phantom premium has just been
   // removed must not then be charged Part B against a premium that is gone).
-  const points = source === "live" ? applyMedicare(wrapped, answers) : wrapped;
+  const points = source === "live" ? applyMedicare(helped, answers) : helped;
 
   // Two readings of the same curve. `full` is what happens: every cliff,
   // including the ones a federal rule defers to a renewal up to a year out.
@@ -703,6 +762,7 @@ export function evaluateCurve(
     esi: source === "live" ? esiSummary(answers, points, curve.currentEarnings) : null,
     maTafdc: tafdc.correction,
     premiumWrap,
+    perMemberPremiumHelp,
     statePremiumAssistance,
     unclaimed: null,
   };

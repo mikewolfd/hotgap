@@ -5,7 +5,7 @@ import type { StateCoverage } from "./data.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
 import { CHILDCARE_SUBSIDY_IN_NET_INCOME } from "./stateChildcareSubsidies.js";
 import { STATE_PREMIUM_ASSISTANCE, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
-import { STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
+import { PER_MEMBER_PREMIUM_HELP, STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
 import { STATE_CODES } from "./states.js";
 import { point, type PointOver } from "./testing.js";
 import type { CurvePoint } from "./types.js";
@@ -54,11 +54,22 @@ describe("stateCoverage — corrections", () => {
     expect(stateCoverage("TX", curves()).corrections.premiumAssistance).toMatchObject({ applies: false, source: "none", program: null });
   });
 
-  it("names a program that exists but is modeled nowhere, on both the correction and the unmodeled list", () => {
+  it("reports the per-member table as a ladder where the endpoint served no figure, and the engine's own figure where it did", () => {
+    // New Jersey and Washington were "modeled nowhere" until 2026-09-16 — the
+    // two hatched states. Now: the engine's variable when every point carries
+    // it, the local per-member schedule otherwise, never a gap.
     const nj = stateCoverage("NJ", curves());
-    expect(nj.corrections.premiumAssistance).toMatchObject({ source: "none", program: "NJ Health Plan Savings" });
-    expect(nj.unmodeled.map((u) => u.program)).toEqual(["NJ Health Plan Savings", "LIHEAP"]);
-    // Maryland's is modeled upstream; a sweep that did not carry it is a gap for that sweep only.
+    expect(nj.corrections.premiumAssistance).toMatchObject({ source: "ladder", program: "NJ Health Plan Savings", code: "statePremiumWraps.ts", cite: expect.stringMatching(/^https:\/\/www\.cms\.gov\//), note: expect.stringContaining("$20 to $100 a month for each person") });
+    expect(nj.corrections.premiumAssistance.note).toContain("#9224");
+    expect(nj.unmodeled.map((u) => u.program)).toEqual(["LIHEAP"]);
+    const wa = stateCoverage("WA", curves());
+    expect(wa.corrections.premiumAssistance).toMatchObject({ source: "ladder", program: "Cascade Care Savings", note: expect.stringContaining("$55 a month for each person on the plan, up to 250%") });
+    expect(stateCoverage("NJ", curves({ statePremiumAssistance: 1200 })).corrections.premiumAssistance).toMatchObject({ source: "modeled", code: expect.stringContaining("nj_njhps") });
+    expect(stateCoverage("WA", curves({ statePremiumAssistance: 660 })).corrections.premiumAssistance).toMatchObject({ source: "modeled", code: expect.stringContaining("wa_cascade_care_savings") });
+  });
+
+  it("names a program modeled upstream that this sweep's endpoint did not serve, as a gap for that sweep only", () => {
+    // Maryland has no local table, so a sweep without the engine's figure is a gap.
     const md = stateCoverage("MD", curves());
     expect(md.corrections.premiumAssistance).toMatchObject({ source: "none", program: "Maryland Young Adult Premium Assistance" });
     expect(md.unmodeled[0]).toMatchObject({ program: "Maryland Young Adult Premium Assistance", note: expect.stringContaining("did not serve") });
@@ -143,7 +154,7 @@ describe("stateCoverage — every state", () => {
       expect(c.corrections.childcareSubsidy.source, state).toBe(CHILDCARE_SUBSIDY_IN_NET_INCOME.has(state) ? "in net income" : "added by HotGap");
       expect(c.corrections.maTafdc.applies, state).toBe(state === "MA");
       const premium = c.corrections.premiumAssistance;
-      const hasWrap = STATE_PREMIUM_WRAPS.some((w) => w.state === state);
+      const hasWrap = STATE_PREMIUM_WRAPS.some((w) => w.state === state) || PER_MEMBER_PREMIUM_HELP.some((h) => h.state === state);
       expect(premium.source, state).toBe(hasWrap ? "ladder" : "none");
       const known = STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state) || UNMODELED_STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state);
       expect(premium.program !== null, state).toBe(hasWrap || known);

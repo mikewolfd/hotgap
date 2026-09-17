@@ -677,6 +677,64 @@ describe("state premium wraps", () => {
   });
 });
 
+describe("per-member state premium help (NJ, WA)", () => {
+  // A one-person household: every FPL share below is on the 2025 one-person guideline ($15,650).
+  const enrollee = (earnings: number, moop: number, over: PointOver = {}) => pt(earnings, 30000 - moop, { medicalOOP: moop, programs: { aca: 4000 }, ...over });
+  const single = (state: string, annualEarnings: number) => answersWith({ state, childAges: [], childDisabled: [], annualEarnings });
+
+  it("pays New Jersey's band amount per person, nets it out of the premium, and steps at the published edges", () => {
+    // $40,000 = 256% FPL: the $100 band. $30,000 = 192%: the $40 band. $95,000 = 607%: past the ceiling.
+    const ev = evaluateCurve(single("NJ", 40000), { year: "2026", currentEarnings: 40000, points: [enrollee(30000, 2000), enrollee(40000, 3000), enrollee(95000, 9000)] }, "archetype");
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([2000 - 480, 3000 - 1200, 9000]);
+    expect(ev.curve.points.map((p) => p.netIncome)).toEqual([28000 + 480, 27000 + 1200, 21000]);
+    expect(ev.perMemberPremiumHelp).toMatchObject({ state: "NJ", program: "NJ Health Plan Savings", maxAnnual: 1200 });
+    expect(ev.premiumWrap).toBeNull();
+    expect(ev.statePremiumAssistance).toBeNull();
+  });
+
+  it("counts every person on the plan: a parent whose children are on CHIP is one member, and three once they are not", () => {
+    // Family of three at $70,000 (263% FPL on $26,650) and $100,000 (375%): both in the $100 band.
+    const family = answersWith({ state: "NJ", childAges: [3, 7], childDisabled: [false, false], annualEarnings: 70000 });
+    const onChip = enrollee(70000, 5000, { childPrograms: { chip: 6000 } });
+    const offChip = enrollee(100000, 9000, { childPrograms: {} });
+    const ev = evaluateCurve(family, { year: "2026", currentEarnings: 70000, points: [onChip, offChip] }, "archetype");
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([5000 - 1200, 9000 - 3600]);
+    expect(ev.perMemberPremiumHelp?.maxAnnual).toBe(3600);
+  });
+
+  it("never takes the premium below zero: the state's help is capped at what is left after the federal credit", () => {
+    const ev = evaluateCurve(single("NJ", 40000), { year: "2026", currentEarnings: 40000, points: [enrollee(40000, 700), enrollee(41000, 800)] }, "archetype");
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([0, 0]);
+    expect(ev.curve.points.map((p) => p.netIncome)).toEqual([30000, 30000]);
+    expect(ev.perMemberPremiumHelp?.maxAnnual).toBe(800);
+  });
+
+  it("pays Washington's $55 a month inside 250% FPL and nothing past it, and stands down where the engine served the amount", () => {
+    // $30,000 = 192% FPL; $40,000 = 256%.
+    const local = evaluateCurve(single("WA", 30000), { year: "2026", currentEarnings: 30000, points: [enrollee(30000, 2000), enrollee(40000, 3000)] }, "archetype");
+    expect(local.curve.points.map((p) => p.medicalOOP)).toEqual([2000 - 660, 3000]);
+    expect(local.perMemberPremiumHelp).toMatchObject({ state: "WA", maxAnnual: 660 });
+    // The same curve with the engine's own figure on every point: the table is not consulted.
+    const served = evaluateCurve(single("WA", 30000), { year: "2026", currentEarnings: 30000, points: [enrollee(30000, 2000, { statePremiumAssistance: 660 }), enrollee(40000, 3000, { statePremiumAssistance: 0 })] }, "archetype");
+    expect(served.curve.points.map((p) => p.medicalOOP)).toEqual([2000 - 660, 3000]);
+    expect(served.perMemberPremiumHelp).toBeNull();
+    expect(served.statePremiumAssistance).toMatchObject({ state: "WA", variable: "wa_cascade_care_savings", maxAnnual: 660 });
+  });
+
+  it("leaves a point alone where nobody is buying a marketplace plan", () => {
+    // An adult on Medicaid, a point with no premium credit, a point with no premium, and employer coverage: nothing to help with.
+    const onMedicaid = enrollee(30000, 2000, { programs: { aca: 4000, medicaid: 5000 } });
+    const noCredit = enrollee(30000, 2000, { programs: { aca: 0 } });
+    const noPremium = enrollee(30000, 0);
+    const ev = evaluateCurve(single("NJ", 30000), { year: "2026", currentEarnings: 30000, points: [onMedicaid, noCredit, noPremium] }, "archetype");
+    expect(ev.curve.points.map((p) => p.medicalOOP)).toEqual([2000, 2000, 0]);
+    expect(ev.perMemberPremiumHelp).toBeNull();
+    // Employer coverage is a live-path input (the sweep never sent it), so it is tested on a live curve.
+    const esi = evaluateCurve(answersWith({ state: "NJ", childAges: [], childDisabled: [], annualEarnings: 30000, hasEmployerCoverage: true }), { year: "2026", currentEarnings: 30000, points: [enrollee(30000, 2000), enrollee(40000, 3000)] }, "live");
+    expect(esi.perMemberPremiumHelp).toBeNull();
+  });
+});
+
 describe("transitional medical assistance is a §1931 rule", () => {
   // A parent with one child whose own Medicaid ends between `at` and the next point.
   const parentLosesAt = (at: number, state: string) => {

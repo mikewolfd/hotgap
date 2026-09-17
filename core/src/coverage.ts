@@ -18,7 +18,7 @@ import { reachProvenance } from "./reachLookup.js";
 import { childcareSubsidyInNetIncome } from "./stateChildcareSubsidies.js";
 import { stateDefaultsProvenance } from "./stateDefaults.js";
 import { otherBenefitSourcesFor } from "./stateOtherBenefits.js";
-import { STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
+import { PER_MEMBER_PREMIUM_HELP, STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
 import { statePremiumAssistanceFor, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import type { CurvePoint } from "./types.js";
 
@@ -74,6 +74,19 @@ function premiumAssistance(state: string, curves: Record<string, CurvePoint[]>):
     return {
       applies: true, source: "ladder", program: wrap.program, code: "statePremiumWraps.ts", cite: wrap.source,
       note: `HotGap applies ${wrap.program}'s published premium schedule itself — a $0 premium up to ${Math.round(wrap.zeroPremiumUpToFpl * 100)}% of the poverty line${wrap.tiers ? " and the reduced premiums above it" : ""}, as read on ${wrap.readOn} — because PolicyEngine does not model the program (policyengine-us #9481).`,
+    };
+  }
+  // The other local table: a flat amount per person per month rather than a
+  // $0 band. Same standing-down rule — it reports only where the endpoint
+  // served no figure, which is the branch this function is already on.
+  const perMember = PER_MEMBER_PREMIUM_HELP.find((h) => h.state === state);
+  if (perMember) {
+    const cheapest = Math.min(...perMember.bands.map((b) => b.monthlyPerMember));
+    const dearest = Math.max(...perMember.bands.map((b) => b.monthlyPerMember));
+    const range = cheapest === dearest ? `$${dearest}` : `$${cheapest} to $${dearest}`;
+    return {
+      applies: true, source: "ladder", program: perMember.program, code: "statePremiumWraps.ts", cite: perMember.source,
+      note: `HotGap applies ${perMember.program}'s published schedule itself — ${range} a month for each person on the plan, up to ${Math.round(perMember.bands[perMember.bands.length - 1].upToFpl * 100)}% of the poverty line, as read on ${perMember.readOn} — because the version of PolicyEngine this sweep ran against does not carry the program (policyengine-us ${perMember.upstreamIssue}).`,
     };
   }
   const known = modeled?.program ?? UNMODELED_STATE_PREMIUM_ASSISTANCE.find((s) => s.state === state)?.program ?? null;

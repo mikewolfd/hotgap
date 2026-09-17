@@ -229,6 +229,10 @@ function report(ev: HouseholdEvaluation): string {
     const w = ev.premiumWrap;
     out.push("", `${a.state}'s ${w.program} makes the marketplace plan free up to ${Math.round(w.zeroPremiumUpToFpl * 100)}% of the poverty line — shown with no premium in that band (${w.source}).`);
   }
+  if (ev.perMemberPremiumHelp) {
+    const h = ev.perMemberPremiumHelp;
+    out.push("", `${a.state}'s ${h.program} pays a flat amount each month for every person on the plan, which this endpoint's PolicyEngine does not compute — HotGap applies the published schedule itself, up to ${money(h.maxAnnual)}/yr on this curve (${h.source}).`);
+  }
   if (ev.esi) {
     const TIER_NAME = { single: "single", plusOne: "employee-plus-one", family: "family" } as const;
     out.push(

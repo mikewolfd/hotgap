@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { STATE_CODES } from "./states.js";
 import { STATE_PREMIUM_ASSISTANCE, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
-import { STATE_PREMIUM_WRAPS, premiumTierAbove, premiumWrapFor } from "./statePremiumWraps.js";
+import { PER_MEMBER_PREMIUM_HELP, STATE_PREMIUM_WRAPS, perMemberPremiumHelpFor, premiumTierAbove, premiumWrapFor } from "./statePremiumWraps.js";
 
 // A state exchange that does not publish on a .gov domain. Every other source
 // must be government. Listing them by name is the point: it is what stops a
 // blog, an insurer, or a policy shop's summary from being cited as the bound.
-const STATE_EXCHANGE_HOSTS = ["mahealthconnector.org", "coveredca.com"];
+const STATE_EXCHANGE_HOSTS = ["mahealthconnector.org", "coveredca.com", "wahbexchange.org"];
 
 const isGovernmentSource = (url: string): boolean => {
   const { protocol, hostname } = new URL(url);
@@ -76,18 +76,28 @@ describe("STATE_PREMIUM_WRAPS", () => {
   // 2026. Read as a list of "do not re-add without new evidence".
   it("leaves out the states whose 2026 help is not an FPL-bounded $0 tier", () => {
     const excluded = [
-      // NJ and WA: flat per-member amounts with no $0 band, and no upstream
-      // variable either — the two the coverage block reports as unmodeled.
-      ...UNMODELED_STATE_PREMIUM_ASSISTANCE.map((s) => s.state),
+      // NJ and WA pay a flat amount per person per month with no $0 band, so
+      // they belong to PER_MEMBER_PREMIUM_HELP below, never to this table.
+      ...PER_MEMBER_PREMIUM_HELP.map((h) => h.state),
       "CO", // Colorado Premium Assistance: $80 first member + $29 each after, capped at the premium
       "MD", // Maryland Premium Assistance: no published $0 band, and closed to anyone enrolling after 2026-04-01
       "VT", // Vermont Premium Assistance: lowers the bill by 1.5% of income — 2.10% ACA minus 1.5% is not $0
       "NY", // Essential Plan is a Basic Health Program, not a marketplace wrap; PolicyEngine models it
     ];
     for (const state of excluded) expect(premiumWrapFor(state, 1.2), state).toBeNull();
-    // "Modeled nowhere" has to stay true on both sides, or the block lies.
+  });
+
+  // The claim the journalist map's hatch rests on. It was NJ and WA until
+  // 2026-09-16; if it ever fills again, the state named here is one whose
+  // premium figure a reader must not compare with another state's.
+  it("leaves no state's 2026 premium help modeled nowhere", () => {
+    expect(UNMODELED_STATE_PREMIUM_ASSISTANCE).toEqual([]);
+    // Vacuous today by design, and the assertion above is what keeps it so;
+    // the loop is what catches a row added back without a table to hold it.
     for (const { state } of UNMODELED_STATE_PREMIUM_ASSISTANCE) {
-      expect(STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state), `${state} is modeled upstream`).toBe(false);
+      const modeled = STATE_PREMIUM_ASSISTANCE.some((s) => s.state === state);
+      const local = STATE_PREMIUM_WRAPS.some((w) => w.state === state) || PER_MEMBER_PREMIUM_HELP.some((h) => h.state === state);
+      expect(modeled || local, `${state} is modeled after all`).toBe(false);
     }
   });
 });
@@ -146,5 +156,87 @@ describe("reduced-premium tiers", () => {
     expect(premiumTierAbove("MA", 3.5)?.tier.annualPremium(0, 3.5, 2)).toBe(235 * 12 * 2);
     expect(premiumTierAbove("MA", 4.5)).toBeNull();
     expect(premiumTierAbove("CT", 1.8)).toBeNull();
+  });
+});
+
+describe("PER_MEMBER_PREMIUM_HELP", () => {
+  it("holds the provenance the $0 table holds: a state page over https, a past reading date, the program and its conditions, the issue that retires it", () => {
+    for (const h of PER_MEMBER_PREMIUM_HELP) {
+      expect(STATE_CODES, h.state).toContain(h.state);
+      expect(isGovernmentSource(h.source), `${h.state}: ${h.source} is not a state source`).toBe(true);
+      expect(h.readOn, h.state).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      const read = new Date(`${h.readOn}T00:00:00Z`);
+      expect(read.toISOString().slice(0, 10), h.state).toBe(h.readOn);
+      expect(read.getTime(), `${h.state} was read in the future`).toBeLessThanOrEqual(Date.now());
+      expect(h.program.length, h.state).toBeGreaterThan(0);
+      expect(h.note, h.state).toBeTruthy();
+      expect(h.upstreamIssue, h.state).toMatch(/^#\d{4}$/);
+    }
+  });
+
+  it("names each state once, in one table only", () => {
+    const states = PER_MEMBER_PREMIUM_HELP.map((h) => h.state);
+    expect(new Set(states).size).toBe(states.length);
+    for (const state of states) expect(STATE_PREMIUM_WRAPS.some((w) => w.state === state), `${state} is in both tables`).toBe(false);
+  });
+
+  it("keeps every band ordered, above the program's own floor, and inside the range a marketplace wrap can live in", () => {
+    for (const h of PER_MEMBER_PREMIUM_HELP) {
+      expect(h.fromFpl, h.state).toBeGreaterThanOrEqual(1.0);
+      let prev = h.fromFpl;
+      for (const b of h.bands) {
+        expect(b.upToFpl, h.state).toBeGreaterThan(prev);
+        expect(b.monthlyPerMember, h.state).toBeGreaterThan(0);
+        prev = b.upToFpl;
+      }
+      // Nobody's marketplace wrap reaches past New Jersey's 600%.
+      expect(prev, h.state).toBeLessThanOrEqual(6.0);
+    }
+  });
+
+  // The figures themselves, pinned to what each publisher printed. These move
+  // when the plan year moves, so they are asserted literally.
+  it("pins each published 2026 schedule", () => {
+    const schedules = Object.fromEntries(PER_MEMBER_PREMIUM_HELP.map((h) => [h.state, { from: h.fromFpl, bands: h.bands.map((b) => [b.upToFpl, b.monthlyPerMember]) }]));
+    expect(schedules).toEqual({
+      // Treasury OTA 1332 addendum (Nov 2021), enhanced schedule; DOBI FY2026 "$20 ... $100"; DOBI FY2027 "up to 600% FPL" in 2026
+      NJ: { from: 1.38, bands: [[1.50, 20], [2.00, 40], [2.50, 50], [4.00, 100], [6.00, 50]] },
+      // WAHBE 2025-09-30 memo: "$55 per member, per month"; final PY2026 policy §4(1)(c): "up to 250%", no floor
+      WA: { from: 1.0, bands: [[2.50, 55]] },
+    });
+  });
+});
+
+describe("perMemberPremiumHelpFor", () => {
+  it("steps through New Jersey's bands, upper-inclusive, and stops at 600%", () => {
+    const at = (share: number) => perMemberPremiumHelpFor("NJ", share)?.monthlyPerMember ?? null;
+    expect(at(1.37)).toBeNull(); // NJ FamilyCare below 138%
+    expect(at(1.38)).toBe(20);
+    expect(at(1.50)).toBe(20);
+    expect(at(1.51)).toBe(40);
+    expect(at(2.00)).toBe(40);
+    expect(at(2.01)).toBe(50);
+    expect(at(2.50)).toBe(50);
+    expect(at(2.51)).toBe(100);
+    expect(at(4.00)).toBe(100);
+    expect(at(4.01)).toBe(50); // the federal credit ends here; the state's $50 does not
+    expect(at(6.00)).toBe(50);
+    expect(at(6.01)).toBeNull();
+  });
+
+  it("pays Washington's flat $55 from the credit's floor to 250% and nothing past it", () => {
+    const at = (share: number) => perMemberPremiumHelpFor("WA", share)?.monthlyPerMember ?? null;
+    expect(at(0.99)).toBeNull();
+    expect(at(1.0)).toBe(55);
+    expect(at(1.38)).toBe(55);
+    expect(at(2.50)).toBe(55);
+    expect(at(2.51)).toBeNull();
+  });
+
+  it("returns null for a state with no schedule and for a share that is not a number", () => {
+    expect(perMemberPremiumHelpFor("CT", 1.5)).toBeNull();
+    expect(perMemberPremiumHelpFor("", 1.5)).toBeNull();
+    expect(perMemberPremiumHelpFor("NJ", Number.NaN)).toBeNull();
+    expect(perMemberPremiumHelpFor("NJ", Number.POSITIVE_INFINITY)).toBeNull();
   });
 });

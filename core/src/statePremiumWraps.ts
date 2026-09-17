@@ -156,6 +156,159 @@ export const STATE_PREMIUM_WRAPS: readonly PremiumWrap[] = [
   },
 ];
 
+// ── The other shape of state help: a flat amount per person per month ──────
+//
+// WORKAROUND — remove when every endpoint serves the state's own variable
+// (`nj_njhps`, `wa_cascade_care_savings`; statePremiumAssistance.ts). New
+// Jersey and Washington do not buy a $0 tier: they hand the carrier a fixed
+// number of dollars a month for each person on the plan, so no FPL-bounded
+// ladder fits them and, until 2026-09-16, HotGap modeled neither — they were
+// the two states the journalist map hatched as "figures incomplete".
+//
+// Upstream models both (policyengine-us #9224 and #9222, shipped in 1.801.0
+// and 1.797.0), and the hosted engine at 2.6.2 serves both, so on that
+// endpoint this table never fires: applyStatePremiumAssistance nets the
+// engine's own figure out first and applyPerMemberPremiumHelp stands down.
+// It exists for the endpoints that predate those releases — the public API at
+// 1.764.6 — so a New Jersey household is not shown a premium $1,200 too high
+// on one endpoint and right on the other.
+//
+// Coverage year 2026, and the same rule the $0 table runs on: publisher, the
+// exact table, and the date it was read, because both schedules are set
+// annually — New Jersey's in the Health Insurance Affordability Fund's
+// appropriation, Washington's by the Exchange Board within its.
+export interface PerMemberPremiumHelp {
+  state: string;
+  program: string;
+  /** Bands in ascending order; the first whose `upToFpl` covers the share wins. */
+  bands: readonly PerMemberBand[];
+  /** Below this share of the poverty line the program pays nothing. */
+  fromFpl: number;
+  /** The publisher's page or document the schedule was read from. */
+  source: string;
+  /** ISO date the source was read. */
+  readOn: string;
+  /** The upstream issue whose release retires this row, e.g. "#9224". */
+  upstreamIssue: string;
+  /** Conditions the state attaches. */
+  note: string;
+}
+
+/** One band of a per-member schedule: (previous bound, upToFpl], paid monthly per person on the plan. */
+export interface PerMemberBand {
+  upToFpl: number;
+  monthlyPerMember: number;
+}
+
+export const PER_MEMBER_PREMIUM_HELP: readonly PerMemberPremiumHelp[] = [
+  {
+    // U.S. Treasury, Office of Tax Analysis, "Section 1332 ... Methodology
+    // Addendum" for New Jersey's pass-through (November 2021), the bullets on
+    // PDF page 9 and Table 2's "Enhanced Monthly State Subsidy" column on page
+    // 12: "From 138% through 150% of FPL: $20 per member per month (PMPM)";
+    // "150% through 200%: $40"; "200% through 250%: $50"; "250% through 400%:
+    // $100"; "400% through 600%: $50". The SAME PDF's February 2021 half lists
+    // the superseded initial schedule ($20/$30/$40/$95, to 400% only); the $95
+    // is the tell for a reader who grabbed the wrong list.
+    //
+    // No New Jersey document for plan year 2026 restates the five amounts —
+    // Get Covered NJ's page sends the reader to its calculator — so the
+    // schedule's currency rests on three DOBI statements, each read from the
+    // Legislature's copy on 2026-09-16: FY2025-2026 budget discussion points,
+    // p.8 ("The lowest amount an eligible individual can receive per month in
+    // New Jersey Health Plan Savings is $20 and the maximum is $100"; "$100 per
+    // person per month ... $400 a month for a family of four at 300% FPL"),
+    // pub.njleg.state.nj.us/publications/budget/governors-budget/2026/dobi_
+    // response_2026.pdf; FY2026-2027 discussion points, p.4 ("While the
+    // enhanced APTCs were not extended by the federal government in 2026, the
+    // Department continued providing NJ Health Plan Savings subsidies up to
+    // 600% FPL"), .../2027/dobi_response_2027.pdf; and the 2026-08-18 letter
+    // to the Assembly Budget Committee, p.5 ("For plan year 2026 (using 2025
+    // FPL levels) ... 600 percent of FPL is $192,900" for four — the FPL_2025
+    // vintage policyYear.ts uses), .../2027/dobi_follow_up_response_abu.pdf.
+    // The FY2027 document's PY2025 cohort averages ($16 under 200% FPL, $43 at
+    // 200–250%, $91 and $96 at 250–400%, $40 above 400%) all sit at or under
+    // the schedule, as a premium-capped flat amount must.
+    //
+    // Re-derived from the deployed model rather than trusted once: on
+    // policyengine-us 2.6.2 a single adult's `nj_njhps` steps $0 → $20 → $40 →
+    // $50 → $100 → $50 → $0 at the first $1,000 past 138, 150, 200, 250, 400 and
+    // 600% of the 2025 guideline — the same schedule, upper-inclusive.
+    state: "NJ",
+    program: "NJ Health Plan Savings",
+    fromFpl: 1.38,
+    bands: [
+      { upToFpl: 1.50, monthlyPerMember: 20 },
+      { upToFpl: 2.00, monthlyPerMember: 40 },
+      { upToFpl: 2.50, monthlyPerMember: 50 },
+      { upToFpl: 4.00, monthlyPerMember: 100 },
+      { upToFpl: 6.00, monthlyPerMember: 50 },
+    ],
+    source: "https://www.cms.gov/files/document/1332-ota-methodology-addendum-nj-pass-through.pdf",
+    readOn: "2026-09-16",
+    upstreamIssue: "#9224",
+    note: "Paid to the carrier on top of the federal credit and capped at the premium left after it, for every person on a Get Covered NJ plan at any metal level; not reported on Form 1095-A or reconciled on Form 8962. Below 138% FPL an adult is on NJ FamilyCare and gets nothing; a child is FamilyCare-eligible to 355% FPL and gets nothing while so, which is why the household count follows who is off Medicaid and CHIP at each point. Not conditioned on federal credit eligibility: above 400% FPL, where the credit ended for 2026, the $50 is the only help. Citizens, nationals and the lawfully present only. Set by the Commissioner under P.L. 2020 c.61, not in statute, and the fund's projected FY2027 closing balance is $0 — reread for 2027.",
+  },
+  {
+    // Washington Health Benefit Exchange, "Final Cascade Care Savings amounts
+    // for plan year 2026 released" (memo dated 2025-09-30, with Wakely's
+    // exhibits), p.1: "Customers with federal subsidies: $55 per member, per
+    // month (PMPM)"; "Customers without federal subsidies: $250 PMPM"; "the
+    // program's $55 million legislative appropriation for plan year 2026". The
+    // exhibit on p.7 carries the year-over-year: Group 1 $155 → $55, Group 2/3
+    // $250 → $250.
+    //
+    // The rules are the Exchange's "Plan year 2026 final Cascade Care Savings
+    // policy" (PDF dated 2025-03-31), wahbexchange.org/content/dam/wahbe-assets
+    // /materials/collateral/cc/FinalPY2026CascadeCareSavingsPolicy_Combined.pdf:
+    // §4(1)(c), p.11, "Has income up to 250% of the Federal Poverty Level" (no
+    // floor); §4(1)(d)–(e) a Silver or Gold Cascade Care plan and "accepts all
+    // APTC for which the individual's household is eligible"; §5(1)(c), p.14,
+    // the base amount "multiplied by the number of eligible enrollees";
+    // §5(1)(d) the household amount capped at the lesser of the net premium
+    // after APTC and what the members would pay in the county's lowest-cost
+    // Cascade Care Silver plan. Attachment 1, p.3, lists the "benchmark
+    // premium expectation" ($0/$0/$15 a month by band) among the "policy
+    // concepts included in the final draft ... but not included in the final
+    // policy" — upstream's model subtracts the draft's $0/$10/$15 anyway,
+    // which is the defect its retirement note in docs/upstream names. RCW
+    // 43.71.110(4)(a)(ii) leaves the income threshold to the appropriation or
+    // the Exchange; 250% is not in statute.
+    //
+    // Re-derived from the deployed model: on policyengine-us 2.6.2 a single
+    // adult's `wa_cascade_care_savings` is $55 a month at every $1,000 step
+    // from the first past 138% (Apple Health's edge, not the program's) to the
+    // first past 250% of the 2025 guideline, then $0.
+    //
+    // The $250 for members without federal subsidies is not carried: HotGap's
+    // households are lawfully present and, inside 250% FPL, credit-eligible.
+    state: "WA",
+    program: "Cascade Care Savings",
+    fromFpl: APTC_FPL_FLOOR,
+    bands: [{ upToFpl: 2.50, monthlyPerMember: 55 }],
+    source: "https://www.wahbexchange.org/content/dam/materials/communications/legislative/2025/WAHBE_Final_PY_2026_Cascade_Care_Savings_Maximum_Per_Member_Per_Month_Methodology.pdf",
+    readOn: "2026-09-16",
+    upstreamIssue: "#9222",
+    note: "A Silver or Gold Cascade Care (standardized) plan from a carrier that does not tobacco-rate; all federal credit and cost-sharing help taken first; the household amount is the per-member amount times the members on the plan, capped at the lesser of the premium left after the credit and what those members would pay in the county's lowest-cost Cascade Care Silver plan. Nobody eligible for Apple Health, Medicare or COFA premium assistance. A hard edge at 250% FPL: the whole amount ends there. The amounts are set each year by the Exchange within the appropriation ($55 million for 2026), and the program may close to new enrollees if spending outruns it (Policy §11).",
+  },
+];
+
+/**
+ * The state's flat per-member help for a marketplace enrollee at this share of
+ * FPL, with the monthly amount per person, or null.
+ *
+ * The same 100%-FPL floor the $0 table takes: every one of these programs
+ * conditions on federal premium-credit eligibility, whose floor is 26 CFR
+ * 1.36B-2(b)(1). A state's own floor can be higher, and `fromFpl` carries it.
+ */
+export function perMemberPremiumHelpFor(state: string, fplShare: number): { help: PerMemberPremiumHelp; monthlyPerMember: number } | null {
+  if (!Number.isFinite(fplShare) || fplShare < APTC_FPL_FLOOR) return null;
+  const help = PER_MEMBER_PREMIUM_HELP.find((h) => h.state === state);
+  if (!help || fplShare < help.fromFpl) return null;
+  const band = help.bands.find((b) => fplShare <= b.upToFpl);
+  return band && band.monthlyPerMember > 0 ? { help, monthlyPerMember: band.monthlyPerMember } : null;
+}
+
 /** The state's $0-premium tier for a marketplace enrollee at this share of FPL, or null. */
 export function premiumWrapFor(state: string, fplShare: number): PremiumWrap | null {
   if (!Number.isFinite(fplShare) || fplShare < APTC_FPL_FLOOR) return null;

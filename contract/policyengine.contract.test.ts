@@ -353,6 +353,53 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     }
   }, 200_000);
 
+  // New Jersey and Washington: the two flat per-member programs. Whichever way
+  // the endpoint answers, the household's premium must come down by the same
+  // published amount — the engine's own figure where it has one, HotGap's
+  // table where it does not. A curve that got NEITHER is the "figures
+  // incomplete" state this pair of tests exists to keep from coming back.
+  //
+  // $40,000 for a single adult is 256% of the 2025 one-person guideline, so it
+  // is inside New Jersey's $100 band and just past Washington's 250% ceiling —
+  // which is why the two assertions differ, and why the WA case pins the
+  // program's edge rather than only its amount.
+  it("NJ Health Plan Savings: $100 a month for the one person on the plan, from the engine or from the table", async () => {
+    const { fetchCurve, evaluateCurve, endpointHasTaxUnitVariable } = await import("../core/src/index.js");
+    const nj = { ...answersFor("NJ", archetypeById("single-0")), annualEarnings: 40000 };
+    const has = await endpointHasTaxUnitVariable("nj_njhps", { timeoutMs: 90_000 });
+    const ev = evaluateCurve(nj, await fetchCurve(nj, { timeoutMs: 90_000 }), "live");
+    const at40k = ev.curve.points.find((p) => p.earnings === 40000)!;
+    expect(at40k.medicalOOP).toBeGreaterThan(0); // the cap never binds here
+    if (has) {
+      expect(at40k.statePremiumAssistance).toBe(1200); // 12 x $100 x 1 member
+      expect(ev.statePremiumAssistance?.variable).toBe("nj_njhps");
+      expect(ev.perMemberPremiumHelp).toBeNull();
+    } else {
+      expect(at40k.statePremiumAssistance).toBeUndefined();
+      expect(ev.perMemberPremiumHelp?.state).toBe("NJ");
+      expect(ev.perMemberPremiumHelp?.maxAnnual).toBeGreaterThanOrEqual(1200);
+    }
+  }, 200_000);
+
+  it("Cascade Care Savings: $55 a month to 250% of the poverty line and nothing above it", async () => {
+    const { fetchCurve, evaluateCurve, endpointHasTaxUnitVariable } = await import("../core/src/index.js");
+    const wa = { ...answersFor("WA", archetypeById("single-0")), annualEarnings: 30000 }; // 192% FPL: inside
+    const has = await endpointHasTaxUnitVariable("wa_cascade_care_savings", { timeoutMs: 90_000 });
+    const ev = evaluateCurve(wa, await fetchCurve(wa, { timeoutMs: 90_000 }), "live");
+    const inside = ev.curve.points.find((p) => p.earnings === 30000)!;
+    const above = ev.curve.points.find((p) => p.earnings === 40000)!; // 256% FPL: past the ceiling
+    if (has) {
+      expect(inside.statePremiumAssistance).toBe(660); // 12 x $55 x 1 member
+      expect(above.statePremiumAssistance).toBe(0);
+      expect(ev.statePremiumAssistance?.variable).toBe("wa_cascade_care_savings");
+      expect(ev.perMemberPremiumHelp).toBeNull();
+    } else {
+      expect(inside.statePremiumAssistance).toBeUndefined();
+      expect(ev.perMemberPremiumHelp?.state).toBe("WA");
+      expect(ev.perMemberPremiumHelp?.maxAnnual).toBe(660);
+    }
+  }, 200_000);
+
   // The untracked `otherBenefits` remainder, traced to a variable per state in
   // core/src/stateOtherBenefits.ts. Each row is pinned the only way that is
   // not circular: the swept household's own payload at the earnings where the
