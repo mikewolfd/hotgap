@@ -10,7 +10,7 @@
 
 ## The load-bearing honesty rule
 
-LIHEAP is a block grant, not an entitlement: a family at the limit is eligible to *apply*, and in most states fewer than one in four eligible families is served. So HotGap never draws LIHEAP dollars into the curve by default. The default is a **boundary marker** outside the money line — "Above $X you can no longer apply for energy assistance in Ohio. It is worth $24–$441 a winter if you get it; about 2 in 10 eligible households here do." — with every figure sourced. The dollars enter the curve only behind a **take-up toggle** ("I get energy assistance"), default off, and only in states whose real schedule is modeled — the same rule HotGap already applies to housing vouchers and the child-care subsidy, whose take-up is comparably low. The served share is the one honest probability and it is always printed next to the amount.
+LIHEAP is a block grant, not an entitlement: a family at the limit is eligible to *apply*, and in most states fewer than one in four eligible families is served. So HotGap never draws LIHEAP dollars into the curve by default. The default is a **boundary marker** outside the money line — "Above $X you can no longer apply for energy assistance in Ohio. It is worth $24–$441 a winter if you get it; about 2 in 10 eligible households here do." — with every figure sourced. The dollars enter the curve only behind a **take-up toggle** ("I get energy assistance"), default off — the same rule HotGap already applies to housing vouchers and the child-care subsidy, whose take-up is comparably low. With the toggle on they enter in every state, because the cliff is the aggregate: a family that has energy assistance and loses it in the same step as SNAP loses both, and the tool exists to show that step's total. The served share is the one honest probability and it is always printed next to the amount.
 
 ## Decisions (the research's ranked options, amended on review)
 
@@ -19,7 +19,7 @@ LIHEAP is a block grant, not an entitlement: a family at the limit is eligible t
 3. **Average benefit as a notch (option b) is not built.** Wrong shape, wrong probability.
 4. **The heating component is the marker's; cooling and crisis are named, not drawn**, in v1. Four states set different limits per component (IA, MI, NC, OH); Texas's cooling is the larger program. Revisit after v1 with the served shares per component.
 5. **60% SMI comes from upstream's parameter**, `gov/hhs/smi/amount.yaml` (four-person SMI by state through FY2027) with `household_size_adjustment.yaml`, pinned to a commit — not the ACF PDF the research could not fetch. FPG comes from HotGap's own `fpl2025` (FY2026 LIHEAP uses the 2025 guidelines: $26,650 for three).
-6. **Michigan's coverage note is fixed first, on its own**, because it is wrong today. The full credit assumes heat is not included in rent (PolicyEngine's default; the credit halves otherwise) — the note says so, and the editor gains the input in Phase 4.
+6. **Michigan's coverage note is fixed first, on its own**, because it is wrong today. The full credit assumes heat is not included in rent (PolicyEngine's default; the credit halves otherwise) — the note says so, and the editor gains the input in Phase 3.
 
 ## Data
 
@@ -50,7 +50,7 @@ Tests: 51 rows, every state once; every `pct` within the statutory floor/ceiling
 
 ### Phase 0 — Michigan note (now, separate merge)
 
-- [ ] `core/src/coverage.ts` `unmodeled()`: the LIHEAP entry becomes per state — MI: *counted* ("Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is"); DC/MA/IL: "PolicyEngine models the schedule but it does not reach net income; HotGap does not yet show it" (until Phase 4); all others: today's note.
+- [ ] `core/src/coverage.ts` `unmodeled()`: the LIHEAP entry becomes per state — MI: *counted* ("Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is"); DC/MA/IL: "PolicyEngine models the schedule but it does not reach net income; HotGap does not yet show it" (until Phase 3); all others: today's note.
 - [ ] `coverage.test.ts`: MI's LIHEAP row is not in `unmodeled`; it appears under `corrections` as `{ applies: false, source: "in net income", program: "Home Heating Credit" }`.
 - [ ] `--from-data` rebuild; every metric byte-identical; only MI's coverage block changes.
 
