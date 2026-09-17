@@ -45,9 +45,15 @@ const conjunction = new Intl.ListFormat("en-US", { style: "long", type: "conjunc
 /** "a", "a and b", "a, b, and c" — the locale's list, not a hand-joined one. */
 export const listOf = (items: string[]): string => conjunction.format(items);
 
-const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
-/** An ISO stamp as a date in words, "Sep 16, 2026". */
-export const dateWords = (iso: string): string => mediumDate.format(new Date(iso));
+const mediumDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+/**
+ * An ISO stamp as a date in words, "Sep 16, 2026", in the reader's own time
+ * zone — a sweep stamped 01:16 UTC is the evening before to a reader in the
+ * United States, and "run of tomorrow" is a date an editor bounces (places
+ * rerun S2). A zone can be named for a test or a fixed-zone surface.
+ */
+export const dateWords = (iso: string, timeZone?: string): string =>
+  (timeZone ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone }) : mediumDate).format(new Date(iso));
 
 export const capitalize = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
