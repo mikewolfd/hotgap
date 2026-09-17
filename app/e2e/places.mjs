@@ -223,8 +223,11 @@ try {
     const txAll = summary.coverage.TX.unmodeled.filter((u) => u.scope === "all").map((u) => u.program);
     const txOwn = summary.coverage.TX.unmodeled.filter((u) => u.scope !== "all").map((u) => u.program);
     const excludes = await page.$$eval("#excludes li", (els) => els.map((el) => el.textContent));
-    check(txAll.length > 0 && txAll.every((p) => !restored.unmod.includes(p) && excludes.some((t) => t.startsWith(`${p}, in every state:`))) && txOwn.every((p) => restored.unmod.includes(p)),
-      "a gap every state shares is listed once under the method, never under a state; a state's own gaps stay in its block (S8)", { txAll, txOwn, unmod: restored.unmod });
+    // Since Plan 7 LIHEAP is a boundary, not a gap, so no state shares a gap on this sweep; the rule still holds for any that returns.
+    const sharedOnce = txAll.every((p) => !restored.unmod.includes(p) && excludes.some((t) => t.startsWith(`${p}, in every state:`)));
+    const noSharedListed = txAll.length > 0 || !excludes.some((t) => /, in every state:/.test(t));
+    check(sharedOnce && noSharedListed && txOwn.every((p) => restored.unmod.includes(p)),
+      "a gap every state shares is listed once under the method, never under a state; a state's own gaps stay in its block (S8)", { txAll, txOwn, unmod: restored.unmod, excludes });
     check(restored.notes.every((n) => /^[A-Z]/.test(n) && !/WORKAROUND|\.ts\b/.test(n) && /#\d{4}/.test(n)), "every correction note is a sentence with its issue number and no code pointer (S9)", restored.notes[0]);
     const dual = (st) => summary.states[st]["married-dual-2"];
     const comparable = STATES.filter((st) => dual(st).cliffCount > 0 && !expectIncompleteFor(st, "married-dual-2"));
