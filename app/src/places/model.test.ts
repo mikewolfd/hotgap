@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from "@hotgap/core";
 import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize } from "../lib/format.js";
-import { word } from "./format.js";
+import { copy, fmt } from "./copy.js";
 import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForCare, rowsFor, tableRows } from "./model.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
@@ -63,9 +63,21 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
 
 describe("counts in words", () => {
   it("spells the counts the lede uses and falls back to digits beyond ninety-nine", () => {
-    expect(word(ARCHETYPES.length)).toBe("eleven");
-    expect(capitalize(word(STATE_CODES.length))).toBe("Fifty-one");
-    expect([word(0), word(20), word(40), word(99), word(100), word(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
+    const { count } = fmt;
+    expect(count(ARCHETYPES.length)).toBe("eleven");
+    expect(capitalize(count(STATE_CODES.length))).toBe("Fifty-one");
+    expect([count(0), count(20), count(40), count(99), count(100), count(1.5)]).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
+    expect(copy.lede.counted(STATE_CODES.length, ARCHETYPES.length)).toMatch(/^Fifty-one sets of rules, eleven household shapes, one earnings scale/);
+  });
+});
+
+describe("the measures, from copy", () => {
+  it("are the six pipeline keys in the FilterRow's order, the two counts without a unit, each option naming its own referent (S2)", () => {
+    expect(MEASURES.map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(MEASURES.map((m) => m.unit)).toEqual(["$", "$", "$", "$", "", ""]);
+    for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
+    expect(measureByKey("leap")!.option).toContain("worst danger zone");
+    expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
   });
 });
 
@@ -130,17 +142,41 @@ describe("bins and group", () => {
     expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, lo: 3, hi: 3 }]);
     expect(bins([], "").classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }]);
   });
-  it("orders the table by state, or by the ranking followed by past, none and incomplete", () => {
-    const exit = measureByKey("safeExit")!;
-    const rows = rowsFor(fixture, single1, exit);
-    const g = group(rows, exit);
-    expect(tableRows(rows, g, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
-    expect(tableRows(rows, g, "measure").map((r) => r.st)).toEqual(["AA", "BB", "DD", "EE", "CC", "FF", "GG"]);
+  it("orders the table by state, or by one measure: its lower-bound rows first (B1), then its ranking, then none and incomplete", () => {
+    expect(tableRows(fixture, single1, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
+    // Safe exit: DD and EE run past the axis and lead; AA and BB rank; CC has no cliff; FF and GG are incomplete.
+    expect(tableRows(fixture, single1, "safeExit").map((r) => r.st)).toEqual(["DD", "EE", "AA", "BB", "CC", "FF", "GG"]);
+    // The leap: only EE's is a lower bound; DD's is a plain figure and ranks.
+    expect(tableRows(fixture, single1, "leap").map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD", "CC", "FF", "GG"]);
+    // A dollar measure nothing bounds: the ranking alone, largest first.
+    expect(tableRows(fixture, single1, "biggestLoss").map((r) => r.st)).toEqual(["EE", "AA", "BB", "DD", "CC", "FF", "GG"]);
   });
 });
 
 describe("the committed sweep", () => {
   const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
+  const single2 = summary.archetypes.find((a) => a.id === "single-2")!;
+  it("for the leap, the lower-bound states precede the largest exact leap (B1); for one-step loss the order is the ranking", () => {
+    const leap = tableRows(summary, single2, "leap");
+    const lower = leap.filter((r) => r.kind === "past").map((r) => r.st);
+    expect(lower.length).toBeGreaterThan(0);
+    expect(leap.slice(0, lower.length).map((r) => r.st)).toEqual(lower);
+    const largestExact = leap.find((r) => r.kind === "shaded")!;
+    for (const st of lower) expect(leap.findIndex((r) => r.st === st)).toBeLessThan(leap.indexOf(largestExact));
+    const loss = tableRows(summary, single2, "biggestLoss");
+    expect(loss.filter((r) => r.kind === "past")).toEqual([]);
+    const g = group(rowsFor(summary, single2, measureByKey("biggestLoss")!), measureByKey("biggestLoss")!);
+    expect(loss.map((r) => r.st)).toEqual([...g.ranked, ...g.none, ...g.incomplete].map((r) => r.st));
+  });
+  it("a state whose worst zone closes but whose last zone runs off the axis has an exact leap and no safe exit (S9)", () => {
+    const rows = rowsFor(summary, single2, measureByKey("safeExit")!);
+    const split = rows.filter((r) => r.m.safeExit === null && !r.m.leapIsLowerBound && r.m.cliffCount > 0);
+    expect(split.length).toBeGreaterThan(0);
+    for (const r of split) {
+      expect(r.kind).toBe("past");
+      expect(rowsFor(summary, single2, measureByKey("leap")!).find((x) => x.st === r.st)!.kind).toBe("shaded");
+    }
+  });
   it("yields a row for every state on every measure and archetype, with no NaN bin", () => {
     for (const a of summary.archetypes) for (const m of MEASURES) {
       const rows = rowsFor(summary, a, m);

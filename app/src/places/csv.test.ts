@@ -4,7 +4,7 @@ import type { SummaryJson } from "@hotgap/core";
 import { parseCsv } from "../../e2e/parseCsv.mjs";
 import { CSV_HEADER, csvField, csvFor, csvName } from "./csv.js";
 import { DEFAULT_ARCHETYPE } from "@hotgap/core";
-import { group, measureByKey, rowsFor, tableRows } from "./model.js";
+import { measureByKey, rowsFor, tableRows } from "./model.js";
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
 const arch = summary.archetypes.find((a) => a.id === DEFAULT_ARCHETYPE) ?? summary.archetypes[0];
@@ -34,7 +34,7 @@ describe("csvFor on the committed sweep", () => {
     for (const r of body) expect(r.length).toBe(head.length);
   });
   it("follows the table's order when the table is sorted by the measure", () => {
-    const sorted = tableRows(rows, group(rows, measure), "measure");
+    const sorted = tableRows(summary, arch, "leap");
     const [, ...sortedBody] = parseCsv(csvFor(summary, arch, sorted).replace(/^﻿/, ""));
     expect(sortedBody.map((r) => r[col("state")])).toEqual(sorted.map((r) => r.st));
   });

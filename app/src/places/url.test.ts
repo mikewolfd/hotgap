@@ -8,9 +8,13 @@ describe("the view in the query string", () => {
     expect(parseView("", domain)).toEqual({ household: "single-2", measure: "biggestLoss", sort: "state", state: null });
   });
   it("round-trips every key", () => {
-    const v = { household: "married-dual-2", measure: "safeExit" as const, sort: "measure" as const, state: "NJ" };
-    expect(viewQuery(v)).toBe("?household=married-dual-2&measure=safeExit&sort=measure&state=NJ");
+    const v = { household: "married-dual-2", measure: "safeExit" as const, sort: "leap" as const, state: "NJ" };
+    expect(viewQuery(v)).toBe("?household=married-dual-2&measure=safeExit&sort=leap&state=NJ");
     expect(parseView(viewQuery(v), domain)).toEqual(v);
+  });
+  it("a link written when the only sort was \"this measure\" still lands on that measure's order", () => {
+    expect(parseView("?measure=safeExit&sort=measure", domain).sort).toBe("safeExit");
+    expect(parseView("?sort=measure", domain).sort).toBe("biggestLoss");
   });
   it("writes every key even at the defaults, and omits only an empty selection", () => {
     expect(viewQuery({ household: "single-2", measure: "biggestLoss", sort: "state", state: null }))

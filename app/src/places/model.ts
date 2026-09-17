@@ -2,7 +2,8 @@
 // household and a measure, the four tile states, the five bins, and the
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
-import { CHILDCARE_MAX_AGE, CLIFF_MIN, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { CHILDCARE_MAX_AGE, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { copy } from "./copy.js";
 
 export type Archetype = SummaryJson["archetypes"][number];
 
@@ -18,21 +19,9 @@ export interface Measure {
   describe: string;
 }
 
-// The six measures pipeline/src/metrics.ts writes, in the FilterRow's order.
-export const MEASURES: readonly Measure[] = [
-  { key: "biggestLoss", title: "Largest one-step loss", option: "Largest one-step loss ($)", unit: "$",
-    describe: "Net income lost in the worst single $1,000 step of earnings." },
-  { key: "dangerWidth", title: "Width of the worst danger zone", option: "Width of the worst danger zone ($)", unit: "$",
-    describe: "Earnings spanned by the widest stretch where more pay leaves the household no better off." },
-  { key: "leap", title: "The leap", option: "The leap — raise needed to clear it ($)", unit: "$",
-    describe: "The raise a household must clear in one move to get past that stretch." },
-  { key: "safeExit", title: "Safe exit", option: "Safe exit — where the last zone closes ($)", unit: "$",
-    describe: "Earnings at which the last danger zone closes." },
-  { key: "cliffCount", title: "Number of cliffs", option: "Number of cliffs", unit: "",
-    describe: `Steps down of $${CLIFF_MIN} or more anywhere on the curve.` },
-  { key: "deferredCliffCount", title: "Deferred cliffs", option: "Of those, deferred to a later renewal", unit: "",
-    describe: "Of those, the ones that land at a future renewal, not with the raise." },
-];
+/* The six measures pipeline/src/metrics.ts writes, in the FilterRow's order; their words are copy's. A count has no unit. */
+const COUNTS: ReadonlySet<MeasureKey> = new Set(["cliffCount", "deferredCliffCount"]);
+export const MEASURES: readonly Measure[] = (Object.keys(copy.measures) as MeasureKey[]).map((key) => ({ key, unit: COUNTS.has(key) ? "" : "$", ...copy.measures[key] }));
 
 export const measureByKey = (key: string): Measure | undefined => MEASURES.find((m) => m.key === key);
 
@@ -41,12 +30,7 @@ export const measureByKey = (key: string): Measure | undefined => MEASURES.find(
    `spouseWorks`), and the earner count decides whether the household buys care. */
 const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
 
-export function archLabel(a: Archetype): string {
-  const adults = !a.married ? "1 adult" : worksBoth(a) ? "2 adults, both working" : "2 adults, one working";
-  const n = a.childAges.length;
-  const ages = n === 2 ? a.childAges.join(" and ") : a.childAges.join(", ");
-  return `${adults}, ${n === 0 ? "no children" : `${n} ${n === 1 ? "child" : "children"} (${ages})`}`;
-}
+export const archLabel = (a: Archetype): string => copy.household(a.married, worksBoth(a), a.childAges);
 
 /* A missing child-care subsidy can only move a household that pays for care:
    a child of child-care age (through core's CHILDCARE_MAX_AGE — the sweep
@@ -57,11 +41,12 @@ export function archLabel(a: Archetype): string {
 export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || worksBoth(a));
 
 /* IncompleteMarker (B1): keyed off coverage[state].unmodeled[], never a list
-   kept here. LIHEAP never reaches net income and is not a reason to hatch; the
+   kept here. A gap every state shares (scope "all": LIHEAP) cannot make one
+   state's figures a floor beside another's and is not a reason to hatch; the
    child-care entry (coverage.ts writes "Child-care subsidy (CCDF)") bites only
    a household that pays for care; a state premium program bites every one. */
 export const bites = (u: UnmodeledProgram, a: Archetype): boolean =>
-  u.program !== "LIHEAP" && (!/child.?care/i.test(u.program) || paysForCare(a));
+  u.scope !== "all" && (!/child.?care/i.test(u.program) || paysForCare(a));
 
 export const incompleteFor = (cov: StateCoverage | undefined, a: Archetype): UnmodeledProgram[] =>
   (cov?.unmodeled ?? []).filter((u) => bites(u, a));
@@ -173,9 +158,20 @@ export function group(rows: StateRow[], measure: Measure): Grouped {
   };
 }
 
-export type SortKey = "state" | "measure";
+/** The table's order: postal code, or one measure's ranking. Carried in the URL as `sort=`. */
+export type SortKey = "state" | MeasureKey;
 
-/** The table's order: postal code, or the ranking followed by the lifted-out groups in the rank strip's own order. */
-export function tableRows(rows: StateRow[], g: Grouped, sort: SortKey): StateRow[] {
-  return sort === "measure" ? [...g.ranked, ...g.past, ...g.none, ...g.incomplete] : rows;
+/**
+ * The table's rows in the order the control names (N2): postal code, or one
+ * measure's own grouping — its lower-bound rows first (B1), then its ranking
+ * largest-first, then the states with no cliff, then the incomplete ones.
+ * The rows for the sort measure are recomputed here, because `past` depends
+ * on the measure while `none` and `incomplete` do not. O(states log states).
+ */
+export function tableRows(summary: SummaryJson, a: Archetype, sort: SortKey): StateRow[] {
+  const measure = sort === "state" ? MEASURES[0] : measureByKey(sort)!;
+  const rows = rowsFor(summary, a, measure);
+  if (sort === "state") return rows;
+  const g = group(rows, measure);
+  return [...g.past, ...g.ranked, ...g.none, ...g.incomplete];
 }
