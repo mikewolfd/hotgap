@@ -35,7 +35,9 @@ export function yRange(s: Scene, narrow: boolean): { y0: number; y1: number; ste
   let y0 = lo - padY, y1 = hi + padY;
   if (y1 - y0 < need) { const ext = (need - (y1 - y0)) / 2; y0 -= ext; y1 += ext; }
   const stepY = niceStep(Math.max(1, y1 - y0), narrow ? 3 : 4);
-  return { y0: Math.floor(y0 / stepY) * stepY, y1: Math.ceil(y1 / stepY) * stepY, stepY, maxDrop };
+  // Snapped outward on a quarter of the gridline step: a whole step took a $19,000 floor to $0 (B2), and the floor need not be a tick.
+  const snap = stepY / 4;
+  return { y0: Math.floor(y0 / snap) * snap, y1: Math.ceil(y1 / snap) * snap, stepY, maxDrop };
 }
 
 /** x ticks generated in the display unit and mapped back to annual for position (M5). */

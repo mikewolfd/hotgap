@@ -6,6 +6,8 @@
 // bracket, {wage} the cliff dot.
 import { copy, fill, parts } from "./copy.js";
 import type { Scene } from "./model.js";
+import { noun, phrase } from "./programs.js";
+import { waitingAhead } from "./steps.js";
 
 export type VerdictKey = keyof typeof copy.verdict;
 
@@ -38,9 +40,26 @@ export const SLOT_KEY: Record<string, string> = {
 
 export type VerdictPart = { text: string } | { slot: string; text: string; key: string | null };
 
-/** The sentence as parts, so a renderer can wrap each slot in its key. */
-export const verdictParts = (s: Scene): VerdictPart[] =>
-  parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
+/**
+ * The sentence as parts, so a renderer can wrap each slot in its key — with
+ * the deferred clause when a loss the lifted curve leaves out waits at or
+ * above the person's pay (B1): "$600" is not the answer when $16,600 waits.
+ */
+export function verdictParts(s: Scene): VerdictPart[] {
+  const out: VerdictPart[] = parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
+  const w = waitingAhead(s);
+  if (w) {
+    const id = w.programsLost[0];
+    // Who loses it follows from the rule that defers it: a child's coverage, a parent's Medicaid, or the household's Head Start.
+    const what = !id ? copy.waits.thisHelp
+      : w.deferral!.reason === "child_continuous_eligibility" ? fill(copy.waits.kids, { noun: noun(id) })
+      : w.deferral!.reason === "transitional_medical_assistance" ? fill(copy.waits.own, { noun: noun(id) })
+      : phrase(id);
+    const slots = { at: s.m.pay(w.endEarnings), phrase: what, drop: s.m.about(w.drop) };
+    out.push(...parts(copy.verdict.waits, slots).map((p) => ("slot" in p ? { ...p, key: p.slot === "at" ? "amt" : null } : p)));
+  }
+  return out;
+}
 
 export const verdictText = (s: Scene): string => verdictParts(s).map((p) => p.text).join("");
 

@@ -2,7 +2,7 @@
 // states and the reach and hours sentences.
 import { describe, expect, test } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
-import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor } from "./facts.js";
+import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText } from "./facts.js";
 import { makeEvaluation } from "./fixture.js";
 import { sceneOf } from "./model.js";
 import { tableRows } from "./table.js";
@@ -66,7 +66,7 @@ describe("what we assumed", () => {
       "Health plan from a job: $2,600 a year comes out of your pay for it.",
       "Head Start: Worth $15,000 a year to you: what day care would cost.",
       "No health plan: From $4,000 a year to $21,000 a year you would have no health plan at all: no Medicaid and no help to buy one. We counted no health plan cost there.",
-      "Health plan help: Colorado premium assistance, up to $960 a year. Colorado helps pay for health insurance. We counted it.",
+      "Health plan help: Colorado premium assistance, up to $960 a year. It helps pay for health insurance. We counted it.",
       "Cash help (TANF): We used the state's rule for people already on it. Not the first-year rule.",
       "Help you could get: You said you do not get food help (SNAP) and food help for moms and babies (WIC). At your pay it would be worth about $3,800 a year.",
     ]));
@@ -105,6 +105,14 @@ describe("SourceNote", () => {
     expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what is left after taxes and health-plan premiums.");
     expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine. Rules for 2026. Money kept is what is left after taxes and health-plan premiums.");
   });
+  test("the child-care gap counts for a child through CHILDCARE_MAX_AGE with paid care, the one rule every surface uses (audit D7)", () => {
+    const withCare = { ...summary, coverage: { CO: { ...summary.coverage!.CO, unmodeled: [{ program: "Child-care subsidy (CCDF)", note: "" }] } } } as SummaryJson;
+    const ev = (ages: number[], care: number | null) => makeEvaluation({ answers: { ...makeEvaluation().answers, childAges: ages, childDisabled: ages.map(() => false), monthlyChildcare: care } });
+    expect(incompleteText(sceneOf(ev([7], 900), year), sweepFor(withCare, "CO"))).toMatch(/Child-care subsidy/);
+    expect(incompleteText(sceneOf(ev([12], 900), year), sweepFor(withCare, "CO"))).toMatch(/Child-care subsidy/);
+    expect(incompleteText(sceneOf(ev([13], 900), year), sweepFor(withCare, "CO"))).toBeNull();
+    expect(incompleteText(sceneOf(ev([7], null), year), sweepFor(withCare, "CO"))).toBeNull();
+  });
   test("the incomplete notice names every unmodeled program but LIHEAP, and nothing without the sweep", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(incompleteText(s, sweepFor(summary, "CO"))).toBe(" Colorado has Colorado Premium Help. Our math does not include it. A drop could be missing from this page.");
@@ -117,10 +125,12 @@ describe("SourceNote", () => {
 describe("reach and hours", () => {
   test("reach is how common the pay is, never odds; the count rounds to tenths", () => {
     expect(reachText(sceneOf(makeEvaluation(), year))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less. The count could be off by a few thousand dollars either way.");
+    expect(whoText(sceneOf(makeEvaluation(), year))).toBe("A parent with 2 kids, ages 3 and 7, in Colorado.");
+    expect(whoText(sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, childAges: [], childDisabled: [], married: true } }), year))).toBe("A couple with no kids, in Colorado.");
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 3, safeExit: null } }), year))).toMatch(/^Fewer than 1 in 10/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 97, safeExit: null } }), year))).toMatch(/^Almost all/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: null, safeExit: null } }), year))).toBeNull();
-    expect(reachSourceText(sceneOf(makeEvaluation(), year), sweepFor(summary, "CO"))).toBe("From U.S. Census Bureau survey data, ACS 2024 1-year PUMS. Grown to 2026 dollars.");
+    expect(reachSourceText(sceneOf(makeEvaluation(), year), sweepFor(summary, "CO"))).toBe("From U.S. Census Bureau survey data (ACS 2024, 1-year). Grown to 2026 dollars.");
   });
   test("hours: the state's minimum wage and full-time pay at it, to $500", () => {
     expect(hoursText(sceneOf(makeEvaluation(), year))).toBe("Colorado's lowest legal pay is $15.16 an hour. Full-time work at that pay is about $31,500 a year.");

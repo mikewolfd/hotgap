@@ -92,25 +92,27 @@ export function liftDeferred(net: number[], deferred: Cliff[], idx: (earnings: n
   return out;
 }
 
+/** The context the crop carries around what it must show: a third before, two thirds after, where the climb back is. */
+export const WINDOW_MARGIN = 30_000;
+
 /**
- * The crop (charts.md § Phone): it must hold the diamond and the household's
- * exit, and it takes in the next cliff and the biggest drop when that lies
- * within $40,000 of them, so the picture shows what the sentence names.
- * Half the axis wide at least, with a third of the slack before and two
- * thirds after, where the climb back is; snapped to the points.
+ * The crop (charts.md § Phone) is what the picture exists to show: the
+ * diamond, the household's zone and its exit, the next cliff, and the
+ * curve's biggest drop when it lies within the margin — plus the margin.
+ * Never a fixed fraction of the axis (design/REVIEW-citizen B2: a
+ * half-axis window spent the picture on the climb and made a $2,400 step
+ * two pixels tall). Snapped to the points.
  */
 export function windowFor(s: Pick<Scene, "current" | "zone" | "stuck" | "exit" | "next" | "worst" | "top" | "step">): [number, number] {
   const { current, zone, stuck, exit, next, worst, top, step } = s;
   let lo = Math.min(current, zone?.startEarnings ?? current);
   let hi = Math.max(current, stuck || exit === null ? current : exit, next?.endEarnings ?? current);
-  if (worst && worst.endEarnings <= hi + 40_000 && worst.startEarnings >= lo - 40_000) {
+  if (worst && worst.endEarnings <= hi + WINDOW_MARGIN && worst.startEarnings >= lo - WINDOW_MARGIN) {
     lo = Math.min(lo, worst.startEarnings);
     hi = Math.max(hi, worst.endEarnings);
   }
-  const span = Math.min(top, Math.max(hi - lo + 30_000, top / 2));
-  const slack = span - (hi - lo);
-  lo -= slack / 3;
-  hi += (2 * slack) / 3;
+  lo -= WINDOW_MARGIN / 3;
+  hi += (2 * WINDOW_MARGIN) / 3;
   if (lo < 0) { hi -= lo; lo = 0; }
   if (hi > top) { lo = Math.max(0, lo - (hi - top)); hi = top; }
   return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step];

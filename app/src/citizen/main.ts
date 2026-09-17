@@ -24,8 +24,8 @@ const editor = mountEditor(app, {
   onChange: (flags) => { if (hasAnswers(flags)) run(flags, { submitted: false }); },
 });
 const resultRoot = h("div", { class: "result", id: "result" });
-app.append(h("h1", { class: "hg-visually-hidden" }, "If your pay goes up, do you keep more?"), resultRoot);
-const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false }));
+app.append(h("h1", { class: "hg-visually-hidden" }, t("heading")), resultRoot);
+const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false, retry: true }));
 
 // Evaluations are answered out of order (a fresh curve takes seconds, a
 // cached one milliseconds); only the latest request may render.
@@ -37,7 +37,7 @@ let latest = 0;
  * the chip (the toggle's whole behaviour, design/inventory.md § ScenarioBar);
  * a landing on a shared link closes the screen and leaves focus alone.
  */
-async function run(flags: HouseholdFlags, { submitted, landing = false }: { submitted: boolean; landing?: boolean }): Promise<void> {
+async function run(flags: HouseholdFlags, { submitted, landing = false, retry = false }: { submitted: boolean; landing?: boolean; retry?: boolean }): Promise<void> {
   const url = `?${searchParamsFromFlags(flags)}`;
   if (submitted && url !== location.search) history.pushState(null, "", url);
   else history.replaceState(null, "", url);
@@ -48,7 +48,16 @@ async function run(flags: HouseholdFlags, { submitted, landing = false }: { subm
   const r = await evaluate(flags);
   if (id !== latest) return;
   if (r.ok) {
-    result.render(r.evaluation, flags, { announce: !submitted });
+    result.render(r.evaluation, flags, { announce: !submitted, retry });
+    // The chips assert answers an archetype curve did not use (S5): the row's
+    // note says so where the chips are, with the same Try again.
+    if (r.evaluation.source === "archetype") {
+      const again = h("button", { type: "button", class: "hg-button hg-button--small" }, t("tryAgain"));
+      again.addEventListener("click", () => run(editor.flags, { submitted: false, retry: true }));
+      const note = document.createDocumentFragment();
+      note.append(t("source.archetype"), " ", again);
+      editor.setNote(note);
+    } else editor.setNote("");
     if (submitted) {
       editor.close();
       // A person's own submit moves focus to their answer; a page load does

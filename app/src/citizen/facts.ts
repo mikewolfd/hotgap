@@ -5,11 +5,11 @@
 // provenance parts take the sweep's summary when the page has fetched it and
 // say less, never something wrong, when it has not.
 import {
-  childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson,
+  CHILDCARE_MAX_AGE, childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson,
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { dateWords, listOf, unitFigure } from "../lib/format.js";
-import { capitalize, modelLine, reachWord } from "../places/format.js";
+import { capitalize, modelLine } from "../places/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
 import { NONCASH, phrase, phraseAndName } from "./programs.js";
@@ -79,8 +79,8 @@ export function assumedRows(s: Scene): Fact[] {
   if (ev.esi) rows.push({ label: L.employerPlan, text: ev.esi.tier ? t("assumed.employerPlan", { amount: m.money(ev.esi.annualContribution) }) : t("assumed.employerPlanFree") });
   if (ev.headStart) rows.push({ label: L.headStart, text: t("assumed.headStart", { amount: m.money(ev.headStart.replacementValue) }) });
   if (ev.coverageGap) rows.push({ label: L.coverageGap, text: t("assumed.coverageGap", { from: m.payUnit(ev.coverageGap.fromEarnings), to: m.payUnit(ev.coverageGap.toEarnings) }) });
-  if (ev.statePremiumAssistance) rows.push({ label: L.premiumHelp, text: t("assumed.premiumHelpMax", { program: ev.statePremiumAssistance.program, amount: m.money(ev.statePremiumAssistance.maxAnnual), state }) });
-  else if (ev.premiumWrap) rows.push({ label: L.premiumHelp, text: t("assumed.premiumHelp", { program: ev.premiumWrap.program, state }) });
+  if (ev.statePremiumAssistance) rows.push({ label: L.premiumHelp, text: t("assumed.premiumHelpMax", { program: ev.statePremiumAssistance.program, amount: m.money(ev.statePremiumAssistance.maxAnnual) }) });
+  else if (ev.premiumWrap) rows.push({ label: L.premiumHelp, text: t("assumed.premiumHelp", { program: ev.premiumWrap.program }) });
   if (ev.maTafdc?.status === "applied") rows.push({ label: L.maTafdc, text: t("assumed.maTafdc") });
   if (ev.unclaimed?.length) rows.push({ label: L.unclaimed, text: t("assumed.unclaimed", {
     list: listOf(ev.unclaimed.map((u) => phraseAndName(u.program))), amount: m.about(ev.unclaimed.reduce((sum, u) => sum + u.annual, 0)) }) });
@@ -112,11 +112,12 @@ export function provenanceText(s: Scene, sweep: Sweep | null): string {
 /**
  * IncompleteMarker (#16), citizen register: the programs the model cannot
  * compute in this state that could move this household — every entry but
- * LIHEAP, and the child-care one only where a child under 6 has paid care.
+ * LIHEAP, and the child-care one only where a child of child-care age
+ * (through CHILDCARE_MAX_AGE, the one rule every surface uses) has paid care.
  */
 export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
   const unmodeled = (sweep?.coverage?.unmodeled ?? []).filter((u) => u.program !== "LIHEAP").filter((u) =>
-    !/child.?care/i.test(u.program) || (s.modeled.childAges.some((age) => age < 6) && (s.modeled.monthlyChildcare ?? 0) > 0));
+    !/child.?care/i.test(u.program) || (s.modeled.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (s.modeled.monthlyChildcare ?? 0) > 0));
   if (!unmodeled.length) return null;
   return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map((u) => u.program)) });
 }
@@ -132,9 +133,25 @@ export function reachText(s: Scene): string | null {
   return (n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params })) + t("reach.margin");
 }
 
+/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place; anything else as-is. */
+const surveyWord = (v: string): string => {
+  const m = v.match(/^(\d{4})(?:-(\d{4}))?-(\d)yr$/);
+  return m ? `ACS ${m[2] ? `${m[1]}–${m[2]}` : m[1]}, ${m[3]}-year` : v;
+};
+
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {
   const v = sweep?.coverage?.vintages.reach.vintages;
-  return v?.length ? t("reach.source", { vintages: listOf(v.map(reachWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
+  return v?.length ? t("reach.source", { vintages: listOf(v.map(surveyWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
+}
+
+/** The masthead sentence for paper: who the numbers are for, from the household the curve was run for. */
+export function whoText(s: Scene): string {
+  const A = s.modeled;
+  const ages = A.childAges;
+  const place = s.stateName;
+  if (!ages.length) return t("whoNoKids", { adults: A.married ? copy.adults.twoNoKids : copy.adults.oneNoKids, place });
+  const kids = ages.length === 1 ? t("kidsOne", { age: ages[0] }) : t("kidsMany", { n: ages.length, ages: listOf(ages.map(String)) });
+  return t("who", { adults: A.married ? copy.adults.two : copy.adults.one, kids, place });
 }
 
 export function hoursText(s: Scene): string | null {

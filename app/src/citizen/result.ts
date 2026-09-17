@@ -19,7 +19,7 @@ import type { EvaluateResult } from "../editor/api.js";
 import { h } from "../lib/dom.js";
 import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
-import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, type Sweep } from "./facts.js";
+import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText, type Sweep } from "./facts.js";
 import { sceneOf, type Scene } from "./model.js";
 import { stepLoss, stepRows, stepSentence, waitsText } from "./steps.js";
 import { tableRows } from "./table.js";
@@ -29,8 +29,12 @@ export interface Result {
   /** Nothing to show: the page went back to a bare URL. */
   clear(): void;
   loading(count: number): void;
-  /** Render an evaluation; `announce` reads the new sentence to the status region for a change made without moving focus. */
-  render(ev: HouseholdEvaluation, flags: HouseholdFlags, opts?: { announce?: boolean }): void;
+  /**
+   * Render an evaluation; `announce` reads the new sentence to the status
+   * region for a change made without moving focus; `retry` says Try again
+   * asked for it, so a still-archetype answer says so and keeps focus there.
+   */
+  render(ev: HouseholdEvaluation, flags: HouseholdFlags, opts?: { announce?: boolean; retry?: boolean }): void;
   error(result: Extract<EvaluateResult, { ok: false }>): void;
 }
 
@@ -44,12 +48,16 @@ const section = (heading: string, ...body: (Node | null | undefined)[]) => h("se
 
 export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   const status = h("p", { class: "hg-source", role: "status" });
+  /* Paper has no ScenarioBar: the wordmark and who the numbers are for, print only (S2). */
+  const masthead = h("p", { class: "hg-print-only masthead" });
+  /* The M4 sentence where the numbers are met, not thirteen hundred pixels down in the source line (S5). Standing text, so not the status region, which announces. */
+  const whose = h("p", { class: "hg-callout hg-callout--caution whose", id: "whose", hidden: true });
   const answer = h("p", { class: "answer", id: "answer", tabindex: "-1" });
   const again = h("p", { class: "answer-sub", hidden: true });
   const sub = h("p", { class: "answer-sub" });
   const alert = h("div", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
   const body = h("div", { class: "page" });
-  root.append(h("section", { class: "band" }, h("div", { class: "page" }, status, answer, again, sub, alert)), body);
+  root.append(h("section", { class: "band" }, h("div", { class: "page" }, masthead, status, whose, answer, again, sub, alert)), body);
 
   const retryButton = () => {
     const b = h("button", { type: "button", class: "hg-button hg-button--small" }, t("tryAgain"));
@@ -84,6 +92,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   return {
     clear() {
       status.textContent = "";
+      whose.hidden = true;
       answer.textContent = "";
       again.hidden = true;
       sub.textContent = "";
@@ -95,11 +104,12 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       status.classList.remove("hg-visually-hidden");
       status.textContent = t("loading", { count });
     },
-    render(ev, flags, { announce = false } = {}) {
+    render(ev, flags, { announce = false, retry = false } = {}) {
       alert.hidden = true;
       clearBody();
       const s = (scene = sceneOf(ev, flags));
       const { m } = s;
+      masthead.replaceChildren(h("strong", {}, t("wordmark")), " ", whoText(s));
 
       /* AnswerSentence (#1): each figure carries the key of the mark it names. */
       answer.replaceChildren(...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
@@ -107,6 +117,10 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       // it is already on the page in display size, so the region is not shown twice.
       status.classList.toggle("hg-visually-hidden", announce);
       status.textContent = announce ? verdictText(s) : "";
+      /* Whose numbers these are, above the answer (S5); after a Try again that still could not, it says "still". */
+      const archetype = ev.source === "archetype";
+      whose.hidden = !archetype;
+      if (archetype) whose.textContent = t(retry ? "stillArchetype" : "source.archetype");
       const againLine = againText(s);
       again.hidden = againLine === null;
       again.textContent = againLine ?? "";
@@ -140,13 +154,16 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       chart = mountChart(figure, s, { onActivate: openRow, onEscape: () => closeRow(true) });
       const sourceText = document.createTextNode("");
       const source = h("p", { class: "hg-source", id: "source", "data-source": ev.source });
-      if (ev.source === "archetype") {
-        source.append(t("source.archetype"), retryButton());
+      const incomplete = h("div", { class: "hg-callout hg-callout--caution", id: "incomplete", hidden: true });
+      let retryBtn: HTMLButtonElement | null = null;
+      if (archetype) {
+        source.append(t("source.archetype"), (retryBtn = retryButton()));
         if (s.clamped) source.append(t("source.clamped", { top: m.payUnit(s.current) }));
         source.append(h("br"));
       }
       source.append(sourceText);
-      figure.append(source);
+      /* The incomplete-state caution qualifies the picture, so it sits with the picture's provenance, not three screens down (S6). */
+      figure.append(incomplete, source);
 
       /* DataTable (#15): the marks as numbers. */
       const rows = tableRows(s);
@@ -154,7 +171,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         h("caption", {}, t("table.caption")),
         h("thead", {}, h("tr", {}, h("th", { scope: "col", class: "num" }, t("table.pay")), h("th", { scope: "col", class: "num" }, t("table.keep")),
           h("th", { scope: "col", class: "num" }, t("table.drop")), h("th", { scope: "col" }, t("table.mark")))),
-        h("tbody", {}, ...rows.map((r) => h("tr", {}, h("td", { class: "num" }, m.money(r.at)), h("td", { class: "num money" }, m.money(r.keep)),
+        h("tbody", {}, ...rows.map((r) => h("tr", {}, h("td", { class: "num" }, m.pay(r.at)), h("td", { class: "num money" }, m.money(r.keep)),
           h("td", { class: "num" }, r.drop ? t("table.dropCell", { drop: m.money(r.drop) }) : ""), h("td", {}, r.mark)))));
       const numbers = h("details", { class: "hg-disclosure" }, h("summary", {}, t("table.show")), h("div", { class: "hg-scroll-x" }, table));
 
@@ -170,7 +187,6 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       }));
       const waits = waitsText(s);
       const waitsBox = waits && h("div", { class: "hg-callout hg-callout--note" }, h("h3", {}, waits.head), ...waits.body.map((x) => h("p", {}, x)), h("p", {}, waits.foot));
-      const incomplete = h("div", { class: "hg-callout hg-callout--caution", id: "incomplete", hidden: true });
 
       /* What we assumed (S6), reach, hours, footer. */
       const assumed = h("ul", { class: "hg-rows assumed" }, ...assumedRows(s).map((f) => h("li", {}, h("span", { class: "hg-rows__at" }, f.label), h("p", {}, f.text))));
@@ -181,7 +197,6 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       body.append(...([
         figure, numbers,
         section(t("steps.heading"), steps.length ? stepList : h("p", {}, t("steps.none")), waitsBox),
-        incomplete,
         section(t("assumed.heading"), assumed),
         reach ? section(t("reach.heading"), h("p", {}, reach), h("p", {}, t("reach.note")), reachSource) : null,
         hours ? section(t("hours.heading"), h("p", {}, hours)) : null,
@@ -191,6 +206,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
           h("p", {}, t("footer.noAdvice"))),
       ] as (Node | null)[]).filter((n): n is Node => n !== null));
       provenance = { source: sourceText, reach: reachSource, incomplete };
+      if (retry) retryBtn?.focus();
       renderProvenance();
       if (!summary) void loadSummary().then((json) => { summary = json; renderProvenance(); });
     },

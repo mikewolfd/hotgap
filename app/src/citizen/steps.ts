@@ -8,7 +8,7 @@ import { listOf } from "../lib/format.js";
 import { capitalize } from "../places/format.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
-import { called, noun, phrase } from "./programs.js";
+import { called, NAMES_ITS_GROUP, noun, phrase } from "./programs.js";
 
 type Group = "adults" | "children";
 
@@ -69,8 +69,8 @@ export function stepRows(s: Scene): StepRow[] {
 export function stepSentence(s: Scene, r: StepRow): string {
   const byAge = s.ev.escape.programEndsByAge;
   const split = (id: ProgramId) => byAge.adults[id] !== undefined && byAge.children[id] !== undefined;
-  // A phrase that already names the kids ("a health plan for kids") takes the plain template, not "Your kids' … for kids".
-  const ends = ({ id, group }: StepRow["programs"][number]) => group && !(group === "children" && /kids$/.test(noun(id)))
+  // A phrase that already names who holds it takes the plain template, not "Your kids' … for kids".
+  const ends = ({ id, group }: StepRow["programs"][number]) => group && !NAMES_ITS_GROUP.has(id)
     ? fill(copy.steps[r.future ? "wouldEndGroup" : "endsGroup"][group], { noun: noun(id), name: called(id) })
     : t(r.future ? "steps.wouldEnd" : "steps.ends", { Phrase: capitalize(phrase(id)), name: called(id) });
   // The cliff's own programs, then — for a deferred cliff — "it does not end
@@ -106,17 +106,21 @@ export function stepLoss(s: Scene, r: StepRow): string | null {
  * eligibility rule, said the same way), or none.
  */
 export function waitsText(s: Scene): { head: string; body: string[]; foot: string } | null {
-  const body = s.deferred.map((c) => fill(copy.waits.reasons[c.deferral!.reason], {
+  const items = s.deferred.map((c) => ({ at: c.endEarnings, text: fill(copy.waits.reasons[c.deferral!.reason], {
     at: s.m.payUnit(c.endEarnings),
     phrase: c.programsLost.length ? phrase(c.programsLost[0]) : copy.waits.thisHelp,
-  }));
+  }) }));
   const deferredAt = new Set(s.deferred.map((c) => c.endEarnings));
   for (const r of stepRows(s)) {
     if (r.cliff?.deferral || deferredAt.has(r.at)) continue;
     for (const p of r.programs.filter(childCoverageWaits)) {
-      body.push(fill(copy.waits.reasons.child_continuous_eligibility, { at: s.m.payUnit(r.at), phrase: phrase(p.id) }));
+      items.push({ at: r.at, text: fill(copy.waits.reasons.child_continuous_eligibility, { at: s.m.payUnit(r.at), phrase: phrase(p.id) }) });
     }
   }
-  if (!body.length) return null;
+  if (!items.length) return null;
+  const body = items.sort((a, b) => a.at - b.at).map((i) => i.text);
   return { head: body.length > 1 ? t("waits.headMany", { n: body.length }) : t("waits.head"), body, foot: t("waits.foot") };
 }
+
+/** The first deferred cliff at or above the person's pay: the loss the lifted verdict leaves out (B1). */
+export const waitingAhead = (s: Scene): Cliff | null => s.deferred.find((c) => c.startEarnings >= s.current) ?? null;

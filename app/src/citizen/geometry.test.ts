@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
 import { tickMoney } from "../lib/format.js";
 import { clusterCliffs, layout, niceStep, niceTicks, xTicks, yRange } from "./geometry.js";
-import { liftDeferred, sceneOf, windowFor } from "./model.js";
+import { liftDeferred, sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
 
@@ -26,25 +26,22 @@ describe("the lift", () => {
 });
 
 describe("the window", () => {
-  test("holds the diamond and the household's exit, takes in the nearby biggest drop, and is snapped to points", () => {
+  test("is what the picture exists to show — the zone, the exit, the nearby biggest drop — plus the margin, and nothing of the axis", () => {
     const s = sceneOf(makeEvaluation(), year);
-    const [lo, hi] = s.window;
-    expect(lo).toBeLessThanOrEqual(s.current);
-    expect(hi).toBeGreaterThanOrEqual(s.exit!);
-    expect(hi).toBeGreaterThanOrEqual(s.worst!.endEarnings);
-    expect(hi - lo).toBeGreaterThanOrEqual(TOP / 2);
-    expect(lo % s.step).toBe(0);
-    expect(hi % s.step).toBe(0);
-    expect(lo).toBeGreaterThanOrEqual(0);
-    expect(hi).toBeLessThanOrEqual(TOP);
+    // zone $41k–$46k, the $54k→$55k drop within the margin: [41k − 10k, 55k + 20k].
+    expect(s.window).toEqual([41_000 - WINDOW_MARGIN / 3, 55_000 + (2 * WINDOW_MARGIN) / 3]);
+    expect(s.window[0] % s.step).toBe(0);
+    // A household with nothing near it gets the margin alone.
+    const alone = sceneOf(makeEvaluation({}, 100_000, { snapCliff: false, careCliff: false, deferredCliff: false }), year);
+    expect(alone.window).toEqual([100_000 - WINDOW_MARGIN / 3, 100_000 + (2 * WINDOW_MARGIN) / 3]);
   });
   test("clamps at the axis ends without losing width", () => {
     const at0 = windowFor({ current: 5000, zone: null, stuck: false, exit: null, next: null, worst: null, top: TOP, step: 1000 });
     expect(at0[0]).toBe(0);
-    expect(at0[1] - at0[0]).toBe(TOP / 2);
+    expect(at0[1] - at0[0]).toBe(WINDOW_MARGIN);
     const atTop = windowFor({ current: 148_000, zone: null, stuck: false, exit: null, next: null, worst: null, top: TOP, step: 1000 });
     expect(atTop[1]).toBe(TOP);
-    expect(atTop[1] - atTop[0]).toBe(TOP / 2);
+    expect(atTop[1] - atTop[0]).toBe(WINDOW_MARGIN);
   });
   test("a stuck zone does not pull the window to the axis top", () => {
     const s = sceneOf(makeEvaluation({}, 60_000, { stuckAt: 61_000 }), year);
@@ -60,8 +57,9 @@ describe("axis honesty", () => {
       const { y0, y1, stepY, maxDrop } = yRange(s, narrow);
       expect(maxDrop).toBe(9000);
       expect(y1 - y0).toBeGreaterThanOrEqual(2.5 * maxDrop);
-      expect(y0 % stepY).toBe(0);
-      expect(y1 % stepY).toBe(0);
+      expect(y0 % (stepY / 4)).toBe(0);
+      expect(y1 % (stepY / 4)).toBe(0);
+      expect(y0).toBeGreaterThan(0);
       const slice = s.lifted.slice(s.idx(s.window[0]), s.idx(s.window[1]) + 1);
       expect(y0).toBeLessThanOrEqual(Math.min(...slice));
       expect(y1).toBeGreaterThanOrEqual(Math.max(...slice));
@@ -118,7 +116,7 @@ describe("marks", () => {
     const inside = sceneOf(makeEvaluation(), year);
     expect(layout(inside, 800).labelled).toBe(inside.worst);
     // A household at $120k: the window starts past the $55k cliff, so the label is withheld and the caption says so.
-    const far = sceneOf(makeEvaluation({}, 120_000), year);
+    const far = sceneOf(makeEvaluation({}, 120_000, { deferredCliff: false }), year);
     expect(far.window[0]).toBeGreaterThan(55_000);
     expect(far.worst?.startEarnings).toBe(54_000);
     expect(layout(far, 800).labelled).toBeNull();

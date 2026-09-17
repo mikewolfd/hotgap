@@ -75,7 +75,7 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(answer).toContainText("More pay does not add to that until you are paid");
       await expect(answer.locator(".amt-keep")).toHaveCount(1);
       await expect(answer.locator(".amt-gap")).toHaveCount(2);
-      expect(dollars((await answer.textContent())!)).toEqual([ev.analysis.currentEarnings, Math.round(ev.analysis.currentNet), ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
+      expect(dollars((await answer.textContent())!).slice(0, 4)).toEqual([ev.analysis.currentEarnings, Math.round(ev.analysis.currentNet), ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
       /* "It happens again from A to B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
       const again = await page.locator("#result .band .answer-sub").first().textContent();
       const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
@@ -114,8 +114,10 @@ for (const scheme of ["light", "dark"] as const) {
       const yTicks = (await page.locator('#chart svg text.hg-tick[text-anchor="end"]').allTextContents()).map((x) => Number(x.replace(/[$k]/g, "")) * 1000);
       expect(yTicks.length).toBeGreaterThanOrEqual(3);
       const maxDrop = Math.max(...inWindow.map((c) => c.drop));
-      expect((Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop).toBeGreaterThanOrEqual(2.5);
-      expect(Number(await page.locator("#chart").getAttribute("data-yratio"))).toBeCloseTo((Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop, 1);
+      // The ticks lie inside the axis (its floor snaps to a quarter step), so the tick span is a floor on the range: enough to prove the rule.
+      const tickRatio = (Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop;
+      expect(tickRatio).toBeGreaterThanOrEqual(2.5);
+      expect(Number(await page.locator("#chart").getAttribute("data-yratio"))).toBeGreaterThanOrEqual(tickRatio);
       /* The one drop label is the curve's biggest drop, and it agrees with the row that says so; if the biggest drop is out of the picture, the caption says where it is. */
       const worst = ev.analysis.cliffs.filter((c) => c.deferral === null).reduce((a, b) => (b.drop > a.drop ? b : a));
       const biggestRow = page.locator(".hg-rows__loss", { hasText: "This is the biggest drop." });
@@ -224,6 +226,8 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   await page.setViewportSize({ width: 1280, height: 900 });
   await loaded(page);
   const before = await page.locator("#answer").textContent();
+  // The chips are behind Edit at every width on this surface (review S1).
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
   // Turning food help off changes the money kept at this pay, so the sentence must change.
   const snap = page.locator('[data-chip="no-snap"]');
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
@@ -235,7 +239,7 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   await expect(page.locator("#chart svg path.hg-draw")).toHaveCount(1);
   await expect(page.locator("#source")).toContainText("These are your own numbers");
   // The sweep's summary is what names the reach data's vintage; without it the line is bare.
-  await expect(page.locator("#result .hg-source", { hasText: "Census" })).toContainText(/survey data, ACS \d{4}.*Grown to \d{4} dollars/);
+  await expect(page.locator("#result .hg-source", { hasText: "Census" })).toContainText(/survey data \(ACS \d{4}.*Grown to \d{4} dollars/);
   expect(errors).toEqual([]);
 });
 
@@ -271,6 +275,8 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   const source = page.locator("#source");
   await expect(source).toHaveAttribute("data-source", "archetype");
   await expect(source).toContainText("We could not get your exact numbers right now. These are numbers for a family like yours in your state.");
+  // …and the same sentence stands above the answer, where the numbers are met (review S5).
+  await expect(page.locator("#whose")).toHaveText("We could not get your exact numbers right now. These are numbers for a family like yours in your state.");
   await expect(source.getByRole("button", { name: "Try again" })).toBeVisible();
   // The sweep's own model and stamp are what produced these numbers.
   await expect(source).toContainText(/Sweep of [A-Z][a-z]{2} \d{1,2}, \d{4}/);

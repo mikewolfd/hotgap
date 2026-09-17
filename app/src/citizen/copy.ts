@@ -17,6 +17,15 @@ export const copy = {
   },
   tryAgain: "Try again",
   skip: "Skip to the answer",
+  wordmark: "HotGap",
+  heading: "If your pay goes up, do you keep more?",
+  // The masthead line, on paper only (the ScenarioBar's summary is screen chrome).
+  who: "{adults} with {kids}, in {place}.",
+  whoNoKids: "{adults} with no kids, in {place}.",
+  adults: { one: "A parent", two: "Two parents", oneNoKids: "An adult", twoNoKids: "A couple" },
+  kidsOne: "one kid, age {age}",
+  kidsMany: "{n} kids, ages {ages}",
+  stillArchetype: "We still could not get your exact numbers. These are numbers for a family like yours in your state.",
 
   // M2: one sentence per curve shape (design/inventory.md § Verdict catalog).
   // {pay}, {wage}, {exit}, {leap} and {top} are in the person's own unit (M5);
@@ -27,6 +36,9 @@ export const copy = {
     in_danger_zone: "You are paid {pay}. You keep {kept}. More pay does not add to that until you are paid {exit}: a raise of {leap}.",
     "in_danger_zone:stuck": "You are paid {pay}. You keep {kept}. More pay does not add to that in the pay range we checked, up to {top}. We did not find a spot where you come out ahead again.",
     cliff_behind: "You are paid {pay}. You keep {kept}. The big drop is below your pay now. From here, more pay means more for you.",
+    // A deferred cliff at or above the person's pay (design/REVIEW-citizen B1; the
+    // catalog needs this clause, TODO(system) 16): the loss the lifted curve leaves out.
+    waits: " One more thing: at {at}, {phrase} stops, but not that day. Later, you would keep about {drop} less a year.",
   },
   again: "It happens again from {from} to {to}.",
   againMany: "It happens {n} more times, between {from} and {to}.",
@@ -50,7 +62,8 @@ export const copy = {
       week: "Pay is by the week.",
       hour: "Pay is by the hour, at {hours} hours a week.",
     },
-    readoutHint: "Move along the line with your finger, your mouse, or the left and right arrow keys. Press ] and [ to jump between drops.",
+    readoutHint: "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+    readoutMarks: " Press ] and [ to jump between drops.",
     readout: "Paid {pay}, you keep {kept}.",
     inYourZone: " This pay is inside your flat stretch.",
     inZone: " This pay is inside a flat stretch.",
@@ -59,6 +72,7 @@ export const copy = {
     markPast: "A drop near {pay}. You keep about {drop} less a year here.",
     markLater: "A drop near {pay} that waits. Later, you would keep about {drop} less a year.",
     markMerged: "{n} drops from {from} to {to}. Together, about {sum} a year.",
+    markMergedWaits: "{n} drops from {from} to {to}. Together, about {sum} a year. Some of it waits for a later day.",
     axisNote: "The side numbers start at {floor}, not at $0, so the drops are easy to see.",
     axisNoteBare: "The side numbers start at {floor}, not at $0.",
     biggestBeyond: " The biggest drop, about {drop} a year at {pay}, is outside the picture.",
@@ -106,7 +120,7 @@ export const copy = {
 
   table: {
     show: "Show the numbers",
-    caption: "The points the picture marks, in dollars a year",
+    caption: "The points the picture marks. Money kept is in dollars a year.",
     pay: "Your pay",
     keep: "You keep",
     drop: "Drop",
@@ -164,6 +178,8 @@ export const copy = {
     },
     foot: "We do not draw it as a drop today, because it is not one.",
     thisHelp: "this help",
+    kids: "your kids' {noun}",
+    own: "your own {noun}",
   },
 
   // "What we assumed about you" (S6): the household the curve was run for.
@@ -195,8 +211,8 @@ export const copy = {
     employerPlanFree: "At your pay, we counted no cost for it.",
     headStart: "Worth {amount} a year to you: what day care would cost.",
     coverageGap: "From {from} to {to} you would have no health plan at all: no Medicaid and no help to buy one. We counted no health plan cost there.",
-    premiumHelp: "{program}. {state} helps pay for health insurance. We counted it.",
-    premiumHelpMax: "{program}, up to {amount} a year. {state} helps pay for health insurance. We counted it.",
+    premiumHelp: "{program}. It helps pay for health insurance. We counted it.",
+    premiumHelpMax: "{program}, up to {amount} a year. It helps pay for health insurance. We counted it.",
     maTafdc: "We used the state's rule for people already on it. Not the first-year rule.",
     unclaimed: "You said you do not get {list}. At your pay it would be worth about {amount} a year.",
     labels: {
@@ -224,11 +240,11 @@ export const copy = {
     who: { parents: "parents like you", couples: "couples like you", people: "people like you" },
     margin: " The count could be off by a few thousand dollars either way.",
     note: "This says how common the pay is. It does not say what you will earn.",
-    source: "From U.S. Census Bureau survey data, {vintages}. Grown to {year} dollars.",
+    source: "From U.S. Census Bureau survey data ({vintages}). Grown to {year} dollars.",
     sourceBare: "From U.S. Census Bureau survey data.",
   },
   hours: {
-    heading: "Hours",
+    heading: "The lowest legal pay",
     body: "{state}'s lowest legal pay is {wage} an hour. Full-time work at that pay is about {fullTime} a year.",
   },
   footer: {
