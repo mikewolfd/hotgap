@@ -396,7 +396,7 @@ test("print from OS-dark: the controls and the bar leave, the client sheet arriv
   expect(shown.pageOverride).toBe(false);
   expect(shown.curveWidth).toBe("672");
   await expect(page.locator("#handout h2")).toHaveText("Your pay and your help — Colorado, one parent, two children");
-  await expect(page.locator("#handout")).toContainText("You are paid $38,000 a year. You keep about $84,400 a year.");
+  await expect(page.locator("#handout")).toContainText("You are paid $38,000 a year. You keep $84,371.");   /* the citizen catalog's sentence (audit D4) */
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.evaluate(() => document.getElementById("handout")!.scrollIntoView());
   await page.screenshot({ path: after("S8-print-handout") });

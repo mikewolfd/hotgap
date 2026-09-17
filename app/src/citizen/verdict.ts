@@ -3,7 +3,9 @@
 // zone, never the whole-curve escape. Each dollar figure the sentence names
 // carries the key of the mark it names, so the sentence doubles as the
 // chart's key: {kept} the line, {exit} and {leap} the exit rule and the
-// bracket, {wage} the cliff dot.
+// bracket, {wage} the cliff dot. The caseworker's client sheet opens with
+// verdictText and againText from the same scene (audit D4): one catalog,
+// one sentence, on both surfaces.
 import { copy, fill, parts } from "./copy.js";
 import type { Scene } from "./model.js";
 import { noun, phrase } from "./programs.js";

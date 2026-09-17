@@ -27,7 +27,8 @@ import {
   type SummaryJson,
   type UnmodeledProgram,
 } from "@hotgap/core";
-import { verdictSentence } from "../lib/verdict.js";
+import { sceneOf } from "../citizen/model.js";
+import { againText, verdictText } from "../citizen/verdict.js";
 import { copy, fmt, programName } from "./copy.js";
 
 export const stateName = (st: string): string => STATE_NAMES[st] ?? st;
@@ -334,14 +335,23 @@ export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
 }
 
 // ── The client sheet (citizen register, from the same objects) ──────────
+/**
+ * The sheet opens with the citizen page's own answer for this household
+ * (design/inventory.md M2, review S8): the catalog's sentence and its
+ * "again" line from the citizen's scene, so the two surfaces cannot say
+ * different things to the same family — including the deferred clause the
+ * catalog carries (TODO(system) 16). Yearly figures: the sheet is printed
+ * for a client whose own unit the caseworker's flags carry, but the paper
+ * says a year, as it always has.
+ */
 export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): { title: string; paragraphs: string[] } {
   const a = ev.analysis, step = stepOf(ev), h = modeled(ev), H = copy.handout;
   const w = cliffAt(ev, a.worstCliff);
   const cc = ev.curve.points[indexOf(ev, a.currentEarnings)].programs.childcare ?? 0;
   const kids = h.childAges.length;
   const snapEnd = ledgerRows(ev).find((r) => r.id === "snap"), child = ev.escape.childCoverageEndEarnings;
-  const { again } = verdict(ev);
-  const p: string[] = [verdictSentence(ev, "year") + (again ? ` ${again}` : "")];
+  const scene = sceneOf(ev, { unit: "year" }), again = againText(scene);
+  const p: string[] = [verdictText(scene) + (again ? ` ${again}` : "")];
   if (cc > 0) p.push(H.careShare(cc));
   if (w) p.push(H.biggestDrop(w.endEarnings, w.programsLost, w.drop) + (snapEnd && snapEnd.at !== w.endEarnings ? ` ${H.snapEnds(snapEnd.at)}` : ""));
   if (child !== null && kids) p.push(H.kidsCoverage(child + step));

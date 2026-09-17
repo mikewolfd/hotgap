@@ -106,6 +106,20 @@ at `:204` (and `e2e/caseworker.spec.ts:396`) changes from "about $84,400" to
 the catalog's exact figure; that is the catalog winning, say so in the
 commit. ~25 lines.
 
+**Resolved** (branch `worktree-agent-a935b0b88f805e197`): `lib/verdict.ts`
+deleted; the caseworker's `handout` renders `verdictText(sceneOf(ev, {
+unit: "year" }))` + `againText` from `citizen/verdict.ts`, so the sheet is
+the citizen page's own answer, deferred clause included. The two "about"
+pins (`caseworker/model.test.ts`, `e2e/caseworker.spec.ts`) now read
+"You keep $84,371." and the sheet's again line is the catalog's "It happens
+again from $46,000 to $119,000" (the next zone's start, never the exit).
+Measured cost: the caseworker page ships the citizen's pure modules and
+catalog — +7.3 kB gzip (`vite build`: the shared chunk 14.7 → 22.1 kB
+gzip) — which the locale-file migration turns into a fetched JSON. The
+citizen's `programs.ts` no longer repeats the thirteen `name`s: it keeps
+only the six `called` forms that take an article and reads the rest from
+`lib/programs.ts` (D3's leftover).
+
 ### D5. The household the curve models, three times
 
 `caseworker/model.ts:62 modeled`, `citizen/model.ts:140–141` (same
