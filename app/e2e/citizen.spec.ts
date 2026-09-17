@@ -67,16 +67,18 @@ for (const scheme of ["light", "dark"] as const) {
 
       expect(ev.analysis.cliffs.length).toBeGreaterThan(0);
 
-      /* One StepList row per cliff (at its landing point), and the marks are the cliffs in the window. */
+      /* One StepList row per cliff (at its landing point), and the marks are every cliff on the axis. */
       for (const c of ev.analysis.cliffs) await expect(page.locator(`#step-${c.endEarnings}`)).toHaveCount(1);
       const marks = page.locator(".hg-mark");
       const markKeys = (await marks.evaluateAll((els) => els.map((el) => Number((el as HTMLElement).dataset.key)))).sort((a, b) => a - b);
       const spoken = await page.locator("#chart").getAttribute("aria-label");
       expect(spoken).toMatch(/^A line of the money this household keeps as pay rises from \$/);
       const [lo, hi] = (spoken!.match(/from \$([\d,]+) a year to \$([\d,]+) a year/)!.slice(1).map((x) => Number(x.replace(/,/g, ""))));
-      const inWindow = ev.analysis.cliffs.filter((c) => c.startEarnings >= lo && c.endEarnings <= hi);
-      // A merged mark carries its first cliff's key and a count; the counts add up to every cliff in the window.
-      for (const k of markKeys) expect(inWindow.some((c) => c.endEarnings === k)).toBe(true);
+      /* The spoken range is the WHOLE axis since 2026-09-17, so this is every cliff — kept derived from the label the reader hears, not from the page's own data. */
+      const onAxis = ev.analysis.cliffs.filter((c) => c.startEarnings >= lo && c.endEarnings <= hi);
+      expect(onAxis.length).toBe(ev.analysis.cliffs.length);
+      // A merged mark carries its first cliff's key and a count; the counts add up to every cliff.
+      for (const k of markKeys) expect(onAxis.some((c) => c.endEarnings === k)).toBe(true);
       expect(markKeys.length).toBeGreaterThan(0);
       let covered = 0;
       for (const b of await marks.all()) {
@@ -87,27 +89,31 @@ for (const scheme of ["light", "dark"] as const) {
         const badge = b.locator(".hg-mark__count");
         covered += (await badge.count()) ? Number(await badge.textContent()) : 1;
       }
-      expect(covered).toBe(inWindow.length);
+      expect(covered).toBe(onAxis.length);
       /* The diamond, the band and the line are drawn; the line animated once (.hg-draw on the first path only). */
       expect(await page.locator("#chart svg path.hg-draw").count()).toBe(1);
       await expect(page.locator("#chart svg rect[fill='var(--loss-wash)']")).toHaveCount(ev.personal.zone ? 1 : 0);
-      /* Axis honesty, re-derived from the tick labels the reader sees, not the page's own data-yratio: the y-range is at least 2.5× the biggest drop in the window. */
+      /* Axis honesty, re-derived from the tick labels the reader sees, not the page's own data-yratio: the y-range is at least 2.5× the biggest drop. */
       const yTicks = (await page.locator('#chart svg text.hg-tick[text-anchor="end"]').allTextContents()).map((x) => Number(x.replace(/[$k]/g, "")) * 1000);
       expect(yTicks.length).toBeGreaterThanOrEqual(3);
-      const maxDrop = Math.max(...inWindow.map((c) => c.drop));
+      const maxDrop = Math.max(...onAxis.map((c) => c.drop));
       // The ticks lie inside the axis (its floor snaps to a quarter step), so the tick span is a floor on the range: enough to prove the rule.
       const tickRatio = (Math.max(...yTicks) - Math.min(...yTicks)) / maxDrop;
       expect(tickRatio).toBeGreaterThanOrEqual(2.5);
       expect(Number(await page.locator("#chart").getAttribute("data-yratio"))).toBeGreaterThanOrEqual(tickRatio);
-      /* The one drop label is the curve's biggest drop, and it agrees with the row that says so; if the biggest drop is out of the picture, the caption says where it is. */
+      /* The one drop label is the curve's biggest drop, and it agrees with the
+         row that says so. Since 2026-09-17 it is ALWAYS drawn: the curve is the
+         whole axis, so the biggest drop can no longer be outside the picture —
+         only somewhere the reader has to scroll to. The caption's old "is
+         outside the picture" sentence went with the crop. */
       const worst = ev.analysis.cliffs.reduce((a, b) => (b.drop > a.drop ? b : a));
       const biggestRow = page.locator(".hg-rows__loss", { hasText: "This is the biggest drop." });
       await expect(biggestRow).toHaveCount(1);
       expect(dollars((await page.locator(`#step-${worst.endEarnings} .hg-rows__loss`).textContent())!)[0]).toBe(Math.round(worst.drop / 100) * 100);
       const labels = await page.locator("#chart svg text.hg-label--loss").allTextContents();
       const dropLabel = labels.find((x) => x.startsWith("−"));
-      if (inWindow.includes(worst)) expect(dollars(dropLabel!)).toEqual([Math.round(worst.drop)]);
-      else { expect(dropLabel).toBeUndefined(); await expect(page.locator("#curveCaption")).toContainText("is outside the picture"); }
+      expect(dollars(dropLabel!)).toEqual([Math.round(worst.drop)]);
+      await expect(page.locator("#curveCaption")).not.toContainText("outside the picture");
 
       /* Type floors (design/inventory.md § Type floors), measured on every SVG text. */
       const texts = await page.locator("#chart svg text").evaluateAll((els) => els.map((el) => ({
@@ -166,7 +172,7 @@ for (const scheme of ["light", "dark"] as const) {
         const expected = r.mark === "You now" ? ev.analysis.currentNet : r.mark === "The top of your flat stretch" ? ev.personal.zone!.peakNet : line.get(r.at)!;
         expect(Math.abs(r.keep - expected), `${r.mark} at ${r.at}`).toBeLessThanOrEqual(1);
       }
-      expect(rows.filter((r) => r.drop !== null).map((r) => r.at)).toEqual(inWindow.map((c) => c.endEarnings));
+      expect(rows.filter((r) => r.drop !== null).map((r) => r.at)).toEqual(onAxis.map((c) => c.endEarnings));
       expect(rows.some((r) => r.mark === "You now" && r.at === ev.analysis.currentEarnings)).toBe(true);
       if (ev.personal.escapeEarnings) expect(rows.some((r) => r.mark === "Back to even" && r.at === ev.personal.escapeEarnings)).toBe(true);
       if (width === 1280 && scheme === "light") await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}-table-open.png`), fullPage: false });

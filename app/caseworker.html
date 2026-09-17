@@ -44,10 +44,15 @@
       <section class="lead">
         <figure class="curve">
           <h2 id="curveTitle"></h2>
-          <div class="hg-chart" id="chartWrap" tabindex="0" role="group" aria-roledescription="interactive chart" aria-describedby="curveCap">
-            <svg id="curve" aria-hidden="true"></svg>
-            <div class="hg-marks" id="marks"></div>
+          <!-- The curve is a fixed y-axis gutter beside a scroller holding the whole earnings axis (design/charts.md § The scroll rule). -->
+          <div class="hg-chart hg-chart--scroll" id="chartWrap" tabindex="0" role="group" aria-roledescription="interactive chart" aria-describedby="curveCap">
+            <svg class="hg-chart__gutter" id="curveAxis" aria-hidden="true"></svg>
+            <div class="hg-scroll-x hg-chart__scroll" id="curveScroll">
+              <svg id="curve" aria-hidden="true"></svg>
+              <div class="hg-marks" id="marks"></div>
+            </div>
           </div>
+          <p class="hg-chart__hint" id="curveRange" aria-hidden="true"></p>
           <p class="hg-readout hg-no-print" id="readout" aria-live="polite"></p>
           <ul class="hg-key" id="key"></ul>
           <figcaption class="hg-source" id="curveCap"></figcaption>

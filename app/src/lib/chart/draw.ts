@@ -93,6 +93,51 @@ export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H">, labe
 }
 
 /**
+ * The chart as one figure in two parts (design/charts.md § The scroll rule):
+ * a fixed gutter holding the y axis, and `.hg-scroll-x` holding the whole
+ * earnings axis. The gutter is outside the scroller so the money labels stay
+ * put while the curve moves — a y label that scrolls away leaves the reader
+ * with a line and no idea what it is worth. Both SVGs are sized in real
+ * pixels, never stretched to their box, because the scale IS the geometry.
+ *
+ * `.hg-marks` lives inside the scroller, over the plot, so a mark's percent
+ * position is a position on the axis and scrolls with its dot.
+ */
+export interface Scroller {
+  /** The whole figure: gutter beside scroller. Carries the chart's role and tab stop. */
+  wrap: HTMLElement;
+  gutter: SVGSVGElement;
+  /** The scrolling box; `scrollLeft` is where the reader is looking. */
+  scroll: HTMLElement;
+  plot: SVGSVGElement;
+  marks: HTMLElement;
+}
+
+export function scrollerParts(gutter: SVGSVGElement, plot: SVGSVGElement, marks: HTMLElement): Omit<Scroller, "wrap"> {
+  /* tabindex -1 and no role: the scroller must not be a second tab stop in front of the chart's own (M6). */
+  const scroll = h("div", { class: "hg-scroll-x hg-chart__scroll" }, plot, marks);
+  return { gutter, scroll, plot, marks };
+}
+
+/** Size one of the figure's two SVGs in real pixels: a viewBox AND width/height, so nothing is scaled and the two halves share a baseline. */
+export function sizeSvg(el: SVGSVGElement, w: number, h: number): void {
+  el.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  el.setAttribute("width", String(w));
+  el.setAttribute("height", String(h));
+}
+
+/**
+ * The y axis in its gutter: the tick labels at the same `py` the plot's
+ * gridlines use, right-aligned against the plot's left edge. Money is
+ * formatted by the page, so nothing here reads copy.
+ */
+export function axisGutter(el: SVGSVGElement, width: number, H: number, ticks: number[], py: (v: number) => number, text: (v: number) => string): void {
+  sizeSvg(el, width, H);
+  el.textContent = "";
+  for (const v of ticks) el.append(svg("text", { x: width - 8, y: py(v) + 4, "text-anchor": "end", class: "hg-tick" }, text(v)));
+}
+
+/**
  * A redraw when the wrapper's width changes (a resize, or the column changing
  * under it — the caseworker's grid moves when a comparison widens), never on
  * a height change alone, and never while the page is laid out for paper:
@@ -109,9 +154,14 @@ export function watchWidth(el: HTMLElement, draw: () => void): () => void {
   return () => ro.disconnect();
 }
 
-/** Paper is one width, whatever the screen was: redraw at `width` before printing and back after (citizen review S2, caseworker N6). */
-export function redrawForPrint(draw: (width?: number) => void, width: number): () => void {
-  const before = () => draw(width), after = () => draw();
+/**
+ * Paper is one width, whatever the screen was: redraw at `width` before
+ * printing and back after (citizen review S2, caseworker N6). Paper also
+ * cannot scroll, so the print draw is told so and fits the whole axis into
+ * the page's column instead (charts.md § The scroll rule).
+ */
+export function redrawForPrint(draw: (width?: number, print?: boolean) => void, width: number): () => void {
+  const before = () => draw(width, true), after = () => draw(undefined, false);
   addEventListener("beforeprint", before);
   addEventListener("afterprint", after);
   return () => { removeEventListener("beforeprint", before); removeEventListener("afterprint", after); };
@@ -122,8 +172,12 @@ export interface CursorModel {
   /** The index range the cursor moves in, and where it is. */
   range(): [number, number];
   cursor(): number;
-  /** Move the cursor and repaint. */
-  set(i: number): void;
+  /**
+   * Move the cursor and repaint. `by` says what moved it: a key may scroll
+   * the caret into view, a pointer must not — the pointer is already on the
+   * pixel it named, and scrolling under it would chase the finger.
+   */
+  set(i: number, by: "pointer" | "key"): void;
   /** How far shift+arrow moves. */
   shift: number;
   /** "hover": the pointer moves the cursor as it passes; "drag": only pressed, and never from a mark. */
@@ -141,7 +195,7 @@ export function attachCursor(wrapper: HTMLElement, m: CursorModel): void {
     const L = m.layer();
     if (!L) return;
     const r = m.svg.getBoundingClientRect(), [lo, hi] = m.range();
-    m.set(indexAtX(L, clientX, r.left, r.width, lo, hi));
+    m.set(indexAtX(L, clientX, r.left, r.width, lo, hi), "pointer");
   };
   const onMark = (e: Event) => !!(e.target as HTMLElement).closest(".hg-mark");
   wrapper.addEventListener("pointerdown", (e) => { if (m.pointer === "hover" || !onMark(e)) move(e.clientX); });
@@ -149,10 +203,10 @@ export function attachCursor(wrapper: HTMLElement, m: CursorModel): void {
   wrapper.addEventListener("keydown", (e) => {
     if (!m.layer()) return;
     const [lo, hi] = m.range(), step = e.shiftKey ? m.shift : 1, at = m.cursor();
-    if (e.key === "ArrowRight") m.set(Math.min(hi, at + step));
-    else if (e.key === "ArrowLeft") m.set(Math.max(lo, at - step));
-    else if (e.key === "Home") m.set(lo);
-    else if (e.key === "End") m.set(hi);
+    if (e.key === "ArrowRight") m.set(Math.min(hi, at + step), "key");
+    else if (e.key === "ArrowLeft") m.set(Math.max(lo, at - step), "key");
+    else if (e.key === "Home") m.set(lo, "key");
+    else if (e.key === "End") m.set(hi, "key");
     else if (e.key === "]" || e.key === "[") m.bracket(e.key, e.target as HTMLElement);
     else if (e.key === "Escape") m.escape();
     else return;

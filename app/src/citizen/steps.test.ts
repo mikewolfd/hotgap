@@ -30,6 +30,20 @@ describe("stepRows", () => {
     expect(medicaid[1].cliff?.deferral?.reason).toBe("child_continuous_eligibility");
     expect(medicaid[1].waits).toBe("child_continuous_eligibility");
   });
+  test("the biggest drop still says so when the evaluation has been over the wire", () => {
+    /* The page reads an evaluation from `POST /api/evaluate`, so `worstCliff`
+       arrives as its own object rather than the `cliffs` entry it names, and
+       everything that compares by identity — this line, the chart's one direct
+       label — goes quiet without a single test failing. So the round trip is
+       pinned here: in process the reference holds and this test proves nothing,
+       which is the point of doing it through JSON. */
+    const wire = JSON.parse(JSON.stringify(makeEvaluation()));
+    const s = sceneOf(wire, year);
+    expect(s.cliffs).toContain(s.worst);        /* toContain is identity on objects, which is the whole question */
+    expect(s.cliffs).toContain(s.next);
+    expect(s.worst?.endEarnings).toBe(55_000);
+    expect(stepLoss(s, stepRows(s).find((r) => r.at === 55_000)!)).toBe("You would keep about $9,000 less. This is the biggest drop.");
+  });
   test("a deferred cliff that is the biggest drop says so, like any other", () => {
     const s = sceneOf(makeEvaluation({}, 43_000, { snapCliff: false, careCliff: false }), year);
     expect(s.worst?.deferral?.reason).toBe("child_continuous_eligibility");

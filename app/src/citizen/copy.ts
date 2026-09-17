@@ -87,7 +87,14 @@ export const copy = {
     markMergedWaits: "{n} drops from {from} to {to}. Together, about {sum} a year. Some of it waits for a later day.",
     axisNote: "The side numbers start at {floor}, not at $0, so the drops are easy to see.",
     axisNoteBare: "The side numbers start at {floor}, not at $0.",
-    biggestBeyond: " The biggest drop, about {drop} a year at {pay}, is outside the picture.",
+    // The whole pay range is drawn, and the reader is told how to reach the rest of it
+    // (design/charts.md § The scroll rule; inventory.md § MoneyCurve). On paper there is
+    // nothing to slide, so the caption says the whole thing is there instead.
+    scrolls: "The picture covers all pay from {from} to {to}. Slide it left and right to see the rest.",
+    wholeOnPaper: "The picture covers all pay from {from} to {to}.",
+    /** The axis's ends under the figure, from the data — the reader's cue that the picture keeps going. */
+    rangeFrom: "← {from}",
+    rangeTo: "{to} →",
     safeBeyond: " From {safe} up, more pay always adds to what you keep.",
     safeNever: " In the pay range we checked, up to {top}, we did not find a spot past all the flat stretches.",
     estimates: " These are estimates. They use the rules for {year} in {state}.",

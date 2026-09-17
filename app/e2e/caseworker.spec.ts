@@ -83,7 +83,8 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     await expect(page.locator("#bdBars")).toContainText("Sums to $25,449, the drop. Driver: benefits.");
     expect(await page.locator("#marks .hg-mark").count()).toBeGreaterThan(0);
     await expect(page.locator("#chartWrap")).toHaveAttribute("aria-label", /The largest step down is \$25,449 at \$54,000 where CCDF child care subsidy ends/);
-    await expect(page.locator("#curveCap")).toContainText(/The y-axis starts at \$[\d,]+, not \$0; the visible range is [\d.]+× the largest drop\. No cliff on this curve is deferred\. Estimates only/);
+    /* The axis sentence is new (2026-09-17): the curve is the whole earnings axis now and scrolls, so the caption says where it runs and that it can be reached. */
+    await expect(page.locator("#curveCap")).toContainText(/The y-axis starts at \$[\d,]+, not \$0; the visible range is [\d.]+× the largest drop\. The x-axis runs \$0 to \$[\d,]+; scroll the curve sideways to reach all of it\. No cliff on this curve is deferred\. Estimates only/);
     await expect(page.locator("#sourceNote")).toContainText("Curve: live PolicyEngine call for this household in El Paso County, Colorado.");
     await expect(page.locator("#sourceNote")).toContainText(/Model: policyengine-us \d/);
     // The dark set is the one the page computes, not a page override.
@@ -372,6 +373,7 @@ test("print from OS-dark: the controls and the bar leave, the client sheet arriv
     body: getComputedStyle(document.body).backgroundColor,
     ink: getComputedStyle(document.querySelector("#verdictLine")!).color,
     curveWidth: document.querySelector("#curve")!.getAttribute("viewBox")!.split(" ")[2],
+    gutterWidth: document.querySelector(".hg-chart__gutter")!.getAttribute("viewBox")!.split(" ")[2],
     pageOverride: [...document.styleSheets].some((s) => { try { return [...s.cssRules].some((r) => r.cssText.includes("color-scheme: light !important")); } catch { return false; } }),
   }));
   measured["print"] = shown;
@@ -386,7 +388,12 @@ test("print from OS-dark: the controls and the bar leave, the client sheet arriv
   expect(shown.body).toBe("rgb(255, 255, 255)");
   expect(shown.ink).toBe("rgb(18, 23, 28)");   /* the system's print block, no page override */
   expect(shown.pageOverride).toBe(false);
-  expect(shown.curveWidth).toBe("672");
+  /* 672 is still the figure's width on paper, but the figure is two SVGs now —
+     the y axis holds still in a 52px gutter and the plot is the rest — so the
+     pin is on the pair. Paper cannot scroll, so the plot is the column and the
+     whole axis is fitted into it (charts.md § The scroll rule, 2026-09-17). */
+  expect(Number(shown.curveWidth) + Number(shown.gutterWidth)).toBe(672);
+  expect(shown.gutterWidth).toBe("52");
   await expect(page.locator("#handout h2")).toHaveText("Your pay and your help — Colorado, one parent, two children");
   await expect(page.locator("#handout")).toContainText("You are paid $38,000 a year. You keep $84,371.");   /* the citizen catalog's sentence (audit D4) */
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });

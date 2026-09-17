@@ -4,7 +4,7 @@
 import { describe, expect, test } from "vitest";
 import { makeEvaluation } from "../../citizen/fixture.js";
 import { sceneOf } from "../../citizen/model.js";
-import { clusterCliffs, indexAtX, layerFor, niceStep, niceTicks, niceUp } from "./geometry.js";
+import { clusterCliffs, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow } from "./geometry.js";
 
 describe("nice values", () => {
   test("a step is range / n snapped to 1, 2, 2.5 or 5 × 10^k", () => {
@@ -32,11 +32,65 @@ describe("marks", () => {
     expect(tight).toHaveLength(1);
     expect(tight[0].cliffs).toHaveLength(2);
     expect(clusterCliffs(s.cliffs.filter((c) => !c.deferral), (e) => e / 100)).toHaveLength(2);
-    const mixed = clusterCliffs(s.inWindow, () => 100);
+    const mixed = clusterCliffs(s.cliffs, () => 100);
     expect(mixed).toHaveLength(1);
     expect(mixed[0].cliffs).toHaveLength(3);
     expect(mixed[0].later).toBe(false);
     expect(clusterCliffs(s.deferred, () => 100)[0].later).toBe(true);
+  });
+});
+
+describe("the scroll rule", () => {
+  const pad = { t: 26, r: 24, b: 38, l: PLOT_LEAD };
+  test("the scale puts the window in one screen, so the initial view is the crop rule's own choice", () => {
+    // A $30,000 window in a 300px viewport: 10px per $1,000, and a $150,000 axis is five screens long.
+    expect(scaleFor(300, [40_000, 70_000], 150_000) * 1000).toBeCloseTo(10, 6);
+    expect(plotWidth(150_000, pad, scaleFor(300, [40_000, 70_000], 150_000))).toBe(PLOT_LEAD + 24 + 1500);
+    // The same window on a desktop column shows the same PAY, at better legibility — that is what a wider box buys.
+    expect(scaleFor(600, [40_000, 70_000], 150_000) * 1000).toBeCloseTo(20, 6);
+  });
+  test("an axis too long to reach by hand zooms out to MAX_SCREENS, showing more pay than the window and never less", () => {
+    // The caseworker's live curves reach $750,000. At the window's own scale that is 25 screens of swiping.
+    const ideal = scaleFor(300, [40_000, 70_000], 750_000);
+    expect(plotWidth(750_000, pad, ideal)).toBeLessThanOrEqual(MAX_SCREENS * 300 + PLOT_LEAD + 24);
+    // Zoomed out, one screen shows more than the $30,000 window, which crops nothing.
+    expect(300 / ideal).toBeGreaterThan(30_000);
+    // A short axis is never zoomed IN past the window: the cap is a ceiling, not a target.
+    expect(scaleFor(300, [40_000, 70_000], 150_000)).toBe(300 / 30_000);
+  });
+  test("the plot is as tall as the biggest drop needs, between a floor and a ceiling", () => {
+    // A drop that is 10% of the range needs 240px of plot, which is under the floor: the floor wins.
+    expect(plotHeight(100_000, 10_000)).toBe(PLOT_H.min);
+    // 5%: 480px, which is what it gets.
+    expect(plotHeight(100_000, 5_000)).toBe(480);
+    // 2.7% — the Massachusetts household — wants 880px and is capped. charts.md records the shortfall.
+    expect(plotHeight(110_000, 3_000)).toBe(PLOT_H.max);
+    // A curve with no cliff has no drop to size for and takes the floor.
+    expect(plotHeight(100_000, 0)).toBe(PLOT_H.min);
+  });
+  test("the initial scroll centres the window and then pulls the household's own pay inside the viewport", () => {
+    const L = layerFor(1812, 400, pad, 0, 150_000, 0, 100_000);
+    // A window in the middle, with the household inside it: the window's centre is the viewport's.
+    expect(scrollFor(L, 346, [40_000, 70_000], 55_000)).toBe(Math.round(L.px(55_000) - 173));
+    // The same window, household near its low end: centring would leave the diamond 31px from the edge,
+    // inside the 44px margin, so the scroll gives way to the diamond. The window is context; "you" is the answer.
+    expect(scrollFor(L, 346, [40_000, 70_000], 43_000)).toBe(Math.round(L.px(43_000) - 44));
+    // A window much wider than the viewport, with the household at its right end: the centre would leave
+    // "you" off screen, so the scroll is pulled back until the diamond is 44px inside the edge.
+    const wide = scrollFor(L, 346, [0, 150_000], 140_000);
+    expect(Math.round(L.px(140_000) - wide)).toBe(346 - 44);
+    // Both ends clamp to the scroller's own range, never past it.
+    expect(scrollFor(L, 346, [0, 20_000], 0)).toBe(0);
+    expect(scrollFor(L, 346, [140_000, 150_000], 150_000)).toBe(L.W - 346);
+  });
+  test("scrollToShow moves only when the target is outside the viewport, and by the least it can", () => {
+    // Already inside: unchanged, so a key that lands on a visible mark does not lurch the picture.
+    expect(scrollToShow(500, 400, 346, 1812)).toBe(400);
+    // Off the right edge: brought to 44px inside it. Off the left: the same, the other way.
+    expect(scrollToShow(800, 400, 346, 1812)).toBe(800 - 346 + 44);
+    expect(scrollToShow(410, 400, 346, 1812)).toBe(410 - 44);
+    expect(scrollToShow(10, 400, 346, 1812)).toBe(0);
+    expect(scrollToShow(1810, 0, 346, 1812)).toBe(1812 - 346);
   });
 });
 

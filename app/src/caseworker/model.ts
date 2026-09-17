@@ -43,7 +43,13 @@ export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
   Math.round((earnings - ev.curve.points[0].earnings) / stepOf(ev));
 const top = (ev: HouseholdEvaluation): number => ev.curve.points[ev.curve.points.length - 1].earnings;
 
-/** The `cliffs` entry a `nextCliff`/`worstCliff` reference names, found by its step (the same object since 2026-09-17; kept for a reference that is not). */
+/**
+ * The `cliffs` entry a `nextCliff`/`worstCliff` reference names, found by its
+ * step. Core hands back the entry itself, but the page reads an evaluation
+ * that came over JSON (`POST /api/evaluate`), where the two fields are
+ * separate objects equal to an entry without being it — so anything that
+ * compares by identity has to come through here.
+ */
 export const cliffAt = (ev: HouseholdEvaluation, ref: { startEarnings: number } | null): Cliff | null =>
   ref ? ev.analysis.cliffs.find((c) => c.startEarnings === ref.startEarnings) ?? null : null;
 

@@ -173,7 +173,9 @@ describe("EligibilityBoundary (#23)", () => {
   test("with the toggle on, says only that it was counted, and the tick leaves the picture", () => {
     const s = sceneOf(makeEvaluation({ liheap: boundary({ counted: true }) }), year);
     expect(said(boundaryText(s))).toMatch(/^You said you get help with heating bills \(LIHEAP\)\. We put it in your line: about \$\d[\d,]* a year, up to \$40,000 a year\.$/);
-    expect(s.boundaryInWindow).toBe(false);
-    expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryInWindow).toBe(true);
+    // The tick marks a limit the household has NOT crossed; counted, there is no limit left to mark.
+    // It is no longer a question of a window: since the curve scrolls, the whole axis is the picture.
+    expect(s.boundaryOnAxis).toBe(false);
+    expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryOnAxis).toBe(true);
   });
 });

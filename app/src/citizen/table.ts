@@ -14,7 +14,7 @@ export function tableRows(s: Scene): TableRow[] {
   rows.push({ at: s.current, keep: s.currentNet, mark: t("table.marks.you") });
   if (s.zone && s.exit !== null) rows.push({ at: s.exit, keep: keepAt(s.exit), mark: t("table.marks.exit") });
   // Every cliff in the window on its own row: a merged mark separates here.
-  for (const c of s.inWindow) rows.push({ at: c.endEarnings, keep: keepAt(c.endEarnings), drop: c.drop, mark: t(c.deferral ? "table.marks.later" : "table.marks.drop") });
+  for (const c of s.cliffs) rows.push({ at: c.endEarnings, keep: keepAt(c.endEarnings), drop: c.drop, mark: t(c.deferral ? "table.marks.later" : "table.marks.drop") });
   if (s.safeExit !== null && s.safeExit !== s.exit && s.safeExit > 0) rows.push({ at: s.safeExit, keep: keepAt(s.safeExit), mark: t("table.marks.safe") });
   return rows.sort((a, b) => a.at - b.at || (a.drop ? 1 : -1));
 }
