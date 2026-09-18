@@ -20,7 +20,7 @@ const KEEP_RATE_DIR = outDir("design/review/keep-rate");
 
 interface Ev {
   analysis: {
-    cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown; programsLost: string[] }[];
+    cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown; programsLost: string[]; position: number | null }[];
     dangerZones: { startEarnings: number; endEarnings: number | null }[];
     currentEarnings: number; currentNet: number;
   };
@@ -64,8 +64,18 @@ for (const scheme of ["light", "dark"] as const) {
       const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
       if (beyond.length) {
         expect(again).toMatch(/^It happens/);
-        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
+        expect(dollars(again!).slice(0, 2)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
       } else expect(again).not.toMatch(/^It happens/);
+      /* Far cliffs framed by company (Plan 9 § Citizen): the clause names the first cliff at or past FAR_POSITION
+         from that same first further zone on, and "n in 10" is its own position, in tenths — never typed. */
+      const farCliff = beyond.length
+        ? ev.analysis.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= 80) ?? null
+        : null;
+      if (farCliff) {
+        expect(again).toContain("beyond what");
+        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings, farCliff.startEarnings]);
+        expect(again).toContain(`${Math.round((farCliff.position ?? 0) / 10)} in 10`);
+      } else expect(again).not.toContain("beyond what");
 
       /* Your keep rate on the next stretch (Plan 9 § Citizen): the two money figures are keepNext.over and
          keepNext.kept × keepNext.over from the response, rounded to the pay-unit step (lib/format.ts, $500 a year);

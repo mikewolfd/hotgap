@@ -104,3 +104,23 @@ describe("your keep rate on the next stretch (Plan 9 § Citizen)", () => {
     expect(keepNextText(s)).toBe("Of the next $5.50 an hour you earn, you keep about $4.50 an hour.");
   });
 });
+
+describe("far cliffs framed by company (Plan 9 § Citizen)", () => {
+  test("the existing line is unchanged when no cliff beyond the household's own zone has a position (the fixture leaves every position null)", () => {
+    const s = sceneOf(makeEvaluation(), year);
+    expect(s.cliffs.every((c) => c.position === null)).toBe(true);
+    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+  });
+  test("the first cliff at or past FAR_POSITION, from the first further zone on, adds the company clause", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 71_000: 82 } }), year);
+    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000. The ones past $71,000 are beyond what 8 in 10 families like yours earn.");
+  });
+  test("a position short of 80 does not qualify: the clause stays off", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 71_000: 50 } }), year);
+    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+  });
+  test("a cliff before the further zones does not count, even past FAR_POSITION", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 41_000: 95 } }), year);   // the SNAP cliff, behind the household's own zone
+    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+  });
+});

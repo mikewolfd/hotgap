@@ -38,6 +38,8 @@ export interface Shape {
    * cliff (the step never falls), and well under the 10¢ floor.
    */
   plateau?: [from: number, to: number];
+  /** A cliff's own position, keyed by its `startEarnings` — for the far-cliffs-by-company test (Plan 9 § Citizen); unset cliffs keep the null `analyzeCurve` gives them. */
+  positions?: Partial<Record<number, number>>;
 }
 
 /** Net income rises $800 a step from $20,000 (or $40 inside `plateau`); the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
@@ -73,6 +75,9 @@ export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, cur
   const points = makePoints(shape);
   // The one reading evaluate.ts makes: every cliff counts, the deferred one labelled (2026-09-17).
   const analysis = analyzeCurve(points, current, { hasChildren: true, isAdultGroupLoss: () => true });
+  // evaluateCurve is what fills a cliff's position from the reach ladder (evaluate.ts); this
+  // fixture runs analyzeCurve bare, so a test that needs one sets it here, keyed by startEarnings.
+  for (const c of analysis.cliffs) { const p = shape.positions?.[c.startEarnings]; if (p !== undefined) c.position = p; }
   const deferred = analysis.cliffs.filter((c) => c.deferral !== null);
   const escape = escapeAnalysis(points, analysis);
   const zone = analysis.dangerZones.find((z) => current > z.startEarnings && (z.endEarnings === null || current < z.endEarnings)) ?? null;
