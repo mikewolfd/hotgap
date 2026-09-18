@@ -451,10 +451,10 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    plot starts where the screen starts — while every word in the figure
    keeps the page's own gutter. Above 64rem the figure leaves the prose
    column: prose keeps its measure, the plot gets more axis per screen. */
-.hg-figure { margin: 0 calc(-1 * var(--s4)); }
-.hg-figure > :not(.hg-chart) { padding-inline: var(--s4); }
+.hg-picture { margin: 0 calc(-1 * var(--s4)); }
+.hg-picture > :not(.hg-chart) { padding-inline: var(--s4); }
 @media (min-width: 64rem) {
-  .hg-figure { margin-inline: calc((min(var(--figure-max), 100vw - 4 * var(--s4)) - 100%) / -2); }
+  .hg-picture { margin-inline: calc((min(var(--figure-max), 100vw - 4 * var(--s4)) - 100%) / -2); }
 }
 
 /* AnswerSentence (#1): the verdict as one sentence at display size, each
@@ -623,6 +623,12 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
   font-weight: var(--w-med); list-style-position: inside; }
 .hg-disclosure > summary::marker { color: var(--ink-3); }
 .hg-disclosure > .hg-scroll-x { margin-bottom: var(--s3); }
+/* A page disclosure's summary IS the section's heading since 2026-09-18
+   (§ The page is its picture), so it carries a real <h2> and a screen reader
+   that navigates by heading still finds the page's outline. The heading is
+   inline, at the summary's own size, because a block heading inside a
+   list-item summary loses the marker. */
+.hg-disclosure > summary > h2 { display: inline; font-size: var(--t-h3); font-weight: var(--w-semi); margin: 0; }
 
 /* ScenarioBar (#11) layout (S1). Only the top row — wordmark and the two
    actions — is sticky, at every width: one rule, no magic offset, and the
@@ -665,8 +671,11 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    review S1): mountEditor's `collapse: "always"` sets data-collapse on the
    block that holds the summary and the inputs. */
 .hg-scenario[data-collapse="always"] .hg-scenario__inputs:not([data-open="true"]) { display: none; }
+/* 13px, not 15px: this surface keeps the collapse at every width, so the
+   summary is above the fold at every width, and every pixel it takes is a
+   pixel off the picture (PICTURE-FIRST). It is the prose floor, and AA. */
 .hg-scenario[data-collapse="always"] .hg-scenario__summary { display: flex; align-items: center; gap: var(--s3);
-  padding: 0 var(--s4) var(--s3); color: var(--ink-2); font-size: var(--t-small); max-width: 76rem; margin: 0 auto; }
+  padding: 0 var(--s4) var(--s2); color: var(--ink-2); font-size: var(--t-micro); max-width: 76rem; margin: 0 auto; }
 .hg-scenario[data-collapse="always"] .hg-scenario__summary > span { flex: 1 1 auto; min-width: 0; }
 
 /* FilterRow (#21), one row above everything it scopes (S13, S11). */
@@ -828,6 +837,11 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
   body { background: #fff; }
   .hg-print-only { display: block; }
   .hg-no-print, .hg-scenario__actions, .hg-button, .hg-skip { display: none !important; }
+  /* Every disclosure is open on paper and its summary is the section heading
+     it carries, so the marker goes and the words stay — the old rule hid the
+     whole summary, from when the only disclosure was "Show the numbers". */
+  .hg-disclosure > summary { list-style: none; }
+  .hg-disclosure > summary::marker { content: ""; }
   .hg-hatch-incomplete, .hg-tile--past, .hg-tile--incomplete, .hg-tile--none,
   .hg-swatch, .hg-callout, .hg-badge, .hg-tag, .hg-rows > [aria-current="true"],
   .hg-table tr:has(> * > [aria-current="true"]) > :first-child {

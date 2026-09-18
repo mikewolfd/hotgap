@@ -182,11 +182,16 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const unit = (): PayUnit => (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
   const monthly = (v: string | undefined) => (v ? fill(copy.chips.aMonth, { amount: money(Number(v)) }) : copy.chips.none);
   const yearly = (v: string | undefined) => (v ? fill(copy.chips.aYear, { amount: money(Number(v)) }) : copy.chips.none);
-  /** "1 adult, kids 3 & 7": the adults by the marriage answer, the kids' ages as the locale's short list. */
+  /**
+   * "A parent with kids aged 3 & 7": the adults by the marriage answer, the
+   * kids' ages as the locale's short list. An adult with no kids is not a
+   * parent, so the two cases take different words (`adults.one` /
+   * `adults.oneAlone`) rather than one noun bent to fit both.
+   */
   const householdLabel = () => {
     const k = kids(), S = copy.summary;
-    const adults = married() ? S.adults.two : S.adults.one;
-    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids, { n: k.length, ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
+    if (!k.length) return fill(S.household.alone, { adults: married() ? S.adults.twoAlone : S.adults.oneAlone });
+    return fill(S.household.withKids, { adults: married() ? S.adults.two : S.adults.one, kids: fill(S.kids, { n: k.length, ages: shortList(k.map(String)) }) });
   };
   const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
   /** An immigration status's words, the citizen's when none was given. */
@@ -240,11 +245,17 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   }
 
   // ── Skeleton ─────────────────────────────────────────────────────────
-  const changeBtn = h("button", { type: "button", class: "hg-button", "aria-expanded": "false", "aria-controls": "editor" }, copy.actions.change);
+  /* The default actions carry a short name too, so the sticky row is ONE line
+     on a phone: three lines of chrome above the answer is what pushed the
+     citizen picture 183px down the page (PICTURE-FIRST). */
+  const changeBtn = h("button", { type: "button", class: "hg-button", "aria-expanded": "false", "aria-controls": "editor", "aria-label": copy.actions.change },
+    h("span", { class: "editor-action__full" }, copy.actions.change), h("span", { class: "editor-action__short" }, copy.actions.changeShort));
   const printBtn = h("button", { type: "button", class: "hg-button" }, copy.actions.print);
-  // A surface's own actions replace the two defaults; a short name shows below 720px (display:none keeps the other out of the accessible name).
+  // A surface's own actions replace the two defaults; a short name shows below
+  // 720px and the full label stays the accessible name, so a screen reader
+  // hears the same words at every width.
   const actionBtn = (a: EditorAction) => {
-    const b = h("button", { type: "button", class: `hg-button${a.primary ? " hg-button--primary" : ""}` },
+    const b = h("button", { type: "button", class: `hg-button${a.primary ? " hg-button--primary" : ""}`, ...(a.short ? { "aria-label": a.label } : {}) },
       ...(a.short ? [h("span", { class: "editor-action__full" }, a.label), h("span", { class: "editor-action__short" }, a.short)] : [a.label]));
     b.addEventListener("click", a.onClick);
     return b;
@@ -411,9 +422,14 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     /* No household, no chips: a row of controls for answers that do not exist yet (caseworker review S10). */
     inputsRow.hidden = !answered;
     for (const b of gated) b.disabled = !answered;
-    /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9); the line and its separators are the summary's copy (N12). */
-    const c = countyLabel(), S = copy.summary, st = state() ?? "";
-    const place = c ? fill(S.place.withCounty, { state: st, county: countyBare(c) }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
+    /* The place, once, in words (2026-09-18): the county the ZIP resolved to
+       stands for the ZIP (review N9) and the ZIP itself leaves the line —
+       it is in the chips, and a phrase that names a place does not also need
+       the postcode inside it. The state is its name here, not its code: this
+       line is a sentence a person reads, and the code is in the chips too. */
+    const c = countyLabel(), S = copy.summary, code = state();
+    const st = code ? stateName(code) : "";
+    const place = c ? fill(S.place.withCounty, { state: st, county: countyBare(c) }) : fill(S.place.stateOnly, { state: st });
     summaryText.textContent = answered ? fill(S.line, { place, household: householdLabel(), pay: payLabel() }) : S.none;
   }
 

@@ -1,9 +1,17 @@
-// The citizen result (design/citizen.html made real): the AnswerSentence,
-// the MoneyCurve with its readout, key and caption, the SourceNote, the
-// DataTable behind "Show the numbers", the StepList a cliff mark opens,
-// what we assumed, reach, hours and the footer — every
-// component design/inventory.md assigns to this surface, rendered from one
-// HouseholdEvaluation through the pure modules beside this file.
+// The citizen result, picture first (design/PICTURE-FIRST-2026-09-18.md):
+// one sentence, then the figure, then everything else behind three named
+// disclosures. The sentence is the figure's own <figcaption>, so the answer
+// and the picture are one object and nothing stands between the masthead and
+// them; the MoneyCurve, its readout, its key and its caption are the figure's
+// (chart.ts); the StepList, the boundary and the DataTable are behind "What
+// happens at each step"; the assumed rows, reach and the lowest legal pay
+// behind "What we assumed about you"; the SourceNote and the estimates footer
+// behind "Where these numbers come from".
+//
+// What never hides (inventory.md § The page is its picture): the status
+// region, the archetype notice with its Try again, the incomplete-state
+// caution and the error callout. They sit above the figure, and on a page
+// where nothing is wrong they are empty and cost nothing.
 //
 // The seam main.ts and the proofs rely on: mountResult(root, onTryAgain) →
 // { clear, loading, render(evaluation, flags, { announce }), error }, with
@@ -19,7 +27,7 @@ import type { EvaluateResult } from "../editor/api.js";
 import { h } from "../lib/dom.js";
 import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
-import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText, type Sweep } from "./facts.js";
+import { assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, whoText, type Sweep } from "./facts.js";
 import { sceneOf, type Scene } from "./model.js";
 import { stepLoss, stepRows, stepSentence } from "./steps.js";
 import { tableRows } from "./table.js";
@@ -44,22 +52,28 @@ function loadSummary(): Promise<SummaryJson | null> {
   return (summaryPromise ??= fetch("/data/summary.json").then((r) => (r.ok ? (r.json() as Promise<SummaryJson>) : null)).catch(() => null));
 }
 
-const section = (heading: string, ...body: (Node | null | undefined)[]) => h("section", {}, h("h2", {}, heading), ...body);
+/**
+ * One of the page's named disclosures: closed by default, open on paper, its
+ * content in the DOM throughout. The summary carries the heading, so the
+ * page still has an outline for a screen reader that navigates by heading.
+ */
+const panel = (id: string, heading: string, ...body: (Node | string | null | undefined)[]): HTMLDetailsElement =>
+  h("details", { class: "hg-disclosure", id }, h("summary", {}, h("h2", {}, heading)),
+    ...body.filter((n): n is Node | string => n !== null && n !== undefined)) as HTMLDetailsElement;
 
 export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   const status = h("p", { class: "hg-source", role: "status" });
   /* Paper has no ScenarioBar: the wordmark and who the numbers are for, print only (S2). */
   const masthead = h("p", { class: "hg-print-only masthead" });
-  /* The M4 sentence where the numbers are met, not thirteen hundred pixels down in the source line (S5). Standing text, so not the status region, which announces. */
+  /* Whose numbers these are (S5, M4) — above the figure, with its own Try again, because a page must never
+     quietly show one family's curve as another's. Standing text, so not the status region, which announces. */
   const whose = h("p", { class: "hg-callout hg-callout--caution whose", id: "whose", hidden: true });
-  const answer = h("p", { class: "answer", id: "answer", tabindex: "-1" });
-  /* The keep rate on the next stretch (Plan 9 § Citizen), directly after the answer — its own line, in the answer's rhythm, not the source line's. */
-  const keepNextP = h("p", { class: "answer-sub", id: "keep-next" });
-  const again = h("p", { class: "answer-sub", id: "again", hidden: true });
-  const sub = h("p", { class: "answer-sub" });
+  /* IncompleteMarker (#16): what the model cannot compute in this state that could move this household. A
+     caution about the picture stays with the picture and never goes behind a disclosure (§ The page is its picture). */
+  const incomplete = h("div", { class: "hg-callout hg-callout--caution", id: "incomplete", hidden: true });
   const alert = h("div", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
   const body = h("div", { class: "hg-page page" });
-  root.append(h("section", { class: "band" }, h("div", { class: "hg-page page" }, masthead, status, whose, answer, keepNextP, again, sub, alert)), body);
+  root.append(h("div", { class: "hg-page page notices" }, masthead, status, whose, incomplete, alert), body);
 
   const retryButton = () => {
     const b = h("button", { type: "button", class: "hg-button hg-button--small" }, t("tryAgain"));
@@ -71,16 +85,18 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   let scene: Scene | null = null;
   let summary: SummaryJson | null = null;
   /** The nodes the sweep's summary refines once it arrives. */
-  let provenance: { source: Text; reach: HTMLElement; incomplete: HTMLElement } | null = null;
+  let provenance: { source: Text; reach: HTMLElement } | null = null;
 
   function renderProvenance(): void {
-    if (!scene || !provenance) return;
+    if (!scene) return;
     const sweep: Sweep | null = sweepFor(summary, scene.state);
-    provenance.source.data = provenanceText(scene, sweep);
-    provenance.reach.textContent = reachSourceText(scene, sweep);
-    const incomplete = incompleteText(scene, sweep);
-    provenance.incomplete.hidden = incomplete === null;
-    if (incomplete !== null) provenance.incomplete.replaceChildren(h("strong", {}, t("incomplete.lead")), incomplete);
+    if (provenance) {
+      provenance.source.data = provenanceText(scene, sweep);
+      provenance.reach.textContent = reachSourceText(scene, sweep);
+    }
+    const text = incompleteText(scene, sweep);
+    incomplete.hidden = text === null;
+    if (text !== null) incomplete.replaceChildren(h("strong", {}, t("incomplete.lead")), text);
   }
 
   function clearBody(): void {
@@ -95,10 +111,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
     clear() {
       status.textContent = "";
       whose.hidden = true;
-      answer.textContent = "";
-      keepNextP.textContent = "";
-      again.hidden = true;
-      sub.textContent = "";
+      incomplete.hidden = true;
       alert.hidden = true;
       clearBody();
     },
@@ -114,25 +127,25 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       const { m } = s;
       masthead.replaceChildren(h("strong", {}, t("wordmark")), " ", whoText(s));
 
-      /* AnswerSentence (#1): each figure carries the key of the mark it names. */
-      answer.replaceChildren(...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
-      /* Your keep rate on the next stretch (Plan 9 § Citizen), directly after the answer. */
-      keepNextP.textContent = keepNextText(s) ?? "";
       // The new sentence is read out for a change made without moving focus;
       // it is already on the page in display size, so the region is not shown twice.
       status.classList.toggle("hg-visually-hidden", announce);
       status.textContent = announce ? verdictText(s) : "";
-      /* Whose numbers these are, above the answer (S5); after a Try again that still could not, it says "still". */
+      /* Whose numbers these are (S5); after a Try again that still could not, it says "still". */
       const archetype = ev.source === "archetype";
       whose.hidden = !archetype;
-      if (archetype) whose.textContent = t(retry ? "stillArchetype" : "source.archetype");
-      const againLine = againText(s);
-      again.hidden = againLine === null;
-      again.textContent = againLine ?? "";
-      sub.textContent = subText(s);
+      let retryBtn: HTMLButtonElement | null = null;
+      if (archetype) {
+        whose.replaceChildren(t(retry ? "stillArchetype" : "source.archetype"), " ", (retryBtn = retryButton()));
+        if (s.clamped) whose.append(" ", t("source.clamped", { top: m.payUnit(s.current) }));
+      }
 
-      /* MoneyCurve (#3) with its readout, key, caption and the SourceNote (#17). */
-      const figure = h("figure");
+      /* AnswerSentence (#1) as the figure's caption: one sentence, each figure carrying the key of the mark it names. */
+      const answer = h("figcaption", { class: "hg-answer", id: "answer", tabindex: "-1" },
+        ...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
+
+      /* MoneyCurve (#3) with its readout, key, caption and "How to read this picture" (chart.ts). */
+      const figure = h("figure", { class: "hg-picture" }, answer);
       let open: number | null = null;
       const closeRow = (refocus: boolean) => {
         if (open === null) return;
@@ -148,6 +161,9 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         closeRow(false);
         open = cliff.endEarnings;
         chart?.setOpen(open);
+        /* The steps are behind a disclosure now: a mark opens it before it opens the row inside it (M6). */
+        const steps = body.querySelector<HTMLDetailsElement>("#steps-panel");
+        if (steps) steps.open = true;
         const row = body.querySelector<HTMLElement>(`#step-${open}`);
         if (!row) return;
         row.setAttribute("aria-current", "true");
@@ -157,20 +173,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         row.scrollIntoView({ block: "nearest" });
       };
       chart = mountChart(figure, s, { onActivate: openRow, onEscape: () => closeRow(true) });
-      const sourceText = document.createTextNode("");
-      const source = h("p", { class: "hg-source", id: "source", "data-source": ev.source });
-      const incomplete = h("div", { class: "hg-callout hg-callout--caution", id: "incomplete", hidden: true });
-      let retryBtn: HTMLButtonElement | null = null;
-      if (archetype) {
-        source.append(t("source.archetype"), (retryBtn = retryButton()));
-        if (s.clamped) source.append(t("source.clamped", { top: m.payUnit(s.current) }));
-        source.append(h("br"));
-      }
-      source.append(sourceText);
-      /* The incomplete-state caution qualifies the picture, so it sits with the picture's provenance, not three screens down (S6). */
-      figure.append(incomplete, source);
 
-      /* DataTable (#15): the marks as numbers. */
+      /* DataTable (#15): the marks as numbers, inside the steps panel — the same rows, counted. */
       const rows = tableRows(s);
       const table = h("table", { class: "hg-table", id: "numbers" },
         h("caption", {}, t("table.caption")),
@@ -191,24 +195,48 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         if (loss) p.append(" ", h("span", { class: "hg-rows__loss" }, loss));
         return h("li", { id: `step-${r.at}` }, h("span", { class: "hg-rows__at" }, m.pay(r.at)), p);
       }));
-      /* What we assumed (S6), reach, hours, footer. */
+
+      /* EligibilityBoundary (#23): where a program this household may not have stops. Three facts, never a drop, so it
+         sits at the end of the steps and not among them; the invitation to the toggle stays off paper (liheap review S2). */
+      const boundary = boundaryText(s);
+      const boundaryP = boundary
+        ? h("p", { class: "boundary", id: "boundary", "data-counted": s.boundary?.counted ? "true" : creditCounted(s) ? "credit" : "false" },
+          boundary.facts, ...(boundary.invite ? [" ", h("span", { class: "hg-no-print" }, boundary.invite)] : []))
+        : null;
+
+      /* What we assumed (S6), reach, hours. */
       const assumed = h("ul", { class: "hg-rows assumed" }, ...assumedRows(s).map((f) => h("li", {}, h("span", { class: "hg-rows__at" }, f.label), h("p", {}, f.text))));
       const reach = reachText(s);
       const reachSource = h("p", { class: "hg-source" });
       const hours = hoursText(s);
 
-      body.append(...([
-        figure, numbers,
-        section(t("steps.heading"), steps.length ? stepList : h("p", {}, t("steps.none"))),
-        section(t("assumed.heading"), assumed),
-        reach ? section(t("reach.heading"), h("p", {}, reach), h("p", {}, t("reach.note")), reachSource) : null,
-        hours ? section(t("hours.heading"), h("p", {}, hours)) : null,
-        h("footer", {},
+      /* SourceNote (#17), with the archetype state on the line as well as in the notice above the figure. */
+      const sourceText = document.createTextNode("");
+      const source = h("p", { class: "hg-source", id: "source", "data-source": ev.source }, sourceText);
+      const keepNext = keepNextText(s);
+      const againLine = againText(s);
+
+      body.append(figure,
+        panel("steps-panel", t("steps.heading"),
+          h("p", {}, t("steps.lead")),
+          keepNext ? h("p", { id: "keep-next" }, keepNext) : null,
+          steps.length ? stepList : h("p", {}, t("steps.none")),
+          againLine ? h("p", { id: "again" }, againLine) : null,
+          boundaryP, numbers),
+        panel("assumed-panel", t("assumed.heading"),
+          h("p", {}, t("assumed.lead")), assumed,
+          reach ? h("h3", {}, t("reach.heading")) : null,
+          reach ? h("p", {}, reach) : null,
+          reach ? h("p", {}, t("reach.note")) : null,
+          reach ? reachSource : null,
+          hours ? h("h3", {}, t("hours.heading")) : null,
+          hours ? h("p", {}, hours) : null),
+        panel("sources-panel", t("source.heading"), source,
           h("p", {}, h("strong", {}, t("footer.estimates")), t("footer.caseworker")),
           h("p", {}, t("footer.assumed", { year: ev.curve.year })),
-          h("p", {}, t("footer.noAdvice"))),
-      ] as (Node | null)[]).filter((n): n is Node => n !== null));
-      provenance = { source: sourceText, reach: reachSource, incomplete };
+          h("p", {}, t("footer.noAdvice"))));
+
+      provenance = { source: sourceText, reach: reachSource };
       if (retry) retryBtn?.focus();
       renderProvenance();
       if (!summary) void loadSummary().then((json) => { summary = json; renderProvenance(); });
@@ -222,6 +250,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   };
 }
 
-/* Paper wants the numbers open: a closed <details> prints nothing. */
+/* Paper wants every disclosure open: a closed <details> prints nothing, and on
+   paper there is nobody to press anything. The figure's own "How to read this
+   picture" comes with them, so a printed page carries the key and the caption. */
 addEventListener("beforeprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.dataset.wasOpen = String(d.open); d.open = true; } });
 addEventListener("afterprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.open = d.dataset.wasOpen === "true"; delete d.dataset.wasOpen; } });

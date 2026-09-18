@@ -1,59 +1,70 @@
-/* Citizen surface: one column, phone first, nothing to decide
-   (design/citizen.html is the brief). Only this page's own layout lives
-   here; every shared class is in design/tokens.css, and the editor's in
-   app/src/editor/editor.css. This file loads after tokens.css, so anything
-   that could meet an hg-* state class is declared at :where() specificity. */
+/* Citizen surface: one column, phone first, the picture first
+   (design/PICTURE-FIRST-2026-09-18.md is the brief). Only this page's own
+   layout lives here; every shared class is in design/tokens.css — the
+   headline is `.hg-answer`, the figure that bleeds to the screen's edges is
+   `.hg-picture`, the disclosures are `.hg-disclosure` — and the editor's own
+   chrome is in app/src/editor/editor.css. This file loads after tokens.css,
+   so anything that could meet an hg-* state class is declared at :where()
+   specificity. */
 .page { --page-max: 40rem; }
+/* Paper-white ground, not the plane: the picture is the page here, and a
+   picture wants paper under it. The sticky bar keeps its hairline, which is
+   what divides it now that the ground no longer does. */
+body { background: var(--surface); }
+
+/* The notices column above the figure: the status region, the archetype
+   notice, the incomplete-state caution and the error callout. Empty on a page
+   where nothing is wrong, so it costs the reader nothing and never pushes the
+   picture down; never a disclosure, because a warning that hides is not a
+   warning (design/inventory.md § The page is its picture). */
+.notices { padding-bottom: 0; }
+.notices > :empty, .notices > p:empty { display: none; }
+.notices > * { margin: var(--s3) 0 0; }
+.notices > .hg-print-only { margin-top: 0; }
 
 /* Paper (S2): the masthead line tokens.css's print block cannot supply, the
-   chips and the readout left behind as screen chrome, the figure kept whole
-   and the disclosure's summary gone (its table is open by then). The two
-   editor selectors are the page's until tokens.css carries them (TODO 26). */
+   chips and the readout left behind as screen chrome, and the figure kept
+   whole. The disclosures' summaries stay on paper: they are the headings. */
 .masthead { font-size: var(--t-small); color: var(--ink-2); margin: 0 0 var(--s3); }
-/* Whose numbers these are (S5): the callout's shape, above the answer, in the band. */
-.whose { margin: var(--s4) 0 0; font-size: var(--t-small); }
 @media print {
-  .hg-scenario__inputs, .hg-readout, details.hg-disclosure > summary { display: none !important; }
+  .hg-scenario__inputs, .hg-readout, .hg-chart__hint { display: none !important; }
   .result figure { break-inside: avoid; }
+  .result .hg-disclosure { break-inside: avoid-page; }
 }
-.band { background: var(--surface); border-block: 1px solid var(--rule); }
-.band > .page { padding-block: var(--s6); }
-/* The band's status and alert sit above the answer; the alert keeps the callout's own margins. */
-.band [role="status"]:empty { display: none; }
 
-/* The answer. The sentence IS the design: each dollar figure carries a rule
-   in the colour of the mark it names, so the sentence doubles as the key. */
-.answer { font-size: var(--t-answer); line-height: var(--lh-answer);
-          font-weight: var(--w-med); letter-spacing: -0.015em;
-          margin: var(--s5) 0 var(--s4); max-width: 22ch; text-wrap: balance; }
-.answer:empty { display: none; }
-.answer .amt { font-weight: var(--w-semi); white-space: nowrap;
-               box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
-.amt-keep  { --keyed: var(--series-1); }   /* the line */
-.amt-gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
-.amt-cliff { --keyed: var(--loss-4); }     /* a cliff dot */
-.answer-sub { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
-.answer-sub:empty { display: none; }
-@media (min-width: 40rem) { .answer { max-width: 26ch; } }
+/* ── One sentence, then the picture ────────────────────────────────────
+   The answer is the figure's own caption, first child, so nothing stands
+   between the masthead and the two of them. Its margins are the page's; its
+   size, measure and keyed underlines are the shared class's. */
+.hg-answer { margin: 0 0 var(--s4); }
+@media (min-width: 40rem) { .hg-answer { margin-bottom: var(--s5); } }
 
-/* Figure */
-.result figure { margin: 0; }
-.chart-head { display: flex; justify-content: space-between; align-items: baseline;
-              gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
-.chart-title { font-size: var(--t-h3); font-weight: var(--w-semi); }
-.chart-unit { font-size: var(--t-micro); color: var(--ink-3); }
-.result figcaption { font-size: var(--t-small); color: var(--ink-2); margin-top: var(--s3);
-                     max-width: var(--measure); }
-/* EligibilityBoundary (#23): one line under the key, in the caption's voice — prose, never a mark. */
-.result .boundary { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure); }
+/* The figure keeps the shared class's margins — they are what bleeds it to
+   the screen's edges — and takes its own padding, which also stops the
+   headline's top margin collapsing out through it and pushing the whole
+   picture down the page. */
+.result figure { padding-block: var(--s4) 0; }
+.result .hg-chart__scroll { --scroll-ground: var(--surface); }
+/* The figure's own words under the plot, each on the page's gutter. */
+.result .hg-chart__hint { margin-top: var(--s2); }
+.result .caption { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure); }
+.result .chart-title { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure); }
+.result .chart-unit { color: var(--ink-3); }
+.result .hg-disclosure p { max-width: var(--measure); }
+/* EligibilityBoundary (#23): prose at the end of the steps, never a mark. */
+.result .boundary { font-size: var(--t-small); color: var(--ink-2); margin: var(--s4) 0 0; max-width: var(--measure); }
 
 /* The Close a mark's open row gains sits under the row's text. */
 :where(.hg-rows) .hg-button--small { margin-top: var(--s2); }
 .assumed { --col: 8rem; }
 
-.result section > h2 { margin-top: var(--s7); }
-.result section > h2 + p, .result section > h2 + .hg-rows { margin-top: var(--s4); }
-.result .hg-callout h3 { margin-bottom: var(--s2); }
-.result footer { color: var(--ink-3); font-size: var(--t-small); margin-top: var(--s7);
-                 border-top: 1px solid var(--rule); padding-top: var(--s5); }
-.result footer p { max-width: var(--measure); }
+/* ── The three disclosures ─────────────────────────────────────────────
+   A stack of rules under the figure: the summary is the heading, and the
+   body indents nothing — the page is one column and a nested margin would
+   read as a card. */
+.result > .hg-disclosure { margin-top: 0; }
+.result > .hg-disclosure:first-of-type { margin-top: var(--s6); }
+.result > .hg-disclosure:last-of-type { border-bottom: 1px solid var(--rule); }
+.result .hg-disclosure > :not(summary) { margin-block: var(--s3); }
+.result .hg-disclosure > :last-child { margin-bottom: var(--s5); }
+.result .hg-disclosure h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }

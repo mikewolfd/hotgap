@@ -54,7 +54,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print`; `.hg-dense` on `<html>` is the two panel surfaces' 15px base and wider measure, once |
 | AnswerSentence | `.hg-answer`; `.hg-amt` with `--keep` (the line), `--gap` (the exit rule and the bracket), `--cliff` (a cliff dot); `--measure-answer` is its measure and `--t-answer` its size. The page keeps only the margins |
-| The figure | `.hg-figure` — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter |
+| The figure | `.hg-picture` — not `.hg-figure`, which is a StatTile's number and was there first — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter |
 | Page column, wordmark | `.hg-page` (centred, `--s4` gutters, `--s8` foot; the page sets `--page-max` on its own class: citizen 40rem, journalist 68rem, caseworker 76rem); `.hg-wordmark` (weight and size; the editor's row tracks it −0.01em, the journalist masthead does not — one value once settled) |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
