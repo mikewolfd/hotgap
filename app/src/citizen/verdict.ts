@@ -110,7 +110,8 @@ export function keepNextText(s: Scene): string | null {
   const next = s.ev.personal.keepNext;
   if (next === null) return null;
   const { over, kept: rate } = next;
-  const slots = { over: s.m.pay(over), kept: s.m.pay(rate * over) };
+  // `over` is a pay level; what is kept out of it is a change and takes the finer step, so $400 kept is not "$0".
+  const slots = { over: s.m.pay(over), kept: s.m.change(rate * over) };
   if (s.next && s.next.startEarnings < s.current + over) {
     const id = s.next.programsLost[0];
     return fill(copy.keepNext.cliff, { ...slots, phrase: id ? phrase(id) : copy.chart.someHelp, wage: s.m.pay(s.next.endEarnings) });

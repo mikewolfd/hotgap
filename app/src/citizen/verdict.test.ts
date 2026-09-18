@@ -85,13 +85,13 @@ describe("your keep rate on the next stretch (Plan 9 § Citizen)", () => {
   test("a cliff inside the stretch is named at the pay it ends, in the existing program phrase, whatever the kept rate", () => {
     const s = sceneOf(makeEvaluation({}, 38_000), year);   // the SNAP cliff, $41,000 → $42,000, sits inside $38,000–$48,000
     expect(s.next?.startEarnings).toBe(41_000);
-    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $4,500, because food help ends at $42,000.");
+    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $4,700, because food help ends at $42,000.");
   });
   test("no cliff and kept under 10¢: a flat stretch, not a plain sentence", () => {
     const s = sceneOf(makeEvaluation({}, 90_000, { plateau: [90_000, 130_000] }), year);
     expect(s.next).toBeNull();
     expect(s.ev.personal.keepNext?.kept).toBeLessThan(0.10);
-    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $500. That is a flat stretch: more pay, little more money.");
+    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $400. That is a flat stretch: more pay, little more money.");
   });
   test("null keepNext (less than one step of axis left) says nothing", () => {
     expect(sceneOf(makeEvaluation({}, 150_000), year).ev.personal.keepNext).toBeNull();
@@ -100,8 +100,8 @@ describe("your keep rate on the next stretch (Plan 9 § Citizen)", () => {
   test("both figures in the person's own pay unit (M5), not always annual", () => {
     const ev = makeEvaluation({ answers: { ...makeEvaluation().answers, hoursPerWeek: 35 } });
     const s = sceneOf(ev, { unit: "hour", hours: "35" });
-    // $10,000 / (35 × 52) = $5.49 → $5.50; $8,000 → $4.40 → $4.50 an hour.
-    expect(keepNextText(s)).toBe("Of the next $5.50 an hour you earn, you keep about $4.50 an hour.");
+    // $10,000 / (35 × 52) = $5.49 → $5.50 (pay-level step); $8,000 → $4.40 an hour exactly (the change step is 5¢, so no rounding up to $4.50) an hour.
+    expect(keepNextText(s)).toBe("Of the next $5.50 an hour you earn, you keep about $4.40 an hour.");
   });
 });
 

@@ -4,8 +4,8 @@
 // t() fills a message and throws on a missing key, an unknown param or an
 // argument left over, as the archive's t.ts did (design/PORT-FROM-ARCHIVE-
 // 2026-09-16.md M1), so a sentence can never reach the page half-filled.
-// The readability gate (scripts/readability.mjs) grades this namespace in
-// en.json: nothing a person reads is composed anywhere else. Program names
+// Social workers review this namespace in en.json, not a formula (owner
+// decision 2026-09-18): nothing a person reads is composed anywhere else. Program names
 // an office uses appear only after the plain phrase (design/inventory.md
 // M3); those names are `shared.program.*` (lib/programs.ts) and are not gated.
 //

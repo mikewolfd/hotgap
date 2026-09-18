@@ -78,7 +78,7 @@ for (const scheme of ["light", "dark"] as const) {
       } else expect(again).not.toContain("beyond what");
 
       /* Your keep rate on the next stretch (Plan 9 § Citizen): the two money figures are keepNext.over and
-         keepNext.kept × keepNext.over from the response, rounded to the pay-unit step (lib/format.ts, $500 a year);
+         keepNext.kept × keepNext.over from the response — the first at the pay-unit step ($500 a year), the second at the change step ($100 a year: lib/format.ts payChangeRounded, so a kept $400 is never "$0");
          a cliff inside the stretch is named at its landing point, a sub-10¢ stretch with none reads as a flat stretch. */
       const keepNextP = page.locator("#keep-next");
       if (ev.personal.keepNext === null) {
@@ -87,7 +87,7 @@ for (const scheme of ["light", "dark"] as const) {
         const { over, kept } = ev.personal.keepNext;
         const text = (await keepNextP.textContent())!;
         expect(text).toMatch(/^Of the next \$/);
-        const keptFigure = Math.round((kept * over) / 500) * 500;
+        const keptFigure = Math.round((kept * over) / 100) * 100;
         const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
         if (next && next.startEarnings < ev.analysis.currentEarnings + over) {
           expect(text).toContain("because");

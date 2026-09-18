@@ -8,7 +8,7 @@ import {
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { windowFor } from "../lib/chart/geometry.js";
-import { money, moneyAbout, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
+import { money, moneyAbout, payChangeRounded, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
 import { stateName } from "../lib/names.js";
 
 /** The unit the person gave and the hours an hourly figure converts through. */
@@ -26,6 +26,8 @@ export function payOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Pay {
  */
 export interface Money {
   pay(annual: number): string;
+  /** A change in pay (kept or lost out of a raise), in the person's unit, at the finer change step. */
+  change(annual: number): string;
   payUnit(annual: number): string;
   /** A difference of two rounded figures, so a sentence adds up in every unit. */
   diff(fromAnnual: number, toAnnual: number, withUnit?: boolean): string;
@@ -37,6 +39,7 @@ function moneyFor({ unit, hours }: Pay): Money {
   const withUnit = unit !== "year";
   return {
     pay: (a) => (withUnit ? payPhrase(a, unit, hours) : payFigure(a, unit, hours)),
+    change: (a) => (withUnit ? payInUnit(payChangeRounded(a, unit, hours), unit) : unitFigure(payChangeRounded(a, unit, hours), unit)),
     payUnit: (a) => payPhrase(a, unit, hours),
     diff: (a, b, say = withUnit) => { const d = payRounded(b, unit, hours) - payRounded(a, unit, hours); return say ? payInUnit(d, unit) : unitFigure(d, unit); },
     money,

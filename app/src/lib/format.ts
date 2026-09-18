@@ -28,6 +28,12 @@ const STEP: Record<PayUnit, number> = { hour: 0.25, week: 10, month: 50, year: 5
 export const payRounded = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): number =>
   Math.round(fromAnnual(annual, unit, hoursPerWeek) / STEP[unit]) * STEP[unit];
 
+/** A change in pay — what is kept or lost out of a raise — in the unit, rounded to a fifth of the unit's step ($100 a year, $10 a month, $2 a week, 5¢ an hour): finer than a pay level, so a real $400 never prints as $0. */
+export const payChangeRounded = (annual: number, unit: PayUnit, hoursPerWeek: number = DEFAULT_HOURS): number => {
+  const step = STEP[unit] / 5;
+  return Math.round(fromAnnual(annual, unit, hoursPerWeek) / step) * step;
+};
+
 /** A figure already in the unit, printed as that unit is: cents by the hour, whole dollars otherwise. */
 export const unitFigure = (inUnit: number, unit: PayUnit): string => (unit === "hour" ? usdCents.format(inUnit) : usd.format(inUnit));
 
