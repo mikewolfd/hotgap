@@ -1013,7 +1013,7 @@
         "withDc": "{states} estados y el Distrito de Columbia, {households} tipos de hogar, una sola escala de ingresos: desde $0 hasta más allá del 400% de la línea de pobreza de ese hogar.",
         "plain": "{states} estados, {households} tipos de hogar, una sola escala de ingresos: desde $0 hasta más allá del 400% de la línea de pobreza de ese hogar."
       },
-      "glossary": "Un *precipicio* es un aumento de $1,000 que recorta el ingreso neto en {floor} o más; una *zona de peligro* es un tramo de ingresos en el que el hogar nunca sale ganando. Un precipicio importa en proporción a cuántas familias están cerca de él: el precipicio más grande de un estado suele ser uno al que llegan pocas familias, y el que duele es el modesto, en el ingreso que tiene la mayoría."
+      "glossary": "Un *precipicio* es un aumento de $1,000 que recorta el ingreso neto en {floor} o más; una *zona de peligro* es un tramo de ingresos en el que el hogar nunca sale ganando. Un precipicio importa en proporción a cuántas familias están cerca de él: el precipicio más grande de un estado suele ser uno al que llegan pocas familias, y el que duele es el modesto, en el ingreso que tiene la mayoría. Las cifras vienen de [PolicyEngine](https://policyengine.org), una calculadora de impuestos y beneficios de código abierto, ejecutada por HotGap."
     },
     "status": {
       "loading": "Cargando la corrida semanal…",
@@ -1037,7 +1037,7 @@
       },
       "dangerWidth": {
         "title": "Ancho total de las zonas de peligro",
-        "option": "Ancho total de las zonas de peligro ($)",
+        "option": "Ancho total de las zonas de peligro — cada tramo en el que más pago no deja al hogar mejor, sumados ($)",
         "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
       },
       "leap": {
@@ -1047,7 +1047,7 @@
       },
       "safeExit": {
         "title": "Salida segura",
-        "option": "Salida segura — ingresos por encima de los cuales no queda ninguna zona ($)",
+        "option": "Salida segura — ingresos por encima de los cuales no queda ninguna zona de peligro ($)",
         "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
       },
       "cliffCount": {
@@ -1062,17 +1062,17 @@
       },
       "keepRate": {
         "title": "Lo que se queda de cada dólar en el camino para salir de la pobreza",
-        "option": "Lo que se queda de cada dólar — los centavos que conserva de cada dólar extra (¢)",
+        "option": "Lo que se queda de cada dólar — de cada dólar extra ganado de la pobreza al doble de la pobreza, los centavos que el hogar conserva (¢)",
         "describe": "De cada dólar extra ganado entre la línea de pobreza y el doble de esa línea, los centavos que este hogar conserva una vez contados los impuestos y los beneficios perdidos. Por debajo de cero, termina más pobre de lo que empezó."
       },
       "roadCliffCount": {
         "title": "Precipicios en el camino para salir de la pobreza",
-        "option": "Precipicios que un hogar encuentra en el camino",
+        "option": "Precipicios en el camino para salir de la pobreza — los precipicios que un hogar encuentra entre la pobreza y el doble de la pobreza",
         "describe": "Escalones hacia abajo de {floor} o más entre la línea de pobreza y el doble de esa línea."
       },
       "roadWorst": {
         "title": "Dónde se derrumba el camino",
-        "option": "Dónde se derrumba el camino — la mayor pérdida en un solo escalón ($)",
+        "option": "Dónde se derrumba el camino — la mayor pérdida en un solo escalón entre la pobreza y el doble de la pobreza ($)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 entre la línea de pobreza y el doble de esa línea."
       }
     },
@@ -1248,9 +1248,9 @@
         "position": "De las familias como esta en ese estado, cuántas de cada 100 ganan menos que la cifra de al lado. De datos de encuesta del Censo, y de corte transversal: cuántas familias ya ganan menos, nunca la probabilidad de que una familia llegue ahí.",
         "positionTerm": "Familias que ganan menos",
         "pastAxisTerm": "más allá del eje",
-        "pastAxis": "La cifra se sale del tope del recorrido, así que el estado tiene un límite y no un valor. Nunca la grafique como un valor.",
+        "pastAxis": "La cifra se sale del tope de la escala de ingresos, así que el estado tiene un límite y no un valor. Nunca la grafique como un valor.",
         "lowerBoundTerm": "≥ una cifra",
-        "lowerBound": "Una cifra que el eje acota por debajo: la real es esa o mayor, y el recorrido terminó antes de poder medirla."
+        "lowerBound": "Una cifra que la escala acota por debajo: la real es esa o mayor, y la escala de ingresos terminó antes de poder medirla."
       },
       "none": "ninguno",
       "complete": "completas",
@@ -1446,7 +1446,7 @@
     },
     "caution": {
       "hatched": "{n, plural, one {**Rayado no es bajo.** Un estado está rayado: {programs} no está modelado allí, así que sus cifras son pisos y no se sombrea ni se clasifica.} other {**Rayado no es bajo.** {n} estados están rayados: {programs} no está modelado allí, así que sus cifras son pisos y no se sombrean ni se clasifican.}}",
-      "past": "{n, plural, one {**Más allá del eje no es un número.** La cifra de un estado se sale del tope del recorrido, así que es un límite y no debe graficarse como un valor.} other {**Más allá del eje no es un número.** Las cifras de {n} estados se salen del tope del recorrido, así que son límites y no deben graficarse como valores.}}",
+      "past": "{n, plural, one {**Más allá del eje no es un número.** La cifra de un estado se sale del tope de la escala de ingresos, así que es un límite y no debe graficarse como un valor.} other {**Más allá del eje no es un número.** Las cifras de {n} estados se salen del tope de la escala de ingresos, así que son límites y no deben graficarse como valores.}}",
       "roadPast": "{n, plural, one {**No hay cifra que comparar.** En un estado el camino de este hogar para salir de la pobreza queda fuera de los ingresos que se recorrieron allí.} other {**No hay cifra que comparar.** En {n} estados el camino de este hogar para salir de la pobreza queda fuera de los ingresos que se recorrieron allí.}}"
     },
     "panels": {

@@ -1010,7 +1010,7 @@
         "withDc": "{states} states and the District of Columbia, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household.",
         "plain": "{states} states, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household."
       },
-      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have."
+      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap."
     },
     "status": {
       "loading": "Loading the weekly run…",
@@ -1034,7 +1034,7 @@
       },
       "dangerWidth": {
         "title": "Total width of the danger zones",
-        "option": "Danger zones, total width ($)",
+        "option": "Total width of the danger zones — every stretch where more pay leaves the household no better off, added together ($)",
         "describe": "Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together."
       },
       "leap": {
@@ -1044,7 +1044,7 @@
       },
       "safeExit": {
         "title": "Safe exit",
-        "option": "Safe exit — earnings above which no danger zone is left ($)",
+        "option": "Safe exit — earnings above which no danger zone remains ($)",
         "describe": "Earnings above which no danger zone remains: where the last one closes."
       },
       "cliffCount": {
@@ -1054,22 +1054,22 @@
       },
       "deferredCliffCount": {
         "title": "Deferred cliffs",
-        "option": "Deferred cliffs — of the cliffs counted, those landing at a later renewal",
+        "option": "Deferred cliffs — of the cliffs counted, those that land at a later renewal",
         "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
       },
       "keepRate": {
         "title": "Keep rate on the road out of poverty",
-        "option": "Keep rate — cents kept of each extra dollar (¢)",
+        "option": "Keep rate — of each extra dollar earned from poverty to twice poverty, the cents the household keeps (¢)",
         "describe": "Of each extra dollar earned between the poverty line and twice the poverty line, the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started."
       },
       "roadCliffCount": {
         "title": "Cliffs on the road out of poverty",
-        "option": "Cliffs a household meets on the way",
+        "option": "Cliffs on the road out of poverty — the cliffs a household meets between poverty and twice poverty",
         "describe": "Steps down of {floor} or more between the poverty line and twice the poverty line."
       },
       "roadWorst": {
         "title": "Where the road collapses",
-        "option": "Where the road collapses — the largest single loss ($)",
+        "option": "Where the road collapses — the largest single loss between poverty and twice poverty ($)",
         "describe": "Net income lost in the worst single $1,000 step between the poverty line and twice the poverty line."
       }
     },
@@ -1245,9 +1245,9 @@
         "position": "Of families like this one in that state, how many in 100 earn less than the figure beside it. From Census survey data, and cross-sectional: how many families already earn less, never one family's chance of getting there.",
         "positionTerm": "Families earning less",
         "pastAxisTerm": "past the axis",
-        "pastAxis": "The figure runs off the top of the sweep, so the state has a bound and not a value. Never chart it as one.",
+        "pastAxis": "The figure runs off the top of the earnings scale, so the state has a bound and not a value. Never chart it as one.",
         "lowerBoundTerm": "≥ a figure",
-        "lowerBound": "A figure the axis bounds from below: the real one is this or larger, and the sweep ended before it could be measured."
+        "lowerBound": "A figure the scale bounds from below: the real one is this or larger, and the earnings scale ended before it could be measured."
       },
       "none": "none",
       "complete": "complete",
@@ -1443,7 +1443,7 @@
     },
     "caution": {
       "hatched": "{n, plural, one {**Hatched is not low.** One state is hatched: {programs} is not modelled there, so its figures are floors and it is neither shaded nor ranked.} other {**Hatched is not low.** {n} states are hatched: {programs} is not modelled there, so their figures are floors and they are neither shaded nor ranked.}}",
-      "past": "{n, plural, one {**Past the axis is not a number.** One state's figure runs off the top of the sweep, so it is a bound and must not be charted as a value.} other {**Past the axis is not a number.** {n} states' figures run off the top of the sweep, so they are bounds and must not be charted as values.}}",
+      "past": "{n, plural, one {**Past the axis is not a number.** One state's figure runs off the top of the earnings scale, so it is a bound and must not be charted as a value.} other {**Past the axis is not a number.** {n} states' figures run off the top of the earnings scale, so they are bounds and must not be charted as values.}}",
       "roadPast": "{n, plural, one {**No rate to compare.** In one state this household's road out of poverty falls outside the earnings that state was swept over.} other {**No rate to compare.** In {n} states this household's road out of poverty falls outside the earnings those states were swept over.}}"
     },
     "panels": {

@@ -10,6 +10,12 @@
    This file loads after tokens.css, so anything that could meet an hg-* state
    class is declared at :where() specificity or with a class of its own. */
 .page { --page-max: 68rem; }
+/* Paper-white ground, not the plane. The figure used to be a panel with a
+   --surface ground of its own; the picture IS the page now, and the ramp is
+   validated against --surface — measured on --plane the two lightest bins fell
+   to 1.86:1, under the 2:1 floor charts.md § 2 sets for the light end of a
+   scale. The same decision the citizen surface made, for the same reason. */
+body { background: var(--surface); }
 h2 { margin: 0; }
 h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
 h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--lh-tight);
@@ -327,9 +333,14 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .hg-table th:first-child { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--plane);
                            box-shadow: 3px 0 0 var(--plane), inset -1px 0 0 var(--rule); }
 .hg-table thead th:first-child { z-index: 2; }
-/* The selected row's ground travels with its sticky cell; the ink bar is the system's (tokens.css). */
+/* The selected row's ground travels with its sticky cell — and so does its ink
+   bar, which the gutter shadow above would otherwise replace: a selection
+   marked by ground alone measures 1.08:1, which is what the shared rule in
+   tokens.css exists to prevent. Three shadows, one job each: the page's ground
+   in the gutter, the ink bar inside the cell's leading edge, the column's rule
+   on its trailing one. */
 .hg-table tr:has(> * > [aria-current="true"]) > th:first-child { background: var(--surface-sunk);
-                                                                 box-shadow: 3px 0 0 var(--plane), inset -1px 0 0 var(--rule); }
+                                                                 box-shadow: 3px 0 0 var(--plane), inset 3px 0 0 var(--ink), inset -1px 0 0 var(--rule); }
 /* One left bar, one meaning — selection (S7): an incomplete row is flagged by
    its cells' own words, and at a narrow width by the amber word beside its
    code, on screen without a swipe (S10). Hidden from 62rem, where the Figures

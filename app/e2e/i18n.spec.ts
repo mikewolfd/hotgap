@@ -139,7 +139,16 @@ const PAGES: PageUnder[] = [
   },
   {
     name: "places", url: "/places.html",
-    ready: async (page) => { await page.waitForLoadState("networkidle"); await page.click('.tile[data-st="CO"]'); await page.locator("#corrections li").first().waitFor(); },
+    /* Picture first (PICTURE-FIRST-2026-09-18): the map page keeps most of its
+       strings behind the figure's two disclosures and the page's three, so the
+       gate opens them — a string it cannot see is a string it cannot check.
+       The same edit the citizen entry above needed, for the same reason. */
+    ready: async (page) => {
+      await page.waitForLoadState("networkidle");
+      await page.click('.tile[data-st="CO"]');
+      await page.evaluate(() => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details")) d.open = true; });
+      await page.locator("#corrections li").first().waitFor();
+    },
   },
 ];
 
