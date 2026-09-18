@@ -150,8 +150,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the figure's disclosure and the page's three carry the contract's names, in its order, with nothing selected", panels);
 
     /* Everything below is read with the page opened up, so a check can reach
-       the ranked strip and the table without asking whether they are folded. */
+       the ranked strip and the table without asking whether they are folded —
+       which is also where a layout that only fits while folded would show, so
+       the sideways check is taken again with everything out. */
     await page.evaluate(OPEN_ALL);
+    await page.waitForTimeout(250);
+    const openScroll = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+    check(openScroll[0] <= openScroll[1], "no horizontal scroll with every disclosure open", { scrollWidth: openScroll[0], innerWidth: openScroll[1] });
     /* The counted sentence is written whole from the data (S6) and keeps its
        code; since the picture-first pass it opens "How to read this map",
        where a reader who wants to know how far the run reaches looks. */
