@@ -157,7 +157,7 @@ page:
 |---|---|
 | *How to read this picture* | the MarkKey, the caption (axis floor, estimates, the year and state), the keyboard sentence. Inside `<figure>`, because it explains the thing it sits in. |
 | *What happens at each step* | the keep-rate sentence for the next stretch, the StepList (one row per threshold, deferred rows badged), where help with heating bills stops, and the numbers table. |
-| *What we assumed* | the assumed rows — the household the curve was run for, every correction that touched it — then how common this pay is, and the lowest legal pay. |
+| *What we assumed* | the assumed rows — the household the curve was run for, every correction that touched it — then how common this pay is, and the lowest legal pay. Planned as *What we assumed about you*; two fresh readers, in two languages, said those two words made them feel sized up by a stranger. |
 | *Where these numbers come from* | the SourceNote, the incomplete-state caution, and the footer's three sentences. |
 
 Rules that go with them:
@@ -202,7 +202,15 @@ new rule is a priority list with a collision test, not a count:
 5. **+$7,000** — the leap, on its bracket.
 6. **you keep 12¢ of each extra dollar** — once, on the road out of poverty,
    in `--ink-3`, below the axis where it cannot be read as part of the curve.
-7. Every other drop's money, in axis order, while there is room.
+7. Every other drop, biggest first, while there is room — at most three drop
+   labels in all. Each is two lines, its money and what ends there; the money
+   goes alone only where the two-line box will not fit.
+
+*(Built as written except for these two: the order is biggest-first, not axis
+order, because a crowded stretch spent the last label on its smallest step;
+and every labelled drop names what ends, not only the largest, because on a
+phone the largest is often a swipe away. `charts.md` carries the rules as
+built.)*
 
 **Collisions.** Labels are placed in that order; each candidate spot is tested
 against the dots (with the open ring's box), the diamond and the labels
