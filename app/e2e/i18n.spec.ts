@@ -135,7 +135,16 @@ const PAGES: PageUnder[] = [
   },
   {
     name: "caseworker", url: "/caseworker.html?zip=80903&kids=3%2C7&pay=38000&unit=year&rent=1735&childcare=2773&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=pay%3D55000",
-    ready: async (page) => { await page.locator("table.compare td").first().waitFor(); await page.locator("#corrections li").first().waitFor(); },
+    /* Picture first (PICTURE-FIRST-2026-09-18), as on the citizen page: the
+       caseworker surface keeps most of its strings behind five named
+       disclosures, so the gate opens them — a string it cannot see is a
+       string it cannot check. */
+    ready: async (page) => {
+      await page.locator("#curve path").first().waitFor();
+      await page.evaluate(() => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details")) d.open = true; });
+      await page.locator("table.compare td").first().waitFor();
+      await page.locator("#corrections li").first().waitFor();
+    },
   },
   {
     name: "places", url: "/places.html",

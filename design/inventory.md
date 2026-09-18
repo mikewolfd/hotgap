@@ -118,6 +118,9 @@ and writes it here.
 | *What happens at each step* | the keep rate on the next stretch, StepList / ThresholdLedger, EligibilityBoundary, DataTable |
 | *What we assumed* | the assumed rows and every correction that touched them, then reach and the lowest legal pay. Named *What we assumed about you* until a fresh reader said it made her feel "sized up by a stranger" — twice, in two languages. The line inside still says whose household it is |
 | *Where these numbers come from* | SourceNote, IncompleteMarker, CorrectionsApplied, the estimates footer |
+| *What this family faces, step by step* | **Caseworker.** The zones beyond this household's and the pay past which none remain, the StatTiles, the DropLedger with each row's position, and BreakdownBars. This surface's reading of *What happens at each step*: the rows a cliff mark opens, led by the five figures a counselor reads out. The tiles were the page's second line until 2026-09-18; a row of 30px numbers above the picture is the big-number hero the plan refuses (`PICTURE-FIRST` § Review against the generic tells) |
+| *Compare the what-ifs* | **Caseworker.** The CompareTable with its keep-rate row, the on-the-way lists, each column's *Remove* and *Try again*, and the compare note. Added by this surface because the comparison is now two objects: the lines on the picture, which is where a counselor meets it, and the figures here, which is where she reads it off. *Add a what-if* stays in the masthead — it changes the answer |
+| *Where each program ends* | **Caseworker.** ThresholdLedger and the EligibilityBoundary row inside it, with the ledger's footnote. The same slot as *What happens at each step*, under the name this surface already gave it |
 
 Four rules that go with them:
 
@@ -132,6 +135,14 @@ Four rules that go with them:
   notice and the incomplete-state caution stay in the open, whatever the
   budget costs. A page under its word count with a hidden warning has failed
   the measurement, not passed it.
+- **And nothing that does not warn stays.** Its converse, added by the
+  caseworker pass: *Figures complete for Colorado. Nothing this household
+  would hold is unmodelled here* is provenance, not a caution, and it was
+  costing the first screen forty-five words. The same component renders into
+  the notices when it has something to warn about and into *Where these
+  numbers come from* when it does not (`caseworker/render.ts`,
+  `renderCoverage`). A warning is what a reader would act on, not every
+  sentence about the data.
 
 ## `--control-edge`
 

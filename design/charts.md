@@ -318,6 +318,11 @@ Drawn in this order, each only if it fits:
    order, because a crowded stretch would otherwise spend the last label on
    the smallest step in it: a $677 drop named beside a $2,387 one that is not.
 
+**A what-if line's tag comes third**, between 2 and 3 (caseworker,
+2026-09-18). It is not a fact about the household's own curve, but a line
+nobody can name is a line that lies, and a second curve is a heavier claim on
+the reader than any of the rules below it. See § A what-if is a second line.
+
 **A drop's label is two lines**: its money, then what ends there — the plain
 phrase for `programsLost[0]`, which is the sentence this page used to spend a
 paragraph on. A number with no cause is half a label. Where the two-line box
@@ -349,6 +354,43 @@ needs its top edge.
 
 Tick labels take `.hg-tick` (12px); word labels take `.hg-label` (13px) —
 never a bare `font-size`.
+
+### A what-if is a second line (2026-09-18)
+
+The caseworker surface is the only one with what-ifs (`README.md` § Where the
+personas conflict, 2), and until this pass its comparison was a table: a
+counselor met four columns of figures before she met the two curves they came
+from. Picture first means the comparison is the picture, so **every what-if
+that has an evaluation is drawn on the base household's own plot**, and the
+CompareTable is what she opens to read the figures off.
+
+- **How it is drawn.** The same axis, the same scale, mapped through the base
+  plot's own `px`/`py`, clipped to the base's earnings axis: two curves on two
+  scales are not a comparison. 1.5px against the base's 2px, in `--series-2` —
+  the ink the CompareTable already rules its what-if columns with, so a line
+  and its column are one mark — and drawn *under* the base line, which is
+  never the curve a reader has to hunt for.
+- **How many.** Three. A fourth what-if keeps its column, its keep rate and
+  its on-the-way list, and the caption says how many lines are drawn and how
+  many are not. A column that is still computing, that failed, or that the
+  sweep cannot answer has no evaluation and therefore no line: the picture
+  never draws a curve nobody computed.
+- **How they are told apart.** By dash and by tag, never by colour alone:
+  three patterns (`7 4`, `2 3`, `10 4 2 4`), one tag each, and a key entry
+  drawn in the line's own dash inside *How to read this picture*. Greyscale, a
+  photocopier and a colour-blind reader keep the distinction; a tag the
+  collision rule has to drop costs a reader the name, not the difference.
+- **What the tag says.** The answer that changed, in the fewest words that
+  name it — the pay figure alone for a pay what-if (`$55,000`), otherwise the
+  control's own name (`Housing voucher`, `CCDF subsidy`), which is already the
+  shortest name the office uses and the same name the chip, the note and the
+  column carry (review S1). It sits at that what-if's own pay, which is where
+  that scenario puts the family, and it takes the same spots-and-collision
+  test as every other label.
+- **What it costs the y range.** A what-if's own nets widen it, so the base's
+  drops are shorter in pixels than they would be alone. That is honest and it
+  is the price of one scale: the 2.5× floor still holds and the caption prints
+  the ratio it actually drew at.
 
 ### Interaction and the text equivalent
 

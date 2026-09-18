@@ -30,7 +30,10 @@
 .notices > :empty, .notices > p:empty { display: none; }
 .notices > * { margin: var(--s3) 0 0; }
 .notices > .hg-print-only { margin-top: 0; }
-.notices .hg-button { margin-block-start: var(--s2); }
+/* A notice's Try again sits on the end of its own sentence, not under it: a
+   warning may cost the first screen what it has to, and not a line more. */
+.notices .hg-callout p { margin: 0; }
+.notices .hg-callout .hg-button { vertical-align: baseline; }
 .masthead { font-size: var(--t-small); color: var(--ink-2); margin: 0 0 var(--s3); }
 
 /* ── One sentence, then the picture ────────────────────────────────────

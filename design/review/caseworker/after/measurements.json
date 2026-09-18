@@ -1,25 +1,62 @@
 {
+ "PF-weight-390-light": {
+  "html": 84,
+  "svg": 23,
+  "total": 107,
+  "figureTop": 118,
+  "figureShare": 0.86,
+  "figureHeight": 746
+ },
+ "PF-weight-open-390-light": {
+  "html": 1429,
+  "svg": 23,
+  "total": 1452,
+  "figureTop": 118,
+  "figureShare": 0.86,
+  "figureHeight": 1192
+ },
+ "PF-labels-390-light": [
+  "net $84,371",
+  "−$27,893",
+  "loses 97¢ of each extra dollar",
+  "−$3,904",
+  "TANF cash assistance ends",
+  "−$3,821",
+  "Premium tax credit ends"
+ ],
  "S4-labels-390-light": [
   {
-   "t": "−$25,449",
+   "t": "net $84,371",
    "hit": 0
   },
   {
-   "t": "$84,732",
+   "t": "−$27,893",
    "hit": 0
   },
   {
-   "t": "+$7,000",
+   "t": "loses 97¢ of each extra dollar",
    "hit": 0
   },
   {
-   "t": "safe from here",
+   "t": "−$3,904",
+   "hit": 0
+  },
+  {
+   "t": "TANF cash assistance ends",
+   "hit": 0
+  },
+  {
+   "t": "−$3,821",
+   "hit": 0
+  },
+  {
+   "t": "Premium tax credit ends",
    "hit": 0
   }
  ],
  "N9-summary-light": {
   "text": "A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.",
-  "h": 46.5
+  "h": 40.28125
  },
  "S7-breakdown-light": {
   "track": 324,
@@ -40,30 +77,66 @@
     "w": 230,
     "right": 374
    }
-  ],
-  "wide": false
+  ]
  },
+ "PF-weight-390-dark": {
+  "html": 84,
+  "svg": 23,
+  "total": 107,
+  "figureTop": 118,
+  "figureShare": 0.86,
+  "figureHeight": 746
+ },
+ "PF-weight-open-390-dark": {
+  "html": 1429,
+  "svg": 23,
+  "total": 1452,
+  "figureTop": 118,
+  "figureShare": 0.86,
+  "figureHeight": 1192
+ },
+ "PF-labels-390-dark": [
+  "net $84,371",
+  "−$27,893",
+  "loses 97¢ of each extra dollar",
+  "−$3,904",
+  "TANF cash assistance ends",
+  "−$3,821",
+  "Premium tax credit ends"
+ ],
  "S4-labels-390-dark": [
   {
-   "t": "−$25,449",
+   "t": "net $84,371",
    "hit": 0
   },
   {
-   "t": "$84,732",
+   "t": "−$27,893",
    "hit": 0
   },
   {
-   "t": "+$7,000",
+   "t": "loses 97¢ of each extra dollar",
    "hit": 0
   },
   {
-   "t": "safe from here",
+   "t": "−$3,904",
+   "hit": 0
+  },
+  {
+   "t": "TANF cash assistance ends",
+   "hit": 0
+  },
+  {
+   "t": "−$3,821",
+   "hit": 0
+  },
+  {
+   "t": "Premium tax credit ends",
    "hit": 0
   }
  ],
  "N9-summary-dark": {
   "text": "A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.",
-  "h": 46.5
+  "h": 40.28125
  },
  "S7-breakdown-dark": {
   "track": 324,
@@ -84,20 +157,47 @@
     "w": 230,
     "right": 374
    }
-  ],
-  "wide": false
+  ]
  },
+ "PF-weight-1280-light": {
+  "html": 88,
+  "svg": 32,
+  "total": 120,
+  "figureTop": 110,
+  "figureShare": 0.87,
+  "figureHeight": 786
+ },
+ "PF-weight-open-1280-light": {
+  "html": 1444,
+  "svg": 32,
+  "total": 1476,
+  "figureTop": 110,
+  "figureShare": 0.88,
+  "figureHeight": 1092
+ },
+ "PF-labels-1280-light": [
+  "net $84,371",
+  "−$25,449",
+  "CCDF child care subsidy ends",
+  "back to even",
+  "safe from here",
+  "loses 97¢ of each extra dollar",
+  "−$3,904",
+  "TANF cash assistance ends",
+  "−$3,821",
+  "Premium tax credit ends"
+ ],
  "S4-labels-1280-light": [
+  {
+   "t": "net $84,371",
+   "hit": 0
+  },
   {
    "t": "−$25,449",
    "hit": 0
   },
   {
-   "t": "$84,732",
-   "hit": 0
-  },
-  {
-   "t": "+$7,000",
+   "t": "CCDF child care subsidy ends",
    "hit": 0
   },
   {
@@ -106,6 +206,26 @@
   },
   {
    "t": "safe from here",
+   "hit": 0
+  },
+  {
+   "t": "loses 97¢ of each extra dollar",
+   "hit": 0
+  },
+  {
+   "t": "−$3,904",
+   "hit": 0
+  },
+  {
+   "t": "TANF cash assistance ends",
+   "hit": 0
+  },
+  {
+   "t": "−$3,821",
+   "hit": 0
+  },
+  {
+   "t": "Premium tax credit ends",
    "hit": 0
   }
  ],
@@ -251,19 +371,47 @@
  ],
  "S7-breakdown-1280": {
   "h": 31.25,
-  "track": 427.78125
+  "track": 950
  },
+ "PF-weight-1280-dark": {
+  "html": 88,
+  "svg": 32,
+  "total": 120,
+  "figureTop": 110,
+  "figureShare": 0.87,
+  "figureHeight": 786
+ },
+ "PF-weight-open-1280-dark": {
+  "html": 1444,
+  "svg": 32,
+  "total": 1476,
+  "figureTop": 110,
+  "figureShare": 0.88,
+  "figureHeight": 1092
+ },
+ "PF-labels-1280-dark": [
+  "net $84,371",
+  "−$25,449",
+  "CCDF child care subsidy ends",
+  "back to even",
+  "safe from here",
+  "loses 97¢ of each extra dollar",
+  "−$3,904",
+  "TANF cash assistance ends",
+  "−$3,821",
+  "Premium tax credit ends"
+ ],
  "S4-labels-1280-dark": [
+  {
+   "t": "net $84,371",
+   "hit": 0
+  },
   {
    "t": "−$25,449",
    "hit": 0
   },
   {
-   "t": "$84,732",
-   "hit": 0
-  },
-  {
-   "t": "+$7,000",
+   "t": "CCDF child care subsidy ends",
    "hit": 0
   },
   {
@@ -272,6 +420,26 @@
   },
   {
    "t": "safe from here",
+   "hit": 0
+  },
+  {
+   "t": "loses 97¢ of each extra dollar",
+   "hit": 0
+  },
+  {
+   "t": "−$3,904",
+   "hit": 0
+  },
+  {
+   "t": "TANF cash assistance ends",
+   "hit": 0
+  },
+  {
+   "t": "−$3,821",
+   "hit": 0
+  },
+  {
+   "t": "Premium tax credit ends",
    "hit": 0
   }
  ],
@@ -301,8 +469,7 @@
     "w": 114,
     "right": 485
    }
-  ],
-  "wide": true
+  ]
  },
  "B2-compare-390-1-whatif": {
   "tableW": 358,
@@ -322,8 +489,25 @@
     "w": 126,
     "right": 374
    }
-  ],
-  "wide": false
+  ]
+ },
+ "PF-whatif-tags-1280": [
+  "CCDF subsidy",
+  "Housing voucher",
+  "$55,000"
+ ],
+ "PF-whatif-dashes": [
+  "7 4",
+  "2 3",
+  "10 4 2 4"
+ ],
+ "PF-weight-1280-3-whatifs": {
+  "html": 88,
+  "svg": 39,
+  "total": 127,
+  "figureTop": 110,
+  "figureShare": 0.87,
+  "figureHeight": 786
  },
  "B2-compare-1280-3-whatifs": {
   "tableW": 1184,
@@ -351,8 +535,7 @@
     "w": 271,
     "right": 1232
    }
-  ],
-  "wide": true
+  ]
  },
  "N7-cell-shadow": "rgb(210, 97, 31) 1px 0px 0px 0px inset",
  "S6-compare-1280-failed": {
@@ -385,8 +568,7 @@
     "w": 371,
     "right": 1232
    }
-  ],
-  "wide": true
+  ]
  },
  "keepRate-calls": [
   {
@@ -464,8 +646,44 @@
     "w": 123,
     "right": 614
    }
-  ],
-  "wide": true
+  ]
+ },
+ "ES-labels-390": [
+  "neto $84,371",
+  "−$27,893",
+  "pierde 97¢ de cada dólar extra",
+  "−$3,904",
+  "se termina Asistencia en efectivo TANF",
+  "−$3,821",
+  "se termina Crédito fiscal para las primas"
+ ],
+ "ES-weight-390": {
+  "html": 95,
+  "svg": 25,
+  "total": 120,
+  "figureTop": 118,
+  "figureShare": 0.86,
+  "figureHeight": 746
+ },
+ "ES-labels-1280": [
+  "neto $84,371",
+  "−$25,449",
+  "se termina Subsidio de cuidado infantil CCDF",
+  "de vuelta a la par",
+  "seguro de aquí en adelante",
+  "pierde 97¢ de cada dólar extra",
+  "−$3,904",
+  "se termina Asistencia en efectivo TANF",
+  "−$3,821",
+  "se termina Crédito fiscal para las primas"
+ ],
+ "ES-weight-1280": {
+  "html": 100,
+  "svg": 36,
+  "total": 136,
+  "figureTop": 110,
+  "figureShare": 0.88,
+  "figureHeight": 811
  },
  "N4-mark1-390": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
  "S5-TX-caption": "The y-axis starts at $0; the visible range is 23.3× the largest drop. The x-axis runs $0 to $150,000; scroll the curve sideways to reach all of it. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
@@ -488,6 +706,7 @@
   "buttons": 0,
   "caption": "none",
   "readout": "none",
+  "masthead": "block",
   "handout": "block",
   "handoutSize": "17.3333px",
   "handoutMeasure": "476.397px",
@@ -496,6 +715,10 @@
   "curveWidth": "620",
   "gutterWidth": "52",
   "pageOverride": false
+ },
+ "B1-archetype-1280": {
+  "head": "\tNow\n\n1 adult, $38,000 (archetype)\n\tHousing voucher on\n\nnot in the sweep — needs the live call\n\tPay $55,000 a year\n\n1 adult, $55,000 (archetype)",
+  "change": "Change from now\t—\t—\t−$28,447"
  },
  "P7-TX-ledger-boundary": "$39,975LIHEAP energy assistance if you apply150% of the poverty guideline, the heating limit. Worth $1,200 at that band if received; 3% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.Household"
 }

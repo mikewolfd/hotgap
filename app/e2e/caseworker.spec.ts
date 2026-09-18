@@ -182,6 +182,9 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
       await page.evaluate(OPEN_ALL);
       await page.screenshot({ path: pf(`${width}-open`), fullPage: true });
       await page.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = false; });
+    } else {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: pf(`${width}-screen1-dark`) });
     }
     if (width < 720) {
       measured[`N9-summary-${scheme}`] = await page.evaluate(() => ({ text: document.querySelector(".hg-scenario__summary span")!.textContent, h: document.querySelector(".hg-scenario__summary span")!.getBoundingClientRect().height }));
@@ -544,6 +547,32 @@ test("390px with three what-ifs: no horizontal scroll (the compare table's width
   // And closes them again afterwards, so the screen is where the reader left it.
   expect(await page.evaluate(() => (document.getElementById("ledger-panel") as HTMLDetailsElement).open)).toBe(false);
 
+  expect(errors).toEqual([]);
+});
+
+test("es-US: the answer, the picture's labels and the disclosure names are the Spanish redraft, and the budget holds in a language three tenths longer", async ({ page }) => {
+  const errors = consoleErrors(page);
+  await light(page);
+  for (const width of [390, 1280] as const) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await page.goto(`${HOUSEHOLD}&lang=es-US`);
+    await expect(page.locator("#answer")).toHaveText("Esta familia pierde dinero con cada aumento entre $36,000 y $45,000; $7,000 la saca del tramo.");
+    await expect(page.locator("#howToSummary")).toHaveText("Cómo leer esta gráfica");
+    await expect(page.locator("#stepsHeading")).toHaveText("Lo que enfrenta esta familia, escalón por escalón");
+    await expect(page.locator("#compare")).toHaveText("Comparar los escenarios");
+    const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
+    measured[`ES-labels-${width}`] = labels;
+    expect(labels).toContain("neto $84,371");
+    expect(labels.some((l) => /¢ de cada dólar extra$/.test(l ?? ""))).toBe(true);
+    const weight = await page.evaluate(MEASURE);
+    measured[`ES-weight-${width}`] = weight;
+    expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
+    expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop);
+    expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[width]);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: pf(`${width}-es`) });
+    await noOverflow(page);
+  }
   expect(errors).toEqual([]);
 });
 
