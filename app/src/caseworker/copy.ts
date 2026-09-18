@@ -5,7 +5,7 @@
 // lib/programs.ts (M3) and state names from the catalog. `editor` is the
 // register laid over the citizen editor's words (mountEditor's `copy`).
 // `handout` is the client sheet, in the citizen register (review S8), and
-// reads the citizen's phrases; the readability gate grades it.
+// reads the citizen's phrases; social workers review it, not a formula.
 //
 // The decisions the messages carry, by key:
 //   editor.* — the editor in the caseworker register: the household is the
