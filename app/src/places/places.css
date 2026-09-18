@@ -74,7 +74,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 @media (min-width: 64rem) {
   .hg-picture.picture { margin-inline: 0; }
   .hg-picture.picture > :not(.map) { padding-inline: 0; }
-  .picture > .map { max-width: 48rem; }
+  /* The scale explains the map, so it is the map's width, not the column's. */
+  .picture > .map, .picture > .legend { max-width: 48rem; }
 }
 
 /* StateTiles (#13). Equal squares on a twelve-column grid, as large as the
@@ -111,9 +112,16 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 
 /* ── The legend strip, inside the figure ────────────────────────────────
    The ramp, its printed bounds and the marks that are on this map: one strip
-   under the tiles, not a column beside them. Above 40rem the ramp and the
-   words share a line, because the ramp needs about a third of the width and
-   the words the rest. */
+   under the tiles, not a column beside them.
+
+   THE RAMP IS THE WIDTH OF THE MAP, at every width, and its bounds sit under
+   it. The first draft gave the ramp a third of the line and the key the rest,
+   which read tidily on the keep rate — seven labels of five characters — and
+   broke on every dollar measure: six bounds of "$148,000" want 348px and had
+   320, so the safe-exit scale printed "$108,000$116,000$124,000…" with no
+   gaps between the figures (measured at 1280). A scale as wide as the thing it
+   explains also puts each bound where its swatch ends, which is what a printed
+   bound is for. The key follows on its own line. */
 /* The strip closes with a rule the width of the picture, so the readout under
    it reads as the map's caption rather than as one more line of key. The rule
    belongs to the legend and not to the readout, whose own box is capped at a
@@ -134,13 +142,6 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
                 margin-top: var(--s1); }
 .scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
 .legend .hg-key { margin-top: var(--s2); }
-@media (min-width: 40rem) {
-  .legend { display: grid; grid-template-columns: minmax(12rem, 20rem) 1fr; column-gap: var(--s5);
-            align-items: start; }
-  .legend .scale { grid-column: 1; }
-  .legend .scale-labels { grid-column: 1; }
-  .legend .hg-key { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
-}
 
 /* The one caution the map on the screen has earned. A callout, so it reads as
    an aside and not as a failure; its own top margin, because the shared class
