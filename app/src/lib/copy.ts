@@ -32,8 +32,7 @@
 // archive's t.ts, design/PORT-FROM-ARCHIVE-2026-09-16.md M1); `parts` is
 // the same for a renderer that marks an argument up; `bind` gives a module
 // its `t(key, params)` over dotted keys. A compiled message is cached per
-// source string, so a render is O(messages), not O(parses). The readability
-// gate (scripts/readability.mjs) walks en.json.
+// source string, so a render is O(messages), not O(parses).
 //
 // THE LOCALE. Resolved once per page load, before any module reads a message
 // (the top-level await below holds every importer until the catalog is in):

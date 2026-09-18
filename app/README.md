@@ -135,8 +135,7 @@ The editor's own hooks are `#editor` (the screen, `hidden` when closed),
 the one evaluation. The result also fetches `/data/summary.json` once, for
 the SourceNote's vintages and the incomplete-state notice, and renders
 without it until it arrives. Every string it shows is in
-`src/citizen/copy.ts` (`t()` throws on an unfilled slot), which
-`npm run readability` grades.
+`src/citizen/copy.ts` (`t()` throws on an unfilled slot).
 
 **URL state** is the CLI's flags (`core/src/flags.ts`, `HOUSEHOLD_FLAGS`):
 `/?zip=94110&kids=3,7&pay=30000&unit=year&married=1&housing=1`. A boolean
@@ -327,7 +326,7 @@ the element holding it, and the document must not scroll sideways. Then `es-US`
 renders every page and must show none of the 589 English phrases the gate
 builds from `en.json`, must say `lang="es-US"`, and must carry the locale's own
 dates, lists and dollars. Both halves were proved to fail before they were
-trusted. `npm run readability` runs on English only.
+trusted.
 
 **What stays English, on purpose.** The CSV's column headers and the URL's
 parameter names — machine contracts, asserted identical in both languages
@@ -352,7 +351,6 @@ professional, the journalist quotable — and no native speaker has read it.
     cd app && npx vite build           # the site
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
     cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts — the editor, citizen, caseworker and places proofs, and the languages gate i18n.spec.ts (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/; the shared harness is e2e/support.ts)
-    npm run readability                # Flesch–Kincaid over src/i18n/en.json, English only (design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
     node e2e/text-dump.mjs <dir> <url> [lang]   # every page's text at 1280, one file each: diff two builds to prove a rendered string did not move
 
 For the archetype path: run `wrangler dev` yourself with a dead engine

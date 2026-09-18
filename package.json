@@ -16,8 +16,7 @@
     "typecheck": "npm run -s types -w worker && tsc -b core pipeline app worker",
     "contract": "RUN_CONTRACT=1 vitest run contract --no-file-parallelism",
     "pipeline": "tsx pipeline/src/run.ts",
-    "hotgap": "tsx core/src/cli.ts",
-    "readability": "tsx scripts/readability.mjs"
+    "hotgap": "tsx core/src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

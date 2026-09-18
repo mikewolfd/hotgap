@@ -1,8 +1,7 @@
 // Every string the editor shows: `editor.*` in src/i18n/<locale>.json (the
 // shape and the reader are lib/copy.ts), written in the citizen register
-// (short words, one thought a line). The readability gate
-// (scripts/readability.mjs, design/PORT-FROM-ARCHIVE-2026-09-16.md M1)
-// grades this namespace in en.json. Program and field names a caseworker
+// (short words, one thought a line); social workers review it, not a
+// formula (owner decision 2026-09-18). Program and field names a caseworker
 // uses (SNAP, TANF, CCDF, "permanent resident") appear only after the plain
 // phrase. A surface lays its own register over any part of it two levels
 // deep (mountEditor's `copy`).

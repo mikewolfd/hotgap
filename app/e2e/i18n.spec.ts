@@ -20,9 +20,6 @@
 // "Colorado premium assistance"); the hostname in a citation's link; and the
 // two machine contracts — the CSV's column headers and the URL's parameter
 // names, which are the same bytes in every language.
-//
-// The readability gate (scripts/readability.mjs) is English-only and is not
-// this file's business.
 import { IntlMessageFormat } from "intl-messageformat";
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
@@ -30,7 +27,7 @@ import { resolve } from "node:path";
 import { check, consoleErrors } from "./support.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
-/* The catalogs are read from the files, the way scripts/readability.mjs reads them, not through lib/copy.ts, which resolves its locales through Vite. */
+/* The catalogs are read from the files, not through lib/copy.ts, which resolves its locales through Vite. */
 const read = (rel: string): Nest => JSON.parse(readFileSync(resolve(ROOT, rel), "utf8")) as Nest;
 type Nest = { [k: string]: string | string[] | Nest };
 const EN: Nest = { ...read("app/src/i18n/en.json"), core: read("core/src/messages/en.json") };

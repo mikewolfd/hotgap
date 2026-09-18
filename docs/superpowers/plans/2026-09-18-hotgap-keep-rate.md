@@ -1,6 +1,6 @@
 # HotGap Keep Rate — the road out of poverty, and one question in three lenses (Plan 9)
 
-> **For agentic workers:** steps use checkbox (`- [ ]`) syntax; each phase lands as its own reviewed merge; every number a page prints is read from the data, never typed. Run every check through the project's runners (`npm run typecheck`, `npx vitest run`, `cd app && npx vite build`, `cd app && npx playwright test`, `npm run readability`). No resweep: the stored points do not change, the reading of them does.
+> **For agentic workers:** steps use checkbox (`- [ ]`) syntax; each phase lands as its own reviewed merge; every number a page prints is read from the data, never typed. Run every check through the project's runners (`npm run typecheck`, `npx vitest run`, `cd app && npx vite build`, `cd app && npx playwright test`). No resweep: the stored points do not change, the reading of them does.
 
 **Goal:** Make every surface ask the one question the tool exists to answer — *of each extra dollar you earn, what do you keep, and where does the road collapse?* — and make the journalist map measure how regressive each state is toward the families climbing out of poverty, instead of naming the tallest wall on the whole axis wherever it stands.
 
@@ -49,7 +49,7 @@ The fix is not a percentile cut-off on the old measures. It is a different measu
 - [ ] **Position on every figure**: a "families earning less" column beside every dollar column in the big table and in the ranked row's secondary text; the CSV gains `keep_rate_cents`, `road_lo`, `road_hi`, `road_cliff_count`, `road_worst_drop`, `road_worst_at`, `road_worst_programs`, `position_*` for each earnings column, and `families_below_2x_poverty`. **Reach returns to this page** (Plan 8 removed it as unused; it is now load-bearing): the source line names the ACS vintage again, and the methodology says what position is and is not (cross-sectional: how many families already earn less, never a family's odds).
 - [ ] **The glossary line under the subhead** gains the one sentence of why: *"A cliff matters in proportion to how many families stand near it. The largest cliff in a state is usually one few families reach; the one that hurts is the modest one at the income most families have."*
 - [ ] Methodology: the road, the keep rate as an EMTR, the two caveats, the two groups of measures explained as two questions. Cite line unchanged.
-- [ ] Copy in `app/src/i18n/en.json` (`places.*`) and `es-US.json`; the readability gate reports the journalist corpus as before.
+- [ ] Copy in `app/src/i18n/en.json` (`places.*`) and `es-US.json`. (The readability gate was dropped on 2026-09-18: social workers review the copy in each register.)
 
 ## Citizen (`app/src/citizen/**`) — asks it of you, from where you stand
 
