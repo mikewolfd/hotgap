@@ -26,7 +26,7 @@ surface renders the component, not that it could.
 | 18 | **CorrectionsApplied** | The HotGap-side corrections behind this state's numbers, from `coverage[state].corrections` (§ CorrectionsApplied). | | ● | ● |
 | 19 | **Callout** | One shape for an aside about the data: a 3px left rule, `--note` or `--caution` or neutral, always led by a word. `.hg-callout`. Never a banner, toast or modal. | ● | ● | ● |
 | 20 | **Button** | One declaration, `.hg-button`; `--primary` for the one action a surface leads with; `--small` inside a source line. The CSV download and *Try again* are the base. The sketches' theme toggle is a demo control and no built surface carries one: `prefers-color-scheme` rules, and print is always light. | ● | ● | ● |
-| 21 | **FilterRow** | One row of `<select>`s above everything it scopes, plus the row's end slot for a download. `.hg-filters`. A control that scopes one component sits with that component in its own row — the table's order control under the table's heading — never in the shared row (places review S7). Never a filter inside a chart card. | | | ● |
+| 21 | **FilterRow** | One row of `<select>`s above everything it scopes, plus the row's end slot for a download. `.hg-filters`. A control that scopes one component sits with that component in its own row — the table's order control under the table's heading — never in the shared row (places review S7). Never a filter inside a chart card. A `<select>` whose options answer **two different questions** groups them and labels each group: the journalist's Measure and Table order both carry *On the road out of poverty* and *Anywhere on the curve*, in that order, because the two are not a ranking of one another (§ KeepRate). | | | ● |
 | 22 | **SkipLink** | The first focusable thing on the page, to the answer, the ledger or the table. `.hg-skip`. | ● | ● | ● |
 | 23 | **EligibilityBoundary** | A line a household never crossed: where a program it may not have stops. Three facts, never a drop (§ EligibilityBoundary). Today one program, energy assistance (LIHEAP), from `evaluation.liheap` / `coverage[ST].liheap`. | ● | ● | ● |
 
@@ -190,6 +190,14 @@ Takes `vintages` and `model` (`coverage[state].vintages`, whose `model` is
 
 > Estimates only. Rules: {year}. Rent: {vintages.rent.publisher}; {vintages.rent.vintage}. Child-care price: {vintages.childcare.preschool}, carried to {year} dollars by the BLS Employment Cost Index. Reach: {vintages.reach.vintages joined}. Model: policyengine-us {model.version}. Sweep generated {generated}.
 
+**Reach is in the line wherever a surface prints a position.** It was dropped
+from the journalist page while nothing there used it and is back since Plan 9,
+because "47 in 100 families like this earn less" is a figure whose survey a
+reader must be able to name. The journalist surface says the fact in the
+reader's words rather than the field's — "Families earning less: ACS 2024
+1-year PUMS, grown to 2026 dollars" — and reads it from that state's own
+coverage block, never from a list kept in the page.
+
 The publisher and vintage strings are printed verbatim, so they are written
 for the reader at their source (`scripts/build-state-defaults.mjs` →
 `state-defaults.json` `sources`): "HUD Office of Policy Development and
@@ -251,8 +259,8 @@ notice; it is never typed. LIHEAP is no longer in `unmodeled[]` at all
 `evaluation.personal` (the household's own zone), never to the whole-curve
 `escape`. Slots in braces are rendered from the evaluation; `{pay}` is the
 household's earnings in its own unit (§ Pay in the person's unit), `{kept}`
-is `analysis.currentNet`. The archive's reviewed strings (Flesch–Kincaid
-1.9–3.2) are the seed; every string here goes through the readability gate.
+is `analysis.currentNet`. The archive's reviewed strings are the seed; every
+string here is reviewed by social workers in the citizen register.
 
 | `verdict` | Sentence | Slots |
 |---|---|---|
@@ -294,11 +302,11 @@ One table, two registers, fourteen ids (`core/src/types.ts` `PROGRAM_IDS`).
 A page never inlines a program phrasing: the citizen surface composes
 "{Phrase} ends. It is called {name}." (or "…would end…" above current pay),
 the caseworker and journalist use `name`. Every `phrase` is citizen copy and
-goes through the readability gate; `name` is what the office calls it and
-is not gated. The archive's twelve reviewed phrases are the seed, split so
+is reviewed in the citizen register; `name` is what the office calls it and
+is reviewed as a name. The archive's twelve reviewed phrases are the seed, split so
 the acronym is the aside the README's two-register rule asks for.
 
-| id | phrase (citizen, gated) | name (neutral) |
+| id | phrase (citizen) | name (neutral) |
 |---|---|---|
 | snap | food help | SNAP |
 | medicaid | a free state health plan | Medicaid |
@@ -321,6 +329,60 @@ the acronym is the aside the README's two-register rule asks for.
 level program ends for one group, the sentence names the group from
 `programEndsByAge`: "Your own free state health plan ends" / "Your kids'
 health plan ends".
+
+**A figure never travels without what qualifies it.** Two things ride with a
+step wherever it is printed, by the same rule that keeps a program's name with
+its loss: the **programs** the step ends, and, where the step is a point on the
+earnings axis, its **position** — how many families like this one earn less than
+it (§ KeepRate). Both are the step's own data; neither is decoration, and a
+surface that has room for the figure has room for them.
+
+## KeepRate (Plan 9)
+
+The one question every surface asks — *of each extra dollar you earn, what do
+you keep?* — as a figure. `keepRate` is dollars kept per extra dollar across
+**the road out of poverty**, the earnings from the federal poverty guideline for
+the household's size to twice it; it is one minus the effective marginal tax
+rate, and it is a measure, not a score (`README.md` § What was deliberately left
+out). Core computes it; a surface renders it.
+
+**The words are core's, everywhere.** `keepRateWords(rate)` returns the sign word
+and the cents — always positive, because the sign word carries the sign — so the
+map, the citizen's answer and the caseworker's sheet cannot round or word one
+rate three ways. A surface chooses only how much room the phrase gets:
+
+| Where | Form | Example |
+| --- | --- | --- |
+| A legend end, a tile's own name | the whole phrase (`core.road.rate`) | keeps 30¢ of each extra dollar |
+| A ranked row's value, a table cell | the short form | keeps 30¢ |
+| A scale bound, an axis end | signed cents | +30¢, −56¢, 0¢ |
+| A bin's width | unsigned cents, because a width is a distance | 35¢ |
+| The readout's first sentence | `core.road.sentence` | Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar. |
+
+Zero keeps nothing and loses nothing, and says "keeps 0¢", which is true and
+reads as the plateau it is. Below zero the family ends the climb **poorer than
+it started** — that is what the lede says, once, rather than a minus sign a
+reader has to interpret.
+
+**Where it appears.** On the journalist page it is the default measure, first in
+the *On the road out of poverty* group, drawn on the diverging ramp with zero
+fixed as a bin edge (`charts.md` § 2); its ranking leads with the LOWEST rate,
+because the worst state on this measure is the most regressive one, and no state
+is lifted out of it for having no cliff — a state with a clear road still has a
+rate. On the citizen page it is the next stretch from where the person stands.
+On the caseworker page it is a row under each what-if column.
+
+**POSITION rides with it, and with every earnings figure.** A dollar figure on
+this site travels with the share of families like this one in that state who
+earn less than it: "47 in 100 families like this in Missouri earn less than
+that". It is the fact that says whether a cliff is one anybody stands at — the
+measure this plan exists because the page lacked. Three rules, and all three are
+the same rule the program phrases follow: it is a **sentence**, not a clause
+glued to another one (`core.road.position` is core's clause; a surface that
+needs a sentence writes one); it is **cross-sectional**, so a surface may say
+how many families already earn less and may never say a family's chance of
+getting there; and a missing survey cell is **null, never 0**, so it prints
+nothing rather than "0 in 100", which would read as a finding.
 
 ## EligibilityBoundary (#23)
 

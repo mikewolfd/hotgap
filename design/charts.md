@@ -323,6 +323,53 @@ postal code is `--ink` on bins 1–2 and `--surface` on bins 3–5**: measured,
 **Bins are recomputed per measure and their bounds are always printed.** A shade
 means nothing across two measures, and the caption says so.
 
+### The diverging ramp, for a measure with a meaningful zero
+
+A measure whose zero is a **fact about the world** — not the bottom of a scale —
+takes two ramps, not one. On this site that is the keep rate, where zero is the
+line between a family that ends a climb out of poverty poorer than it began and
+one that keeps a little of each extra dollar. Below zero is the plum loss ramp,
+which already means "money lost" everywhere else on the site; above it the
+**keep ramp** (`--keep-1..5`), the second arm, warm. Five rules:
+
+1. **Zero is always a bin edge**, and it is printed. The span is stretched to
+   include zero — a scale whose states all keep starts at zero rather than at
+   the lowest state — which is the one place this system bins from zero rather
+   than over the observed range, because here zero is the fact a reader is
+   looking for and not an empty corner of the scale.
+2. **Each arm is cut over its own reach**: three equal steps from zero out to
+   the furthest state on that side, the arm's ramp end to end, lightest against
+   the hinge. One width shared by both arms was built first and rejected on the
+   page: the arms are wildly asymmetric (105¢ and 30¢ on the committed sweep),
+   so the short arm got a single class and half the map was one flat colour. The
+   property a shared width buys — depth meaning the same distance from zero on
+   either ramp — is one a reader cannot use, because comparing depth across two
+   hues is not something the eye does reliably.
+3. **Both widths are printed**, for the same reason: "three steps of 35¢ below
+   zero and three of 10¢ above it, from −105¢ to +30¢". A step on one arm is not
+   a step on the other and the caption must not let a reader think it is.
+4. **Six swatches, not five**, because this is two scales meeting. The gap where
+   they meet is wider than the gaps inside each arm: the hue change says which
+   way is which, the gap says where the turn is.
+5. **The hue is the sign, so the pair has to survive colour blindness.**
+   Measured with a Viénot 1999 dichromat simulation, CIE76 ΔE between the arms'
+   matching steps, both themes: plum against the warm keep ramp is 38 or better
+   under protanopia and deuteranopia; plum against the blue money line collapses
+   to 2.4 and plum against teal to 5.6 — both unusable for about one man in
+   twelve. Tritanopia loses this pair instead, as it loses every warm/cool
+   diverging scale, and that is ~0.01% of readers against ~8%. The sign is
+   carried in words as well, three more times: the scale's two ends are named in
+   full ("loses 105¢ of each extra dollar"), every tile's own name says its
+   rate, and the ranked strip's bars run left of the hinge for a state that
+   loses. `app/src/places/model.ts` `divergingBins` is the rule.
+
+**The ranked strip follows the same zero.** The standing rule — a dot on a
+shared axis, never a bar, because a bar's length has to be read from a zero the
+axis does not have — holds for every measure but this one. The keep rate's axis
+CONTAINS zero, so the bar is the right mark: it runs from the hinge, left for a
+state that loses and right for one that keeps, with the hinge drawn as one rule
+down every row and labelled on the axis above them.
+
 **Fewer than five, for a count.** "Five, never more" is silent on fewer, and a
 count measure binned five ways over a range of 0 to 1 printed the scale
 *0 0 0 1 1 1* (places review S5). So a measure in whole numbers takes

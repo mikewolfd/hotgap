@@ -4,22 +4,97 @@
 // code's pick; every figure arrives formatted. Pure, no DOM; model.test.ts
 // pins the sentences here. Where a message is several sentences, they are
 // joined with a space in the order the reader meets them; a list is Intl's.
-import { LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
+import { keepRateWords, LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
+import { bind, catalog } from "../lib/copy.js";
 import { dayWords, listOf, listOfItems, modelLine, numberWords } from "../lib/format.js";
 import { programName } from "../lib/names.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, t } from "./copy.js";
 
+/** The sentences core writes, in the active language (`core.*`, app/README.md § Keep rate) — the road's own, which every surface says the same way. */
+const ct = bind(catalog.core);
+
+// ── The keep rate (Plan 9) ───────────────────────────────────────────────
+/* The sign word and the rounding are core's `keepRateWords`, never this
+   page's: the map, the citizen answer and the caseworker sheet cannot word
+   or round one rate three ways. What is this page's is how much room the
+   phrase gets — the whole phrase where a reader meets the measure for the
+   first time, the short form in a ranked row or a table cell, and a signed
+   tick on the scale, where five labels share the figure's width. */
+
+/** "keeps 30¢ of each extra dollar" — core's own phrase, for the legend and the tile. */
+export const keepPhrase = (rate: number): string => ct("road.rate", keepRateWords(rate));
+/** "keeps 30¢" — the ranked row's value and the table's cell. */
+export const keepShort = (rate: number): string => t("keep.short", keepRateWords(rate));
+/** "+30¢", "−56¢", "0¢" — a bin bound on the scale. */
+export const keepTick = (rate: number): string => t("keep.tick", keepRateWords(rate));
+/** "35¢" — a bin's width, which is a distance and takes no sign: it is the same step either side of zero. */
+export const keepSpan = (rate: number): string => t("keep.span", { cents: keepRateWords(rate).cents });
+/** Where the road's collapse is also the tallest wall on the whole curve, said once rather than printed twice. */
+export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
+
+// ── The road, as the readout leads with it ───────────────────────────────
+/* Three sentences, in the order a reader meets them: what the household
+   keeps of each extra dollar walking from the poverty line to twice it,
+   where that road collapses, and how many families like it are standing
+   below the collapse. The first two are core's own codes, so the citizen
+   answer and the caseworker sheet say them the same way; the two this page
+   adds are the two core has no code for — a road that holds, and a collapse
+   no single program explains — and the position sentence, which is a
+   sentence here and a clause in core. */
+
+/** "Missouri — a single parent of two children … ends up 56¢ poorer for every extra dollar." */
+export const roadSentence = (state: string, household: string, rate: number, cents: (n: number) => string = String): string => {
+  const w = keepRateWords(rate);
+  return ct("road.sentence", { state, household, sign: w.sign, cents: cents(w.cents) });
+};
+/**
+ * "The road collapses at $40,000, where CCDF child care subsidy ends and the
+ * family loses $16,428 in one step."
+ *
+ * core's `road.collapse` is the sentence, and it says "{program} ends" — one
+ * program, one verb. A step can end two at once (Massachusetts' road collapses
+ * on SNAP *and* WIC), and it can end none the model can name, so those two
+ * take this page's own wording rather than core's with a verb that does not
+ * agree. Same sentence, same figures, in the branch it belongs to.
+ */
+export const roadCollapse = (at: string, drop: string, ids: readonly ProgramId[]): string =>
+  ids.length === 1 ? ct("road.collapse", { at, drop, program: programs(ids) })
+    : ids.length ? t("readout.road.collapsePlural", { at, drop, programs: programs(ids) })
+      : t("readout.road.collapseNoProgram", { at, drop });
+/** What the model found instead, where no cliff falls on the road. */
+export const roadHolds = (step: string, lo: string, hi: string, floor: string): string => t("readout.road.holds", { step, lo, hi, floor });
+/** Who is standing there: the share of families like this earning less than the figure just named. */
+export const roadPosition = (n: number, state: string): string => t("readout.road.position", { n, state });
+export const axisPosition = (n: number): string => t("readout.axisPosition", { n });
+/** A cell whose road runs off its own axis: there is no rate to say. */
+export const roadOffAxisLine = (state: string): string => t("readout.road.offAxis", { state });
+export const roadCliffCountLine = (state: string, n: number): string => t("readout.measure.roadCliffCount", { state, n });
+/** Where a state's child-care price is not its own county's: the input that qualifies most of these cliffs, said beside them. */
+export const carePriceLine = (care: string, state: string): string => t("readout.carePrice", { care, state });
+
 /** "3 and 7" for two children, "1, 4, 9" for more (the label's own form, kept from the first review). */
 const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.map(String)) : listOfItems(ages.map(String)));
+
+/** Which of the three shapes a swept household is: one adult, or a couple with one earner or two. */
+const shapeOf = (married: boolean, bothWork: boolean): "single" | "bothWork" | "oneWorks" => (!married ? "single" : bothWork ? "bothWork" : "oneWorks");
 
 /** The household as the reader knows it (S10 of the first review): "1 adult, 2 children (3 and 7)". */
 export function householdLabel(married: boolean, bothWork: boolean, ages: number[]): string {
   const H = copy.household, n = ages.length;
-  const adults = !married ? H.adults.single : bothWork ? H.adults.bothWork : H.adults.oneWorks;
+  const adults = H.adults[shapeOf(married, bothWork)];
   const children = t("household.children", { n, ages: agesList(ages) });
   return t("household.line", { adults, children });
 }
+
+/**
+ * The same household as a SENTENCE names it — "a single parent of two
+ * children" — because the road sentence puts it in the middle of one and the
+ * label form ("1 adult, 2 children (3 and 7)") does not read there. Same
+ * facts, different grammar; the ages are the label's job, not this one's.
+ */
+export const householdPhrase = (married: boolean, bothWork: boolean, ages: number[]): string =>
+  t(`household.phrase.${shapeOf(married, bothWork)}`, { n: ages.length, words: numberWords(ages.length) });
 
 /** The counted lede sentence, the states counted as a reader counts them (rerun N11). */
 export const countedLede = (states: number, households: number, withDc: boolean): string =>
@@ -73,13 +148,18 @@ export const rankOrdinal = (n: number): string => t("rank.ordinal", { n });
 export const rowLabel = (rank: string, state: string, value: string, at?: string): string =>
   at ? t("rank.row.withAt", { rank, state, value, at }) : t("rank.row.plain", { rank, state, value });
 
+/** Which bound lifted a row out of the ranking: the axis, from above or below — or, on a road measure, a road that runs off the axis entirely. */
+export type LowerKey = "leap" | "safeExit" | "road";
+
 /** The lower-bound group's heading: it leads the order and shares ranks 1–n (B1). */
-export const lowerTitle = (key: "leap" | "safeExit", n: number): string => t(`rank.lower.${key}`, { n });
+export const lowerTitle = (key: LowerKey, n: number): string => t(`rank.lower.${key}`, { n });
 
 /** Why the ranks are shared, and the one thing the data lets a reader say about the worst. */
-export function lowerNote(key: "leap" | "safeExit", n: number, top: { state: string; v: string } | null, floor?: { state: string; v: string; reaches: boolean }): string {
+export function lowerNote(key: LowerKey, n: number, top: { state: string; v: string } | null, floor?: { state: string; v: string; reaches: boolean }): string {
   const lead = t(`rank.lower.note.${key}`, { n });
-  if (!top) return lead;
+  /* A road off the axis is not a bound on a figure — there is no figure —
+     so there is nothing to say about the largest one. */
+  if (key === "road" || !top) return lead;
   const tail = key === "leap" && floor
     ? t(`rank.lower.note.leapTop.${floor.reaches ? "reaches" : "larger"}`, { topState: top.state, topValue: top.v, floorState: floor.state, ...(floor.reaches ? {} : { floorValue: floor.v }) })
     : t("rank.lower.note.safeExitTop", { topState: top.state, topValue: top.v });
@@ -99,7 +179,13 @@ export function stepLine(state: string, loss: string, step: string, ids: readonl
     ? t("readout.floor", { n: ids.length, m: missing.length, state, loss, step, programs: programs(ids), missing: listOf(missing) })
     : t("readout.step", { n: ids.length, state, loss, step, programs: programs(ids) });
 }
-/** The worst step as the second line, under another measure's sentence. */
+/**
+ * The whole-axis worst as the LAST line, labelled for what it is (Plan 9).
+ * It used to lead; measured on the committed sweep it names a cliff above the
+ * median family's earnings in 39 states of 50, so it is a fact about the rules
+ * and not an answer to what happens to a family climbing out of poverty. The
+ * road leads now, and this follows it with the share of families below it.
+ */
 export function worstStepLine(loss: string, step: string, ids: readonly ProgramId[], missing: string[]): string {
   return missing.length
     ? t("readout.worstStepFloor", { n: ids.length, m: missing.length, loss, step, programs: programs(ids), missing: listOf(missing) })
@@ -118,6 +204,16 @@ export const hatchedLine = (n: number, programs: string[]): string => t("figure.
 export const binsLine = (bins: string, comparable: number, none: number, past: number): string =>
   t(`figure.binsLine.${none && past ? "nonePast" : none ? "none" : past ? "past" : "plain"}`, { bins, comparable, ...(none ? { none } : {}), ...(past ? { past } : {}) });
 export const classesLine = (n: number, lo: number, hi: number): string => t("figure.bins.classes", { n, words: numberWords(n), lo, hi });
+/**
+ * The diverging scale's bounds: each arm's own step and the two ends
+ * (charts.md § 2). Both widths are printed because they differ — each arm is
+ * cut over its own reach — and a reader must not take a step on one arm for a
+ * step on the other. With states on one side only there is one width to name.
+ */
+export const divergingLine = (arms: { down: string | null; up: string | null; nDown: number; nUp: number }, lo: string, hi: string): string =>
+  arms.down !== null && arms.up !== null
+    ? t("figure.bins.diverging", { down: numberWords(arms.nDown), downWidth: arms.down, up: numberWords(arms.nUp), upWidth: arms.up, lo, hi })
+    : t("figure.bins.divergingOneSide", { n: numberWords(arms.nDown || arms.nUp), width: (arms.down ?? arms.up)!, lo, hi });
 /** The axis the selected household was swept to, in dollars (rerun N9), with the states whose guidelines lengthen it. */
 export const axisLine = (household: string, top: string, exceptions: { state: string; top: string }[]): string =>
   exceptions.length
