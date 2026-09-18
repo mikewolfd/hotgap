@@ -27,6 +27,8 @@ export const KEY_MARK = {
   you: `<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--ink)" stroke="var(--surface)" stroke-width="1.5"/>`,
   leap: `<path d="M3 2 V10 M3 6 H19 M19 2 V10" fill="none" stroke="var(--loss-3)" stroke-width="1"/>`,
   safe: `<line x1="11" y1="0" x2="11" y2="12" stroke="var(--loss-3)" stroke-width="1"/>`,
+  /* The road out of poverty: a measured span under the axis, in the hairline ink, never a loss. */
+  road: `<path d="M3 3 V9 M3 6 H19 M19 3 V9" fill="none" stroke="var(--rule-strong)" stroke-width="1"/>`,
   /* EligibilityBoundary (#23): the axis tick, and nothing that looks like a loss. */
   boundary: `<line x1="1" y1="11" x2="21" y2="11" stroke="var(--axis)" stroke-width="1"/><line x1="11" y1="3" x2="11" y2="11" stroke="var(--ink-3)" stroke-width="2"/>`,
 } as const;

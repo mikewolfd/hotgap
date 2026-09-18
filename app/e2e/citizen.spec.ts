@@ -146,7 +146,7 @@ for (const scheme of ["light", "dark"] as const) {
       /* One StepList row per cliff (at its landing point), and the marks are every cliff on the axis. */
       for (const c of ev.analysis.cliffs) await expect(page.locator(`#step-${c.endEarnings}`)).toHaveCount(1);
       /* The disclosures hold what the page stopped saying by default, under the names the system fixed. */
-      for (const name of ["What happens at each step", "What we assumed about you", "Where these numbers come from"]) {
+      for (const name of ["What happens at each step", "What we assumed", "Where these numbers come from"]) {
         await expect(page.locator("details.hg-disclosure", { has: page.getByRole("heading", { name, exact: true }) })).toHaveCount(1);
       }
       const marks = page.locator(".hg-mark");
@@ -325,7 +325,7 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   await openPanel(page, "Where these numbers come from");
   await expect(page.locator("#source")).toContainText("These are your own numbers");
   // The sweep's summary is what names the reach data's vintage; without it the line is bare.
-  await openPanel(page, "What we assumed about you");
+  await openPanel(page, "What we assumed");
   await expect(page.locator("#result .hg-source", { hasText: "Census" })).toContainText(/survey data \(ACS \d{4}.*Grown to \d{4} dollars/);
   expect(errors).toEqual([]);
 });
@@ -374,7 +374,7 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   await expect(source).toContainText(/Sweep of [A-Z][a-z]{2} \d{1,2}, \d{4}/);
   await expect(source).toContainText(/from policyengine-us [\d.]+ with 2026 rules/);
   // The assumed list describes the swept household, not the person's echoed answers.
-  await openPanel(page, "What we assumed about you");
+  await openPanel(page, "What we assumed");
   await expect(page.locator(".assumed")).toContainText("the usual rent in California");
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-archetype.png"), fullPage: true });
   expect(errors).toEqual([]);
@@ -398,7 +398,9 @@ test(`a plateau household shows the flat-stretch wording (source ${EXPECT_SOURCE
   expect(next === null || next.startEarnings >= ev.analysis.currentEarnings + over).toBe(true);
   await openPanel(page, "What happens at each step");
   await expect(page.locator("#keep-next")).toContainText("that's a flat stretch: more pay, barely more money");
-  expect(dollars((await page.locator("#keep-next").textContent())!)).toEqual([over, Math.round((kept * over) / 500) * 500]);
+  /* The kept figure is a CHANGE in pay, so it takes the $100 step the main block measures against
+     (lib/format.ts payChangeRounded) — a stretch that keeps $100 must not print "$0". */
+  expect(dollars((await page.locator("#keep-next").textContent())!)).toEqual([over, Math.round((kept * over) / 100) * 100]);
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-plateau.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
@@ -449,7 +451,7 @@ test(`Texas: the toggle puts $1,200 into the line to the limit and the boundary 
   await openPanel(page, "What happens at each step");
   await expect(page.locator("#boundary")).toHaveText("You told us you get help with heating bills (LIHEAP), so it's in your line: about $1,200 a year, up to $40,000 a year.");
   await expect(page.locator("#chart svg line[data-boundary]")).toHaveCount(0);
-  await openPanel(page, "What we assumed about you");
+  await openPanel(page, "What we assumed");
   await expect(page.locator(".assumed")).toContainText("help with heating bills (LIHEAP energy assistance). We counted each one as if you get it.");
   expect(errors).toEqual([]);
 });

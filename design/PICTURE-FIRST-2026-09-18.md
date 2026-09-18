@@ -100,7 +100,7 @@ then cut every word that does not help.**
 │ ▸ How to read this picture             │
 ├────────────────────────────────────────┤
 │ ▸ What happens at each step            │
-│ ▸ What we assumed about you            │
+│ ▸ What we assumed            │
 │ ▸ Where these numbers come from        │
 └────────────────────────────────────────┘
 ```
@@ -135,7 +135,7 @@ is not improved by being wider.
 │   ▸ How to read this picture                                         │
 ├──────────────────────────────────────────────────────────────────────┤
 │ ▸ What happens at each step                                          │
-│ ▸ What we assumed about you                                          │
+│ ▸ What we assumed                                          │
 │ ▸ Where these numbers come from                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -157,7 +157,7 @@ page:
 |---|---|
 | *How to read this picture* | the MarkKey, the caption (axis floor, estimates, the year and state), the keyboard sentence. Inside `<figure>`, because it explains the thing it sits in. |
 | *What happens at each step* | the keep-rate sentence for the next stretch, the StepList (one row per threshold, deferred rows badged), where help with heating bills stops, and the numbers table. |
-| *What we assumed about you* | the assumed rows — the household the curve was run for, every correction that touched it — then how common this pay is, and the lowest legal pay. |
+| *What we assumed* | the assumed rows — the household the curve was run for, every correction that touched it — then how common this pay is, and the lowest legal pay. |
 | *Where these numbers come from* | the SourceNote, the incomplete-state caution, and the footer's three sentences. |
 
 Rules that go with them:

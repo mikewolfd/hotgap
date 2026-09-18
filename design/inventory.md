@@ -116,7 +116,7 @@ and writes it here.
 |---|---|
 | *How to read this picture* | MarkKey, the caption (axis floor, estimates, year and state), the keyboard sentence. Inside `<figure>` |
 | *What happens at each step* | the keep rate on the next stretch, StepList / ThresholdLedger, EligibilityBoundary, DataTable |
-| *What we assumed about you* | the assumed rows and every correction that touched them, then reach and the lowest legal pay |
+| *What we assumed* | the assumed rows and every correction that touched them, then reach and the lowest legal pay. Named *What we assumed about you* until a fresh reader said it made her feel "sized up by a stranger" — twice, in two languages. The line inside still says whose household it is |
 | *Where these numbers come from* | SourceNote, IncompleteMarker, CorrectionsApplied, the estimates footer |
 
 Four rules that go with them:

@@ -43,7 +43,7 @@ const DOT = 4.5, DOT_MERGED = 6;
 const PRINT_WIDTH = 640;
 
 /** The key entries: each draws the actual mark (never a swatch alone); an entry for a mark not in this picture keeps its place, hidden. */
-function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean, hasBoundary: boolean): HTMLUListElement {
+function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean, hasRoad: boolean, hasBoundary: boolean): HTMLUListElement {
   return h("ul", { class: "hg-key" },
     keyEntry(copy.key.line, KEY_MARK.line),
     keyEntry(copy.key.band, KEY_MARK.band, !s.zone),
@@ -51,6 +51,7 @@ function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolea
     keyEntry(copy.key.drop, KEY_MARK.drop, !hasDrop),
     keyEntry(copy.key.later, KEY_MARK.later, !hasLater),
     keyEntry(copy.key.you, KEY_MARK.you),
+    keyEntry(copy.key.road, KEY_MARK.road, !hasRoad),
     keyEntry(copy.key.boundary, KEY_MARK.boundary, !hasBoundary),
   );
 }
@@ -121,7 +122,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       /* Why the line is not the person's pay, and the largest part of it that never arrives as cash (S6) — beside
          the picture it describes, rather than as a second paragraph under the answer. */
       h("p", {}, subText(s)),
-      keyList(s, hasOther, hasLater, hasDrop, s.boundaryOnAxis), caption));
+      keyList(s, hasOther, hasLater, hasDrop, s.road !== null, s.boundaryOnAxis), caption));
 
   let L: Layout | null = null;
   let firstDraw = true;
@@ -302,9 +303,11 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     for (const mk of marks) boxes.push({ x: mk.cl.x - RING, y: mk.y - RING, w: 2 * RING, h: 2 * RING });
     boxes.push({ x: cx - 7, y: cy - 7, w: 14, h: 14 });
 
-    /* 1. What the reader keeps now, over their own diamond: the fact that
-          left the answer sentence to come and label the axis here. */
-    label([t("chart.labels.youKeep", { kept: m.money(s.currentNet) })],
+    /* 1. What the reader keeps now, at their own diamond: the fact that left
+          the answer sentence to come and label the axis here. It says in two
+          words why the figure is not the pay — a fresh reader met "you keep
+          $42,830" beside her own $30,000 and wanted to close the tab. */
+    label([t(s.currentNet >= s.current ? "chart.labels.youKeepHelp" : "chart.labels.youKeepTax", { kept: m.money(s.currentNet) })],
       [{ x: cx, y: cy - 14, anchor: "middle" }, { x: cx, y: cy + 26, anchor: "middle" },
         { x: cx + 14, y: cy + 4, anchor: "start" }, { x: cx - 14, y: cy + 4, anchor: "end" },
         { x: cx, y: cy - 34, anchor: "middle" }, { x: cx, y: top - 8, anchor: "middle" }],

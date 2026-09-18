@@ -243,12 +243,13 @@
         "leap": "+{leap}",
         "leapMore": "more than +{leap}",
         "drop": "−{drop}",
-        "youKeep": "you keep {kept}",
         "ends": "{phrase} ends",
         "road": {
           "keeps": "you keep {cents}¢ of each extra dollar",
           "loses": "you lose {cents}¢ of each extra dollar"
-        }
+        },
+        "youKeepHelp": "you keep {kept}, help counted",
+        "youKeepTax": "you keep {kept} after tax"
       },
       "scrolls": "The picture covers every pay from {from} to {to} — slide it sideways to see the rest.",
       "wholeOnPaper": "The picture covers every pay from {from} to {to}.",
@@ -264,7 +265,8 @@
       "drop": "A drop this year",
       "later": "A drop that waits",
       "you": "You now",
-      "boundary": "Where heating help stops"
+      "boundary": "Where heating help stops",
+      "road": "The road out of poverty"
     },
     "boundary": {
       "line": "Above {pay} you can't apply for help with heating bills in {state} any more. It's called LIHEAP.",
@@ -357,7 +359,7 @@
       "own": "your own {noun}"
     },
     "assumed": {
-      "heading": "What we assumed about you",
+      "heading": "What we assumed",
       "rent": "{amount} a month. You told us this.",
       "rentTypical": "{amount} a month — the usual rent in {state}.",
       "rentNone": "You didn't say, so we counted no rent.",
