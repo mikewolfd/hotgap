@@ -704,7 +704,8 @@
       "raiseTo": "hasta {exit} de ingresos",
       "raiseNotFound": "no encontrado por debajo de {top}",
       "atLeast": "> {n}",
-      "drop": "Mayor caída en un escalón",
+      "nextCliff": "Próxima caída",
+      "drop": "Mayor caída en cualquier punto de la curva",
       "dropAt": "en {from} → {to}",
       "reach": "Alcance con los ingresos actuales",
       "reachSub": "percentil, ±{moe} (n = {n})"
@@ -896,6 +897,7 @@
       "rows": {
         "net": "Neto después de primas",
         "change": "Cambio desde ahora",
+        "keep": "Lo que se queda de cada dólar extra",
         "inZone": "En una zona de peligro",
         "zoneEnds": "La zona termina en",
         "raise": "Aumento que aún falta",
@@ -918,7 +920,12 @@
       "reachNote": "El alcance es la proporción de hogares con la misma forma en {state} que ganan esta cifra o menos: dice qué tan común es el pago, nunca las probabilidades de llegar a él.",
       "ladderNote": "Una columna cuya forma de hogar difiere está en su propia escala ({other} frente a {base}), y por eso el mismo pago puede quedar en otro percentil ahí.",
       "archetypeNote": "Una columna marcada como arquetipo es el barrido comprometido para un hogar de esa forma en este estado, no la llamada en vivo de esta familia.",
-      "unansweredNote": "{n, plural, one {El barrido comprometido solo varía la forma y el pago de un hogar, así que un escenario que cambia otra cosa no tiene cifra hasta que responda la llamada en vivo.} other {El barrido comprometido solo varía la forma y el pago de un hogar, así que {n} escenarios que cambian otra cosa no tienen cifra hasta que responda la llamada en vivo.}}"
+      "unansweredNote": "{n, plural, one {El barrido comprometido solo varía la forma y el pago de un hogar, así que un escenario que cambia otra cosa no tiene cifra hasta que responda la llamada en vivo.} other {El barrido comprometido solo varía la forma y el pago de un hogar, así que {n} escenarios que cambian otra cosa no tienen cifra hasta que responda la llamada en vivo.}}",
+      "onTheWay": {
+        "heading": "En el camino — {title}",
+        "empty": "Ninguna caída entre aquí y allá.",
+        "item": "{n, plural, =0 {{at} — un paso hacia abajo ({drop})} one {{at} — {programs} se termina ({drop})} other {{at} — {programs} se terminan ({drop})}}"
+      }
     },
     "assumed": {
       "health": "El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",

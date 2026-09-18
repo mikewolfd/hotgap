@@ -13,7 +13,7 @@ import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, sourceLine, stateName, tiles, verdict, type Provenance,
+  modeled, onTheWay, sourceLine, stateName, tiles, verdict, type Provenance,
 } from "./model.js";
 
 /** The page's fixed words — headings, captions, column heads — from copy.ts into the skeleton, once. */
@@ -161,7 +161,7 @@ export function renderCompare(base: HouseholdEvaluation, cols: Column[], on: { r
     `<th scope="col" ${cls(c)}>${esc(c.title)}<br><span class="hg-cite">${esc(sub(c))}</span></th>`).join("");
   $("compareRows").innerHTML = compareRows(base).map((r) =>
     `<tr><th scope="row">${esc(r.label)}</th>` + cols.map((c) =>
-      `<td ${cls(c, r.money ? " money" : "")}>${c.ev ? esc(r.cell(c.ev)) : c.state === "computing" ? W.ellipsis : W.dash}</td>`).join("") + "</tr>").join("");
+      `<td ${cls(c, `${r.money ? " money" : ""}${r.wrap ? " wrap" : ""}`)}>${c.ev ? esc(r.cell(c.ev)) : c.state === "computing" ? W.ellipsis : W.dash}</td>`).join("") + "</tr>").join("");
   /* A what-if's controls live in a footer row, not its header, so a column's announced name stays its name. */
   const foot = $("compareFoot");
   foot.hidden = !cols.some(what);
@@ -176,6 +176,31 @@ export function renderCompare(base: HouseholdEvaluation, cols: Column[], on: { r
   $("compareEmpty").hidden = cols.length > 1;
   /* With more than one what-if the table takes both grid columns (B2); the page's grid reads the attribute. */
   $("compareSection").toggleAttribute("data-wide", cols.length > 2);
+  renderOnTheWay(base, cols);
+}
+
+/**
+ * On the way (Plan 9): under the table, one short list per pay what-if that
+ * changed pay from the base — the cliffs `onTheWay` (model.ts) reads off
+ * core's own `cliffsBetween`, each with the DeferredBadge where the cliff
+ * carries one and its position as the cite. A toggle what-if (the same pay
+ * as the base) gets no list at all, not an empty one (`onTheWay` returns
+ * null for it); a pay what-if whose stretch holds no cliff prints the
+ * empty line instead of an empty `<ul>`.
+ */
+function renderOnTheWay(base: HouseholdEvaluation, cols: Column[]): void {
+  const OW = copy.compare.onTheWay;
+  const sections = cols.flatMap((c) => {
+    if (c.index === undefined || !c.ev) return [];
+    const items = onTheWay(base, c.ev);
+    return items === null ? [] : [{ title: c.title, items }];
+  });
+  $("onTheWay").innerHTML = sections.map(({ title, items }) => `<div class="on-the-way__col"><h3>${esc(t("compare.onTheWay.heading", { title }))}</h3>` +
+    (items.length
+      ? `<ul>${items.map((it) => `<li>${esc(it.text)}` +
+          (it.deferred ? ` <span class="hg-badge">${esc(copy.drops.deferred)}</span>` : "") +
+          (it.position ? `<span class="hg-cite">${esc(it.position)}</span>` : "") + `</li>`).join("")}</ul>`
+      : `<p class="footnote">${esc(OW.empty)}</p>`) + `</div>`).join("");
 }
 
 export function renderAssumed(ev: HouseholdEvaluation, prov: Provenance): void {

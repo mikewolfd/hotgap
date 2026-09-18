@@ -701,7 +701,8 @@
       "raiseTo": "to {exit} earned",
       "raiseNotFound": "not found below {top}",
       "atLeast": "> {n}",
-      "drop": "Largest single-step drop",
+      "nextCliff": "Next cliff",
+      "drop": "Largest drop anywhere on the curve",
       "dropAt": "at {from} → {to}",
       "reach": "Reach at current earnings",
       "reachSub": "percentile, ±{moe} (n = {n})"
@@ -893,6 +894,7 @@
       "rows": {
         "net": "Net after premiums",
         "change": "Change from now",
+        "keep": "Keeps of each extra dollar",
         "inZone": "In a danger zone",
         "zoneEnds": "Zone ends at",
         "raise": "Raise still needed",
@@ -915,7 +917,12 @@
       "reachNote": "Reach is the share of households of the same shape in {state} earning at or below this figure — it says how common the pay is, never the odds of getting there.",
       "ladderNote": "A column whose household shape differs sits on its own ladder ({other} against {base}), which is why the same pay can sit at a different percentile there.",
       "archetypeNote": "A column marked archetype is the committed sweep for a household of that shape in this state, not this family's own live call.",
-      "unansweredNote": "{n, plural, one {The committed sweep varies only a household's shape and pay, so a what-if that changes something else has no figure until the live call answers.} other {The committed sweep varies only a household's shape and pay, so {n} what-ifs that change something else have no figure until the live call answers.}}"
+      "unansweredNote": "{n, plural, one {The committed sweep varies only a household's shape and pay, so a what-if that changes something else has no figure until the live call answers.} other {The committed sweep varies only a household's shape and pay, so {n} what-ifs that change something else have no figure until the live call answers.}}",
+      "onTheWay": {
+        "heading": "On the way — {title}",
+        "empty": "No cliff between here and there.",
+        "item": "{n, plural, =0 {{at} — a step down ({drop})} one {{at} — {programs} ends ({drop})} other {{at} — {programs} end ({drop})}}"
+      }
     },
     "assumed": {
       "health": "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",

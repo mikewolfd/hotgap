@@ -20,6 +20,9 @@ import { AUDIT_DIR as AUDIT, consoleErrors, noOverflow, outDir } from "./support
 const AFTER = outDir("design/review/caseworker/after");
 const shot = (name: string) => resolve(AUDIT, `caseworker-${name}.png`);
 const after = (name: string) => resolve(AFTER, `${name}.png`);
+/** Plan 9's own review folder: the keep-rate row, the on-the-way list, the tile demotion. */
+const KEEP_DIR = outDir("design/review/keep-rate");
+const keepShot = (name: string) => resolve(KEEP_DIR, `caseworker-${name}.png`);
 const measured: Record<string, unknown> = {};
 test.afterAll(() => writeFileSync(resolve(AFTER, "measurements.json"), JSON.stringify(measured, null, 1)));
 
@@ -52,9 +55,13 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     await expect(page.locator('[data-chip="where"] .hg-chip__v')).toHaveText("80903, CO, El Paso County");
     await expect(page.locator('[data-chip="childcare-subsidy"]')).toHaveText("CCDF subsidyon");
     await expect(page.locator('[data-chip="no-snap"]')).toHaveText("SNAPon");
-    // The verdict, the tiles and the reach margin from reach.json.
+    // The verdict, the tiles and the reach margin from reach.json. Plan 9: the family's own next cliff leads, the whole-axis worst — a different, farther cliff here — follows it labeled as the whole-axis fact, both with their own position.
     await expect(page.locator("#verdictSub")).toHaveText("It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.");
-    await expect(page.locator("#tiles .tile")).toHaveCount(4);
+    await expect(page.locator("#tiles .tile")).toHaveCount(5);
+    await expect(page.locator("#tiles .tile").nth(2)).toContainText("Next cliff");
+    await expect(page.locator("#tiles .tile").nth(2)).toContainText("$41,000 → $42,000");
+    await expect(page.locator("#tiles .tile").nth(3)).toContainText("Largest drop anywhere on the curve");
+    await expect(page.locator("#tiles .tile").nth(3)).toContainText("in 100 families like this earn less");
     await expect(page.locator("#tiles")).toContainText("percentile, ±$8,000 (n = 393)");
     // IncompleteMarker and CorrectionsApplied from coverage.CO — the count of states rendered, never typed; the notes core's own.
     await expect(page.locator("#coverage")).toContainText("Figures complete for Colorado.");
@@ -320,6 +327,102 @@ test("1280px: a shared comparison with three what-ifs fits its full-width table;
   expect(page.url()).toBe("about:blank");
   await noOverflow(page);
   expect(errors.filter((e) => !e.includes("503"))).toEqual([]);   /* the routed failure above logs its own 503 */
+});
+
+test("Plan 9: the keep-rate row and the on-the-way list measure against the page's own /api/evaluate responses; the tiles demote the whole-axis worst below the household's own next cliff", async ({ page }) => {
+  const errors = consoleErrors(page);
+  await light(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  // Every /api/evaluate call this page load makes, request and reply, captured live — the proof recomputes the keep cell and the on-the-way list from these, never from the rendered HTML alone.
+  const calls: { req: Record<string, unknown>; res: Record<string, unknown> }[] = [];
+  page.on("response", (res) => {
+    if (!res.url().endsWith("/api/evaluate")) return;
+    void res.json().then((body) => calls.push({ req: (res.request().postDataJSON() ?? {}) as Record<string, unknown>, res: body as Record<string, unknown> })).catch(() => {});
+  });
+  await page.goto(`${HOUSEHOLD}&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=pay%3D55000`);
+  await rendered(page);
+  await expect(page.locator("#compareHead th")).toHaveCount(5);
+  // Wait for every what-if to land before reading the table or the capture.
+  for (let i = 1; i <= 3; i++) await expect(page.locator("#compareRows tr").first().locator("td").nth(i)).toHaveText(/^\$[\d,]+$/);
+
+  // Plan 9's demotion: the family's own next cliff leads (a different, nearer cliff here), the whole-axis worst — labeled as the whole-axis fact — follows it, each with its own position.
+  const tiles = page.locator("#tiles .tile");
+  await expect(tiles).toHaveCount(5);
+  await expect(tiles.nth(2)).toContainText("Next cliff");
+  await expect(tiles.nth(2)).toContainText(/in 100 families like this earn less/);
+  await expect(tiles.nth(3)).toContainText("Largest drop anywhere on the curve");
+  await expect(tiles.nth(3)).toContainText(/in 100 families like this earn less/);
+
+  const earn = (c: { res: Record<string, unknown> }) => (c.res.analysis as Record<string, unknown>).currentEarnings as number;
+  const base = calls.find((c) => earn(c) === 38000 && c.req.getsChildcareSubsidy === true && c.req.getsHousing !== true);
+  const payWhatIf = calls.find((c) => earn(c) === 55000);
+  const toggleWhatIf = calls.find((c) => earn(c) === 38000 && c.req.getsChildcareSubsidy === false);
+  expect([base, payWhatIf, toggleWhatIf].every(Boolean), `captured base, pay and toggle what-ifs among ${calls.length} /api/evaluate calls`).toBe(true);
+  measured["keepRate-calls"] = calls.map((c) => ({ req: { earnings: c.req.annualEarnings, subsidy: c.req.getsChildcareSubsidy, housing: c.req.getsHousing }, net: earn(c) }));
+
+  // Δnet ÷ Δpay between the base and the pay what-if, rounded the way keepRateWords rounds — the compare row's own cell, never typed here.
+  const baseAnalysis = base!.res.analysis as Record<string, unknown>, payAnalysis = payWhatIf!.res.analysis as Record<string, unknown>;
+  const baseNet = baseAnalysis.currentNet as number, baseEarn = baseAnalysis.currentEarnings as number;
+  const payNet = payAnalysis.currentNet as number, payEarn = payAnalysis.currentEarnings as number;
+  const rate = (payNet - baseNet) / (payEarn - baseEarn);
+  const expectedKeep = `${rate < 0 ? "loses" : "keeps"} ${Math.round(Math.abs(rate) * 100)}¢ of each extra dollar`;
+
+  const payTitle = "Pay $55,000 a year", toggleTitle = "CCDF subsidy off";
+  const indexOfHeader = (title: string) => page.evaluate((t) => [...document.querySelectorAll("#compareHead th")].findIndex((th) => th.textContent?.includes(t)), title);
+  const payIndex = await indexOfHeader(payTitle), toggleIndex = await indexOfHeader(toggleTitle);
+  expect(payIndex).toBeGreaterThan(0);
+  expect(toggleIndex).toBeGreaterThan(0);
+  const keepRow = page.locator("#compareRows tr").nth(2);   /* net, change, keep — the row directly under Change from now */
+  await expect(keepRow.locator("th")).toHaveText("Keeps of each extra dollar");
+  await expect(keepRow.locator("td, th").nth(payIndex)).toHaveText(expectedKeep);
+  // The toggle changed no pay: its keep cell is the table's own dash, never a rate over $0.
+  await expect(keepRow.locator("td, th").nth(toggleIndex)).toHaveText("—");
+
+  // On the way: the base's own cliffs between the two pays, from the page's own live response.
+  const baseCliffs = baseAnalysis.cliffs as { startEarnings: number }[];
+  const lo = Math.min(baseEarn, payEarn), hi = Math.max(baseEarn, payEarn);
+  const expectedOnTheWay = baseCliffs.filter((c) => c.startEarnings >= lo && c.startEarnings < hi);
+  const payCol = page.locator("#onTheWay .on-the-way__col").filter({ hasText: payTitle });
+  await expect(payCol).toHaveCount(1);
+  await expect(payCol.locator("li")).toHaveCount(expectedOnTheWay.length);
+  for (const [i, c] of expectedOnTheWay.entries()) await expect(payCol.locator("li").nth(i)).toContainText(`$${c.startEarnings.toLocaleString("en-US")}`);
+  // The toggle column moved no pay: no on-the-way list at all, not an empty one.
+  await expect(page.locator("#onTheWay .on-the-way__col").filter({ hasText: toggleTitle })).toHaveCount(0);
+  measured["keepRate-onTheWay"] = { expected: expectedOnTheWay.map((c) => c.startEarnings), rendered: await payCol.locator("li").allTextContents() };
+
+  await page.evaluate(() => document.getElementById("compare")!.scrollIntoView());
+  await page.screenshot({ path: keepShot("1280") });
+  expect(errors).toEqual([]);
+});
+
+test("390px with three what-ifs: no horizontal scroll (the compare table's width rule holds with the keep row's prose cell); print keeps the row and stays light", async ({ page }) => {
+  const errors = consoleErrors(page);
+  await light(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${HOUSEHOLD}&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=pay%3D55000`);
+  await rendered(page);
+  await expect(page.locator("#compareHead th")).toHaveCount(5);
+  for (let i = 1; i <= 3; i++) await expect(page.locator("#compareRows tr").first().locator("td").nth(i)).toHaveText(/^\$[\d,]+$/);
+  // The page itself never scrolls sideways — B2's rule for the compare table's own scroller (fits whole at one or two what-ifs) is unchanged by the keep row; three what-ifs already needed the table's internal .hg-scroll-x before this plan, and still do — measured, not asserted narrower than the pre-existing contract.
+  await noOverflow(page);
+  const box = await compareBox(page);
+  measured["keepRate-B2-compare-390-3-whatifs"] = box;
+  console.log("keepRate-B2-compare-390-3-whatifs", JSON.stringify(box));
+  expect(box.cols[0].w).toBeGreaterThanOrEqual(112);   /* the sticky name column keeps its 8rem at this width, wrap row or not */
+  await page.evaluate(() => document.getElementById("compare")!.scrollIntoView());
+  await page.screenshot({ path: keepShot("390") });
+
+  await page.emulateMedia({ media: "print" });
+  await page.evaluate(() => dispatchEvent(new Event("beforeprint")));
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bg).toBe("rgb(255, 255, 255)");   /* paper is light, even from a light OS session */
+  const keepRow = page.locator("#compareRows tr").nth(2);
+  await expect(keepRow.locator("th")).toHaveText("Keeps of each extra dollar");
+  await expect(keepRow).toBeVisible();   /* the client sheet carries the keep row: nothing hides it on paper */
+  await page.screenshot({ path: keepShot("390-print") });
+  await page.evaluate(() => dispatchEvent(new Event("afterprint")));
+
+  expect(errors).toEqual([]);
 });
 
 test("390px: ] from the household's pay stops at the merged mark that holds its own cliff (N4)", async ({ page }) => {
