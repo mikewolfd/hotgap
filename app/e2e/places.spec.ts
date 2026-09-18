@@ -245,6 +245,15 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     })));
     check(tiles.length === STATES.length && tiles.map((t) => t.st).sort().join() === STATES.join(), `every state has a tile (${tiles.length})`);
     check(tiles.every((t) => t.tag === "BUTTON" && t.label), "every tile is a button with an accessible name", tiles[0].label);
+    /* The group has a name of its own, from the measure — not the figcaption's,
+       which a screen reader has just heard on entering the figure. */
+    const groupName = await page.evaluate(() => ({
+      label: document.querySelector("#grid")!.getAttribute("aria-label"),
+      by: document.querySelector("#grid")!.getAttribute("aria-labelledby"),
+      describedBy: document.querySelector("#grid")!.getAttribute("aria-describedby"),
+    }));
+    check(groupName.label === "Keep rate on the road out of poverty, state by state" && groupName.by === null && groupName.describedBy === "figDesc",
+      "the tile group is named for the measure it shows and described by how its squares work", groupName);
     check(tiles.every((t) => t.current === null), "with nothing selected, no tile is aria-current (a tab stop is not a selection)");
     const shownArch = await page.$eval("#arch", (el) => (el as HTMLSelectElement).value);
     const expectIncomplete = STATES.filter((st) => expectIncompleteFor(st, shownArch));
