@@ -8,67 +8,98 @@
   <script type="module" src="/src/places/main.ts"></script>
 </head>
 <body>
-<!-- The skeleton holds ids; every word is in src/places/copy.ts and is written in by render.ts (app/README.md § Languages). -->
-<a class="hg-skip" href="#table" id="skip"></a>
+<!-- The skeleton holds ids; every word is in src/places/copy.ts and is written in by render.ts (app/README.md § Languages).
+     The order is the contract's (design/PICTURE-FIRST-2026-09-18.md, design/inventory.md § The page is its picture):
+     one line of masthead, one sentence, the map. Nothing else is above the fold — not a lede, not a key, not a filter. -->
+<a class="hg-skip" href="#answer" id="skip"></a>
 
-<div class="hg-page page masthead">
-  <div class="masthead__top"><p class="hg-wordmark wordmark" id="wordmark"></p><span id="lang"></span></div>
-  <h1 id="title"></h1>
-  <!-- The counted sentence is written from the data once it is in (S6); until then the lede is the sentence that needs no number. -->
-  <p class="lede"><span id="ledeCount"></span><span id="ledeFigure"></span></p>
-  <p class="lede glossary" id="glossary"></p>
-</div>
+<header class="hg-page page masthead">
+  <h1 class="hg-wordmark wordmark" id="wordmark"></h1>
+  <span id="lang"></span>
+  <button type="button" class="hg-button hg-button--small csv" id="csvBtn"></button>
+</header>
 
 <!-- Loading and failure share one line: a status while the run loads, an alert if it does not.
-     Everything below it stays hidden until the data is in, so neither state shows a skeleton (S6). -->
-<div class="hg-page page"><p class="hg-source" id="status" role="status"></p></div>
+     It never hides and never sits behind a disclosure (§ The page is its picture). Everything
+     below stays hidden until the data is in, so neither state shows a skeleton (S6). -->
+<div class="hg-page page notices"><p class="hg-source" id="status" role="status"></p></div>
 
 <div class="hg-page page" id="main" hidden>
-  <!-- The shared row: the two scopes the map, the ranking and the table all follow, and the download. -->
-  <div class="hg-filters hg-no-print">
-    <div>
-      <label for="arch" id="archLabel"></label>
-      <select id="arch" class="hg-select"></select>
-    </div>
-    <div>
-      <label for="metric" id="metricLabel"></label>
-      <select id="metric" class="hg-select"></select>
-    </div>
-    <div class="hg-filters__end">
-      <button type="button" class="hg-button" id="csvBtn"></button>
-    </div>
-  </div>
+  <!-- THE PICTURE. Everything the map needs is inside it, in this order: the sentence as its
+       caption, the tiles, the legend strip, any caution the map itself earns, the readout, the
+       selected state's provenance, the two controls that change it, the estimates line, and
+       "How to read this map". Nothing about the map lives outside it (charts.md § 2). -->
+  <figure class="hg-picture picture">
+    <figcaption class="hg-answer" id="answer" tabindex="-1"></figcaption>
 
-  <div class="split">
-    <div>
-      <figure class="figure">
-        <h3 id="figTitle"></h3>
-        <p class="sub" id="figSub"></p>
-        <div class="grid" id="grid" role="group" aria-labelledby="figTitle" aria-describedby="figDesc"></div>
-        <div class="scale" id="scale" aria-hidden="true"></div>
-        <div class="scale-labels" id="scaleLabels"></div>
-        <ul class="hg-key" id="legend"></ul>
-        <!-- The state readout (B3, B4, S1): the selected state's figure with its step, its programs and its county, at the point of the click. -->
-        <p class="hg-readout" id="readout" aria-live="polite"></p>
-        <p class="hg-source" id="figSrc"></p>
-        <p class="hg-visually-hidden" id="figDesc"></p>
-      </figure>
+    <!-- StateTiles (#13): 51 buttons on the cartogram, full-bleed on a phone. -->
+    <div class="map" id="grid" role="group" aria-labelledby="answer" aria-describedby="figDesc"></div>
+    <p class="hg-visually-hidden" id="figDesc"></p>
 
-      <section class="state" id="stateDetail" aria-labelledby="stateTitle">
-        <!-- Focusable so a selection made from the map or the table can land here (S1). -->
-        <h3 id="stateTitle" tabindex="-1"></h3>
-        <p class="sub" id="stateStep" hidden></p>
-        <p class="sub" id="stateSub"></p>
-        <ul class="hg-rows hg-rows--stack" id="corrections"></ul>
-        <h4 id="unmodTitle" hidden></h4>
-        <ul class="hg-rows hg-rows--stack" id="unmod" hidden></ul>
-        <h4 id="otherTitle" hidden></h4>
-        <ul class="hg-rows hg-rows--stack" id="other" hidden></ul>
-        <!-- EligibilityBoundary (#23): one row in the ledger's shape — the three facts with their publishers; never a figure, a bin or a sort. -->
-        <ul class="hg-rows hg-rows--stack boundary" id="liheap" hidden></ul>
-        <p class="hg-source" id="stateSrc"></p>
-      </section>
+    <!-- The legend, inside the figure, as one compact strip: the ramp, its printed bounds, and
+         the tile states that are on the map at this moment. The other three are in "How to read
+         this map", drawn with the same classes, so the key cannot drift from the tiles. -->
+    <div class="legend">
+      <div class="scale" id="scale" aria-hidden="true"></div>
+      <div class="scale-labels" id="scaleLabels"></div>
+      <ul class="hg-key" id="legend"></ul>
     </div>
+
+    <!-- Nothing that warns hides: the one caution that applies to the map a reader is looking at
+         right now, in one line, with the whole of it a press away in "How to read this map". -->
+    <p class="hg-callout hg-callout--caution mapCaution" id="mapCaution" hidden></p>
+
+    <!-- CurveReadout (#4) as the map's caption: the selected state's sentences, directly under
+         the tiles, never a block a screen away (rerun S1). -->
+    <p class="hg-readout" id="readout" aria-live="polite"></p>
+
+    <!-- CorrectionsApplied (#18), IncompleteMarker (#16), otherBenefits, EligibilityBoundary (#23)
+         and the state's SourceNote (#17), scoped to the selected state and under its own readout. -->
+    <details class="hg-disclosure state" id="statePanel" hidden>
+      <summary id="stateTitle"></summary>
+      <p class="sub" id="stateSub"></p>
+      <ul class="hg-rows hg-rows--stack" id="corrections"></ul>
+      <h3 id="unmodTitle" hidden></h3>
+      <ul class="hg-rows hg-rows--stack" id="unmod" hidden></ul>
+      <h3 id="otherTitle" hidden></h3>
+      <ul class="hg-rows hg-rows--stack" id="other" hidden></ul>
+      <!-- EligibilityBoundary (#23): one row in the ledger's shape — the three facts with their publishers; never a figure, a bin or a sort. -->
+      <ul class="hg-rows hg-rows--stack boundary" id="liheap" hidden></ul>
+      <p class="hg-source" id="stateSrc"></p>
+    </details>
+
+    <!-- The two scopes the map, the ranking and the table all follow: a quiet row under the
+         picture, never above it (§ The page is its picture — not a filter above the fold). -->
+    <div class="hg-filters hg-no-print controls">
+      <div>
+        <label for="arch" id="archLabel"></label>
+        <select id="arch" class="hg-select"></select>
+      </div>
+      <div>
+        <label for="metric" id="metricLabel"></label>
+        <select id="metric" class="hg-select"></select>
+      </div>
+    </div>
+
+    <p class="hg-source estimates" id="figSrc"></p>
+
+    <details class="hg-disclosure howto" id="howTo">
+      <summary id="howToHeading"></summary>
+      <p id="figScope"></p>
+      <p id="figMeasure"></p>
+      <!-- Every tile state, always all four, each drawn with the tile's own class (places review S9). -->
+      <ul class="hg-key" id="keyFull"></ul>
+      <p id="figKeyboard"></p>
+      <p class="hg-source" id="binsLine"></p>
+      <p class="hg-callout hg-callout--caution" id="hatchCaution"></p>
+      <p class="hg-callout hg-callout--caution" id="pastAxisNote"></p>
+      <p class="glossary" id="glossary"></p>
+    </details>
+  </figure>
+
+  <!-- RankStrip (#14) and DataTable (#15): the two readings of every state, one press away. -->
+  <details class="hg-disclosure" id="everything">
+    <summary><h2 id="tableHeading"></h2></summary>
 
     <section aria-labelledby="rankTitle" id="rankList">
       <h3 id="rankTitle"></h3>
@@ -93,58 +124,61 @@
       </div>
       <p class="hg-source" id="rankBins"></p>
     </section>
-  </div>
 
-  <h2 id="table"></h2>
-  <!-- The order control scopes only this table, so it sits with it (S7, inventory #21). -->
-  <div class="hg-filters hg-no-print table-order">
-    <div>
-      <label for="sort" id="sortLabel"></label>
-      <select id="sort" class="hg-select"></select>
-      <!-- Said once, where the control is: Measure and Table order are independent (rerun N3). -->
-      <p class="hg-source" id="sortHint"></p>
+    <h3 id="table"></h3>
+    <!-- The order control scopes only this table, so it sits with it (S7, inventory #21). -->
+    <div class="hg-filters hg-no-print table-order">
+      <div>
+        <label for="sort" id="sortLabel"></label>
+        <select id="sort" class="hg-select"></select>
+        <!-- Said once, where the control is: Measure and Table order are independent (rerun N3). -->
+        <p class="hg-source" id="sortHint"></p>
+      </div>
     </div>
-  </div>
-  <!-- One sentence per column, where the headers are (rerun S3); each header's aria-describedby points at its line. -->
-  <dl class="defs" id="defs"></dl>
-  <div class="hg-scroll-x" id="scroller">
-    <table class="hg-table">
-      <caption id="tabCap"></caption>
-      <thead>
-        <tr><th scope="col" id="colState"></th>
-            <!-- The road out of poverty leads, as it does in the measure menu: the keep rate, the cliffs on the road, and where it collapses. -->
-            <th scope="col" class="num" id="colKeepRate"></th>
-            <th scope="col" class="num" id="colRoadCliffCount"></th>
-            <th scope="col" class="num" id="colRoadWorst"></th>
-            <!-- Position rides UNDER each earnings figure, in its own cell:
-                 a figure is not a finding until a reader knows how many
-                 families stand below it, and three more columns pushed the
-                 page itself sideways at 1280 (measured). -->
-            <th scope="col" class="num" id="colRoadWorstAt"></th>
-            <th scope="col" class="num" id="colBiggestLoss"></th>
-            <th scope="col" class="num" id="colBiggestLossAt"></th>
-            <th scope="col" class="num" id="colDangerWidth"></th>
-            <th scope="col" class="num" id="colLeap"></th>
-            <th scope="col" class="num" id="colSafeExit"></th>
-            <th scope="col" class="num" id="colCliffCount"></th>
-            <th scope="col" class="num" id="colDeferredCliffCount"></th>
-            <th scope="col" id="colFigures"></th></tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-  <p class="hg-source" id="tableNote"></p>
+    <!-- One sentence per column, where the headers are (rerun S3); each header's aria-describedby points at its line. -->
+    <dl class="defs" id="defs"></dl>
+    <div class="hg-scroll-x" id="scroller">
+      <table class="hg-table">
+        <caption id="tabCap"></caption>
+        <thead>
+          <tr><th scope="col" id="colState"></th>
+              <!-- The road out of poverty leads, as it does in the measure menu: the keep rate, the cliffs on the road, and where it collapses. -->
+              <th scope="col" class="num" id="colKeepRate"></th>
+              <th scope="col" class="num" id="colRoadCliffCount"></th>
+              <th scope="col" class="num" id="colRoadWorst"></th>
+              <!-- Position rides UNDER each earnings figure, in its own cell:
+                   a figure is not a finding until a reader knows how many
+                   families stand below it, and three more columns pushed the
+                   page itself sideways at 1280 (measured). -->
+              <th scope="col" class="num" id="colRoadWorstAt"></th>
+              <th scope="col" class="num" id="colBiggestLoss"></th>
+              <th scope="col" class="num" id="colBiggestLossAt"></th>
+              <th scope="col" class="num" id="colDangerWidth"></th>
+              <th scope="col" class="num" id="colLeap"></th>
+              <th scope="col" class="num" id="colSafeExit"></th>
+              <th scope="col" class="num" id="colCliffCount"></th>
+              <th scope="col" class="num" id="colDeferredCliffCount"></th>
+              <th scope="col" id="colFigures"></th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="hg-source" id="tableNote"></p>
+  </details>
 
-  <h2 id="methodHeading"></h2>
-  <div class="hg-panel method">
+  <details class="hg-disclosure" id="methodPanel">
+    <summary><h2 id="methodHeading"></h2></summary>
     <ul id="methodList"></ul>
     <h3 id="excludesHeading"></h3>
     <ul id="excludes"></ul>
-    <p class="hg-callout hg-callout--caution" id="hatchCaution"></p>
-    <p class="hg-callout hg-callout--caution" id="pastAxisNote"></p>
+  </details>
+
+  <details class="hg-disclosure" id="sourcesPanel">
+    <summary><h2 id="sourcesHeading"></h2></summary>
     <p class="hg-source" id="methodSrc"></p>
+    <p class="hg-source" id="csvColumns"></p>
     <p class="hg-source" id="cite"></p>
-  </div>
+  </details>
 </div>
 </body>
 </html>
