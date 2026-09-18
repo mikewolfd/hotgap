@@ -60,7 +60,13 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
   const lines = [CSV_HEADER.join(",")];
   for (const r of rows) {
     const { m } = r, cov = summary.coverage?.[r.st], v = cov?.vintages;
-    const none = r.kind === "none";
+    /* "This state has no cliff anywhere" is the CELL's fact, read from the
+       metrics — not the row's tile state, which follows whichever measure the
+       table is ordered by and, since the keep rate became the default, no
+       longer lifts a no-cliff state out at all. Reading the tile state here
+       printed New Mexico's $0 safe exit as a figure and then looked up how
+       many families earn less than $0. */
+    const none = m.cliffCount === 0;
     const dollars = (x: number | null) => (none || x === null ? "" : x);
     const missing = r.incomplete.map(unmodeledName);
     lines.push([

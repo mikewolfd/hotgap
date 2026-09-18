@@ -268,7 +268,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
      they keep the figure, which must not break, on the first page at Letter
      (measured at 816px: a 379px masthead pushed the 723px figure whole onto
      page 2; at 68ch the masthead is 306px and the figure ends at 1002px). */
-  .lede { max-width: 68ch; }
+  .lede { max-width: none; font-size: var(--t-small); }
   #readout:not(:has(b)) { display: none; }
   .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); }
   .hg-scroll-x { overflow: visible; }
@@ -279,6 +279,12 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
      width, and Chromium shrank the whole PDF to fit it (measured at 816px:
      808px of table in a 784px column with the headers on one line). */
   .flag, .hg-table thead th.num { white-space: normal; }
+  /* Since Plan 9 the table carries thirteen columns, and the two step cells
+     ("$38,000 → $39,000") are the widest things in it. On paper they wrap
+     too — measured at 816px, thirteen unbreakable step cells made 955px of
+     table in a 784px column, and Chromium shrank the whole PDF to fit,
+     taking every drawn position with it. */
+  .hg-table td.num { white-space: normal; }
   /* The method panel is taller than a page, so avoiding a break inside it
      only moved it to a fresh page behind a stranded heading (measured: a
      page holding one paragraph). Headings stay with what follows instead. */
