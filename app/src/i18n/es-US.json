@@ -2,42 +2,45 @@
   "_": {
     "language": "es-US",
     "status": "draft",
-    "note": "Borrador. Redactado por el modelo el 2026-09-17 a partir de en.json; pendiente de revisión por un hablante nativo antes de considerarse definitivo (app/README.md § Languages). Registro: el ciudadano y la hoja del cliente en usted, sencillo; el trabajador social, profesional; el periodista, citable. Los acrónimos de los programas se conservan; la frase sencilla se traduce. / A draft: machine-written 2026-09-17 from en.json, awaiting a native speaker's review.",
+    "note": "Borrador. Redactado por el modelo el 2026-09-17 a partir de en.json; pendiente de revisión por un hablante nativo antes de considerarse definitivo (app/README.md § Languages). Registro: el ciudadano y la hoja del cliente en usted, sencillo; el trabajador social, profesional; el periodista, citable. Los acrónimos de los programas se conservan; la frase sencilla se traduce. / A draft: machine-written 2026-09-17 from en.json, awaiting a native speaker's review. Redactado de nuevo el 2026-09-18 para el registro nuevo del ciudadano: como se lo diría una trabajadora social al otro lado del escritorio. Sigue sin revisar. / Redrafted 2026-09-18 to the new citizen register; still unreviewed.",
     "drafted": "2026-09-17",
-    "reviewed": null
+    "reviewed": null,
+    "redrafted": "2026-09-18"
   },
   "editor": {
     "wordmark": "HotGap",
     "actions": {
       "change": "Cambiar mis respuestas",
-      "print": "Imprimir"
+      "print": "Imprimir",
+      "changeShort": "Cambiar"
     },
     "summary": {
-      "none": "Cuéntenos sobre su hogar para ver su respuesta.",
+      "none": "Cuéntenos sobre su hogar y le mostramos la respuesta.",
       "edit": "Editar",
-      "line": "{place} · {household} · {pay}",
+      "line": "{household} en {place}, con una paga de {pay}.",
       "place": {
-        "withCounty": "{state} · {county}",
-        "withZip": "{zip} · {state}",
+        "withCounty": "{county}, {state}",
         "stateOnly": "{state}"
       },
       "household": {
         "alone": "{adults}",
-        "withKids": "{adults}, {kids}"
+        "withKids": "{adults} con {kids}"
       },
       "adults": {
-        "one": "1 adulto",
-        "two": "2 adultos"
+        "one": "Una madre o un padre",
+        "two": "Dos padres",
+        "oneAlone": "Una persona adulta",
+        "twoAlone": "Una pareja"
       },
-      "kids": "{n, plural, one {niño de {ages}} other {niños de {ages}}}"
+      "kids": "{n, plural, one {un niño de {ages} años} other {niños de {ages} años}}"
     },
     "heading": "Si su pago sube, ¿le queda más?",
-    "lead": "Responda cuatro cosas. Revisamos su ayuda en cada nivel de pago y le decimos qué pasa.",
-    "privacy": "No guardamos lo que escribe. Sin registro. Sin rastreo.",
+    "lead": "Cuatro preguntas. Calculamos su ayuda en cada nivel de paga y le mostramos qué pasa.",
+    "privacy": "No guardamos lo que escribe. Sin registro y sin rastreo.",
     "place": {
       "legend": "Dónde vive",
       "zip": "Su código postal",
-      "zipHint": "Cinco dígitos. Lo usamos para saber su estado y su condado.",
+      "zipHint": "Cinco dígitos: los usamos para encontrar su estado y su condado.",
       "or": "O elija su estado",
       "statePlaceholder": "Elija un estado",
       "inState": "Eso está en {state}."
@@ -48,12 +51,12 @@
       "single": "Solo yo",
       "married": "Mi pareja y yo",
       "kids": "¿Cuántos niños viven con usted?",
-      "kidsHint": "Niños menores de 18. Hasta seis.",
+      "kidsHint": "Niños menores de 18 años, hasta seis.",
       "kidAge": "¿Cuántos años tiene el niño {n}?"
     },
     "pay": {
-      "legend": "Cuánto le pagan",
-      "amount": "Su pago, antes de impuestos",
+      "legend": "Lo que le pagan",
+      "amount": "Su paga, antes de impuestos",
       "unit": "Por",
       "units": {
         "hour": "hora",
@@ -62,13 +65,13 @@
         "year": "año"
       },
       "hours": "Horas que trabaja a la semana",
-      "hoursHint": "Déjelo en blanco si no está seguro. Entonces suponemos 40."
+      "hoursHint": "Déjelo en blanco si no está seguro y suponemos 40."
     },
     "costs": {
       "legend": "Lo que paga cada mes",
       "rent": "Renta o pago de la casa",
       "childcare": "Cuidado de niños",
-      "typical": "Lo típico en {where}: {amount} al mes. Cámbielo si lo suyo es distinto.",
+      "typical": "Lo habitual en {where} son {amount} al mes. Cámbielo si el suyo es distinto.",
       "none": "Ponga 0 si no paga nada."
     },
     "submit": "Ver mi respuesta",
@@ -163,12 +166,12 @@
     }
   },
   "citizen": {
-    "loading": "Haciendo las cuentas… Revisamos su ayuda en {count} niveles de pago. Puede tardar unos segundos.",
-    "errorTitle": "No pudimos obtener su respuesta.",
+    "loading": "Estamos calculando: revisamos su ayuda en {count} niveles de paga distintos, así que deme unos segundos.",
+    "errorTitle": "No pudimos calcular su respuesta.",
     "errors": {
-      "rate_limited": "Ha preguntado varias veces seguidas. Espere un minuto y vuelva a intentarlo.",
-      "busy": "El servicio de cálculo está ocupado ahora. Vuelva a intentarlo en unos segundos.",
-      "other": "El servicio de cálculo no respondió. Sus respuestas no se guardaron. Vuelva a intentarlo en un minuto."
+      "rate_limited": "Son varios intentos seguidos. Espere un minuto y vuelva a intentarlo.",
+      "busy": "El servicio está ocupado en este momento. Inténtelo de nuevo en unos segundos.",
+      "other": "El servicio no respondió y no se guardó nada de lo que escribió. Inténtelo de nuevo en un minuto."
     },
     "tryAgain": "Intentar de nuevo",
     "skip": "Ir a la respuesta",
@@ -185,56 +188,52 @@
     },
     "kidsOne": "un niño de {age} años",
     "kidsMany": "{n} niños de {ages} años",
-    "stillArchetype": "Todavía no pudimos obtener sus números exactos. Estos son los números de una familia como la suya en su estado.",
+    "stillArchetype": "Todavía no pudimos obtener sus propios números, así que estos son de una familia como la suya en su estado.",
     "verdict": {
-      "always_up": "Le pagan {pay}. Le quedan {kept}. Cuando gana más, le queda más. No encontramos un punto donde ganar más le deje con menos.",
-      "cliff_ahead": "Le pagan {pay}. Le quedan {kept}. Cerca de {wage}, ganar más puede dejarle menos dinero: pasado ese punto le quedarían unos {drop} menos al año. A esto le llaman un precipicio de beneficios.",
-      "in_danger_zone": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso hasta que le paguen {exit}: un aumento de {leap}.",
-      "in_danger_zone:stuck": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso en el rango de pago que revisamos, hasta {top}. No encontramos un punto donde vuelva a salir ganando.",
-      "cliff_behind": "Le pagan {pay}. Le quedan {kept}. La gran caída está por debajo de su pago actual. De aquí en adelante, ganar más es más para usted.",
-      "waits": {
-        "head_start_program_year": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Un niño o una niña en el programa se queda hasta el fin del próximo año escolar.",
-        "child_continuous_eligibility": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Los niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
-        "transitional_medical_assistance": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Usted lo conserva de 6 a 12 meses más."
-      }
+      "always_up": "Cada aumento le deja mejor: revisamos cada escalón hasta {top} y no baja en ningún punto.",
+      "cliff_ahead": "Va bien hasta {wage}; pasado ese punto, ganar más le cuesta unos {drop} al año.",
+      "in_danger_zone": "Ganar más no le deja mejor hasta pasar {exit}, o sea {leap} más de lo que gana ahora.",
+      "in_danger_zone:stuck": "Ganar más no le deja mejor en ningún punto que revisamos, hasta {top}.",
+      "cliff_behind": "Lo peor ya quedó atrás: de {wage} en adelante, más paga es más dinero.",
+      "cliff_ahead:waits": "Va bien hasta {wage}; pasado ese punto perdería unos {drop} al año, aunque no de inmediato."
     },
-    "again": "Pasa otra vez de {from} a {to}.",
+    "again": "Vuelve a pasar entre {from} y {to}.",
     "againMany": "Pasa {n} veces más, entre {from} y {to}.",
     "sub": {
-      "more": "Le queda más que su pago porque la ayuda y el dinero de los impuestos son parte de ello.",
-      "less": "Le queda menos que su pago porque de ahí salen los impuestos y los costos de salud."
+      "more": "La línea es más que su paga porque la ayuda y los descuentos en los impuestos cuentan dentro de ella.",
+      "less": "La línea es menos que su paga porque de ahí salen los impuestos y los costos de salud."
     },
     "noncash": {
-      "childcare": "{amount} de esto es ayuda para el cuidado de niños. Va a su guardería, no a usted.",
-      "schoolmeals": "{amount} de esto son comidas escolares gratuitas. No es efectivo.",
-      "headstart": "{amount} de esto es educación temprana gratuita. No es efectivo.",
-      "liheap": "{amount} de esto es ayuda con la factura de la calefacción. Va a su compañía de servicios, no a usted."
+      "childcare": "{amount} de eso es ayuda para el cuidado de niños, que va a su guardería y no a usted.",
+      "schoolmeals": "{amount} de eso son comidas escolares gratuitas, no dinero en efectivo.",
+      "headstart": "{amount} de eso es educación temprana gratuita, no dinero en efectivo.",
+      "liheap": "{amount} de eso es ayuda con la calefacción, que va a su compañía de servicios y no a usted."
     },
-    "health": "{amount} al año para su plan de salud salen primero.",
+    "health": "Y {amount} al año salen primero para su plan de salud.",
     "chart": {
-      "title": "El dinero que le queda en un año, a medida que sube su pago",
+      "title": "La línea es lo que le queda en un año, a medida que sube su paga.",
       "unit": {
-        "year": "El pago es por año.",
-        "month": "El pago es por mes.",
-        "week": "El pago es por semana.",
-        "hour": "El pago es por hora, a {hours} horas a la semana."
+        "year": "La paga de abajo es por año.",
+        "month": "La paga de abajo es por mes.",
+        "week": "La paga de abajo es por semana.",
+        "hour": "La paga de abajo es por hora, a {hours} horas a la semana."
       },
-      "readoutHint": "Recorra la línea con el dedo, el mouse o las flechas izquierda y derecha.",
+      "readoutHint": "Recorra la línea para ver cualquier paga.",
       "readoutMarks": " Pulse ] y [ para saltar entre caídas.",
       "readout": "Con un pago de {pay}, le quedan {kept}.",
-      "inYourZone": " Este pago está dentro de su tramo plano.",
-      "inZone": " Este pago está dentro de un tramo plano.",
-      "outZone": " Aquí, ganar más es más dinero.",
-      "markWould": "Una caída cerca de {pay}. Aquí le quedarían unos {drop} menos al año.",
-      "markPast": "Una caída cerca de {pay}. Aquí le quedan unos {drop} menos al año.",
-      "markLater": "Una bajada cerca de {pay}. Aquí se quedaría con unos {drop} menos al año. Llega más tarde, no ese día.",
-      "markMerged": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año.",
-      "markMergedWaits": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año. Parte de ello espera a un día más adelante.",
+      "inYourZone": " Esa paga está dentro de su tramo plano.",
+      "inZone": " Esa paga está dentro de un tramo plano.",
+      "outZone": " Aquí, más paga es más dinero.",
+      "markWould": "Una caída cerca de {pay}. Pasado ese punto le quedarían unos {drop} menos al año.",
+      "markPast": "Una caída cerca de {pay}. Pasado ese punto le quedan unos {drop} menos al año.",
+      "markLater": "Una caída cerca de {pay}. Le quedarían unos {drop} menos al año, pero no ese mismo día.",
+      "markMerged": "{n} caídas entre {from} y {to}, unos {sum} al año en total.",
+      "markMergedWaits": "{n} caídas entre {from} y {to}, unos {sum} al año en total. Parte de eso espera a otro día.",
       "axisNote": "Los números del lado empiezan en {floor}, no en $0, para que las caídas se vean bien.",
       "axisNoteBare": "Los números del lado empiezan en {floor}, no en $0.",
-      "safeBeyond": " Desde {safe} en adelante, ganar más siempre suma a lo que le queda.",
-      "safeNever": " En el rango de pago que revisamos, hasta {top}, no encontramos un punto más allá de todos los tramos planos.",
-      "estimates": " Son estimaciones. Usan las reglas de {year} en {state}.",
+      "safeBeyond": " Desde {safe} en adelante, más paga siempre suma a lo que le queda.",
+      "safeNever": " Revisamos hasta {top} y nunca encontramos un punto más allá de todos los tramos planos.",
+      "estimates": " Son estimaciones, con las reglas de {year} en {state}.",
       "aria": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}. Es plana de {zoneFrom} a {zoneTo}.{more}{worst} El hogar está en {pay}, dentro de un tramo plano.",
       "ariaMore": " Vuelve a ser plana de {from} a {to}.",
       "ariaWorst": " La caída más grande está en {at}, donde se termina {what}.",
@@ -242,18 +241,25 @@
       "someHelp": "parte de la ayuda",
       "labels": {
         "later": "más adelante",
-        "you": "usted",
         "backToEven": "de vuelta a la par",
         "backToEvenSafe": "de vuelta a la par, y seguro de aquí en adelante",
         "safe": "seguro de aquí en adelante",
         "leap": "+{leap}",
         "leapMore": "más de +{leap}",
-        "drop": "−{drop}"
+        "drop": "−{drop}",
+        "youKeep": "le quedan {kept}",
+        "ends": "termina {phrase}",
+        "road": {
+          "keeps": "se queda con {cents}¢ de cada dólar extra",
+          "loses": "pierde {cents}¢ de cada dólar extra"
+        }
       },
-      "scrolls": "El dibujo cubre todo el sueldo de {from} a {to}. Deslícelo a los lados para ver el resto.",
-      "wholeOnPaper": "El dibujo cubre todo el sueldo de {from} a {to}.",
+      "scrolls": "La imagen cubre toda la paga de {from} a {to}: deslícela de lado para ver el resto.",
+      "wholeOnPaper": "La imagen cubre toda la paga de {from} a {to}.",
       "rangeFrom": "← {from}",
-      "rangeTo": "{to} →"
+      "rangeTo": "{to} →",
+      "howTo": "Cómo leer esta imagen",
+      "rangeMid": "su paga"
     },
     "key": {
       "line": "El dinero que le queda",
@@ -262,32 +268,33 @@
       "drop": "Una caída este año",
       "later": "Una caída que espera",
       "you": "Usted ahora",
-      "boundary": "Donde se termina la ayuda con la calefacción"
+      "boundary": "Dónde termina la ayuda con la calefacción"
     },
     "boundary": {
-      "line": "Por encima de {pay}, ya no puede pedir ayuda con la factura de la calefacción en {state}. Se llama LIHEAP.",
+      "line": "Por encima de {pay} ya no puede pedir ayuda con la factura de la calefacción en {state}. Se llama LIHEAP.",
       "worth": " Vale de {min} a {max} por invierno si la recibe.",
       "worthFlat": " Vale {amount} por invierno si la recibe.",
       "worthUnknown": " No pudimos leer cuánto paga.",
       "served": {
-        "some": " Alrededor de {n} de cada 10 familias que podrían recibirla aquí la reciben.",
-        "few": " Menos de 1 de cada 10 familias que podrían recibirla aquí la reciben.",
-        "most": " Casi todas las familias que podrían recibirla aquí la reciben.",
-        "unknown": " No sabemos cuántas familias que podrían recibirla aquí la reciben."
+        "some": " De las familias de aquí que podrían recibirla, unas {n} de cada 10 la reciben.",
+        "few": " De las familias de aquí que podrían recibirla, menos de 1 de cada 10 la recibe.",
+        "most": " Casi todas las familias de aquí que podrían recibirla la reciben.",
+        "unknown": " No sabemos cuántas familias de aquí que podrían recibirla la reciben."
       },
-      "invite": "Si la recibe, actívela para verla en su línea.",
-      "credit": "En {state}, la ayuda con la calefacción es un crédito en los impuestos. Ya está en su línea. Se achica a medida que gana más y se acaba por encima de {pay}.",
-      "counted": "Usted dijo que recibe ayuda con la calefacción (LIHEAP). La pusimos en su línea: unos {amount} al año, hasta {pay}."
+      "invite": "Si la recibe, actívela y la ponemos en su línea.",
+      "credit": "La ayuda con la calefacción en {state} es un descuento en los impuestos, así que ya está en su línea. Se achica a medida que gana más y se acaba por encima de {pay}.",
+      "counted": "Usted nos dijo que recibe ayuda con la factura de la calefacción (LIHEAP), así que está en su línea: unos {amount} al año, hasta {pay}."
     },
     "source": {
-      "archetype": "No pudimos obtener sus números exactos en este momento. Estos son los números de una familia como la suya en su estado.",
-      "clamped": " Su pago está por encima del rango que revisamos. Estos números son para {top}, el tope de ese rango.",
+      "archetype": "No pudimos obtener sus propios números ahora mismo, así que estos son de una familia como la suya en su estado.",
+      "clamped": " Su paga está por encima del rango que revisamos, así que estos números son para {top}, el tope de ese rango.",
       "live": "Fuente: HotGap, con PolicyEngine y las reglas de {year}. Estos son sus propios números.",
       "sweep": "Fuente: HotGap, con {model} y las reglas de {year}. Barrido del {date}.",
       "sweepBare": "Fuente: HotGap, con PolicyEngine. Reglas de {year}.",
       "rent": " Renta: rentas justas de mercado de HUD, {rent}.",
       "childcare": " Precio del cuidado de niños: {childcare}, llevado a dólares de {year}.",
-      "money": " El dinero que le queda es lo que sobra después de los impuestos y las primas del plan de salud."
+      "money": " El dinero que le queda es lo que sobra después de los impuestos y de las primas del plan de salud.",
+      "heading": "De dónde salen estos números"
     },
     "table": {
       "show": "Ver los números",
@@ -307,21 +314,21 @@
       }
     },
     "steps": {
-      "heading": "Qué se termina, y cuándo",
-      "none": "Nada se termina en el rango de pago que revisamos.",
-      "ends": "{Phrase} se termina. Se llama {name}.",
-      "wouldEnd": "{Phrase} se terminaría. Se llama {name}.",
+      "heading": "Qué pasa en cada escalón",
+      "none": "No se termina nada en el rango de paga que revisamos.",
+      "ends": "{Phrase} se termina: se llama {name}.",
+      "wouldEnd": "{Phrase} se terminaría: se llama {name}.",
       "endsGroup": {
-        "adults": "Se termina {noun} para usted. Se llama {name}.",
-        "children": "Se termina {noun} de sus niños. Se llama {name}."
+        "adults": "Se termina {noun} para usted: se llama {name}.",
+        "children": "Se termina {noun} de sus niños: se llama {name}."
       },
       "wouldEndGroup": {
-        "adults": "Se terminaría {noun} para usted. Se llama {name}.",
-        "children": "Se terminaría {noun} de sus niños. Se llama {name}."
+        "adults": "Se terminaría {noun} para usted: se llama {name}.",
+        "children": "Se terminaría {noun} de sus niños: se llama {name}."
       },
-      "starts": " Entonces empieza {phrase}. Se llama {name}.",
-      "wouldStart": " Entonces empezaría {phrase}. Se llama {name}.",
-      "remains": " Parte sigue hasta {until}: {list}.",
+      "starts": " Entonces empieza {phrase}: se llama {name}.",
+      "wouldStart": " Entonces empezaría {phrase}: se llama {name}.",
+      "remains": " Parte de eso sigue hasta {until}: {list}.",
       "remainsItem": "{amount} de {phrase}",
       "smaller": {
         "benefits": "Aquí parte de la ayuda se achica.",
@@ -342,10 +349,11 @@
       "waitsBadge": "Espera",
       "close": "Cerrar",
       "waits": {
-        "head_start_program_year": " No se acaba ese día. Un niño o una niña en el programa se queda hasta el fin del próximo año escolar.",
-        "child_continuous_eligibility": " No se acaba ese día. Los niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
-        "transitional_medical_assistance": " No se acaba ese día. Usted lo conserva de 6 a 12 meses más."
-      }
+        "head_start_program_year": " No se acaba ese día: un niño o una niña que ya está en el programa se queda hasta el fin del próximo año escolar.",
+        "child_continuous_eligibility": " No se acaba ese día: sus niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
+        "transitional_medical_assistance": " No se acaba ese día: usted lo conserva de 6 a 12 meses más."
+      },
+      "lead": "Cada uno es una paga en la que algo se termina. La gente los llama precipicios de beneficios."
     },
     "waits": {
       "thisHelp": "esta ayuda",
@@ -354,36 +362,36 @@
     },
     "assumed": {
       "heading": "Lo que supusimos sobre usted",
-      "rent": "{amount} al mes. Usted nos lo dio.",
-      "rentTypical": "{amount} al mes. La renta habitual en {state}.",
-      "rentNone": "No nos lo dio. No contamos ninguna renta.",
-      "childcare": "{amount} al mes por {kids}. Usted nos lo dio.",
-      "childcareTypical": "{amount} al mes por {kids}. El precio habitual de la guardería en {state}.",
-      "childcareNone": "Nada. Nadie en el hogar paga guardería.",
+      "rent": "{amount} al mes. Usted nos lo dijo.",
+      "rentTypical": "{amount} al mes: la renta habitual en {state}.",
+      "rentNone": "No nos lo dijo, así que no contamos ninguna renta.",
+      "childcare": "{amount} al mes por {kids}. Usted nos lo dijo.",
+      "childcareTypical": "{amount} al mes por {kids}: el precio habitual de la guardería en {state}.",
+      "childcareNone": "Nadie en el hogar paga guardería.",
       "help": "{list}. Contamos cada una como si la recibiera.",
       "notCounted": "{list}. Las contamos como si no las recibiera.",
-      "you": "{age} años. Ciudadano de EE. UU.",
-      "youNotCitizen": "{age} años. No es ciudadano de EE. UU.",
-      "spouse": "{age} años. Le pagan {pay} al año.",
-      "spouseNoPay": "{age} años. Sin pago.",
+      "you": "{age} años, ciudadano de EE. UU.",
+      "youNotCitizen": "{age} años, no es ciudadano de EE. UU.",
+      "spouse": "{age} años, le pagan {pay} al año.",
+      "spouseNoPay": "{age} años, sin pago.",
       "nobodyDisabled": " Nadie en el hogar tiene una discapacidad.",
-      "youDisabled": " Usted dijo que tiene una discapacidad.",
-      "spouseDisabled": " Usted dijo que su pareja tiene una discapacidad.",
-      "kidDisabled": " Usted dijo que uno de sus niños tiene una discapacidad.",
-      "kidsDisabled": " Usted dijo que {n} de sus niños tienen una discapacidad.",
+      "youDisabled": " Usted nos dijo que tiene una discapacidad.",
+      "spouseDisabled": " Usted nos dijo que su pareja tiene una discapacidad.",
+      "kidDisabled": " Usted nos dijo que uno de sus niños tiene una discapacidad.",
+      "kidsDisabled": " Usted nos dijo que {n} de sus niños tienen una discapacidad.",
       "savings": "Ahorros: {savings}.",
       "noOtherMoney": " Sin manutención de hijos, SSDI ni pago por desempleo.",
       "hours": "{hours} horas a la semana.",
-      "hoursNone": "No nos lo dio. Suponemos tiempo completo.",
+      "hoursNone": "No nos lo dijo, así que supusimos tiempo completo.",
       "selfEmployed": "Usted trabaja por cuenta propia, no para un jefe.",
       "employerPlan": "{amount} al año salen de su pago para pagarlo.",
-      "employerPlanFree": "Con su pago, no contamos ningún costo por él.",
+      "employerPlanFree": "Con su paga no contamos ningún costo por él.",
       "headStart": "Vale {amount} al año para usted: lo que costaría la guardería.",
-      "coverageGap": "De {from} a {to} no tendría ningún plan de salud: ni Medicaid ni ayuda para comprar uno. Ahí no contamos ningún costo de plan de salud.",
+      "coverageGap": "Entre {from} y {to} no tendría ningún plan de salud: ni Medicaid ni ayuda para comprar uno. Ahí no contamos ningún costo de plan de salud.",
       "premiumHelp": "{program}. Ayuda a pagar el seguro de salud. Lo contamos.",
       "premiumHelpMax": "{program}, hasta {amount} al año. Ayuda a pagar el seguro de salud. Lo contamos.",
       "maTafdc": "Usamos la regla del estado para quienes ya la reciben. No la regla del primer año.",
-      "unclaimed": "Usted dijo que no recibe {list}. Con su pago valdría unos {amount} al año.",
+      "unclaimed": "Usted nos dijo que no recibe {list}. Con su paga valdría unos {amount} al año.",
       "labels": {
         "rent": "Renta",
         "childcare": "Cuidado de niños",
@@ -407,11 +415,12 @@
         "childSupport": " Manutención de hijos: {amount} al mes.",
         "unemployment": " Pago por desempleo: {amount} al mes."
       },
-      "none": "Ninguno"
+      "none": "Ninguno",
+      "lead": "Cambie cualquiera de estos datos y la imagen cambia. Si algo de aquí no es correcto para usted, los números tampoco lo son."
     },
     "incomplete": {
       "lead": "Una cosa que no pudimos contar.",
-      "body": " {state} tiene {program}. Nuestras cuentas no lo incluyen. En esta página podría faltar una caída."
+      "body": " {state} tiene {program}, y nuestras cuentas no lo incluyen, así que podría faltar una caída en esta página."
     },
     "reach": {
       "heading": "¿Qué tan común es este pago?",
@@ -424,7 +433,7 @@
         "people": "personas como usted"
       },
       "margin": " La cuenta puede variar unos miles de dólares hacia arriba o hacia abajo.",
-      "note": "Esto dice qué tan común es el pago. No dice cuánto va a ganar usted.",
+      "note": "Esto dice qué tan común es esa paga. No dice cuánto va a ganar usted.",
       "source": "De datos de encuestas de la Oficina del Censo de EE. UU. ({vintages}). Llevados a dólares de {year}.",
       "sourceBare": "De datos de encuestas de la Oficina del Censo de EE. UU.",
       "survey": {
@@ -434,12 +443,12 @@
     },
     "hours": {
       "heading": "El pago mínimo legal",
-      "body": "El pago mínimo legal de {state} es {wage} por hora. Un trabajo de tiempo completo con ese pago da unos {fullTime} al año."
+      "body": "La paga legal más baja en {state} es {wage} por hora, y trabajar tiempo completo con esa paga son unos {fullTime} al año."
     },
     "footer": {
       "estimates": "Son estimaciones.",
-      "caseworker": " Un trabajador social decide la ayuda real.",
-      "assumed": "Usamos las reglas de {year}. La lista de arriba dice lo que supusimos. Si algo de eso no es cierto para usted, estos números tampoco lo son. No preguntamos por nadie en el hogar de 65 años o más.",
+      "caseworker": " Un trabajador social decide la ayuda que de verdad recibe.",
+      "assumed": "Usamos las reglas de {year}. No preguntamos por nadie del hogar de 65 años o más.",
       "noAdvice": "No le decimos qué hacer."
     },
     "program": {
@@ -484,9 +493,9 @@
     },
     "phraseAndName": "{phrase} ({name})",
     "keepNext": {
-      "base": "De los próximos {over} que gane, le quedan unos {kept}.",
-      "cliff": "De los próximos {over} que gane, le quedan unos {kept}, porque {phrase} se acaba en {wage}.",
-      "plateau": "De los próximos {over} que gane, le quedan unos {kept}. Eso es un tramo plano: más paga, poco más de dinero."
+      "base": "De los próximos {over} que gane, le quedarían unos {kept}.",
+      "cliff": "De los próximos {over} que gane, le quedarían unos {kept}, porque {phrase} se termina en {wage}.",
+      "plateau": "De los próximos {over} que gane, le quedarían unos {kept}: eso es un tramo plano, más paga y apenas más dinero."
     },
     "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya."
   },
