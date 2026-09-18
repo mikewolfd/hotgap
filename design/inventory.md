@@ -102,7 +102,10 @@ measures how much of the first screen it covers.
 | first figure's top, at 390 | ≤ 120px | ≤ 120px | ≤ 120px |
 | figure's share of screen 1, 390 / 1280 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 |
 
-The three budgets differ because density is a surface decision, not a
+In a language a third longer than English the summary line may wrap once
+more, so a translated page is allowed one line-height (20px) over the
+figure-top budget — and nothing over the word or share budgets. The three
+budgets differ because density is a surface decision, not a
 component one (`README.md` § Where the personas conflict, 3). They are floors
 on the reader's attention, not ceilings on what the page holds: the same
 script run with every disclosure open is the proof that nothing was deleted,

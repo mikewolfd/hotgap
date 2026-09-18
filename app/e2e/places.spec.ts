@@ -108,12 +108,16 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
 
     /* ── THE PICTURE IS THE PAGE ──────────────────────────────────────────
        Measured before anything is opened or clicked, by the same function
-       `node e2e/weight.mjs` runs, plus the options the tool subtracts from a
-       total that never held them (OPTION_WORDS above). */
+       `node e2e/weight.mjs` runs. The tool once subtracted every option of a
+       visible select from a total that never held them (their rects are
+       zero, so its walker never counts them); it now adds the shown option
+       once, and OPTION_WORDS asserts the zero-rect premise that makes that
+       right — if a browser ever gives options a rect, the count jumps here. */
     await page.evaluate(() => scrollTo(0, 0));
     const weight = await page.evaluate(MEASURE);
     const opts = await page.evaluate(OPTION_WORDS);
-    const visible = weight.total + opts.n;
+    check(opts.rects === 0, `a closed select's options have no client rect, so the tool's count is the visible count (${opts.n} option words, ${opts.rects} rects)`, opts);
+    const visible = weight.total;
     console.log(`     weight: tool ${weight.total} (${weight.html} prose + ${weight.svg} in the picture), re-derived ${visible}; figure top ${weight.figureTop}px, ${weight.figureShare} of screen 1`);
     check(opts.rects === 0, "a closed select's options have no client rect, so the tool's subtraction runs against a total that never held them", opts);
     check(visible <= BUDGET.words, `at most ${BUDGET.words} words are visible before a reader does anything (${visible})`, { tool: weight.total, options: opts.n, visible });
