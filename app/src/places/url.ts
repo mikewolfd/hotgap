@@ -3,6 +3,7 @@
 // or a measure key>&state=<postal code>. Every key is written once anything changes,
 // never only the ones that differ from a default — a default can move with
 // the sweep, and a link to "the default household" would then move with it.
+import { withLang } from "../lib/copy.js";
 import { MEASURES, measureByKey, type MeasureKey, type SortKey } from "./model.js";
 
 export interface View {
@@ -37,9 +38,9 @@ export function parseView(search: string, d: ViewDomain): View {
   };
 }
 
-/** The query string for a view, always beginning with "?". */
+/** The query string for a view, always beginning with "?", the language carried. */
 export function viewQuery(v: View): string {
   const q = new URLSearchParams({ household: v.household, measure: v.measure, sort: v.sort });
   if (v.state) q.set("state", v.state);
-  return "?" + q.toString();
+  return "?" + withLang(q).toString();
 }

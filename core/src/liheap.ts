@@ -60,6 +60,7 @@
 // re-reading every row from its publisher, never carrying a percentage over —
 // the rule policyYear.ts sets out.
 import { readData } from "./data.js";
+import { message } from "./messages.js";
 import { fpl2025 } from "./policyYear.js";
 import { householdSize, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
@@ -668,12 +669,12 @@ export function liheapLimitDollars(state: string, limit: LiheapLimit, size: numb
   }
 }
 
-/** A limit in the words a coverage note prints: "150% of the poverty guideline", "60% of state median income", Maryland's slide. */
+/** A limit in the words a coverage note prints: "150% of the poverty guideline", "60% of state median income", Maryland's slide (messages/en.json `liheap.limit.*`; a surface renders the same codes in its language). */
 export function liheapLimitWords(limit: LiheapLimit): string {
   switch (limit.kind) {
-    case "fpg": return `${limit.pct}% of the poverty guideline`;
-    case "smi": return `${limit.pct}% of state median income${limit.vintage ? ` (the state still applies the ${limit.vintage} table)` : ""}`;
-    case "smi-by-size": return `${limit.pct[0]}% to ${limit.pct[limit.pct.length - 1]}% of state median income, rising with household size`;
+    case "fpg": return message("liheap.limit.fpg", { pct: limit.pct });
+    case "smi": return limit.vintage ? message("liheap.limit.smiVintage", { pct: limit.pct, vintage: limit.vintage }) : message("liheap.limit.smi", { pct: limit.pct });
+    case "smi-by-size": return message("liheap.limit.smiBySize", { from: limit.pct[0], to: limit.pct[limit.pct.length - 1] });
   }
 }
 

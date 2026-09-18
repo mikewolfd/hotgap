@@ -4,7 +4,7 @@ import type { SummaryJson } from "@hotgap/core";
 import { parseCsv } from "../../e2e/parseCsv.mjs";
 import { CSV_HEADER, csvField, csvFor, csvName } from "./csv.js";
 import { DEFAULT_ARCHETYPE, STATE_NAMES } from "@hotgap/core";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { measureByKey, rowsFor, tableRows } from "./model.js";
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;

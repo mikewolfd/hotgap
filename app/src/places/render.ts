@@ -3,10 +3,14 @@
 // panel's per-view sentences, and the selected state's detail
 // (CorrectionsApplied, IncompleteMarker, otherBenefits, SourceNote). Every
 // word is copy.ts's; every number is read from the summary; nothing is typed.
-import { CLIFF_MIN, STATE_NAMES, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { correctionRows } from "../lib/corrections.js";
+import { CLIFF_MIN, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { coreText, limitWords } from "../lib/copy.js";
+import { correctionRows, sourceWord } from "../lib/corrections.js";
+import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money } from "../lib/format.js";
+import { languageSwitch } from "../lib/lang.js";
+import { stateName } from "../lib/names.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
 import { bites, MEASURES, type Archetype, type Grouped, type Measure, type SortKey, type StateRow, tableRows } from "./model.js";
@@ -24,7 +28,7 @@ export interface Scene {
   sel: string | null;
 }
 
-const name = (st: string): string => STATE_NAMES[st] ?? st;
+const name = stateName;
 /** A measure's value as the map, the ranking and the caption print it; null is past the axis. */
 const value = (v: number | null, m: Measure): string => (v === null ? copy.pastAxis : m.unit === "$" ? money(v) : String(v));
 const isCount = (m: Measure): boolean => m.unit === "";
@@ -68,6 +72,7 @@ export function renderStatic(): void {
     ["colFigures", C.figures, copy.table.defs.figures],
   ];
   $("defs").setAttribute("aria-label", copy.table.defs.label);
+  $("lang").replaceWith(languageSwitch());
   $("defs").innerHTML = defs.map(([id, term, def]) => `<dt>${esc(term)}</dt><dd id="def-${id}">${esc(def)}</dd>`).join("");
   for (const [id] of defs) $(id).setAttribute("aria-describedby", `def-${id}`);
   $("pastAxisNote").innerHTML = rich(copy.method.pastAxisCaution);
@@ -91,7 +96,7 @@ export function renderOnce(summary: SummaryJson): void {
   /* A gap every state shares is listed once here, never under a state (S8): the `all` entries, one per program. */
   const coverage = summary.coverage ?? {};
   const everywhere = new Map<string, string>();
-  for (const st of states) for (const u of coverage[st]?.unmodeled ?? []) if (u.scope === "all" && !everywhere.has(u.program)) everywhere.set(u.program, u.note);
+  for (const st of states) for (const u of coverage[st]?.unmodeled ?? []) if (u.scope === "all" && !everywhere.has(unmodeledName(u))) everywhere.set(unmodeledName(u), unmodeledNote(u));
   /* EligibilityBoundary (#23), once for the page: the served range across the
      blocks, its two states named, and the states where the money is counted. */
   const served = states.flatMap((st) => { const s = coverage[st]?.liheap?.servedShare; return s === null || s === undefined ? [] : [{ state: name(st), share: s }]; }).sort((a, z) => a.share - z.share);
@@ -113,7 +118,7 @@ const control = (st: string, sel: string | null, tabbable: string | undefined): 
 function tileTitle(r: StateRow, measure: Measure): string {
   const state = name(r.st);
   switch (r.kind) {
-    case "incomplete": return t("figure.tile.incomplete", { state, programs: listOf(r.incomplete.map((u) => u.program)) });
+    case "incomplete": return t("figure.tile.incomplete", { state, programs: listOf(r.incomplete.map(unmodeledName)) });
     case "none": return t("figure.tile.none", { state });
     case "past": return t("figure.tile.past", { state });
     default: return t("figure.tile.value", { state, value: value(r.value, measure) });
@@ -205,7 +210,7 @@ function stateLines(r: StateRow, measure: Measure, cov: StateCoverage | undefine
   const b = (text: string) => (marked ? `<b>${esc(text)}</b>` : esc(text));
   const county = cov?.vintages.county.name ?? null;
   const st = b(name(r.st)), top = money(m.axisTop), renter = esc(county ? t("readout.renter.county", { county }) : copy.readout.renter.unknown);
-  const missing = r.incomplete.map((u) => u.program);
+  const missing = r.incomplete.map(unmodeledName);
   if (m.cliffCount === 0 || m.biggestLossAt === null) return [`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${renter}`];
   const step = esc(stepWords(m.biggestLossAt)), loss = b(money(m.biggestLoss));
   if (measure.key === "biggestLoss") return [`${stepLine(st, loss, step, m.biggestLossPrograms, missing.map(esc))} ${renter}`];
@@ -274,7 +279,7 @@ export function renderRank(s: Scene): void {
   let rank = 0;
   $("rank").innerHTML = g.ranked.map((r, i) => {
     if (i === 0 || r.value !== g.ranked[i - 1].value) rank = n + i + 1;
-    return rankRow(r, `<span class="dot" style="left:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
+    return rankRow(r, `<span class="dot" style="inset-inline-start:${(((r.value as number) - g.bins.lo) / span) * 100}%;` +
       `background:var(--loss-${g.bins.index(r.value as number) + 1})"></span>`, value(r.value, measure), rankOrdinal(rank));
   }).join("");
   $("rankAxis").innerHTML = `<span>${value(g.bins.lo, measure)}</span><span>${value(g.bins.hi, measure)}</span>`;
@@ -317,7 +322,7 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
      The Figures cell carries the child-care subsidy's footing where HotGap
      added it (rerun S4), so Ohio and Texas read on their footing without a click. */
   $("tbody").innerHTML = rows.map((r, i) => {
-    const { m } = r, none = r.kind === "none", missing = r.incomplete.map((u) => u.program);
+    const { m } = r, none = r.kind === "none", missing = r.incomplete.map(unmodeledName);
     const floor = (v: string) => (missing.length ? t("rank.floor", { value: v }) : v);
     const cell = (v: number) => (none ? T.none : floor(money(v)));
     const figures = esc(missing.length ? t("table.floor", { programs: listOf(missing) }) : T.complete) +
@@ -340,7 +345,7 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
 export function renderMethod(s: Scene): void {
   const { g } = s, label = s.archLabel.toLowerCase();
   $("unmodSummary").textContent = g.incomplete.length
-    ? t("method.excludes.hatched", { household: label, where: listOf(g.incomplete.map((r) => t("method.excludes.whereItem", { programs: listOf(r.incomplete.map((u) => u.program)), state: name(r.st) }))) })
+    ? t("method.excludes.hatched", { household: label, where: listOf(g.incomplete.map((r) => t("method.excludes.whereItem", { programs: listOf(r.incomplete.map(unmodeledName)), state: name(r.st) }))) })
     : t("method.excludes.nothing", { household: label });
   $("hatchCaution").innerHTML = rich(g.programs.length ? t("method.hatchCaution.some", { programs: listOf(g.programs) }) : copy.method.hatchCaution.none);
   /* The axis this household was swept to, in dollars (rerun N9): the top most
@@ -390,17 +395,17 @@ export function renderDetail(s: Scene): void {
   const rows = correctionRows(cov.corrections);
   $("stateTitle").textContent = t("detail.heading", { state: stateName, n: rows.length });
   $("stateSub").textContent = `${t(rows.length ? "detail.changed" : "detail.unchanged", { state: stateName })} ${t(`detail.subsidy.${cov.corrections.childcareSubsidy.source === "added by HotGap" ? "added" : "inNetIncome"}`, { state: stateName })}`;
-  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ?? D.applied, r.note, r.href)).join("");
+  $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ? sourceWord(r.source) : D.applied, r.note, r.href)).join("");
 
   const own = cov.unmodeled.filter((u) => u.scope !== "all");
   $("unmodTitle").hidden = $("unmod").hidden = own.length === 0;
   $("unmodTitle").textContent = t("detail.unmodeled", { state: stateName, n: own.length });
-  $("unmod").innerHTML = own.map((u) => detailRow(u.program, bites(u, s.arch) ? D.incompleteTag : null, u.note)).join("");
+  $("unmod").innerHTML = own.map((u) => detailRow(unmodeledName(u), bites(u, s.arch) ? D.incompleteTag : null, unmodeledNote(u))).join("");
 
   const other = cov.otherBenefits;
   $("otherTitle").hidden = $("other").hidden = other.length === 0;
   $("otherTitle").textContent = t("detail.other", { state: stateName, n: other.length });
-  $("other").innerHTML = other.map((o) => detailRow(o.label, null, t("detail.otherNote", { max: money(o.maxAnnualInSweep) }), undefined, o.variable ? t("detail.variable", { name: o.variable }) : undefined)).join("");
+  $("other").innerHTML = other.map((o) => detailRow(coreText(o.message, o.label), null, t("detail.otherNote", { max: money(o.maxAnnualInSweep) }), undefined, o.variable ? t("detail.variable", { name: o.variable }) : undefined)).join("");
 
   /* EligibilityBoundary (#23): one row in the ledger's shape from
      coverage[state].liheap — the program with its footing chip in the name
@@ -416,7 +421,7 @@ export function renderDetail(s: Scene): void {
   $("liheap").hidden = !hasBoundary;
   if (hasBoundary) {
     const counted = note.source === "in net income";
-    const facts = boundaryFacts({ limit: b.limitKind, worth: b.topBand ? { lo: money(b.topBand.min), hi: b.topBand.max === b.topBand.min ? null : money(b.topBand.max), shape: b.shape } : null, share: b.servedShare }) +
+    const facts = boundaryFacts({ limit: limitWords(b.limit), worth: b.topBand ? { lo: money(b.topBand.min), hi: b.topBand.max === b.topBand.min ? null : money(b.topBand.max), shape: b.shape } : null, share: b.servedShare }) +
       (counted ? ` ${boundaryCounted(stateName, note.program)}` : "");
     $("liheap").dataset.footing = note.source;
     $("liheap").innerHTML = `<li><span class="hg-rows__at">${esc(L.program)} <span class="hg-tag">${esc(counted ? L.footing.inNetIncome : L.footing.boundary)}</span></span>` +
@@ -426,7 +431,7 @@ export function renderDetail(s: Scene): void {
   /* SourceNote (#17) from vintages and model, in the inventory's shape, the county named. */
   const v = cov.vintages;
   const [careBasis, careYear] = (v.childcare?.preschool ?? "").split(" ");
-  const care = D.care[careBasis] ?? careBasis ?? D.care.unknown;
+  const care = (D.care as Record<string, string>)[careBasis] ?? careBasis ?? D.care.unknown;
   $("stateSrc").textContent = t("detail.source", {
     year: summary.year, rentPublisher: v.rent.publisher, rentVintage: v.rent.vintage,
     county: v.county.name ? t("detail.sourceCounty.named", { county: v.county.name, vintage: v.county.vintage }) : t("detail.sourceCounty.unnamed", { vintage: v.county.vintage }),

@@ -12,13 +12,15 @@ import { CHILDCARE_MAX_AGE, CLIFF_MIN, LIHEAP_VINTAGE, STATE_NAMES, type LiheapC
 import { test, type Page } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { programName } from "../src/lib/programs.js";
 import { parseCsv } from "./parseCsv.mjs";
 import { formsDrawn, greyRowTransitions, pageContent, pageHeight, pdfObjects, pdfPages, reachable, resource, textInks } from "./pdf.mjs";
 import { AUDIT_DIR as OUT, check, consoleErrors, contrast, rgb } from "./support.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const summary = JSON.parse(readFileSync(resolve(ROOT, "core/data/summary.json"), "utf8")) as SummaryJson;
+/** The program names as the English catalog has them (`shared.program`, app/README.md § Languages) — read from the file, the way the page reads it, not through lib/names.ts, which loads its catalog through Vite. */
+const EN = JSON.parse(readFileSync(resolve(ROOT, "app/src/i18n/en.json"), "utf8")) as { shared: { program: Record<string, string> } };
+const programName = (id: string): string => EN.shared.program[id];
 const coverage = summary.coverage!;
 const STATES = Object.keys(summary.states).sort();
 /* The one child-care age rule (N8), the cliff floor, the LIHEAP vintages (#23) and the program names (M3) are core's and

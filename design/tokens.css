@@ -414,7 +414,7 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
   margin: var(--s2) 0 0;
   max-width: var(--measure-wide);
 }
-.hg-source .hg-button { margin-left: var(--s2); }   /* M4: "Try again" sits in the line */
+.hg-source .hg-button { margin-inline-start: var(--s2); }   /* M4: "Try again" sits in the line */
 
 /* The cite line under a ledger or list entry (ThresholdLedger, CorrectionsApplied — B3). */
 .hg-cite { display: block; color: var(--ink-3); font-size: var(--t-micro);
@@ -493,24 +493,28 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    (a heading or a <strong> first), never alone. Default: a neutral aside.
    --note: an estimate, a definition, a deferred change.
    --caution: stale data, an offline fallback, an incomplete state. */
-.hg-callout { border-left: 3px solid var(--rule-strong);
+.hg-callout { border-inline-start: 3px solid var(--rule-strong);
               padding: var(--s1) 0 var(--s1) var(--s4); margin: var(--s5) 0;
               color: var(--ink-2); max-width: var(--measure-wide); }
-.hg-callout--note    { border-left-color: var(--note); }
-.hg-callout--caution { border-left-color: var(--caution); }
+.hg-callout--note    { border-inline-start-color: var(--note); }
+.hg-callout--caution { border-inline-start-color: var(--caution); }
 .hg-callout > :last-child { margin-bottom: 0; }
 .hg-callout strong, .hg-callout h2, .hg-callout h3 { color: var(--ink); }
 
 /* Button (#20), one declaration (S13). The theme button, the CSV download
    and the secondary action are the base; --primary is the one action a
    surface leads with (the caseworker's print). Edge at --control-edge (S11). */
+/* A label is never clipped for its length (app/README.md § Languages, text
+   expansion): a button, a chip, a tag keep to one line while they fit their
+   row — a wrapping flex row moves an item to the next line before it shrinks
+   it — and wrap their words only when alone they are wider than the row. */
 .hg-button {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
-  min-height: var(--touch); padding: 0 var(--s4);
+  min-height: var(--touch); padding: var(--s1) var(--s4); min-width: 0;
   border: 1px solid var(--control-edge); border-radius: var(--r-control);
   background: var(--surface); color: var(--ink);
   font: inherit; font-weight: var(--w-med); line-height: 1.2;
-  cursor: pointer; text-decoration: none; white-space: nowrap;
+  cursor: pointer; text-decoration: none; text-align: center;
 }
 .hg-button--primary { background: var(--ink); color: var(--plane); border-color: var(--ink); }
 .hg-button--small { min-height: 32px; padding: 0 var(--s3); font-size: var(--t-micro); }
@@ -521,9 +525,9 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    aria-pressed; or opening an editor) — otherwise it is a <span>, because a
    button that does nothing is a lie. Same look on both elements. */
 .hg-chip {
-  display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch);
-  padding: 0 var(--s3); border: 1px solid var(--control-edge); background: var(--surface);
-  color: var(--ink); border-radius: var(--r-control); white-space: nowrap; font: inherit;
+  display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--touch); min-width: 0;
+  padding: var(--s1) var(--s3); border: 1px solid var(--control-edge); background: var(--surface);
+  color: var(--ink); border-radius: var(--r-control); font: inherit; text-align: start;
 }
 button.hg-chip { cursor: pointer; }
 .hg-chip__k { color: var(--ink-3); }
@@ -541,7 +545,7 @@ button.hg-chip { cursor: pointer; }
 /* Disclosure (S4): `display: flex` on a summary drops the ::marker in
    Chromium; list-item keeps it. DataTable's "Show the numbers" wants this. */
 details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4); }
-.hg-disclosure > summary { display: list-item; cursor: pointer; padding: var(--s3) 0 var(--s3) var(--s1);
+.hg-disclosure > summary { display: list-item; cursor: pointer; padding-block: var(--s3); padding-inline: var(--s1) 0;
   font-weight: var(--w-med); list-style-position: inside; }
 .hg-disclosure > summary::marker { color: var(--ink-3); }
 .hg-disclosure > .hg-scroll-x { margin-bottom: var(--s3); }
@@ -558,9 +562,16 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    row lives in its own .hg-scenario--sticky block, and the summary and inputs
    in a second, non-sticky .hg-scenario after it. */
 .hg-scenario--sticky { position: sticky; top: 0; z-index: 5; }
-.hg-scenario__top { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
+.hg-scenario__top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4);
   max-width: 76rem; margin: 0 auto; }
-.hg-scenario__actions { margin-left: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+.hg-scenario__actions { margin-inline-start: auto; display: flex; gap: var(--s2); flex-wrap: wrap; }
+/* The language switch (app/README.md § Languages; lib/lang.ts): one link
+   per other language, named in its own language; in the ScenarioBar's top
+   row after the wordmark and in the journalist masthead. Small, because it
+   is chrome; a name never breaks mid-word; never on paper. */
+.hg-lang { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); font-size: var(--t-small); min-width: 0; }
+.hg-lang a { color: var(--ink-2); white-space: nowrap; }
+.hg-wordmark { white-space: nowrap; }
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
 /* A full-width line of text inside the inputs row — what a take-up toggle
@@ -589,7 +600,7 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
               padding: var(--s4) 0; border-bottom: 1px solid var(--rule); }
 .hg-filters > div { min-width: 0; flex: 1 1 15rem; }
 .hg-filters label { display: block; color: var(--ink-3); font-size: var(--t-micro); }
-.hg-filters .hg-filters__end { margin-left: auto; display: flex; gap: var(--s2); flex: 0 0 auto; }
+.hg-filters .hg-filters__end { margin-inline-start: auto; display: flex; gap: var(--s2); flex: 0 0 auto; }
 /* A text or number input takes the select's rule (audit F5): the editor's
    four-facts screen and its one-value dialog. */
 .hg-select, .hg-input, .hg-filters select {
@@ -599,20 +610,20 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 }
 
 /* SkipLink (#22), one declaration (S13). */
-.hg-skip { position: absolute; left: -9999px; }
-.hg-skip:focus { left: var(--s4); top: var(--s2); position: fixed; z-index: 9;
+.hg-skip { position: absolute; inset-inline-start: -9999px; }
+.hg-skip:focus { inset-inline-start: var(--s4); top: var(--s2); position: fixed; z-index: 9;
                  background: var(--surface); color: var(--ink); padding: var(--s3);
                  border: 1px solid var(--ink); }
 
 /* DataTable (#15) base and caption, one declaration (S13). The surface sets
    density by its base font size, not the table. */
 .hg-table { border-collapse: collapse; width: 100%; }
-.hg-table caption { text-align: left; color: var(--ink-2); padding-bottom: var(--s2); }
-.hg-table th, .hg-table td { text-align: left; padding: var(--s2) var(--s3) var(--s2) 0;
+.hg-table caption { text-align: start; color: var(--ink-2); padding-bottom: var(--s2); }
+.hg-table th, .hg-table td { text-align: start; padding-block: var(--s2); padding-inline: 0 var(--s3);
                              border-bottom: 1px solid var(--rule); vertical-align: top; }
 .hg-table thead th { color: var(--ink-3); font-weight: var(--w-med); font-size: var(--t-micro);
                      border-bottom-color: var(--rule-strong); }
-.hg-table .num { text-align: right; padding-right: var(--s3); white-space: nowrap; }
+.hg-table .num { text-align: end; padding-inline-end: var(--s3); white-space: nowrap; }
 .hg-table .money { font-weight: var(--w-semi); }
 /* A row that is a control (DropLedger, the state table) centres its cells
    on the button, so a wrapped label does not float its neighbours (S9). */
@@ -628,7 +639,7 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    and nothing else, so :focus-visible keeps its ring. Fills the cell, is
    at least 44px tall, and centres its text. */
 .hg-row-btn { border: 0; background: none; padding: 0; font: inherit; color: inherit;
-              display: flex; align-items: center; width: 100%; text-align: left;
+              display: flex; align-items: center; width: 100%; text-align: start;
               min-height: var(--touch); cursor: pointer; }
 
 /* Panel, one padding (S13): --s4. Both panel-bearing surfaces set a 15px

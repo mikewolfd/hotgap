@@ -1,0 +1,1448 @@
+{
+  "_": {
+    "language": "en",
+    "status": "source",
+    "note": "The English every other locale is a translation of; app/src/lib/copy.ts says the shape and app/README.md § Languages the rules."
+  },
+  "editor": {
+    "wordmark": "HotGap",
+    "actions": {
+      "change": "Change my answers",
+      "print": "Print"
+    },
+    "summary": {
+      "none": "Tell us about your home to see your answer.",
+      "edit": "Edit",
+      "line": "{place} · {household} · {pay}",
+      "place": {
+        "withCounty": "{state} · {county}",
+        "withZip": "{zip} · {state}",
+        "stateOnly": "{state}"
+      },
+      "household": {
+        "alone": "{adults}",
+        "withKids": "{adults}, {kids}"
+      },
+      "adults": {
+        "one": "1 adult",
+        "two": "2 adults"
+      },
+      "kids": "{n, plural, one {kid {ages}} other {kids {ages}}}"
+    },
+    "heading": "If your pay goes up, do you keep more?",
+    "lead": "Answer four things. We check your help at every pay level and tell you what happens.",
+    "privacy": "We do not save what you type. No sign up. No tracking.",
+    "place": {
+      "legend": "Where you live",
+      "zip": "Your ZIP code",
+      "zipHint": "Five digits. We use it to find your state and county.",
+      "or": "Or pick your state",
+      "statePlaceholder": "Choose a state",
+      "inState": "That is in {state}."
+    },
+    "household": {
+      "legend": "Who lives with you",
+      "adults": "Adults",
+      "single": "Just me",
+      "married": "Me and my spouse",
+      "kids": "How many kids live with you?",
+      "kidsHint": "Kids under 18. Up to six.",
+      "kidAge": "How old is kid {n}?"
+    },
+    "pay": {
+      "legend": "What you are paid",
+      "amount": "Your pay, before taxes",
+      "unit": "Per",
+      "units": {
+        "hour": "hour",
+        "week": "week",
+        "month": "month",
+        "year": "year"
+      },
+      "hours": "Hours you work a week",
+      "hoursHint": "Leave it blank if you are not sure. We then assume 40."
+    },
+    "costs": {
+      "legend": "What you pay each month",
+      "rent": "Rent or house payment",
+      "childcare": "Child care",
+      "typical": "Typical in {where}: {amount} a month. Change it if yours is different.",
+      "none": "Put 0 if you pay nothing."
+    },
+    "submit": "See my answer",
+    "close": "Close",
+    "chips": {
+      "where": "Where",
+      "household": "Home",
+      "pay": "Pay",
+      "rent": "Rent",
+      "childcare": "Child care",
+      "age": "Your age",
+      "spouseAge": "Spouse's age",
+      "spousePay": "Spouse's pay",
+      "ssdi": "SSDI",
+      "childSupport": "Child support",
+      "unemployment": "Unemployment pay",
+      "savings": "Savings",
+      "status": "Your status",
+      "spouseStatus": "Spouse's status",
+      "kidsDisabled": "Kids who have a disability",
+      "childcareSubsidy": "Child care help",
+      "headStart": "Head Start",
+      "housing": "Housing help",
+      "energyAssistance": "Heating bill help",
+      "heatInRent": "Heat is in my rent",
+      "employerCoverage": "Health plan from a job",
+      "selfEmployed": "Self-employed",
+      "disabled": "You live with a disability",
+      "spouseDisabled": "Spouse lives with a disability",
+      "snap": "Gets food help (SNAP)",
+      "tanf": "Gets cash help (TANF)",
+      "medicaid": "Gets Medicaid",
+      "wic": "Gets WIC",
+      "on": "on",
+      "off": "off",
+      "yes": "yes",
+      "no": "no",
+      "none": "none",
+      "aYear": "{amount} a year",
+      "aMonth": "{amount} a month"
+    },
+    "dialog": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "age": "Age in years",
+      "monthly": "Dollars a month",
+      "yearly": "Dollars a year",
+      "dollars": "Dollars",
+      "choose": "Choose one",
+      "years": "Years in the US",
+      "yearsHint": "Only if you are not a citizen.",
+      "hasDisability": "Kid {n}, who is {age}, lives with a disability"
+    },
+    "status": {
+      "citizen": "US citizen",
+      "lpr": "Has a green card (permanent resident)",
+      "refugee": "Refugee",
+      "asylee": "Asylee",
+      "deportation_withheld": "Deportation withheld",
+      "cuban_haitian_entrant": "Cuban or Haitian entrant",
+      "conditional_entrant": "Conditional entrant",
+      "paroled_one_year": "Paroled for a year or more",
+      "daca": "DACA",
+      "tps": "TPS",
+      "undocumented": "No papers"
+    },
+    "errors": {
+      "checkThis": "Check this.",
+      "check": "Please check {label}.",
+      "fields": {
+        "zip": "your ZIP code",
+        "state": "your ZIP code or state",
+        "annualEarnings": "your pay",
+        "hoursPerWeek": "your hours",
+        "childAges": "your kids' ages",
+        "age": "your age",
+        "spouseAge": "your spouse's age",
+        "monthlyRent": "your rent",
+        "monthlyChildcare": "your child care cost",
+        "spouseAnnualEarnings": "your spouse's pay",
+        "ssdiMonthly": "SSDI",
+        "childSupportMonthly": "child support",
+        "unemploymentMonthly": "unemployment pay",
+        "savings": "savings",
+        "youStatus": "your status",
+        "spouseStatus": "your spouse's status",
+        "youYearsInUs": "years in the US",
+        "spouseYearsInUs": "your spouse's years in the US",
+        "childDisabled": "which kids have a disability",
+        "countyFips": "your county"
+      }
+    }
+  },
+  "citizen": {
+    "loading": "Doing the math… We check your help at {count} pay levels. This can take a few seconds.",
+    "errorTitle": "We could not get your answer.",
+    "errors": {
+      "rate_limited": "You have asked a few times in a row. Please wait a minute and try again.",
+      "busy": "The math service is busy right now. Please try again in a few seconds.",
+      "other": "The math service did not reply. Your answers were not saved. Please try again in a minute."
+    },
+    "tryAgain": "Try again",
+    "skip": "Skip to the answer",
+    "wordmark": "HotGap",
+    "heading": "If your pay goes up, do you keep more?",
+    "who": "{adults} with {kids}, in {place}.",
+    "whoNoKids": "{adults} with no kids, in {place}.",
+    "adults": {
+      "one": "A parent",
+      "two": "Two parents",
+      "oneNoKids": "An adult",
+      "twoNoKids": "A couple"
+    },
+    "kidsOne": "one kid, age {age}",
+    "kidsMany": "{n} kids, ages {ages}",
+    "stillArchetype": "We still could not get your exact numbers. These are numbers for a family like yours in your state.",
+    "verdict": {
+      "always_up": "You are paid {pay}. You keep {kept}. When you earn more, you keep more. We did not find a spot where more pay leaves you with less.",
+      "cliff_ahead": "You are paid {pay}. You keep {kept}. Near {wage}, more pay can mean less money: past it you would keep about {drop} less a year. People call this a benefits cliff.",
+      "in_danger_zone": "You are paid {pay}. You keep {kept}. More pay does not add to that until you are paid {exit}: a raise of {leap}.",
+      "in_danger_zone:stuck": "You are paid {pay}. You keep {kept}. More pay does not add to that in the pay range we checked, up to {top}. We did not find a spot where you come out ahead again.",
+      "cliff_behind": "You are paid {pay}. You keep {kept}. The big drop is below your pay now. From here, more pay means more for you.",
+      "waits": {
+        "head_start_program_year": " At {at}, {phrase} stops: about {drop} a year. But not that day. A child in it stays to the end of the next program year.",
+        "child_continuous_eligibility": " At {at}, {phrase} stops: about {drop} a year. But not that day. Kids keep it to their next yearly check, up to 12 months later.",
+        "transitional_medical_assistance": " At {at}, {phrase} stops: about {drop} a year. But not that day. You keep it for 6 to 12 more months."
+      }
+    },
+    "again": "It happens again from {from} to {to}.",
+    "againMany": "It happens {n} more times, between {from} and {to}.",
+    "sub": {
+      "more": "You keep more than your pay because help and tax money are part of it.",
+      "less": "You keep less than your pay because taxes and health costs come out of it."
+    },
+    "noncash": {
+      "childcare": "{amount} of this is child care help. It goes to your day care, not to you.",
+      "schoolmeals": "{amount} of this is free school meals. It is not cash.",
+      "headstart": "{amount} of this is free early learning. It is not cash.",
+      "liheap": "{amount} of this is help with heating bills. It goes to your utility, not to you."
+    },
+    "health": "{amount} a year for your health plan comes out first.",
+    "chart": {
+      "title": "Money you keep in a year, as your pay goes up",
+      "unit": {
+        "year": "Pay is by the year.",
+        "month": "Pay is by the month.",
+        "week": "Pay is by the week.",
+        "hour": "Pay is by the hour, at {hours} hours a week."
+      },
+      "readoutHint": "Move along the line with your finger, your mouse, or the left and right arrow keys.",
+      "readoutMarks": " Press ] and [ to jump between drops.",
+      "readout": "Paid {pay}, you keep {kept}.",
+      "inYourZone": " This pay is inside your flat stretch.",
+      "inZone": " This pay is inside a flat stretch.",
+      "outZone": " Here, more pay means more money.",
+      "markWould": "A drop near {pay}. You would keep about {drop} less a year here.",
+      "markPast": "A drop near {pay}. You keep about {drop} less a year here.",
+      "markLater": "A drop near {pay}. You would keep about {drop} less a year here. It lands later, not that day.",
+      "markMerged": "{n} drops from {from} to {to}. Together, about {sum} a year.",
+      "markMergedWaits": "{n} drops from {from} to {to}. Together, about {sum} a year. Some of it waits for a later day.",
+      "axisNote": "The side numbers start at {floor}, not at $0, so the drops are easy to see.",
+      "axisNoteBare": "The side numbers start at {floor}, not at $0.",
+      "safeBeyond": " From {safe} up, more pay always adds to what you keep.",
+      "safeNever": " In the pay range we checked, up to {top}, we did not find a spot past all the flat stretches.",
+      "estimates": " These are estimates. They use the rules for {year} in {state}.",
+      "aria": "A line of the money this household keeps as pay rises from {from} to {to}. It is flat from {zoneFrom} to {zoneTo}.{more}{worst} The household sits at {pay}, inside a flat stretch.",
+      "ariaMore": " It is flat again from {from} to {to}.",
+      "ariaWorst": " The biggest drop is at {at}, where {what} ends.",
+      "ariaNoZone": "A line of the money this household keeps as pay rises from {from} to {to}.{worst} The household sits at {pay}.",
+      "someHelp": "some help",
+      "labels": {
+        "later": "later",
+        "you": "you",
+        "backToEven": "back to even",
+        "backToEvenSafe": "back to even, and safe from here",
+        "safe": "safe from here",
+        "leap": "+{leap}",
+        "leapMore": "more than +{leap}",
+        "drop": "−{drop}"
+      },
+      "scrolls": "The picture covers all pay from {from} to {to}. Slide it left and right to see the rest.",
+      "wholeOnPaper": "The picture covers all pay from {from} to {to}.",
+      "rangeFrom": "← {from}",
+      "rangeTo": "{to} →"
+    },
+    "key": {
+      "line": "Money you keep",
+      "band": "Your flat stretch",
+      "other": "Other flat stretches",
+      "drop": "A drop this year",
+      "later": "A drop that waits",
+      "you": "You now",
+      "boundary": "Where help with heating bills stops"
+    },
+    "boundary": {
+      "line": "Above {pay}, you can no longer apply for help with heating bills in {state}. It is called LIHEAP.",
+      "worth": " It is worth {min} to {max} a winter if you get it.",
+      "worthFlat": " It is worth {amount} a winter if you get it.",
+      "worthUnknown": " We could not read what it pays.",
+      "served": {
+        "some": " About {n} in 10 families who could get it here do.",
+        "few": " Fewer than 1 in 10 families who could get it here do.",
+        "most": " Almost all families who could get it here do.",
+        "unknown": " We do not know how many families who could get it here do."
+      },
+      "invite": "If you get it, turn it on to see it in your line.",
+      "credit": "Help with heating bills in {state} is a tax credit. It is already in your line. It gets smaller as you earn more and runs out above {pay}.",
+      "counted": "You said you get help with heating bills (LIHEAP). We put it in your line: about {amount} a year, up to {pay}."
+    },
+    "source": {
+      "archetype": "We could not get your exact numbers right now. These are numbers for a family like yours in your state.",
+      "clamped": " Your pay is above the range we checked. These numbers are for {top}, the top of that range.",
+      "live": "Source: HotGap, from PolicyEngine with {year} rules. These are your own numbers.",
+      "sweep": "Source: HotGap, from {model} with {year} rules. Sweep of {date}.",
+      "sweepBare": "Source: HotGap, from PolicyEngine. Rules for {year}.",
+      "rent": " Rent: HUD Fair Market Rents, {rent}.",
+      "childcare": " Child care price: {childcare}, grown to {year} dollars.",
+      "money": " Money kept is what is left after taxes and health-plan premiums."
+    },
+    "table": {
+      "show": "Show the numbers",
+      "caption": "The points the picture marks. Money kept is in dollars a year.",
+      "pay": "Your pay",
+      "keep": "You keep",
+      "drop": "Drop",
+      "dropCell": "−{drop}",
+      "mark": "On the picture",
+      "marks": {
+        "peak": "The top of your flat stretch",
+        "you": "You now",
+        "exit": "Back to even",
+        "drop": "A drop",
+        "later": "A drop that waits",
+        "safe": "Safe from here"
+      }
+    },
+    "steps": {
+      "heading": "What ends, and when",
+      "none": "Nothing ends in the pay range we checked.",
+      "ends": "{Phrase} ends. It is called {name}.",
+      "wouldEnd": "{Phrase} would end. It is called {name}.",
+      "endsGroup": {
+        "adults": "Your own {noun} ends. It is called {name}.",
+        "children": "Your kids' {noun} ends. It is called {name}."
+      },
+      "wouldEndGroup": {
+        "adults": "Your own {noun} would end. It is called {name}.",
+        "children": "Your kids' {noun} would end. It is called {name}."
+      },
+      "starts": " Then {phrase} starts. It is called {name}.",
+      "wouldStart": " Then {phrase} would start. It is called {name}.",
+      "remains": " Some goes on until {until}: {list}.",
+      "remainsItem": "{amount} of {phrase}",
+      "smaller": {
+        "benefits": "Some help gets smaller here.",
+        "credits": "Your tax breaks get smaller here.",
+        "premiums": "Your health plan costs more here.",
+        "other": "Other money gets smaller here."
+      },
+      "wouldSmaller": {
+        "benefits": "Some help would get smaller here.",
+        "credits": "Your tax breaks would get smaller here.",
+        "premiums": "Your health plan would cost more here.",
+        "other": "Other money would get smaller here."
+      },
+      "loss": "You keep about {drop} less.",
+      "wouldLoss": "You would keep about {drop} less.",
+      "laterLoss": "Later, you would keep about {drop} less a year.",
+      "biggest": " This is the biggest drop.",
+      "waitsBadge": "Waits",
+      "close": "Close",
+      "waits": {
+        "head_start_program_year": " It does not end that day. A child in it stays to the end of the next program year.",
+        "child_continuous_eligibility": " It does not end that day. Kids keep it to their next yearly check, up to 12 months later.",
+        "transitional_medical_assistance": " It does not end that day. You keep it for 6 to 12 more months."
+      }
+    },
+    "waits": {
+      "thisHelp": "this help",
+      "kids": "your kids' {noun}",
+      "own": "your own {noun}"
+    },
+    "assumed": {
+      "heading": "What we assumed about you",
+      "rent": "{amount} a month. You gave this.",
+      "rentTypical": "{amount} a month. The usual rent in {state}.",
+      "rentNone": "None given. We counted no rent.",
+      "childcare": "{amount} a month for {kids}. You gave this.",
+      "childcareTypical": "{amount} a month for {kids}. The usual price of day care in {state}.",
+      "childcareNone": "None. Nobody in the home pays for day care.",
+      "help": "{list}. We count each as if you get it.",
+      "notCounted": "{list}. We count them as if you do not get them.",
+      "you": "Age {age}. A U.S. citizen.",
+      "youNotCitizen": "Age {age}. Not a U.S. citizen.",
+      "spouse": "Age {age}. Paid {pay} a year.",
+      "spouseNoPay": "Age {age}. Not paid.",
+      "nobodyDisabled": " No one in the home has a disability.",
+      "youDisabled": " You said you have a disability.",
+      "spouseDisabled": " You said your spouse has a disability.",
+      "kidDisabled": " You said one of your kids has a disability.",
+      "kidsDisabled": " You said {n} of your kids have a disability.",
+      "savings": "Savings: {savings}.",
+      "noOtherMoney": " No child support, SSDI or unemployment pay.",
+      "hours": "{hours} hours a week.",
+      "hoursNone": "Not given. We assume full time.",
+      "selfEmployed": "You work for yourself, not for a boss.",
+      "employerPlan": "{amount} a year comes out of your pay for it.",
+      "employerPlanFree": "At your pay, we counted no cost for it.",
+      "headStart": "Worth {amount} a year to you: what day care would cost.",
+      "coverageGap": "From {from} to {to} you would have no health plan at all: no Medicaid and no help to buy one. We counted no health plan cost there.",
+      "premiumHelp": "{program}. It helps pay for health insurance. We counted it.",
+      "premiumHelpMax": "{program}, up to {amount} a year. It helps pay for health insurance. We counted it.",
+      "maTafdc": "We used the state's rule for people already on it. Not the first-year rule.",
+      "unclaimed": "You said you do not get {list}. At your pay it would be worth about {amount} a year.",
+      "labels": {
+        "rent": "Rent",
+        "childcare": "Child care",
+        "help": "Help you get",
+        "notCounted": "Not counted",
+        "you": "You",
+        "spouse": "Your spouse",
+        "money": "Other money",
+        "hours": "Hours",
+        "work": "Work",
+        "employerPlan": "Health plan from a job",
+        "headStart": "Head Start",
+        "coverageGap": "No health plan",
+        "premiumHelp": "Health plan help",
+        "maTafdc": "Cash help (TANF)",
+        "unclaimed": "Help you could get"
+      },
+      "kids": "{n, plural, =1 {one kid} =2 {two kids} =3 {three kids} other {{n} kids}}",
+      "monthly": {
+        "ssdi": " SSDI: {amount} a month.",
+        "childSupport": " Child support: {amount} a month.",
+        "unemployment": " Unemployment pay: {amount} a month."
+      },
+      "none": "None"
+    },
+    "incomplete": {
+      "lead": "One thing we could not count.",
+      "body": " {state} has {program}. Our math does not include it. A drop could be missing from this page."
+    },
+    "reach": {
+      "heading": "How common is this pay?",
+      "some": "About {n} in 10 {who} in {state} are paid {pay} or less.",
+      "few": "Fewer than 1 in 10 {who} in {state} are paid {pay} or less.",
+      "most": "Almost all {who} in {state} are paid {pay} or less.",
+      "who": {
+        "parents": "parents like you",
+        "couples": "couples like you",
+        "people": "people like you"
+      },
+      "margin": " The count could be off by a few thousand dollars either way.",
+      "note": "This says how common the pay is. It does not say what you will earn.",
+      "source": "From U.S. Census Bureau survey data ({vintages}). Grown to {year} dollars.",
+      "sourceBare": "From U.S. Census Bureau survey data.",
+      "survey": {
+        "one": "ACS {year}, {n}-year",
+        "range": "ACS {from}–{to}, {n}-year"
+      }
+    },
+    "hours": {
+      "heading": "The lowest legal pay",
+      "body": "{state}'s lowest legal pay is {wage} an hour. Full-time work at that pay is about {fullTime} a year."
+    },
+    "footer": {
+      "estimates": "These are estimates.",
+      "caseworker": " A case worker decides real help.",
+      "assumed": "We use {year} rules. The list above says what we assumed. If any of it is wrong for you, these numbers are off too. We did not ask about anyone in the home aged 65 or more.",
+      "noAdvice": "We do not tell you what to do."
+    },
+    "program": {
+      "snap": "food help",
+      "medicaid": "a free state health plan",
+      "chip": "a health plan for kids",
+      "eitc": "a tax break for workers",
+      "ctc": "the child tax break",
+      "aca": "help paying for health insurance",
+      "tanf": "cash help",
+      "housing": "housing help",
+      "wic": "food help for moms and babies",
+      "ssi": "SSI cash help",
+      "headstart": "free early learning",
+      "schoolmeals": "free school meals",
+      "childcare": "child care help",
+      "liheap": "help with heating bills"
+    },
+    "called": {
+      "eitc": "the Earned Income Tax Credit (EITC)",
+      "ctc": "the Child Tax Credit",
+      "aca": "the Premium tax credit",
+      "housing": "the Housing voucher",
+      "childcare": "the CCDF child care subsidy",
+      "liheap": "LIHEAP"
+    },
+    "noun": {
+      "snap": "food help",
+      "medicaid": "free state health plan",
+      "chip": "health plan for kids",
+      "eitc": "tax break for workers",
+      "ctc": "child tax break",
+      "aca": "help paying for health insurance",
+      "tanf": "cash help",
+      "housing": "housing help",
+      "wic": "food help for moms and babies",
+      "ssi": "SSI cash help",
+      "headstart": "free early learning",
+      "schoolmeals": "free school meals",
+      "childcare": "child care help",
+      "liheap": "help with heating bills"
+    },
+    "phraseAndName": "{phrase} ({name})",
+    "pageTitle": "HotGap — will I lose money if I earn more?"
+  },
+  "caseworker": {
+    "editor": {
+      "summary": {
+        "none": "Enter the household to evaluate it.",
+        "edit": "Edit"
+      },
+      "heading": "The household",
+      "lead": "Place, household, pay and monthly costs. Net income is evaluated at every pay level on the axis.",
+      "privacy": "Nothing typed here is stored.",
+      "place": {
+        "legend": "Place",
+        "zip": "ZIP code",
+        "zipHint": "Five digits; it sets the state and the county.",
+        "or": "Or the state",
+        "statePlaceholder": "Choose a state",
+        "inState": "In {state}."
+      },
+      "household": {
+        "legend": "Household",
+        "adults": "Adults",
+        "single": "One adult",
+        "married": "Two adults, married",
+        "kids": "Children in the household",
+        "kidsHint": "Under 18. Up to six.",
+        "kidAge": "Age of child {n}"
+      },
+      "pay": {
+        "legend": "Pay",
+        "amount": "Pay, before taxes",
+        "unit": "Per",
+        "hours": "Hours a week",
+        "hoursHint": "Blank assumes 40."
+      },
+      "costs": {
+        "legend": "Monthly costs",
+        "rent": "Rent or mortgage",
+        "childcare": "Child care",
+        "typical": "Typical in {where}: {amount} a month. Change it if the household's differs.",
+        "none": "0 if nothing is paid."
+      },
+      "submit": "Update the household",
+      "chips": {
+        "where": "Place",
+        "household": "Household",
+        "pay": "Pay",
+        "rent": "Rent",
+        "childcare": "Child care",
+        "age": "Age",
+        "spouseAge": "Spouse's age",
+        "spousePay": "Spouse's pay",
+        "ssdi": "SSDI",
+        "childSupport": "Child support",
+        "unemployment": "Unemployment",
+        "savings": "Savings",
+        "status": "Status",
+        "spouseStatus": "Spouse's status",
+        "kidsDisabled": "Children with a disability",
+        "childcareSubsidy": "CCDF subsidy",
+        "headStart": "Head Start",
+        "housing": "Housing voucher",
+        "energyAssistance": "LIHEAP",
+        "heatInRent": "Heat in rent",
+        "employerCoverage": "Employer coverage",
+        "selfEmployed": "Self-employed",
+        "disabled": "Disability",
+        "spouseDisabled": "Spouse's disability",
+        "snap": "SNAP",
+        "tanf": "TANF",
+        "medicaid": "Medicaid",
+        "wic": "WIC",
+        "yes": "on",
+        "no": "off"
+      },
+      "errors": {
+        "check": "Check {label}.",
+        "fields": {
+          "zip": "the ZIP code",
+          "state": "the ZIP code or state",
+          "annualEarnings": "the pay",
+          "hoursPerWeek": "the hours",
+          "childAges": "the children's ages",
+          "age": "the age",
+          "spouseAge": "the spouse's age",
+          "monthlyRent": "the rent",
+          "monthlyChildcare": "the child care cost",
+          "spouseAnnualEarnings": "the spouse's pay",
+          "ssdiMonthly": "SSDI",
+          "childSupportMonthly": "child support",
+          "unemploymentMonthly": "unemployment pay",
+          "savings": "savings",
+          "youStatus": "the status",
+          "spouseStatus": "the spouse's status",
+          "youYearsInUs": "years in the US",
+          "spouseYearsInUs": "the spouse's years in the US",
+          "childDisabled": "which children have a disability",
+          "countyFips": "the county"
+        }
+      }
+    },
+    "actions": {
+      "whatIf": "Add a what-if",
+      "whatIfShort": "What-if",
+      "print": "Print the client sheet",
+      "printShort": "Print",
+      "addAsWhatIf": "Add as a what-if"
+    },
+    "page": {
+      "title": "Benefits cliffs for one household, with what-ifs",
+      "skip": "Skip to the threshold ledger",
+      "coverageHeading": "Model coverage in {state}",
+      "correctionsHeading": "Corrections applied in {state}",
+      "readoutHint": "Arrow keys, or drag, to read any point. Square brackets step between cliffs.",
+      "dropsHeading": "Every step down",
+      "dropsCaption": "Select a row or its mark for the breakdown.",
+      "dropsCols": {
+        "earnings": "Earnings",
+        "drop": "Drop",
+        "lost": "Programs lost",
+        "driver": "Driver"
+      },
+      "breakdownFootnote": "The four shares sum to the drop exactly. A share right of zero adds to the loss; one left of it offsets the loss — here, a falling tax bill. Medicaid and CHIP never appear: their value is a coverage sticker price, never cash, so it cannot move net income. A child losing coverage shows in programs lost instead.",
+      "ledgerHeading": "Where each program ends",
+      "ledgerCaption": "A program ends at the first pay at which it is gone. Adults and children are reported separately — a parent usually loses coverage far below a child’s limit.",
+      "ledgerCols": {
+        "earnings": "Earnings",
+        "program": "Program",
+        "who": "Who"
+      },
+      "compareHeading": "Compare",
+      "compareCaption": "The same rules asked of each what-if.",
+      "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
+      "assumptionsHeading": "What this model does not include"
+    },
+    "status": {
+      "loading": "Evaluating… net income is checked at {count} pay levels. A household not seen before takes a few seconds.",
+      "errorTitle": "The evaluation did not come back.",
+      "errors": {
+        "rate_limited": "Too many evaluations in a minute. Wait a minute and try again.",
+        "busy": "The engine is busy. Try again in a few seconds.",
+        "other": "The engine did not reply. Nothing was saved. Try again in a minute.",
+        "badInput": "Not a household: {detail}."
+      },
+      "tryAgain": "Try again"
+    },
+    "whatIf": {
+      "added": "What-if added: {label}, evaluated beside the base under",
+      "addedAfterLink": ". The chips show the base.",
+      "compareLink": "Compare",
+      "removed": "What-if removed: {label}.",
+      "already": "{label} is already compared.",
+      "now": "Now",
+      "computing": "computing",
+      "failed": "did not come back",
+      "notInSweep": "not in the sweep — needs the live call",
+      "archetype": "(archetype)",
+      "thisWhatIf": "This what-if",
+      "remove": "Remove",
+      "removeAria": "Remove the what-if {title}",
+      "ellipsis": "…",
+      "dash": "—",
+      "married": "Married",
+      "single": "Single",
+      "cleared": "{label} cleared",
+      "place": "Place {where}",
+      "pay": "Pay {pay}",
+      "monthly": "{label} {amount} a month",
+      "yearly": "{label} {amount} a year",
+      "figure": "{label} {amount}",
+      "children": "Children {ages}",
+      "valued": "{label} {value}",
+      "toggled": {
+        "on": "{label} on",
+        "off": "{label} off"
+      },
+      "names": {
+        "zip": "ZIP",
+        "state": "State",
+        "county": "County",
+        "age": "Age",
+        "spouse-age": "Spouse's age",
+        "kids": "Children",
+        "kids-disabled": "Children with a disability",
+        "rent": "Rent",
+        "childcare": "Child care",
+        "earnings": "Earnings",
+        "pay": "Pay",
+        "unit": "Pay unit",
+        "hours": "Hours a week",
+        "spouse-earnings": "Spouse's pay",
+        "ssdi": "SSDI",
+        "child-support": "Child support",
+        "unemployment": "Unemployment",
+        "savings": "Savings",
+        "status": "Status",
+        "spouse-status": "Spouse's status",
+        "years-in-us": "Years in the US",
+        "spouse-years-in-us": "Spouse's years in the US"
+      }
+    },
+    "verdict": {
+      "alwaysUp": "No danger zone. Net rises with every step of earnings on the axis.",
+      "cliffAhead": "A cliff ahead: at {at} net drops {drop}. Below it, more pay is more money.",
+      "cliffBehind": "Past the cliff. The big drop is below current earnings; from here, more pay is more money.",
+      "stuck": "In a danger zone with no exit on the axis. From {start} up to {top} of earnings, net never gets back to the {peak} it reaches at {start}.",
+      "inZone": "In a danger zone. Between {start} and {exit} of earnings, net never gets back to the {peak} it reaches at {start}. Clear at {exit}: a raise of {raise}.",
+      "again": "It happens again between {exit} and {safe}.",
+      "safeFrom": {
+        "exact": "Safe from {safe}: a raise of {leap}.",
+        "atLeast": "Safe from {safe}: a raise of {leap} or more."
+      },
+      "neverSafe": "The sweep never found a pay past which no zone remains."
+    },
+    "tiles": {
+      "net": "Net, after premiums",
+      "netSub": "at {earned} earned",
+      "raise": "Raise to clear the zone",
+      "raiseTo": "to {exit} earned",
+      "raiseNotFound": "not found below {top}",
+      "atLeast": "> {n}",
+      "drop": "Largest single-step drop",
+      "dropAt": "at {from} → {to}",
+      "reach": "Reach at current earnings",
+      "reachSub": "percentile, ±{moe} (n = {n})"
+    },
+    "coverage": {
+      "unknown": "Coverage unknown for {state}.",
+      "noBlock": "The sweep on this site recorded no coverage block for this state, so nothing here can say what the model leaves out.",
+      "notLoaded": "The weekly sweep's summary did not load, so nothing here can say what the model leaves out. Reload to try again.",
+      "incomplete": "Figures incomplete in {state}.",
+      "incompleteBody": "The model cannot compute {programs} here, so a cliff this household would meet is missing from this curve. Every figure on this page is a floor, not a measurement. Do not read this household as better off than one in a state the model can complete.",
+      "complete": "Figures complete for {state}.",
+      "completeBody": "Nothing this household would hold is unmodelled here.",
+      "elsewhere": "{n, plural, one {In 1 state ({states}) this line would carry the} other {In {n} states ({states}) this line would carry the}}",
+      "elsewhereAfterMark": "mark and every figure on the page would be a floor."
+    },
+    "corrections": {
+      "none": "None",
+      "noneBody": "No HotGap-side correction touches this state's numbers.",
+      "unknown": "Unknown",
+      "unknownBody": "The coverage block did not load, so the corrections behind these numbers cannot be listed.",
+      "source": "source",
+      "tafdc": "TAFDC (MA)",
+      "tafdcChecked": "TAFDC",
+      "premiumHelp": "State premium help",
+      "coverageGap": "Coverage gap",
+      "rest": "Checked and not applying here — {items}",
+      "checked": "{program}: {note}"
+    },
+    "drops": {
+      "range": "{from} → {to}",
+      "noneNamed": "none named",
+      "deferred": "Deferred",
+      "until": "until {when}",
+      "empty": "No step down of {min} or more anywhere on this curve.",
+      "drivers": {
+        "benefits": "benefits",
+        "credits": "credits",
+        "premiums": "premiums",
+        "other": "other"
+      }
+    },
+    "breakdown": {
+      "idle": "Where a drop went",
+      "idleBody": "Select a step above, or a mark on the chart.",
+      "title": "Where the {drop} went — {from} to {to}",
+      "parts": {
+        "benefits": "Benefits",
+        "credits": "Credits",
+        "premiums": "Premiums",
+        "other": "Other"
+      },
+      "offsets": "offsets the loss",
+      "adds": "adds to the loss",
+      "sum": "Sums to {drop}, the drop. Driver: {driver}."
+    },
+    "ledger": {
+      "who": {
+        "Adult": "Adult",
+        "Children": "Children",
+        "Household": "Household"
+      },
+      "deferred": "Deferred",
+      "continues": {
+        "open": "{left} a year of {program} continues at {at}.",
+        "closed": "{left} a year of {program} continues at {at}, none from {goneAt}."
+      },
+      "careWorth": {
+        "priced": "Worth {worth} a year at {at}. Care priced at {monthly} a month for {kids} ({price} prices, carried to {year} dollars by the BLS Employment Cost Index).",
+        "unpriced": "Worth {worth} a year at {at}. Care priced at {monthly} a month for {kids}."
+      },
+      "kids": "{n, plural, one {{n} child} other {{n} children}}",
+      "medicaidEnds": {
+        "flat": "Coverage ends with the raise (no deferral applies).",
+        "premium": "Coverage ends with the raise (no deferral applies); the net premium rises {premiumRise} in the step."
+      },
+      "acaEnds": {
+        "alone": "Net premium rises {premiumRise} in one step.",
+        "withHelp": "Net premium rises {premiumRise} in one step; {program} ({amount}) ends with it."
+      },
+      "toChip": "The children move to CHIP: {amount} a year of coverage from {at}.",
+      "eitc": "Phases out; no step of {min} or more, so it is not a cliff.",
+      "chipEnds": "The premium tax credit rises {ptcRise} as it ends.",
+      "deferredUntil": "Crossing this does not end it this year: the loss lands at {when}.",
+      "cashNever": "Cash benefits never end inside this axis.",
+      "cashEnds": "The last cash benefit ends at {at}.",
+      "childCoverageEnds": "Child coverage ends at {at}, deferred.",
+      "gapApplies": "Coverage gap band applies: {note}",
+      "gapNone": "No coverage gap band: {note}",
+      "premiumModeled": "{program} is modeled: netted out of the premium, up to {max} a year.",
+      "premiumLadder": "{program} is applied from a local ladder.",
+      "premiumUnmodeled": "{program} exists but is not modeled on this sweep.",
+      "premiumNone": "No state premium help applies.",
+      "ifYouApply": "if you apply",
+      "liheapBoundary": "{limit}, the heating limit. {worthServed} Not counted unless the household says it gets it. Read {readOn}.",
+      "liheapWorthServed": {
+        "bandKnown": "Worth {band} at that band if received; {pct}% of income-eligible households were served in {vintage}.",
+        "bandUnread": "Worth {band} at that band if received; the {vintage} share of income-eligible households served was not read.",
+        "unreadKnown": "The amount at that band was not read; {pct}% of income-eligible households were served in {vintage}.",
+        "unreadUnread": "The amount at that band was not read; the {vintage} share of income-eligible households served was not read."
+      },
+      "liheapCredit": "{paidAs} {served} {heat} Read {readOn}.",
+      "liheapPaidAs": {
+        "named": "Paid as the {program}, a refundable state credit PolicyEngine models and HotGap counts in state credits; it tapers out by the state's limit, {limit}, so it is not a cliff.",
+        "unnamed": "Paid as a refundable state credit PolicyEngine models and HotGap counts in state credits; it tapers out by the state's limit, {limit}, so it is not a cliff."
+      },
+      "liheapServed": {
+        "known": "{pct}% of income-eligible households were served in {vintage}.",
+        "unread": "The {vintage} share of income-eligible households served was not read."
+      },
+      "liheapHeat": {
+        "inRent": "Heat is included in the rent, so the credit is halved.",
+        "notInRent": "Assumes heat is not included in rent; the credit halves when it is."
+      },
+      "liheapCounted": "Counted at the household's say-so: {amount} a year from HotGap's table of the state's published schedule, to the {limit} limit. PolicyEngine serves no LIHEAP amount on this payload.",
+      "liheapBand": {
+        "flat": "{min}",
+        "range": "{min}–{max}"
+      }
+    },
+    "chart": {
+      "title": "Net income after premiums, {from}–{to} of earnings",
+      "label": {
+        "lead": "Net income after premiums against earnings, {from} to {to}.",
+        "zones": "{n, plural, =0 {No danger zone.} one {{n} danger zone.} other {{n} danger zones.}}",
+        "own": {
+          "toExit": "This household's runs from {start} to {exit}.",
+          "toExitRaise": "This household's runs from {start} to {exit}, cleared by a raise of {raise}.",
+          "toTop": "This household's runs from {start} to the top of the axis.",
+          "toTopRaise": "This household's runs from {start} to the top of the axis, cleared by a raise of {raise}."
+        },
+        "worst": "{n, plural, =0 {The largest step down is {drop} at {at}.} one {The largest step down is {drop} at {at} where {programs} ends.} other {The largest step down is {drop} at {at} where {programs} end.}}",
+        "safe": {
+          "none": "No pay on the axis is past every zone.",
+          "from": "Safe from {safe}."
+        }
+      },
+      "cliff": {
+        "lead": "Cliff at {from} to {to}: {drop}.",
+        "lost": "{n, plural, =0 {No program named.} one {{programs} ends.} other {{programs} end.}}",
+        "driver": "Driver: {driver}.",
+        "deferred": "Deferred until {until}."
+      },
+      "merged": "{n} drops between {from} and {to}, together {sum} a year.",
+      "later": "later",
+      "backToEven": "back to even",
+      "backToEvenAndSafe": "back to even, and safe from here",
+      "safeFromHere": "safe from here",
+      "leap": {
+        "exact": "+{raise}",
+        "atLeast": "more than +{raise}"
+      },
+      "key": {
+        "net": "Net income",
+        "ownZone": "This household's zone",
+        "otherZones": "Other zones",
+        "zones": "Danger zones",
+        "immediate": "Immediate cliff",
+        "deferred": "Deferred cliff",
+        "current": "Current earnings",
+        "leap": "The leap, to the exit",
+        "safe": "Safe from here"
+      },
+      "readout": {
+        "lead": "Earnings {earnings} → net {net}.",
+        "outside": "Outside any danger zone.",
+        "own": {
+          "toExit": "Inside the household's danger zone (ends {end}; peak {peak} at {start}).",
+          "toTop": "Inside the household's danger zone (ends past the axis; peak {peak} at {start})."
+        },
+        "other": {
+          "toExit": "Inside a later zone ({start}–{end}).",
+          "toTop": "Inside a later zone ({start}–the top of the axis)."
+        }
+      },
+      "axis": {
+        "fromZero": "The y-axis starts at {floor}; the visible range is {ratio}× the largest drop.",
+        "aboveZero": "The y-axis starts at {floor}, not $0; the visible range is {ratio}× the largest drop."
+      },
+      "noneDeferred": "No cliff on this curve is deferred.",
+      "span": {
+        "scrolls": "The x-axis runs {from} to {to}; scroll the curve sideways to reach all of it.",
+        "whole": "The x-axis runs {from} to {to}, shown whole."
+      },
+      "rangeFrom": "← {from}",
+      "rangeTo": "{to} →",
+      "deferred": "{n, plural, one {{n} cliff lands at a later renewal (hollow dot, dashed connector); it counts in every figure here.} other {{n} cliffs land at a later renewal (hollow dots, dashed connectors); they count in every figure here.}}"
+    },
+    "compare": {
+      "rows": {
+        "net": "Net after premiums",
+        "change": "Change from now",
+        "inZone": "In a danger zone",
+        "zoneEnds": "Zone ends at",
+        "raise": "Raise still needed",
+        "safe": "Safe from",
+        "drop": "Largest drop",
+        "adultMedicaid": "Adult Medicaid ends",
+        "childCoverage": "Child coverage ends",
+        "reach": "Reach at these earnings"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "pastAxis": "past the axis",
+      "none": "none",
+      "dash": "—",
+      "sub": "{adults}, {earnings}",
+      "adults": {
+        "one": "1 adult",
+        "two": "2 adults"
+      },
+      "reachNote": "Reach is the share of households of the same shape in {state} earning at or below this figure — it says how common the pay is, never the odds of getting there.",
+      "ladderNote": "A column whose household shape differs sits on its own ladder ({other} against {base}), which is why the same pay can sit at a different percentile there.",
+      "archetypeNote": "A column marked archetype is the committed sweep for a household of that shape in this state, not this family's own live call.",
+      "unansweredNote": "{n, plural, one {The committed sweep varies only a household's shape and pay, so a what-if that changes something else has no figure until the live call answers.} other {The committed sweep varies only a household's shape and pay, so {n} what-ifs that change something else have no figure until the live call answers.}}"
+    },
+    "assumed": {
+      "health": "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "facts": "Assumed for this curve: {facts}; aged {age}.",
+      "citizen": "a citizen",
+      "status": "status: {status}",
+      "savings": "{amount} in savings",
+      "noSavings": "no savings",
+      "selfEmployed": "self-employed",
+      "wages": "wages, not self-employment",
+      "esi": "employer coverage offered",
+      "noEsi": "no employer coverage",
+      "otherIncome": "other income as entered",
+      "noOtherIncome": "no other income",
+      "takeUp": {
+        "all": "Take-up assumed for {on}.",
+        "some": "Take-up assumed for {on}; not for {off}."
+      },
+      "annualised": "Annualised current-rule scenarios, not prorated calendar-year benefit totals.",
+      "unmodeled": "Not modelled in {state}: {program}. {note}",
+      "liheap": "Energy assistance (LIHEAP) in {state}: {note}"
+    },
+    "source": {
+      "lead": "Estimates only — a caseworker decides real benefits. Rules: {year}. Curve: {curve}",
+      "vintages": "Rent: {rent} Child-care price: {care}, carried to {year} dollars by the BLS Employment Cost Index. Reach: {reach}",
+      "other": "Other state benefits in the remainder: {other}.",
+      "model": "Model: {model}.",
+      "archetype": {
+        "dated": "committed archetype sweep ({id}), generated {generated} — not this family's own live call.",
+        "undated": "committed archetype sweep ({id}) — not this family's own live call."
+      },
+      "clamped": "Pay is above the modeled range — evaluated at {clamped}, the top of the sweep.",
+      "live": {
+        "inPlace": "live PolicyEngine call for this household in {where}.",
+        "anywhere": "live PolicyEngine call for this household."
+      },
+      "inPlace": "{county}, {state}",
+      "rent": "{publisher} {vintage}",
+      "reachVintages": "{basis} Vintages used: {vintages}.",
+      "otherBenefit": "{label} (up to {max})",
+      "unclaimed": "Off for this household: {items} at {earnings}.",
+      "wouldPay": "{program} would pay {annual} a year"
+    },
+    "handout": {
+      "title": "Your pay and your help — {state}, {parents}, {children}",
+      "parents": {
+        "one": "one parent",
+        "two": "two parents"
+      },
+      "children": "{n, plural, =0 {no children} one {one child} other {{words} children}}",
+      "careShare": "{amount} of what you keep is {phrase} paid straight to your day care.",
+      "biggestDrop": "{n, plural, =0 {The biggest drop is at {at} of pay: your tax break shrinks and you keep {drop} less.} one {The biggest drop is at {at} of pay: {phrases} ends and you keep {drop} less.} other {The biggest drop is at {at} of pay: {phrases} end and you keep {drop} less.}}",
+      "snapEnds": "Food help ends at {at}.",
+      "kidsCoverage": "Your kids' health plan ends at {at} of pay — but not that year. It ends at their next yearly check, up to 12 months later.",
+      "estimates": "These are estimates. A case worker decides real help.",
+      "printed": {
+        "dated": "Printed from HotGap. {year} rules. Sweep of {sweep}.",
+        "undated": "Printed from HotGap. {year} rules."
+      }
+    },
+    "pageTitle": "HotGap — caseworker"
+  },
+  "places": {
+    "pageTitle": "HotGap — what a raise costs, state by state",
+    "wordmark": "HotGap",
+    "skip": "Skip to the data table",
+    "title": "What a raise costs, state by state",
+    "lede": {
+      "counted": {
+        "withDc": "{states} states and the District of Columbia, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. ",
+        "plain": "{states} states, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. "
+      },
+      "figure": "Each figure is the worst single $1,000 step of earnings in that state's curve for that household — how much net income falls when pay goes up by a thousand dollars.",
+      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap. Estimates only."
+    },
+    "status": {
+      "loading": "Loading the weekly run…",
+      "failed": "We could not load the weekly run: {reason}. Reload to try again.",
+      "http": "the data file answered HTTP {status}"
+    },
+    "filters": {
+      "household": "Household",
+      "measure": "Measure",
+      "csv": "Download these rows (CSV)"
+    },
+    "measures": {
+      "biggestLoss": {
+        "title": "Largest one-step loss",
+        "option": "Largest one-step loss ($)",
+        "describe": "Net income lost in the worst single $1,000 step of earnings."
+      },
+      "dangerWidth": {
+        "title": "Total width of the danger zones",
+        "option": "Total width of the danger zones — every stretch where more pay leaves the household no better off, added together ($)",
+        "describe": "Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together."
+      },
+      "leap": {
+        "title": "The leap",
+        "option": "The leap — the raise needed to clear the worst danger zone ($)",
+        "describe": "The raise a household must clear in one move to get past its worst danger zone."
+      },
+      "safeExit": {
+        "title": "Safe exit",
+        "option": "Safe exit — earnings above which no danger zone remains ($)",
+        "describe": "Earnings above which no danger zone remains: where the last one closes."
+      },
+      "cliffCount": {
+        "title": "Number of cliffs",
+        "option": "Number of cliffs",
+        "describe": "Steps down of {floor} or more anywhere on the curve."
+      },
+      "deferredCliffCount": {
+        "title": "Deferred cliffs",
+        "option": "Deferred cliffs — of the cliffs counted, those that land at a later renewal",
+        "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
+      }
+    },
+    "household": {
+      "line": "{adults}, {children}",
+      "adults": {
+        "single": "1 adult",
+        "bothWork": "2 adults, both working",
+        "oneWorks": "2 adults, one working"
+      },
+      "children": "{n, plural, =0 {no children} one {{n} child ({ages})} other {{n} children ({ages})}}"
+    },
+    "pastAxis": "past the axis",
+    "figure": {
+      "title": "{measure}, by state",
+      "sub": "{household}, renting in the state's most populous county. {describe}",
+      "description": "A grid of the fifty states and the District of Columbia, each a square in roughly its geographic position, shaded by the selected measure. A state with no cliff is an empty square; a state whose figure runs past the axis has a dashed edge; a state the model cannot complete is hatched rather than shaded. Each square is a button that opens that state's corrections under the map; the arrow keys move between squares and Enter selects. Every value is listed in the table below this figure.",
+      "tile": {
+        "value": "{state}: {value}",
+        "none": "{state}: no cliff found",
+        "past": "{state}: past the axis",
+        "incomplete": "{state}: {programs} not modelled — figures incomplete"
+      },
+      "legend": {
+        "none": "No cliff found ({n})",
+        "past": "Runs past the top of the axis ({n})",
+        "incomplete": "{programs} not modelled — figures incomplete, not low ({n})"
+      },
+      "bins": {
+        "steps": "five equal-width steps from {lo} to {hi}",
+        "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}"
+      },
+      "source": "HotGap, from PolicyEngine {year} rules on {model}. Weekly run of {date}. Net income after health-insurance premiums. Estimates only.",
+      "binsLine": {
+        "plain": "Bins: {bins} over the {comparable} states with a comparable figure.",
+        "none": "Bins: {bins} over the {comparable} states with a comparable figure; {none} with no cliff found.",
+        "past": "Bins: {bins} over the {comparable} states with a comparable figure; {past} past the axis.",
+        "nonePast": "Bins: {bins} over the {comparable} states with a comparable figure; {none} with no cliff found; {past} past the axis."
+      },
+      "hatched": "{n, plural, one {{m, plural, one {One state is hatched: {programs} is not modelled there, so its figures are incomplete and are not shaded or ranked.} other {One state is hatched: {programs} are not modelled there, so its figures are incomplete and are not shaded or ranked.}}} other {{m, plural, one {{n} states are hatched: {programs} is not modelled there, so their figures are incomplete and are not shaded or ranked.} other {{n} states are hatched: {programs} are not modelled there, so their figures are incomplete and are not shaded or ranked.}}}}",
+      "oneClass": {
+        "countNone": "{n} of the {total} comparable states have none.",
+        "countValue": "{n} of the {total} comparable states have {value}.",
+        "countRange": "{n} of the {total} comparable states have {lo} to {hi}.",
+        "dollars": "{n} of the {total} comparable states fall between {lo} and {hi}."
+      }
+    },
+    "readout": {
+      "empty": "Select a state on the map or in the table.",
+      "step": "{n, plural, one {{state} — {loss} lost at {step}, when {programs} ends.} other {{state} — {loss} lost at {step}, when {programs} end.} =0 {{state} — {loss} lost at {step}; no single program explains the drop.}}",
+      "floor": "{n, plural, one {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {{state} — at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
+      "worstStep": "{n, plural, one {Worst step: {loss} lost at {step}, when {programs} ends.} other {Worst step: {loss} lost at {step}, when {programs} end.} =0 {Worst step: {loss} lost at {step}; no single program explains the drop.}}",
+      "worstStepFloor": "{n, plural, one {{m, plural, one {Worst step: at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {Worst step: at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {Worst step: at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
+      "measure": {
+        "dangerWidth": "{state} — {width} of earnings lie inside danger zones.",
+        "dangerWidthOpen": "{state} — at least {width} of earnings lie inside danger zones; the last one had not closed by {top}, the top of the axis.",
+        "leap": "{state} — a raise of {leap} clears the worst danger zone.",
+        "leapAtLeast": "{state} — a raise of at least {leap} to clear the worst danger zone, which runs past {top}, the top of the axis.",
+        "safeExit": "{state} — no danger zone left above {exit}.",
+        "safeExitPast": "{state} — no safe exit found: the last danger zone had not closed by {top}, the top of the axis.",
+        "cliffCount": "{n, plural, one {{deferred, plural, =0 {{state} — 1 cliff on this household's curve, none deferred.} other {{state} — 1 cliff on this household's curve, and {deferred} more deferred to a later renewal.}}} other {{deferred, plural, =0 {{state} — {n} cliffs on this household's curve, none deferred.} other {{state} — {n} cliffs on this household's curve, and {deferred} more deferred to a later renewal.}}}}",
+        "deferred": "{deferred, plural, =0 {{n, plural, one {{state} — no cliff deferred to a later renewal; its one cliff lands with the raise.} other {{state} — no cliff deferred to a later renewal; all {n} land with the raise.}}} one {{n, plural, one {{state} — 1 cliff deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — 1 cliff deferred to a later renewal, on top of {n} that land with the raise.}}} other {{n, plural, one {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that land with the raise.}}}}",
+        "floorTail": "{n, plural, one {Incomplete: {missing} is not modelled, so the figure is a floor.} other {Incomplete: {missing} are not modelled, so the figure is a floor.}}"
+      },
+      "none": "{state} — no cliff found: no {step} step of earnings on this household's curve cut net income by {floor} or more, up to {top}.",
+      "noneDeferred": "{deferred, plural, one {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; 1 cliff is deferred to a later renewal.} other {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; {deferred} cliffs are deferred to a later renewal.}}",
+      "renter": {
+        "county": "Renter, {county}.",
+        "unknown": "Renter in the state's most populous county."
+      },
+      "details": "Details below ↓"
+    },
+    "rank": {
+      "heading": "Ranked",
+      "row": {
+        "plain": "{rank} {state}: {value}",
+        "withAt": "{rank} {state}: {value}, {at}"
+      },
+      "at": "at {value}",
+      "ordinal": "{n}.",
+      "range": "{n, plural, one {1.} other {1–{n}}}",
+      "floor": "{value} (floor)",
+      "atLeast": "≥ {value}",
+      "step": "{from} → {to}",
+      "lower": {
+        "leap": "{n, plural, one {Rank 1 — at least this much; the exact size runs past the axis (1)} other {Ranks 1–{n} shared — at least this much; the exact size runs past the axis ({n})}}",
+        "safeExit": "{n, plural, one {Rank 1 — past the top of the axis; no safe exit found on the scale (1)} other {Ranks 1–{n} shared — past the top of the axis; no safe exit found on the scale ({n})}}",
+        "note": {
+          "leap": "{n, plural, one {This state could need the largest raise — the axis ends before the worst zone closes — so it takes the top rank.} other {Any of these could need the largest raise — the axis ends before the worst zone closes — so they share the top ranks the way a tie does.}}",
+          "leapTop": {
+            "reaches": "The largest measured leap is {topState}'s {topValue}; {floorState}'s is at least as large.",
+            "larger": "The largest measured leap is {topState}'s {topValue}; {floorState}'s is at least {floorValue} and may be larger."
+          },
+          "safeExit": "{n, plural, one {This state had not closed its last danger zone by the top of the axis, so it takes the top rank.} other {None of these had closed the last danger zone by the top of the axis, so any could be the highest; they share the top ranks the way a tie does.}}",
+          "safeExitTop": "The highest measured safe exit is {topState}'s {topValue}."
+        }
+      },
+      "none": {
+        "heading": "No cliff found ({n})",
+        "value": "no cliff",
+        "note": "No step down of {floor} or more anywhere on this household's curve. A measurement of zero, not the smallest loss: these states are left out of the bins."
+      },
+      "incomplete": {
+        "heading": "Not ranked — figures incomplete ({n})",
+        "value": "not comparable",
+        "note": "{n, plural, one {{m, plural, one {{programs} is not modelled here, so a real cliff may be missing from this curve. This is not a low state; it is an unmeasured one.} other {{programs} are not modelled here, so a real cliff may be missing from this curve. This is not a low state; it is an unmeasured one.}}} other {{m, plural, one {{programs} is not modelled here, so a real cliff may be missing from these curves. They are not low states; they are unmeasured ones.} other {{programs} are not modelled here, so a real cliff may be missing from these curves. They are not low states; they are unmeasured ones.}}}}"
+      },
+      "bins": "Bins are recomputed for every measure — equal-width steps of a dollar measure, classes of whole numbers for a count — so a shade means nothing across two different measures. Read the bin bounds, not the colour."
+    },
+    "table": {
+      "heading": "All {n}, every measure",
+      "order": {
+        "label": "Table order",
+        "state": "State, A to Z",
+        "measure": {
+          "dollars": "{title}, largest first",
+          "count": "{title}, most first"
+        },
+        "hint": "Orders this table only; the map and the ranking follow the Measure above."
+      },
+      "caption": "All six measures for {household}, {order}. PolicyEngine {year} rules, run of {date}.",
+      "byState": "by state",
+      "byMeasure": {
+        "dollars": "by {title}, largest first",
+        "count": "by {title}, most first"
+      },
+      "cols": {
+        "state": "State",
+        "biggestLoss": "Largest one-step loss",
+        "biggestLossAt": "Worst step",
+        "dangerWidth": "Danger zones, total width",
+        "leap": "The leap",
+        "safeExit": "Safe exit",
+        "cliffCount": "Cliffs",
+        "deferredCliffCount": "Deferred",
+        "figures": "Figures"
+      },
+      "defs": {
+        "label": "What the columns mean",
+        "biggestLossAt": "The $1,000 step of earnings at which the largest one-step loss lands.",
+        "figures": "Complete, or the program the model cannot compute in that state, which makes the row's figures floors; and whether HotGap added the child-care subsidy to net income, where PolicyEngine had left it out."
+      },
+      "none": "none",
+      "complete": "complete",
+      "floor": "floor: {programs} not modelled",
+      "subsidyAdded": "child-care subsidy added by HotGap",
+      "floorMark": "floor",
+      "swipe": "Swipe for more →",
+      "note": "Every row keeps the number the model returned, including the rows it cannot complete, because a reporter needs to see what came back. Those rows are flagged in the last column and are not shaded on the map or placed in the ranking. Select a state on the map or in this table to read the corrections behind its numbers under the map; the arrow keys move between states and Enter selects."
+    },
+    "detail": {
+      "choose": "Corrections applied — choose a state",
+      "chooseSub": "Select a state on the map or in the table to read what HotGap changed on top of PolicyEngine before its figures were read.",
+      "heading": "Corrections applied in {state} ({n})",
+      "applied": "applied",
+      "noBlock": "This run recorded no coverage block for this state.",
+      "changed": "What HotGap changed on top of PolicyEngine before any figure for {state} was read.",
+      "unchanged": "PolicyEngine's own figures for {state} stand as served; HotGap changed nothing on top of them — the fixes other states need were not needed here.",
+      "subsidy": {
+        "added": "Child-care subsidy: added by HotGap for {state}.",
+        "inNetIncome": "Child-care subsidy: inside PolicyEngine's net income for {state}."
+      },
+      "unmodeled": "Not modelled in {state} ({n})",
+      "incompleteTag": "figures incomplete",
+      "other": "Also in {state}'s net income ({n})",
+      "otherNote": "Up to {max} a year on this run.",
+      "variable": "PolicyEngine variable: {name}",
+      "liheap": {
+        "program": "Energy assistance (LIHEAP)",
+        "footing": {
+          "boundary": "not counted",
+          "inNetIncome": "in net income"
+        },
+        "limit": "Stops at {limit}, the heating limit for {vintage}.",
+        "worth": {
+          "unread": "The state's matrix prints no amount at that band.",
+          "flatTaper": "Worth {lo} a winter if received; the amount tapers toward the limit.",
+          "flatNotch": "Worth {lo} a winter if received, flat to the limit.",
+          "flatOther": "Worth {lo} a winter if received, at that top income band.",
+          "rangeTaper": "Worth {lo} to {hi} a winter if received; the amount tapers toward the limit.",
+          "rangeNotch": "Worth {lo} to {hi} a winter if received, flat to the limit.",
+          "rangeOther": "Worth {lo} to {hi} a winter if received, at that top income band."
+        },
+        "served": {
+          "few": "Fewer than 1 in 10 income-eligible households were served in {vintage} ({pct}%).",
+          "some": "About {n} in 10 income-eligible households were served in {vintage} ({pct}%).",
+          "most": "Almost all income-eligible households were served in {vintage} ({pct}%).",
+          "unread": "The share of income-eligible households served is not published for {vintage}."
+        },
+        "counted": "Paid as the {program}, which is counted in every figure for {state}.",
+        "cite": {
+          "limitAndAmount": "Limit and amount: {host}.",
+          "limit": "Limit: {host}.",
+          "amount": "Amount: {host}.",
+          "served": "Households served: {host}.",
+          "readOn": "Read {readOn}.",
+          "link": "[{host}]({url})"
+        }
+      },
+      "care": {
+        "county": "county price",
+        "stateMedianCounty": "state median county price",
+        "nationalMedian": "national median price",
+        "unknown": "not recorded"
+      },
+      "source": "Estimates only. Rules: {year}. Rent: {rentPublisher}; {rentVintage}. County: {county}. Child-care price: {care}, carried to {year} dollars by the BLS Employment Cost Index. Model: {model}. Weekly run of {date}.",
+      "sourceCounty": {
+        "named": "{county} (the state's most populous; {vintage})",
+        "unnamed": "the state's most populous, {vintage}"
+      },
+      "sourceCare": {
+        "dated": "{care}, {year} study",
+        "undated": "{care}"
+      }
+    },
+    "csv": {
+      "subsidy": {
+        "inNetIncome": "in PolicyEngine's net income",
+        "added": "added by HotGap"
+      },
+      "modelLabel": {
+        "hosted": "HotGap hosted engine, {model}",
+        "publicApi": "PolicyEngine public API ({endpoint})"
+      }
+    },
+    "method": {
+      "heading": "How these numbers were made",
+      "items": {
+        "engine": "Every cell is one household shape run through [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, at {year} rules, earnings varied in $1,000 steps from $0 past 400% of the poverty guideline for that household size, plus $40,000 of room to recover.",
+        "money": "The money line is **health-adjusted**: household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included.",
+        "household": "Each household is a typical renter in the state's most populous county — named under the map for the selected state — with HUD Fair Market Rent, Census county estimates, and the DOL National Database of Childcare Prices preschool price for that county, carried to {year} dollars by the BLS Employment Cost Index. The study year behind the price, and whether a state or national median stood in for a county the database lacks, differ by state and are printed in the source line under the map.",
+        "takeUp": "The CCDF child care subsidy is **on** for this run and off for a household's own lookup. Head Start and housing vouchers are off in both: they are rationed, and assuming a family holds one inflates its numbers.",
+        "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in the *deferred* column and are lifted out of every other figure here. They are real losses; they do not land in the year of the raise.",
+        "corrections": "Where a state's figure needed a correction on top of PolicyEngine — a premium ladder applied locally, the child care subsidy added back into net income, a parent Medicaid limit taken from the state's handbook, a coverage-gap premium — it is listed under the map for the selected state, from the run's own coverage record, not from copy kept here.",
+        "download": "The download is the table's rows in the table's order, one per state, with these columns: {columns}. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds."
+      },
+      "axis": {
+        "plain": "For {household} the axis runs from $0 to {top}; a figure that runs past the axis runs past that.",
+        "exceptions": "For {household} the axis runs from $0 to {top} ({exceptions}); a figure that runs past the axis runs past that."
+      },
+      "exception": "{top} in {state}",
+      "excludes": {
+        "heading": "What the model does not include",
+        "inputs": "Immigration status, assets, and household members aged 65 or over are not inputs.",
+        "alaskaHawaii": "Alaska and Hawaii marketplace subsidies are computed upstream against the 48-state poverty guideline rather than their own higher ones ([reported to PolicyEngine](https://github.com/PolicyEngine/policyengine-us/issues/9482 \"policyengine-us #9482\")). HotGap does not correct this, so both states' premium-driven figures are understated.",
+        "everywhere": "{program}, in every state: {note}",
+        "liheap": {
+          "none": "Energy assistance (LIHEAP) is in no figure on this page.",
+          "counted": "Energy assistance (LIHEAP) is in no figure on this page, except in {states}, where it is paid as {programs} and counted.",
+          "grant": "It is a block grant, not an entitlement: in {vintage} the states served between {loPct}% ({loState}) and {hiPct}% ({hiState}) of their income-eligible households, so a curve that assumed it would draw a benefit most eligible families never receive. Each state's block under the map says where it stops, what it pays there and the share served; the download carries the limit and the share.",
+          "the": "the {program}"
+        },
+        "hatched": "A program the model cannot compute in a state is listed under the map for that state and hatches it on every measure it could move. For {household} today that is {where}.",
+        "whereItem": "{programs} in {state}",
+        "nothing": "Nothing the model cannot compute would move this household's figures in any state, so no state is hatched for {household}."
+      },
+      "hatchCaution": {
+        "some": "**Hatched is not low.** A program the model cannot compute in a state — today {programs} — is missing from every figure for it, so its numbers are floors, not measurements. Do not write that those states are gentler; the only honest claim is that this model cannot yet say. The flag is read from the run's own coverage record, not from a list kept here, so a state drops off it the day the engine starts modelling the program.",
+        "none": "**Hatched is not low.** A program the model cannot compute in a state is missing from every figure for it, so its numbers are floors, not measurements. Do not write that those states are gentler; the only honest claim is that this model cannot yet say. The flag is read from the run's own coverage record, not from a list kept here, so a state drops off it the day the engine starts modelling the program."
+      },
+      "pastAxisCaution": "**Past the axis is not a number.** Where a state's *last* danger zone runs off the top of the axis rather than closing, the safe exit is unknown; the leap is a lower bound only when the *worst* zone is the one that runs off. The two can differ, so a state can show an exact leap and no safe exit. Those cells read *past the axis* here and must not be charted as a value.",
+      "source": "Run of {date} on {model}. Licence: AGPL-3.0-only. Estimates only — a caseworker decides real benefits.",
+      "cite": "Cite as: HotGap, *What a raise costs, state by state*, {year} rules on PolicyEngine ({model}), run of {date}, {url}."
+    }
+  },
+  "shared": {
+    "program": {
+      "snap": "SNAP",
+      "medicaid": "Medicaid",
+      "chip": "CHIP",
+      "eitc": "Earned Income Tax Credit (EITC)",
+      "ctc": "Child Tax Credit",
+      "aca": "Premium tax credit",
+      "tanf": "TANF cash assistance",
+      "housing": "Housing voucher",
+      "wic": "WIC",
+      "ssi": "SSI",
+      "headstart": "Head Start",
+      "schoolmeals": "School meals",
+      "childcare": "CCDF child care subsidy",
+      "liheap": "LIHEAP energy assistance"
+    },
+    "pay": {
+      "hour": "{figure} an hour",
+      "week": "{figure} a week",
+      "month": "{figure} a month",
+      "year": "{figure} a year"
+    },
+    "ordinal": "{n, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "numbers": {
+      "ones": [
+        "zero",
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine",
+        "ten",
+        "eleven",
+        "twelve",
+        "thirteen",
+        "fourteen",
+        "fifteen",
+        "sixteen",
+        "seventeen",
+        "eighteen",
+        "nineteen"
+      ],
+      "tens": [
+        "twenty",
+        "thirty",
+        "forty",
+        "fifty",
+        "sixty",
+        "seventy",
+        "eighty",
+        "ninety"
+      ],
+      "compound": "{tens}-{ones}",
+      "exact": {}
+    },
+    "reachVintage": {
+      "one": "ACS {year} {n}-year PUMS",
+      "range": "ACS {from}–{to} {n}-year PUMS"
+    },
+    "model": {
+      "versioned": "policyengine-us {version}",
+      "endpoint": "the PolicyEngine API at {endpoint}",
+      "unrecorded": "PolicyEngine (version not recorded)"
+    },
+    "tickThousands": "{amount}k",
+    "language": {
+      "label": "Language"
+    },
+    "state": {
+      "AL": "Alabama",
+      "AK": "Alaska",
+      "AZ": "Arizona",
+      "AR": "Arkansas",
+      "CA": "California",
+      "CO": "Colorado",
+      "CT": "Connecticut",
+      "DE": "Delaware",
+      "DC": "Washington, DC",
+      "FL": "Florida",
+      "GA": "Georgia",
+      "HI": "Hawaii",
+      "ID": "Idaho",
+      "IL": "Illinois",
+      "IN": "Indiana",
+      "IA": "Iowa",
+      "KS": "Kansas",
+      "KY": "Kentucky",
+      "LA": "Louisiana",
+      "ME": "Maine",
+      "MD": "Maryland",
+      "MA": "Massachusetts",
+      "MI": "Michigan",
+      "MN": "Minnesota",
+      "MS": "Mississippi",
+      "MO": "Missouri",
+      "MT": "Montana",
+      "NE": "Nebraska",
+      "NV": "Nevada",
+      "NH": "New Hampshire",
+      "NJ": "New Jersey",
+      "NM": "New Mexico",
+      "NY": "New York",
+      "NC": "North Carolina",
+      "ND": "North Dakota",
+      "OH": "Ohio",
+      "OK": "Oklahoma",
+      "OR": "Oregon",
+      "PA": "Pennsylvania",
+      "RI": "Rhode Island",
+      "SC": "South Carolina",
+      "SD": "South Dakota",
+      "TN": "Tennessee",
+      "TX": "Texas",
+      "UT": "Utah",
+      "VT": "Vermont",
+      "VA": "Virginia",
+      "WA": "Washington",
+      "WV": "West Virginia",
+      "WI": "Wisconsin",
+      "WY": "Wyoming"
+    },
+    "correctionSource": {
+      "modeled": "modeled",
+      "ladder": "ladder",
+      "overridden": "overridden",
+      "added by HotGap": "added by HotGap",
+      "in net income": "in net income"
+    },
+    "county": {
+      "county": "{name} County",
+      "parish": "{name} Parish",
+      "municipio": "{name} Municipio",
+      "municipality": "{name} Municipality",
+      "cityAndBorough": "{name} City and Borough",
+      "borough": "{name} Borough",
+      "censusArea": "{name} Census Area",
+      "city": "{name} city"
+    },
+    "correctionProgram": {
+      "parentIncomeLimit": "{program} — parent income limit",
+      "basicHealthProgram": "Basic Health Program — expanded-limit states",
+      "premiumHelp": "State premium help",
+      "coverageGap": "{program} — coverage gap"
+    }
+  }
+}

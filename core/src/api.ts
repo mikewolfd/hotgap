@@ -2,6 +2,7 @@
 // (worker/) and the pages that call it (app/). The request is whatever
 // validateAnswers accepts (a `zip` allowed); a 200 is a HouseholdEvaluation;
 // anything else is an ApiErrorBody.
+import type { Coded } from "./messages.js";
 
 export type ApiErrorCode =
   /** 400: not a household. `detail` is validateAnswers' reason, or "invalid JSON". */
@@ -24,4 +25,6 @@ export type ApiErrorCode =
 export interface ApiErrorBody {
   error: ApiErrorCode;
   detail?: string;
+  /** `detail` as a code with its parameters (messages.ts), where core wrote it: a bad_input's reason, invalid JSON. A page renders it in its own language. */
+  message?: Coded;
 }

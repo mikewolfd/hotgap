@@ -1,3 +1,4 @@
+import { IntlMessageFormat } from "intl-messageformat";
 import { describe, expect, test } from "vitest";
 import { copy, fill, parts, t } from "./copy.js";
 
@@ -16,10 +17,11 @@ describe("t()", () => {
     ]);
     expect(() => parts("Paid {pay}.", {})).toThrow(/missing param/);
   });
-  test("every catalog string is a string or a nest of strings, and every slot is a plain word", () => {
+  test("every catalog string is an ICU message or a nest of them, and every argument is a plain word", () => {
     const walk = (o: unknown, path: string) => {
       if (typeof o === "string") {
-        for (const m of o.matchAll(/\{([^}]*)\}/g)) expect(m[1], `${path}: ${o}`).toMatch(/^[A-Za-z]+$/);
+        expect(() => new IntlMessageFormat(o, "en", undefined, { ignoreTag: true }), `${path}: ${o}`).not.toThrow();
+        for (const m of o.matchAll(/\{([A-Za-z]*)[,}]/g)) expect(m[1], `${path}: ${o}`).toMatch(/^[A-Za-z]+$/);
         return;
       }
       expect(typeof o, path).toBe("object");

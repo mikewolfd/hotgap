@@ -1,0 +1,76 @@
+{
+  "_": {
+    "language": "en",
+    "status": "source",
+    "note": "The English behind every sentence core writes for a person to read: coverage notes, unmodeled programs, the other-benefits labels, validateAnswers details, /api error details. core/src/messages.ts renders them; a surface renders the same code in its own language (app/README.md § Languages)."
+  },
+  "coverage": {
+    "override": {
+      "parentLimit": "HotGap sends the state's own published parent Medicaid income limit for this household's size, as a share of the 2026 poverty line including the MAGI disregard, because PolicyEngine's figure is five years out of date (policyengine-us #9474; fixed upstream in PR #9475).",
+      "nyBhp": "HotGap takes New York off PolicyEngine's expanded Basic Health Program list, so the Essential Plan ceiling is the 200% of poverty rule in force from 2026-07-01 for the whole year rather than the 250% upstream keeps (policyengine-us #9471; CMS approved the termination on 2026-03-20)."
+    },
+    "maTafdc": {
+      "elsewhere": "Massachusetts only; PolicyEngine's TANF stands as served.",
+      "applied": "HotGap recomputes the TAFDC grant under the state's ongoing-recipient rules ($200 a month per earner, then a 50% disregard; 106 CMR 704.281) and feeds it back to the engine so SNAP follows it, because PolicyEngine ends the grant abruptly (policyengine-us #9469; fix in PR #9477); the September clothing allowance is counted under other benefits, and the six-month full disregard is not modelled."
+    },
+    "premium": {
+      "modeled": "PolicyEngine computes {program} itself, and HotGap subtracts it from the premium the household pays, because the engine reports it as a health benefit rather than in the out-of-pocket premium HotGap reads; no local schedule is applied.",
+      "ladder": "{tiers, select, yes {HotGap applies {program}'s published premium schedule itself — a $0 premium up to {pct}% of the poverty line and the reduced premiums above it, as read on {readOn} — because PolicyEngine does not model the program (policyengine-us #9481).} other {HotGap applies {program}'s published premium schedule itself — a $0 premium up to {pct}% of the poverty line, as read on {readOn} — because PolicyEngine does not model the program (policyengine-us #9481).}}",
+      "perMember": "{range, select, flat {HotGap applies {program}'s published schedule itself — ${dearest} a month for each person on the plan, up to {pct}% of the poverty line, as read on {readOn} — because the version of PolicyEngine this sweep ran against does not carry the program (policyengine-us {issue}).} other {HotGap applies {program}'s published schedule itself — ${cheapest} to ${dearest} a month for each person on the plan, up to {pct}% of the poverty line, as read on {readOn} — because the version of PolicyEngine this sweep ran against does not carry the program (policyengine-us {issue}).}}",
+      "unserved": "{program} is not counted: PolicyEngine served no figure for it on this sweep, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.",
+      "none": "No state premium help applies: PolicyEngine serves none for this state, and HotGap knows of no program to add."
+    },
+    "childcare": {
+      "countedEverywhere": "PolicyEngine counts the child-care subsidy inside net income in every state on this version (policyengine-us #9503), so HotGap only names it.",
+      "counted": "PolicyEngine already counts this state's child-care subsidy in net income, so HotGap only names it.",
+      "added": "PolicyEngine computes the child-care subsidy but leaves it out of net income here, so HotGap adds it back, until the engine's own fix (policyengine-us #9405, PR #9503) reaches this endpoint."
+    },
+    "coverageGap": {
+      "applies": "In this non-expansion state an adult with no Medicaid and no premium credit below 100% of the poverty line is charged no marketplace premium, and the point is flagged, because PolicyEngine bills the full premium to someone the marketplace would not enrol (policyengine-us #9472).",
+      "expansion": "Expansion state: adults to 138% of the poverty line are on Medicaid, so the coverage-gap correction never fires."
+    },
+    "unmodeled": {
+      "premiumKnown": "{program} ({detail}) is not computed by PolicyEngine, and HotGap's own schedules cover only $0-premium tiers, so the premiums here are overstated by it.",
+      "premiumUnserved": "PolicyEngine models {program}, but this sweep's endpoint did not serve it and HotGap has no schedule of its own for it, so the premiums here are overstated by it.",
+      "childcare": "PolicyEngine paid $0 of child-care subsidy at every point to a household here that pays for care — a modelling gap, not a state rule — so a real cliff may be missing; footnote this state rather than read the gap as good news."
+    },
+    "liheap": {
+      "credit": "Michigan pays its heating assistance as the refundable Home Heating Credit; PolicyEngine models it and HotGap counts it in state credits, assuming heat is not included in rent — the credit halves when it is.",
+      "boundary": "{served, select, known {HotGap shows where energy assistance (LIHEAP) stops in this state — {limit} — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served about {pct}% of its income-eligible households in {vintage}, so a curve that assumed it would draw a benefit most eligible families never receive.} other {HotGap shows where energy assistance (LIHEAP) stops in this state — {limit} — and what the state pays at that top band, but counts the money only for a household that says it gets it, because the program is a block grant that served a share of eligible households the {vintage} profile does not give, so a curve that assumed it would draw a benefit most eligible families never receive.}}"
+    },
+    "otherBenefits": {
+      "unidentified": "not yet identified — probe the engine with the household-benefit lists (stateOtherBenefits.ts)",
+      "nj_property_tax_relief": "New Jersey ANCHOR property-tax relief, renter benefit ($450 a year under $150,000 of income)"
+    }
+  },
+  "program": {
+    "liheap": "LIHEAP",
+    "childcareCcdf": "Child-care subsidy (CCDF)",
+    "homeHeatingCredit": "Home Heating Credit"
+  },
+  "liheap": {
+    "limit": {
+      "fpg": "{pct}% of the poverty guideline",
+      "smi": "{pct}% of state median income",
+      "smiVintage": "{pct}% of state median income (the state still applies the {vintage} table)",
+      "smiBySize": "{from}% to {to}% of state median income, rising with household size"
+    }
+  },
+  "validate": {
+    "notObject": "body must be an object",
+    "field": "{field}"
+  },
+  "place": {
+    "territory": "HotGap does not model US territories yet",
+    "noState": "no state for ZIP {zip}",
+    "stateMismatch": "ZIP {zip} is in {zipState}, not {state}"
+  },
+  "api": {
+    "invalidJson": "invalid JSON"
+  },
+  "deferral": {
+    "head_start_program_year": "the end of the next Head Start program year (45 CFR 1302.12(j)(1))",
+    "child_continuous_eligibility": "the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342)",
+    "transitional_medical_assistance": "6 to 12 months of Transitional Medical Assistance run out (§1925 of the Social Security Act, 42 U.S.C. 1396r-6)"
+  }
+}

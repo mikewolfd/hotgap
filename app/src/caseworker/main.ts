@@ -15,6 +15,7 @@ import { axisSpec, countyName, pickArchetypeId, provideData, rawAnswersFromFlags
 import { evaluate, type EvaluateResult } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
+import { coreText } from "../lib/copy.js";
 import { CHIP_ORDER, copy, t } from "./copy.js";
 import { chartLabel, curveTitle, notInSweep, sourceLine, unclaimedNote, type Provenance } from "./model.js";
 import { $ } from "../lib/dom.js";
@@ -29,7 +30,7 @@ interface WhatIf { diff: Diff; ev: HouseholdEvaluation | null; state: "computing
 const fresh = (diff: Diff): WhatIf => ({ diff, ev: null, state: "computing", reason: "", seq: 0 });
 
 const errorText = (r: Extract<EvaluateResult, { ok: false }>): string =>
-  r.error === "bad_input" && r.detail ? t("status.errors.badInput", { detail: r.detail }) : r.error === "rate_limited" ? S.errors.rate_limited : r.error === "busy" ? S.errors.busy : S.errors.other;
+  r.error === "bad_input" && r.detail ? t("status.errors.badInput", { detail: coreText(r.message, r.detail) }) : r.error === "rate_limited" ? S.errors.rate_limited : r.error === "busy" ? S.errors.busy : S.errors.other;
 
 // ── Data the page reads beside the evaluation ──────────────────────────
 const fetchJson = async <T>(url: string): Promise<T | null> => {
@@ -125,7 +126,7 @@ function showError(r: Extract<EvaluateResult, { ok: false }>): void {
  */
 async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: boolean; push: boolean }): Promise<void> {
   const v = validateAnswers(rawAnswersFromFlags(flags));
-  if (!v.ok) { editor.showError(v.detail); return; }
+  if (!v.ok) { editor.showError(v.detail, v.message); return; }
   baseFlags = flags;
   writeUrl(push);
   const id = ++latest;
@@ -138,7 +139,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   if (!r.ok) {
     /* The page is the new household's or nothing's: what was rendered belonged to the old one. */
     baseEv = null; content.hidden = true;
-    if (r.error === "bad_input" && r.detail) editor.showError(r.detail); else showError(r);
+    if (r.error === "bad_input" && r.detail) editor.showError(r.detail, r.message); else showError(r);
     return;
   }
   if (!(await renderAll(r.evaluation, flags, id))) return;
@@ -207,7 +208,7 @@ async function runWhatIf(i: number): Promise<void> {
   renderCompareTable();
   const flags = applyDiff(baseFlags, w.diff);
   const v = validateAnswers(rawAnswersFromFlags(flags));
-  const r: EvaluateResult = v.ok ? await evaluate(flags) : { ok: false, error: "bad_input", detail: v.detail };
+  const r: EvaluateResult = v.ok ? await evaluate(flags) : { ok: false, error: "bad_input", detail: v.detail, message: v.message };
   if (w.seq !== seq || !whatIfs.includes(w)) return;
   if (!r.ok) { w.state = "failed"; w.reason = errorText(r); }
   else if (baseEv && notInSweep(baseEv, r.evaluation)) { w.state = "unanswered"; w.reason = W.notInSweep; }   /* B1: the fallback's curve is the base's own */

@@ -15,7 +15,6 @@ import { clusterCliffs, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_
 
 import { svg as mk } from "../lib/dom.js";
 import { lossFigure, money as usd, tickMoney } from "../lib/format.js";
-import { pluralKey } from "../lib/copy.js";
 import { copy, t } from "./copy.js";
 import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
@@ -202,7 +201,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     host.cap.textContent = [
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
       t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
-      DEFERRED.length ? t(`chart.deferred.${pluralKey(DEFERRED.length)}`, { n: DEFERRED.length }) : K.noneDeferred,
+      DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
       source,
     ].join(" ");
     /* The axis's own ends under the figure: the cue that the picture keeps going. */

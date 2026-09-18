@@ -10,6 +10,7 @@ import "./citizen.css";
 import { axisSpec, flagsFromSearchParams, rawAnswersFromFlags, searchParamsFromFlags, validateAnswers, type HouseholdFlags } from "@hotgap/core";
 import { evaluate } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
+import { withLang } from "../lib/copy.js";
 import { h } from "../lib/dom.js";
 import { t } from "./copy.js";
 import { mountResult } from "./result.js";
@@ -42,11 +43,11 @@ let latest = 0;
  * a landing on a shared link closes the screen and leaves focus alone.
  */
 async function run(flags: HouseholdFlags, { submitted, landing = false, retry = false }: { submitted: boolean; landing?: boolean; retry?: boolean }): Promise<void> {
-  const url = `?${searchParamsFromFlags(flags)}`;
+  const url = `?${withLang(searchParamsFromFlags(flags))}`;
   if (submitted && url !== location.search) history.pushState(null, "", url);
   else history.replaceState(null, "", url);
   const v = validateAnswers(rawAnswersFromFlags(flags));
-  if (!v.ok) { editor.showError(v.detail); return; }
+  if (!v.ok) { editor.showError(v.detail, v.message); return; }
   const id = ++latest;
   result.loading(axisSpec(v.value).count);
   const r = await evaluate(flags);
@@ -69,11 +70,16 @@ async function run(flags: HouseholdFlags, { submitted, landing = false, retry = 
       if (!landing) document.querySelector<HTMLElement>("#answer")?.focus();
     }
   } else if (r.error === "bad_input" && r.detail) {
-    editor.showError(r.detail);
+    editor.showError(r.detail, r.message);
   } else {
     result.error(r);
   }
 }
+
+/* The tab's own name is a message too: the skeleton's <title> is English so a
+   page has one before the catalog is in, and this replaces it in the active
+   language (the pseudo-locale gate reads document.title). */
+document.title = t("pageTitle");
 
 function start(): void {
   const flags = flagsFromSearchParams(new URLSearchParams(location.search));

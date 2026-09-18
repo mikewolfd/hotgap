@@ -17,12 +17,16 @@
 // because HotGap forced the wrong variable. That is closed in translate.ts
 // (`takes_up_housing_assistance_if_eligible`), so it has no row here.
 
+import { coded, type Coded } from "./messages.js";
+
 export interface OtherBenefitSource {
   /** The PolicyEngine variable, as named in the household-benefit lists. */
   variable: string;
   /** The request entity it is defined on, so the contract suite can ask for it. */
   entity: "people" | "spm_units" | "tax_units" | "households";
+  /** What the money is, for a reader: rendered from `coverage.otherBenefits.<variable>` in messages/en.json, and the code beside it. */
   label: string;
+  message: Coded;
   /** The states whose swept county turns the variable on. */
   states: readonly string[];
 }
@@ -38,7 +42,8 @@ export const OTHER_BENEFIT_SOURCES: readonly OtherBenefitSource[] = [
     // every New Jersey archetype's curve.
     variable: "nj_property_tax_relief",
     entity: "tax_units",
-    label: "New Jersey ANCHOR property-tax relief, renter benefit ($450 a year under $150,000 of income)",
+    label: coded("coverage.otherBenefits.nj_property_tax_relief").text,
+    message: coded("coverage.otherBenefits.nj_property_tax_relief").message,
     states: ["NJ"],
   },
 ];

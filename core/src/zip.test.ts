@@ -37,9 +37,9 @@ describe("resolvePlace", () => {
     expect(resolvePlace({ state: "TX" })).toEqual({ ok: true, state: "TX", countyFips: null });
     expect(resolvePlace({})).toEqual({ ok: true, state: undefined, countyFips: null });
   });
-  it("names the reason a ZIP cannot be used", () => {
-    expect(resolvePlace({ zip: "00901" })).toEqual({ ok: false, detail: "HotGap does not model US territories yet" });
-    expect(resolvePlace({ zip: "00000" })).toEqual({ ok: false, detail: "no state for ZIP 00000" });
-    expect(resolvePlace({ zip: "94110", state: "NY" })).toEqual({ ok: false, detail: "ZIP 94110 is in CA, not NY" });
+  it("names the reason a ZIP cannot be used, in English and as a code with its parameters (app/README.md § Languages)", () => {
+    expect(resolvePlace({ zip: "00901" })).toEqual({ ok: false, detail: "HotGap does not model US territories yet", message: { code: "place.territory" } });
+    expect(resolvePlace({ zip: "00000" })).toEqual({ ok: false, detail: "no state for ZIP 00000", message: { code: "place.noState", params: { zip: "00000" } } });
+    expect(resolvePlace({ zip: "94110", state: "NY" })).toEqual({ ok: false, detail: "ZIP 94110 is in CA, not NY", message: { code: "place.stateMismatch", params: { zip: "94110", zipState: "CA", state: "NY" } } });
   });
 });

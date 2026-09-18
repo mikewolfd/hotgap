@@ -1,11 +1,12 @@
 // The page's side of POST /api/evaluate (worker/src/index.ts serves it; the
 // shapes are core/src/api.ts). Flags in, a HouseholdEvaluation or a named
 // failure out; the page never sees a thrown error.
-import { rawAnswersFromFlags, type ApiErrorBody, type ApiErrorCode, type HouseholdEvaluation, type HouseholdFlags } from "@hotgap/core";
+import { rawAnswersFromFlags, type ApiErrorBody, type ApiErrorCode, type Coded, type HouseholdEvaluation, type HouseholdFlags } from "@hotgap/core";
 
 export type EvaluateResult =
   | { ok: true; evaluation: HouseholdEvaluation }
-  | { ok: false; error: ApiErrorCode | "network" | "timeout"; detail?: string };
+  /** `detail` is core's English; `message` the same as a code, for the page to say in its own language (lib/copy.ts coreText). */
+  | { ok: false; error: ApiErrorCode | "network" | "timeout"; detail?: string; message?: Coded };
 
 // A Massachusetts household re-asks PolicyEngine point by point; the Worker
 // bounds each upstream request at 60 s, so the whole call needs longer.
@@ -32,6 +33,6 @@ export async function evaluate(flags: HouseholdFlags): Promise<EvaluateResult> {
     return { ok: false, error: res.ok ? "network" : "internal" };
   }
   if (res.ok) return { ok: true, evaluation: body as HouseholdEvaluation };
-  const { error, detail } = body as ApiErrorBody;
-  return { ok: false, error, detail };
+  const { error, detail, message } = body as ApiErrorBody;
+  return { ok: false, error, detail, message };
 }

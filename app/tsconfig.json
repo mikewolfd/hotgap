@@ -7,6 +7,6 @@
     "rootDir": "..",
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "e2e/**/*.ts", "vite.config.ts", "playwright.config.ts"],
+  "include": ["src/**/*.ts", "src/i18n/*.json", "../core/src/messages/*.json", "e2e/**/*.ts", "vite.config.ts", "playwright.config.ts"],
   "references": [{ "path": "../core" }]
 }

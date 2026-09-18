@@ -6,8 +6,8 @@
 // say less, never something wrong, when it has not.
 import { childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
-import { careHousehold, incompleteFor } from "../lib/coverage.js";
-import { capitalize, dateWords, listOf, modelLine, unitFigure } from "../lib/format.js";
+import { careHousehold, incompleteFor, unmodeledName } from "../lib/coverage.js";
+import { capitalize, dateWords, listOf, modelLine, numberWords, unitFigure } from "../lib/format.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
@@ -36,8 +36,7 @@ const TAKE_UP: [keyof Scene["modeled"], ProgramId][] = [
 /** The state pays its heating help as a tax credit HotGap already counts (Michigan): nothing to apply for, nothing to turn on. */
 export const creditCounted = (s: Scene): boolean => s.boundary?.upstream?.counted === "state credit";
 
-const kidsWord = (n: number): string =>
-  n === 1 ? copy.assumed.kids.one : n === 2 ? copy.assumed.kids.two : n === 3 ? copy.assumed.kids.three : fill(copy.assumed.kids.many, { n });
+const kidsWord = (n: number): string => t("assumed.kids", { n });
 
 /** "What we assumed about you": the household the curve was run for, and every correction that touched its numbers. */
 export function assumedRows(s: Scene): Fact[] {
@@ -67,7 +66,7 @@ export function assumedRows(s: Scene): Fact[] {
   if (A.spouseDisabled) disability += copy.assumed.spouseDisabled;
   const kidsDisabled = A.childDisabled.filter(Boolean).length;
   if (kidsDisabled === 1) disability += copy.assumed.kidDisabled;
-  else if (kidsDisabled > 1) disability += fill(copy.assumed.kidsDisabled, { n: capitalize(kidsWord(kidsDisabled).split(" ")[0]) });
+  else if (kidsDisabled > 1) disability += fill(copy.assumed.kidsDisabled, { n: capitalize(numberWords(kidsDisabled)) });
   rows.push({ label: L.you, text: t(A.youStatus === "citizen" ? "assumed.you" : "assumed.youNotCitizen", { age: A.age }) + (disability || copy.assumed.nobodyDisabled) });
   if (A.married) rows.push({ label: L.spouse, text: A.spouseAnnualEarnings > 0
     ? t("assumed.spouse", { age: A.spouseAge ?? A.age, pay: m.money(A.spouseAnnualEarnings) }) : t("assumed.spouseNoPay", { age: A.spouseAge ?? A.age }) });
@@ -117,7 +116,7 @@ export function provenanceText(s: Scene, sweep: Sweep | null): string {
 export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
   const unmodeled = incompleteFor(sweep?.coverage, careHousehold(s.modeled));
   if (!unmodeled.length) return null;
-  return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map((u) => u.program)) });
+  return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map(unmodeledName)) });
 }
 
 export function reachText(s: Scene): string | null {
@@ -131,10 +130,10 @@ export function reachText(s: Scene): string | null {
   return (n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params })) + t("reach.margin");
 }
 
-/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place; anything else as-is. */
+/** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place (`reach.survey.*`); anything else as-is. */
 const surveyWord = (v: string): string => {
   const m = v.match(/^(\d{4})(?:-(\d{4}))?-(\d)yr$/);
-  return m ? `ACS ${m[2] ? `${m[1]}–${m[2]}` : m[1]}, ${m[3]}-year` : v;
+  return !m ? v : m[2] ? t("reach.survey.range", { from: m[1], to: m[2], n: m[3] }) : t("reach.survey.one", { year: m[1], n: m[3] });
 };
 
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {

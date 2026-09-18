@@ -255,6 +255,63 @@ source line changes sentence ("These are numbers for a family like yours in
 your state."), gains *Try again*, and the county is dropped from every sentence
 because the archetype has none.
 
+## Languages
+
+A language is one file (`app/src/i18n/<tag>.json`; `app/README.md` § Languages
+says how). What a translation owes the system is not the words — it is the three
+registers, which are the design, and which a translator can flatten without
+touching a single slot.
+
+**The register per language.** The same distinction the personas draw in English
+has to survive the crossing.
+
+- **The citizen surface** is plain, second person, one thought a sentence, and
+  it never meets a regulation citation. In Spanish that is `usted`, not `tú`:
+  this is a government benefits page, the reader may be filling out a form
+  beside it, and the formal address is what the notices they already hold use.
+  English's readability gate (Flesch–Kincaid ≤ 5.9) does not transfer — the
+  formula is English — so the target in Spanish is the same *plainness*, judged
+  by a reader, not a number: short clauses, common words, no nominalisations
+  ("cuando le paguen más", not "en caso de un incremento salarial").
+- **The caseworker surface** is professional and dense: the regulation, the
+  dollar figure and the date in one line. Spanish keeps the citation exactly as
+  the English has it — a CFR number is not translated — and keeps the
+  abbreviations a caseworker reads at speed.
+- **The journalist surface** is quotable: a sentence that can be dragged into a
+  story without a copy editor rewriting it. Spanish should read as though it
+  were written for a Spanish-language outlet, not as though it were translated
+  for one.
+
+**What does not translate**, in any language: a program's acronym (SNAP, WIC,
+Medicaid, CHIP) and a program's name as the office wrote it, including a state's
+own ("ConnectorCare"), because a name is the office's (`inventory.md` M3) — the
+plain phrase beside it does translate. A county's name is a name; its kind is a
+common noun and the catalog says it ("Condado de El Paso"). CSV column headers
+and URL parameter names are machine contracts. Money stays US dollars.
+
+**The languages that exist.**
+
+| Tag | Status | Register | Notes |
+| --- | --- | --- | --- |
+| `en` | source | all three, as above | The file every other language is a copy of; the readability gate runs on it. |
+| `es-US` | **draft, unreviewed** | drafted to match | Machine-written 2026-09-17. `_.reviewed` is `null`. US Spanish, not Castilian: `usted`, and the vocabulary of the US benefits system. |
+
+**What a native reviewer of `es-US` should look at first**, in this order:
+
+1. **The verdict lines and the step sentences** (`citizen.verdict.*`,
+   `citizen.steps.*`) — the few sentences most readers will read, where a wrong
+   register or a false friend does the most damage.
+2. **`usted` and its agreement**, everywhere. A machine drifts into `tú` and
+   into the impersonal, sometimes inside one sentence.
+3. **Money and "pay" in the person's unit** (`shared.pay.*`) — "al año", "a la
+   semana", "por hora" beside a figure, and whether the phrasing survives the
+   figure being large or small.
+4. **The program phrases** (`citizen.program.*`): "ayuda para la comida" for
+   SNAP and the eleven others. These are what a reader recognises or does not.
+5. **The plural and select branches** — a Spanish `one`/`other` reads naturally
+   or it does not, and the gate cannot hear it.
+6. **The words on paper** (`caseworker.handout.*`), the sheet a client is handed.
+
 ## What was deliberately left out
 
 - **A geographic choropleth.** Area would weight Texas twenty times Connecticut

@@ -1,5 +1,6 @@
 import type { CurvePoint, ProgramId } from "./types.js";
 import { CASH_PROGRAMS, COVERAGE_PROGRAMS, NET_INCOME_CREDITS, PROGRAM_IDS } from "./types.js";
+import { message } from "./messages.js";
 import { PERSON_LEVEL_PROGRAMS } from "./parse.js";
 
 export const CLIFF_MIN = 200;
@@ -47,7 +48,7 @@ export type DeferralReason =
 
 export interface Deferral {
   reason: DeferralReason;
-  /** When the loss actually lands, in the household's own words. */
+  /** When the loss actually lands, in the household's own words: messages/en.json `deferral.<reason>` rendered; a surface renders the reason's code in its language. */
   until: string;
   /**
    * True when every named loss on this cliff waits. False when the label sits
@@ -57,17 +58,22 @@ export interface Deferral {
   complete: boolean;
 }
 
+/**
+ * When each deferral lands, as English (messages/en.json `deferral.*`):
+ *   head_start_program_year — 45 CFR 1302.12(j)(1): a child enrolled in Head
+ *   Start stays eligible for the remainder of the program year and the one
+ *   immediately following.
+ *   child_continuous_eligibility — 42 CFR 435.926 and 457.342: 12 months of
+ *   continuous eligibility for a child in Medicaid or CHIP, regardless of a
+ *   change in family income.
+ *   transitional_medical_assistance — §1925 of the Social Security Act (42
+ *   U.S.C. 1396r-6): a family that loses §1931 Medicaid because of earnings
+ *   from employment keeps it for 6 months, and a further 6 on a state's extension.
+ */
 export const DEFERRAL_UNTIL: Record<DeferralReason, string> = {
-  // 45 CFR 1302.12(j)(1): a child enrolled in Head Start stays eligible for
-  // the remainder of the program year and the one immediately following.
-  head_start_program_year: "the end of the next Head Start program year (45 CFR 1302.12(j)(1))",
-  // 42 CFR 435.926 and 457.342: 12 months of continuous eligibility for a
-  // child in Medicaid or CHIP, regardless of a change in family income.
-  child_continuous_eligibility: "the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342)",
-  // §1925 of the Social Security Act (42 U.S.C. 1396r-6): a family that loses
-  // §1931 Medicaid because of earnings from employment keeps it for 6 months,
-  // and a further 6 on a state's extension.
-  transitional_medical_assistance: "6 to 12 months of Transitional Medical Assistance run out (§1925 of the Social Security Act, 42 U.S.C. 1396r-6)",
+  head_start_program_year: message("deferral.head_start_program_year"),
+  child_continuous_eligibility: message("deferral.child_continuous_eligibility"),
+  transitional_medical_assistance: message("deferral.transitional_medical_assistance"),
 };
 
 export interface Cliff {

@@ -4,7 +4,7 @@
 // part vitest covers directly (model.test.ts).
 import { CHILDCARE_MAX_AGE, CLIFF_MIN, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
 import { fill } from "../lib/copy.js";
-import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, type CareHousehold } from "../lib/coverage.js";
+import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, unmodeledName, type CareHousehold } from "../lib/coverage.js";
 import { money } from "../lib/format.js";
 import { copy } from "./copy.js";
 import { householdLabel } from "./words.js";
@@ -159,7 +159,7 @@ export function group(rows: StateRow[], measure: Measure): Grouped {
   return {
     ranked, past, none, incomplete,
     bins: bins(shaded.map((r) => r.value as number), measure.unit),
-    programs: [...new Set(incomplete.flatMap((r) => r.incomplete.map((u) => u.program)))],
+    programs: [...new Set(incomplete.flatMap((r) => r.incomplete.map(unmodeledName)))],
   };
 }
 

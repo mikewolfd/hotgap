@@ -4,11 +4,12 @@
 // the chart geometry can be tested from a fixture. O(points × programs)
 // once per evaluation; nothing here is repeated per component.
 import {
-  DEFAULT_HOURS, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
+  DEFAULT_HOURS, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
 import { windowFor } from "../lib/chart/geometry.js";
-import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
+import { money, moneyAbout, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
+import { stateName } from "../lib/names.js";
 
 /** The unit the person gave and the hours an hourly figure converts through. */
 export interface Pay { unit: PayUnit; hours: number }
@@ -37,7 +38,7 @@ function moneyFor({ unit, hours }: Pay): Money {
   return {
     pay: (a) => (withUnit ? payPhrase(a, unit, hours) : payFigure(a, unit, hours)),
     payUnit: (a) => payPhrase(a, unit, hours),
-    diff: (a, b, say = withUnit) => unitFigure(payRounded(b, unit, hours) - payRounded(a, unit, hours), unit) + (say ? ` ${unitPhrase(unit)}` : ""),
+    diff: (a, b, say = withUnit) => { const d = payRounded(b, unit, hours) - payRounded(a, unit, hours); return say ? payInUnit(d, unit) : unitFigure(d, unit); },
     money,
     about: moneyAbout,
   };
@@ -137,7 +138,7 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     ...base,
     ev, pay, m: moneyFor(pay), net, idx, earningsAt: (i) => points[i].earnings,
     currentNet: a.currentNet,
-    state: ev.answers.state, stateName: STATE_NAMES[ev.answers.state] ?? ev.answers.state,
+    state: ev.answers.state, stateName: stateName(ev.answers.state),
     safeExit: ev.escape.safeExitEarnings,
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
     cliffs: a.cliffs, deferred,

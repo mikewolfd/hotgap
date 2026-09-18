@@ -57,7 +57,7 @@ const YEARLY = new Set<HouseholdFlagName>(["earnings", "spouse-earnings"]);
 /** The control's name for a flag: its chip's, else the copy's name for a dialog field. */
 const flagName = (f: HouseholdFlagName): string => {
   const key = CHIP_OF[f];
-  return (key ? copy.editor.chips[key] : undefined) ?? copy.whatIf.names[f] ?? f;
+  return (key ? copy.editor.chips[key] : undefined) ?? (copy.whatIf.names as Record<string, string>)[f] ?? f;
 };
 
 /** A what-if's name from its diff, against the flags it was applied to: "CCDF subsidy on", "Pay $55,000 a year", "Married". */
@@ -82,7 +82,7 @@ export function whatIfLabel(diff: Diff, flags: HouseholdFlags): string {
     else if (YEARLY.has(f)) parts.push(t("whatIf.yearly", { label, amount: usd(Number(s)) }));
     else if (f === "savings") parts.push(t("whatIf.figure", { label, amount: usd(Number(s)) }));
     else if (f === "kids") parts.push(t("whatIf.children", { ages: shortList(s.split(",")) }));
-    else if (f === "status" || f === "spouse-status") parts.push(t("whatIf.valued", { label, value: editorCopy.status[s] ?? s }));
+    else if (f === "status" || f === "spouse-status") parts.push(t("whatIf.valued", { label, value: (editorCopy.status as Record<string, string>)[s] ?? s }));
     else parts.push(t("whatIf.valued", { label, value: s }));
   }
   return parts.join(", ");

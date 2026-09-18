@@ -4,12 +4,12 @@
 // sheet. Every string is copy.ts's or comes from the evaluation and the
 // coverage block through model.ts; nothing is typed here. Each function is
 // O(its rows).
-import { CLIFF_MIN, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { pluralKey } from "../lib/copy.js";
-import { correctionRows } from "../lib/corrections.js";
+import { CLIFF_MIN, type CorrectionNote, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { coreText, deferralUntil, limitWords, type Params } from "../lib/copy.js";
+import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { $, fillText } from "../lib/dom.js";
 import { esc, listOf, listOfItems, lossFigure, money as usd, signedMoney } from "../lib/format.js";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import {
   assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
@@ -19,6 +19,8 @@ import {
 /** The page's fixed words — headings, captions, column heads — from copy.ts into the skeleton, once. */
 export function renderStatic(): void {
   const P = copy.page;
+  /* The tab's own name: the skeleton's <title> is English so a page has one before the catalog is in (places/render.ts does the same). */
+  document.title = copy.pageTitle;
   fillText({
     pageTitle: P.title, skip: P.skip, readout: P.readoutHint, drops: P.dropsHeading, dropsCaption: P.dropsCaption,
     colEarnings: P.dropsCols.earnings, colDrop: P.dropsCols.drop, colLost: P.dropsCols.lost, colDriver: P.dropsCols.driver,
@@ -51,7 +53,7 @@ export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | und
   const h = modeled(ev);
   const mine = incompleteHere(cov, h);
   const states = summary ? incompleteStates(summary, h) : [];
-  const elsewhere = t(`coverage.elsewhere.${pluralKey(states.length)}`, { ...(states.length === 1 ? {} : { n: states.length }), states: listOfItems(states) });
+  const elsewhere = t("coverage.elsewhere", { n: states.length, states: listOfItems(states) });
   $("coverage").innerHTML = mine.length
     ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>${esc(t("coverage.incomplete", { state: st }))}</strong> ${esc(t("coverage.incompleteBody", { programs: listOf(mine) }))}</p></div>`
     : `<div class="hg-callout"><p><strong>${esc(t("coverage.complete", { state: st }))}</strong> ${esc(C.completeBody)}` +
@@ -63,20 +65,20 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
   const C = copy.corrections, c = cov?.corrections;
   const rows = correctionRows(c);
   /* The office, the note and the mockup say TAFDC for Massachusetts's row (review N10). */
-  const program = (r: { program: string; note: string }) => (c?.maTafdc.applies && r.note === c.maTafdc.note ? C.tafdc : r.program);
+  const program = (r: { program: string; note: string }) => (c?.maTafdc.applies && r.note === coreText(c.maTafdc.message, c.maTafdc.note) ? C.tafdc : r.program);
   $("corrections").innerHTML = rows.length
     ? rows.map((r) => `<li><span class="hg-rows__at">${esc(program(r))}</span><p>` +
-        (r.source ? `<span class="hg-tag">${esc(r.source)}</span> ` : "") +
+        (r.source ? `<span class="hg-tag">${esc(sourceWord(r.source))}</span> ` : "") +
         `<span class="hg-cite">${esc(r.note)}${r.href ? ` <a href="${esc(r.href)}">${esc(C.source)}</a>` : ""}</span></p></li>`).join("")
     : `<li><span class="hg-rows__at">${esc(cov ? C.none : C.unknown)}</span><p class="hg-cite">${esc(cov ? C.noneBody : C.unknownBody)}</p></li>`;
   const rest: string[] = [];
-  const checked = (program: string, note: string) => rest.push(t("corrections.checked", { program, note }));
+  const checked = (program: string, n: CorrectionNote, overrides?: Params) => rest.push(t("corrections.checked", { program, note: coreText(n.message, n.note, overrides) }));
   if (c) {
-    if (!c.maTafdc.applies) checked(C.tafdcChecked, c.maTafdc.note);
-    if (!c.premiumAssistance.applies) checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance.note);
-    if (!c.childcareSubsidy.applies) checked(programName("childcare"), c.childcareSubsidy.note);
-    if (!c.coverageGap.applies) checked(C.coverageGap, c.coverageGap.note);
-    if (c.liheap && !c.liheap.applies) checked(programName("liheap"), c.liheap.note);
+    if (!c.maTafdc.applies) checked(C.tafdcChecked, c.maTafdc);
+    if (!c.premiumAssistance.applies) checked(c.premiumAssistance.program ?? C.premiumHelp, c.premiumAssistance);
+    if (!c.childcareSubsidy.applies) checked(programName("childcare"), c.childcareSubsidy);
+    if (!c.coverageGap.applies) checked(C.coverageGap, c.coverageGap);
+    if (c.liheap && !c.liheap.applies) checked(programName("liheap"), c.liheap, cov?.liheap ? { limit: limitWords(cov.liheap.limit) } : undefined);
   }
   $("correctionsRest").textContent = rest.length ? t("corrections.rest", { items: rest.join(" ") }) : "";
 }
@@ -88,8 +90,8 @@ export function renderDrops(ev: HouseholdEvaluation, onSelect: (i: number) => vo
     `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button></td>` +
     `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
     `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
-    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: c.deferral.until }))}</span>` : "") + `</td>` +
-    `<td>${esc(c.driver)}</td></tr>`).join("");
+    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: deferralUntil(c.deferral.reason) }))}</span>` : "") + `</td>` +
+    `<td>${esc(t(`drops.drivers.${c.driver}`))}</td></tr>`).join("");
   rows.querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => b.addEventListener("click", () => onSelect(i)));
   $("dropsEmpty").textContent = t("drops.empty", { min: usd(CLIFF_MIN) });
   $("dropsEmpty").hidden = ev.analysis.cliffs.length > 0;
@@ -121,7 +123,7 @@ export function renderBreakdown(ev: HouseholdEvaluation, selected: number | null
       return `<div class="bd-row"><span class="bd-label">${esc(label)}</span><span class="bd-val">${esc(signedMoney(v))}</span><span class="bd-track"><span class="bd-zero"></span>` +
         `<span class="bd-fill${v < 0 ? " neg" : ""}" style="left:${v < 0 ? 50 - w : 50}%;width:${w}%;background:var(--loss-${v < 0 ? 2 : 4})"></span></span></div>`;
     }).join("") +
-    `<p class="footnote bd-sum">${esc(t("breakdown.sum", { drop: usd(c.drop), driver: c.driver }))}</p>`;
+    `<p class="footnote bd-sum">${esc(t("breakdown.sum", { drop: usd(c.drop), driver: t(`drops.drivers.${c.driver}`) }))}</p>`;
 }
 
 /** ThresholdLedger (#7): every program's end, its cite from the curve and the coverage block. */

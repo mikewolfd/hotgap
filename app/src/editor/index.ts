@@ -26,13 +26,16 @@ import {
   STATE_NAMES,
   stateDefaults,
   validateAnswers,
+  type Coded,
   type HouseholdFlagName,
   type HouseholdFlags,
   type PayUnit,
 } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
-import { fill, pluralKey } from "../lib/copy.js";
+import { coreText, fill } from "../lib/copy.js";
+import { languageSwitch } from "../lib/lang.js";
+import { countyBare, countyWords, stateName } from "../lib/names.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
 import { copy as defaultCopy } from "./copy.js";
@@ -98,7 +101,8 @@ export interface Editor {
   open(field?: HouseholdFlagName, opts?: { lead?: "submit" | "alt" }): void;
   close(): void;
   /** Show a validation detail — core's, from the page or the API — beside the field it names. */
-  showError(detail: string): void;
+  /** A rejection from core (validateAnswers, the API): its English detail and, where core sent one, its code, said in the page's language. */
+  showError(detail: string, message?: Coded): void;
   /** The full-width line, first in the chips row, that a press answers with (§ ScenarioBar): text or a fragment with a link; "" empties it. */
   setNote(content: string | Node): void;
   /** The county the evaluation resolved for a ZIP, shown beside the place while that ZIP stands; undefined clears it. */
@@ -182,11 +186,14 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const householdLabel = () => {
     const k = kids(), S = copy.summary;
     const adults = married() ? S.adults.two : S.adults.one;
-    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids[pluralKey(k.length)], { ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
+    return k.length ? fill(S.household.withKids, { adults, kids: fill(S.kids, { n: k.length, ages: shortList(k.map(String)) }) }) : fill(S.household.alone, { adults });
   };
   const payLabel = () => (flags.pay ? payInUnit(Number(flags.pay), unit()) : copy.chips.none);
+  /** An immigration status's words, the citizen's when none was given. */
+  const status = (s: string | undefined): string => (copy.status as Record<string, string>)[s ?? "citizen"] ?? s ?? "";
+  /** The county the ZIP resolved to, as core's table writes it; the two places that print it say its kind their own way (names.ts countyWords / countyBare). */
   const countyLabel = (): string | undefined => (county && county.zip === flags.zip ? county.name : undefined);
-  const placeLabel = () => listOfItems([flags.zip, state(), countyLabel()].filter((x): x is string => Boolean(x))) || copy.chips.none;
+  const placeLabel = () => { const c = countyLabel(); return listOfItems([flags.zip, state(), c && countyWords(c)].filter((x): x is string => Boolean(x))) || copy.chips.none; };
 
   // ── The chips, in row order ──────────────────────────────────────────
   /* A dialog's field is labelled by the unit or the question, never by the chip's name again — that is the dialog's title (review N8). */
@@ -208,8 +215,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     { kind: "value", id: "child-support", label: copy.chips.childSupport, value: () => monthly(flags["child-support"]), fields: [monthlyField("child-support")] },
     { kind: "value", id: "unemployment", label: copy.chips.unemployment, value: () => monthly(flags.unemployment), fields: [monthlyField("unemployment")] },
     { kind: "value", id: "savings", label: copy.chips.savings, value: () => (flags.savings ? money(Number(flags.savings)) : copy.chips.none), fields: [{ flag: "savings", label: copy.dialog.dollars, kind: "number", min: 0, max: 10_000_000, step: 1 }] },
-    { kind: "value", id: "status", label: copy.chips.status, value: () => copy.status[flags.status ?? "citizen"], fields: statusFields("status", "years-in-us") },
-    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => copy.status[flags["spouse-status"] ?? "citizen"], fields: statusFields("spouse-status", "spouse-years-in-us"), when: married },
+    { kind: "value", id: "status", label: copy.chips.status, value: () => status(flags.status), fields: statusFields("status", "years-in-us") },
+    { kind: "value", id: "spouse-status", label: copy.chips.spouseStatus, value: () => status(flags["spouse-status"]), fields: statusFields("spouse-status", "spouse-years-in-us"), when: married },
     { kind: "value", id: "kids-disabled", label: copy.chips.kidsDisabled, value: () => { const n = flagList(flags["kids-disabled"]).filter((x) => x === "1").length; return n ? String(n) : copy.chips.none; }, fields: [{ flag: "kids-disabled", label: copy.chips.kidsDisabled, kind: "kids-disabled" }], when: () => kids().length > 0 },
     { kind: "toggle", id: "childcare-subsidy", label: copy.chips.childcareSubsidy, when: () => kids().some((a) => a <= CHILDCARE_MAX_AGE) },
     { kind: "toggle", id: "head-start", label: copy.chips.headStart, when: () => kids().some((a) => a <= HEAD_START_MAX_AGE) },
@@ -260,7 +267,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   const zipInput = h("input", { id: "f-zip", name: "zip", class: "hg-input editor__input--short", inputmode: "numeric", autocomplete: "postal-code", pattern: "[0-9]{5}", maxlength: "5", "aria-describedby": "h-zip" });
   const zipHint = h("p", { class: "editor__hint", id: "h-zip", "aria-live": "polite" }, copy.place.zipHint);
   const stateSelect = h("select", { id: "f-state", name: "state", class: "hg-select" }, h("option", { value: "" }, copy.place.statePlaceholder),
-    ...Object.entries(STATE_NAMES).map(([code, name]) => h("option", { value: code }, name)));
+    ...Object.keys(STATE_NAMES).map((code) => h("option", { value: code }, stateName(code))));
   const radio = (value: string, label: string) => h("label", { class: "editor__option" }, h("input", { type: "radio", name: "married", value }), label);
   const kidsCount = h("input", { id: "f-kids", name: "kids-count", type: "number", min: "0", max: String(MAX_KIDS), inputmode: "numeric", class: "hg-input editor__input--short", "aria-describedby": "h-kids" });
   const kidsRows = h("div", { class: "editor__kids" });
@@ -307,7 +314,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   // child cannot outlive its parent's box — S1). An empty root sees no difference.
   root.prepend(
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
-      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark),
+      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark), languageSwitch(),
         h("div", { class: "hg-scenario__actions" }, ...actions))),
     h("header", { class: "hg-scenario", "data-collapse": opts.collapse },
       h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),
@@ -356,7 +363,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(stateSelect, st ?? "");
     const p = place();
     if (flags.zip) {
-      zipHint.textContent = p.ok && p.state ? fill(copy.place.inState, { state: STATE_NAMES[p.state] }) : p.ok ? copy.place.zipHint : p.detail;
+      zipHint.textContent = p.ok && p.state ? fill(copy.place.inState, { state: stateName(p.state) }) : p.ok ? copy.place.zipHint : coreText(p.message, p.detail);
       zipInput.setAttribute("aria-invalid", p.ok ? "false" : "true");
     } else {
       zipHint.textContent = copy.place.zipHint;
@@ -379,7 +386,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     write(rentInput, flags.rent ?? "");
     write(childcareInput, flags.childcare ?? "");
     childcareField.hidden = !k.some((a) => a <= CHILDCARE_MAX_AGE);
-    const where = st ? STATE_NAMES[st] : null;
+    const where = st ? stateName(st) : null;
     rentHint.textContent = where && prefilled.rent ? fill(copy.costs.typical, { amount: money(Number(prefilled.rent)), where }) : copy.costs.none;
     childcareHint.textContent = where && prefilled.childcare ? fill(copy.costs.typical, { amount: money(Number(prefilled.childcare)), where }) : copy.costs.none;
   }
@@ -406,7 +413,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     for (const b of gated) b.disabled = !answered;
     /* The place, once: the county the ZIP resolved to stands for the ZIP (review N9); the line and its separators are the summary's copy (N12). */
     const c = countyLabel(), S = copy.summary, st = state() ?? "";
-    const place = c ? fill(S.place.withCounty, { state: st, county: c.replace(/ County$/, "") }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
+    const place = c ? fill(S.place.withCounty, { state: st, county: countyBare(c) }) : flags.zip ? fill(S.place.withZip, { zip: flags.zip, state: st }) : fill(S.place.stateOnly, { state: st });
     summaryText.textContent = answered ? fill(S.line, { place, household: householdLabel(), pay: payLabel() }) : S.none;
   }
 
@@ -494,12 +501,14 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     if (f) opts.onSubmit(f);
   });
 
-  function showError(detail: string): void {
-    const label = copy.errors.fields[detail];
-    errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : detail);
+  function showError(detail: string, message?: Coded): void {
+    // A field's rejection names the field (code validate.field); the editor's own words for it are the line.
+    const field = message?.code === "validate.field" ? String(message.params?.field) : detail;
+    const label = (copy.errors.fields as Record<string, string>)[field];
+    errorLine.replaceChildren(h("strong", {}, copy.errors.checkThis), " ", label ? fill(copy.errors.check, { label }) : coreText(message, detail));
     errorLine.hidden = false;
     // A field name points at its control; a sentence about a ZIP points at the ZIP.
-    const fieldId = FIELD_OF[detail] ?? (/ZIP|territor/i.test(detail) ? "zip" : null);
+    const fieldId = FIELD_OF[field] ?? ((message ? message.code.startsWith("place.") : /ZIP|territor/i.test(detail)) ? "zip" : null);
     const control = fieldId ? form.querySelector<HTMLElement>(`#f-${fieldId}`) : null;
     control?.setAttribute("aria-invalid", "true");
     // An error from the API arrives with the screen closed; one from the
@@ -544,7 +553,7 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
       }
       let control: HTMLInputElement | HTMLSelectElement;
       if (f.kind === "select") {
-        control = h("select", { id, class: "hg-select" }, ...(f.options ?? []).map((o) => h("option", { value: o }, copy.status[o] ?? o)));
+        control = h("select", { id, class: "hg-select" }, ...(f.options ?? []).map((o) => h("option", { value: o }, status(o))));
         control.value = (flags[f.flag] as string | undefined) ?? f.options?.[0] ?? "";
         // The default answer is not an answer: leave it out of the URL.
         controls.push({ field: f, read: () => (control.value === f.options?.[0] ? undefined : control.value) });

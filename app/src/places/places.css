@@ -13,7 +13,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    so the headline never runs to the screen edge while the controls below
    keep theirs (N5 of the context-blind review). */
 .masthead { border-bottom: 1px solid var(--rule); padding-top: var(--s4); padding-bottom: var(--s4); }
-.wordmark { margin: 0 0 var(--s4); }
+.masthead__top { display: flex; align-items: baseline; gap: var(--s3); margin: 0 0 var(--s4); }
+.wordmark { margin: 0; }
 .lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
 /* The glossary sentence (S3) reads a step lighter than the lede, at the small size the rest of the page sets. */
 .glossary { font-size: var(--t-small); margin-bottom: 0; }
@@ -43,7 +44,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    reads as the figure's own answer and not as a legend entry. */
 .figure .hg-readout { border-top: 1px solid var(--rule); padding-top: var(--s3); margin-top: var(--s3); max-width: none; }
 @media (max-width: 519.98px) {
-  .figure { padding: var(--s3); margin: 0 calc(-1 * var(--s4)); border-left: 0; border-right: 0; }
+  .figure { padding: var(--s3); margin: 0 calc(-1 * var(--s4)); border-inline: 0; }
 }
 
 .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
@@ -97,20 +98,20 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .rank.with-at .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 10.2rem; }
 .rank .at { color: var(--ink-3); font-size: var(--t-micro); white-space: nowrap; }
 @media (min-width: 62rem) { .rank .hg-row-btn { min-height: 26px; } }
-.rank .n { color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: right; grid-column: 1; }
+.rank .n { color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: end; grid-column: 1; }
 .rank .st { font-weight: var(--w-semi); grid-column: 2; }
 .rank .track { position: relative; height: 14px; }
-.rank .track::before { content: ""; position: absolute; left: 0; right: 0; top: 6px;
+.rank .track::before { content: ""; position: absolute; inset-inline: 0; top: 6px;
                        height: 2px; background: var(--surface-sunk); }
-.rank .dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px;
+.rank .dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-inline-start: -5px;
              border-radius: 50%; box-shadow: 0 0 0 2px var(--plane); }
 /* The past-the-axis mark is the tile's own: a dashed-edged square on the
    sunk ground at the far end of the track (a dashed circle read as a
    spinner, rerun N2). */
-.rank .past { position: absolute; right: 0; top: 2px; width: 10px; height: 10px; box-sizing: border-box;
+.rank .past { position: absolute; inset-inline-end: 0; top: 2px; width: 10px; height: 10px; box-sizing: border-box;
               background: var(--surface-sunk); outline: 1px dashed var(--control-edge); outline-offset: -1px; }
-.rank .incomplete-mark { position: absolute; left: 0; right: 0; top: 4px; height: 6px; }
-.rank .v { text-align: right; font-variant-numeric: tabular-nums; }
+.rank .incomplete-mark { position: absolute; inset-inline: 0; top: 4px; height: 6px; }
+.rank .v { text-align: end; font-variant-numeric: tabular-nums; }
 /* The selected row: the sunk ground plus the 3px ink bar, the tile's mark in
    the row's slot (S3); the tint alone measured 1.08:1. */
 .rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
@@ -187,11 +188,11 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 /* The row button sets the row's height, and its focus ring sits 4px outside
    its box: the first column keeps that much clear of the scroller's clip edge. */
 .hg-table tbody th { padding: 0 var(--s3) 0 var(--s1); }
-.hg-table thead th:first-child { padding-left: var(--s1); }
+.hg-table thead th:first-child { padding-inline-start: var(--s1); }
 /* The state column stays put while the rest scrolls sideways (S10), on the
    page's ground so the cells passing under it do not show through; the
    inline padding is the focus ring's room, the rule its right edge. */
-.hg-table th:first-child { position: sticky; left: 0; z-index: 1; background: var(--plane);
+.hg-table th:first-child { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--plane);
                            box-shadow: inset -1px 0 0 var(--rule); }
 .hg-table thead th:first-child { z-index: 2; }
 /* The selected row's ground travels with its sticky cell; the ink bar is the system's (tokens.css). */
@@ -200,7 +201,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    by its cells' own words, and at a narrow width by the amber word beside
    its code, on screen without a swipe (S10). Hidden from 62rem, where the
    Figures column is in view. */
-.flag-mark { display: inline-block; margin-left: var(--s2); color: var(--caution); font-size: var(--t-micro);
+.flag-mark { display: inline-block; margin-inline-start: var(--s2); color: var(--caution); font-size: var(--t-micro);
              font-weight: var(--w-med); }
 @media (min-width: 62rem) { .flag-mark { display: none; } }
 /* One line, however narrow the viewport: the table already scrolls, and a
@@ -209,16 +210,25 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .flag { color: var(--ink-2); white-space: nowrap; }
 .flag small { display: block; font-size: var(--t-micro); color: var(--ink-3); }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
+/* From 62rem the scroller is open (above) and the table's width is the
+   page's: an unbreakable reason and nine unbreakable headers have nowhere to
+   go but past the viewport, and a longer language than English finds that
+   edge — measured at 1280, es-US pushed the document 38px wide and the
+   pseudo-locale 296px, English fitting exactly. So they wrap here, the same
+   fix print already needed for the same reason (@media print below). Below
+   62rem they stay on one line: there the table scrolls in its own box and a
+   wrapped reason made the two incomplete rows 90px tall (N9). */
+@media (min-width: 62rem) { .flag, .hg-table thead th.num { white-space: normal; } }
 /* A group heading inside the sorted table (B1): the strip's h4, as a row.
    Its words, like the caption's, wrap inside the viewport and stay put while
    the 48rem table scrolls under them, so a heading is never clipped
    mid-word on a phone. */
 .hg-table tr.group th { font-size: var(--t-small); font-weight: var(--w-semi); color: var(--ink);
                         padding-top: var(--s4); border-bottom-color: var(--rule-strong); position: static; box-shadow: none; }
-.hg-table tr.group th > span, .hg-table caption > span { display: block; position: sticky; left: 0;
+.hg-table tr.group th > span, .hg-table caption > span { display: block; position: sticky; inset-inline-start: 0;
                                                            max-width: calc(100vw - 2 * var(--s4)); }
 
-.method ul { margin: 0 0 var(--s4); padding-left: var(--s5); max-width: var(--measure-wide); }
+.method ul { margin: 0 0 var(--s4); padding-inline-start: var(--s5); max-width: var(--measure-wide); }
 .method li { margin-bottom: var(--s2); }
 .method h3 { margin-top: var(--s5); }
 

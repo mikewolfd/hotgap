@@ -1,17 +1,15 @@
 // The journalist page's sentences that have variants, composed from copy.ts
-// in the one shape (lib/copy.ts): the code picks the variant — a plural
-// category, a select the data names — and hands every figure formatted.
-// Pure, no DOM; model.test.ts pins the sentences here. Where a message is
-// several sentences, they are joined with a space in the order the reader
-// meets them; a list is Intl's.
+// in the one shape (lib/copy.ts): a count is handed to its plural message
+// and the locale's rule chooses the branch; a select the data names is the
+// code's pick; every figure arrives formatted. Pure, no DOM; model.test.ts
+// pins the sentences here. Where a message is several sentences, they are
+// joined with a space in the order the reader meets them; a list is Intl's.
 import { LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
-import { pluralKey } from "../lib/copy.js";
 import { dayWords, listOf, listOfItems, modelLine, numberWords } from "../lib/format.js";
-import { programName } from "../lib/programs.js";
+import { programName } from "../lib/names.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, t } from "./copy.js";
 
-const one = (n: number) => pluralKey(n);
 /** "3 and 7" for two children, "1, 4, 9" for more (the label's own form, kept from the first review). */
 const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.map(String)) : listOfItems(ages.map(String)));
 
@@ -19,7 +17,7 @@ const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.ma
 export function householdLabel(married: boolean, bothWork: boolean, ages: number[]): string {
   const H = copy.household, n = ages.length;
   const adults = !married ? H.adults.single : bothWork ? H.adults.bothWork : H.adults.oneWorks;
-  const children = n === 0 ? H.children.none : t(`household.children.${one(n)}`, { n, ages: agesList(ages) });
+  const children = t("household.children", { n, ages: agesList(ages) });
   return t("household.line", { adults, children });
 }
 
@@ -70,17 +68,17 @@ export function liheapMethodLine(lo: { state: string; share: number }, hi: { sta
 
 // ── The ranked strip ─────────────────────────────────────────────────────
 /** "1–12" — the rank range a lower-bound group shares, the way a tie shares one rank (rerun B1); "1." when it is one state. */
-export const rankRange = (n: number): string => t(`rank.range.${one(n)}`, n === 1 ? {} : { n });
+export const rankRange = (n: number): string => t("rank.range", { n });
 export const rankOrdinal = (n: number): string => t("rank.ordinal", { n });
 export const rowLabel = (rank: string, state: string, value: string, at?: string): string =>
   at ? t("rank.row.withAt", { rank, state, value, at }) : t("rank.row.plain", { rank, state, value });
 
 /** The lower-bound group's heading: it leads the order and shares ranks 1–n (B1). */
-export const lowerTitle = (key: "leap" | "safeExit", n: number): string => t(`rank.lower.${key}.${one(n)}`, n === 1 ? {} : { n });
+export const lowerTitle = (key: "leap" | "safeExit", n: number): string => t(`rank.lower.${key}`, { n });
 
 /** Why the ranks are shared, and the one thing the data lets a reader say about the worst. */
 export function lowerNote(key: "leap" | "safeExit", n: number, top: { state: string; v: string } | null, floor?: { state: string; v: string; reaches: boolean }): string {
-  const lead = t(`rank.lower.note.${key}.${one(n)}`);
+  const lead = t(`rank.lower.note.${key}`, { n });
   if (!top) return lead;
   const tail = key === "leap" && floor
     ? t(`rank.lower.note.leapTop.${floor.reaches ? "reaches" : "larger"}`, { topState: top.state, topValue: top.v, floorState: floor.state, ...(floor.reaches ? {} : { floorValue: floor.v }) })
@@ -88,43 +86,38 @@ export function lowerNote(key: "leap" | "safeExit", n: number, top: { state: str
   return `${lead} ${tail}`;
 }
 
+/** `n` states, `m` programs: two counts, one nested plural. */
 export const incompleteNote = (n: number, programs: string[]): string =>
-  t(`rank.incomplete.note.${one(n)}${cap(one(programs.length))}`, { programs: listOf(programs) });
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+  t("rank.incomplete.note", { n, m: programs.length, programs: listOf(programs) });
 
 // ── The state's sentences (B3, B4; rerun B2) ─────────────────────────────
 const programs = (ids: readonly ProgramId[]) => listOf(ids.map(programName));
-const missingKey = (missing: string[]) => cap(one(missing.length));
 
-/** The one-step loss as the leading sentence: the step, the programs it ends, and — for a hatched state — why the figure is a floor. */
+/** The one-step loss as the leading sentence: the step, the programs it ends (`n`), and — for a hatched state — why the figure is a floor (`m` programs missing). */
 export function stepLine(state: string, loss: string, step: string, ids: readonly ProgramId[], missing: string[]): string {
-  const p = ids.length ? one(ids.length) : "none";
   return missing.length
-    ? t(`readout.floor.${p}${missingKey(missing)}`, { state, loss, step, ...(ids.length ? { programs: programs(ids) } : {}), missing: listOf(missing) })
-    : t(`readout.step.${p}`, { state, loss, step, ...(ids.length ? { programs: programs(ids) } : {}) });
+    ? t("readout.floor", { n: ids.length, m: missing.length, state, loss, step, programs: programs(ids), missing: listOf(missing) })
+    : t("readout.step", { n: ids.length, state, loss, step, programs: programs(ids) });
 }
 /** The worst step as the second line, under another measure's sentence. */
 export function worstStepLine(loss: string, step: string, ids: readonly ProgramId[], missing: string[]): string {
-  const p = ids.length ? one(ids.length) : "none";
   return missing.length
-    ? t(`readout.worstStepFloor.${p}${missingKey(missing)}`, { loss, step, ...(ids.length ? { programs: programs(ids) } : {}), missing: listOf(missing) })
-    : t(`readout.worstStep.${p}`, { loss, step, ...(ids.length ? { programs: programs(ids) } : {}) });
+    ? t("readout.worstStepFloor", { n: ids.length, m: missing.length, loss, step, programs: programs(ids), missing: listOf(missing) })
+    : t("readout.worstStep", { n: ids.length, loss, step, programs: programs(ids) });
 }
-export const cliffCountLine = (state: string, n: number, deferred: number): string =>
-  t(`readout.measure.cliffCount.${one(n)}${deferred === 0 ? "None" : "Some"}`, { state, ...(n === 1 ? {} : { n }), ...(deferred === 0 ? {} : { deferred }) });
-export const deferredLine = (state: string, deferred: number, n: number): string =>
-  t(`readout.measure.deferred.${deferred === 0 ? "none" : one(deferred)}${cap(one(n))}`, { state, ...(n === 1 && deferred === 0 ? {} : { n }), ...(deferred > 1 ? { deferred } : {}) });
-export const floorTail = (missing: string[]): string => t(`readout.measure.floorTail.${one(missing.length)}`, { missing: listOf(missing) });
+export const cliffCountLine = (state: string, n: number, deferred: number): string => t("readout.measure.cliffCount", { state, n, deferred });
+export const deferredLine = (state: string, deferred: number, n: number): string => t("readout.measure.deferred", { state, n, deferred });
+export const floorTail = (missing: string[]): string => t("readout.measure.floorTail", { n: missing.length, missing: listOf(missing) });
 /** What the model found instead of a cliff (rerun S6). */
 export const noneLine = (state: string, step: string, floor: string, top: string, deferred: number): string =>
-  deferred ? t(`readout.noneDeferred.${one(deferred)}`, { state, step, floor, top, ...(deferred === 1 ? {} : { deferred }) }) : t("readout.none", { state, step, floor, top });
+  deferred ? t("readout.noneDeferred", { state, step, floor, top, deferred }) : t("readout.none", { state, step, floor, top });
 
 // ── The figure box and the method ────────────────────────────────────────
-export const hatchedLine = (n: number, programs: string[]): string =>
-  t(`figure.hatched.${one(n)}${cap(one(programs.length))}`, { ...(n === 1 ? {} : { n }), programs: listOf(programs) });
+/** `n` states hatched, `m` programs unmodelled. */
+export const hatchedLine = (n: number, programs: string[]): string => t("figure.hatched", { n, m: programs.length, programs: listOf(programs) });
 export const binsLine = (bins: string, comparable: number, none: number, past: number): string =>
   t(`figure.binsLine.${none && past ? "nonePast" : none ? "none" : past ? "past" : "plain"}`, { bins, comparable, ...(none ? { none } : {}), ...(past ? { past } : {}) });
-export const classesLine = (n: number, lo: number, hi: number): string => t(`figure.bins.classes.${one(n)}`, { n: numberWords(n), lo, hi });
+export const classesLine = (n: number, lo: number, hi: number): string => t("figure.bins.classes", { n, words: numberWords(n), lo, hi });
 /** The axis the selected household was swept to, in dollars (rerun N9), with the states whose guidelines lengthen it. */
 export const axisLine = (household: string, top: string, exceptions: { state: string; top: string }[]): string =>
   exceptions.length

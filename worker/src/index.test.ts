@@ -58,12 +58,12 @@ describe("POST /api/evaluate", () => {
     expect([ev.answers.state, ev.answers.countyFips]).toEqual(["CA", "06075"]);
   });
 
-  it("rejects bad input with core's own detail, and non-JSON with its own", async () => {
-    expect(await errorOf(await handleRequest(post({ ...raw, state: "ZZ" }), deps()))).toEqual({ error: "bad_input", detail: "state" });
-    expect(await errorOf(await handleRequest(post({ ...raw, state: undefined, zip: "00000" }), deps()))).toEqual({ error: "bad_input", detail: "no state for ZIP 00000" });
+  it("rejects bad input with core's own detail and its code, and non-JSON with its own", async () => {
+    expect(await errorOf(await handleRequest(post({ ...raw, state: "ZZ" }), deps()))).toEqual({ error: "bad_input", detail: "state", message: { code: "validate.field", params: { field: "state" } } });
+    expect(await errorOf(await handleRequest(post({ ...raw, state: undefined, zip: "00000" }), deps()))).toEqual({ error: "bad_input", detail: "no state for ZIP 00000", message: { code: "place.noState", params: { zip: "00000" } } });
     const res = await handleRequest(post("{not json"), deps());
     expect(res.status).toBe(400);
-    expect(await errorOf(res)).toEqual({ error: "bad_input", detail: "invalid JSON" });
+    expect(await errorOf(res)).toEqual({ error: "bad_input", detail: "invalid JSON", message: { code: "api.invalidJson" } });
   });
 
   it("refuses a body no household could need", async () => {

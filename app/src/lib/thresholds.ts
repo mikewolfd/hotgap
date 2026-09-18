@@ -8,7 +8,7 @@
 // once per pay: a cliff that names a program the holder still keeps for a
 // while (a halving) carries that fact in its cite or its remainder sentence,
 // not in a second row. O(cliffs × programs).
-import { COVERAGE_PROGRAMS, DEFERRAL_UNTIL, type Cliff, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
+import { COVERAGE_PROGRAMS, type Cliff, type DeferralReason, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
 
 /** Who holds the program that ends here, as `programEndsByAge` splits it; `household` when it is not split or both halves end together. */
 export type Holder = "adults" | "children" | "household";
@@ -21,7 +21,8 @@ export interface Threshold {
   /** The cliff whose landing point this is, when the cliff list names the program. */
   cliff: Cliff | null;
   /** When the loss lands, if not with the raise: the cliff's own deferral, or a child's coverage waiting for its renewal whether or not it is a cliff (escape.ts). */
-  deferred: string | null;
+  /** Why the loss lands later, when it does: core's reason, which the surface says in its language (`core.deferral.<reason>`). */
+  deferred: DeferralReason | null;
 }
 
 /** The axis step between consecutive points ($1,000 on the sweep). */
@@ -43,12 +44,12 @@ export function thresholds(ev: HouseholdEvaluation): Threshold[] {
   const place = (t: Threshold): void => { seen.add(`${t.id}|${t.holder}`); placed.add(t.id); out.push(t); };
   const placedAt = (id: ProgramId, at: number): boolean => out.some((t) => t.id === id && t.at === at);
   for (const c of ev.analysis.cliffs) for (const id of c.programsLost) {
-    place({ at: c.endEarnings, id, holder: holderOf(id, c.startEarnings), cliff: c, deferred: c.deferral?.until ?? null });
+    place({ at: c.endEarnings, id, holder: holderOf(id, c.startEarnings), cliff: c, deferred: c.deferral?.reason ?? null });
   }
   for (const [holder, ends] of [["adults", adults], ["children", children]] as const) {
     for (const [id, last] of Object.entries(ends) as [ProgramId, number][]) {
       if (seen.has(`${id}|${holder}`) || placedAt(id, last + step)) continue;
-      place({ at: last + step, id, holder, cliff: null, deferred: holder === "children" && COVERAGE_PROGRAMS.includes(id) ? DEFERRAL_UNTIL.child_continuous_eligibility : null });
+      place({ at: last + step, id, holder, cliff: null, deferred: holder === "children" && COVERAGE_PROGRAMS.includes(id) ? "child_continuous_eligibility" : null });
     }
   }
   for (const [id, last] of Object.entries(ev.escape.programEnds) as [ProgramId, number][]) {
