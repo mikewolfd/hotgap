@@ -25,7 +25,6 @@
 // The slot a sentence keys to the loss ramp is the one whose figure is drawn
 // on it, so the sentence doubles as the map's key — the citizen rule, on a
 // map (design/charts.md § The map is the picture).
-import type { SummaryJson } from "@hotgap/core";
 import { CLIFF_MIN } from "@hotgap/core";
 import type { Part } from "../lib/copy.js";
 import { money } from "../lib/format.js";
@@ -34,9 +33,8 @@ import { copy, parts, t } from "./copy.js";
 import type { Archetype, Grouped, Measure, StateRow } from "./model.js";
 import { householdPhrase, keepPhrase } from "./words.js";
 
-/** What one sentence needs: the same objects a render pass already has. */
+/** What one sentence needs — a subset of render.ts's Scene, so a render pass hands over what it already has. */
 export interface AnswerScene {
-  summary: SummaryJson;
   arch: Archetype;
   measure: Measure;
   rows: StateRow[];
