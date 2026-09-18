@@ -57,29 +57,59 @@ const overlaps = (a: Box, b: Box): boolean => a.x < b.x + b.w && b.x < a.x + a.w
 
 export function placer(picture: SVGSVGElement, view: () => View): Placer {
   const boxes: Box[] = [];
+
+  /** The window a label is nudged inside for a spot at this x. */
+  const windowFor = (x: number): [number, number] => {
+    const v = view();
+    return v.print || x < v.scrollLeft || x > v.scrollLeft + v.viewport
+      ? [2, v.W - 2] : [v.scrollLeft + 2, v.scrollLeft + v.viewport - 2];
+  };
+
+  /**
+   * Draw the lines at a spot and hand back their real ink box. Measured, not
+   * estimated: a box computed from a character-width constant is a pixel or
+   * two short of the glyphs at the top and the bottom, and a pixel is the
+   * difference between a clear label and one sitting on a mark's ring
+   * (caseworker review S4). The estimate is still used to nudge the label
+   * inside the view before it is measured, because that needs a width before
+   * there is anything to measure.
+   */
+  const draw = (lines: string[], sp: Spot, cls: string): { nodes: SVGTextElement[]; box: Box } => {
+    const est = Math.max(...lines.map((line) => line.length)) * CH;
+    const left = sp.anchor === "start" ? sp.x : sp.anchor === "middle" ? sp.x - est / 2 : sp.x - est;
+    const [lo, hi] = windowFor(sp.x);
+    /* Only the edge in the way is a nudge, not a drop: a label near $0 keeps its number. */
+    const dx = left < lo ? lo - left : left + est > hi ? hi - (left + est) : 0;
+    const nodes = lines.map((text, i) => svg("text", { x: sp.x + dx, y: sp.y + i * LH, "text-anchor": sp.anchor, class: cls }, text));
+    for (const n of nodes) picture.append(n);
+    let box = { x: left + dx, y: sp.y - LH + 2, w: est, h: LH * lines.length };
+    try {
+      const b = nodes.map((n) => n.getBBox());
+      box = {
+        x: Math.min(...b.map((r) => r.x)), y: Math.min(...b.map((r) => r.y)),
+        w: Math.max(...b.map((r) => r.x + r.width)) - Math.min(...b.map((r) => r.x)),
+        h: Math.max(...b.map((r) => r.y + r.height)) - Math.min(...b.map((r) => r.y)),
+      };
+    } catch { /* no layout (a detached or hidden figure): the estimate stands */ }
+    return { nodes, box };
+  };
+
   return {
     reset() { boxes.length = 0; },
     block(box) { boxes.push(box); },
     place(lines, spots, cls, force = false) {
-      const v = view();
-      const w = Math.max(...lines.map((line) => line.length)) * CH;
-      const fit = (sp: Spot) => {
-        const window = v.print || sp.x < v.scrollLeft || sp.x > v.scrollLeft + v.viewport
-          ? [2, v.W - 2] : [v.scrollLeft + 2, v.scrollLeft + v.viewport - 2];
-        const left = sp.anchor === "start" ? sp.x : sp.anchor === "middle" ? sp.x - w / 2 : sp.x - w;
-        /* Only the edge in the way is a nudge, not a drop: a label near $0 keeps its number. */
-        const dx = left < window[0] ? window[0] - left : left + w > window[1] ? window[1] - (left + w) : 0;
-        return { dx, box: { x: left + dx, y: sp.y - LH + 2, w, h: LH * lines.length } };
-      };
-      let at = spots.map((sp) => ({ sp, ...fit(sp) })).find((c) => !boxes.some((o) => overlaps(c.box, o)));
-      if (!at) {
-        if (!force) return false;
-        at = { sp: spots[0], ...fit(spots[0]) };
+      let last: { nodes: SVGTextElement[]; box: Box } | null = null;
+      for (const sp of spots) {
+        last = draw(lines, sp, cls);
+        if (!boxes.some((o) => overlaps(last!.box, o))) { boxes.push(last.box); return true; }
+        for (const n of last.nodes) n.remove();
+        last = null;
       }
+      /* Nowhere clear. The label the page promises is drawn at its first spot anyway; every other one is
+         dropped, because its money is in the readout, the row and the table, all a key press away. */
+      if (!force) return false;
+      const at = draw(lines, spots[0], cls);
       boxes.push(at.box);
-      for (const [i, text] of lines.entries()) {
-        picture.append(svg("text", { x: at.sp.x + at.dx, y: at.sp.y + i * LH, "text-anchor": at.sp.anchor, class: cls }, text));
-      }
       return true;
     },
   };

@@ -5,7 +5,7 @@
 // the base, so changing the base re-asks every what-if of the new one.
 import { HOUSEHOLD_FLAGS, PAY_UNITS, type HouseholdFlagName, type HouseholdFlags, type PayUnit } from "@hotgap/core";
 import { copy as editorCopy } from "../editor/copy.js";
-import { money as usd, payInUnit, shortList } from "../lib/format.js";
+import { money as usd, payInUnit, shortList, unitFigure } from "../lib/format.js";
 import { copy, t } from "./copy.js";
 
 /** The answers a what-if changes; null removes the base's answer (a toggle off, a figure cleared). */
@@ -79,8 +79,10 @@ export function whatIfTag(diff: Diff, flags: HouseholdFlags): string {
   for (const [f, v] of Object.entries(diff) as [HouseholdFlagName, string | boolean | null][]) {
     if (f === "married") return v === true ? W.married : W.single;
     if (f === "pay" && v !== null && v !== false) {
+      /* The figure alone, in the unit it was typed in: "a year" is three more characters on a picture
+         whose whole x axis is pay, and the column's name says the unit in full. */
       const unit = (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
-      return payInUnit(Number(v), unit);
+      return unitFigure(Number(v), unit);
     }
     return flagName(f);
   }

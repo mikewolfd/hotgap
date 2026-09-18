@@ -155,7 +155,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
 
     /* The road out of poverty (charts.md § Direct labels, 6): a bar under the x
        ticks, outside the plot, where it cannot be read as part of the curve. */
-    const roadY = plotBot + 46;
+    const roadY = plotBot + 36;
     if (road) {
       const [ra, rb] = [px(road.lo), px(road.hi)];
       svg.append(mk("path", { d: `M${ra} ${roadY - 4} V${roadY + 4} M${ra} ${roadY} H${rb} M${rb} ${roadY - 4} V${roadY + 4}`,
@@ -313,7 +313,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
       t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
       DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
-      whatIfs.length ? t("chart.whatIfLines", { n: lines.length, held: whatIfs.length - lines.length }) : "",
+      lines.length ? t("chart.whatIfLines", { n: lines.length }) : "",
+      whatIfs.length > lines.length ? t("chart.whatIfHeld", { held: whatIfs.length - lines.length }) : "",
       source,
     ].filter(Boolean).join(" ");
     /* The axis's own ends under the figure: the cue that the picture keeps going. */
@@ -373,9 +374,14 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     if (!layer || !ev) return;
     const { px, py, pad, H } = layer;
     const e = earn[cursor], v = net[cursor];
-    const [l, dot] = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
-    svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
-    cursorNodes = [l, dot];
+    /* At the household's own point the diamond IS the cursor: a second dot on top of it would say nothing,
+       and it is a ring the direct label at the diamond ("net $84,371") would then have to clear — the label
+       the picture most needs (review S4). The readout still speaks for the point either way. */
+    if (cursor !== indexOf(ev, ev.analysis.currentEarnings)) {
+      const [l, dot] = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
+      svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
+      cursorNodes = [l, dot];
+    }
     const z = zoneOf(e);
     const R = copy.chart.readout, lead = t("chart.readout.lead", { earnings: usd(e), net: usd(v) });
     const zone = !z ? R.outside

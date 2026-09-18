@@ -11,7 +11,14 @@
    The two-column grid went with this pass. It existed to fit four panels on
    one screen; there is one thing on the first screen now, and the rest is a
    stack of rules under it. */
-.page { --page-max: 76rem; }
+/* The picture takes the whole column here. `--figure-max` is 56rem in
+   tokens.css because it was written for the citizen page, whose prose column
+   is 40rem and whose figure is allowed to leave it; this surface's column is
+   already wider than 56rem, and capping the plot at 56rem would have thrown
+   away 288px of axis at 1280 to leave two empty margins. The prose keeps its
+   own measures either way — the answer at `--measure-answer`, the notes at
+   `--measure-wide`. */
+.page { --page-max: 76rem; --figure-max: 76rem; }
 #status { margin: var(--s4) 0 0; }
 
 /* ── The notices: what never hides ─────────────────────────────────────
@@ -36,7 +43,10 @@
 @media (min-width: 40rem) { .hg-answer { margin-bottom: var(--s5); } }
 #picture { padding-block: var(--s4) 0; }
 #picture .hg-chart__scroll { --scroll-ground: var(--plane); }
-#picture .hg-chart__hint { margin-top: var(--s2); }
+/* The axis's own ends sit at the picture's own ends: this is not prose and
+   the dense base's measure would pull "$150,000 →" into the middle of a
+   1,200px figure, where it says nothing about where the axis stops. */
+#picture .hg-chart__hint { margin-top: var(--s2); max-width: none; }
 .chart-title { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure-wide); }
 #curveCap { margin-block-start: var(--s3); }
 
@@ -56,8 +66,11 @@
 #content > .hg-disclosure > :not(summary) { margin-block: var(--s3); }
 #content > .hg-disclosure > :last-child { margin-bottom: var(--s5); }
 .hg-disclosure h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
-.hg-disclosure > .hg-scroll-x .hg-table { min-width: 30rem; }   /* the drops table's four columns; the compare table sets its own */
-.hg-disclosure .ledger { min-width: 0; }
+/* The drops table's four columns want more than a phone's width and get a
+   scroller; the compare table sets its own width from its columns, and a
+   floor here would push a single what-if out of the 358px scroller it used
+   to fit inside (B2). */
+.hg-scroll-x .drops { min-width: 30rem; }
 
 /* StatTiles (#2): the figures a counselor reads out, at the head of the
    rows they are read against. They were the page's second line until this
