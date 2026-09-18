@@ -147,6 +147,19 @@ function interpolate(points: CurvePoint[], earnings: number): number {
   return points[points.length - 1].netIncome;
 }
 
+/**
+ * The last sampled point at or below `earnings` — the point whose figures
+ * already sit in the curve — or the first when none is. Every reading taken
+ * "at this household's own pay" (the employer-plan charge, an unclaimed
+ * benefit, the keep rate over the next stretch) starts here, so they can
+ * never disagree about which point a person is standing on.
+ */
+export function pointAtOrBelow(points: CurvePoint[], earnings: number): CurvePoint {
+  let at = points[0];
+  for (const p of points) if (p.earnings <= earnings) at = p;
+  return at;
+}
+
 /** The danger zone this income sits inside, or null. */
 export function zoneAt(zones: DangerZone[], earnings: number): DangerZone | null {
   return zones.find(

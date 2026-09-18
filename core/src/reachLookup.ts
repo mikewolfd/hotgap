@@ -80,3 +80,27 @@ export function reachForHousehold(
 ): number | null {
   return reachForArchetype(state, pickArchetypeId(household), householdEarnings);
 }
+
+/**
+ * Where a point on this household's earnings AXIS falls among families like
+ * it — the one conversion every caller needs and none should repeat.
+ *
+ * The axis varies the householder's own pay and holds the spouse's fixed
+ * (archetypes.ts), while the ladder's yardstick is householder PLUS spouse
+ * earnings, so the spouse's pay is added back before the lookup. The "is
+ * there any income to place" guard looks at that same combined figure, or a
+ * household living on its spouse's wages loses its reach line; a zero income
+ * has no position in an earnings distribution, and "0% earn less" would read
+ * as a finding rather than a gap.
+ *
+ * Null when `axisEarnings` is null, when nothing is there to place, or when
+ * the PUMS cell is missing or suppressed — never 0.
+ */
+export function reachAtEarnings(
+  household: ArchetypeMatch & { state: string },
+  axisEarnings: number | null,
+): number | null {
+  if (axisEarnings === null) return null;
+  const combined = axisEarnings + household.spouseAnnualEarnings;
+  return combined > 0 ? reachForHousehold(household.state, household, combined) : null;
+}

@@ -33,6 +33,7 @@ export * from "./zip.js";
 export * from "./county.js";
 export * from "./minWage.js";
 export * from "./reachLookup.js";
+export * from "./road.js";
 export * from "./fallback.js";
 export * from "./evaluate.js";
 export * from "./statePremiumAssistance.js";

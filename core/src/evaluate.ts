@@ -9,7 +9,7 @@
 // applied to the points BEFORE any analysis runs (so cliffs and danger zones
 // describe the corrected curve, not the raw one), and each is reported on the
 // evaluation so a front end can say what was changed and why.
-import { analyzeCurve, childCoverageAt, heldByAdults, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
+import { analyzeCurve, childCoverageAt, heldByAdults, pointAtOrBelow, zoneAt, type Cliff, type CurveAnalysis, type DangerZone, PROGRAM_END_MIN } from "./analyze.js";
 import { fetchCurve, PolicyEngineError, type FetchCurveOptions } from "./client.js";
 import { escapeAnalysis, type EscapeAnalysis } from "./escape.js";
 import { loadStateFile, type StateFileJson } from "./data.js";
@@ -19,7 +19,7 @@ import { ESI_EMPLOYEE_CONTRIBUTION, ESI_FULL_TIME_HOURS, fpl2025, MEDICARE_PART_
 import { stateDefaults } from "./stateDefaults.js";
 import { statePremiumAssistanceFor, type StatePremiumAssistance } from "./statePremiumAssistance.js";
 import { PER_MEMBER_PREMIUM_HELP, perMemberPremiumHelpFor, premiumTierAbove, premiumWrapFor, type PerMemberPremiumHelp, type PremiumWrap } from "./statePremiumWraps.js";
-import { reachForHousehold } from "./reachLookup.js";
+import { reachAtEarnings } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
 import { liheapAmount, liheapBoundary, type LiheapBoundary } from "./liheap.js";
@@ -155,13 +155,6 @@ export const ENTITLEMENT_TAKE_UP: readonly { program: UnclaimedBenefit["program"
 function withEveryEntitlement(a: HouseholdAnswers): HouseholdAnswers | null {
   if (ENTITLEMENT_TAKE_UP.every(({ flag }) => a[flag])) return null;
   return { ...a, getsSnap: true, getsTanf: true, getsMedicaid: true, getsWic: true };
-}
-
-/** The last sampled point at or below `earnings` — the point whose figures already sit in the curve — or the first when none is. */
-function pointAtOrBelow(points: CurvePoint[], earnings: number): CurvePoint {
-  let at = points[0];
-  for (const p of points) if (p.earnings <= earnings) at = p;
-  return at;
 }
 
 /** Programs that are off for `a` and pay something at its earnings on the all-take-up evaluation. */
@@ -770,17 +763,10 @@ export function evaluateCurve(
   const escape = knowsWhoHolds
     ? escapeAnalysis(points, analysis)
     : { ...escapeAnalysis(points, analysis), programEndsByAge: { adults: {}, children: {} }, childCoverageEndEarnings: null };
-  // A zero (or absent) income has no position in an earnings distribution —
-  // reporting "0% of households earn less" would read as a finding, not a gap.
-  // The reach ladder is indexed on householder-plus-spouse earnings, so a
-  // married household's position has to include the spouse's pay — and the
-  // "is there any income to place" guard has to look at the same combined
-  // figure, or a household living on the spouse's wages loses its reach line.
-  const reachAt = (income: number | null): number | null => {
-    if (income === null) return null;
-    const household = income + answers.spouseAnnualEarnings;
-    return household > 0 ? reachForHousehold(answers.state, answers, household) : null;
-  };
+  // The spouse's fixed pay, the zero-income guard and the suppressed-cell
+  // rule all live in reachAtEarnings (reachLookup.ts), so this household's
+  // two reach figures cannot drift from any other reading of the ladder.
+  const reachAt = (income: number | null): number | null => reachAtEarnings(answers, income);
 
   return {
     answers,
