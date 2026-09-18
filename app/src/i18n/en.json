@@ -1061,9 +1061,9 @@
       },
       "children": "{n, plural, =0 {no children} one {{n} child ({ages})} other {{n} children ({ages})}}",
       "phrase": {
-        "single": "{n, plural, =0 {a single adult with no children} one {a single parent of one child} other {a single parent of {words} children}}",
-        "oneWorks": "{n, plural, =0 {a couple with no children, one of them earning} one {a couple with one child and one parent earning} other {a couple with {words} children and one parent earning}}",
-        "bothWork": "{n, plural, =0 {a couple with no children, both earning} one {a couple with one child and both parents earning} other {a couple with {words} children and both parents earning}}"
+        "single": "{n, plural, =0 {a childless single adult} one {a single parent of one child} other {a single parent of {words} children}}",
+        "oneWorks": "{n, plural, =0 {a childless one-earner couple} one {a one-earner couple with one child} other {a one-earner couple with {words} children}}",
+        "bothWork": "{n, plural, =0 {a childless two-earner couple} one {a two-earner couple with one child} other {a two-earner couple with {words} children}}"
       }
     },
     "pastAxis": "past the axis",

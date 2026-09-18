@@ -1064,8 +1064,8 @@
       "children": "{n, plural, =0 {sin niños} one {{n} niño ({ages})} other {{n} niños ({ages})}}",
       "phrase": {
         "single": "{n, plural, =0 {un adulto solo sin hijos} one {una madre o padre solo con un hijo} other {una madre o padre solo con {words} hijos}}",
-        "oneWorks": "{n, plural, =0 {una pareja sin hijos, con uno de los dos trabajando} one {una pareja con un hijo y uno de los dos trabajando} other {una pareja con {words} hijos y uno de los dos trabajando}}",
-        "bothWork": "{n, plural, =0 {una pareja sin hijos, los dos trabajando} one {una pareja con un hijo y los dos trabajando} other {una pareja con {words} hijos y los dos trabajando}}"
+        "oneWorks": "{n, plural, =0 {una pareja sin hijos y con un solo sueldo} one {una pareja con un hijo y un solo sueldo} other {una pareja con {words} hijos y un solo sueldo}}",
+        "bothWork": "{n, plural, =0 {una pareja sin hijos y con dos sueldos} one {una pareja con un hijo y dos sueldos} other {una pareja con {words} hijos y dos sueldos}}"
       }
     },
     "pastAxis": "más allá del eje",

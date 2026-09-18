@@ -287,9 +287,12 @@ describe("the sentences, from copy through words.ts", () => {
   });
   it("the readout's road lead is core's own sentences, the household said as a sentence names it, and the position a sentence of its own", () => {
     expect(householdPhrase(false, false, [3, 7])).toBe("a single parent of two children");
-    expect(householdPhrase(false, false, [])).toBe("a single adult with no children");
-    expect(householdPhrase(true, false, [3])).toBe("a couple with one child and one parent earning");
-    expect(householdPhrase(true, true, [1, 4, 9])).toBe("a couple with three children and both parents earning");
+    /* Every branch ends in the noun the road sentence's relative clause
+       attaches to: "a one-earner couple with no children who earns their way"
+       read as the children earning it. */
+    expect(householdPhrase(false, false, [])).toBe("a childless single adult");
+    expect(householdPhrase(true, false, [3])).toBe("a one-earner couple with one child");
+    expect(householdPhrase(true, true, [1, 4, 9])).toBe("a two-earner couple with three children");
     expect(roadSentence("Missouri", householdPhrase(false, false, [3, 7]), -0.5632))
       .toBe("Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar.");
     expect(roadSentence("New Mexico", householdPhrase(false, false, [3, 7]), 0.3042))
