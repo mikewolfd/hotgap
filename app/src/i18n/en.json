@@ -1322,7 +1322,7 @@
         "undated": "{care}"
       },
       "sourceReach": "Families earning less: {vintages}, grown to {year} dollars.",
-      "wherefrom": "Where {state}’s numbers come from"
+      "wherefrom": "Where {state}'s numbers come from"
     },
     "csv": {
       "subsidy": {
@@ -1395,7 +1395,7 @@
         "all": "In every one of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started — worst of all is {state}, which {value}."
       },
       "roadCliffCount": {
-        "some": "{state} puts {n, plural, one {one cliff} other {{n} cliffs}} on the road out of poverty, more than anywhere else; {some} of {places} have at least one.",
+        "some": "{state} puts {n, plural, one {{count} cliff} other {{count} cliffs}} on the road out of poverty, more than anywhere else; of {places}, {miss, plural, =0 {every one has at least one} one {just one has none} other {{miss} have none}}.",
         "none": "Nothing on the road out of poverty costs this household {floor} in a single step, in any of {places}."
       },
       "roadWorst": {
@@ -1403,7 +1403,7 @@
         "none": "The road out of poverty holds across {places}: nothing on it costs this household {floor} in a single step."
       },
       "biggestLoss": {
-        "some": "The largest one-step loss on the map is {state}’s {drop}, between {at} and {to} of pay; {some} of {places} have a cliff somewhere on this household’s curve.",
+        "some": "The largest one-step loss on the map is {state}'s {drop}, between {at} and {to} of pay; of {places}, {miss, plural, =0 {every one has a cliff somewhere on this household's curve} one {just one has no cliff at all} other {{miss} have no cliff at all}}.",
         "none": "No curve in {places} has a single step down of {floor} or more for this household."
       },
       "dangerWidth": {
@@ -1420,11 +1420,11 @@
         "none": "No danger zone is left anywhere in {places} for this household."
       },
       "cliffCount": {
-        "some": "{state}'s curve carries {n, plural, one {one cliff} other {{n} cliffs}} for this household, more than any other state.",
+        "some": "{state}'s curve carries {n, plural, one {{count} cliff} other {{count} cliffs}} for this household, more than any other state.",
         "none": "No curve in {places} has a step down of {floor} or more for this household."
       },
       "deferredCliffCount": {
-        "some": "{state} has the most cliffs that wait: {n, plural, one {one lands} other {{n} land}} at a later renewal rather than with the raise.",
+        "some": "{state} has the most cliffs that wait: {n, plural, one {{count} lands} other {{count} land}} at a later renewal rather than with the raise.",
         "none": "No cliff in {places} waits for a later renewal; every one lands with the raise."
       }
     },

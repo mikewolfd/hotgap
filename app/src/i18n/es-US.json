@@ -1398,7 +1398,7 @@
         "all": "En todos {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar; el peor de todos es {state}, que {value}."
       },
       "roadCliffCount": {
-        "some": "{state} pone {n, plural, one {un precipicio} other {{n} precipicios}} en el camino para salir de la pobreza, más que ningún otro estado; {some} de {places} tienen al menos uno.",
+        "some": "{state} pone {n, plural, one {{count} precipicio} other {{count} precipicios}} en el camino para salir de la pobreza, más que ningún otro estado; de {places}, {miss, plural, =0 {todos tienen al menos uno} one {solo uno no tiene ninguno} other {{miss} no tienen ninguno}}.",
         "none": "Nada en el camino para salir de la pobreza le cuesta a este hogar {floor} de un solo paso, en ninguno de {places}."
       },
       "roadWorst": {
@@ -1406,7 +1406,7 @@
         "none": "El camino para salir de la pobreza aguanta en {places}: nada en él le cuesta a este hogar {floor} de un solo paso."
       },
       "biggestLoss": {
-        "some": "La mayor pérdida en un escalón del mapa es la de {state}, {drop}, entre {at} y {to} de pago; {some} de {places} tienen un precipicio en algún punto de la curva de este hogar.",
+        "some": "La mayor pérdida en un escalón del mapa es la de {state}, {drop}, entre {at} y {to} de pago; de {places}, {miss, plural, =0 {todos tienen algún precipicio en la curva de este hogar} one {solo uno no tiene ningún precipicio} other {{miss} no tienen ningún precipicio}}.",
         "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
       },
       "dangerWidth": {
@@ -1423,11 +1423,11 @@
         "none": "No queda ninguna zona de peligro en {places} para este hogar."
       },
       "cliffCount": {
-        "some": "La curva de {state} lleva {n, plural, one {un precipicio} other {{n} precipicios}} para este hogar, más que la de ningún otro estado.",
+        "some": "La curva de {state} lleva {n, plural, one {{count} precipicio} other {{count} precipicios}} para este hogar, más que la de ningún otro estado.",
         "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
       },
       "deferredCliffCount": {
-        "some": "{state} es donde más precipicios esperan: {n, plural, one {uno cae} other {{n} caen}} en una renovación posterior y no con el aumento.",
+        "some": "{state} es donde más precipicios esperan: {n, plural, one {{count} cae} other {{count} caen}} en una renovación posterior y no con el aumento.",
         "none": "Ningún precipicio de {places} espera a una renovación posterior; todos caen con el aumento."
       }
     },

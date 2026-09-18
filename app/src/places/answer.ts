@@ -48,7 +48,18 @@ export type AnswerPart = { text: string } | { slot: string; text: string; key: s
 /** The sweep's $1,000 between points: the width of the step a figure names. */
 const STEP = 1000;
 
-/** The mark a slot is keyed to. Everything a sentence underlines here is drawn on the plum loss ramp; a figure on the keep ramp is left plain, because an underline in loss ink would say the opposite of the tile. */
+/**
+ * The mark a slot is keyed to. Everything a sentence underlines here is drawn
+ * on the plum loss ramp; a figure on the keep ramp is left plain, because an
+ * underline in loss ink would say the opposite of the tile.
+ *
+ * A COUNT IS HANDED OVER TWICE, and on purpose: `n` chooses the plural branch
+ * and `count` is the figure the branch prints. ICU renders a plural's own
+ * selector as a literal, so a `{n}` inside the branch comes back as text and
+ * the renderer has nothing to wrap — the count went unkeyed on three measures
+ * until this was read off the render. The selector stays a number, the printed
+ * figure is a string, which is the shape lib/copy.ts asks for.
+ */
 const KEYED = "hg-amt hg-amt--cliff";
 
 /** "the 50 states and the District of Columbia", counted off the rows rather than typed. */
@@ -90,9 +101,15 @@ function sentenceFor(s: AnswerScene): Sentence {
       return { text: A.keepRate.some, args: { places, household, bad }, keyed: ["bad"] };
     }
     case "roadCliffCount": {
-      const some = rows.filter((r) => r.m.roadCliffCount > 0).length;
+      /* THE COMPLEMENT, not the share. "{some} of {places}" printed "50 of the
+         50 states and the District of Columbia" on this run — a numerator and
+         a denominator that read as the same number, in the sentence whose
+         whole job is a fraction a reporter can quote. The states with NONE are
+         also the more interesting count, and there is never more than one way
+         to read it. */
+      const miss = rows.filter((r) => r.m.roadCliffCount === 0).length;
       if (!top || (top.value as number) === 0) return { text: A.roadCliffCount.none, args: { places, floor } };
-      return { text: A.roadCliffCount.some, args: { places, state: name(top), n: top.value as number, some }, keyed: ["n"] };
+      return { text: A.roadCliffCount.some, args: { places, state: name(top), n: top.value as number, count: String(top.value), miss }, keyed: ["count"] };
     }
     case "roadWorst": {
       if (!top || !top.m.roadWorst) return { text: A.roadWorst.none, args: { places, floor } };
@@ -100,9 +117,9 @@ function sentenceFor(s: AnswerScene): Sentence {
       return { text: A.roadWorst.some, args: { state: name(top), drop: money(w.drop), at: money(w.at), to: money(w.at + STEP) }, keyed: ["drop"] };
     }
     case "biggestLoss": {
-      const some = rows.filter((r) => r.m.cliffCount > 0).length;
+      const miss = rows.filter((r) => r.m.cliffCount === 0).length;
       if (!top || top.m.biggestLossAt === null) return { text: A.biggestLoss.none, args: { places, floor } };
-      return { text: A.biggestLoss.some, args: { places, some, state: name(top), drop: money(top.value as number), at: money(top.m.biggestLossAt), to: money(top.m.biggestLossAt + STEP) }, keyed: ["drop"] };
+      return { text: A.biggestLoss.some, args: { places, miss, state: name(top), drop: money(top.value as number), at: money(top.m.biggestLossAt), to: money(top.m.biggestLossAt + STEP) }, keyed: ["drop"] };
     }
     case "dangerWidth":
       if (!top || (top.value as number) === 0) return { text: A.dangerWidth.none, args: { places } };
@@ -119,10 +136,10 @@ function sentenceFor(s: AnswerScene): Sentence {
       return { text: A.safeExit.some, args: { state: name(top), exit: money(top.value as number) }, keyed: ["exit"] };
     case "cliffCount":
       if (!top || (top.value as number) === 0) return { text: A.cliffCount.none, args: { places, floor } };
-      return { text: A.cliffCount.some, args: { state: name(top), n: top.value as number }, keyed: ["n"] };
+      return { text: A.cliffCount.some, args: { state: name(top), n: top.value as number, count: String(top.value) }, keyed: ["count"] };
     default:
       if (!top || (top.value as number) === 0) return { text: A.deferredCliffCount.none, args: { places } };
-      return { text: A.deferredCliffCount.some, args: { state: name(top), n: top.value as number }, keyed: ["n"] };
+      return { text: A.deferredCliffCount.some, args: { state: name(top), n: top.value as number, count: String(top.value) }, keyed: ["count"] };
   }
 }
 

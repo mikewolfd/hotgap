@@ -431,7 +431,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       panelAfterReadout: document.querySelector("#readout")!.compareDocumentPosition(document.querySelector("#statePanel")!) & Node.DOCUMENT_POSITION_FOLLOWING,
       corrHeading: document.querySelector("#corrTitle")!.textContent!,
     }));
-    check(near(afterTile.top, tileBefore, 0.5) && afterTile.focused === "TX" && afterTile.readout.startsWith("Texas — ") && afterTile.title === "Where Texas\u2019s numbers come from" && afterTile.current === "TX",
+    check(near(afterTile.top, tileBefore, 0.5) && afterTile.focused === "TX" && afterTile.readout.startsWith("Texas — ") && afterTile.title === "Where Texas's numbers come from" && afterTile.current === "TX",
       "a tile click fills the readout and names the state's own block, keeps focus on the tile and does not move the page (rerun S1)", { ...afterTile, tileBefore });
     check(!afterTile.panelHidden && afterTile.panelInFigure && afterTile.panelAfterReadout > 0 && /^Corrections applied in Texas/.test(afterTile.corrHeading),
       "the selected state's provenance is a disclosure inside the figure, directly under its readout, and appears only once a state is chosen (rerun S1)", afterTile);
@@ -562,7 +562,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* The block under the readout says where the numbers came from and nothing
        else: it used to repeat the readout's sentences verbatim, which is what
        the cold read met twice on the way down the page. */
-    check(!ohText.block.includes(roadLead("OH")) && ohText.block.startsWith("Where Ohio\u2019s numbers come from"),
+    check(!ohText.block.includes(roadLead("OH")) && ohText.block.startsWith("Where Ohio's numbers come from"),
       "the state's block no longer repeats the readout above it; it is named for what is inside it", ohText.block.slice(0, 90));
     check(ohText.bold.join("|") === `Ohio|${phraseOf("OH")}|${money(oh.roadWorst!.at)}|${money(oh.roadWorst!.drop)}`,
       "the readout marks the state, its rate and the road's two figures, as the CurveReadout marks its figure", ohText.bold);
