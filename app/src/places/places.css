@@ -394,8 +394,10 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   #readout:not(:has(b)) { display: none; }
   /* The map is the picture on paper too, but a full-width cartogram at Letter
      is 8 rows of 63px and pushes its own legend onto page 2. Two thirds of the
-     column still gives a 47px tile, which is larger than any screen at 390. */
-  .map { max-width: 66%; }
+     column still gives a 47px tile, which is larger than any screen at 390 —
+     and the scale that explains it keeps the same width, so a printed bound
+     still stands under the swatch it names. */
+  .map, .legend { max-width: 66%; }
   .hg-scroll-x { overflow: visible; }
   .hg-scroll-x table { min-width: 0; font-size: var(--t-micro); }
   .hg-table thead th { position: static; }
