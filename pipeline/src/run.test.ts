@@ -132,19 +132,23 @@ describe("runPipeline", () => {
       expect(Object.keys(result.summary!.states[state])).toEqual(ARCHETYPES.map((a) => a.id));
       // Metrics come from the whole-dollar points the sweep stores, not raw floats.
       // Pinned literally (not re-derived from the code under test): the CA
-      // fixture's $22,103 Head Start loss at $30k is deferred, so the biggest
-      // immediate loss is the $3,868 subsidy end at $84k and the leap is that
-      // zone's width; same under WY and VT answers since neither the wrap nor
-      // the coverage gap touches this fixture.
+      // fixture's $22,103 Head Start loss at $30k lands at the next program
+      // year and, since 2026-09-17, counts — it is the biggest loss, and the
+      // leap is the $29k–$74k trough it opens (pinned 2026-09-15 at the $3,868
+      // subsidy end at $84k, a $7,000 leap and an $18,000 danger width, with
+      // the deferred drop lifted out); same under WY and VT answers since
+      // neither the wrap nor the coverage gap touches this fixture. A second
+      // cliff on the curve names a waiting program beside an immediate loss;
+      // the label counts it (2026-09-17: a label, never an exemption).
       expect(result.summary!.states[state]["single-2"]).toEqual({
-        biggestLoss: 3868,
-        biggestLossAt: 84000,
-        biggestLossPrograms: ["aca"],
-        dangerWidth: 18000,
-        cliffCount: 3,
-        deferredCliffCount: 1,
+        biggestLoss: 22103,
+        biggestLossAt: 30000,
+        biggestLossPrograms: ["headstart"],
+        dangerWidth: 57000,
+        cliffCount: 4,
+        deferredCliffCount: 2,
         safeExit: 91000,
-        leap: 7000,
+        leap: 45000,
         leapIsLowerBound: false,
         axisTop: 150000, // the fake fetch answers at the archetype's own axis (fixtureFor(axis.count, axis.max))
       });

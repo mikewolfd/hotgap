@@ -251,10 +251,17 @@ describe("the committed sweep", () => {
     expect(leap.slice(0, lower.length).map((r) => r.st)).toEqual(lower);
     const floors = leap.slice(0, lower.length).map((r) => r.m.leap);
     expect(floors).toEqual([...floors].sort((a, z) => z - a));
-    // The reviewer's case (rerun B1): 1 adult, 3 children — Colorado's floor equals Wisconsin's exact leap, so Colorado leads and Wisconsin ranks after the group.
+    // The reviewer's case (rerun B1): 1 adult, 3 children — Colorado's leap is a floor, so it leads the table
+    // whatever it says. Since deferred losses count (2026-09-17) the deferred step at the top of Wisconsin's
+    // curve pushed its safe exit $162,000 → $163,000 and so its exact leap $129,000 → $130,000, which is $1,000
+    // past Colorado's floor: the floor no longer ties the largest exact leap, but it still outranks every other
+    // one and still leads, which is the rule the group exists for.
     const single3 = summary.archetypes.find((a) => a.id === "single-3")!;
     const g3 = group(rowsFor(summary, single3, measureByKey("leap")!), measureByKey("leap")!);
-    expect(g3.past[0].value!).toBeGreaterThanOrEqual(g3.ranked[0].value!);
+    expect([g3.past[0].st, g3.past[0].value]).toEqual(["CO", 129_000]);
+    expect([g3.ranked[0].st, g3.ranked[0].value]).toEqual(["WI", 130_000]);
+    expect(g3.past[0].value!).toBeGreaterThan(g3.ranked[1].value!);
+    expect(tableRows(summary, single3, "leap")[0].st).toBe("CO");
     const largestExact = leap.find((r) => r.kind === "shaded")!;
     for (const st of lower) expect(leap.findIndex((r) => r.st === st)).toBeLessThan(leap.indexOf(largestExact));
     const loss = tableRows(summary, single2, "biggestLoss");

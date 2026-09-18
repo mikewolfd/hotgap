@@ -3,8 +3,8 @@
 // the verdict in the caseworker register, the tiles, the IncompleteMarker
 // count, the ThresholdLedger under the one threshold convention, the
 // CompareTable rows, the assumed list, the SourceNote and the client sheet.
-// The lift and the modeled household are core's (immediateCurve,
-// modeledAnswers); the IncompleteMarker rule is lib/coverage.ts's. No DOM,
+// The modeled household is core's (modeledAnswers); the IncompleteMarker
+// rule is lib/coverage.ts's. No DOM,
 // no fetch — vitest covers it directly (model.test.ts).
 // Every figure is annual (design/inventory.md M5): this reader checks the
 // table against the file. Every word is copy.ts's, every figure formatted
@@ -43,7 +43,13 @@ export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
   Math.round((earnings - ev.curve.points[0].earnings) / stepOf(ev));
 const top = (ev: HouseholdEvaluation): number => ev.curve.points[ev.curve.points.length - 1].earnings;
 
-/** The cliff object `nextCliff`/`worstCliff` name — they are never the same object as a `cliffs` entry (evaluate.ts). */
+/**
+ * The `cliffs` entry a `nextCliff`/`worstCliff` reference names, found by its
+ * step. Core hands back the entry itself, but the page reads an evaluation
+ * that came over JSON (`POST /api/evaluate`), where the two fields are
+ * separate objects equal to an entry without being it — so anything that
+ * compares by identity has to come through here.
+ */
 export const cliffAt = (ev: HouseholdEvaluation, ref: { startEarnings: number } | null): Cliff | null =>
   ref ? ev.analysis.cliffs.find((c) => c.startEarnings === ref.startEarnings) ?? null : null;
 
@@ -190,7 +196,7 @@ export function cite(ev: HouseholdEvaluation, r: LedgerRow, cov: StateCoverage |
       const slots = { worth: usd(p[before]), at: usd(pts[before].earnings), monthly: usd(h.monthlyChildcare ?? 0), kids: t(`ledger.kids.${pluralKey(n)}`, { n }) };
       s.push(price ? t("ledger.careWorth.priced", { ...slots, price, year: ev.curve.year }) : t("ledger.careWorth.unpriced", slots));
     }
-    if (r.id === "medicaid" && !r.cliff.deferral) {
+    if (r.id === "medicaid" && r.cliff.deferral?.complete !== true) {
       const rise = r.cliff.breakdown.premiums;
       s.push(rise > 0 ? t("ledger.medicaidEnds.premium", { premiumRise: usd(rise) }) : t("ledger.medicaidEnds.flat"));
     }

@@ -11,7 +11,8 @@ import type { Scene } from "./model.js";
 import { noun, phrase } from "./programs.js";
 import { waitingAhead } from "./steps.js";
 
-export type VerdictKey = keyof typeof copy.verdict;
+/** One shape per curve shape; `waits` is the timing clause, keyed by rule, not a shape. */
+export type VerdictKey = Exclude<keyof typeof copy.verdict, "waits">;
 
 export function verdictKey(s: Scene): VerdictKey {
   const v = s.ev.analysis.verdict;
@@ -44,21 +45,22 @@ export type VerdictPart = { text: string } | { slot: string; text: string; key: 
 
 /**
  * The sentence as parts, so a renderer can wrap each slot in its key — with
- * the deferred clause when a loss the lifted curve leaves out waits at or
- * above the person's pay (B1): "$600" is not the answer when $16,600 waits.
+ * the timing clause when a deferred loss waits at or above the person's pay
+ * (B1; M2): its money is already in the figures above (2026-09-17), and the
+ * clause says when it lands and under which rule.
  */
 export function verdictParts(s: Scene): VerdictPart[] {
   const out: VerdictPart[] = parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
   const w = waitingAhead(s);
   if (w) {
-    const id = w.programsLost[0];
+    const id = w.programsLost[0], reason = w.deferral!.reason;
     // Who loses it follows from the rule that defers it: a child's coverage, a parent's Medicaid, or the household's Head Start.
     const what = !id ? copy.waits.thisHelp
-      : w.deferral!.reason === "child_continuous_eligibility" ? fill(copy.waits.kids, { noun: noun(id) })
-      : w.deferral!.reason === "transitional_medical_assistance" ? fill(copy.waits.own, { noun: noun(id) })
+      : reason === "child_continuous_eligibility" ? fill(copy.waits.kids, { noun: noun(id) })
+      : reason === "transitional_medical_assistance" ? fill(copy.waits.own, { noun: noun(id) })
       : phrase(id);
     const slots = { at: s.m.pay(w.endEarnings), phrase: what, drop: s.m.about(w.drop) };
-    out.push(...parts(copy.verdict.waits, slots).map((p) => ("slot" in p ? { ...p, key: p.slot === "at" ? "amt" : null } : p)));
+    out.push(...parts(copy.verdict.waits[reason], slots).map((p) => ("slot" in p ? { ...p, key: p.slot === "at" ? "amt" : null } : p)));
   }
   return out;
 }

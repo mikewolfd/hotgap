@@ -675,6 +675,39 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 .hg-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
 
+/* The scrolling curve (design/charts.md § The scroll rule): the whole earnings
+   axis is drawn at a fixed px-per-$1,000 inside .hg-scroll-x, and the y axis
+   holds still in a gutter beside it, so the money labels are readable wherever
+   the reader has scrolled to. The two SVGs are sized in real pixels by the
+   page — the scale IS the geometry — so neither may be stretched to its box. */
+.hg-chart--scroll { display: flex; align-items: flex-start; }
+.hg-chart--scroll > svg, .hg-chart--scroll .hg-chart__scroll > svg { width: auto; flex: none; }
+.hg-chart__gutter { flex: none; }
+/* The plot is the scroller's scrolling content, and the marks layer is the
+   plot's own box (not the viewport's), so a mark travels with its dot. The
+   page sets its width and height; position stays at the content's origin. */
+.hg-chart__scroll { position: relative; flex: 1 1 auto; min-width: 0; touch-action: pan-x pan-y; }
+.hg-chart__scroll > .hg-marks { inset: auto; top: 0; left: 0; }
+/* A scroller is not a tab stop of its own: the chart's wrapper is the one tab
+   stop (M6), and a focusable box in front of it would double every chart's
+   keyboard cost. Keyboard scrolling happens through the marks and the caret. */
+.hg-chart__scroll:focus-visible { outline: none; }
+/* The range hint sits OUTSIDE the scroller. `.hg-scroll-x`'s own data-more
+   hint is a block in the scrolling content, which is right for a table (the
+   content is the viewport's width) and wrong for a 1,800px plot: it would
+   scroll off the left edge with the curve. So the axis's ends are said here,
+   in the figure, where they hold still — and they are what tells the reader
+   the picture goes on (inventory.md § MoneyCurve). */
+.hg-chart__hint { margin: 0; color: var(--ink-3); font-size: var(--t-micro);
+                  display: flex; justify-content: space-between; }
+
+@media print {
+  /* Paper cannot scroll: the page redraws the whole axis at the column's width,
+     and the figure must not keep a scrollbar, a fade or a sideways invitation. */
+  .hg-chart__scroll { overflow: visible; background: none; }
+  .hg-chart__hint { display: none; }
+}
+
 /* A cliff mark as a control: a 44px hit area centred on the drawn dot,
    positioned over the SVG in percent of its box. The dot stays in the SVG;
    the button is transparent, so the mark's drawing rules in charts.md are

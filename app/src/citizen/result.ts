@@ -1,7 +1,7 @@
 // The citizen result (design/citizen.html made real): the AnswerSentence,
 // the MoneyCurve with its readout, key and caption, the SourceNote, the
-// DataTable behind "Show the numbers", the StepList a cliff mark opens, the
-// deferred callout, what we assumed, reach, hours and the footer — every
+// DataTable behind "Show the numbers", the StepList a cliff mark opens,
+// what we assumed, reach, hours and the footer — every
 // component design/inventory.md assigns to this surface, rendered from one
 // HouseholdEvaluation through the pure modules beside this file.
 //
@@ -21,7 +21,7 @@ import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
 import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText, type Sweep } from "./facts.js";
 import { sceneOf, type Scene } from "./model.js";
-import { stepLoss, stepRows, stepSentence, waitsText } from "./steps.js";
+import { stepLoss, stepRows, stepSentence } from "./steps.js";
 import { tableRows } from "./table.js";
 import { againText, verdictParts, verdictText } from "./verdict.js";
 
@@ -175,7 +175,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
           h("td", { class: "num" }, r.drop ? t("table.dropCell", { drop: m.money(r.drop) }) : ""), h("td", {}, r.mark)))));
       const numbers = h("details", { class: "hg-disclosure" }, h("summary", {}, t("table.show")), h("div", { class: "hg-scroll-x" }, table));
 
-      /* StepList (#6): one row per threshold; a row is the card a mark opens (M6). */
+      /* StepList (#6): one row per threshold; a row is the card a mark opens (M6). A loss that lands at a later renewal
+         is a row like any other with the DeferredBadge (#10); its clause is in the sentence. */
       const steps = stepRows(s);
       const stepList = h("ul", { class: "hg-rows", id: "steps" }, ...steps.map((r) => {
         const p = h("p");
@@ -185,9 +186,6 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         if (loss) p.append(" ", h("span", { class: "hg-rows__loss" }, loss));
         return h("li", { id: `step-${r.at}` }, h("span", { class: "hg-rows__at" }, m.pay(r.at)), p);
       }));
-      const waits = waitsText(s, steps);
-      const waitsBox = waits && h("div", { class: "hg-callout hg-callout--note" }, h("h3", {}, waits.head), ...waits.body.map((x) => h("p", {}, x)), h("p", {}, waits.foot));
-
       /* What we assumed (S6), reach, hours, footer. */
       const assumed = h("ul", { class: "hg-rows assumed" }, ...assumedRows(s).map((f) => h("li", {}, h("span", { class: "hg-rows__at" }, f.label), h("p", {}, f.text))));
       const reach = reachText(s);
@@ -196,7 +194,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
 
       body.append(...([
         figure, numbers,
-        section(t("steps.heading"), steps.length ? stepList : h("p", {}, t("steps.none")), waitsBox),
+        section(t("steps.heading"), steps.length ? stepList : h("p", {}, t("steps.none"))),
         section(t("assumed.heading"), assumed),
         reach ? section(t("reach.heading"), h("p", {}, reach), h("p", {}, t("reach.note")), reachSource) : null,
         hours ? section(t("hours.heading"), h("p", {}, hours)) : null,

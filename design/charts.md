@@ -15,26 +15,26 @@ box**; the title names what is plotted. What *does* need a key is the set of
 non-series marks (band, cliff, deferred cliff, position), because those are
 meanings, not identities.
 
-### The lift — the rule that is easiest to get wrong
+### One curve — the rule that used to be easiest to get wrong
 
-`HouseholdEvaluation.analysis.dangerZones`, `.verdict`, `.escape` and
-`.personal` all describe a curve with **deferred drops removed**.
-`analysis.points` is the **real** curve (`evaluate.ts` puts the real points back
-on the analysis object). Plotting `analysis.points` under `analysis.dangerZones`
-draws two different curves.
+There is exactly one curve to draw, and it is the real one. Plot
+`analysis.points` under `analysis.dangerZones` and they agree, because since
+2026-09-17 `analysis` *is* the reading of the real points: a loss a federal
+rule defers to a later renewal counts in the verdict, the zones, the leap and
+the safe exit (README § Honesty; `inventory.md` #10).
 
-So the UI lifts the points itself, the same arithmetic as `immediateCurve()`:
-add each `deferred[i].drop` to every point above `deferred[i].startEarnings`.
-Both sketches do this in six lines and say so in a comment.
+Until then `.dangerZones`, `.verdict`, `.escape` and `.personal` described a
+curve with deferred drops removed, so the UI had to redo that arithmetic
+itself — add each `deferred[i].drop` to every point above
+`deferred[i].startEarnings` — and the real curve came back as a dashed
+**ghost** line labelled *if the later change happens*. All of it is gone:
+`immediateCurve()`, the six-line lift in each chart, the ghost, its 1.5%-of-
+y-range threshold, and the caption sentence rendered from that condition. A
+deferred drop is now a drop in the line like any other, and what marks it is
+the hollow dot and the dashed stub below — the label, not a second geometry.
 
-The real curve is then available as a **ghost**: the same line, 1.5px, dashed,
-`--ink-3`, labelled *if the later change happens*. It is drawn only when a
-deferred drop exceeds 1.5% of the y-range; below that it is a second line drawn
-on top of the first and adds nothing. **The caption sentence that describes the
-ghost is rendered from the same condition** (S14): when no ghost is drawn, the
-caption does not mention one. Today's Colorado curve has no deferred drop and
-no ghost; the 2026-09-15 sketch had a $219 drop on a $67,000 range and drew
-none either, while its caption said it had.
+If you find yourself computing a y-value the evaluation did not give you, stop:
+that is the lift growing back.
 
 ### Marks
 
@@ -48,7 +48,7 @@ none either, while its caption said it had.
 | The leap | a bracket along the peak rule from the diamond's x to the exit, 1px `--loss-3` with 4px end ticks, direct-labelled once with a plus sign: "+$7,000" (`personal.raiseToClear`) |
 | Safe from here | a second vertical rule, 1px `--loss-3`, full height, labelled *safe from here* (`escape.safeExitEarnings`) — see *More than one zone* |
 | Immediate cliff | filled dot r4–4.5 in `--loss-4` with a 2px `--surface` ring, and a 2.5px solid connector down to where the line lands |
-| Deferred cliff | **hollow** dot (2px `--ink-3` stroke, `--surface` fill), **dashed** 2px stub, and the word *later* |
+| Deferred cliff | **hollow** dot (2px `--ink-3` stroke, `--surface` fill), **dashed** 2px stub, and the word *later* — sitting on a real drop in the line, because the loss counts; only the timing is being marked |
 | The household | a **diamond** in `--ink` with a 2px surface ring and a drop line to the axis — a different *shape*, so position survives greyscale |
 | Reference line | 1px `--rule-strong` (present value) or `--loss-3` (the zone's peak). Solid: it is a real number, not a projection |
 | Gridlines | 1px solid, `--grid`, horizontal only, 3 on a phone and 4–5 on a desktop, on nice values (below) |
@@ -98,15 +98,22 @@ do this; a bar chart may not. Two obligations follow:
    computed** — never typed into the copy, where it would drift the first time
    the data moved.
 2. **The visible y-range is at least 2.5× the largest plotted drop**, so no
-   step is exaggerated by a tight crop. This is a rule the crop must satisfy,
-   not a hope (S14): compute `need = 2.5 × max(drop)` over the drops in the
-   window; if `hi − lo` of the plotted slice, after padding, is less than
-   `need`, extend the floor and the ceiling equally until the range equals
-   `need`, then snap both outward to the gridline step. Widening the x-window
-   first is preferred where it adds real data (a wider crop can raise `hi`),
-   but padding is the guarantee — today's full Colorado curve spans $48,806
-   against a $25,449 drop (1.92×), so even the caseworker's uncropped axis
-   needs the extension, and the citizen crop's 14% padding gave 1.3×.
+   step is exaggerated by a tight range. This is a rule the range must
+   satisfy, not a hope (S14): compute `need = 2.5 × max(drop)` over the drops
+   on the curve; if `hi − lo`, after padding, is less than `need`, extend the
+   floor and the ceiling equally until the range equals `need`, then snap both
+   outward to a quarter of the gridline step. Today's full Colorado curve
+   spans $48,806 against a $25,449 drop (1.92×), so even an uncropped axis
+   needs the extension.
+
+   Since the curve stopped being cropped (§ The scroll rule) the range is the
+   **whole curve's** and the rule almost never bites — the climb from $0 to
+   $150,000 is a far wider range than 2.5× any one step. The padding came down
+   from 14% to 6% with the crop: the ends of a crop were arbitrary, and a line
+   running into an arbitrary edge looks cut off, but the ends of the whole
+   curve are real points at real pay. Every dollar of slack here is a dollar
+   of range that makes every drop shorter in pixels, which is now the scarce
+   thing (§ The scroll rule's 24px floor).
 
 ### Gridlines on nice values (N1)
 
@@ -163,16 +170,108 @@ touching the thing, on a phone or with a screen reader, without a hover:
   Today's Colorado axis puts three dots within 12px (x = 255, 263, 267 at
   1280px) and the citizen crop overlaps $53k and $54k.
 
+### The scroll rule (2026-09-17)
+
+**Both curves draw the whole earnings axis and scroll it. No viewport decides
+which part of the curve exists.** The citizen curve used to crop to a window
+around the household — 151 points across 340px with eight labels is a texture,
+not a chart — and the crop was the answer to the phone. It was the wrong
+answer: a household whose worst cliff sits $55,000 past its exit was shown a
+picture the cliff was not in, and a caption that said so is not the same as
+letting them look.
+
+The figure is therefore two SVGs side by side in one `.hg-chart--scroll` flex
+row:
+
+- **The gutter.** The y-axis and its tick labels, in a fixed 44px (narrow) or
+  52px (wide) SVG *outside* the scroller. It cannot scroll away, so the
+  reader never sees a curve with no scale beside it.
+- **The scroller.** `.hg-chart__scroll` (`.hg-scroll-x`, `touch-action:
+  pan-x pan-y`), holding the plot SVG and the marks layer, both sized to the
+  plot's own width so a mark travels with its dot. The x-ticks are in here
+  and move with the curve.
+- **The hint**, `.hg-chart__hint`, *outside* the scroller: "← $0" and
+  "$150,000 →", the axis's real ends rendered from the data, in copy. It is
+  outside because `.hg-scroll-x`'s own `data-more` hint is a block in the
+  scrolling content — right for a table, wrong for an 1,800px plot, where it
+  would scroll off the left edge with the curve.
+
+Neither SVG is stretched to its box: both carry a `viewBox` **and** matching
+`width`/`height`, because the scale *is* the geometry here.
+
+**`windowFor` is now where the reader starts, not what exists.** The same
+function, the same reasons — the household, its danger zone, that zone's exit,
+the next cliff, and the biggest drop when it lies within `WINDOW_MARGIN`
+($30,000) — but it chooses `scrollLeft`. The window is centred in the viewport,
+then the diamond is pulled inside it by 44px, because "you" being on screen is
+the one thing the initial view owes. A mark taking focus scrolls itself into
+view with the same margin (`scrollToShow`), so `[`, `]`, the arrows and Home
+all reach the whole axis; a pointer never scrolls, because the finger is
+already on the pixel it named.
+
+**The scale is derived, not fixed.** `scaleFor` gives the window one screen of
+scroller: one viewport of scrolling shows the pay the crop used to show, at the
+legibility it had, and everything the crop threw away is a swipe either side.
+A constant px-per-$1,000 fails both ways — it squeezes a $44,000 window on a
+phone, and it stretches the $750,000 axis a caseworker's live curve can reach
+to nine thousand pixels, twenty-nine screens of swiping. `MAX_SCREENS = 6`
+guards the second case: past six screens the axis is not reachable by hand, so
+the scale zooms out until it is, and the initial view then shows *more* pay
+than the window, never less.
+
+**Paper cannot scroll**, so the print draw is told so: the whole axis is fitted
+into the page's column (640px citizen, 672px caseworker, gutter included), the
+x-tick step grows so the type never shrinks below the 9pt floor, the caption
+says the whole range is shown, and the hint and the edge fade are off. The
+redraw hangs off `beforeprint`; `afterprint` gives the scroller back.
+
+#### Height is chosen by the biggest drop
+
+The cost of an honest y-range is pixels: the range is the whole curve's now, so
+the biggest drop is a much smaller share of it than it was inside a crop. Height
+is the only thing left that buys those pixels back, so the plot is **exactly as
+tall as the biggest drop needs to stand 24px**, clamped to 260–560px of
+drawing area (324–624px with padding).
+
+The ceiling bites, and it is honest about where. Measured on the citizen
+review's eight households at 390 and 1280 (`app/e2e/scroll-curve-review.mjs`,
+`design/review/scroll-curve/`):
+
+| household | plot width @390 / @1280 | height | biggest drop | where it starts |
+| --- | --- | --- | --- | --- |
+| CA archetype `94110` | 1,083 / 1,889px | 371px | **24.1px** | 0.95 viewports out |
+| Wisconsin, no cliff | 1,606 / 2,816px | 324px | — | — |
+| CA + Head Start | 1,555 / 2,726px | 324px | **57.5 / 59.5px** | in the initial view |
+| CA at $125,000 | 1,254 / 2,192px | 468 / 456px | **24.0 / 24.1px** | in the initial view |
+| hourly, $18.50 × 35h | 1,185 / 2,070px | 324px | **62.9px** | in the initial view |
+| Massachusetts | 1,185 / 2,070px | 624 / 617px | 23.1 / 24.0px | 0.54 viewports out |
+| Texas | 808 / 1,403px | 624px | 23.1 / 22.3px | 0.58 viewports out |
+| New Jersey | 1,275 / 2,231px | 624px | 23.7px | 1.26 viewports out |
+| caseworker, CA archetype | 1,079 / 2,065px | 405 / 337px | 24.1px | 0.95 viewports out |
+
+Massachusetts, Texas and New Jersey are **at the ceiling and still short of
+24px** — 22.3 to 23.7px. Reaching the floor would need plots 600–880px tall,
+which is a scrolling page and not a figure. That is the price of never cropping
+the curve, and it is paid in the drop's *height*, not in its dollars: the
+direct label, the readout, the StepList row and the DataTable all carry the
+money in text. The two households whose drop clears the floor easily (Head
+Start at 57.5px, hourly at 62.9px) are the ones whose biggest drop is a
+deferred cliff, which since 2026-09-17 counts.
+
+**The biggest drop is not promised to be in the initial view.** Three of the
+eight land outside it, New Jersey's by 1.26 viewports, because `windowFor`
+spends the view on the household's own zone before a cliff $46,000 up the axis
+(REVIEW-citizen B2: a half-axis view made a $2,400 step two pixels tall).
+There is no upper bound on the distance — a worst cliff can be anywhere on its
+axis — so what the reader is owed is reachability: the whole axis is drawn, the
+hint says where it runs, and `[` `]` walk to it.
+
 ### Phone
 
-The citizen curve **crops to a window** around the household, because 151
-points across 340px with eight labels is not a chart, it is a texture. The
-window contains the diamond and the household's exit (rule 4 above). The
-caseworker curve keeps the full axis: that reader wants the $106,000
-premium-subsidy cliff in the same picture.
-
 Below 520px: 3 gridlines, 4 x-ticks, the reference-line label drops to the bare
-dollar, the *back to even* label is dropped, the leap keeps its label.
+dollar, the *back to even* label is dropped, the leap keeps its label. The
+gutter is 44px instead of 52px. The caseworker curve is scrolled the same way
+as the citizen's, and its compare columns are untouched by any of it.
 
 ### Direct labels
 

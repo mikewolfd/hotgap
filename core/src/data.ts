@@ -23,9 +23,10 @@ export interface StateMetrics {
   biggestLossAt: number | null;
   biggestLossPrograms: ProgramId[];
   dangerWidth: number;
+  /** Every cliff on the curve, the deferred ones included (2026-09-17). */
   cliffCount: number;
-  // Cliffs whose loss is deferred to a future renewal (Head Start, children's
-  // continuous eligibility, transitional Medicaid); not in cliffCount.
+  // Of cliffCount, those whose loss lands at a future renewal (Head Start,
+  // children's continuous eligibility, transitional Medicaid).
   deferredCliffCount: number;
   safeExit: number | null;
   leap: number;

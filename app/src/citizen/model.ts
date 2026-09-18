@@ -4,9 +4,10 @@
 // the chart geometry can be tested from a fixture. O(points × programs)
 // once per evaluation; nothing here is repeated per component.
 import {
-  DEFAULT_HOURS, immediateCurve, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
+  DEFAULT_HOURS, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS, STATE_NAMES,
   type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
 } from "@hotgap/core";
+import { windowFor } from "../lib/chart/geometry.js";
 import { money, moneyAbout, payFigure, payPhrase, payRounded, unitFigure, unitPhrase } from "../lib/format.js";
 
 /** The unit the person gave and the hours an hourly figure converts through. */
@@ -52,9 +53,8 @@ export interface Scene {
   /** Axis step and the last swept pay. */
   step: number;
   top: number;
-  /** The REAL curve's net income per point, and the same with deferred drops lifted out (charts.md § The lift: core's immediateCurve). */
+  /** The curve's net income per point — the one line every figure describes (a deferred loss counts, 2026-09-17). */
   net: number[];
-  lifted: number[];
   idx(earnings: number): number;
   earningsAt(i: number): number;
   current: number;
@@ -68,18 +68,20 @@ export interface Scene {
   safeExit: number | null;
   otherZones: DangerZone[];
   cliffs: Cliff[];
-  /** Cliffs that land now, and the ones a federal rule defers to a renewal. */
-  immediate: Cliff[];
+  /** The cliffs a federal rule defers to a later renewal: counted like the rest, badged (Cliff.deferral says when). */
   deferred: Cliff[];
-  /** The largest immediate drop: the one direct label, the one "biggest" row. */
+  /** The largest drop: the one direct label, the one "biggest" row. */
   worst: Cliff | null;
   next: Cliff | null;
-  /** The crop the citizen chart shows, in annual dollars, and the cliffs inside it. */
+  /**
+   * Where the citizen chart is scrolled to first, in annual dollars — the
+   * part of the curve that answers the question. Since 2026-09-17 it is a
+   * position, not a crop: the chart draws the whole axis either way.
+   */
   window: [number, number];
-  inWindow: Cliff[];
   /** Where energy assistance stops (EligibilityBoundary #23), when it lies on the axis; drawn as a tick only while the toggle is off. */
   boundary: LiheapBoundary | null;
-  boundaryInWindow: boolean;
+  boundaryOnAxis: boolean;
   /** The household the curve was actually run for: the person's own on the live path, the swept archetype otherwise (S6). */
   modeled: HouseholdAnswers;
   clamped: boolean;
@@ -88,31 +90,9 @@ export interface Scene {
   remains(c: Cliff): Remainder[];
 }
 
-/** The context the crop carries around what it must show: a third before, two thirds after, where the climb back is. */
-export const WINDOW_MARGIN = 30_000;
-
-/**
- * The crop (charts.md § Phone) is what the picture exists to show: the
- * diamond, the household's zone and its exit, the next cliff, and the
- * curve's biggest drop when it lies within the margin — plus the margin.
- * Never a fixed fraction of the axis (design/REVIEW-citizen B2: a
- * half-axis window spent the picture on the climb and made a $2,400 step
- * two pixels tall). Snapped to the points.
- */
-export function windowFor(s: Pick<Scene, "current" | "zone" | "stuck" | "exit" | "next" | "worst" | "top" | "step">): [number, number] {
-  const { current, zone, stuck, exit, next, worst, top, step } = s;
-  let lo = Math.min(current, zone?.startEarnings ?? current);
-  let hi = Math.max(current, stuck || exit === null ? current : exit, next?.endEarnings ?? current);
-  if (worst && worst.endEarnings <= hi + WINDOW_MARGIN && worst.startEarnings >= lo - WINDOW_MARGIN) {
-    lo = Math.min(lo, worst.startEarnings);
-    hi = Math.max(hi, worst.endEarnings);
-  }
-  lo -= WINDOW_MARGIN / 3;
-  hi += (2 * WINDOW_MARGIN) / 3;
-  if (lo < 0) { hi -= lo; lo = 0; }
-  if (hi > top) { lo = Math.max(0, lo - (hi - top)); hi = top; }
-  return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step];
-}
+/* Where the curve is scrolled to first, and the margin it carries: the rule
+   is both doors' now, so it lives in lib/chart/geometry.ts (audit D10). */
+export { WINDOW_MARGIN, windowFor } from "../lib/chart/geometry.js";
 
 export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
   const points = ev.curve.points;
@@ -122,13 +102,21 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
   const net = points.map((p) => p.netIncome);
   const a = ev.analysis;
   const deferred = a.cliffs.filter((c) => c.deferral !== null);
-  const immediate = a.cliffs.filter((c) => c.deferral === null);
   const zone = ev.personal.zone;
   const stuck = zone !== null && ev.personal.raiseIsLowerBound;
-  const worst = immediate.length ? immediate.reduce((x, y) => (y.drop > x.drop ? y : x)) : null;
-  // nextCliff is computed on the lifted curve and is never an entry of
-  // cliffs (evaluate.ts); the real cliff is found by its step.
-  const next = a.nextCliff ? a.cliffs.find((c) => c.startEarnings === a.nextCliff!.startEarnings) ?? a.nextCliff : null;
+  /* The worst and next cliff as the ENTRIES of `a.cliffs` they name, not as
+     `a.worstCliff`/`a.nextCliff` themselves. The page compares cliffs by
+     identity — the StepList's "This is the biggest drop.", the chart's one
+     direct label, a mark's open row — and the evaluation reaches this module
+     over JSON (`POST /api/evaluate`), where those two fields come back as
+     separate objects that are equal to an entry without being it. In process
+     the reference holds, so every unit test passes either way and only the
+     live page shows the label missing; the caseworker already re-links, in
+     `caseworker/model.ts` cliffAt. Deferred cliffs are in the running, which
+     is the owner's rule of 2026-09-17. */
+  const sameStep = (c: Cliff, r: Cliff | null) => r !== null && c.startEarnings === r.startEarnings && c.endEarnings === r.endEarnings;
+  const worst = a.cliffs.find((c) => sameStep(c, a.worstCliff)) ?? null;
+  const next = a.cliffs.find((c) => sameStep(c, a.nextCliff)) ?? null;
   const pay = payOf(ev, flags);
   const base = {
     step, top, current: a.currentEarnings, zone, stuck,
@@ -147,15 +135,15 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
 
   return {
     ...base,
-    ev, pay, m: moneyFor(pay), net, lifted: immediateCurve(points, ev.deferred).map((p) => p.netIncome), idx, earningsAt: (i) => points[i].earnings,
+    ev, pay, m: moneyFor(pay), net, idx, earningsAt: (i) => points[i].earnings,
     currentNet: a.currentNet,
     state: ev.answers.state, stateName: STATE_NAMES[ev.answers.state] ?? ev.answers.state,
     safeExit: ev.escape.safeExitEarnings,
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
-    cliffs: a.cliffs, immediate, deferred,
-    window, inWindow: a.cliffs.filter((c) => c.startEarnings >= window[0] && c.endEarnings <= window[1]),
+    cliffs: a.cliffs, deferred,
+    window,
     boundary: ev.liheap,
-    boundaryInWindow: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit >= window[0] && ev.liheap.earningsLimit <= window[1],
+    boundaryOnAxis: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit <= top,
     modeled: modeledAnswers(ev), clamped: a.currentEarnings !== ev.answers.annualEarnings,
     starts,
     // programsLost also fires when a program halves in a step (analyze.ts), so

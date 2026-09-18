@@ -308,18 +308,26 @@ pre-rolls the archetypes, so the offline path is instant.
   `programEnds.ctc` reads the total, while a cliff's own `programsLost` and
   `breakdown.credits` keep the refundable series, labeled as such in
   `core/src/cli.ts`'s report.
-- Deferred losses: `core/src/analyze.ts` (`DeferralReason`, `Deferral`,
-  `deferralOf`) marks a cliff whose cost is carried forward by Head Start's
-  program-year rule, a child's 12-month continuous eligibility, or a
-  parent's Transitional Medical Assistance; `core/src/evaluate.ts`'s
-  `immediateCurve` lifts those drops out of the curve that drives the
-  verdict, the danger zones, the leap, and the personal path, while
-  `HouseholdEvaluation.deferred` and `analysis.cliffs` still carry every one
-  of them in full.
-- Summary counts them apart: `pipeline/src/metrics.ts`'s `stateMetrics`
-  reads `deferred` off the shared evaluation and reports
-  `deferredCliffCount` next to `cliffCount`; `core/src/data.ts`'s
-  `StateMetrics` carries the new field.
+- Deferred losses (rewritten 2026-09-17): `core/src/analyze.ts`
+  (`DeferralReason`, `Deferral`, `deferralOf`) marks a cliff whose cost is
+  carried forward by Head Start's program-year rule, a child's 12-month
+  continuous eligibility, or a parent's Transitional Medical Assistance.
+  The mark is a **label only**. `core/src/evaluate.ts` reads `analysis` —
+  the verdict, the danger zones, the leap, the safe exit, the personal path
+  — off the real curve, so a deferred loss counts in every figure, and
+  `HouseholdEvaluation.deferred` is just the subset of `analysis.cliffs`
+  that lands later, carrying `until`, the rule and its citation for the
+  DeferredBadge. `immediateCurve` and the lifted reading it produced are
+  deleted: the owner's rule is that the household loses the money, so the
+  impact is the figure and the timing is a clause beside it. The reasoning
+  this reverses — "a family whose Head Start slot is guaranteed through the
+  next program year is not standing in a $20,000 hole" — is recorded in
+  commit 311ec17 with every pin it moved.
+- Summary counts them as a subset: `pipeline/src/metrics.ts`'s
+  `stateMetrics` reads `deferred` off the shared evaluation and reports
+  `deferredCliffCount` next to `cliffCount` — how many of the counted
+  cliffs land at a later renewal, not how many were held out;
+  `core/src/data.ts`'s `StateMetrics` carries the field.
 - Medicare for SSDI: `core/src/evaluate.ts`'s `applyMedicare`, backed by
   `core/src/policyYear.ts`'s `MEDICARE_PART_B_MONTHLY`/`_ANNUAL` ($202.90,
   CMS, 2025-11-14) — no marketplace premium or credit for the recipient,
@@ -344,12 +352,13 @@ pre-rolls the archetypes, so the offline path is instant.
   SSDI household as already Medicare-entitled. The error runs one way — a
   household in its first two years on SSDI would in reality still owe a
   marketplace premium, and this leaves it out.
-- `immediateCurve` (`core/src/evaluate.ts`) is the only place HotGap alters
-  a curve for TIMING rather than for a wrong number: every other correction
-  in that file changes a number PolicyEngine got wrong; this one changes
-  when a correct number arrives, and the real curve — deferred cliffs full
-  size, in place — is still what `HouseholdEvaluation.curve` and
-  `analysis.cliffs` return.
+- HotGap no longer alters a curve for TIMING anywhere (2026-09-17).
+  `immediateCurve` used to be the one such place — every other correction
+  in `core/src/evaluate.ts` changes a number PolicyEngine got wrong, and
+  that one changed when a correct number arrives. It is gone, so every
+  correction in the file is now of one kind, and there is a single curve:
+  deferred cliffs full size, in place, in `HouseholdEvaluation.curve`,
+  `analysis.points`, `analysis.cliffs` and everything read off them.
 - Three ESI tiers by headcount, not two: AHRQ publishes single,
   employee-plus-one, and family employee contributions, and a parent with
   one child is not buying a family plan.
