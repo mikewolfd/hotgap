@@ -88,10 +88,12 @@ export const MEASURE = () => {
     if (el.ownerSVGElement || el.tagName === "svg") svg += n;
     else html += n;
   }
-  // A <select> shows one option; the walker sees all of them.
+  // A <select> shows one option. A closed select's options have no client
+  // rect, so the walker never counted them — subtracting them took 204 words
+  // off a total that never held them and printed −31 on the map page (the
+  // places picture-first review). Add the shown option once; subtract nothing.
   for (const sel of document.querySelectorAll("select")) {
     if (hidden(sel)) continue;
-    for (const o of sel.options) html -= words(o.textContent ?? "");
     html += words(sel.selectedOptions[0]?.textContent ?? "");
   }
   const fig = document.querySelector("figure");
@@ -114,7 +116,12 @@ async function measure(page, base, path, { open }) {
   await page.goto(base + path, { waitUntil: "load" });
   // The answer arrives from the Worker (seconds, on a cold household); the
   // line is drawn after it, and a page with no curve settles on its own.
-  await page.locator("svg path, table").first().waitFor({ timeout: 180_000 }).catch(() => {});
+  // Ready when the picture has drawn, or a table exists at all — a table
+  // folded in a closed <details> is attached but not visible, and waiting for
+  // it to be visible cost a one-page run twelve minutes.
+  await page.locator("svg path").first().waitFor({ timeout: 90_000 }).catch(async () => {
+    await page.locator("table").first().waitFor({ state: "attached", timeout: 30_000 }).catch(() => {});
+  });
   await page.waitForTimeout(1500);
   if (open) { await page.evaluate(OPEN_ALL); await page.waitForTimeout(250); }
   await page.evaluate(() => scrollTo(0, 0));
