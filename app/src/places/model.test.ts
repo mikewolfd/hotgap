@@ -335,6 +335,35 @@ describe("the sentences, from copy through words.ts", () => {
   });
 });
 
+describe("the one caution the map on the screen has earned (§ The page is its picture)", () => {
+  /* The two boxed warnings live in full inside "How to read this map"; the one
+     that is TRUE OF THE MAP a reader is looking at comes out of it in one line,
+     because then it is not a rule but a warning, and nothing that warns hides.
+     The bounded branch is exercised end to end on the safe-exit map
+     (e2e/places.spec.ts). The hatched branch has no subject on this sweep — no
+     state is incomplete since NJ and WA became complete — so the path is proved
+     here, on the message, rather than left unwritten until a sweep needs it. */
+  it("says what is hatched and that hatched is not low, for one state and for several", () => {
+    expect(t("caution.hatched", { n: 1, programs: "Child care subsidy" }))
+      .toBe("**Hatched is not low.** One state is hatched: Child care subsidy is not modelled there, so its figures are floors and it is neither shaded nor ranked.");
+    expect(t("caution.hatched", { n: 3, programs: "Child care subsidy and Premium assistance" }))
+      .toBe("**Hatched is not low.** 3 states are hatched: Child care subsidy and Premium assistance is not modelled there, so their figures are floors and they are neither shaded nor ranked.");
+  });
+  it("says a bound is not a value, on the whole axis and on the road", () => {
+    expect(t("caution.past", { n: 1 })).toMatch(/^\*\*Past the axis is not a number\.\*\* One state's figure runs off the top of the earnings scale/);
+    expect(t("caution.past", { n: 3 })).toMatch(/^\*\*Past the axis is not a number\.\*\* 3 states' figures run off the top of the earnings scale/);
+    expect(t("caution.roadPast", { n: 2 })).toMatch(/^\*\*No rate to compare\.\*\* In 2 states this household's road out of poverty falls outside/);
+  });
+  it("uses the reader's word for the run, never the developer's", () => {
+    for (const n of [1, 2]) {
+      expect(t("caution.past", { n })).not.toMatch(/sweep/i);
+      expect(t("caution.hatched", { n, programs: "x" })).not.toMatch(/sweep/i);
+    }
+    expect(copy.table.defs.pastAxis).not.toMatch(/sweep/i);
+    expect(copy.table.defs.lowerBound).not.toMatch(/sweep/i);
+  });
+});
+
 describe("the committed sweep", () => {
   const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
   const single2 = summary.archetypes.find((a) => a.id === "single-2")!;
