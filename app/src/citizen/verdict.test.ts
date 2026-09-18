@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { makeEvaluation } from "./fixture.js";
 import { sceneOf } from "./model.js";
-import { againText, verdictKey, verdictParts, verdictText } from "./verdict.js";
+import { againText, keepNextText, verdictKey, verdictParts, verdictText } from "./verdict.js";
 
 const year = { unit: "year" };
 
@@ -72,5 +72,35 @@ describe("the timing clause (B1, M2)", () => {
   test("no deferred cliff at or above the pay, no clause", () => {
     expect(verdictText(sceneOf(makeEvaluation({}, 80_000), year))).not.toMatch(/But not that day/);
     expect(verdictText(sceneOf(makeEvaluation({}, 43_000, { deferredCliff: false }), year))).not.toMatch(/But not that day/);
+  });
+});
+
+describe("your keep rate on the next stretch (Plan 9 § Citizen)", () => {
+  test("no cliff in the stretch, kept 10¢ or more: the plain sentence, both figures from personal.keepNext", () => {
+    const s = sceneOf(makeEvaluation(), year);   // current $43,000: the SNAP cliff is behind it, the care cliff at $54,000 is past the $10,000 window
+    expect(s.ev.personal.keepNext).toEqual({ over: 10_000, kept: 0.8 });
+    expect(s.next?.startEarnings).toBe(54_000);   // past current + over ($53,000): not named
+    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $8,000.");
+  });
+  test("a cliff inside the stretch is named at the pay it ends, in the existing program phrase, whatever the kept rate", () => {
+    const s = sceneOf(makeEvaluation({}, 38_000), year);   // the SNAP cliff, $41,000 → $42,000, sits inside $38,000–$48,000
+    expect(s.next?.startEarnings).toBe(41_000);
+    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $4,500, because food help ends at $42,000.");
+  });
+  test("no cliff and kept under 10¢: a flat stretch, not a plain sentence", () => {
+    const s = sceneOf(makeEvaluation({}, 90_000, { plateau: [90_000, 130_000] }), year);
+    expect(s.next).toBeNull();
+    expect(s.ev.personal.keepNext?.kept).toBeLessThan(0.10);
+    expect(keepNextText(s)).toBe("Of the next $10,000 you earn, you keep about $500. That is a flat stretch: more pay, little more money.");
+  });
+  test("null keepNext (less than one step of axis left) says nothing", () => {
+    expect(sceneOf(makeEvaluation({}, 150_000), year).ev.personal.keepNext).toBeNull();
+    expect(keepNextText(sceneOf(makeEvaluation({}, 150_000), year))).toBeNull();
+  });
+  test("both figures in the person's own pay unit (M5), not always annual", () => {
+    const ev = makeEvaluation({ answers: { ...makeEvaluation().answers, hoursPerWeek: 35 } });
+    const s = sceneOf(ev, { unit: "hour", hours: "35" });
+    // $10,000 / (35 × 52) = $5.49 → $5.50; $8,000 → $4.40 → $4.50 an hour.
+    expect(keepNextText(s)).toBe("Of the next $5.50 an hour you earn, you keep about $4.50 an hour.");
   });
 });

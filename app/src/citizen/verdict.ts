@@ -80,3 +80,25 @@ export function againText(s: Scene): string | null {
   const slots = { from: s.m.pay(beyond[0].startEarnings), to: s.m.pay(s.safeExit) };
   return beyond.length === 1 ? fill(copy.again, slots) : fill(copy.againMany, { n: beyond.length, ...slots });
 }
+
+/**
+ * Your keep rate on the next stretch (Plan 9 § Citizen), from
+ * `personal.keepNext`: `over` and `kept` are both money in the person's own
+ * pay unit (app/README.md § Keep rate). A cliff inside the stretch — the
+ * citizen's own next cliff, `s.next`, which can sit past the $10,000 window
+ * — is named in the existing program phrase, at the pay it ends (the one
+ * convention, design/inventory.md § Where a program ends); short of that, a
+ * stretch keeping under 10¢ on the dollar is a flat stretch, not a cliff.
+ * Null `keepNext` (less than one step of axis left) says nothing.
+ */
+export function keepNextText(s: Scene): string | null {
+  const next = s.ev.personal.keepNext;
+  if (next === null) return null;
+  const { over, kept: rate } = next;
+  const slots = { over: s.m.pay(over), kept: s.m.pay(rate * over) };
+  if (s.next && s.next.startEarnings < s.current + over) {
+    const id = s.next.programsLost[0];
+    return fill(copy.keepNext.cliff, { ...slots, phrase: id ? phrase(id) : copy.chart.someHelp, wage: s.m.pay(s.next.endEarnings) });
+  }
+  return fill(rate < 0.10 ? copy.keepNext.plateau : copy.keepNext.base, slots);
+}

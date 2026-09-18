@@ -32,10 +32,16 @@ export interface Shape {
   stuckAt?: number;
   /** The children's CHIP ($4,000 sticker) is received up to this pay and then gone, with no step in net income. */
   chipEndsAt?: number;
+  /**
+   * Within (from, to], each step gains $40 instead of $800 — a keep rate of
+   * 5¢ on the dollar, for the keep-next plateau test (Plan 9 § Citizen): no
+   * cliff (the step never falls), and well under the 10¢ floor.
+   */
+  plateau?: [from: number, to: number];
 }
 
-/** Net income rises $800 a step from $20,000; the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
-function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt }: Shape = {}): CurvePoint[] {
+/** Net income rises $800 a step from $20,000 (or $40 inside `plateau`); the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
+function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt, plateau }: Shape = {}): CurvePoint[] {
   const points: CurvePoint[] = [];
   let net = 20_000;
   for (let e = 0; e <= TOP; e += STEP) {
@@ -49,7 +55,8 @@ function makePoints({ snapCliff = true, snapTail = false, careCliff = true, defe
     programs.chip = childChip;
     if (e >= 39_000) programs.aca = 2000;
     if (e >= 1000 && e <= 57_000) programs.eitc = 3000;
-    if (e > 0) net += 800;
+    const inPlateau = plateau !== undefined && e > plateau[0] && e <= plateau[1];
+    if (e > 0) net += inPlateau ? 40 : 800;
     if (snapCliff && e === 42_000) net -= 2500 + 800;
     if (careCliff && e === 55_000) net -= 9000 + 800;
     if (deferredCliff && e === 72_000) net -= 1500 + 800;
