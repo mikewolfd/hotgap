@@ -2,7 +2,7 @@
   "_": {
     "language": "es-US",
     "status": "draft",
-    "note": "Borrador redactado por el modelo el 2026-09-17; pendiente de revisión por un hablante nativo. / A draft, machine-written 2026-09-17, awaiting a native speaker's review (app/README.md § Languages).",
+    "note": "Borrador redactado por el modelo el 2026-09-17, con las frases del camino de salida de la pobreza (road.*) agregadas el 2026-09-18; pendiente de revisión por un hablante nativo. / A draft, machine-written 2026-09-17, with the road-out-of-poverty sentences (road.*) added 2026-09-18, awaiting a native speaker's review (app/README.md § Languages).",
     "drafted": "2026-09-17",
     "reviewed": null
   },
@@ -57,6 +57,14 @@
       "smiVintage": "{pct}% del ingreso mediano del estado (el estado todavía aplica la tabla de {vintage})",
       "smiBySize": "{from}% a {to}% del ingreso mediano del estado, subiendo con el tamaño del hogar"
     }
+  },
+  "road": {
+    "sentence": "{state} — {household} que se abre camino de la pobreza al doble de la pobreza {sign, select, keeps {se queda con {cents}¢ de cada dólar extra} other {termina {cents}¢ más pobre por cada dólar extra}}.",
+    "rate": "{sign, select, keeps {se queda con {cents}¢ de cada dólar extra} other {pierde {cents}¢ de cada dólar extra}}",
+    "collapse": "El camino se derrumba en {at}, donde termina {program} y la familia pierde {drop} de un solo paso.",
+    "position": "{n} de cada 100 familias como esta ganan menos",
+    "keepNext": "De los próximos {over} que gane, se queda con unos {kept}.",
+    "plateau": "De los próximos {over} que gane, se queda con unos {kept}: una meseta, más trabajo y casi el mismo dinero."
   },
   "validate": {
     "notObject": "el cuerpo debe ser un objeto",

@@ -77,6 +77,19 @@ export interface KeepNext {
   kept: number;
 }
 
+/**
+ * How a keep rate is said: the sign word every road sentence selects on
+ * (`messages/*.json` `road.sentence`, `road.rate`) and the cents a person
+ * hears, which is always positive because the sign word carries the sign.
+ *
+ * Here rather than on each surface so the journalist map, the citizen answer
+ * and the caseworker sheet cannot round or word the same rate three ways.
+ * Zero keeps nothing and loses nothing: it says "keeps 0¢", which is true and
+ * reads as the plateau it is.
+ */
+export const keepRateWords = (rate: number): { sign: "keeps" | "loses"; cents: number } =>
+  ({ sign: rate < 0 ? "loses" : "keeps", cents: Math.abs(Math.round(rate * 100)) });
+
 /** The sweep's own step, read off the curve rather than recomputed from the answers. */
 const stepOf = (points: CurvePoint[]): number => points[1].earnings - points[0].earnings;
 

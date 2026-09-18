@@ -5,8 +5,11 @@ import type { StateCoverage, SummaryJson } from "./data.js";
 import { provideData } from "./data.js";
 import { message, type Coded, type MessageCode } from "./messages.js";
 import en from "./messages/en.json" with { type: "json" };
-import { STATE_CODES } from "./states.js";
+import { STATE_CODES, STATE_NAMES } from "./states.js";
 import { validateAnswers } from "./validate.js";
+import { answersFor, archetypeById } from "./archetypes.js";
+import { evaluateOffline } from "./evaluate.js";
+import { keepRateWords } from "./road.js";
 import { resolvePlace } from "./zip.js";
 
 const root = new URL("../", import.meta.url);
@@ -71,5 +74,53 @@ describe("core's prose is a code (app/README.md § Languages)", () => {
 
   it("an unknown code throws rather than rendering blank", () => {
     expect(() => message("no.such.code" as MessageCode)).toThrow(/no message/);
+  });
+
+  it("every code the English file has, the Spanish draft has too, and nothing extra", () => {
+    // A message the other file lacks renders in English, so a partial
+    // translation ships — but core's own sentences are few enough that a gap
+    // is an oversight, not a decision. Both ways: an orphan in es-US is a
+    // code that was renamed or removed and left behind.
+    const { _: _record, ...rest } = read("src/messages/es-US.json") as Record<string, Nest>;
+    const es = new Set(codes(rest as Nest));
+    expect([...ALL_CODES].filter((c) => !es.has(c))).toEqual([]);
+    expect([...es].filter((c) => !ALL_CODES.has(c))).toEqual([]);
+  });
+});
+
+describe("the road out of poverty says the same thing the plan says (Plan 9)", () => {
+  // The sentences the journalist readout is built from, rendered here with the
+  // numbers read from the committed sweep — never typed — so the words are
+  // pinned and the figures stay the data's.
+  const road = evaluateOffline(answersFor("MO", archetypeById("single-2")))!.road!;
+  const { sign, cents } = keepRateWords(road.keepRate!);
+  // Money reaches a message already formatted, as every catalog message's does
+  // (app/README.md § Languages): the locale's own dollars, and — on the
+  // citizen page — the person's own pay unit, neither of which a bare number
+  // could carry through ICU.
+  const money = (n: number): string =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+
+  it("renders Missouri's road sentence word for word", () => {
+    expect(message("road.sentence", { state: STATE_NAMES.MO, household: "a single parent of two", sign, cents }))
+      .toBe("Missouri — a single parent of two who earns their way from poverty to twice poverty ends up 63¢ poorer for every extra dollar.");
+  });
+
+  it("renders where the road collapses, and who is standing there", () => {
+    expect(message("road.collapse", { at: money(road.worst!.startEarnings), program: "child-care help", drop: money(road.worst!.drop) }))
+      .toBe("The road collapses at $40,000, where child-care help ends and the family loses $16,428 in one step.");
+    expect(message("road.position", { n: Math.round(road.worst!.position!) })).toMatch(/^\d+ in 100 families like this earn less$/);
+  });
+
+  it("says a keep rate either way round: kept on the map's legend, poorer in the sentence", () => {
+    expect(message("road.rate", { sign, cents })).toBe("loses 63¢ of each extra dollar");
+    expect(message("road.rate", keepRateWords(0.3))).toBe("keeps 30¢ of each extra dollar");
+    expect(message("road.sentence", { state: "New Mexico", household: "a single parent of two", ...keepRateWords(0.3) }))
+      .toBe("New Mexico — a single parent of two who earns their way from poverty to twice poverty keeps 30¢ of every extra dollar.");
+  });
+
+  it("says the next stretch, and says a plateau when there is no step to point at", () => {
+    expect(message("road.keepNext", { over: money(10_000), kept: money(1200) })).toBe("Of the next $10,000 you earn, you keep about $1,200.");
+    expect(message("road.plateau", { over: money(10_000), kept: money(200) })).toBe("Of the next $10,000 you earn, you keep about $200 — a plateau: more work, almost the same money.");
   });
 });
