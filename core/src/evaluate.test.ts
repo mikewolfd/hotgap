@@ -651,13 +651,16 @@ describe("the road out of poverty, and where each cliff stands (Plan 9)", () => 
   });
 
   it("carries this household's road, the keep rate over it, and the cliffs on it", () => {
-    // A single parent of one: $21,150 for two in 2025, snapped to the axis.
-    expect(ev.road).toMatchObject({ lo: 21000, hi: 42000 });
+    // A single parent of one: $21,150 for two in 2025, so the road starts at
+    // $21,000 and its last step is the one out of $43,000 — the first sampled
+    // point at or above twice the guideline, where a limit sitting on that
+    // line can only be placed (road.ts, grid resolution).
+    expect(ev.road).toMatchObject({ lo: 21000, hiStart: 43000, hi: 44000 });
     const netAt = (e: number) => ev.analysis.points.find((p) => p.earnings === e)!.netIncome;
-    expect(ev.road!.keepRate).toBeCloseTo((netAt(42000) - netAt(21000)) / 21000, 10);
-    expect(ev.road!.cliffs).toEqual(ev.analysis.cliffs.filter((c) => c.startEarnings >= 21000 && c.startEarnings < 42000));
+    expect(ev.road!.keepRate).toBeCloseTo((netAt(44000) - netAt(21000)) / 23000, 10);
+    expect(ev.road!.cliffs).toEqual(ev.analysis.cliffs.filter((c) => c.startEarnings >= 21000 && c.startEarnings <= 43000));
     expect(ev.road!.worst).toBe(ev.road!.cliffs.reduce((w, c) => (c.drop > w.drop ? c : w)));
-    expect(ev.road!.familiesBelowHi).toBe(reachForArchetype("CA", "single-1", 42000));
+    expect(ev.road!.familiesBelowHi).toBe(reachForArchetype("CA", "single-1", 44000));
   });
 
   it("is null when the road runs off the end of the axis", () => {
@@ -669,7 +672,7 @@ describe("the road out of poverty, and where each cliff stands (Plan 9)", () => 
     // swept family's: $32,150 for four, not $43,150 for six.
     const big = answersWith({ childAges: [1, 2, 3, 4, 5], childDisabled: [false, false, false, false, false] });
     const offline = evaluateOffline(big)!;
-    expect(offline.road).toMatchObject({ lo: 32000, hi: 64000 });
+    expect(offline.road).toMatchObject({ lo: 32000, hiStart: 65000, hi: 66000 });
     expect(offline.analysis.cliffs.every((c) => c.position === reachForArchetype("CA", "single-3", c.startEarnings))).toBe(true);
   });
 });

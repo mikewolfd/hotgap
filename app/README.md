@@ -191,13 +191,26 @@ renders it. What a page gets, and what it means:
 snapped to the sweep's step. Null when either end runs off this curve's axis
 (no swept cell: `axisSpec` always reaches past four times the poverty line).
 
+The top carries a **one-step allowance for the grid**, and a page that prints
+the road's ends should know why. A program limit is a dollar figure; the curve
+is sampled every `step`, so a limit on the 200%-of-poverty line lands in the
+step *starting* at the first sampled point at or above it — SNAP's broad-based
+limit is the common case, tested against a fiscal-year-blended poverty figure
+a little above the calendar guideline, so for a family of three (2 × $26,650 =
+$53,300) the cliff is the step out of $54,000. So `hiStart` is that first
+point, the road's last step is the one out of it, and `hi = hiStart + step` is
+the top of the measured span — the cliffs counted and the rate measured are
+then the same stretch of curve.
+
 | field | type | meaning |
 |---|---|---|
-| `lo`, `hi` | `number` | the road's ends, in earnings on the axis |
+| `lo` | `number` | where the road starts: the sampled point nearest the guideline |
+| `hiStart` | `number` | the start of the road's last step: the first point at or above twice the guideline |
+| `hi` | `number` | the top of the measured span, one step past `hiStart` |
 | `keepRate` | `number \| null` | dollars kept per extra dollar over the whole road; `0.30` is 30¢ kept, `-0.63` is 63¢ poorer. Null only when an end is not a sampled point |
-| `cliffs` | `Cliff[]` | every cliff whose step starts in `[lo, hi)`, in earnings order — `cliffsBetween` |
+| `cliffs` | `Cliff[]` | every cliff whose step starts in `[lo, hiStart]` — which is `[lo, hi)`, in earnings order — `cliffsBetween` |
 | `worst` | `Cliff \| null` | the largest of them: where the road collapses |
-| `familiesBelowHi` | `number \| null` | 0–100, families like this earning less than `hi`; null where the PUMS cell is missing or suppressed, never 0 |
+| `familiesBelowHi` | `number \| null` | 0–100, families like this earning less than `hi`, the top of the span; null where the PUMS cell is missing or suppressed, never 0 |
 
 **`Cliff.position: number | null`** — 0–100, how many families like this one
 in this state earn less than `startEarnings`. On every cliff in
@@ -216,7 +229,9 @@ number that says so.
 **`StateMetrics`** (`summary.json`, every state × archetype cell) carries the
 same six facts for the map: `keepRate` (4 decimals), `roadLo`, `roadHi`,
 `roadCliffCount`, `roadWorst: { drop, at, programs } | null`, and
-`biggestLossPosition` (0–100, one decimal) — the position of the WHOLE-AXIS
+`biggestLossPosition` (0–100, one decimal). `roadHi` is the span's top
+(`road.hi`), so a family of three reads $27,000 → $55,000; `hiStart` is on the
+evaluation only — the position of the WHOLE-AXIS
 worst step, so a table can say "$33,587 at $97,000 — 80 in 100 families like
 this earn less". `roadLo`/`roadHi` are null and `roadCliffCount` is 0 when
 there is no road; `keepRate` being null is what says so.

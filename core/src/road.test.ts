@@ -20,24 +20,29 @@ const roadFor = (state: string): { road: RoadSummary | null; answers: ReturnType
 };
 
 describe("povertyRoad", () => {
-  it("runs from the poverty guideline to twice it, snapped to the sweep's step", () => {
-    // A single parent of one: $21,150 for two in 2025, so $21,000 → $42,000.
-    expect(povertyRoad(answersWith(), sloped(0.5))).toEqual({ lo: 21_000, hi: 42_000 });
-    // …and of two: $26,650 for three, so $27,000 → $53,000.
+  it("runs from the poverty guideline to the step that clears twice it", () => {
+    // A single parent of one: $21,150 for two in 2025, so the road starts at
+    // $21,000 and its last step is the one out of $43,000, the first point at
+    // or above $42,300 — a limit on that line can only be placed there.
+    expect(povertyRoad(answersWith(), sloped(0.5))).toEqual({ lo: 21_000, hiStart: 43_000, hi: 44_000 });
+    // …and of two: $26,650 for three, so $27,000 → the step out of $54,000.
     expect(povertyRoad(answersWith({ childAges: [3, 7], childDisabled: [false, false] }), sloped(0.5)))
-      .toEqual({ lo: 27_000, hi: 53_000 });
+      .toEqual({ lo: 27_000, hiStart: 54_000, hi: 55_000 });
   });
 
   it("puts Alaska and Hawaii on their own guideline ladders, not the contiguous one", () => {
-    // Two people: AK $26,430 (→ $26,000/$53,000), HI $24,320 (→ $24,000/$49,000),
-    // where the 48 contiguous states are $21,150 (→ $21,000/$42,000).
-    expect(povertyRoad(answersWith({ state: "AK" }), sloped(0.5))).toEqual({ lo: 26_000, hi: 53_000 });
-    expect(povertyRoad(answersWith({ state: "HI" }), sloped(0.5))).toEqual({ lo: 24_000, hi: 49_000 });
+    // Two people: AK $26,430 (2× = $52,860 → the step out of $53,000), HI
+    // $24,320 (2× = $48,640 → out of $49,000), where the 48 contiguous states
+    // are $21,150 (2× = $42,300 → out of $43,000).
+    expect(povertyRoad(answersWith({ state: "AK" }), sloped(0.5))).toEqual({ lo: 26_000, hiStart: 53_000, hi: 54_000 });
+    expect(povertyRoad(answersWith({ state: "HI" }), sloped(0.5))).toEqual({ lo: 24_000, hiStart: 49_000, hi: 50_000 });
   });
 
   it("is null when the road runs off the end of a short axis", () => {
     expect(povertyRoad(answersWith(), sloped(0.5, 30_000))).toBeNull();
-    expect(povertyRoad(answersWith(), sloped(0.5, 42_000))).toEqual({ lo: 21_000, hi: 42_000 });
+    // The last step has to be ON the axis, not merely start on it.
+    expect(povertyRoad(answersWith(), sloped(0.5, 43_000))).toBeNull();
+    expect(povertyRoad(answersWith(), sloped(0.5, 44_000))).toEqual({ lo: 21_000, hiStart: 43_000, hi: 44_000 });
   });
 });
 
@@ -65,6 +70,21 @@ describe("cliffsBetween", () => {
     expect(cliffsBetween(cliffs, 21_000, 42_000).map((c) => c.startEarnings)).toEqual([29_000]);
     expect(cliffsBetween(cliffs, 29_000, 49_000).map((c) => c.startEarnings)).toEqual([29_000]);
     expect(cliffsBetween(cliffs, 21_000, 29_000)).toEqual([]);
+  });
+
+  it("counts exactly the steps the keep rate measures, the last one included", () => {
+    // The property the road's top allowance rests on: a cliff in the step out
+    // of hiStart is inside [lo, hi) because hi is one step past hiStart, and
+    // its drop is inside the keep rate for the same reason.
+    const points = sloped(0.5, 60_000);
+    for (let i = 55; i < points.length; i++) points[i].netIncome -= 9000;
+    const { cliffs } = analyzeCurve(points, 0);
+    expect(cliffs.map((c) => c.startEarnings)).toEqual([54_000]);
+    const road = povertyRoad(answersWith({ childAges: [3, 7], childDisabled: [false, false] }), points)!;
+    expect(road).toEqual({ lo: 27_000, hiStart: 54_000, hi: 55_000 });
+    expect(cliffsBetween(cliffs, road.lo, road.hi)).toHaveLength(1);
+    // $14,000 earned, $9,000 of it lost at the last step.
+    expect(keepRate(points, road.lo, road.hi)).toBeCloseTo((14_000 - 9000) / 28_000, 10);
   });
 });
 
@@ -95,9 +115,10 @@ describe("keepNext", () => {
 // They are what the journalist map will print, so they are read here from the
 // data rather than typed anywhere a page can reach.
 describe("the road on the committed sweep, single parent of two", () => {
-  it("Missouri: 63 cents poorer per extra dollar, and the road collapses where child-care help ends", () => {
+  it("Missouri: 56 cents poorer per extra dollar, and the road collapses where child-care help ends", () => {
     const { road } = roadFor("MO");
-    expect(road!.keepRate!.toFixed(2)).toBe("-0.63");
+    expect(road).toMatchObject({ lo: 27_000, hiStart: 54_000, hi: 55_000 });
+    expect(road!.keepRate!.toFixed(2)).toBe("-0.56");
     expect(road!.worst!.drop).toBe(16_428);
     expect(road!.worst!.startEarnings).toBe(40_000);
     expect(road!.worst!.programsLost).toEqual(["childcare"]);
@@ -113,10 +134,21 @@ describe("the road on the committed sweep, single parent of two", () => {
     expect(road!.worst).toBeNull();
   });
 
-  it("nationally, a family that doubles its earnings from poverty ends up where it started", () => {
+  it("Massachusetts collapses at the SNAP limit on the line, which a road stopping short could not see", () => {
+    // The case that fixed the definition: BBCE tests SNAP against a
+    // fiscal-year-blended poverty figure a little above the calendar
+    // guideline, so the cliff is the step out of $54,000 with 2 × $26,650 =
+    // $53,300. A road whose last step started at $53,000 excluded it — and
+    // the same one-step miss hid Maryland's $913 at $54,000.
+    const ma = roadFor("MA").road!;
+    expect(ma.worst).toMatchObject({ startEarnings: 54_000, drop: 3513, programsLost: ["snap", "wic"] });
+    expect(roadFor("MD").road!.worst).toMatchObject({ startEarnings: 54_000, drop: 913 });
+  });
+
+  it("nationally, a family that doubles its earnings from poverty ends up poorer than it started", () => {
     const rates = STATE_CODES.map((state) => roadFor(state).road?.keepRate ?? null);
     expect(rates.filter((r) => r === null)).toEqual([]); // every state's road is on its axis
     const mean = rates.reduce<number>((sum, r) => sum + r!, 0) / rates.length;
-    expect(mean.toFixed(2)).toBe("-0.01");
+    expect(mean.toFixed(2)).toBe("-0.17");
   });
 });

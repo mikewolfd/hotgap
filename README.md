@@ -452,7 +452,15 @@ received), `--offline`, `--json`.
   kindest, a $7.25 floor and a $30,000 median describing a road too short and
   too low to cross a cliff. Where a state's own families sit on the fixed
   road is reported separately, as `familiesBelowHi` and each cliff's
-  `position`, and never folded into the rate. Plan 9,
+  `position`, and never folded into the rate. The road's top carries a
+  one-step allowance for the grid: a program limit sitting on the
+  200%-of-poverty line can only be placed at the nearest sampled point, and
+  SNAP's broad-based limit — tested against a fiscal-year-blended poverty
+  figure a little above the calendar guideline — lands in the step starting
+  at the first point at or above the line ($54,000 for a family of three,
+  where twice the guideline is $53,300), so the road's last step is that one
+  and the rate spans it, rather than the measure excluding by construction
+  the most common cliff at the top of the road. Plan 9,
   `docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`.
 - Minimum-wage framing (`minWageContext`, the "~hrs/wk" column) is context,
   not eligibility — nothing in the calculation depends on it.

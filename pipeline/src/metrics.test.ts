@@ -63,11 +63,11 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
     return stateMetrics(evaluateCurve(answersFor(state, single2), { year: file.year, currentEarnings: 0, points: file.archetypes["single-2"].points }, "archetype"));
   };
 
-  it("Missouri loses 63 cents of every extra dollar between poverty and twice poverty", () => {
+  it("Missouri loses 56 cents of every extra dollar between poverty and twice poverty", () => {
     const m = forState("MO");
     expect(m.roadLo).toBe(27000);   // $26,650 for three, snapped to the sweep's $1,000
-    expect(m.roadHi).toBe(53000);   // $53,300, likewise
-    expect(m.keepRate!.toFixed(2)).toBe("-0.63");
+    expect(m.roadHi).toBe(55000);   // the step out of $54,000 — the first point at or above $53,300 — carried to its end
+    expect(m.keepRate!.toFixed(2)).toBe("-0.56");
     expect(m.roadCliffCount).toBe(7);
     expect(m.roadWorst).toEqual({ drop: 16428, at: 40000, programs: ["childcare"] });
     // Missouri is the case where the two measures agree: its whole-axis worst
@@ -91,10 +91,11 @@ describe("stateMetrics on synthetic curves", () => {
   it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
     // The road snaps to this curve's own $50,000 step — a three-point curve is
-    // not a sweep — so it runs $0 → $50,000 and keeps a tenth of each dollar.
+    // not a sweep — so its last step is the one out of $50,000 and the span
+    // runs $0 → $100,000, keeping eleven cents of each dollar.
     expect(stateMetrics(evaluated(pts))).toEqual({
       biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
-      keepRate: 0.1, roadLo: 0, roadHi: 50000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+      keepRate: 0.11, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
     });
   });
 

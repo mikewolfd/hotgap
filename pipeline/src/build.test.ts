@@ -165,12 +165,13 @@ describe("buildSummary", () => {
       leapIsLowerBound: false,
       axisTop: 100000,
       // The road out of poverty for a single parent of one: $21,150 for two in
-      // 2025, so $21,000 → $42,000 on this axis. The Head Start step is on it,
-      // which is why the road loses 81 cents of every extra dollar — and a
+      // 2025, so $21,000 → the step out of $43,000, which the span carries to
+      // $44,000 (road.ts, grid resolution). The Head Start step is on it,
+      // which is why the road loses 70 cents of every extra dollar — and a
       // third of families like this earn less than the $30,000 it happens at.
-      keepRate: -0.8083,
+      keepRate: -0.6963,
       roadLo: 21000,
-      roadHi: 42000,
+      roadHi: 44000,
       roadCliffCount: 3,
       roadWorst: { drop: 21971, at: 30000, programs: ["headstart"] },
       biggestLossPosition: 33.1,

@@ -151,14 +151,14 @@ describe("runPipeline", () => {
         leap: 45000,
         leapIsLowerBound: false,
         axisTop: 150000, // the fake fetch answers at the archetype's own axis (fixtureFor(axis.count, axis.max))
-        // The road out of poverty for three: $26,650 → $53,300, snapped to the
-        // sweep's $1,000. The Head Start step is on it, so the fixture's
-        // family ends up 46 cents poorer for every extra dollar it earns
-        // across it, and the whole-axis worst step is one a third of families
-        // like this have passed.
-        keepRate: -0.4579,
+        // The road out of poverty for three: $26,650 → the step out of $54,000,
+        // the first sampled point at or above twice $26,650, carried to its
+        // end. The Head Start step is on it, so the fixture's family ends up
+        // 38 cents poorer for every extra dollar it earns across it, and the
+        // whole-axis worst step is one a third of families like this have passed.
+        keepRate: -0.3807,
         roadLo: 27000,
-        roadHi: 53000,
+        roadHi: 55000,
         roadCliffCount: 2,
         roadWorst: { drop: 22103, at: 30000, programs: ["headstart"] },
         // …and the one figure the two fake states do NOT share, on identical

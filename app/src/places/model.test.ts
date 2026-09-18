@@ -10,7 +10,7 @@ import { axisLine, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine,
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
   biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, axisTop: 150000,
-  keepRate: -0.1, roadLo: 27000, roadHi: 53000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
+  keepRate: -0.1, roadLo: 27000, roadHi: 55000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
 });
 const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({

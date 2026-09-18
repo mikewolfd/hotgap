@@ -49,9 +49,38 @@ export const ROAD_TO = 2;
 /** How far ahead `keepNext` looks from where a household stands. */
 export const KEEP_NEXT_OVER = 10_000;
 
-/** The two ends of the road, in earnings on this household's axis. */
+/**
+ * The road's span on this household's axis: the earnings it runs from, the
+ * start of its LAST step, and the earnings it runs to (`hiStart` + one step).
+ *
+ * GRID RESOLUTION, and why the top carries an allowance. A program's income
+ * limit is a dollar figure; the curve is sampled every `step`, so a limit can
+ * only be placed at the nearest sampled point, and a limit sitting ON the
+ * 200%-of-poverty line lands in the step STARTING at the first point at or
+ * above the line. SNAP's broad-based categorical eligibility is the common
+ * case: its limit is tested against a fiscal-year-blended poverty figure a
+ * little above the calendar guideline, so for a family of three (2 × $26,650
+ * = $53,300) the cliff is the step out of $54,000, not out of $53,000.
+ *
+ * A road that ended at the nearest point to twice poverty therefore excluded,
+ * by construction and in every BBCE state, the most common cliff at the top
+ * of the road — the measure could not see the thing it exists to measure. So
+ * the road's last step is the one starting at `hiStart`, the first sampled
+ * point at or above twice poverty, and the span runs to `hi = hiStart + step`
+ * so that step's whole drop is inside the keep rate. The cliffs counted and
+ * the rate measured are then the same stretch of curve, which is the property
+ * that has to hold: `cliffsBetween(cliffs, lo, hi)` is exactly the steps
+ * starting in `[lo, hiStart]`.
+ *
+ * The low end is the nearest sampled point to the guideline itself: no
+ * equivalent allowance is owed there, because the road's first step is inside
+ * the span either way.
+ */
 export interface Road {
   lo: number;
+  /** The start of the road's last step: the first sampled point at or above twice poverty. */
+  hiStart: number;
+  /** The top of the measured span, one step past `hiStart`. */
   hi: number;
 }
 
@@ -63,7 +92,7 @@ export interface RoadSummary extends Road {
    * sampled point of this curve.
    */
   keepRate: number | null;
-  /** Every cliff whose step STARTS on the road, in earnings order. */
+  /** Every cliff whose step STARTS on the road — `[lo, hiStart]` inclusive — in earnings order. */
   cliffs: Cliff[];
   /** The largest of them — where the road collapses — or null when it holds. */
   worst: Cliff | null;
@@ -101,22 +130,22 @@ function netAt(points: CurvePoint[], earnings: number): number | null {
 
 /**
  * This household's road out of poverty on this curve's axis, snapped to the
- * sweep's step — null when either end runs off the axis, which is what a
- * short axis or a very large household gives. Alaska and Hawaii are on their
- * own guideline ladders (`fpl2025`), so their road is longer, as their
- * poverty line is.
+ * sweep's step (see `Road` for what the top's one-step allowance is for) —
+ * null when either end runs off the axis, which is what a short axis or a
+ * very large household gives. Alaska and Hawaii are on their own guideline
+ * ladders (`fpl2025`), so their road is longer, as their poverty line is.
  */
 export function povertyRoad(answers: HouseholdAnswers, points: CurvePoint[]): Road | null {
   if (points.length < 2) return null;
   const step = stepOf(points);
   if (!(step > 0)) return null;
   const line = fpl2025(answers.state, householdSize(answers));
-  const snap = (x: number): number => Math.round(x / step) * step;
-  const lo = snap(ROAD_FROM * line);
-  const hi = snap(ROAD_TO * line);
+  const lo = Math.round(ROAD_FROM * line / step) * step;
+  const hiStart = Math.ceil(ROAD_TO * line / step) * step;
+  const hi = hiStart + step;
   const first = points[0].earnings;
   const last = points[points.length - 1].earnings;
-  return lo >= first && hi <= last && hi > lo ? { lo, hi } : null;
+  return lo >= first && hi <= last && hi > lo ? { lo, hiStart, hi } : null;
 }
 
 /**
@@ -134,8 +163,11 @@ export function keepRate(points: CurvePoint[], lo: number, hi: number): number |
 
 /**
  * The cliffs whose step starts on [lo, hi) — the ones a family walking that
- * stretch actually meets. Half-open at the top: a cliff starting AT `hi` is
- * the next stretch's problem, and its drop is not inside this keep rate.
+ * stretch actually meets. Half-open at the top because a cliff starting AT
+ * `hi` drops outside the span, so its loss is not in the keep rate either:
+ * the set of cliffs and the rate always describe the same stretch of curve.
+ * On the road that means `[lo, hiStart]` inclusive, `hi` being one step past
+ * `hiStart`.
  */
 export const cliffsBetween = (cliffs: Cliff[], lo: number, hi: number): Cliff[] =>
   cliffs.filter((c) => c.startEarnings >= lo && c.startEarnings < hi);
