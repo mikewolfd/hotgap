@@ -1,8 +1,11 @@
-// Rendering: the skeleton's fixed words, the figure (StateTiles, legend, the
-// state readout, SourceNote), the RankStrip, the DataTable, the method
-// panel's per-view sentences, and the selected state's detail
-// (CorrectionsApplied, IncompleteMarker, otherBenefits, SourceNote). Every
-// word is copy.ts's; every number is read from the summary; nothing is typed.
+// Rendering, in the order a reader meets it (design/PICTURE-FIRST-2026-09-18.md,
+// design/inventory.md § The page is its picture): the skeleton's fixed words,
+// the AnswerSentence, then the figure — StateTiles, the legend strip, the one
+// caution the map on the screen earns, the readout, the selected state's
+// provenance and "How to read this map" — and then, behind the three page
+// disclosures, the RankStrip, the DataTable, the method and the sources.
+// Every word is copy.ts's; every number is read from the summary; nothing is
+// typed.
 import { CLIFF_MIN, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { coreText, limitWords } from "../lib/copy.js";
 import { correctionRows, sourceWord } from "../lib/corrections.js";
@@ -11,11 +14,13 @@ import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money, reachWord } from "../lib/format.js";
 import { languageSwitch } from "../lib/lang.js";
 import { stateName } from "../lib/names.js";
+import { answerParts } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
 import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
-import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, type LowerKey, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
+import { h } from "../lib/dom.js";
 
 /** Everything one render pass reads. */
 export interface Scene {
@@ -103,9 +108,13 @@ export function renderStatic(): void {
   document.title = copy.pageTitle;
   const C = copy.table.cols;
   fillText({
-    skip: copy.skip, wordmark: copy.wordmark, title: copy.title, status: copy.status.loading,
+    skip: copy.skip, wordmark: copy.wordmark, status: copy.status.loading,
     archLabel: copy.filters.household, metricLabel: copy.filters.measure, csvBtn: copy.filters.csv,
-    figDesc: copy.figure.description, readout: copy.readout.empty, rankTitle: copy.rank.heading, rankBins: copy.rank.bins,
+    figDesc: copy.figure.description, readout: copy.readout.empty, rankBins: copy.rank.bins,
+    /* The three page disclosures carry the contract's names; the figure's two
+       are named for what is inside them (§ The page is its picture). */
+    tableHeading: copy.panels.everything, sourcesHeading: copy.panels.sources,
+    howToHeading: copy.howTo.heading, figKeyboard: copy.howTo.keyboard,
     sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state,
     colKeepRate: C.keepRate, colRoadCliffCount: C.roadCliffCount, colRoadWorst: C.roadWorst, colRoadWorstAt: C.roadWorstAt,
     colBiggestLoss: C.biggestLoss, colBiggestLossAt: C.biggestLossAt,
@@ -113,10 +122,10 @@ export function renderStatic(): void {
     colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
     tableNote: copy.table.note, methodHeading: copy.method.heading, excludesHeading: copy.method.excludes.heading,
   });
-  /* Both lede sentences carry an emphasis, so both go through rich(): the
-     first names the measure the page opens on, the second what a cliff is
-     and why its size alone is not the story. */
-  $("ledeFigure").innerHTML = rich(copy.lede.figure);
+  /* The glossary sentence carries its emphases, so it goes through rich(). It
+     used to stand above the map as half of a two-paragraph standfirst; it is
+     the same sentence, one press away inside "How to read this map", where a
+     reader who wants a definition looks for one. */
   $("glossary").innerHTML = rich(t("lede.glossary", { floor: money(CLIFF_MIN) }));
   /* One sentence per column where the headers are (rerun S3): the measures'
      own `describe`, the two step columns' and the flag's; each header points
@@ -134,6 +143,11 @@ export function renderStatic(): void {
        its own. */
     { id: "position", term: copy.table.defs.positionTerm, def: copy.table.defs.position, heads: [] },
     { id: "colFigures", term: C.figures, def: copy.table.defs.figures },
+    /* The two cell words the cold read could not look up: they are printed IN
+       the table and were explained four thousand pixels below it, never in the
+       list a careful reader consults (places keep-rate read, S3). */
+    { id: "pastAxis", term: copy.table.defs.pastAxisTerm, def: copy.table.defs.pastAxis, heads: [] },
+    { id: "lowerBound", term: copy.table.defs.lowerBoundTerm, def: copy.table.defs.lowerBound, heads: [] },
   ];
   $("defs").setAttribute("aria-label", copy.table.defs.label);
   $("lang").replaceWith(languageSwitch());
@@ -155,7 +169,6 @@ export function renderStatic(): void {
 export function renderOnce(summary: SummaryJson): void {
   const states = Object.keys(summary.states);
   $<HTMLSelectElement>("arch").innerHTML = summary.archetypes.map((a) => `<option value="${a.id}">${esc(householdLabel(a.married, a.id.includes("dual"), a.childAges))}</option>`).join("");
-  $("ledeCount").textContent = countedLede(states.length, summary.archetypes.length, states.includes("DC"));
   $("table").textContent = t("table.heading", { n: states.length });
   /* The axis in dollars for the selected household (rerun N9) follows the axis bullet; renderMethod fills it per view. */
   const M = copy.method.items;
@@ -174,8 +187,11 @@ export function renderOnce(summary: SummaryJson): void {
     t("method.items.road", { year: summary.year }), M.keepRate, M.groups,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
     M.money, t("method.items.household", { year: summary.year }), M.modeledFamily, M.takeUp, M.deferred, M.corrections,
-    t("method.items.download", { columns: listOfItems([...CSV_HEADER]) }),
   ].map((text) => `<li>${rich(text)}</li>`);
+  /* The download's columns are provenance, so they sit with the sources and
+     the citation rather than in the method list, where they were the one item
+     about a file and not about a rule. */
+  $("csvColumns").innerHTML = rich(t("method.items.download", { columns: listOfItems([...CSV_HEADER]) }));
   items.splice(1, 0, `<li id="axisLine"></li>`);
   $("methodList").innerHTML = items.join("");
   /* A gap every state shares is listed once here, never under a state (S8): the `all` entries, one per program. */
@@ -211,11 +227,26 @@ function tileTitle(r: StateRow, measure: Measure): string {
   }
 }
 
-/** The figure box: title, sub, the 51 tiles, the ramp scale, the legend and the SourceNote. O(states). */
+/**
+ * AnswerSentence (#1): the national reading of this view, as the figure's own
+ * <figcaption> and so the figure's accessible name. Each keyed figure is
+ * underlined in the ink of the tiles it counts, so the sentence doubles as the
+ * map's key — the citizen rule, on a map (charts.md § The map is the picture).
+ * O(states), in `answerParts`.
+ */
+export function renderAnswer(s: Scene): void {
+  $("answer").replaceChildren(...answerParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
+}
+
+/**
+ * The figure: the 51 tiles, the legend strip, the one caution the map on the
+ * screen has earned, the estimates line, and the per-view words inside "How to
+ * read this map". Everything the map needs is inside the figure and nothing
+ * else is (charts.md § The map is the picture). O(states).
+ */
 export function renderFigure(s: Scene): void {
   const { summary, measure, g } = s;
-  $("figTitle").textContent = t("figure.title", { measure: measure.title });
-  $("figSub").textContent = t("figure.sub", { household: s.archLabel, describe: measure.describe });
+  const road = measure.group === "road";
   const bins = g.bins.kind === "steps"
     ? t("figure.bins.steps", { lo: value(g.bins.lo, measure), hi: value(g.bins.hi, measure) })
     : g.bins.kind === "diverging"
@@ -229,8 +260,16 @@ export function renderFigure(s: Scene): void {
       ? (g.bins.classes[big].lo === 0 ? t("figure.oneClass.countNone", { n: share[big], total: g.ranked.length }) : t("figure.oneClass.countValue", { n: share[big], total: g.ranked.length, value: g.bins.classes[big].lo }))
       : t("figure.oneClass.countRange", { n: share[big], total: g.ranked.length, lo: g.bins.classes[big].lo, hi: g.bins.classes[big].hi }))
     : t("figure.oneClass.dollars", { n: share[big], total: g.ranked.length, lo: tick(g.bins.classes[big].lo, measure), hi: tick(g.bins.classes[big].hi, measure) });
-  $("figSrc").textContent = [
-    t("figure.source", { year: summary.year, model: modelLine(summary.model), date: dateWords(summary.generated) }),
+
+  /* The line that never hides, cut to what a reporter needs at a glance: that
+     these are estimates, whose rules they are, and which run. The model
+     version, the premium adjustment and the bin bounds are a press away —
+     under "How to read this map" for the bins, under "Where these numbers come
+     from" for the rest — because they answer a question nobody asks first. */
+  $("figSrc").textContent = t("figure.source", { year: summary.year, date: dateWords(summary.generated) });
+  $("figScope").textContent = `${countedLede(s.rows.length, summary.archetypes.length, s.rows.some((r) => r.st === "DC"))} ${t("figure.sub", { household: s.archLabel })}`;
+  $("figMeasure").textContent = t("howTo.measure", { measure: measure.title, describe: measure.describe });
+  $("binsLine").textContent = [
     binsLine(bins, g.ranked.length, g.none.length, g.past.length),
     oneClass,
     g.incomplete.length ? hatchedLine(g.incomplete.length, g.programs) : null,
@@ -280,9 +319,10 @@ export function renderFigure(s: Scene): void {
     ? classes.map((c) => `<span>${c.lo === c.hi ? c.lo : `${c.lo}–${c.hi}`}</span>`).join("")
     : `<span>${tick(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${tick(c.hi, measure)}</span>`).join("");
 
-  /* The legend outside the ramp: one entry per tile state present, drawn with
-     the tile's class, so the entry IS the mark. */
-  const road = measure.group === "road";
+  /* The legend strip inside the figure: only the marks that are on the map
+     right now, so it is one line and not a lesson. Every tile state, present
+     or not, is drawn again under "How to read this map" (places keep-rate
+     read, S9: three of the four had no visible key at all). */
   const legend: string[] = [];
   /* A diverging ramp is a new picture on this surface, so its two ends say in
      words which way is which — the deepest plum and the deepest keep step,
@@ -298,6 +338,28 @@ export function renderFigure(s: Scene): void {
   if (g.past.length) legend.push(`<li><i class="hg-swatch hg-swatch--past"></i>${esc(t(road ? "figure.legend.roadPast" : "figure.legend.past", { n: g.past.length }))}</li>`);
   if (g.incomplete.length) legend.push(`<li><i class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete"></i>${esc(t("figure.legend.incomplete", { programs: listOf(g.programs), n: g.incomplete.length }))}</li>`);
   $("legend").innerHTML = legend.join("");
+
+  /* All four tile states, drawn with the tiles' own classes so the key cannot
+     drift from the map, whether or not this view has one of each. */
+  const K = copy.howTo.key;
+  $("keyFull").innerHTML = [
+    `<li><i class="hg-swatch" style="background:var(--loss-4)"></i>${esc(K.shaded)}</li>`,
+    `<li><i class="hg-swatch hg-swatch--none"></i>${esc(road ? K.roadNone : K.none)}</li>`,
+    `<li><i class="hg-swatch hg-swatch--past"></i>${esc(road ? K.roadPast : K.past)}</li>`,
+    `<li><i class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete"></i>${esc(K.incomplete)}</li>`,
+  ].join("");
+
+  /* Nothing that warns hides (§ The page is its picture). The two boxed
+     warnings live inside "How to read this map" in full; the one that is TRUE
+     OF THE MAP ON THE SCREEN comes out of it, in one line, because then it is
+     not a rule but a caution about the tiles a reader is looking at. A hatched
+     state outranks a bounded one: it says a figure is missing, not merely
+     open-ended. */
+  const caution = g.incomplete.length ? t("caution.hatched", { n: g.incomplete.length, programs: listOf(g.programs) })
+    : g.past.length ? t(road ? "caution.roadPast" : "caution.past", { n: g.past.length })
+      : null;
+  $("mapCaution").hidden = caution === null;
+  if (caution !== null) $("mapCaution").innerHTML = rich(caution);
 }
 
 /**
@@ -315,20 +377,26 @@ export function renderFigure(s: Scene): void {
  * 3. **The whole-axis worst, labelled and last**, with its own position. It is
  *    a true fact about the rules and it stays; it is not the answer, and on
  *    the committed sweep it names a cliff above the median family's earnings
- *    in 39 states of 50. Then the county the household rents in.
+ *    in 39 states of 50.
  *
  * A state with no cliff anywhere says what the model found instead, up to the
- * axis it was swept to (rerun S6). The readout under the map and the first
- * lines of the detail block are the same sentences; bold on the state and the
- * figures is the readout's own mark (`.hg-readout b`). Every figure is the
- * row's, and every position the reach ladder's.
+ * axis it was swept to (rerun S6). Bold on the state and the figures is the
+ * readout's own mark (`.hg-readout b`). Every figure is the row's, and every
+ * position the reach ladder's.
+ *
+ * Two things left these lines in the picture-first pass, both because they
+ * were being said twice. **The county** is provenance and is named in the
+ * state's own source line, one press below, so "Renter, Franklin County." went
+ * with it. **The whole block no longer repeats the readout**: the readout is
+ * the map's caption and says the findings; the block under it says only where
+ * the numbers came from. The child-care price's footing stays here, because it
+ * qualifies the claim rather than sourcing it and a caution does not hide
+ * (§ The page is its picture; places keep-rate read, B3).
  */
 function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCoverage | undefined, marked: boolean): string[] {
   const { m } = r;
   const b = (text: string) => (marked ? `<b>${esc(text)}</b>` : esc(text));
-  const county = cov?.vintages.county.name ?? null;
   const plain = name(r.st), st = b(plain), top = money(m.axisTop);
-  const renter = esc(county ? t("readout.renter.county", { county }) : copy.readout.renter.unknown);
   const missing = r.incomplete.map(unmodeledName);
   const lines: string[] = [];
 
@@ -336,11 +404,11 @@ function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCo
      says that rather than a figure nothing stands behind. */
   if (m.keepRate === null) lines.push(esc(roadOffAxisLine(plain)));
   else {
-    const road = [roadSentence(st, esc(householdPhrase(arch.married, arch.id.includes("dual"), arch.childAges)), m.keepRate, (n) => b(String(n)))];
+    const road = [roadRateLine(st, m.keepRate, (text) => b(text))];
     if (m.roadWorst) {
       road.push(roadCollapse(b(money(m.roadWorst.at)), b(money(m.roadWorst.drop)), m.roadWorst.programs));
       const at = positionAt(r.st, arch, m.roadWorst.at);
-      if (at !== null) road.push(esc(roadPosition(Math.round(at), plain)));
+      if (at !== null) road.push(esc(roadPosition(Math.round(at))));
     } else if (m.cliffCount > 0 && m.roadLo !== null && m.roadHi !== null) {
       /* Only where the curve has a cliff SOMEWHERE is "the road holds" news.
          With none anywhere, line 3 says the stronger thing and this would
@@ -369,23 +437,28 @@ function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCo
   /* The child-care price's footing closes the block where it is not this
      state's own county price: the input that qualifies most of these cliffs. */
   const care = carePriceFooting(cov);
-  const tail = [renter, care === null ? null : esc(carePriceLine(care, plain))].filter((x): x is string => x !== null).join(" ");
-  if (m.cliffCount === 0 || m.biggestLossAt === null) lines.push(`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${tail}`);
-  else if (sameCliff) lines.push(`${esc(axisSameAsRoad())} ${tail}`);
+  const tail = care === null ? "" : ` ${esc(carePriceLine(care, plain))}`;
+  if (m.cliffCount === 0 || m.biggestLossAt === null) lines.push(`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)}${tail}`);
+  else if (sameCliff) lines.push(`${esc(axisSameAsRoad())}${tail}`);
   else {
     const worst = worstStepLine(b(money(m.biggestLoss)), esc(stepWords(m.biggestLossAt)), m.biggestLossPrograms, missing.map(esc));
     const at = m.biggestLossPosition;
-    lines.push([worst, at === null ? null : esc(axisPosition(Math.round(at))), tail].filter((x): x is string => x !== null).join(" "));
+    lines.push([worst, at === null ? null : esc(axisPosition(Math.round(at)))].filter((x): x is string => x !== null).join(" ") + tail);
   }
   return lines;
 }
 
-/** The readout beside the map: the selected state's sentences with a link to its block, or how to select one. O(1). */
+/**
+ * The readout UNDER the map, inside the figure: the selected state's sentences
+ * as the map's own caption. It used to carry a "Details below" link to a block
+ * roughly twelve hundred pixels away (rerun S1); the block is now the next
+ * thing in the figure, closed, so there is nowhere to send anybody. O(1).
+ */
 export function renderReadout(s: Scene): void {
   const el = $("readout");
   const r = s.sel ? s.rows.find((x) => x.st === s.sel) : undefined;
   if (!r) { el.textContent = copy.readout.empty; return; }
-  el.innerHTML = `${stateLines(r, s.measure, s.arch, s.summary.coverage?.[r.st], true).join("<br>")} <a href="#stateTitle">${esc(copy.readout.details)}</a>`;
+  el.innerHTML = stateLines(r, s.measure, s.arch, s.summary.coverage?.[r.st], true).join("<br>");
 }
 
 /**
@@ -401,6 +474,12 @@ export function renderReadout(s: Scene): void {
 export function renderRank(s: Scene): void {
   const { measure, g } = s;
   const R = copy.rank;
+  /* "Ranked" was the whole label, and a cold reader could not tell whether
+     rank 1 was the best state or the worst — on this page the difference
+     between "Ohio is 14th from the bottom" and "14th from the top" (places
+     keep-rate read, S4). It says the measure and the direction now, in the
+     same words the table's order control uses. */
+  $("rankTitle").textContent = t("rank.headingBy", { order: orderName(measure) });
   const span = (g.bins.hi - g.bins.lo) || 1;
   const order = [...g.past, ...g.ranked, ...g.none, ...g.incomplete];
   const tabbable = s.sel ?? order[0]?.st;
@@ -585,22 +664,29 @@ const detailRow = (at: string, tag: string | null, note: string, href?: string, 
 
 
 /**
- * The selected state's block: its step sentence (B3), CorrectionsApplied
- * from coverage[state].corrections kept to applies === true with the
- * child-care subsidy's footing stated whatever applies (B2), then the state's
- * own unmodeled[] entries (S8) and otherBenefits[], then the state's
- * SourceNote from vintages and model with the county named (B4). All of it
- * from the file. With nothing selected the block says how to select.
+ * The selected state's block — WHERE ITS NUMBERS COME FROM, and nothing else:
+ * CorrectionsApplied from coverage[state].corrections kept to applies === true
+ * with the child-care subsidy's footing stated whatever applies (B2), the
+ * state's own unmodeled[] entries (S8) and otherBenefits[], the
+ * EligibilityBoundary row, and the state's SourceNote with the county named
+ * (B4). All of it from the file.
+ *
+ * It is the figure's second disclosure (§ The page is its picture), closed,
+ * directly under the readout that names the state, and it is absent until one
+ * is selected — so it never asks a reader to choose something before they know
+ * there is anything to choose. It no longer repeats the readout's sentences
+ * above it, which is what the cold read met twice ("the same paragraph repeats
+ * verbatim").
  */
 export function renderDetail(s: Scene): void {
   const { summary, sel } = s, D = copy.detail;
   const cov = sel ? summary.coverage?.[sel] : undefined;
-  const row = sel ? s.rows.find((r) => r.st === sel) : undefined;
-  $("stateStep").hidden = !row;
-  if (row) $("stateStep").innerHTML = stateLines(row, s.measure, s.arch, cov, false).join("<br>");
-  if (!sel || !cov) {
-    $("stateTitle").textContent = sel ? t("detail.heading", { state: name(sel), n: 0 }) : D.choose;
-    $("stateSub").textContent = sel ? D.noBlock : D.chooseSub;
+  $("statePanel").hidden = !sel;
+  if (!sel) return;
+  $("stateTitle").textContent = t("detail.wherefrom", { state: name(sel) });
+  if (!cov) {
+    $("corrTitle").textContent = t("detail.heading", { state: name(sel), n: 0 });
+    $("stateSub").textContent = D.noBlock;
     for (const id of ["corrections", "unmod", "other", "liheap"]) $(id).textContent = "";
     $("unmodTitle").hidden = $("unmod").hidden = $("otherTitle").hidden = $("other").hidden = true;
     $("liheap").hidden = true;
@@ -609,7 +695,7 @@ export function renderDetail(s: Scene): void {
   }
   const stateName = name(sel);
   const rows = correctionRows(cov.corrections);
-  $("stateTitle").textContent = t("detail.heading", { state: stateName, n: rows.length });
+  $("corrTitle").textContent = t("detail.heading", { state: stateName, n: rows.length });
   $("stateSub").textContent = `${t(rows.length ? "detail.changed" : "detail.unchanged", { state: stateName })} ${t(`detail.subsidy.${cov.corrections.childcareSubsidy.source === "added by HotGap" ? "added" : "inNetIncome"}`, { state: stateName })}`;
   $("corrections").innerHTML = rows.map((r) => detailRow(r.program, r.source ? sourceWord(r.source) : D.applied, r.note, r.href)).join("");
 

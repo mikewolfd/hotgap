@@ -10,7 +10,7 @@ import { $ } from "../lib/dom.js";
 import { copy, t } from "./copy.js";
 import { csvFor, csvName } from "./csv.js";
 import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
-import { applySelection, GROUPS, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
+import { applySelection, GROUPS, renderAnswer, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
 import { tileNeighbor } from "./tiles.js";
 import { parseView, viewQuery, type View } from "./url.js";
 
@@ -73,6 +73,7 @@ function main(summary: SummaryJson): void {
     const measure = measureByKey(view.measure)!;
     const rows = rowsFor(summary, arch, measure);
     scene = { summary, arch, archLabel: archLabel(arch), measure, rows, g: group(rows, measure), sel: view.state };
+    renderAnswer(scene);
     renderFigure(scene);
     renderReadout(scene);
     renderRank(scene);
@@ -82,12 +83,12 @@ function main(summary: SummaryJson): void {
     swipeHint();
   };
 
-  /* Selecting a state rebuilds nothing but the readout and the detail block,
-     and moves nothing: the readout beside the map is the answer, the control
-     keeps aria-current and focus stays on it (rerun S1 — the jump to the
-     block, ~1,200px down, read as leaving the page and cost a scroll-back
-     per state compared). The readout's "Details below" link is the opt-in
-     jump: it scrolls the block into view and hands focus to its heading. */
+  /* Selecting a state rebuilds nothing but the readout under the map and the
+     state's own block under that, and moves nothing: the readout IS the map's
+     caption, the control keeps aria-current and focus stays on it (rerun S1 —
+     the jump to a block ~1,200px down read as leaving the page and cost a
+     scroll-back per state compared). Since the picture-first pass there is
+     nowhere to jump to: the block is the next thing inside the figure. */
   const select = (st: string) => {
     view = { ...view, state: st };
     scene.sel = st;
@@ -96,13 +97,6 @@ function main(summary: SummaryJson): void {
     renderDetail(scene);
     writeUrl(true);
   };
-  $("readout").addEventListener("click", (e) => {
-    if (!(e.target as HTMLElement).closest('a[href="#stateTitle"]')) return;
-    e.preventDefault();
-    const heading = $("stateTitle");
-    heading.scrollIntoView({ block: "start" });
-    heading.focus();
-  });
 
   /* The table's scroller says when there is more to the side (S10): the
      system draws the edge fade; the words are this page's. Re-read when the
@@ -119,6 +113,11 @@ function main(summary: SummaryJson): void {
   };
   // Next frame, not inside the delivery: the hint changes the scroller's own height.
   new ResizeObserver(() => requestAnimationFrame(swipeHint)).observe(scroller);
+  /* A scroller inside a closed disclosure measures zero, so the first real
+     measurement is the one taken when the disclosure opens. The observer sees
+     that too, but only after layout; asking again on toggle means the swipe
+     words and the sticky header are right on the first frame a reader sees. */
+  $("everything").addEventListener("toggle", () => requestAnimationFrame(swipeHint));
 
   syncControls();
   render();
@@ -171,6 +170,14 @@ function main(summary: SummaryJson): void {
     URL.revokeObjectURL(url);
   });
 }
+
+/* Paper wants every disclosure open: a closed <details> prints nothing, and on
+   paper there is nobody to press anything. So the printed page is the whole
+   page — the map and its key, every state ranked, the table, the method, the
+   sources — in the order the screen puts them, which is the proof that folding
+   is not deleting (design/inventory.md § The page is its picture). */
+addEventListener("beforeprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.dataset.wasOpen = String(d.open); d.open = true; } });
+addEventListener("afterprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.open = d.dataset.wasOpen === "true"; delete d.dataset.wasOpen; } });
 
 renderStatic();
 /* Both files before the first render, so no figure is drawn without its

@@ -1042,7 +1042,7 @@
       },
       "leap": {
         "title": "El salto",
-        "option": "El salto — el aumento necesario para salir de la peor zona ($)",
+        "option": "El salto — el aumento necesario para salir de la peor zona de peligro ($)",
         "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
       },
       "safeExit": {
@@ -1057,7 +1057,7 @@
       },
       "deferredCliffCount": {
         "title": "Precipicios diferidos",
-        "option": "Precipicios diferidos — los que caen en una renovación posterior",
+        "option": "Precipicios diferidos — de los precipicios contados, los que caen en una renovación posterior",
         "describe": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre."
       },
       "keepRate": {
@@ -1115,7 +1115,7 @@
         "diverging": "{down} pasos de {downWidth} por debajo de cero y {up} de {upWidth} por encima, de {lo} a {hi}",
         "divergingOneSide": "{n} pasos de {width} desde cero, de {lo} a {hi}"
       },
-      "source": "Solo estimaciones. Reglas de {year} de PolicyEngine, corrida semanal del {date}.",
+      "source": "Solo estimaciones. Reglas de {year} de PolicyEngine, corrida del {date}.",
       "binsLine": {
         "plain": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable.",
         "none": "Rangos: {bins} sobre los {comparable} estados con una cifra comparable; {none} sin precipicio encontrado.",
@@ -1150,16 +1150,13 @@
       },
       "none": "{state} — no se encontró precipicio: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más, hasta {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; 1 precipicio está diferido a una renovación posterior.} other {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; {deferred} precipicios están diferidos a una renovación posterior.}}",
-      "renter": {
-        "county": "Inquilino, {county}.",
-        "unknown": "Inquilino en el condado más poblado del estado."
-      },
       "road": {
         "holds": "El camino no se derrumba: ningún escalón de {step} de ingresos entre {lo} y {hi} recortó el ingreso neto en {floor} o más.",
         "collapseNoProgram": "El camino se derrumba en {at}, donde la familia pierde {drop} de un solo paso; ningún programa por sí solo explica la caída.",
         "collapsePlural": "El camino se derrumba en {at}, donde terminan {programs} y la familia pierde {drop} de un solo paso.",
         "position": "{n} de cada 100 familias como esta ganan menos que eso.",
-        "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar."
+        "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar.",
+        "rate": "{state} — {rate} al salir de la pobreza."
       },
       "axisPosition": "{n} de cada 100 familias como esta ganan menos que eso.",
       "axisSameAsRoad": "Ese derrumbe es también la mayor pérdida en un solo escalón de toda la curva.",
@@ -1266,8 +1263,6 @@
       "carePrice": "precio del cuidado de niños: {care}"
     },
     "detail": {
-      "choose": "Correcciones aplicadas — elija un estado",
-      "chooseSub": "Seleccione un estado en el mapa o en la tabla para leer lo que HotGap cambió sobre PolicyEngine antes de leer sus cifras.",
       "heading": "Correcciones aplicadas en {state} ({n})",
       "applied": "aplicada",
       "noBlock": "Esta corrida no registró un bloque de cobertura para este estado.",
@@ -1329,7 +1324,8 @@
         "dated": "{care}, estudio de {year}",
         "undated": "{care}"
       },
-      "sourceReach": "Familias que ganan menos: {vintages}, llevado a dólares de {year}."
+      "sourceReach": "Familias que ganan menos: {vintages}, llevado a dólares de {year}.",
+      "wherefrom": "De dónde vienen las cifras de {state}"
     },
     "csv": {
       "subsidy": {
@@ -1398,19 +1394,19 @@
       },
       "keepRate": {
         "some": "En {bad} de {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar.",
-        "none": "En ninguno de {places} {household} termina ese ascenso más pobre de lo que empezó; el margen más estrecho es el de {state}, con {value}.",
-        "all": "En todos {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar; lo peor está en {state}, con {value}."
+        "none": "En ninguno de {places} {household} termina ese ascenso más pobre de lo que empezó; el estado que más se acerca es {state}, que {value}.",
+        "all": "En todos {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar; el peor de todos es {state}, que {value}."
       },
       "roadCliffCount": {
         "some": "{state} pone {n, plural, one {un precipicio} other {{n} precipicios}} en el camino para salir de la pobreza, más que ningún otro estado; {some} de {places} tienen al menos uno.",
         "none": "Nada en el camino para salir de la pobreza le cuesta a este hogar {floor} de un solo paso, en ninguno de {places}."
       },
       "roadWorst": {
-        "some": "El camino para salir de la pobreza se derrumba con más fuerza en {state}: {drop} de ingreso que desaparecen en un solo escalón de {step}, en {at}.",
+        "some": "El camino para salir de la pobreza se derrumba con más fuerza en {state}: {drop} de ingreso que desaparecen entre {at} y {to} de pago.",
         "none": "El camino para salir de la pobreza aguanta en {places}: nada en él le cuesta a este hogar {floor} de un solo paso."
       },
       "biggestLoss": {
-        "some": "La mayor pérdida en un escalón del mapa es la de {state}, {drop}, en {at}; {some} de {places} tienen un precipicio en algún punto de la curva de este hogar.",
+        "some": "La mayor pérdida en un escalón del mapa es la de {state}, {drop}, entre {at} y {to} de pago; {some} de {places} tienen un precipicio en algún punto de la curva de este hogar.",
         "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
       },
       "dangerWidth": {

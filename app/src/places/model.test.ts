@@ -5,7 +5,7 @@ import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, numberWords } from "../lib/format.js";
 import { copy, t } from "./copy.js";
 import { archLabel, bins, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, paysForCare, rowsFor, tableRows, valueOf } from "./model.js";
-import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, servedLine, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -303,17 +303,23 @@ describe("the sentences, from copy through words.ts", () => {
     expect(householdPhrase(false, false, [])).toBe("a childless single adult");
     expect(householdPhrase(true, false, [3])).toBe("a one-earner couple with one child");
     expect(householdPhrase(true, true, [1, 4, 9])).toBe("a two-earner couple with three children");
-    expect(roadSentence("Missouri", householdPhrase(false, false, [3, 7]), -0.5632))
-      .toBe("Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar.");
-    expect(roadSentence("New Mexico", householdPhrase(false, false, [3, 7]), 0.3042))
-      .toBe("New Mexico — a single parent of two children who earns their way from poverty to twice poverty keeps 30¢ of every extra dollar.");
+    /* The readout's rate line is the page's frame around core's own phrase
+       since the picture-first pass: the answer sentence above it has already
+       named the household and the climb, so the readout says the state and the
+       rate and stops (design/REVIEW-picture-first-places-2026-09-18.md). The
+       sign word and the rounding are still core's. */
+    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar climbing out of poverty.");
+    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar climbing out of poverty.");
+    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar</b> climbing out of poverty.");
     expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
       .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
     expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");
     expect(roadCollapse("$54,000", "$3,513", [])).toBe("The road collapses at $54,000, where the family loses $3,513 in one step; no single program explains the drop.");
     expect(roadHolds("$1,000", "$27,000", "$55,000", "$200"))
       .toBe("The road does not collapse: no $1,000 step of earnings between $27,000 and $55,000 cut net income by $200 or more.");
-    expect(roadPosition(47, "Missouri")).toBe("47 in 100 families like this in Missouri earn less than that.");
+    /* The state is the readout line's own subject and is named at its head, so
+       the position sentence no longer says it twice. */
+    expect(roadPosition(47)).toBe("47 in 100 families like this earn less than that.");
     expect(axisPosition(87)).toBe("87 in 100 families like this earn less than that.");
     expect(roadCliffCountLine("Missouri", 7)).toBe("Missouri — 7 cliffs on the road out of poverty.");
     expect(roadCliffCountLine("Alabama", 1)).toBe("Alabama — 1 cliff on the road out of poverty.");

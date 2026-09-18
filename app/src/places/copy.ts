@@ -81,7 +81,9 @@
 //     exact leap beside an unknown safe exit is one state, not a contradiction.
 //     method.cite — a suggested citation, from the run's own facts and the
 //     page's own address (N13).
-import { bind, catalog } from "../lib/copy.js";
+import { bind, catalog, parts } from "../lib/copy.js";
+
+export { parts };
 
 export const copy = catalog.places;
 

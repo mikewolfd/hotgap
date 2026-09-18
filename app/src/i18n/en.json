@@ -1039,7 +1039,7 @@
       },
       "leap": {
         "title": "The leap",
-        "option": "The leap — the raise needed to clear the worst zone ($)",
+        "option": "The leap — the raise needed to clear the worst danger zone ($)",
         "describe": "The raise a household must clear in one move to get past its worst danger zone."
       },
       "safeExit": {
@@ -1054,7 +1054,7 @@
       },
       "deferredCliffCount": {
         "title": "Deferred cliffs",
-        "option": "Deferred cliffs — those that land at a later renewal",
+        "option": "Deferred cliffs — of the cliffs counted, those landing at a later renewal",
         "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
       },
       "keepRate": {
@@ -1112,7 +1112,7 @@
         "diverging": "{down} steps of {downWidth} below zero and {up} of {upWidth} above it, from {lo} to {hi}",
         "divergingOneSide": "{n} steps of {width} from zero, from {lo} to {hi}"
       },
-      "source": "Estimates only. PolicyEngine {year} rules, weekly run of {date}.",
+      "source": "Estimates only. PolicyEngine {year} rules, run of {date}.",
       "binsLine": {
         "plain": "Bins: {bins} over the {comparable} states with a comparable figure.",
         "none": "Bins: {bins} over the {comparable} states with a comparable figure; {none} with no cliff found.",
@@ -1147,16 +1147,13 @@
       },
       "none": "{state} — no cliff found: no {step} step of earnings on this household's curve cut net income by {floor} or more, up to {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; 1 cliff is deferred to a later renewal.} other {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; {deferred} cliffs are deferred to a later renewal.}}",
-      "renter": {
-        "county": "Renter, {county}.",
-        "unknown": "Renter in the state's most populous county."
-      },
       "road": {
         "holds": "The road does not collapse: no {step} step of earnings between {lo} and {hi} cut net income by {floor} or more.",
         "collapseNoProgram": "The road collapses at {at}, where the family loses {drop} in one step; no single program explains the drop.",
         "position": "{n} in 100 families like this earn less than that.",
         "offAxis": "{state} — this household's road out of poverty, from the poverty line to twice it, falls outside the earnings this state was swept over, so it has no keep rate.",
-        "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step."
+        "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step.",
+        "rate": "{state} — {rate} climbing out of poverty."
       },
       "axisPosition": "{n} in 100 families like this earn less than that.",
       "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve.",
@@ -1263,8 +1260,6 @@
       "carePrice": "child-care price: {care}"
     },
     "detail": {
-      "choose": "Corrections applied — choose a state",
-      "chooseSub": "Select a state on the map or in the table to read what HotGap changed on top of PolicyEngine before its figures were read.",
       "heading": "Corrections applied in {state} ({n})",
       "applied": "applied",
       "noBlock": "This run recorded no coverage block for this state.",
@@ -1326,7 +1321,8 @@
         "dated": "{care}, {year} study",
         "undated": "{care}"
       },
-      "sourceReach": "Families earning less: {vintages}, grown to {year} dollars."
+      "sourceReach": "Families earning less: {vintages}, grown to {year} dollars.",
+      "wherefrom": "Where {state}’s numbers come from"
     },
     "csv": {
       "subsidy": {
@@ -1395,19 +1391,19 @@
       },
       "keepRate": {
         "some": "In {bad} of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started.",
-        "none": "Nowhere in {places} does {household} end the climb from poverty to twice poverty poorer than they started; the thinnest margin is {state}'s, at {value}.",
-        "all": "In every one of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started — worst in {state}, at {value}."
+        "none": "Nowhere in {places} does {household} end the climb from poverty to twice poverty poorer than they started; the state that comes closest is {state}, which {value}.",
+        "all": "In every one of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started — worst of all is {state}, which {value}."
       },
       "roadCliffCount": {
         "some": "{state} puts {n, plural, one {one cliff} other {{n} cliffs}} on the road out of poverty, more than anywhere else; {some} of {places} have at least one.",
         "none": "Nothing on the road out of poverty costs this household {floor} in a single step, in any of {places}."
       },
       "roadWorst": {
-        "some": "The road out of poverty collapses hardest in {state}: {drop} of income gone in one {step} step of pay, at {at}.",
+        "some": "The road out of poverty collapses hardest in {state}: {drop} of income gone between {at} and {to} of pay.",
         "none": "The road out of poverty holds across {places}: nothing on it costs this household {floor} in a single step."
       },
       "biggestLoss": {
-        "some": "The largest one-step loss on the map is {state}'s {drop}, at {at}; {some} of {places} have a cliff somewhere on this household's curve.",
+        "some": "The largest one-step loss on the map is {state}’s {drop}, between {at} and {to} of pay; {some} of {places} have a cliff somewhere on this household’s curve.",
         "none": "No curve in {places} has a single step down of {floor} or more for this household."
       },
       "dangerWidth": {
