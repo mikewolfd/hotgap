@@ -212,15 +212,23 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
                        font-weight: var(--w-reg); }
 
 .hg-scroll-x table { min-width: 48rem; }
-/* Below 62rem the table scrolls sideways in its own box; from 62rem its
-   48rem minimum fits the page, the scroller opens, and the header sticks to
-   the top of the viewport so rows 20–51 keep their names (S8). A collapsed
-   border does not travel with a sticky cell, so the header's rule is drawn
-   as a shadow. */
+/* The table scrolls sideways in its own box; where it FITS the page column,
+   from 62rem, the scroller opens and the header sticks to the top of the
+   viewport so rows 20–51 keep their names (S8). A collapsed border does not
+   travel with a sticky cell, so the header's rule is drawn as a shadow.
+   A sticky header can only reach the viewport when no ancestor clips, so the
+   two go together and both hang off `data-fits`.
+   WHY AN ATTRIBUTE and not the width alone: this used to open at 62rem on the
+   assumption that a 48rem minimum always fits, which held for nine columns of
+   English. Thirteen columns do not fit in every language — the pseudo-locale,
+   which is English two fifths longer, put 44px of table past the viewport at
+   1280 and scrolled the whole page sideways. The page measures instead
+   (`main.ts` swipeHint, the same measurement that sets the swipe words), so
+   the table scrolls in its own box in any language where it has to. */
 @media (min-width: 62rem) {
-  .hg-scroll-x { overflow: visible; }
-  .hg-table thead th { position: sticky; top: 0; background: var(--plane); z-index: 1;
-                       box-shadow: inset 0 -1px 0 var(--rule-strong); }
+  .hg-scroll-x[data-fits] { overflow: visible; }
+  .hg-scroll-x[data-fits] .hg-table thead th { position: sticky; top: 0; background: var(--plane); z-index: 1;
+                                               box-shadow: inset 0 -1px 0 var(--rule-strong); }
 }
 /* The row button sets the row's height, and its focus ring sits 4px outside
    its box: the first column keeps that much clear of the scroller's clip edge. */

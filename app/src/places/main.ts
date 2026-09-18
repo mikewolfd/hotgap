@@ -108,8 +108,14 @@ function main(summary: SummaryJson): void {
      system draws the edge fade; the words are this page's. Re-read when the
      column changes width, which the observer sees and a resize event may not. */
   const scroller = $("scroller");
+  /* The same measurement answers two questions: whether to say there is more
+     to the side, and whether the table fits its column — which decides whether
+     the scroller may open and let the header stick to the viewport
+     (places.css). Measured rather than assumed from the width, because a
+     language with longer words makes the same thirteen columns wider. */
   const swipeHint = () => {
-    if (scroller.scrollWidth > scroller.clientWidth) scroller.dataset.more = copy.table.swipe; else delete scroller.dataset.more;
+    const fits = scroller.scrollWidth <= scroller.clientWidth;
+    if (fits) { delete scroller.dataset.more; scroller.dataset.fits = ""; } else { scroller.dataset.more = copy.table.swipe; delete scroller.dataset.fits; }
   };
   // Next frame, not inside the delivery: the hint changes the scroller's own height.
   new ResizeObserver(() => requestAnimationFrame(swipeHint)).observe(scroller);
