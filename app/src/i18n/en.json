@@ -988,8 +988,8 @@
         "withDc": "{states} states and the District of Columbia, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. ",
         "plain": "{states} states, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. "
       },
-      "figure": "Each figure is the worst single $1,000 step of earnings in that state's curve for that household — how much net income falls when pay goes up by a thousand dollars.",
-      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap. Estimates only."
+      "figure": "Each figure is what one household in that state keeps of each extra dollar it earns on the way from the poverty line to twice it — its *keep rate*. Below zero, the family ends that climb poorer than it started. The Measure control changes the figure.",
+      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap. Estimates only."
     },
     "status": {
       "loading": "Loading the weekly run…",

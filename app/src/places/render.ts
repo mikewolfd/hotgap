@@ -85,7 +85,7 @@ export function renderStatic(): void {
   document.title = copy.pageTitle;
   const C = copy.table.cols;
   fillText({
-    skip: copy.skip, wordmark: copy.wordmark, title: copy.title, ledeFigure: copy.lede.figure, status: copy.status.loading,
+    skip: copy.skip, wordmark: copy.wordmark, title: copy.title, status: copy.status.loading,
     archLabel: copy.filters.household, metricLabel: copy.filters.measure, csvBtn: copy.filters.csv,
     figDesc: copy.figure.description, readout: copy.readout.empty, rankTitle: copy.rank.heading, rankBins: copy.rank.bins,
     sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state,
@@ -95,6 +95,10 @@ export function renderStatic(): void {
     colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
     tableNote: copy.table.note, methodHeading: copy.method.heading, excludesHeading: copy.method.excludes.heading,
   });
+  /* Both lede sentences carry an emphasis, so both go through rich(): the
+     first names the measure the page opens on, the second what a cliff is
+     and why its size alone is not the story. */
+  $("ledeFigure").innerHTML = rich(copy.lede.figure);
   $("glossary").innerHTML = rich(t("lede.glossary", { floor: money(CLIFF_MIN) }));
   /* One sentence per column where the headers are (rerun S3): the measures'
      own `describe`, the two step columns' and the flag's; each header points
