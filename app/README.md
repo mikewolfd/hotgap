@@ -19,9 +19,18 @@ evaluates on the public PolicyEngine API's older model — still `live`.
 
 | Page | Surface | Module | State |
 |---|---|---|---|
-| `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result (`src/citizen/result.ts`; the pure modules beside it render every component `design/inventory.md` assigns to the surface, from one `HouseholdEvaluation`) | built; proofs `e2e/citizen.spec.ts` |
+| `index.html` | citizen | `src/citizen/main.ts` — mounts the editor and the result (`src/citizen/result.ts`; the pure modules beside it render every component `design/inventory.md` assigns to the surface, from one `HouseholdEvaluation`) | built, picture first since 2026-09-18; proofs `e2e/citizen.spec.ts` |
 | `places.html` | journalist | `src/places/main.ts` | being built |
 | `caseworker.html` | caseworker | `src/caseworker/main.ts` — the editor with this surface's actions and register (`copy.ts`, every string of the page), the base household in full, its what-ifs beside it | built; reviewed 2026-09-16 |
+
+**The order on every page** (`design/PICTURE-FIRST-2026-09-18.md`,
+`design/inventory.md` § The page is its picture): one line of masthead, one
+sentence, then the figure — nothing else above the fold. Everything the page
+says beyond that is in the DOM behind named `details.hg-disclosure` panels,
+open on paper and reachable by keyboard. The budget is measured, not asserted:
+`node e2e/weight.mjs <base-url>` counts the words a person can really see, and
+the same run with every disclosure open is the proof that nothing was deleted
+to meet it.
 
 Every page imports `design/tokens.css` and uses its `hg-*` classes
 (`design/inventory.md` § Class map); a page keeps only its own layout
@@ -339,7 +348,11 @@ noun, so `shared.county.*` says the kind ("Condado de El Paso"). The language
 switch, where a language names itself. A citation's hostname.
 
 **Spanish is a draft.** `es-US.json` says so in its `_` record, with the date
-it was written (2026-09-17) and `reviewed: null`. It was drafted by the model
+it was written (2026-09-17), the date it was redrafted to the new citizen
+register (2026-09-18) and `reviewed: null`. Three native readers have since
+read the citizen page and named three phrases that sounded machine-written;
+those are fixed (`design/REVIEW-picture-first-citizen-2026-09-18.md`), which
+is a reading, not a review. It was drafted by the model
 in each persona's register — the citizen plain and in `usted`, the caseworker
 professional, the journalist quotable — and no native speaker has read it.
 `design/README.md` § Languages says what a reviewer should look at first.
@@ -352,6 +365,8 @@ professional, the journalist quotable — and no native speaker has read it.
     cd worker && npm run build         # wrangler deploy --dry-run: bundle 923 KiB / 180 KiB gzip
     cd app && npx playwright test      # builds, starts wrangler dev, runs e2e/*.spec.ts — the editor, citizen, caseworker and places proofs, and the languages gate i18n.spec.ts (HOTGAP_ARCHETYPE_URL=a dead-engine server runs the caseworker's B1 test too; screenshots to design/audit/app/; the shared harness is e2e/support.ts)
     node e2e/text-dump.mjs <dir> <url> [lang]   # every page's text at 1280, one file each: diff two builds to prove a rendered string did not move
+    node e2e/weight.mjs <base-url> [path…]      # words visible by default and with every disclosure open, where the first figure starts, how much of the first screen it covers — the picture-first budget, per page and width
+    node e2e/shots.mjs <dir> <base-url> [lang]  # the citizen households at both widths, both schemes, open and on paper, for a reviewer to read
 
 For the archetype path: run `wrangler dev` yourself with a dead engine
 (`HOTGAP_PE_URL=http://127.0.0.1:9/us/calculate` in `worker/.dev.vars`), then

@@ -18,7 +18,7 @@
   }
  ],
  "N9-summary-light": {
-  "text": "CO · El Paso · 1 adult, kids 3 & 7 · $38,000 a year",
+  "text": "A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.",
   "h": 46.5
  },
  "S7-breakdown-light": {
@@ -62,7 +62,7 @@
   }
  ],
  "N9-summary-dark": {
-  "text": "CO · El Paso · 1 adult, kids 3 & 7 · $38,000 a year",
+  "text": "A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.",
   "h": 46.5
  },
  "S7-breakdown-dark": {
@@ -154,6 +154,12 @@
   },
   {
    "id": "housing",
+   "unset": false,
+   "weight": "400",
+   "color": "rgb(94, 104, 113)"
+  },
+  {
+   "id": "energy-assistance",
    "unset": false,
    "weight": "400",
    "color": "rgb(94, 104, 113)"
@@ -309,11 +315,11 @@
     "right": 144
    },
    {
-    "w": 106,
-    "right": 250
+    "w": 104,
+    "right": 248
    },
    {
-    "w": 125,
+    "w": 126,
     "right": 374
    }
   ],
@@ -330,19 +336,19 @@
     "right": 224
    },
    {
-    "w": 223,
-    "right": 447
+    "w": 221,
+    "right": 445
    },
    {
-    "w": 244,
-    "right": 692
+    "w": 242,
+    "right": 687
    },
    {
-    "w": 277,
-    "right": 969
+    "w": 274,
+    "right": 961
    },
    {
-    "w": 263,
+    "w": 271,
     "right": 1232
    }
   ],
@@ -360,33 +366,113 @@
     "right": 224
    },
    {
-    "w": 141,
-    "right": 365
+    "w": 140,
+    "right": 364
    },
    {
-    "w": 154,
-    "right": 518
+    "w": 153,
+    "right": 516
    },
    {
-    "w": 174,
-    "right": 693
+    "w": 173,
+    "right": 689
    },
    {
-    "w": 166,
-    "right": 858
+    "w": 171,
+    "right": 861
    },
    {
-    "w": 374,
+    "w": 371,
     "right": 1232
    }
   ],
   "wide": true
  },
- "N4-mark1-390": "6 drops between $37,000 and $55,000, together $29,558 a year.",
- "S5-TX-caption": "The y-axis starts at $0; the visible range is 23.3× the largest drop. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
+ "keepRate-calls": [
+  {
+   "req": {
+    "earnings": 38000,
+    "subsidy": true,
+    "housing": false
+   },
+   "net": 38000
+  },
+  {
+   "req": {
+    "earnings": 38000,
+    "subsidy": false,
+    "housing": false
+   },
+   "net": 38000
+  },
+  {
+   "req": {
+    "earnings": 55000,
+    "subsidy": true,
+    "housing": false
+   },
+   "net": 55000
+  },
+  {
+   "req": {
+    "earnings": 38000,
+    "subsidy": true,
+    "housing": true
+   },
+   "net": 38000
+  }
+ ],
+ "keepRate-onTheWay": {
+  "expected": [
+   41000,
+   46000,
+   51000,
+   53000,
+   54000
+  ],
+  "rendered": [
+   "$41,000 — a step down (−$305)42 in 100 families like this earn less",
+   "$46,000 — a step down (−$361)44 in 100 families like this earn less",
+   "$51,000 — a step down (−$780)48 in 100 families like this earn less",
+   "$53,000 — food help and food help for moms and babies end (−$2,444)49 in 100 families like this earn less",
+   "$54,000 — child care help ends (−$25,449)50 in 100 families like this earn less"
+  ]
+ },
+ "keepRate-B2-compare-390-3-whatifs": {
+  "tableW": 598,
+  "scrollerW": 358,
+  "scrollerRight": 374,
+  "scrollW": 598,
+  "cols": [
+   {
+    "w": 128,
+    "right": 144
+   },
+   {
+    "w": 104,
+    "right": 248
+   },
+   {
+    "w": 114,
+    "right": 362
+   },
+   {
+    "w": 129,
+    "right": 491
+   },
+   {
+    "w": 123,
+    "right": 614
+   }
+  ],
+  "wide": true
+ },
+ "N4-mark1-390": "Cliff at $41,000 to $42,000: −$305. No program named. Driver: credits.",
+ "S5-TX-caption": "The y-axis starts at $0; the visible range is 23.3× the largest drop. The x-axis runs $0 to $150,000; scroll the curve sideways to reach all of it. No cliff on this curve is deferred. Estimates only — a caseworker decides real benefits. Rules: 2026. Curve: live PolicyEngine call for this household in Travis County, Texas. Rent: HUD Office of Policy Development and Research, Fair Market Rents FY2026 revised schedule (effective 2025-10-01) Child-care price: county 2018, carried to 2026 dollars by the BLS Employment Cost Index. Reach: ACS 2024 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI. Vintages used: ACS 2024 1-year PUMS. Model: policyengine-us 2.6.2.",
  "S5-TX-ledger": [
   "$5,000MedicaidAdult",
   "$12,000TANF cash assistanceHousehold",
+  "$39,975LIHEAP energy assistance if you apply150% of the poverty guideline, the heating limit. Worth $1,200 at that band if received; 3% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.Household",
   "$41,000Medicaid DeferredThe children move to CHIP: $2,913 a year of coverage from $41,000. Crossing this does not end it this year: the loss lands at the child's next yearly renewal, up to 12 months away (42 CFR 435.926, 457.342).Children",
   "$44,000SNAP$1,943 a year of SNAP continues at $44,000, none from $46,000.Household",
   "$46,000SNAPHousehold",
@@ -407,11 +493,9 @@
   "handoutMeasure": "476.397px",
   "body": "rgb(255, 255, 255)",
   "ink": "rgb(18, 23, 28)",
-  "curveWidth": "672",
+  "curveWidth": "620",
+  "gutterWidth": "52",
   "pageOverride": false
  },
- "B1-archetype-1280": {
-  "head": "\tNow\n\n1 adult, $38,000 (archetype)\n\tHousing voucher on\n\nnot in the sweep — needs the live call\n\tPay $55,000 a year\n\n1 adult, $55,000 (archetype)",
-  "change": "Change from now\t—\t—\t−$28,447"
- }
+ "P7-TX-ledger-boundary": "$39,975LIHEAP energy assistance if you apply150% of the poverty guideline, the heating limit. Worth $1,200 at that band if received; 3% of income-eligible households were served in FY2024. Not counted unless the household says it gets it. Read 2026-09-16.Household"
 }
