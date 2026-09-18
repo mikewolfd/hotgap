@@ -8,14 +8,15 @@
 //
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
-import type { Cliff } from "@hotgap/core";
+import { keepRateWords, type Cliff } from "@hotgap/core";
 import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { scrollToShow } from "../lib/chart/geometry.js";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
-import { boundaryText, creditCounted, worstPhrase } from "./facts.js";
-import { layout, type Cluster, type Layout } from "./geometry.js";
+import { subText, worstPhrase } from "./facts.js";
+import { phrase } from "./programs.js";
+import { layout, MAX_DROP_LABELS, type Cluster, type Layout } from "./geometry.js";
 import type { Scene } from "./model.js";
 
 export interface ChartHooks {
@@ -34,6 +35,8 @@ export interface Chart {
 }
 
 const LOSS_LABEL = "hg-label hg-label--loss hg-label--halo";
+/** The household's own marks: the ink ramp, not the loss ramp — position is not a loss. */
+const INK_LABEL = "hg-label hg-label--ink";
 /** The dot radii this chart draws at (the caseworker's are a half-pixel smaller): a merged mark is r6, a single r4.5. */
 const DOT = 4.5, DOT_MERGED = 6;
 /** Paper is the column's width, whatever the screen was: a 358px drawing stretched to Letter prints its 12px ticks at 1.7× (S2). */
@@ -86,30 +89,39 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   /* The figure is a fixed gutter beside a scroller (charts.md § The scroll rule): the money labels hold still while the
      axis moves. The chart's one tab stop and its role stay on the wrapper that holds both. */
   const { scroll } = scrollerParts(gutterSvg, picture, marksLayer);
-  const wrapper = h("div", { class: "hg-chart hg-chart--scroll", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption chartKeys", "aria-label": ariaLabel(s) }, gutterSvg, scroll);
+  const wrapper = h("div", { class: "hg-chart hg-chart--scroll", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "chartKeys", "aria-label": ariaLabel(s) }, gutterSvg, scroll);
   const hint = h("p", { class: "hg-chart__hint", id: "chartRange", "aria-hidden": "true" });
   const hasOther = s.otherZones.length > 0;
   const hasDrop = s.cliffs.some((c) => c.deferral?.complete !== true);
   const hasLater = s.deferred.length > 0;
   /* How the chart is operated: the readout says it until the first touch or key — the bracket keys only where there are marks and, at a
      desktop width, keys (N2) — and a visually hidden copy says all of it to a screen reader through aria-describedby. */
-  const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint") + (s.cliffs.length && innerWidth >= 720 ? t("chart.readoutMarks") : ""));
+  /* The visible line says the one thing a finger needs; the bracket keys are
+     in the hidden copy the chart is described by and in "How to read this
+     picture", because eight words of keyboard instruction on every screen is
+     eight words nobody reads (PICTURE-FIRST § The budget). */
+  const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint"));
   const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.cliffs.length ? t("chart.readoutMarks") : ""));
-  const caption = h("figcaption", { id: "curveCaption" });
-  /* EligibilityBoundary (#23): one line under the key, whether or not the tick is in the window; nothing when the curve ends below the
-     limit. The invitation to the toggle is its own sentence and stays off paper, where there is nothing to turn on (liheap review S2);
-     data-counted says which of the three states the paragraph is in — a boundary, the toggle's end, or a state credit already in the line (B1). */
-  const boundary = boundaryText(s);
-  const boundaryState = s.boundary?.counted ? "true" : creditCounted(s) ? "credit" : "false";
+  const caption = h("p", { class: "caption", id: "curveCaption" });
   /* The readout paints the caret only once a person has moved it; before that it holds the hint. */
   let touched = false;
-  figure.append(
-    h("div", { class: "chart-head" }, h("span", { class: "chart-title" }, t("chart.title")),
-      h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
-    wrapper, hint, readout, keys, keyList(s, hasOther, hasLater, hasDrop, s.boundaryOnAxis),
-    ...(boundary ? [h("p", { class: "boundary", id: "boundary", "data-counted": boundaryState }, boundary.facts, ...(boundary.invite ? [" ", h("span", { class: "hg-no-print" }, boundary.invite)] : []))] : []),
-    caption,
-  );
+  /* How to read this picture (inventory.md § The page is its picture): the
+     plot's own title and unit, the MarkKey and the caption — inside the
+     figure, because they explain the thing they sit in, and closed by
+     default, because the direct labels are the first read now and a key
+     nobody needs is 21 words of the reader's attention. Open on paper, one
+     key press from the chart, and in the DOM throughout. The chart's
+     aria-describedby therefore names only the operating sentence, which is
+     visually hidden and always exposed; the caption is reached the way every
+     other disclosed fact on this page is reached. */
+  figure.append(wrapper, hint, readout, keys,
+    h("details", { class: "hg-disclosure", id: "howto" }, h("summary", {}, t("chart.howTo")),
+      h("p", { class: "chart-title" }, t("chart.title"), " ",
+        h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
+      /* Why the line is not the person's pay, and the largest part of it that never arrives as cash (S6) — beside
+         the picture it describes, rather than as a second paragraph under the answer. */
+      h("p", {}, subText(s)),
+      keyList(s, hasOther, hasLater, hasDrop, s.boundaryOnAxis), caption));
 
   let L: Layout | null = null;
   let firstDraw = true;
@@ -118,19 +130,75 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   let cursorNodes: SVGElement[] = [];
   let clusters: Cluster[] = [];
 
-  /* Direct labels never sit on a mark (S3): each candidate spot is tested against the dots (with the open ring's box), the diamond and the labels already placed. O(labels × marks). */
+  /* Direct labels (charts.md § Direct labels, rewritten 2026-09-18): the
+     picture says what the prose used to. They are placed in priority order
+     AFTER every mark is drawn, each candidate spot tested against the dots
+     (with the open ring's box), the diamond and the labels already placed; a
+     label with no clear spot is dropped rather than drawn over something,
+     because its money is always in the readout, the step row and the table.
+     The one that always draws is the largest drop's — it is the label the
+     page promises. O(labels × marks). */
   const CH = 7.4, LH = 13;
   type Box = { x: number; y: number; w: number; h: number };
+  type Spot = { x: number; y: number; anchor: "start" | "middle" | "end" };
   const boxes: Box[] = [];
   const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-  const textBox = (x: number, y: number, text: string, anchor: "start" | "middle" | "end"): Box => {
-    const w = text.length * CH;
-    return { x: anchor === "start" ? x : anchor === "middle" ? x - w / 2 : x - w, y: y - LH, w, h: LH + 2 };
-  };
   const clear = (b: Box) => !boxes.some((o) => overlaps(b, o));
 
+  /**
+   * One label, one or two lines, at the first clear spot — or nowhere.
+   * `force` falls back to the first spot for the label that must be drawn.
+   * A spot is nudged sideways rather than dropped when only the plot's edge
+   * is in the way, so a drop near $0 keeps its number (S1).
+   */
+  function label(lines: string[], spots: Spot[], cls: string, force = false): boolean {
+    const w = Math.max(...lines.map((line) => line.length)) * CH;
+    const fit = (sp: Spot) => {
+      /* A label is nudged inside whichever box the reader is actually looking
+         through: the initial view when its mark is in it, the whole plot when
+         the mark is further along the axis (and on paper, where the view IS
+         the plot). Clamping to the plot alone put "cash help ends" half off
+         the left edge of a scrolled phone. */
+      const view = L!.print || sp.x < L!.scrollLeft || sp.x > L!.scrollLeft + L!.viewport
+        ? [2, L!.W - 2] : [L!.scrollLeft + 2, L!.scrollLeft + L!.viewport - 2];
+      const left = sp.anchor === "start" ? sp.x : sp.anchor === "middle" ? sp.x - w / 2 : sp.x - w;
+      const dx = left < view[0] ? view[0] - left : left + w > view[1] ? view[1] - (left + w) : 0;
+      return { dx, box: { x: left + dx, y: sp.y - LH + 2, w, h: LH * lines.length } };
+    };
+    let at = spots.map((sp) => ({ sp, ...fit(sp) })).find((c) => clear(c.box));
+    if (!at) {
+      if (!force) return false;
+      at = { sp: spots[0], ...fit(spots[0]) };
+    }
+    boxes.push(at.box);
+    for (const [i, text] of lines.entries()) {
+      picture.append(svg("text", { x: at.sp.x + at.dx, y: at.sp.y + i * LH, "text-anchor": at.sp.anchor, class: cls }, text));
+    }
+    return true;
+  }
+
+  /* The room the figure's own words need under the plot — the axis hint, the
+     readout and the disclosure's summary — so the height rule below leaves
+     them on the first screen too. */
+  const RESERVED = 152;
+  /**
+   * The second height floor (charts.md § Height is chosen by the biggest drop,
+   * and by the screen): how much of the reader's FIRST screen is still free
+   * below the figure's own top. Read once per draw — a new evaluation or a
+   * resize — never per scroll or per pointer event, and measured from the top
+   * of the document, because "the first screen" is where a person lands.
+   */
+  function screenLeft(): number {
+    if (!wrapper.isConnected) return 0;
+    const docTop = wrapper.getBoundingClientRect().top + scrollY;
+    return Math.max(0, Math.round(innerHeight - docTop - RESERVED));
+  }
+
+  /** What ends at a cliff, as the second line of its direct label; nothing when the cliff names no program. */
+  const endsLine = (c: Cliff): string | null => (c.programsLost.length ? t("chart.labels.ends", { phrase: phrase(c.programsLost[0]) }) : null);
+
   function draw(width = wrapper.clientWidth, print = false): void {
-    L = layout(s, width, print);
+    L = layout(s, width, print, screenLeft());
     boxes.length = 0;
     const { W, H, narrow, pad, px, py, y0, y1, i0, i1 } = L;
     const top = pad.t, bottom = H - pad.b;
@@ -140,6 +208,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     /* The y axis in its own gutter, at the same py the gridlines below use, so the two halves read as one figure. */
     axisGutter(gutterSvg, L.gutter, H, L.yTicks, py, (v) => tickMoney(v, "year"));
 
+    /* ── The ground ──────────────────────────────────────────────────── */
     /* Zones: the household's gets the wash, every other one hatch alone (rule 1). */
     const clip = (z: { startEarnings: number; endEarnings: number | null }) => [px(Math.max(z.startEarnings, x0)), px(Math.min(z.endEarnings ?? x1, x1))];
     for (const z of s.otherZones) {
@@ -154,7 +223,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     for (const v of L.yTicks) {
       if (v > y0 && v < y1) picture.append(svg("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
     }
-    for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
+    for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: bottom + 24, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
     picture.append(svg("line", { x1: 0, y1: bottom, x2: W, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* EligibilityBoundary (#23): a tick on the axis where energy assistance stops — no dot, no connector, no drop. */
@@ -163,28 +232,30 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       picture.append(svg("line", { x1: tx, y1: bottom - 8, x2: tx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-linecap": "round", "data-boundary": "true" }));
     }
 
-    /* The peak of the household's zone: a rule across the band, labelled with the dollar (N2). */
-    const yPeak = s.zone ? py(s.zone.peakNet) : NaN;
-    if (s.zone) {
-      picture.append(svg("line", { x1: bx0, y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      const peak = m.money(s.zone.peakNet);
-      picture.append(svg("text", { x: bx0 - 16, y: yPeak - 9, "text-anchor": "end", class: `${LOSS_LABEL} hg-label--med` }, peak));
-      boxes.push(textBox(bx0 - 16, yPeak - 9, peak, "end"));
+    /* The road out of poverty (charts.md § Direct labels, 6): a bar under the
+       x ticks, outside the plot, where it cannot be read as part of the curve.
+       Its keep rate is written on it once, in the label pass. */
+    const roadY = bottom + 36;
+    if (s.road) {
+      const [ra, rb] = [px(s.road.lo), px(s.road.hi)];
+      picture.append(svg("path", { d: `M${ra} ${roadY - 4} V${roadY + 4} M${ra} ${roadY} H${rb} M${rb} ${roadY - 4} V${roadY + 4}`,
+        fill: "none", stroke: "var(--rule-strong)", "stroke-width": 1, "data-road": "true" }));
     }
+
+    /* The peak of the household's zone: a rule across the band. Its dollar
+       label went on 2026-09-18 — it printed, two inches from "you keep", a
+       number within a rounding of it, and it was one of citizen review S3's
+       three collisions. */
+    const yPeak = s.zone ? py(s.zone.peakNet) : NaN;
+    if (s.zone) picture.append(svg("line", { x1: bx0, y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
 
     /* The exit, and safe-from-here when it is a different pay (rule 2). Both are on the axis or they do not exist. */
     const exitInWindow = s.zone !== null && !s.stuck && s.exit !== null && s.exit <= x1;
-    if (exitInWindow) {
-      const ex = px(s.exit!);
-      picture.append(svg("line", { x1: ex, y1: top, x2: ex, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      if (!narrow) picture.append(svg("text", { x: ex + 6, y: top + 12, class: `${LOSS_LABEL} hg-label--med` }, s.safeExit === s.exit ? copy.chart.labels.backToEvenSafe : copy.chart.labels.backToEven));
-    }
+    const ex = exitInWindow ? px(s.exit!) : NaN;
+    if (exitInWindow) picture.append(svg("line", { x1: ex, y1: top, x2: ex, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
     const safeInWindow = s.safeExit !== null && s.safeExit > 0 && s.safeExit !== s.exit && s.safeExit >= x0 && s.safeExit <= x1;
-    if (safeInWindow) {
-      const sx = px(s.safeExit!);
-      picture.append(svg("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      if (!narrow) picture.append(svg("text", { x: sx + 6, y: top + 12, class: `${LOSS_LABEL} hg-label--med` }, copy.chart.labels.safe));
-    }
+    const sx = safeInWindow ? px(s.safeExit!) : NaN;
+    if (safeInWindow) picture.append(svg("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
     /* Whether the words "safe from here" are on the picture: on a phone they are not, and the caption says it instead (S4). */
     const safeSaid = !narrow && ((exitInWindow && s.safeExit === s.exit) || safeInWindow);
 
@@ -192,7 +263,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const window = Array.from({ length: i1 - i0 + 1 }, (_, k) => i0 + k);
     picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), firstDraw));
 
-    /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
+    /* ── The marks ───────────────────────────────────────────────────── */
     const cx = px(s.current);
     let cy = py(s.currentNet);
     clusters = L.clusters;
@@ -200,59 +271,121 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const RING = 10;
     const dotY = (cl: Cluster) => py(s.net[s.idx(cl.cliffs[0].startEarnings)]);
     if (clusters.some((cl) => Math.abs(cl.x - cx) < RING && Math.abs(dotY(cl) - cy) < RING)) cy += 2 * RING;
-    const diamond: Box = { x: cx - 7, y: cy - 7, w: 14, h: 14 };
-    for (const cl of clusters) boxes.push({ x: cl.x - RING, y: dotY(cl) - RING, w: 2 * RING, h: 2 * RING });
-    boxes.push(diamond);
-
-    const bracket = s.zone !== null && (s.stuck || exitInWindow);
-    const by = yPeak - 20;
-    if (bracket) {
-      const bx = s.stuck ? W - pad.r : px(s.exit!);
-      picture.append(svg("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (s.stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
-      const leap = t(s.stuck ? "chart.labels.leapMore" : "chart.labels.leap", { leap: m.diff(s.current, s.stuck ? s.top : s.exit!) });
-      picture.append(svg("text", { x: (cx + bx) / 2, y: by - 5, "text-anchor": "middle", class: `${LOSS_LABEL} hg-label--strong` }, leap));
-      boxes.push(textBox((cx + bx) / 2, by - 5, leap, "middle"));
-    }
 
     /* Cliff marks (S8): a cluster is one dot at the first cliff's top. The
        immediate cliffs under it draw the solid --loss-4 dot and a connector to
        the lowest landing; a deferred one keeps its own channel — the dashed
        stub and the word later — beside them, and alone it is the hollow dot
        (B1: a mixed cluster never hides the loss that waits). */
-    for (const cl of clusters) {
+    const marks = clusters.map((cl) => {
       const y = dotY(cl), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
       const waiting = cl.cliffs.some((c) => c.deferral !== null);
-      if (waiting) {
-        picture.append(waitStub(cl.x, y, 22));
-        picture.append(svg("text", { x: cl.x, y: y - 28, "text-anchor": "middle", class: "hg-label hg-label--med" }, copy.chart.labels.later));
-        boxes.push(textBox(cl.x, y - 28, copy.chart.labels.later, "middle"));
-      }
-      if (cl.later) {
-        picture.append(waitDot(cl.x, y, r));
-        continue;
-      }
+      if (waiting) picture.append(waitStub(cl.x, y, 22));
+      if (cl.later) { picture.append(waitDot(cl.x, y, r)); return { cl, y, landY: y, waiting }; }
       const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => s.net[s.idx(c.endEarnings)]));
       picture.append(...dropMark(cl.x, y, py(land), r));
-      /* The chart's other direct label: the biggest drop. Beside a tall
-         connector first; else above the dot or below the landing — always
-         to the right of the mark, so a connector flush with the left clip
-         cannot put the number in the gutter (S1). */
-      if (L.labelled && cl.cliffs.includes(L.labelled)) {
-        const label = t("chart.labels.drop", { drop: m.money(L.labelled.drop) });
-        const tall = py(land) - y >= 24;
-        const spots: [number, number][] = [
-          ...(tall ? [[cl.x + 12, (y + py(land)) / 2 + 4] as [number, number]] : []),
-          [cl.x + 12, y - 9], [cl.x + 12, py(land) + 14],
-        ];
-        const spot = spots.find(([x, yy]) => clear(textBox(x, yy, label, "start"))) ?? spots[0];
-        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": "start", class: `${LOSS_LABEL} hg-label--strong` }, label));
-        boxes.push(textBox(spot[0], spot[1], label, "start"));
-      }
+      return { cl, y, landY: py(land), waiting };
+    });
+
+    /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit. */
+    const bracket = s.zone !== null && (s.stuck || exitInWindow);
+    const by = yPeak - 20;
+    const bx = s.stuck ? W - pad.r : ex;
+    if (bracket) {
+      picture.append(svg("path", { d: `M${cx} ${by + 4} V${by} H${bx}` + (s.stuck ? "" : ` V${by + 4}`), fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
     }
 
     /* You are here: a diamond, so position survives greyscale — drawn last, on its own drop line. */
     picture.append(...household(cx, cy, bottom));
-    picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink hg-label--strong" }, copy.chart.labels.you));
+
+    /* ── The labels, in the priority order charts.md sets ─────────────── */
+    for (const mk of marks) boxes.push({ x: mk.cl.x - RING, y: mk.y - RING, w: 2 * RING, h: 2 * RING });
+    boxes.push({ x: cx - 7, y: cy - 7, w: 14, h: 14 });
+
+    /* 1. What the reader keeps now, over their own diamond: the fact that
+          left the answer sentence to come and label the axis here. */
+    label([t("chart.labels.youKeep", { kept: m.money(s.currentNet) })],
+      [{ x: cx, y: cy - 14, anchor: "middle" }, { x: cx, y: cy + 26, anchor: "middle" },
+        { x: cx + 14, y: cy + 4, anchor: "start" }, { x: cx - 14, y: cy + 4, anchor: "end" },
+        { x: cx, y: cy - 34, anchor: "middle" }, { x: cx, y: top - 8, anchor: "middle" }],
+      `${INK_LABEL} hg-label--strong hg-label--halo`, true);
+
+    /* 2. The largest drop: its money and what ends there, two lines, the
+          heaviest ink on the picture. Always drawn — beside a tall connector
+          first, else above the dot or below the landing, always to the right
+          of the mark, so a connector flush with the left clip cannot put the
+          number in the gutter (S1). */
+    const dropSpots = (mk: { cl: Cluster; y: number; landY: number }): Spot[] => {
+      const tall = mk.landY - mk.y >= 24;
+      return [
+        ...(tall ? [{ x: mk.cl.x + 12, y: (mk.y + mk.landY) / 2 + 4, anchor: "start" } as Spot] : []),
+        { x: mk.cl.x + 12, y: mk.y - 9, anchor: "start" },
+        { x: mk.cl.x + 12, y: mk.landY + 14, anchor: "start" },
+        /* Then above the mark, then to its left: a flat stretch puts three
+           dots and a diamond inside sixty pixels, and the right-hand side
+           alone is not enough room for a label that names what ends. The
+           plot's edge nudges a label in rather than dropping it (S1). */
+        { x: mk.cl.x, y: mk.y - 26, anchor: "middle" },
+        { x: mk.cl.x - 12, y: mk.y - 9, anchor: "end" },
+        { x: mk.cl.x - 12, y: mk.landY + 14, anchor: "end" },
+      ];
+    };
+    const dropMoney = (cl: Cluster) => t("chart.labels.drop", { drop: m.money(cl.cliffs.reduce((sum, c) => sum + c.drop, 0)) });
+    /* A drop's label is its money and what ends there, two lines — the money
+       alone is a number without a cause, and the cause is the sentence this
+       page used to spend a paragraph on. The second line is dropped only when
+       the two-line box finds no clear spot and the one-line box does. */
+    const dropLabel = (mk: { cl: Cluster; y: number; landY: number }, cls: string, force = false): boolean => {
+      const money = dropMoney(mk.cl);
+      const ends = mk.cl.cliffs.length === 1 ? endsLine(mk.cl.cliffs[0]) : null;
+      const both = ends !== null ? [money, ends] : [money];
+      if (label(both, dropSpots(mk), cls)) return true;
+      if (ends !== null && label([money], dropSpots(mk), cls)) return true;
+      // The label the page promises keeps BOTH lines when it is forced: a drop
+      // with no cause named is the number the old page put in a paragraph.
+      return force ? label(both, dropSpots(mk), cls, true) : false;
+    };
+    const worstMark = L.labelled ? marks.find((mk) => mk.cl.cliffs.includes(L!.labelled!)) : undefined;
+    let drawn = 0;
+    if (worstMark) { dropLabel(worstMark, `${LOSS_LABEL} hg-label--strong`, true); drawn++; }
+
+    /* 3. The way back, on its rule — dropped on a phone, where the caption says it instead (S4). */
+    if (exitInWindow && !narrow) {
+      label([s.safeExit === s.exit ? copy.chart.labels.backToEvenSafe : copy.chart.labels.backToEven],
+        [{ x: ex + 6, y: top + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
+    }
+    if (safeInWindow && !narrow) label([copy.chart.labels.safe], [{ x: sx + 6, y: top + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
+
+    /* 4. "later", over each deferred mark's dashed stub: solid means this year, dashed means a later renewal. */
+    for (const mk of marks) {
+      if (mk.waiting) label([copy.chart.labels.later], [{ x: mk.cl.x, y: mk.y - 28, anchor: "middle" }], "hg-label hg-label--med hg-label--halo");
+    }
+
+    /* 5. The leap, once, on its bracket. */
+    if (bracket) {
+      label([t(s.stuck ? "chart.labels.leapMore" : "chart.labels.leap", { leap: m.diff(s.current, s.stuck ? s.top : s.exit!) })],
+        [{ x: (cx + bx) / 2, y: by - 5, anchor: "middle" }], `${LOSS_LABEL} hg-label--strong`);
+    }
+
+    /* 6. The keep rate, written once on the road it measures (app/README.md
+          § Keep rate): the sign and the cents are core's, so no surface
+          invents its own rounding. */
+    if (s.road && s.road.keepRate !== null) {
+      const { sign, cents } = keepRateWords(s.road.keepRate);
+      label([t(`chart.labels.road.${sign}`, { cents })],
+        [{ x: (px(s.road.lo) + px(s.road.hi)) / 2, y: roadY + 18, anchor: "middle" }], "hg-label");
+    }
+
+    /* 7. Every other drop's money, biggest first, while there is room. Biggest
+          first and not in axis order, because a crowded stretch would
+          otherwise spend the last label on the smallest step in it — a $677
+          drop labelled beside a $2,387 one nobody named. */
+    const rest = marks.filter((mk) => mk !== worstMark)
+      .sort((a, b) => b.cl.cliffs.reduce((n, c) => n + c.drop, 0) - a.cl.cliffs.reduce((n, c) => n + c.drop, 0));
+    for (const mk of rest) {
+      if (drawn >= MAX_DROP_LABELS) break;
+      if (dropLabel(mk, `${LOSS_LABEL} hg-label--med`)) drawn++;
+    }
 
     /* The caption, from the values just computed (never typed). The axis clause says
        whether the reader is looking at a slice of a scroller or the whole thing at
@@ -263,8 +396,10 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     else if (s.safeExit > 0 && !safeSaid) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
     caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
 
-    /* The axis's own ends under the figure, from the data: what tells the reader the picture goes on (inventory.md § MoneyCurve). */
-    hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
+    /* The axis's own ends under the figure, from the data, and the axis's own
+       name between them: what tells the reader the picture goes on, and what
+       it goes along (inventory.md § MoneyCurve). */
+    hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), h("span", {}, t("chart.rangeMid")), h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
 
     wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
     firstDraw = false;

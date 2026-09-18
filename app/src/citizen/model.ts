@@ -5,7 +5,7 @@
 // once per evaluation; nothing here is repeated per component.
 import {
   DEFAULT_HOURS, modeledAnswers, PAY_UNITS, PROGRAM_END_MIN, PROGRAM_IDS,
-  type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId,
+  type Cliff, type DangerZone, type HouseholdAnswers, type HouseholdEvaluation, type HouseholdFlags, type LiheapBoundary, type PayUnit, type ProgramId, type RoadSummary,
 } from "@hotgap/core";
 import { windowFor } from "../lib/chart/geometry.js";
 import { money, moneyAbout, payChangeRounded, payFigure, payInUnit, payPhrase, payRounded, unitFigure } from "../lib/format.js";
@@ -83,6 +83,14 @@ export interface Scene {
    * position, not a crop: the chart draws the whole axis either way.
    */
   window: [number, number];
+  /**
+   * The road out of poverty (app/README.md § Keep rate) — 100% to 200% of the
+   * poverty line for this household's size — and what it keeps of each extra
+   * dollar across it. Drawn as the quiet bar under the axis with its keep
+   * rate written on it once (charts.md § Direct labels, 6); null where either
+   * end runs off the axis, and then nothing is drawn.
+   */
+  road: RoadSummary | null;
   /** Where energy assistance stops (EligibilityBoundary #23), when it lies on the axis; drawn as a tick only while the toggle is off. */
   boundary: LiheapBoundary | null;
   boundaryOnAxis: boolean;
@@ -146,6 +154,7 @@ export function sceneOf(ev: HouseholdEvaluation, flags: HouseholdFlags): Scene {
     otherZones: a.dangerZones.filter((z) => z.startEarnings !== zone?.startEarnings),
     cliffs: a.cliffs, deferred,
     window,
+    road: ev.road,
     boundary: ev.liheap,
     boundaryOnAxis: ev.liheap !== null && !ev.liheap.counted && ev.liheap.earningsLimit <= top,
     modeled: modeledAnswers(ev), clamped: a.currentEarnings !== ev.answers.annualEarnings,

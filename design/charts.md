@@ -313,15 +313,34 @@ Drawn in this order, each only if it fits:
    (`evaluation.road`), in `--ink-3` below the axis, where it cannot be read
    as part of the curve. Sign and cents from `keepRateWords`, never rounded
    locally.
-7. Every remaining drop's money, in axis order, while room lasts.
+7. Every remaining drop, **biggest first**, while room lasts — at most three
+   drop labels on the picture, 2 included. Biggest first and not in axis
+   order, because a crowded stretch would otherwise spend the last label on
+   the smallest step in it: a $677 drop named beside a $2,387 one that is not.
+
+**A drop's label is two lines**: its money, then what ends there — the plain
+phrase for `programsLost[0]`, which is the sentence this page used to spend a
+paragraph on. A number with no cause is half a label. Where the two-line box
+finds no clear spot and the one-line box does, the money goes alone; the
+largest drop keeps both lines even when it has to be forced, because it is the
+label the page promises.
 
 **Collisions.** Each label's candidate spots are tested against the dots (with
-the open ring's box), the diamond, and every label already placed. A label
-with no clear spot is **dropped, not drawn overlapping** — its money is in the
-readout, the step row and the table, all of which are a key press away. The
-single exception is 2, which always draws: it is the label the page promises,
-and its last-resort spot is used. Because placement is in priority order, a
-crowded curve loses its seventh label, never its first.
+the open ring's box), the diamond, and every label already placed. The spots
+run right of the mark first (beside a tall connector, above the dot, below the
+landing), then above it, then left: a flat stretch puts three dots and a
+diamond inside sixty pixels, and the right-hand side alone is not room enough
+for a label that names a program. A label with no clear spot is **dropped, not
+drawn overlapping** — its money is in the readout, the step row and the table,
+all of which are a key press away. The single exception is 2, which always
+draws, at its first spot. Because placement is in priority order, a crowded
+curve loses its last label, never its first.
+
+**A label is nudged inside the box the reader is looking through**, not merely
+inside the plot: the initial view when its mark is in that view, the whole
+plot when the mark is further along the axis, and the plot on paper, where
+there is nothing to scroll. Clamping to the plot alone put "cash help ends"
+half off the left edge of a scrolled phone.
 
 **Deleted in the same pass:** the peak rule's dollar. It printed a number two
 inches from *you keep* that was within a rounding of it, and it was one of the

@@ -109,10 +109,17 @@ export const PLOT_H = { min: 260, max: 560 } as const;
  * that the curve is never cropped, and it is paid in the one place that can
  * afford it — the drop's *height*, not its dollars, which the direct label,
  * the readout, the StepList row and the DataTable all carry in text.
+ *
+ * `avail` is the second floor (2026-09-18): the drawing area still free in
+ * the reader's FIRST SCREEN, which the page measures and hands in. The
+ * picture is the page now, so a plot that could have been 324px tall fills
+ * the screen instead — and the households that were short of the 24px floor
+ * gain those pixels too. The ceiling is unchanged, so a figure is never
+ * taller than a screen, and the drop floor still wins where it asks for more.
  */
-export function plotHeight(yRange: number, maxDrop: number): number {
+export function plotHeight(yRange: number, maxDrop: number, avail = 0): number {
   const want = maxDrop > 0 ? Math.ceil((DROP_FLOOR * yRange) / maxDrop) : PLOT_H.min;
-  return Math.min(PLOT_H.max, Math.max(PLOT_H.min, want));
+  return Math.min(PLOT_H.max, Math.max(PLOT_H.min, want, Math.floor(avail)));
 }
 
 /** The context the initial view carries around what it must show: a third before, two thirds after, where the climb back is. */

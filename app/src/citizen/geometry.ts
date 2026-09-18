@@ -18,8 +18,14 @@ export const GUTTER = { narrow: 44, wide: 52 } as const;
 
 /* The plot's height follows the data under a rule both doors share (§ The scroll rule), so it lives in lib/chart. */
 
-/** The plot's own padding: a lead-in at $0, room at the top for the "you" label and at the right for the last tick. */
+/** The plot's own padding: a lead-in at $0, room at the top for the "you keep" label and at the right for the last tick. */
 const PAD: Pad = { t: 26, r: 24, b: 38, l: PLOT_LEAD };
+/**
+ * The extra foot the road out of poverty needs (charts.md § Direct labels,
+ * 6): its bar and the one line of keep rate written on it, below the x-tick
+ * labels so nothing that measures pay sits inside the plot.
+ */
+export const ROAD_FOOT = 26;
 
 /**
  * Axis honesty: the y-range covers the WHOLE curve — no crop chooses which
@@ -77,34 +83,47 @@ export interface Layout extends Layer {
   /** True when the whole axis is being fitted to a page instead of scrolled. */
   print: boolean;
   /**
-   * The chart's one drop label is the curve's biggest drop (charts.md § Direct
-   * labels). It is always drawn now: the curve is never cropped, so the
-   * biggest drop is never outside the picture.
+   * The first drop label is always the curve's biggest (charts.md § Direct
+   * labels): it is the label the page promises, and since the curve is never
+   * cropped it is never outside the picture. The rest of the clusters follow
+   * it in axis order and are labelled while there is room, up to `MAX_DROP_LABELS`.
    */
   labelled: Cliff | null;
 }
+
+/**
+ * How many drops may carry their money (charts.md § Direct labels). The old
+ * rule was one, from a page whose prose carried the answer; the anti-pattern
+ * it guarded against — a number on every cliff — starts around four.
+ */
+export const MAX_DROP_LABELS = 3;
 
 /**
  * Everything a draw needs, from the scene and the box the figure has. `width`
  * is the whole figure's — the gutter comes off it, and what is left is the
  * viewport the axis scrolls through (or, on paper, the plot's whole width).
  */
-export function layout(s: Scene, width: number, print = false): Layout {
+export function layout(s: Scene, width: number, print = false, screen = 0): Layout {
   const box = Math.max(300, width);
   const narrow = !print && box < 520;
   const gutter = narrow ? GUTTER.narrow : GUTTER.wide;
   const viewport = Math.max(200, box - gutter);
   const { y0, y1, stepY, maxDrop } = yRange(s, narrow);
-  const H = plotHeight(y1 - y0, maxDrop) + PAD.t + PAD.b;
+  const foot = s.road ? ROAD_FOOT : 0;
+  const pad: Pad = { ...PAD, b: PAD.b + foot };
+  /* The second height floor (charts.md § Height): what is left of the first
+     screen, handed in by the page, because only the page knows where the
+     figure starts. Paper has no screen and passes none. */
+  const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
   /* Paper cannot scroll, so the whole axis is fitted to the column; a screen draws the axis
      at the scale that puts the window in one viewport and scrolls the rest (§ The scroll rule). */
-  const scale = print ? (viewport - PAD.l - PAD.r) / s.top : scaleFor(viewport, s.window, s.top);
-  const W = print ? viewport : plotWidth(s.top, PAD, scale);
-  const layer = layerFor(W, H, PAD, 0, s.top, y0, y1);
+  const scale = print ? (viewport - pad.l - pad.r) / s.top : scaleFor(viewport, s.window, s.top);
+  const W = print ? viewport : plotWidth(s.top, pad, scale);
+  const layer = layerFor(W, H, pad, 0, s.top, y0, y1);
   return {
     ...layer, narrow, i0: 0, i1: s.net.length - 1, y0, y1, stepY, maxDrop, gutter, viewport, print, scale,
     yTicks: niceTicks(y0, y1, stepY),
-    xTicks: xTicks(s, Math.max(2, Math.round((W - PAD.l - PAD.r) / (print ? 150 : 110)))),
+    xTicks: xTicks(s, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110)))),
     clusters: clusterCliffs(s.cliffs, layer.px),
     scrollLeft: print ? 0 : scrollFor(layer, viewport, s.window, s.current),
     labelled: s.worst,
