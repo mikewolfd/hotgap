@@ -85,7 +85,7 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(page.locator("#answer .hg-amt--gap")).toHaveCount(3);
     // Nothing between the masthead and the answer: the chips are behind Edit at every width now.
     await expect(page.locator("#inputs")).toBeHidden();
-    await expect(page.locator(".hg-scenario__summary span")).toHaveText("A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.");
+    await expect(page.locator(".hg-scenario__summary span")).toHaveText("A parent with kids aged 3 & 7 in El Paso County, Colorado, paid $38,000 a year.");
 
     // ── Nothing that warns hides, and nothing that merely provides is in the way.
     await expect(page.locator("#incomplete")).toBeHidden();       /* Colorado is complete: not a warning, so not in the notices */

@@ -429,7 +429,8 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
        line is a sentence a person reads, and the code is in the chips too. */
     const c = countyLabel(), S = copy.summary, code = state();
     const st = code ? stateName(code) : "";
-    const place = c ? fill(S.place.withCounty, { state: st, county: countyBare(c) }) : fill(S.place.stateOnly, { state: st });
+    // The county with its kind ("El Paso County"): bare, two counselors read "El Paso, Colorado" as Texas (caseworker picture-first review).
+    const place = c ? fill(S.place.withCounty, { state: st, county: countyWords(c) }) : fill(S.place.stateOnly, { state: st });
     summaryText.textContent = answered ? fill(S.line, { place, household: householdLabel(), pay: payLabel() }) : S.none;
   }
 
