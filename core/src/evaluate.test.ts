@@ -605,7 +605,19 @@ describe("personal escape (finding 8)", () => {
 
   it("reports nothing when the household is already clear of every zone", () => {
     const ev = evaluateOn(answersWith({ annualEarnings: 5000 }), zoned, 5000);
-    expect(ev.personal).toEqual({ zone: null, escapeEarnings: null, raiseToClear: null, raiseIsLowerBound: false });
+    // …except what the next stretch pays: $10,000 more earnings, $10,000 more
+    // money, so every dollar of it is kept. A household clear of every zone
+    // still has a keep rate (Plan 9).
+    expect(ev.personal).toEqual({ zone: null, escapeEarnings: null, raiseToClear: null, raiseIsLowerBound: false, keepNext: { over: 10000, kept: 1 } });
+  });
+
+  it("measures the keep rate over the next stretch: flat on a plateau, negative across a cliff", () => {
+    const plateau = [pt(0, 20000), pt(10000, 30000), pt(20000, 30000), pt(30000, 30000), pt(40000, 34000)];
+    expect(evaluateOn(answersWith({ annualEarnings: 10000 }), plateau, 10000).personal.keepNext).toEqual({ over: 10000, kept: 0 });
+    // The $10k → $20k step of `zoned` loses $8,000 while earning $10,000.
+    expect(evaluateOn(answersWith({ annualEarnings: 10000 }), zoned, 10000).personal.keepNext).toEqual({ over: 10000, kept: -0.8 });
+    // Nothing left of the axis to look ahead over.
+    expect(evaluateOn(answersWith({ annualEarnings: 40000 }), zoned, 40000).personal.keepNext).toBeNull();
   });
 
   it("gives a lower bound when the zone never recovers inside the axis", () => {
@@ -614,6 +626,51 @@ describe("personal escape (finding 8)", () => {
     expect(ev.personal.escapeEarnings).toBeNull();
     expect(ev.personal.raiseIsLowerBound).toBe(true);
     expect(ev.personal.raiseToClear).toBe(15000); // to the top of the sweep, at least
+  });
+});
+
+describe("the road out of poverty, and where each cliff stands (Plan 9)", () => {
+  const ev = evaluateCurve(answers, { year: "2026", currentEarnings: 30000, points: fixturePoints }, "live");
+
+  it("gives every cliff its position on the reach ladder, rising with earnings", () => {
+    const positions = ev.analysis.cliffs.map((c) => c.position);
+    expect(positions.some((p) => p === null)).toBe(false);
+    // Monotone because the ladder is: a cliff further up the axis has more
+    // families below it, whatever its size. This is the fact the whole-axis
+    // headline could not see — the tallest wall is usually the emptiest.
+    expect(positions).toEqual([...(positions as number[])].sort((a, b) => a - b));
+    expect(positions.at(-1)!).toBeGreaterThan(positions[0]!);
+    for (const c of ev.analysis.cliffs) {
+      expect(c.position).toBe(reachForArchetype("CA", "single-1", c.startEarnings));
+    }
+    // worstCliff, nextCliff and deferred are entries of cliffs, not copies,
+    // so they carry the position without a second pass.
+    expect(ev.analysis.worstCliff!.position).toBe(ev.analysis.cliffs.find((c) => c === ev.analysis.worstCliff)!.position);
+    expect(ev.analysis.worstCliff!.position).toBeTypeOf("number");
+    expect(ev.deferred.every((c) => typeof c.position === "number")).toBe(true);
+  });
+
+  it("carries this household's road, the keep rate over it, and the cliffs on it", () => {
+    // A single parent of one: $21,150 for two in 2025, snapped to the axis.
+    expect(ev.road).toMatchObject({ lo: 21000, hi: 42000 });
+    const netAt = (e: number) => ev.analysis.points.find((p) => p.earnings === e)!.netIncome;
+    expect(ev.road!.keepRate).toBeCloseTo((netAt(42000) - netAt(21000)) / 21000, 10);
+    expect(ev.road!.cliffs).toEqual(ev.analysis.cliffs.filter((c) => c.startEarnings >= 21000 && c.startEarnings < 42000));
+    expect(ev.road!.worst).toBe(ev.road!.cliffs.reduce((w, c) => (c.drop > w.drop ? c : w)));
+    expect(ev.road!.familiesBelowHi).toBe(reachForArchetype("CA", "single-1", 42000));
+  });
+
+  it("is null when the road runs off the end of the axis", () => {
+    expect(evaluateOn(answers, [pt(0, 20000), pt(10000, 25000)]).road).toBeNull();
+  });
+
+  it("reads the archetype path's road off the household the curve models, not the caller's", () => {
+    // Five children fall back to the three-child curve, so the road is the
+    // swept family's: $32,150 for four, not $43,150 for six.
+    const big = answersWith({ childAges: [1, 2, 3, 4, 5], childDisabled: [false, false, false, false, false] });
+    const offline = evaluateOffline(big)!;
+    expect(offline.road).toMatchObject({ lo: 32000, hi: 64000 });
+    expect(offline.analysis.cliffs.every((c) => c.position === reachForArchetype("CA", "single-3", c.startEarnings))).toBe(true);
   });
 });
 

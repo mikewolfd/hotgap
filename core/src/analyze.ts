@@ -93,6 +93,20 @@ export interface Cliff {
    * cliff whose every named loss waits.
    */
   deferral: Deferral | null;
+  /**
+   * How many families like this one, in this state, earn less than the pay at
+   * which this cliff starts (0–100) — the answer to "and who is standing
+   * here?", without which a $33,587 wall at $97,000 outranks a $913 one at
+   * the median (Plan 9).
+   *
+   * Always null here: analyze.ts reads a curve and knows nothing of the
+   * household or the state behind it. `evaluateCurve` fills every cliff in
+   * place from the reach ladder, which is why it is a property of the cliff
+   * and not a parallel array — `worstCliff`, `nextCliff` and `deferred` are
+   * the same objects, so they carry the position too. Null stays where the
+   * PUMS cell is missing or suppressed; never read it as 0.
+   */
+  position: number | null;
 }
 export interface DangerZone {
   startEarnings: number;
@@ -305,6 +319,8 @@ export function analyzeCurve(points: CurvePoint[], currentEarnings: number, opts
         breakdown,
         driver,
         deferral: deferralOf(a, b, programsLost, opts.hasChildren === true, opts.isAdultGroupLoss ?? (() => false)),
+        // Filled by evaluateCurve, which knows the household and the state.
+        position: null,
       });
     }
   }

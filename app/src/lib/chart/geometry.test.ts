@@ -43,7 +43,7 @@ describe("marks", () => {
     const mixed = {
       startEarnings: 38_000, endEarnings: 39_000, drop: 16_700, programsLost: ["medicaid", "headstart"],
       breakdown: { benefits: 16_700, credits: 0, premiums: 0, other: 0 }, driver: "benefits" as const,
-      deferral: { reason: "head_start_program_year" as const, until: "later", complete: false },
+      deferral: { reason: "head_start_program_year" as const, until: "later", complete: false }, position: null,
     } satisfies Cliff;
     expect(clusterCliffs([mixed], () => 100)[0].later).toBe(false);
   });

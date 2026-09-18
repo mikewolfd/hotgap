@@ -4,7 +4,7 @@
 // shape the components branch on, small enough to read. Built through
 // core's own analyzeCurve and escapeAnalysis, so the fixture cannot drift
 // from what the Worker returns.
-import { analyzeCurve, escapeAnalysis, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
+import { analyzeCurve, escapeAnalysis, keepNext, roadSummary, type CurvePoint, type HouseholdAnswers, type HouseholdEvaluation, type ProgramId } from "@hotgap/core";
 
 const ANSWERS: HouseholdAnswers = {
   state: "CO", married: false, age: 30, spouseAge: null, youStatus: "citizen", spouseStatus: "citizen",
@@ -71,8 +71,8 @@ export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, cur
   const zone = analysis.dangerZones.find((z) => current > z.startEarnings && (z.endEarnings === null || current < z.endEarnings)) ?? null;
   return {
     answers: { ...ANSWERS, annualEarnings: current }, source: "live", curve: { year: "2026", currentEarnings: current, points },
-    analysis, deferred, escape,
-    personal: { zone, escapeEarnings: zone?.endEarnings ?? null, raiseToClear: zone ? (zone.endEarnings ?? TOP) - current : null, raiseIsLowerBound: zone !== null && zone.endEarnings === null },
+    analysis, deferred, escape, road: roadSummary(analysis, ANSWERS),
+    personal: { zone, escapeEarnings: zone?.endEarnings ?? null, raiseToClear: zone ? (zone.endEarnings ?? TOP) - current : null, raiseIsLowerBound: zone !== null && zone.endEarnings === null, keepNext: keepNext(points, current) },
     reach: { safeExit: 80, current: 37.5 }, minWage: { wage: 15.16, fullTimeEarnings: 31532.8, cliffs: [] },
     coverageGap: null, headStart: null, esi: null, maTafdc: null, premiumWrap: null, perMemberPremiumHelp: null, statePremiumAssistance: null, liheap: null, unclaimed: [],
     ...overrides,

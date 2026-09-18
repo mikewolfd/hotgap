@@ -23,6 +23,7 @@ import { reachAtEarnings } from "./reachLookup.js";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { correctMaTafdc, type MaTafdcCorrection } from "./maTafdc.js";
 import { liheapAmount, liheapBoundary, type LiheapBoundary } from "./liheap.js";
+import { keepNext, roadSummary, type KeepNext, type RoadSummary } from "./road.js";
 import { householdSize, YEAR, type CurvePoint, type CurveResponse, type HouseholdAnswers } from "./types.js";
 
 /** Where the curve came from: a live PolicyEngine call, or the committed sweep. */
@@ -53,6 +54,17 @@ export interface PersonalEscape {
   raiseToClear: number | null;
   /** True when the zone runs off the end of the axis, so the raise is a floor. */
   raiseIsLowerBound: boolean;
+  /**
+   * What this household keeps of its next stretch of earnings: `over` dollars
+   * ahead (the next $10,000, or what is left of the axis), `kept` dollars kept
+   * per dollar earned across it (road.ts `keepNext`). Null with less than one
+   * step of axis left.
+   *
+   * The answer sentence names the next CLIFF; a stretch can be flat without
+   * one, and a plateau is as real to a family as a cliff — it just has no
+   * step to point at. This is the number that makes it sayable.
+   */
+  keepNext: KeepNext | null;
 }
 
 /** The band of earnings where no coverage help exists at all. */
@@ -106,6 +118,18 @@ export interface HouseholdEvaluation {
    * surface can badge them (`deferral.until` says when and under which rule).
    */
   deferred: Cliff[];
+  /**
+   * The road out of poverty — 100% to 200% of the federal poverty guideline
+   * for this household's size — and what it keeps of each extra dollar over
+   * it, the cliffs on it, the worst of them, and how many families like this
+   * one earn less than its top (road.ts). Null when the road runs off this
+   * curve's axis.
+   *
+   * The whole-axis measures above answer "how rough are this state's rules".
+   * This answers "what happens to a family climbing out of poverty", which is
+   * a different question and the one the tool exists for (Plan 9).
+   */
+  road: RoadSummary | null;
   escape: EscapeAnalysis;
   personal: PersonalEscape;
   reach: ReachSummary;
@@ -672,6 +696,7 @@ function personalEscape(analysis: CurveAnalysis): PersonalEscape {
   const axisTop = analysis.points[analysis.points.length - 1].earnings;
   return {
     zone,
+    keepNext: keepNext(analysis.points, analysis.currentEarnings),
     escapeEarnings: zone?.endEarnings ?? null,
     // The whole-curve safe exit answers "where does this state's worst zone
     // end"; this answers "how much more does THIS household need". An
@@ -759,6 +784,15 @@ export function evaluateCurve(
     hasChildren: knowsWhoHolds && modeled.childAges.length > 0,
     isAdultGroupLoss: adultGroupLossTest(modeled),
   });
+  // Where each cliff stands among families like this one, filled in place —
+  // once per cliff, O(cliffs) — because `worstCliff`, `nextCliff` and
+  // `deferred` are the SAME objects as the entries of `cliffs` (the doc
+  // comment on `analysis` above), so a parallel array would be a second
+  // truth to keep in step. The modeled household is the one whose curve
+  // these earnings sit on: on the archetype path that is the state's swept
+  // family, not the caller's, exactly as every poverty-line test here reads.
+  const positionAt = (earnings: number): number | null => reachAtEarnings(modeled, earnings);
+  for (const c of analysis.cliffs) c.position = positionAt(c.startEarnings);
   const deferred = analysis.cliffs.filter((c) => c.deferral !== null);
   const escape = knowsWhoHolds
     ? escapeAnalysis(points, analysis)
@@ -774,6 +808,9 @@ export function evaluateCurve(
     curve: { ...curve, points },
     analysis,
     deferred,
+    // The modeled household's road, for the same reason its positions are:
+    // the guideline that sets it is the size of the family this curve is of.
+    road: roadSummary(analysis, modeled),
     escape,
     personal: personalEscape(analysis),
     reach: { safeExit: reachAt(escape.safeExitEarnings), current: reachAt(curve.currentEarnings) },
