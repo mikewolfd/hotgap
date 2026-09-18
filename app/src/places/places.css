@@ -188,6 +188,13 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   .defs dt, .defs dd { display: block; }
 }
 
+/* POSITION under a figure (Plan 9): how many families like this earn less
+   than the earnings in the cell above it. A second line in the same cell,
+   one step lighter and smaller, so the figure still reads as the figure —
+   the Figures column's subsidy note is the same shape. */
+.hg-table .num small { display: block; color: var(--ink-3); font-size: var(--t-micro);
+                       font-weight: var(--w-reg); }
+
 .hg-scroll-x table { min-width: 48rem; }
 /* Below 62rem the table scrolls sideways in its own box; from 62rem its
    48rem minimum fits the page, the scroller opens, and the header sticks to

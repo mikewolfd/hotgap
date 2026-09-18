@@ -5,7 +5,19 @@ import { parseCsv } from "../../e2e/parseCsv.mjs";
 import { CSV_HEADER, csvField, csvFor, csvName } from "./csv.js";
 import { DEFAULT_ARCHETYPE, STATE_NAMES } from "@hotgap/core";
 import { programName } from "../lib/names.js";
-import { measureByKey, rowsFor, tableRows } from "./model.js";
+import { measureByKey, positionAt, rowsFor, tableRows } from "./model.js";
+
+/* The header as it stood before Plan 9, typed out on purpose: this is the
+   contract a reporter's script holds, and the new columns are appended so that
+   not one of these indices moves. If a change here is deliberate, it is a
+   change to a published contract and belongs in a commit that says so. */
+const BEFORE_PLAN_9 = [
+  "state", "state_name", "archetype_id", "archetype",
+  "biggest_one_step_loss", "biggest_loss_at", "biggest_loss_programs", "danger_zone_width", "leap", "safe_exit", "cliff_count", "deferred_cliff_count",
+  "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied", "childcare_subsidy_footing", "liheap_limit", "liheap_served_share",
+  "county_name", "county_fips", "rent_vintage", "county_vintage", "childcare_price_vintage",
+  "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
+];
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
 const arch = summary.archetypes.find((a) => a.id === DEFAULT_ARCHETYPE) ?? summary.archetypes[0];
@@ -111,6 +123,42 @@ describe("csvFor on the committed sweep", () => {
       // The floor wording travels with the row (S5), so a spreadsheet reads the caveat without the page.
       expect(r[col("figures")]).toBe(rows[i].incomplete.length ? `floor: ${rows[i].incomplete.map((u) => u.program).join(" and ")} not modelled` : "complete");
     }
+  });
+  it("carries the road out of poverty and the positions, appended so no existing column moved (Plan 9)", () => {
+    // The contract: every column that existed before this plan is where it was.
+    expect(head.slice(0, 32)).toEqual(BEFORE_PLAN_9);
+    expect(head.slice(32)).toEqual([
+      "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
+      "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
+    ]);
+    for (const [i, r] of body.entries()) {
+      const m = rows[i].m;
+      // Signed whole cents, so a spreadsheet sorts the measure without parsing a word.
+      expect(r[col("keep_rate_cents")]).toBe(m.keepRate === null ? "" : String(Math.round(m.keepRate * 100)));
+      expect(r[col("road_lo")]).toBe(m.roadLo === null ? "" : String(m.roadLo));
+      expect(r[col("road_hi")]).toBe(m.roadHi === null ? "" : String(m.roadHi));
+      expect(Number(r[col("road_cliff_count")])).toBe(m.roadCliffCount);
+      expect(r[col("road_worst_drop")]).toBe(m.roadWorst ? String(m.roadWorst.drop) : "");
+      expect(r[col("road_worst_at")]).toBe(m.roadWorst ? String(m.roadWorst.at) : "");
+      expect(r[col("road_worst_programs")]).toBe(m.roadWorst ? m.roadWorst.programs.map(programName).join("; ") : "");
+      // A position is the page's own lookup, to one decimal, and empty — never
+      // 0 — where the survey cell cannot support it.
+      const round = (n: number | null) => (n === null ? "" : String(Math.round(n * 10) / 10));
+      expect(r[col("road_worst_position")]).toBe(round(positionAt(rows[i].st, arch, m.roadWorst?.at ?? null)));
+      expect(r[col("biggest_loss_position")]).toBe(round(m.biggestLossPosition));
+      expect(r[col("families_below_road_top")]).toBe(round(positionAt(rows[i].st, arch, m.roadHi)));
+    }
+    // Missouri, the plan's worked example, cell by cell.
+    const mo = body.find((r) => r[col("state")] === "MO")!;
+    expect([mo[col("keep_rate_cents")], mo[col("road_lo")], mo[col("road_hi")], mo[col("road_cliff_count")], mo[col("road_worst_drop")], mo[col("road_worst_at")], mo[col("road_worst_programs")]])
+      .toEqual(["-56", "27000", "55000", "7", "16428", "40000", "CCDF child care subsidy"]);
+    // New Mexico has a road and no cliff on it; its whole-axis worst has no position because it has no worst step.
+    const nm = body.find((r) => r[col("state")] === "NM")!;
+    expect([nm[col("keep_rate_cents")], nm[col("road_cliff_count")], nm[col("road_worst_drop")], nm[col("biggest_loss_position")]]).toEqual(["30", "0", "", ""]);
+    // Every position the file carries is inside 0–100, and none of them is a bare 0.
+    const shares = body.flatMap((r) => ["road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top"].map((c) => r[col(c as (typeof CSV_HEADER)[number])])).filter((s) => s !== "");
+    expect(shares.length).toBeGreaterThan(100);
+    for (const s of shares) { expect(Number(s)).toBeGreaterThan(0); expect(Number(s)).toBeLessThanOrEqual(100); }
   });
   it("names the file after the household as the reader knows it, and the sweep date", () => {
     expect(csvName({ id: "single-2", married: false, childAges: [3, 7] }, "2026-09-16T19:37:52.231Z")).toBe("hotgap-1-adult-2-children-3-and-7-2026-09-16.csv");

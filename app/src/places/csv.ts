@@ -12,15 +12,28 @@ import { unmodeledName } from "../lib/coverage.js";
 import { listOf } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
 import { copy } from "./copy.js";
-import { archLabel, type Archetype, type StateRow } from "./model.js";
+import { archLabel, positionAt, type Archetype, type StateRow } from "./model.js";
 import { modelLabel } from "./words.js";
 
+/*
+ * The road's six figures and the four positions are APPENDED, not slotted in
+ * beside the columns they belong with, and that is deliberate: this file is
+ * already downloaded and a column's index is part of what a reporter's script
+ * holds. Reading order loses; every existing index stays where it was.
+ * `keep_rate_cents` is signed whole cents (-56 is 56 cents poorer per extra
+ * dollar), because a spreadsheet should sort it without parsing a word; the
+ * page says "loses 56¢" and core's `keepRateWords` owns that wording.
+ * A position is 0-100 to one decimal, and EMPTY where the survey cell cannot
+ * support it — never 0, which would read as "nobody earns less".
+ */
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
   "biggest_one_step_loss", "biggest_loss_at", "biggest_loss_programs", "danger_zone_width", "leap", "safe_exit", "cliff_count", "deferred_cliff_count",
   "leap_is_lower_bound", "no_cliff_found", "comparable", "figures", "unmodeled_programs", "corrections_applied", "childcare_subsidy_footing", "liheap_limit", "liheap_served_share",
   "county_name", "county_fips", "rent_vintage", "county_vintage", "childcare_price_vintage",
   "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
+  "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
+  "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
 ] as const;
 
 /** One field, quoted only when it has to be (a comma, a quote, a line break). */
@@ -28,6 +41,9 @@ export const csvField = (v: unknown): string => {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
+
+/** A position as the file carries it: 0–100 to one decimal, empty where the survey cannot support the cell. */
+const position = (n: number | null): number | string => (n === null ? "" : Math.round(n * 10) / 10);
 
 /**
  * The rows as the table shows them: a no-cliff row leaves the dollar
@@ -62,6 +78,13 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       v?.rent.vintage ?? "", v?.county.vintage ?? "", v?.childcare.preschool ?? "",
       summary.year, summary.generated, modelLabel(summary.model), summary.model?.endpoint ?? "", summary.model?.version ?? "",
       "HotGap/PolicyEngine",
+      /* The road out of poverty (Plan 9). `no_cliff_found` is the whole axis's
+         fact; the road's own is `road_cliff_count` being 0, and a road that
+         runs off this cell's axis is an empty `keep_rate_cents`. */
+      m.keepRate === null ? "" : Math.round(m.keepRate * 100), m.roadLo ?? "", m.roadHi ?? "",
+      m.roadCliffCount, m.roadWorst?.drop ?? "", m.roadWorst?.at ?? "", m.roadWorst?.programs.map(programName).join("; ") ?? "",
+      position(positionAt(r.st, a, m.roadWorst?.at ?? null)), position(m.biggestLossPosition),
+      position(none ? null : positionAt(r.st, a, m.safeExit)), position(positionAt(r.st, a, m.roadHi)),
     ].map(csvField).join(","));
   }
   return "﻿" + lines.join("\r\n") + "\r\n";
