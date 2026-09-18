@@ -1,68 +1,90 @@
-// AnswerSentence (#1): one sentence per curve shape from the catalog
+// AnswerSentence (#1): ONE sentence per curve shape from the catalog
 // (design/inventory.md § Verdict catalog, M2), wired to the household's own
 // zone, never the whole-curve escape. Each dollar figure the sentence names
 // carries the key of the mark it names, so the sentence doubles as the
-// chart's key: {kept} the line, {exit} and {leap} the exit rule and the
-// bracket, {wage} the cliff dot. The caseworker's client sheet opens with
-// verdictText and againText from the same scene (audit D4): one catalog,
-// one sentence, on both surfaces.
+// chart's key: {exit} and {leap} the exit rule and the bracket, {wage} the
+// cliff dot. The caseworker's client sheet opens with verdictText and
+// againText from the same scene (audit D4): one catalog, one sentence, on
+// both surfaces.
+//
+// Rewritten 2026-09-18 to the desk rule (design/README.md § Where the
+// personas conflict, 1): written the way a good caseworker says it across
+// the desk, then cut to what helps. The old shape opened by repeating the
+// question ("You are paid $30,000 a year. You keep $45,283.") and a reader
+// stopped at sentence two.
+import type { Cliff } from "@hotgap/core";
 import { copy, fill, parts } from "./copy.js";
 import type { Scene } from "./model.js";
-import { noun, phrase } from "./programs.js";
-import { waitingAhead } from "./steps.js";
+import { phrase } from "./programs.js";
 
-/** One shape per curve shape; `waits` is the timing clause, keyed by rule, not a shape. */
-export type VerdictKey = Exclude<keyof typeof copy.verdict, "waits">;
+/** One shape per curve shape; the two suffixed keys are the shapes a timing or a missing exit changes. */
+export type VerdictKey = keyof typeof copy.verdict;
+
+/**
+ * The cliff the `cliff_ahead` sentence is about. `Scene.next` is the entry of
+ * `analysis.cliffs` that `analysis.nextCliff` names; over JSON the re-link can
+ * come back empty, and a sentence with an unfilled slot is a thrown error on a
+ * person's screen, so the first cliff above the household's pay stands in.
+ */
+const nextCliff = (s: Scene): Cliff | null => s.next ?? s.cliffs.find((c) => c.endEarnings > s.current) ?? null;
 
 export function verdictKey(s: Scene): VerdictKey {
   const v = s.ev.analysis.verdict;
-  return v === "in_danger_zone" && s.stuck ? "in_danger_zone:stuck" : v;
+  /* No exit reads as stuck: the sentence would otherwise name a pay that does not exist. */
+  if (v === "in_danger_zone") return s.stuck || s.exit === null ? "in_danger_zone:stuck" : "in_danger_zone";
+  /* A cliff the rules defer says so in four words, because the sentence names that cliff
+     and would otherwise be wrong about when it lands (inventory.md § Verdict catalog). */
+  if (v === "cliff_ahead") return nextCliff(s)?.deferral ? "cliff_ahead:waits" : "cliff_ahead";
+  return v;
 }
 
-/** The slot values for this scene's shape, every pay figure in the person's unit. */
+/**
+ * The slot values for this scene's shape, every pay figure in the person's
+ * unit. One sentence per shape means one set of slots per shape: `fill`
+ * throws on an argument nothing asked for, which is what keeps this honest.
+ *
+ * The household's own pay and the money it keeps left these sentences on
+ * 2026-09-18: the pay is what the person typed and the ScenarioBar still says
+ * it, and what they keep is the direct label at their own diamond
+ * (`charts.md` § Direct labels, 1).
+ */
 function verdictSlots(s: Scene): Record<string, string> {
   const { m } = s;
-  const key = verdictKey(s);
-  const slots: Record<string, string> = { pay: m.payUnit(s.current), kept: m.money(s.currentNet) };
-  // The threshold is the step's landing point (§ Where a program ends).
-  if (key === "cliff_ahead" && s.next) { slots.wage = m.pay(s.next.endEarnings); slots.drop = m.about(s.next.drop); }
-  if (key === "in_danger_zone" && s.exit !== null) {
-    slots.exit = m.pay(s.exit);
-    // The leap is the difference of the two rounded figures the sentence
-    // names, so it adds up in every unit ($45,000 − $38,000 = $7,000).
-    slots.leap = m.diff(s.current, s.exit);
+  switch (verdictKey(s)) {
+    case "always_up":
+    case "in_danger_zone:stuck":
+      return { top: m.pay(s.top) };
+    case "cliff_ahead":
+    case "cliff_ahead:waits": {
+      // The threshold is the step's landing point (§ Where a program ends).
+      const c = nextCliff(s)!;
+      return { wage: m.pay(c.endEarnings), drop: m.about(c.drop) };
+    }
+    case "cliff_behind":
+      return { wage: m.pay((s.worst ?? s.cliffs[s.cliffs.length - 1]).endEarnings) };
+    default:
+      // The leap is the difference of the two rounded figures the sentence
+      // names, so it adds up in every unit ($45,000 − $38,000 = $7,000).
+      return { exit: m.pay(s.exit!), leap: m.diff(s.current, s.exit!) };
   }
-  if (key === "in_danger_zone:stuck") slots.top = m.pay(s.top);
-  return slots;
 }
 
 /** The mark each slot is keyed to (a class on the span), or none. */
 const SLOT_KEY: Record<string, string> = {
-  pay: "amt", kept: "amt amt-keep", wage: "amt amt-cliff", exit: "amt amt-gap", leap: "amt amt-gap",
+  wage: "hg-amt hg-amt--cliff", exit: "hg-amt hg-amt--gap", leap: "hg-amt hg-amt--gap",
 };
 
 export type VerdictPart = { text: string } | { slot: string; text: string; key: string | null };
 
 /**
- * The sentence as parts, so a renderer can wrap each slot in its key — with
- * the timing clause when a deferred loss waits at or above the person's pay
- * (B1; M2): its money is already in the figures above (2026-09-17), and the
- * clause says when it lands and under which rule.
+ * The sentence as parts, so a renderer can wrap each slot in its key. One
+ * sentence, up to two clauses, and nothing appended: a deferred loss is
+ * marked on the picture — the hollow dot, the dashed stub, the word *later*
+ * and its money — and carries its rule on the step row (citizen review B1,
+ * answered in the place B1 asked for).
  */
 export function verdictParts(s: Scene): VerdictPart[] {
-  const out: VerdictPart[] = parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
-  const w = waitingAhead(s);
-  if (w) {
-    const id = w.programsLost[0], reason = w.deferral!.reason;
-    // Who loses it follows from the rule that defers it: a child's coverage, a parent's Medicaid, or the household's Head Start.
-    const what = !id ? copy.waits.thisHelp
-      : reason === "child_continuous_eligibility" ? fill(copy.waits.kids, { noun: noun(id) })
-      : reason === "transitional_medical_assistance" ? fill(copy.waits.own, { noun: noun(id) })
-      : phrase(id);
-    const slots = { at: s.m.pay(w.endEarnings), phrase: what, drop: s.m.about(w.drop) };
-    out.push(...parts(copy.verdict.waits[reason], slots).map((p) => ("slot" in p ? { ...p, key: p.slot === "at" ? "amt" : null } : p)));
-  }
-  return out;
+  return parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
 }
 
 export const verdictText = (s: Scene): string => verdictParts(s).map((p) => p.text).join("");

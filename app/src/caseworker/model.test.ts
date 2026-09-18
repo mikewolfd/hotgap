@@ -258,8 +258,11 @@ describe("the client sheet", () => {
   it("is the citizen catalog's sentence and the same thresholds in plain words", () => {
     const h = handout(co, summary);
     expect(h.title).toBe("Your pay and your help — Colorado, one parent, two children");
-    // The citizen page's own answer for this household (audit D4): the exact figure kept, "a year" said once, and "again" from the next zone's start.
-    expect(h.paragraphs[0]).toBe("You are paid $38,000 a year. You keep $84,371. More pay does not add to that until you are paid $45,000: a raise of $7,000. It happens again from $46,000 to $119,000.");
+    // The citizen page's own answer for this household (audit D4), rewritten to the desk rule on 2026-09-18
+    // (design/PICTURE-FIRST-2026-09-18.md): one sentence, the exit and the leap, then "again" from the next
+    // zone's start. The pay and the money kept left the sentence there and have not been given a home on this
+    // sheet yet — the caseworker pass should decide where they go.
+    expect(h.paragraphs[0]).toBe("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now. It happens again between $46,000 and $119,000.");
     expect(h.paragraphs[1]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
     expect(h.paragraphs[2]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");
     expect(h.paragraphs[3]).toBe("Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.");
