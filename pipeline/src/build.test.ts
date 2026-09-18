@@ -164,7 +164,27 @@ describe("buildSummary", () => {
       leap: 44000,
       leapIsLowerBound: false,
       axisTop: 100000,
+      // The road out of poverty for a single parent of one: $21,150 for two in
+      // 2025, so $21,000 → $42,000 on this axis. The Head Start step is on it,
+      // which is why the road loses 81 cents of every extra dollar — and a
+      // third of families like this earn less than the $30,000 it happens at.
+      keepRate: -0.8083,
+      roadLo: 21000,
+      roadHi: 42000,
+      roadCliffCount: 3,
+      roadWorst: { drop: 21971, at: 30000, programs: ["headstart"] },
+      biggestLossPosition: 33.1,
     });
+  });
+
+  it("reports no road at all when the axis ends below twice the poverty line", () => {
+    // A $20,000 axis: $21,000 is past its end, so there is no road to measure
+    // and the keep rate is null rather than a figure over some other stretch.
+    const results: ResultsByStateArchetype = { CA: {} };
+    for (const a of ARCHETYPES) results.CA[a.id] = linearCurve(10000, 21);
+    const m = buildSummary("g", ["CA"], results).states.CA["single-1"];
+    expect(m).toMatchObject({ keepRate: null, roadLo: null, roadHi: null, roadCliffCount: 0, roadWorst: null });
+    expect(m.axisTop).toBe(20000);
   });
 });
 

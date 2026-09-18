@@ -42,6 +42,37 @@ export interface StateMetrics {
    * dollar figure instead of "the axis" (places rerun S6, N9).
    */
   axisTop: number;
+  /**
+   * THE ROAD OUT OF POVERTY (Plan 9, road.ts). Every measure above is an
+   * absolute dollar figure over the whole axis, so it names the tallest wall
+   * wherever it stands — usually one few families reach. These six describe
+   * the stretch from 100% to 200% of the federal poverty guideline for this
+   * household's size, which is where the families the tool is for actually
+   * are. They are a seventh measure with its own definition, not a composite
+   * of the six (design/README.md forbids a score).
+   *
+   * `keepRate` is dollars kept per extra dollar earned across the road —
+   * 1 minus the effective marginal tax rate — rounded to four decimals, so
+   * -0.63 means the family ends up 63 cents poorer for each extra dollar.
+   * Null only when the road runs off this cell's axis, which no swept cell
+   * does (axisSpec always reaches past 4x the poverty line); `roadLo` and
+   * `roadHi` are null and `roadCliffCount` is 0 in that same case, and
+   * `keepRate` is the field that says so.
+   */
+  keepRate: number | null;
+  roadLo: number | null;
+  roadHi: number | null;
+  /** Cliffs whose step starts on the road. Every cliff counts, deferred ones included (2026-09-17). */
+  roadCliffCount: number;
+  /** Where the road collapses: the largest of those cliffs, or null when it holds. */
+  roadWorst: { drop: number; at: number; programs: ProgramId[] } | null;
+  /**
+   * How many families like this one, in this state, earn less than the pay
+   * the WHOLE-AXIS worst step starts at (0–100, one decimal). The number that
+   * tells a reader whether the headline cliff is one anybody stands at: null
+   * where the reach ladder has no trustworthy cell, and never 0.
+   */
+  biggestLossPosition: number | null;
 }
 
 export interface SummaryJson {

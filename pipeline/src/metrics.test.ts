@@ -53,10 +53,49 @@ describe("stateMetrics on the committed Ohio file", () => {
   });
 });
 
+describe("stateMetrics on the road out of poverty (Plan 9)", () => {
+  // Read from the committed sweep at test time, like the Ohio pin above: these
+  // are the figures the journalist map will rank states by, and the plan's own
+  // most- and least-regressive examples.
+  const single2 = archetypeById("single-2");
+  const forState = (state: string) => {
+    const file = loadStateFile(state)!;
+    return stateMetrics(evaluateCurve(answersFor(state, single2), { year: file.year, currentEarnings: 0, points: file.archetypes["single-2"].points }, "archetype"));
+  };
+
+  it("Missouri loses 63 cents of every extra dollar between poverty and twice poverty", () => {
+    const m = forState("MO");
+    expect(m.roadLo).toBe(27000);   // $26,650 for three, snapped to the sweep's $1,000
+    expect(m.roadHi).toBe(53000);   // $53,300, likewise
+    expect(m.keepRate!.toFixed(2)).toBe("-0.63");
+    expect(m.roadCliffCount).toBe(7);
+    expect(m.roadWorst).toEqual({ drop: 16428, at: 40000, programs: ["childcare"] });
+    // Missouri is the case where the two measures agree: its whole-axis worst
+    // step IS the road's, at $40,000, and it sits near the middle of the
+    // distribution — 47 in 100 families like this earn less. (The plan's
+    // illustrative readout says "6 in 10"; the ladder says 46.6, and the
+    // ladder is what a page renders.)
+    expect(m.biggestLossAt).toBe(40000);
+    expect(m.biggestLossPosition).toBe(46.6);
+  });
+
+  it("New Mexico keeps 30 cents, with no cliff on the road at all", () => {
+    const m = forState("NM");
+    expect(m.keepRate!.toFixed(2)).toBe("0.30");
+    expect(m.roadCliffCount).toBe(0);
+    expect(m.roadWorst).toBeNull();
+  });
+});
+
 describe("stateMetrics on synthetic curves", () => {
   it("reports zero loss, zero danger width, safeExit 0, and leap 0 for a monotonic curve", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
-    expect(stateMetrics(evaluated(pts))).toEqual({ biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000 });
+    // The road snaps to this curve's own $50,000 step — a three-point curve is
+    // not a sweep — so it runs $0 → $50,000 and keeps a tenth of each dollar.
+    expect(stateMetrics(evaluated(pts))).toEqual({
+      biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
+      keepRate: 0.1, roadLo: 0, roadHi: 50000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+    });
   });
 
   it("measures dangerWidth to the axis max when the zone never recovers, and reports safeExit null", () => {

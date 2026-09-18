@@ -151,6 +151,21 @@ describe("runPipeline", () => {
         leap: 45000,
         leapIsLowerBound: false,
         axisTop: 150000, // the fake fetch answers at the archetype's own axis (fixtureFor(axis.count, axis.max))
+        // The road out of poverty for three: $26,650 → $53,300, snapped to the
+        // sweep's $1,000. The Head Start step is on it, so the fixture's
+        // family ends up 46 cents poorer for every extra dollar it earns
+        // across it, and the whole-axis worst step is one a third of families
+        // like this have passed.
+        keepRate: -0.4579,
+        roadLo: 27000,
+        roadHi: 53000,
+        roadCliffCount: 2,
+        roadWorst: { drop: 22103, at: 30000, programs: ["headstart"] },
+        // …and the one figure the two fake states do NOT share, on identical
+        // curves: how many families like this earn less than $30,000 is a
+        // fact about the state's families, not about the curve. Wyoming 33.6,
+        // Vermont 13.7.
+        biggestLossPosition: { WY: 33.6, VT: 13.7 }[state],
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
