@@ -482,7 +482,13 @@
       "childcare": "la ayuda para el cuidado de niños",
       "liheap": "la ayuda con la factura de la calefacción"
     },
-    "phraseAndName": "{phrase} ({name})"
+    "phraseAndName": "{phrase} ({name})",
+    "keepNext": {
+      "base": "De los próximos {over} que gane, le quedan unos {kept}.",
+      "cliff": "De los próximos {over} que gane, le quedan unos {kept}, porque {phrase} se acaba en {wage}.",
+      "plateau": "De los próximos {over} que gane, le quedan unos {kept}. Eso es un tramo plano: más paga, poco más de dinero."
+    },
+    "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya."
   },
   "caseworker": {
     "pageTitle": "HotGap — trabajador social",

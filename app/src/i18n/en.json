@@ -480,7 +480,13 @@
       "liheap": "help with heating bills"
     },
     "phraseAndName": "{phrase} ({name})",
-    "pageTitle": "HotGap — will I lose money if I earn more?"
+    "pageTitle": "HotGap — will I lose money if I earn more?",
+    "keepNext": {
+      "base": "Of the next {over} you earn, you keep about {kept}.",
+      "cliff": "Of the next {over} you earn, you keep about {kept}, because {phrase} ends at {wage}.",
+      "plateau": "Of the next {over} you earn, you keep about {kept}. That is a flat stretch: more pay, little more money."
+    },
+    "beyondReach": " The ones past {at} are beyond what {n} in 10 families like yours earn."
   },
   "caseworker": {
     "editor": {

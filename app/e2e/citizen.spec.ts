@@ -11,19 +11,21 @@ import { expect, test, type Page } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
-import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, rgb } from "./support.js";
+import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, outDir, rgb } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
+/** Plan 9 § Citizen's own review: the keep-next sentence in the answer's rhythm, and the far-cliffs clause. */
+const KEEP_RATE_DIR = outDir("design/review/keep-rate");
 
 interface Ev {
   analysis: {
-    cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown }[];
+    cliffs: { startEarnings: number; endEarnings: number; drop: number; deferral: unknown; programsLost: string[]; position: number | null }[];
     dangerZones: { startEarnings: number; endEarnings: number | null }[];
     currentEarnings: number; currentNet: number;
   };
   curve: { points: { earnings: number; netIncome: number }[] };
-  personal: { zone: { startEarnings: number; peakNet: number } | null; escapeEarnings: number | null };
+  personal: { zone: { startEarnings: number; peakNet: number } | null; escapeEarnings: number | null; keepNext: { over: number; kept: number } | null };
   escape: { safeExitEarnings: number | null };
 }
 
@@ -58,12 +60,47 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(answer.locator(".amt-gap")).toHaveCount(2);
       expect(dollars((await answer.textContent())!).slice(0, 4)).toEqual([ev.analysis.currentEarnings, Math.round(ev.analysis.currentNet), ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
       /* "It happens again from A to B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
-      const again = await page.locator("#result .band .answer-sub").first().textContent();
+      const again = await page.locator("#again").textContent();
       const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
       if (beyond.length) {
         expect(again).toMatch(/^It happens/);
-        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
+        expect(dollars(again!).slice(0, 2)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
       } else expect(again).not.toMatch(/^It happens/);
+      /* Far cliffs framed by company (Plan 9 § Citizen): the clause names the first cliff at or past FAR_POSITION
+         from that same first further zone on, and "n in 10" is its own position, in tenths — never typed. */
+      const farCliff = beyond.length
+        ? ev.analysis.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= 80) ?? null
+        : null;
+      if (farCliff) {
+        expect(again).toContain("beyond what");
+        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings, farCliff.startEarnings]);
+        expect(again).toContain(`${Math.round((farCliff.position ?? 0) / 10)} in 10`);
+      } else expect(again).not.toContain("beyond what");
+
+      /* Your keep rate on the next stretch (Plan 9 § Citizen): the two money figures are keepNext.over and
+         keepNext.kept × keepNext.over from the response, rounded to the pay-unit step (lib/format.ts, $500 a year);
+         a cliff inside the stretch is named at its landing point, a sub-10¢ stretch with none reads as a flat stretch. */
+      const keepNextP = page.locator("#keep-next");
+      if (ev.personal.keepNext === null) {
+        await expect(keepNextP).toBeEmpty();
+      } else {
+        const { over, kept } = ev.personal.keepNext;
+        const text = (await keepNextP.textContent())!;
+        expect(text).toMatch(/^Of the next \$/);
+        const keptFigure = Math.round((kept * over) / 500) * 500;
+        const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
+        if (next && next.startEarnings < ev.analysis.currentEarnings + over) {
+          expect(text).toContain("because");
+          expect(dollars(text)).toEqual([over, keptFigure, next.endEarnings]);
+        } else if (kept < 0.10) {
+          expect(text).toContain("flat stretch");
+          expect(dollars(text)).toEqual([over, keptFigure]);
+        } else {
+          expect(text).not.toContain("because");
+          expect(text).not.toContain("flat stretch");
+          expect(dollars(text)).toEqual([over, keptFigure]);
+        }
+      }
 
       expect(ev.analysis.cliffs.length).toBeGreaterThan(0);
 
@@ -201,6 +238,9 @@ for (const scheme of ["light", "dark"] as const) {
       await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}.png`), fullPage: true });
       if (scheme === "light") {
         await page.locator("#result figure").screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}-chart.png`) });
+        // Plan 9 § Citizen's own review: the band (answer, keep-next, again, sub) at full page width and cropped tight, so the new sentence's rhythm can be read on its own.
+        await page.screenshot({ path: resolve(KEEP_RATE_DIR, `citizen-${width}.png`), fullPage: true });
+        await page.locator("section.band").screenshot({ path: resolve(KEEP_RATE_DIR, `citizen-${width}-band.png`) });
       }
       expect(errors).toEqual([]);
     });
@@ -271,6 +311,28 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   // The assumed list describes the swept household, not the person's echoed answers.
   await expect(page.locator(".assumed")).toContainText("The usual rent in California");
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-archetype.png"), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+test(`a plateau household shows the flat-stretch wording (source ${EXPECT_SOURCE})`, async ({ page }) => {
+  // Delaware's swept single-2 curve keeps 1¢ on the dollar from $41,000 to $51,000, with no cliff in the
+  // stretch (committed 2026-09 sweep, core/data/states/DE.json) — found by scanning every state × archetype
+  // for a next-$10,000 window under the 10¢ floor, per the plan's "or the archetype path with a dead engine".
+  test.skip(EXPECT_SOURCE !== "archetype", "run wrangler with a dead HOTGAP_PE_URL and HOTGAP_EXPECT_SOURCE=archetype");
+  const errors = consoleErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
+  await page.goto("/?zip=19801&kids=3%2C7&pay=41000&unit=year");
+  const ev = (await (await evaluated).json()) as Ev;
+  await page.locator("#chart svg path").first().waitFor();
+  expect(ev.personal.keepNext).not.toBeNull();
+  const { over, kept } = ev.personal.keepNext!;
+  expect(kept).toBeLessThan(0.10);
+  const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
+  expect(next === null || next.startEarnings >= ev.analysis.currentEarnings + over).toBe(true);
+  await expect(page.locator("#keep-next")).toContainText("That is a flat stretch: more pay, little more money.");
+  expect(dollars((await page.locator("#keep-next").textContent())!)).toEqual([over, Math.round((kept * over) / 500) * 500]);
+  await page.screenshot({ path: resolve(OUT, "citizen-390-light-plateau.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
 

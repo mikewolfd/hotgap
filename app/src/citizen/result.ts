@@ -23,7 +23,7 @@ import { assumedRows, hoursText, incompleteText, provenanceText, reachSourceText
 import { sceneOf, type Scene } from "./model.js";
 import { stepLoss, stepRows, stepSentence } from "./steps.js";
 import { tableRows } from "./table.js";
-import { againText, verdictParts, verdictText } from "./verdict.js";
+import { againText, keepNextText, verdictParts, verdictText } from "./verdict.js";
 
 export interface Result {
   /** Nothing to show: the page went back to a bare URL. */
@@ -53,11 +53,13 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
   /* The M4 sentence where the numbers are met, not thirteen hundred pixels down in the source line (S5). Standing text, so not the status region, which announces. */
   const whose = h("p", { class: "hg-callout hg-callout--caution whose", id: "whose", hidden: true });
   const answer = h("p", { class: "answer", id: "answer", tabindex: "-1" });
-  const again = h("p", { class: "answer-sub", hidden: true });
+  /* The keep rate on the next stretch (Plan 9 § Citizen), directly after the answer — its own line, in the answer's rhythm, not the source line's. */
+  const keepNextP = h("p", { class: "answer-sub", id: "keep-next" });
+  const again = h("p", { class: "answer-sub", id: "again", hidden: true });
   const sub = h("p", { class: "answer-sub" });
   const alert = h("div", { class: "hg-callout hg-callout--caution", role: "alert", hidden: true });
   const body = h("div", { class: "hg-page page" });
-  root.append(h("section", { class: "band" }, h("div", { class: "hg-page page" }, masthead, status, whose, answer, again, sub, alert)), body);
+  root.append(h("section", { class: "band" }, h("div", { class: "hg-page page" }, masthead, status, whose, answer, keepNextP, again, sub, alert)), body);
 
   const retryButton = () => {
     const b = h("button", { type: "button", class: "hg-button hg-button--small" }, t("tryAgain"));
@@ -94,6 +96,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       status.textContent = "";
       whose.hidden = true;
       answer.textContent = "";
+      keepNextP.textContent = "";
       again.hidden = true;
       sub.textContent = "";
       alert.hidden = true;
@@ -113,6 +116,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
 
       /* AnswerSentence (#1): each figure carries the key of the mark it names. */
       answer.replaceChildren(...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
+      /* Your keep rate on the next stretch (Plan 9 § Citizen), directly after the answer. */
+      keepNextP.textContent = keepNextText(s) ?? "";
       // The new sentence is read out for a change made without moving focus;
       // it is already on the page in display size, so the region is not shown twice.
       status.classList.toggle("hg-visually-hidden", announce);

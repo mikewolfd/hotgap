@@ -68,15 +68,52 @@ export function verdictParts(s: Scene): VerdictPart[] {
 export const verdictText = (s: Scene): string => verdictParts(s).map((p) => p.text).join("");
 
 /**
+ * A cliff at or past this share of families like the household counts as
+ * "beyond its reach" for `againText`'s company clause (Plan 9 § Citizen).
+ */
+const FAR_POSITION = 80;
+
+/**
  * When further zones lie beyond the household's (charts.md § 1 rule 2):
  * "It happens again from {start of the next zone} to {safe exit}", or, with
  * several, how many times between the first's start and the safe exit. The
  * zones are read off analysis.dangerZones, never assumed to abut the exit.
+ *
+ * Framed by company (Plan 9 § Citizen): among the cliffs from that first
+ * further zone on, the first whose `position` is at or past `FAR_POSITION`
+ * adds a clause naming it and how many families like this one, in tenths,
+ * already stand past it — omitted where none qualifies, or every position
+ * on the stretch is null (never read null as "not far").
  */
 export function againText(s: Scene): string | null {
   if (s.zone === null || s.stuck || s.exit === null || s.safeExit === null || s.safeExit === s.exit) return null;
   const beyond = s.otherZones.filter((z) => z.startEarnings >= s.exit!);
   if (!beyond.length) return null;
   const slots = { from: s.m.pay(beyond[0].startEarnings), to: s.m.pay(s.safeExit) };
-  return beyond.length === 1 ? fill(copy.again, slots) : fill(copy.againMany, { n: beyond.length, ...slots });
+  let out = beyond.length === 1 ? fill(copy.again, slots) : fill(copy.againMany, { n: beyond.length, ...slots });
+  const far = s.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= FAR_POSITION);
+  if (far) out += fill(copy.beyondReach, { at: s.m.pay(far.startEarnings), n: Math.round((far.position ?? 0) / 10) });
+  return out;
+}
+
+/**
+ * Your keep rate on the next stretch (Plan 9 § Citizen), from
+ * `personal.keepNext`: `over` and `kept` are both money in the person's own
+ * pay unit (app/README.md § Keep rate). A cliff inside the stretch — the
+ * citizen's own next cliff, `s.next`, which can sit past the $10,000 window
+ * — is named in the existing program phrase, at the pay it ends (the one
+ * convention, design/inventory.md § Where a program ends); short of that, a
+ * stretch keeping under 10¢ on the dollar is a flat stretch, not a cliff.
+ * Null `keepNext` (less than one step of axis left) says nothing.
+ */
+export function keepNextText(s: Scene): string | null {
+  const next = s.ev.personal.keepNext;
+  if (next === null) return null;
+  const { over, kept: rate } = next;
+  const slots = { over: s.m.pay(over), kept: s.m.pay(rate * over) };
+  if (s.next && s.next.startEarnings < s.current + over) {
+    const id = s.next.programsLost[0];
+    return fill(copy.keepNext.cliff, { ...slots, phrase: id ? phrase(id) : copy.chart.someHelp, wage: s.m.pay(s.next.endEarnings) });
+  }
+  return fill(rate < 0.10 ? copy.keepNext.plateau : copy.keepNext.base, slots);
 }
