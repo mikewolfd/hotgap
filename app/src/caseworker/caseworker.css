@@ -100,11 +100,21 @@ h2 { margin: var(--s6) 0 var(--s3); }
 .compare tfoot td, .compare tfoot th { border-block-end: 0; vertical-align: top; }
 .compare .col-actions { display: flex; gap: var(--s2); justify-content: flex-end; flex-wrap: wrap; }
 .compare tfoot .hg-cite { margin-block-end: var(--s2); white-space: normal; text-align: start; }
+/* The keep-rate row (Plan 9) is a sentence, not a figure: it wraps in its own cell instead of setting every column's width to its longest phrase (B2's width rule). max-width is a hint the table's auto layout mostly ignores once other rows already drive the column wider, so the visible fix is the wrap itself; padding-inline-start keeps the text off the what-if column's start-side rule, which .num's own padding (end only) leaves at zero. */
+.compare td.wrap { white-space: normal; text-align: start; max-width: 8rem; padding-inline-start: var(--s3); }
 /* Below 520px the names take 8rem and a column's head may wrap, so the base and one what-if sit inside a 358px scroller (B2). */
 @media (max-width: 519.98px) {
   .compare th:first-child { min-width: 8rem; width: 8rem; }
   .compare thead th { white-space: normal; }
 }
+
+/* On the way (Plan 9): one list per pay what-if, under the table — the assumed list's own rhythm, one heading per column. */
+.on-the-way__col { margin-block-start: var(--s3); }
+.on-the-way__col h3 { margin-block-end: var(--s2); }
+.on-the-way__col ul { margin: 0; padding-inline-start: var(--s5); }
+.on-the-way__col li { margin-block-end: var(--s1); overflow-wrap: anywhere; }
+.on-the-way__col .hg-badge { margin-inline-start: var(--s1); }
+.on-the-way__col .hg-cite { display: block; }
 
 .footnote { color: var(--ink-3); font-size: var(--t-micro); max-width: var(--measure-wide); }
 .assumptions .hg-source { margin-block-start: var(--s3); }

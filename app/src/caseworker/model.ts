@@ -11,6 +11,8 @@
 // here through lib/format.ts before it fills a slot (lib/copy.ts).
 import {
   CLIFF_MIN,
+  cliffsBetween,
+  keepRateWords,
   modeledAnswers,
   pickArchetypeId,
   REACH_PERCENTILES,
@@ -25,7 +27,7 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
-import { coreText, deferralUntil, limitWords } from "../lib/copy.js";
+import { catalog, coreText, deferralUntil, fill, limitWords } from "../lib/copy.js";
 import { careHousehold, incompleteFor, unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
@@ -35,6 +37,13 @@ import { copy, SERVED_VINTAGE, t } from "./copy.js";
 export { stateName };
 /** A share of eligible households as the whole-number percent the profiles print. */
 const pct = (share: number): number => Math.round(share * 100);
+
+/** "42 in 100 families like this earn less" — core's road.position message (Plan 9); "" where the ladder has no cell, never read as 0. */
+const positionWords = (n: number | null): string => (n === null ? "" : fill(catalog.core.road.position, { n: Math.round(n) }));
+/** "keeps 12¢ of each extra dollar" / "loses 40¢ of each extra dollar" — core's keepRateWords and road.rate own the sign word and the rounding (Plan 9), so the compare row and the tiles cannot round or word a rate differently. */
+const keepRateSentence = (rate: number): string => { const { sign, cents } = keepRateWords(rate); return fill(catalog.core.road.rate, { sign, cents }); };
+/** A tile's qualifying line with the cliff's position parenthesised onto it, the way the reach tile already parenthesises its n (§ StatTiles); "" position adds nothing. */
+const withPosition = (sub: string, position: number | null): string => (position === null ? sub : `${sub} (${positionWords(position)})`);
 
 /** The index of an earnings figure on the axis. */
 export const indexOf = (ev: HouseholdEvaluation, earnings: number): number =>
@@ -96,7 +105,15 @@ export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[]
     label: T.raise, value: p.raiseIsLowerBound ? t("tiles.atLeast", { n: usd(p.raiseToClear ?? 0) }) : usd(p.raiseToClear ?? 0),
     sub: p.raiseIsLowerBound ? t("tiles.raiseNotFound", { top: usd(top(ev)) }) : t("tiles.raiseTo", { exit: usd(p.escapeEarnings ?? 0) }),
   });
-  if (a.worstCliff) out.push({ label: T.drop, value: usd(a.worstCliff.drop), sub: t("tiles.dropAt", { from: usd(a.worstCliff.startEarnings), to: usd(a.worstCliff.endEarnings) }) });
+  // The family's own next cliff leads; the whole-axis worst — often a different, farther, or larger fact — follows it, labeled as the whole-axis fact it is, with its own position (Plan 9's demotion: the family's own road comes before the wall wherever it stands).
+  if (a.nextCliff) out.push({
+    label: T.nextCliff, value: usd(a.nextCliff.drop),
+    sub: withPosition(t("tiles.dropAt", { from: usd(a.nextCliff.startEarnings), to: usd(a.nextCliff.endEarnings) }), a.nextCliff.position),
+  });
+  if (a.worstCliff) out.push({
+    label: T.drop, value: usd(a.worstCliff.drop),
+    sub: withPosition(t("tiles.dropAt", { from: usd(a.worstCliff.startEarnings), to: usd(a.worstCliff.endEarnings) }), a.worstCliff.position),
+  });
   const reach = ev.reach.current;
   if (reach !== null && cell) {
     /* The ladder point at or below the percentile: the ladder is sampled at REACH_PERCENTILES. */
@@ -260,7 +277,7 @@ export function chartLabel(ev: HouseholdEvaluation): string {
 }
 
 // ── CompareTable (#12) ──────────────────────────────────────────────────
-export interface CompareRow { label: string; cell: (ev: HouseholdEvaluation) => string; money?: boolean }
+export interface CompareRow { label: string; cell: (ev: HouseholdEvaluation) => string; money?: boolean; /** The keep-rate sentence is prose, not a figure: it wraps in its cell instead of setting the column's width (B2). */ wrap?: boolean }
 
 /** The rows every scenario answers; `base` is the column "Change from now" is measured against. A threshold takes its own curve's step (a wider axis has a wider one). */
 export function compareRows(base: HouseholdEvaluation): CompareRow[] {
@@ -268,6 +285,8 @@ export function compareRows(base: HouseholdEvaluation): CompareRow[] {
   return [
     { label: R.net, cell: (ev) => usd(ev.analysis.currentNet), money: true },
     { label: R.change, cell: (ev) => (ev === base ? C.dash : signedMoney(ev.analysis.currentNet - base.analysis.currentNet)) },
+    // Keep rate (Plan 9): keepRateWords' rounding of Δnet ÷ Δpay against the base, through road.rate — the base column and a take-up toggle (no change in pay) show the table's own dash, never a rate over $0.
+    { label: R.keep, wrap: true, cell: (ev) => { if (ev === base) return C.dash; const dPay = ev.analysis.currentEarnings - base.analysis.currentEarnings; return dPay === 0 ? C.dash : keepRateSentence((ev.analysis.currentNet - base.analysis.currentNet) / dPay); } },
     { label: R.inZone, cell: (ev) => (ev.analysis.verdict === "in_danger_zone" ? C.yes : C.no) },
     { label: R.zoneEnds, cell: (ev) => (ev.personal.raiseIsLowerBound ? C.pastAxis : ev.personal.escapeEarnings === null ? C.dash : usd(ev.personal.escapeEarnings)) },
     { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? t("tiles.atLeast", { n: usd(ev.personal.raiseToClear ?? 0) }) : usd(ev.personal.raiseToClear ?? 0)) },
@@ -277,6 +296,28 @@ export function compareRows(base: HouseholdEvaluation): CompareRow[] {
     { label: R.childCoverage, cell: (ev) => (ev.escape.childCoverageEndEarnings === null ? C.pastAxis : usd(ev.escape.childCoverageEndEarnings + stepOf(ev))) },
     { label: R.reach, cell: (ev) => (ev.reach.current === null ? C.dash : ordinal(Math.round(ev.reach.current))) },
   ];
+}
+
+/** One row of the on-the-way list under the CompareTable: the cliff's own sentence, whether it carries the DeferredBadge, and its position, pre-rendered so render.ts only marks it up. */
+export interface OnTheWayItem { text: string; deferred: boolean; position: string }
+
+/**
+ * The cliffs between the base's own pay and a pay what-if's, in earnings
+ * order (core's `cliffsBetween`, Plan 9) — what this family crosses walking
+ * from here to there, regardless of which one is higher. Null for a what-if
+ * that did not change pay (a take-up toggle): there is no "on the way"
+ * between one earnings figure and itself, so the column gets no list at
+ * all, not an empty one. O(cliffs).
+ */
+export function onTheWay(base: HouseholdEvaluation, ev: HouseholdEvaluation): OnTheWayItem[] | null {
+  const payBase = base.analysis.currentEarnings, payWhatIf = ev.analysis.currentEarnings;
+  if (payBase === payWhatIf) return null;
+  const lo = Math.min(payBase, payWhatIf), hi = Math.max(payBase, payWhatIf);
+  return cliffsBetween(base.analysis.cliffs, lo, hi).map((c) => ({
+    text: t("compare.onTheWay.item", { at: usd(c.startEarnings), n: c.programsLost.length, programs: listOf(c.programsLost.map(phrase)), drop: lossFigure(c.drop) }),
+    deferred: c.deferral !== null,
+    position: positionWords(c.position),
+  }));
 }
 
 /** A column's sub-line: the household shape and earnings the column was evaluated at. */

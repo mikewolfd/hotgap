@@ -2,12 +2,12 @@
 // design/caseworker.html froze (single parent, kids 3 and 7, $38,000),
 // evaluated offline through core, so every expected figure below is one the
 // mockup's audit screenshots carry and a reader can check against the file.
-import { evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
+import { cliffsBetween, evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
 import { describe, expect, it } from "vitest";
 import { dateWords, listOf, lossFigure, ordinal, signedMoney } from "../lib/format.js";
 import {
   assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, notInSweep, sourceLine, tiles, unclaimedNote, verdict,
+  modeled, notInSweep, onTheWay, sourceLine, tiles, unclaimedNote, verdict,
 } from "./model.js";
 
 const answers = (flags: Record<string, string | boolean>) => {
@@ -54,12 +54,13 @@ describe("the verdict, caseworker register", () => {
 });
 
 describe("the tiles", () => {
-  it("are net, the raise, the largest drop and reach with its margin from the cell", () => {
+  it("are net, the raise, the household's own next cliff, the whole-axis worst below it, and reach with its margin from the cell (Plan 9's demotion)", () => {
     const t = tiles(co, reachCell("CO", "single-2"));
     expect(t.map((x) => [x.label, x.value, x.sub])).toEqual([
       ["Net, after premiums", "$84,371", "at $38,000 earned"],
       ["Raise to clear the zone", "$7,000", "to $45,000 earned"],
-      ["Largest single-step drop", "$25,449", "at $54,000 → $55,000"],
+      ["Next cliff", "$305", "at $41,000 → $42,000 (42 in 100 families like this earn less)"],
+      ["Largest drop anywhere on the curve", "$25,449", "at $54,000 → $55,000 (50 in 100 families like this earn less)"],
       ["Reach at current earnings", "40th", "percentile, ±$8,000 (n = 393)"],
     ]);
   });
@@ -160,12 +161,13 @@ describe("the chart's words", () => {
 });
 
 describe("CompareTable", () => {
+  const raise = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "55000" }))!;
   it("answers the same rows for the base and for a what-if", () => {
-    const raise = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "55000" }))!;
     const rows = compareRows(co);
     expect(rows.map((r) => [r.label, r.cell(co), r.cell(raise)])).toEqual([
       ["Net after premiums", "$84,371", "$55,924"],
       ["Change from now", "—", "−$28,447"],
+      ["Keeps of each extra dollar", "—", "loses 167¢ of each extra dollar"],
       ["In a danger zone", "Yes", "Yes"],
       ["Zone ends at", "$45,000", "$119,000"],
       ["Raise still needed", "$7,000", "$64,000"],
@@ -175,6 +177,40 @@ describe("CompareTable", () => {
       ["Child coverage ends", "$73,000", "$73,000"],
       ["Reach at these earnings", "40th", "51st"],
     ]);
+  });
+  it("keeps rate is Δnet ÷ Δpay against the base, through keepRateWords and road.rate — never a rate for a column whose pay did not change (a take-up toggle)", () => {
+    const keep = compareRows(co).find((r) => r.label === "Keeps of each extra dollar")!;
+    // $17,000 more pay, $28,447 less net (the $54k→$55k childcare cliff sits in the stretch): loses $1.673 of every extra dollar.
+    expect(keep.cell(raise)).toBe("loses 167¢ of each extra dollar");
+    const toggle = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "38000", married: true }))!;
+    expect(toggle.analysis.currentEarnings).toBe(co.analysis.currentEarnings);   /* same pay as the base: a toggle, not a raise */
+    expect(keep.cell(toggle)).toBe("—");
+    expect(keep.cell(co)).toBe("—");   /* the base column is never measured against itself */
+  });
+});
+
+describe("on the way (Plan 9): the cliffs a pay what-if crosses, from core's own cliffsBetween", () => {
+  const raise = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "55000" }))!;
+  it("equals cliffsBetween on the base's own cliffs, in earnings order, each with its position", () => {
+    const items = onTheWay(co, raise)!;
+    const expected = cliffsBetween(co.analysis.cliffs, 38000, 55000);
+    expect(items).toHaveLength(expected.length);
+    expect(items.map((i) => i.deferred)).toEqual(expected.map((c) => c.deferral !== null));
+    // The first is a credits phase-out with no named program (a step, not a program ending); the last is the childcare cliff the tiles and the ledger already carry.
+    expect(items[0].text).toBe("$41,000 — a step down (−$305)");
+    expect(items[0].position).toBe("42 in 100 families like this earn less");
+    expect(items.at(-1)!.text).toBe("$54,000 — child care help ends (−$25,449)");
+  });
+  it("carries the DeferredBadge flag on a deferred cliff", () => {
+    const cliffs = co.analysis.cliffs;
+    const at41k = cliffs.find((c) => c.startEarnings === 41000)!;
+    const deferred = { ...at41k, deferral: { reason: "transitional_medical_assistance", until: "next renewal", complete: true } as never };
+    const withDeferred = { ...co, analysis: { ...co.analysis, cliffs: cliffs.map((c) => (c === at41k ? deferred : c)) } };
+    expect(onTheWay(withDeferred, raise)!.map((i) => i.deferred)).toEqual([true, false, false, false, false]);
+  });
+  it("is null for a toggle what-if whose pay did not move — no list, not an empty one", () => {
+    const toggle = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "38000", married: true }))!;
+    expect(onTheWay(co, toggle)).toBeNull();
   });
 });
 
