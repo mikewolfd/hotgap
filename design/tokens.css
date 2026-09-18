@@ -53,8 +53,13 @@
 :root {
   --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  /* 1.185 scale from a 17px body. The citizen answer is the only display size. */
-  --t-answer: clamp(1.625rem, 1.05rem + 2.5vw, 2.375rem);
+  /* 1.185 scale from a 17px body. The answer is the only display size.
+     Retuned 2026-09-18 (PICTURE-FIRST): 22px at 390 and 34px at 1280, down
+     from 26/38. The sentence got shorter and the picture needs the pixels —
+     on a phone every point of headline is a point off the plot, and at four
+     lines of 22px the sentence is still the largest thing on the screen
+     until the chart begins. */
+  --t-answer: clamp(1.375rem, 0.95rem + 1.9vw, 2.125rem);
   --t-figure: 1.875rem;   /* a hero number inside a tile — same sans, never serif */
   --t-h1:     1.5rem;
   --t-h2:     1.1875rem;
@@ -86,6 +91,16 @@
      under 80 on its longest item). */
   --measure:      48ch;   /* citizen prose */
   --measure-wide: 58ch;   /* caseworker / journalist prose */
+  /* The headline's own measure, in the shared layer because all three
+     surfaces get one (PICTURE-FIRST). 30ch is about 40 characters in
+     Archivo: two to four lines of a sentence a person would say out loud.
+     It widens at 40rem, where the sentence gets two lines instead of four. */
+  --measure-answer: 30ch;
+
+  /* The picture may leave the prose column (PICTURE-FIRST § Layout): prose
+     keeps --page-max, the figure takes the room, because a wider plot is
+     more axis per screen and a sentence is not improved by being wider. */
+  --figure-max: 56rem;
 
   /* ── Space. 4px base. ── */
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
@@ -429,6 +444,32 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    A page's width is its own by contract and is set as --page-max on the
    page's own class (citizen 40rem, journalist 68rem, caseworker 76rem). */
 .hg-page { max-width: var(--page-max, 76rem); margin-inline: auto; padding: 0 var(--s4) var(--s8); }
+
+/* ── The picture is the page (PICTURE-FIRST-2026-09-18) ────────────────
+   One sentence, then the figure, and the figure gets the room. On a phone
+   it bleeds to both edges — the y-axis gutter travels inside it, so the
+   plot starts where the screen starts — while every word in the figure
+   keeps the page's own gutter. Above 64rem the figure leaves the prose
+   column: prose keeps its measure, the plot gets more axis per screen. */
+.hg-figure { margin: 0 calc(-1 * var(--s4)); }
+.hg-figure > :not(.hg-chart) { padding-inline: var(--s4); }
+@media (min-width: 64rem) {
+  .hg-figure { margin-inline: calc((min(var(--figure-max), 100vw - 4 * var(--s4)) - 100%) / -2); }
+}
+
+/* AnswerSentence (#1): the verdict as one sentence at display size, each
+   dollar underlined in the colour of the mark it names, so the sentence
+   doubles as the chart's key. Shared since 2026-09-18, because all three
+   surfaces open with an answer; the page keeps only its own margins. */
+.hg-answer { font-size: var(--t-answer); line-height: var(--lh-answer); font-weight: var(--w-med);
+             letter-spacing: -0.015em; max-width: var(--measure-answer); text-wrap: balance; }
+.hg-answer:empty { display: none; }
+.hg-amt { font-weight: var(--w-semi); white-space: nowrap;
+          box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
+.hg-amt--keep  { --keyed: var(--series-1); }   /* the line */
+.hg-amt--gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
+.hg-amt--cliff { --keyed: var(--loss-4); }     /* a cliff dot */
+@media (min-width: 40rem) { :root { --measure-answer: 38ch; } }
 
 /* The wordmark's type (audit F10): the editor's sticky row and the
    journalist masthead. Each keeps its own margin; the editor also tracks it

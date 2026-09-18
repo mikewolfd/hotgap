@@ -59,6 +59,9 @@ measures step size, and nothing is a card.
   and `core/data/summary.json`
 - `AUDIT-2026-09-16.md` — the visual audit these rules answer; its screenshots
   are under `audit/`
+- `PICTURE-FIRST-2026-09-18.md` — the pass that made the figure the page: the
+  word budget, the disclosure pattern, the direct-label priority list and the
+  contract all three surfaces build to. `app/e2e/weight.mjs` is its scale
 
 All three sketches are **frozen to** the sweep stamped
 **2026-09-16T16:13:51.445Z** (`summary.generated`), run on policyengine-us
@@ -203,6 +206,13 @@ reviewed by social workers, not scored by a formula (decided 2026-09-18): a
 readability index cannot see a hard word in a three-word label, and the people
 who say these sentences to families every day can.
 
+The rule that replaced the formula, in one line: **write it the way a good
+caseworker says it across the desk, then cut every word that does not help.**
+Second person, contractions, the numbers inside the sentence rather than
+announced before it. The old rule — *short words, one thought a line* — was
+satisfied by "More pay does not add to that until you are paid $38,000", which
+is short, is one thought, and is a sentence no human being has ever said.
+
 **2. One answer against many what-ifs.** The citizen surface gives one answer and
 refuses to offer alternatives, because offering paths reads as advice. The
 caseworker's entire job is running four what-ifs in ninety seconds. *Resolved:*
@@ -276,8 +286,9 @@ touching a single slot.
 **The register per language.** The same distinction the personas draw in English
 has to survive the crossing.
 
-- **The citizen surface** is plain, second person, one thought a sentence, and
-  it never meets a regulation citation. In Spanish that is `usted`, not `tú`:
+- **The citizen surface** is a caseworker's voice across a desk: second
+  person, warm, contractions, the numbers inside the sentence, and it never
+  meets a regulation citation. In Spanish that is `usted`, not `tú`:
   this is a government benefits page, the reader may be filling out a form
   beside it, and the formal address is what the notices they already hold use.
   Plainness is judged by a reader in every language, English included: short
@@ -347,6 +358,12 @@ and URL parameter names are machine contracts. Money stays US dollars.
   cannot.
 - **Shadows and rounded cards.** Panels are defined by a rule and a change of
   ground. `--r-panel` is `0` on purpose.
+- **Anything above the figure but a sentence.** Since 2026-09-18 the order on
+  every surface is masthead, one sentence, picture (`inventory.md` § The page
+  is its picture). A lede, a stat row, a key, a filter row or an eyebrow above
+  the fold is a rejected design, not a missing one: the reader who needs them
+  finds them under a named disclosure, and the reader who does not is not
+  charged for them.
 - **A live tooltip as the primary read.** Values are reachable by keyboard, by
   the readout line, by a cliff mark that is a button, and by the table before
   hover is considered.

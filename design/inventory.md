@@ -6,11 +6,11 @@ surface renders the component, not that it could.
 
 | # | Component | What it is | C | W | J |
 |---|---|---|:-:|:-:|:-:|
-| 1 | **AnswerSentence** | The verdict written as one sentence at display size, with each dollar figure underlined in the colour of the mark it names — so the sentence doubles as the chart's key. One sentence shape per curve shape (§ Verdict catalog); the second figure it names is the leap (S7). | ● | | |
+| 1 | **AnswerSentence** | The verdict as **one** sentence at display size, up to two clauses, each dollar figure underlined in the colour of the mark it names — so the sentence doubles as the chart's key. One shape per curve shape (§ Verdict catalog); the second figure it names is the leap (S7). Since 2026-09-18 it is the figure's own `<figcaption>`, first child: the sentence and the picture are one object, and nothing stands between the masthead and them (§ The page is its picture). | ● | ● | ● |
 | 2 | **StatTile** | Label, one number, one qualifying line. Proportional figures, same sans, no sparkline unless the trend is the point. | | ● | |
 | 3 | **MoneyCurve** | The line of net income against earnings, with the household's band, the exit and the leap bracket, cliffs as controls, deferred cliffs, a reference line and the household's position. Plots the real curve — every drop full size, in place (2026-09-17). **The whole earnings axis, scrolled sideways, never cropped** (2026-09-17): the y-axis holds still in a gutter outside the scroller, the x-ticks move with the curve, `windowFor` picks where the reader lands, and the axis's ends are rendered beneath it from the data as "← $0 … $150,000 →". Rules in `charts.md` § 1 and § The scroll rule. | ● | ● | |
 | 4 | **CurveReadout** | The live `aria-live` line under the curve that reports the point under the cursor, the keyboard caret, or the cliff mark just activated. Replaces a floating tooltip. | ● | ● | |
-| 5 | **MarkKey** | The non-series key: band, immediate cliff, deferred cliff, position. Never a colour swatch alone — each entry draws the actual mark. | ● | ● | |
+| 5 | **MarkKey** | The non-series key: band, immediate cliff, deferred cliff, position. Never a colour swatch alone — each entry draws the actual mark. Since the marks carry direct labels (2026-09-18) it is the fallback rather than the first read, and it lives inside the figure's own *How to read this picture* disclosure — in the DOM, on paper, one key press away, and not in the way. | ● | ● | |
 | 6 | **StepList** | The citizen reading of thresholds: a dollar in a fixed left column, a plain sentence beside it, one rule per step. Rendered from the cliff list under the one threshold convention (§ Where a program ends). A row is the card a cliff mark opens (M6). A deferred cliff is a row like any other, its loss line counted, carrying DeferredBadge (#10) and the rule's clause. | ● | | |
 | 7 | **ThresholdLedger** | The professional reading of the same data: earnings, program, who holds it (adult or child), and the citation that governs it. Same convention and same source as StepList, deferred rows included and badged. | | ● | |
 | 8 | **DropLedger** | Every cliff as a row — step, drop, programs lost, driver, deferred badge. Selecting a row, or its cliff mark on the chart, drives the breakdown: one selection, not two. | | ● | |
@@ -53,6 +53,8 @@ layout that is genuinely its own (its column grid, its masthead).
 | DataTable, DropLedger, CompareTable | `.hg-table` with `.num` and `.money`; `.hg-row-btn` for a row that is a control (44px on screen, its own rhythm on paper); `.hg-scroll-x` around a wide table — an edge shadow on whichever side still has content, by CSS alone, and `data-more` for a page's own "swipe" words while it finds an overflow (places context-blind S10); `details.hg-disclosure` around a table that opens on demand |
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print`; `.hg-dense` on `<html>` is the two panel surfaces' 15px base and wider measure, once |
+| AnswerSentence | `.hg-answer`; `.hg-amt` with `--keep` (the line), `--gap` (the exit rule and the bracket), `--cliff` (a cliff dot); `--measure-answer` is its measure and `--t-answer` its size. The page keeps only the margins |
+| The figure | `.hg-figure` — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter |
 | Page column, wordmark | `.hg-page` (centred, `--s4` gutters, `--s8` foot; the page sets `--page-max` on its own class: citizen 40rem, journalist 68rem, caseworker 76rem); `.hg-wordmark` (weight and size; the editor's row tracks it −0.01em, the journalist masthead does not — one value once settled) |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
@@ -77,6 +79,60 @@ Four rules that go with the map:
   same (places review S3). Selection and focus are two marks in two places:
   the system focus ring outside, the selection mark inside (S4).
 
+## The page is its picture (2026-09-18)
+
+The rule this pass added, and the one every surface follows. Its reason is a
+first reader's, quoted in `PICTURE-FIRST-2026-09-18.md`: there was too much
+writing, and the picture was two thirds of a phone screen down.
+
+**The order, on every surface.** One line of masthead, one sentence, the
+figure. Nothing else is above the fold — not a lede, not a stat row, not a
+key, not a filter. The figure's first child is the AnswerSentence itself, as
+`<figcaption>`, so the picture's accessible name is the answer.
+
+**The budget, measured not asserted.** `app/e2e/weight.mjs` counts the words a
+person can really see (no `[hidden]`, no `display:none`, no visually-hidden
+clip; a closed `<details>` is worth its summary and nothing else), reports the
+words inside the picture apart from the prose, finds the first `<figure>` and
+measures how much of the first screen it covers.
+
+| | citizen | caseworker | journalist |
+|---|---:|---:|---:|
+| words visible by default | ≤ 120 | ≤ 250 | ≤ 200 |
+| first figure's top, at 390 | ≤ 120px | ≤ 120px | ≤ 120px |
+| figure's share of screen 1, 390 / 1280 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 |
+
+The three budgets differ because density is a surface decision, not a
+component one (`README.md` § Where the personas conflict, 3). They are floors
+on the reader's attention, not ceilings on what the page holds: the same
+script run with every disclosure open is the proof that nothing was deleted,
+and that number belongs in every review beside the closed one.
+
+**The disclosures.** Three on the page, one inside the figure, in this order,
+with these names. A surface that needs another names it for what is inside it
+and writes it here.
+
+| summary | what is inside |
+|---|---|
+| *How to read this picture* | MarkKey, the caption (axis floor, estimates, year and state), the keyboard sentence. Inside `<figure>` |
+| *What happens at each step* | the keep rate on the next stretch, StepList / ThresholdLedger, EligibilityBoundary, DataTable |
+| *What we assumed about you* | the assumed rows and every correction that touched them, then reach and the lowest legal pay |
+| *Where these numbers come from* | SourceNote, IncompleteMarker, CorrectionsApplied, the estimates footer |
+
+Four rules that go with them:
+
+- `details.hg-disclosure`, closed by default, **open on paper**
+  (`beforeprint`), content in the DOM at all times and reachable by keyboard
+  and screen reader. Never a tab, never a modal, never a link that navigates.
+- A summary is a plain sentence fragment a person would say, sentence case,
+  no count badge and no chevron of our own.
+- **Nothing that changes an answer hides.** The ScenarioBar's chips are behind
+  *Edit* because they are the household, not the answer.
+- **Nothing that warns hides.** `role="alert"`, `role="status"`, the archetype
+  notice and the incomplete-state caution stay in the open, whatever the
+  budget costs. A page under its word count with a hidden warning has failed
+  the measurement, not passed it.
+
 ## `--control-edge`
 
 The boundary of anything a person can press or change (S11): `.hg-chip`,
@@ -100,7 +156,14 @@ its parent's box, so a top row that shared a block with the inputs scrolled
 away with them (the caseworker page measured `top: -556`). The
 input chips collapse to one summary line, rendered from `answers`:
 
-> CO · El Paso · 1 adult, kids 3 & 7 · $38,000 — **Edit**
+> A parent with two kids in Colorado, paid $38,000 a year — **Edit**
+
+The line was `CO · El Paso · 1 adult, kids 3 & 7 · $38,000` until 2026-09-18.
+Facts joined by middle dots are a template's way of writing, not a person's,
+and this line is the only prose above the answer: it says who the numbers are
+for, in one phrase, from the same `answers` as before. The county leaves it —
+it is in the chips and in the source line, and it was the fact readers scanned
+past.
 
 *Edit* is a `.hg-button--small` with `aria-expanded` and `aria-controls`
 pointing at the inputs row; pressing it sets `data-open="true"` on
@@ -264,37 +327,42 @@ string here is reviewed by social workers in the citizen register.
 
 | `verdict` | Sentence | Slots |
 |---|---|---|
-| `always_up` | You are paid {pay}. You keep {kept}. When you earn more, you keep more. We did not find a spot where more pay leaves you with less. | pay, kept |
-| `cliff_ahead` | You are paid {pay}. You keep {kept}. Near {wage}, more pay can mean less money: past it you would keep about {drop} less a year. People call this a benefits cliff. | pay, kept, wage = `nextCliff.endEarnings` (the convention above), drop = `nextCliff.drop` |
-| `in_danger_zone`, exit known | You are paid {pay}. You keep {kept}. More pay does not add to that until you are paid {exit}: a raise of {leap}. | pay, kept, exit = `personal.escapeEarnings`, leap = `personal.raiseToClear` (keyed to the bracket, S7) |
-| `in_danger_zone`, stuck (`personal.raiseIsLowerBound`) | You are paid {pay}. You keep {kept}. More pay does not add to that in the pay range we checked, up to {top}. We did not find a spot where you come out ahead again. | pay, kept, top = the last `curve.points[].earnings` |
-| `cliff_behind` | You are paid {pay}. You keep {kept}. The big drop is below your pay now. From here, more pay means more for you. | pay, kept |
+| `always_up` | Every raise leaves you better off — we checked every step up to {top} and nothing drops. | top |
+| `cliff_ahead` | You're fine up to {wage}; past that, earning more costs you about {drop} a year. | wage = `nextCliff.endEarnings` (the convention above), drop = `nextCliff.drop` |
+| `cliff_ahead`, and that cliff waits | You're fine up to {wage}; past that you'd lose about {drop} a year, though not right away. | as above |
+| `in_danger_zone`, exit known | More pay won't leave you better off until you're past {exit} — {leap} more than you make now. | exit = `personal.escapeEarnings`, leap = `personal.raiseToClear` (keyed to the bracket, S7) |
+| `in_danger_zone`, stuck (`personal.raiseIsLowerBound`) | More pay won't leave you better off anywhere we looked, right up to {top}. | top = the last `curve.points[].earnings` |
+| `cliff_behind` | The worst of it is behind you — from {wage} up, more pay means more money. | wage = `worstCliff.endEarnings` |
 
-The keyed underlines follow the marks: {kept} in `--series-1` (the line),
-{exit} and {leap} in `--loss-3` (the exit rule and the bracket), {wage} in
-`--loss-4` (the cliff dot). "People call this a benefits cliff." is kept on
-purpose: it is the one sentence that lets a client match what the office
-says to what the page showed. When more zones lie beyond the household's
-(`escape.safeExitEarnings` differs from `personal.escapeEarnings`), the
-answer-sub carries one more sentence, from the data: "It happens again
-between {exit} and {safeExit}." — see `charts.md` § 1 for the drawn rule.
+The keyed underlines follow the marks: {exit} and {leap} in `--loss-3` (the
+exit rule and the bracket), {wage} in `--loss-4` (the cliff dot), {top} and
+{drop} unkeyed. When more zones lie beyond the household's
+(`escape.safeExitEarnings` differs from `personal.escapeEarnings`), one more
+sentence carries it, from the data: "It happens again between {exit} and
+{safeExit}." — drawn rule in `charts.md` § 1 — and it sits in *What happens
+at each step*, not in the answer.
 
-**The timing clause.** When a deferred cliff (`evaluation.deferred`) starts
-at or above the household's own pay, the sentence above it takes one more
-clause. Its money is already in the figures — since 2026-09-17 a deferred
-loss counts like any other, so it can be the `{drop}` of `cliff_ahead` or
-the step that sets `{exit}` and `{leap}` — and the clause only says when it
-lands, keyed by `Cliff.deferral.reason` so the reader gets the rule and not
-the word *later*: "At {at}, {phrase} stops: about {drop} a year. But not
-that day." then, per reason, "A child in it stays to the end of the next
-program year." (`head_start_program_year`), "Kids keep it to their next
-yearly check, up to 12 months later."
-(`child_continuous_eligibility`), or "You keep it for 6 to 12 more months."
-(`transitional_medical_assistance`). `{at}` is keyed `amt`; the rest is
-prose, because the figure it would underline is already underlined above.
-This replaced a *One more thing…* clause whose job was to restore a loss
-the lifted curve had left out, and a two-screens-down callout that said the
-drop was not real today — both gone with the lift.
+**What left this sentence on 2026-09-18** (`PICTURE-FIRST-2026-09-18.md`),
+and why, because each was there for a reason:
+
+- **{pay} and {kept}** — "You are paid $30,000 a year. You keep $45,283."
+  The pay is what the person typed and the ScenarioBar's summary line still
+  says it; an answer that opens by repeating the question is why nobody reads
+  its second sentence. What they keep moved onto the chart, as the direct
+  label at their own diamond (`charts.md` § Direct labels): it is the one
+  number on this page that needs a picture to make sense of.
+- **"People call this a benefits cliff."** — the sentence that let a client
+  match the page to what the office says. It is not lost: it opens *What
+  happens at each step*, where a person who wants the mechanism is already
+  looking.
+- **The timing clause** for a deferred cliff at or above the household's pay.
+  Citizen review B1 asked that such a loss not be invisible *in the answer
+  and in the picture*; the picture now carries it — the hollow dot, the dashed
+  stub, the word *later* and the drop's money as a direct label — and the
+  step row still carries the rule and the badge, which is what B1 protected.
+  `cliff_ahead` keeps a four-word hedge ("though not right away") where the
+  cliff the sentence itself names is the deferred one, because there the
+  answer would otherwise be wrong about timing.
 
 ## Program phrases (M3)
 

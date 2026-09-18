@@ -225,13 +225,23 @@ x-tick step grows so the type never shrinks below the 9pt floor, the caption
 says the whole range is shown, and the hint and the edge fade are off. The
 redraw hangs off `beforeprint`; `afterprint` gives the scroller back.
 
-#### Height is chosen by the biggest drop
+#### Height is chosen by the biggest drop, and by the screen
 
 The cost of an honest y-range is pixels: the range is the whole curve's now, so
 the biggest drop is a much smaller share of it than it was inside a crop. Height
 is the only thing left that buys those pixels back, so the plot is **exactly as
 tall as the biggest drop needs to stand 24px**, clamped to 260–560px of
 drawing area (324–624px with padding).
+
+Since 2026-09-18 there is a **second floor: what is left of the first screen.**
+The plot fills the space between its own top and the bottom of the first
+viewport, less the room the hint and the readout need. On a phone that is the
+difference between a picture a person looks at and one they scroll past, and
+it is the same rule that makes `weight.mjs`'s *figure share of screen 1*
+reachable. The ceiling is unchanged, so a figure is never taller than a
+screen; the drop floor still wins wherever it asks for more; and where the
+screen asks for more than the data did, the drop gets those pixels too — the
+three households `charts.md` recorded at 22–24px are the ones that gain.
 
 The ceiling bites, and it is honest about where. Measured on the citizen
 review's eight households at 390 and 1280 (`app/e2e/scroll-curve-review.mjs`,
@@ -273,12 +283,53 @@ dollar, the *back to even* label is dropped, the leap keeps its label. The
 gutter is 44px instead of 52px. The caseworker curve is scrolled the same way
 as the citizen's, and its compare columns are untouched by any of it.
 
-### Direct labels
+### Direct labels (rewritten 2026-09-18)
 
-Exactly two on the citizen chart (the largest drop and the leap) and two on the
-caseworker's. Every other value lives in the ledger, the readout, or the table.
-A number on every cliff is the anti-pattern. Tick labels take `.hg-tick`
-(12px); word labels take `.hg-label` (13px) — never a bare `font-size`.
+The old rule was *exactly two on the citizen chart* — the largest drop and the
+leap — and it was right for a page whose paragraphs carried the answer. The
+paragraphs are gone (`PICTURE-FIRST-2026-09-18.md`), so the labels carry it.
+What replaces the count is a **priority list and a collision test**, which is
+the thing the count was really protecting: a number on every cliff is still
+the anti-pattern.
+
+Drawn in this order, each only if it fits:
+
+1. **`you keep $45,283`** — at the household's diamond, in `--ink`,
+   `--w-semi`. The one place the y-axis is named in dollars a person
+   recognises, and the fact that left the answer sentence to come here.
+2. **`−$3,513` / `food help ends`** — the largest drop, two lines, `--loss-ink`
+   at `--w-semi` over a halo. The heaviest ink on the picture: it is the
+   thing the page exists to show. The second line is the plain phrase for
+   `programsLost[0]` (`inventory.md` § Program phrases), or nothing when the
+   cliff names no program.
+3. **`back to even`**, and **`safe from here`** when that is a different pay —
+   on their rules, `--loss-3`, `--w-med`. Both drop below 520px and the
+   caption says them instead.
+4. **`later`** over a deferred mark's dashed stub, with that drop's money
+   beside it when there is room. Solid means this year, dashed means a later
+   renewal, here as everywhere.
+5. **`+$7,000`** — the leap, on its bracket, `--w-semi`.
+6. **`you keep 12¢ of each extra dollar`** — once, on the road out of poverty
+   (`evaluation.road`), in `--ink-3` below the axis, where it cannot be read
+   as part of the curve. Sign and cents from `keepRateWords`, never rounded
+   locally.
+7. Every remaining drop's money, in axis order, while room lasts.
+
+**Collisions.** Each label's candidate spots are tested against the dots (with
+the open ring's box), the diamond, and every label already placed. A label
+with no clear spot is **dropped, not drawn overlapping** — its money is in the
+readout, the step row and the table, all of which are a key press away. The
+single exception is 2, which always draws: it is the label the page promises,
+and its last-resort spot is used. Because placement is in priority order, a
+crowded curve loses its seventh label, never its first.
+
+**Deleted in the same pass:** the peak rule's dollar. It printed a number two
+inches from *you keep* that was within a rounding of it, and it was one of the
+three collisions citizen review S3 found. The peak rule itself stays: the band
+needs its top edge.
+
+Tick labels take `.hg-tick` (12px); word labels take `.hg-label` (13px) —
+never a bare `font-size`.
 
 ### Interaction and the text equivalent
 
