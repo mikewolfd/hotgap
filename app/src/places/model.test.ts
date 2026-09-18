@@ -5,7 +5,7 @@ import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, numberWords } from "../lib/format.js";
 import { copy, t } from "./copy.js";
 import { archLabel, bins, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, paysForCare, rowsFor, tableRows, valueOf } from "./model.js";
-import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, servedLine, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -303,17 +303,23 @@ describe("the sentences, from copy through words.ts", () => {
     expect(householdPhrase(false, false, [])).toBe("a childless single adult");
     expect(householdPhrase(true, false, [3])).toBe("a one-earner couple with one child");
     expect(householdPhrase(true, true, [1, 4, 9])).toBe("a two-earner couple with three children");
-    expect(roadSentence("Missouri", householdPhrase(false, false, [3, 7]), -0.5632))
-      .toBe("Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar.");
-    expect(roadSentence("New Mexico", householdPhrase(false, false, [3, 7]), 0.3042))
-      .toBe("New Mexico — a single parent of two children who earns their way from poverty to twice poverty keeps 30¢ of every extra dollar.");
+    /* The readout's rate line is the page's frame around core's own phrase
+       since the picture-first pass: the answer sentence above it has already
+       named the household and the climb, so the readout says the state and the
+       rate and stops (design/REVIEW-picture-first-places-2026-09-18.md). The
+       sign word and the rounding are still core's. */
+    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar climbing out of poverty.");
+    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar climbing out of poverty.");
+    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar</b> climbing out of poverty.");
     expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
       .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
     expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");
     expect(roadCollapse("$54,000", "$3,513", [])).toBe("The road collapses at $54,000, where the family loses $3,513 in one step; no single program explains the drop.");
     expect(roadHolds("$1,000", "$27,000", "$55,000", "$200"))
       .toBe("The road does not collapse: no $1,000 step of earnings between $27,000 and $55,000 cut net income by $200 or more.");
-    expect(roadPosition(47, "Missouri")).toBe("47 in 100 families like this in Missouri earn less than that.");
+    /* The state is the readout line's own subject and is named at its head, so
+       the position sentence no longer says it twice. */
+    expect(roadPosition(47)).toBe("47 in 100 families like this earn less than that.");
     expect(axisPosition(87)).toBe("87 in 100 families like this earn less than that.");
     expect(roadCliffCountLine("Missouri", 7)).toBe("Missouri — 7 cliffs on the road out of poverty.");
     expect(roadCliffCountLine("Alabama", 1)).toBe("Alabama — 1 cliff on the road out of poverty.");
@@ -326,6 +332,35 @@ describe("the sentences, from copy through words.ts", () => {
     expect(axisLine("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))
       .toBe("For 1 adult, 2 children (3 and 7) the axis runs from $0 to $150,000 ($175,000 in Alaska, $165,000 in Hawaii); a figure that runs past the axis runs past that.");
     expect(axisLine("h", "$150,000", [])).toBe("For h the axis runs from $0 to $150,000; a figure that runs past the axis runs past that.");
+  });
+});
+
+describe("the one caution the map on the screen has earned (§ The page is its picture)", () => {
+  /* The two boxed warnings live in full inside "How to read this map"; the one
+     that is TRUE OF THE MAP a reader is looking at comes out of it in one line,
+     because then it is not a rule but a warning, and nothing that warns hides.
+     The bounded branch is exercised end to end on the safe-exit map
+     (e2e/places.spec.ts). The hatched branch has no subject on this sweep — no
+     state is incomplete since NJ and WA became complete — so the path is proved
+     here, on the message, rather than left unwritten until a sweep needs it. */
+  it("says what is hatched and that hatched is not low, for one state and for several", () => {
+    expect(t("caution.hatched", { n: 1, programs: "Child care subsidy" }))
+      .toBe("**Hatched is not low.** One state is hatched: Child care subsidy is not modelled there, so its figures are floors and it is neither shaded nor ranked.");
+    expect(t("caution.hatched", { n: 3, programs: "Child care subsidy and Premium assistance" }))
+      .toBe("**Hatched is not low.** 3 states are hatched: Child care subsidy and Premium assistance is not modelled there, so their figures are floors and they are neither shaded nor ranked.");
+  });
+  it("says a bound is not a value, on the whole axis and on the road", () => {
+    expect(t("caution.past", { n: 1 })).toMatch(/^\*\*Past the axis is not a number\.\*\* One state's figure runs off the top of the earnings scale/);
+    expect(t("caution.past", { n: 3 })).toMatch(/^\*\*Past the axis is not a number\.\*\* 3 states' figures run off the top of the earnings scale/);
+    expect(t("caution.roadPast", { n: 2 })).toMatch(/^\*\*No rate to compare\.\*\* In 2 states this household's road out of poverty falls outside/);
+  });
+  it("uses the reader's word for the run, never the developer's", () => {
+    for (const n of [1, 2]) {
+      expect(t("caution.past", { n })).not.toMatch(/sweep/i);
+      expect(t("caution.hatched", { n, programs: "x" })).not.toMatch(/sweep/i);
+    }
+    expect(copy.table.defs.pastAxis).not.toMatch(/sweep/i);
+    expect(copy.table.defs.lowerBound).not.toMatch(/sweep/i);
   });
 });
 

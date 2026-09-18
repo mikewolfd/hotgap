@@ -43,11 +43,22 @@ export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
    no single program explains — and the position sentence, which is a
    sentence here and a clause in core. */
 
-/** "Missouri — a single parent of two children … ends up 56¢ poorer for every extra dollar." */
-export const roadSentence = (state: string, household: string, rate: number, cents: (n: number) => string = String): string => {
-  const w = keepRateWords(rate);
-  return ct("road.sentence", { state, household, sign: w.sign, cents: cents(w.cents) });
-};
+/**
+ * "**Ohio** — **loses 42¢ of each extra dollar** climbing out of poverty."
+ *
+ * core's `road.sentence` says the same thing with the household inside it —
+ * "Ohio — a single parent of two children who earns their way from poverty to
+ * twice poverty ends up 42¢ poorer for every extra dollar" — and that is right
+ * on a surface where nothing else has said whose curve this is. Here the
+ * answer sentence two inches above has just said it, in the same breath as the
+ * national count, so the readout was spending fourteen words re-stating the
+ * frame it sits under. The RATE is still core's own phrase (`road.rate`,
+ * through `keepPhrase`), so the map, the citizen answer and the caseworker
+ * sheet cannot word or round one rate three ways; only the frame is this
+ * page's, because only this page has already supplied it.
+ */
+export const roadRateLine = (state: string, rate: number, mark: (text: string) => string = (x) => x): string =>
+  t("readout.road.rate", { state, rate: mark(keepPhrase(rate)) });
 /**
  * "The road collapses at $40,000, where CCDF child care subsidy ends and the
  * family loses $16,428 in one step."
@@ -64,8 +75,8 @@ export const roadCollapse = (at: string, drop: string, ids: readonly ProgramId[]
       : t("readout.road.collapseNoProgram", { at, drop });
 /** What the model found instead, where no cliff falls on the road. */
 export const roadHolds = (step: string, lo: string, hi: string, floor: string): string => t("readout.road.holds", { step, lo, hi, floor });
-/** Who is standing there: the share of families like this earning less than the figure just named. */
-export const roadPosition = (n: number, state: string): string => t("readout.road.position", { n, state });
+/** Who is standing there: the share of families like this earning less than the figure just named. The state is the line's own subject, named at the head of the readout, so the sentence does not say it twice. */
+export const roadPosition = (n: number): string => t("readout.road.position", { n });
 export const axisPosition = (n: number): string => t("readout.axisPosition", { n });
 /** A cell whose road runs off its own axis: there is no rate to say. */
 export const roadOffAxisLine = (state: string): string => t("readout.road.offAxis", { state });

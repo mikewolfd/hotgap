@@ -18,8 +18,8 @@ surface renders the component, not that it could.
 | 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Since 2026-09-17 it is the *only* thing a deferral does to a reading: the row, the mark and the figures are an ordinary cliff's, and the badge plus its clause ("it does not end that day", then the rule) say when the money goes. Dashed everywhere, always. One declaration: `.hg-badge`. | ● | ● | |
 | 11 | **ScenarioBar** | The household's inputs as chips — state, county, shape, earnings, rent, childcare, and the take-up toggles — plus *add a what-if* and *print*. Phone behaviour and chip semantics in § ScenarioBar. | | ● | |
 | 12 | **CompareTable** | Two or three scenarios in columns against the same rows. Column identity is a rule under the header, never coloured text. | | ● | |
-| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. | | | ● |
-| 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*, with the axis bounds above the list. Each row is a `.hg-row-btn` that opens its state: the 44px control beside the map that a tile sized to its square cannot be (`charts.md` § 2). States with no cliff and states the model cannot complete are each lifted out into their own labelled block, never left at the bottom of the order. | | | ● |
+| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. Since 2026-09-18 it is the journalist page's picture: full-bleed on a phone, 48rem above 64rem, with the AnswerSentence as its `<figcaption>` and everything it needs — legend, caution, readout, controls — inside the same figure (`charts.md` § The map is the picture). | | | ● |
+| 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*, with the axis bounds above the list. Each row is a `.hg-row-btn` that opens its state: the full-size control that a tile sized to its square cannot be (`charts.md` § 2). States with no cliff and states the model cannot complete are each lifted out into their own labelled block, never left at the bottom of the order. Since 2026-09-18 it opens *Every state, every measure* beside the DataTable — fifty-one ranked rows are two hundred words and the map is the page — and its heading says which measure it ranks and which way, in the order control's own words. | | | ● |
 | 15 | **DataTable** | The text equivalent and the thing a reporter copies: every row, every measure, in its own horizontal scroller, with a CSV export carrying its own provenance columns. A no-cliff cell prints *none*, never `$0`. | ● | ● | ● |
 | 16 | **IncompleteMarker** | The 45° hatch (`.hg-hatch-incomplete`) and its companions — the legend entry that says *figures incomplete, not low*, the not-ranked block, the flag column, the caseworker's one-line state notice. Rendered from `coverage[state].unmodeled[]` on every pass (§ IncompleteMarker). | | ● | ● |
 | 17 | **SourceNote** | The provenance line that closes every figure and table: publisher, vintages, model version, date read, policy year, and *estimates only* — all from the data. Has an *archetype* state (§ SourceNote). | ● | ● | ● |
@@ -54,7 +54,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | SourceNote | `.hg-source` |
 | Panels, print | `.hg-panel`; `.hg-print-only`, `.hg-no-print`; `.hg-dense` on `<html>` is the two panel surfaces' 15px base and wider measure, once |
 | AnswerSentence | `.hg-answer`; `.hg-amt` with `--keep` (the line), `--gap` (the exit rule and the bracket), `--cliff` (a cliff dot); `--measure-answer` is its measure and `--t-answer` its size. The page keeps only the margins |
-| The figure | `.hg-picture` — not `.hg-figure`, which is a StatTile's number and was there first — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter |
+| The figure | `.hg-picture` — not `.hg-figure`, which is a StatTile's number and was there first — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter. **Leaving the column is for a chart whose x axis wants every pixel**; a surface whose picture is square may keep the column and size the picture itself instead, which is what the journalist map does above 64rem (`charts.md` § The map is the picture) |
 | Page column, wordmark | `.hg-page` (centred, `--s4` gutters, `--s8` foot; the page sets `--page-max` on its own class: citizen 40rem, journalist 68rem, caseworker 76rem); `.hg-wordmark` (weight and size; the editor's row tracks it −0.01em, the journalist masthead does not — one value once settled) |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
@@ -108,6 +108,18 @@ on the reader's attention, not ceilings on what the page holds: the same
 script run with every disclosure open is the proof that nothing was deleted,
 and that number belongs in every review beside the closed one.
 
+**One thing the script cannot see (2026-09-18, the journalist pass).** It
+subtracts every `<option>`'s words from a visible `<select>` and adds the
+selected one back — but a closed select's options have no client rect, so the
+tree walker never counted them, and the subtraction runs against a total that
+never held them. On a page with two long-optioned selects the error is 184
+words; on the journalist page that made the tool print **−11 words**, which is
+the defect announcing itself. Until `weight.mjs` skips options the walker
+skipped, a review of a page with a visible `<select>` prints the tool's figure
+AND the figure with the options added back, and the budget is checked against
+the second. `e2e/places.spec.ts` re-derives it that way and asserts the
+zero-rect premise, so the correction cannot silently stop being needed.
+
 **The disclosures.** Three on the page, one inside the figure, in this order,
 with these names. A surface that needs another names it for what is inside it
 and writes it here.
@@ -121,6 +133,19 @@ and writes it here.
 | *What this family faces, step by step* | **Caseworker.** The zones beyond this household's and the pay past which none remain, the StatTiles, the DropLedger with each row's position, and BreakdownBars. This surface's reading of *What happens at each step*: the rows a cliff mark opens, led by the five figures a counselor reads out. The tiles were the page's second line until 2026-09-18; a row of 30px numbers above the picture is the big-number hero the plan refuses (`PICTURE-FIRST` § Review against the generic tells) |
 | *Compare the what-ifs* | **Caseworker.** The CompareTable with its keep-rate row, the on-the-way lists, each column's *Remove* and *Try again*, and the compare note. Added by this surface because the comparison is now two objects: the lines on the picture, which is where a counselor meets it, and the figures here, which is where she reads it off. *Add a what-if* stays in the masthead — it changes the answer |
 | *Where each program ends* | **Caseworker.** ThresholdLedger and the EligibilityBoundary row inside it, with the ledger's footnote. The same slot as *What happens at each step*, under the name this surface already gave it |
+
+The journalist surface's own two, both inside `<figure>` and both named for
+what is in them (2026-09-18; `charts.md` § The map is the picture):
+
+| summary | what is inside |
+|---|---|
+| *How to read this map* | what the map shades and what the measure means, all four tile states with the tiles' own marks, the bin bounds and the one-class line, the keyboard sentence, the two boxed warnings in full, and the cliff/danger-zone glossary. The map's *How to read this picture* |
+| *Where {state}'s numbers come from* | CorrectionsApplied, IncompleteMarker, otherBenefits, EligibilityBoundary and the SourceNote for the selected state, directly under the readout that names it. Absent until a state is chosen, and it never repeats the readout's own sentences |
+
+The three page disclosures on that surface hold: *Every state, every measure*
+(RankStrip, the order control, the column definitions, DataTable), *How these
+numbers were made* (the method and what the model excludes), *Where these
+numbers come from* (the run's source line, the CSV's columns, the citation).
 
 Four rules that go with them:
 

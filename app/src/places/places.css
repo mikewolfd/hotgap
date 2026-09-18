@@ -1,109 +1,223 @@
-/* Only layout that is this page's own lives here (S13). Filters, selects,
-   buttons, the table base, the scroller, the skip link, the callout, the
-   panel, the row button, the page column, the map's legend (.hg-key) and
-   the 15px base (.hg-dense on <html>) are the hg-* classes in
-   design/tokens.css. */
+/* The journalist surface, picture first (design/PICTURE-FIRST-2026-09-18.md is
+   the brief, design/charts.md § The map is the picture the rule). Only layout
+   that is this page's own lives here (S13): filters, selects, buttons, the
+   table base, the scroller, the skip link, the callout, the row button, the
+   page column, the figure that bleeds to the screen's edges (.hg-picture), the
+   answer sentence (.hg-answer), the disclosures (.hg-disclosure), the map's
+   legend (.hg-key), the readout (.hg-readout) and the 15px base (.hg-dense on
+   <html>) are the hg-* classes in design/tokens.css.
+
+   This file loads after tokens.css, so anything that could meet an hg-* state
+   class is declared at :where() specificity or with a class of its own. */
 .page { --page-max: 68rem; }
-h1 { margin: 0 0 var(--s2); letter-spacing: -0.01em; }
-h2 { margin: var(--s7) 0 var(--s3); }
+/* Paper-white ground, not the plane. The figure used to be a panel with a
+   --surface ground of its own; the picture IS the page now, and the ramp is
+   validated against --surface — measured on --plane the two lightest bins fell
+   to 1.86:1, under the 2:1 floor charts.md § 2 sets for the light end of a
+   scale. The same decision the citizen surface made, for the same reason. */
+body { background: var(--surface); }
+h2 { margin: 0; }
+h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
 h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--lh-tight);
      margin: var(--s5) 0 0; }
 
-/* The masthead shares the page column's side gutter: `.page` carries it,
-   so the headline never runs to the screen edge while the controls below
-   keep theirs (N5 of the context-blind review). */
-.masthead { border-bottom: 1px solid var(--rule); padding-top: var(--s4); padding-bottom: var(--s4); }
-.masthead__top { display: flex; align-items: baseline; gap: var(--s3); margin: 0 0 var(--s4); }
+/* ── One line of masthead ───────────────────────────────────────────────
+   The wordmark, the language switch and the one action a reporter came for.
+   One line, because the figure's top is measured from it: at 390 it is 68px
+   and the budget is 120 (design/inventory.md § The page is its picture). The
+   page title is the <title>; the headline is the answer sentence, because a
+   headline that repeats the tab is a line of the first screen spent on
+   nothing. */
+.masthead { display: flex; align-items: center; gap: var(--s3);
+            border-bottom: 1px solid var(--rule); padding-top: var(--s3); padding-bottom: var(--s3); }
 .wordmark { margin: 0; }
-.lede { font-size: var(--t-body); color: var(--ink-2); max-width: var(--measure); }
-/* The glossary sentence (S3) reads a step lighter than the lede, at the small size the rest of the page sets. */
-.glossary { font-size: var(--t-small); margin-bottom: 0; }
+.masthead .csv { margin-inline-start: auto; }
 
 /* The load line: a status while the sweep arrives, an alert if it does not,
-   gone once the page is filled. */
-#status { margin: var(--s4) 0 0; }
+   gone once the page is filled. It never hides and never folds. */
+.notices { padding-bottom: 0; }
+#status { margin: var(--s3) 0 0; }
 #status[role="alert"] { color: var(--caution); }
-/* Gone once the page is filled: its column's bottom padding would otherwise stand as a blank band between the masthead and the filters. */
+/* Gone once the page is filled: its column's bottom padding would otherwise
+   stand as a blank band between the masthead and the picture. */
 .page:has(> #status[hidden]) { display: none; }
 
-.split { display: grid; gap: var(--s6); grid-template-columns: 1fr; margin-top: var(--s5);
-         align-items: start; }
-@media (min-width: 62rem) { .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); } }
-/* Grid items default to min-width:auto, which lets a wide table push the
-   column past the viewport. A scroller only works if its column can shrink. */
-.split > * { min-width: 0; }
+/* ── The picture ────────────────────────────────────────────────────────
+   Everything the map needs is inside the <figure>, in one column, in the
+   order a reader meets it: the sentence, the tiles, the legend, the caution
+   the map has earned, the readout, the state's own provenance, the two
+   controls, the estimates line, and "How to read this map". The shared class
+   bleeds it to the screen's edges below 64rem and caps it at --figure-max
+   above; every non-map child keeps the page's gutter. */
+.picture { padding-block: var(--s4) 0; }
+.hg-answer { margin: 0 0 var(--s4); }
+@media (min-width: 40rem) { .hg-answer { margin-bottom: var(--s5); } }
 
-/* The figure box (charts.md § 2): everything a screenshot needs is inside
-   it. It is not a panel. Below 520px it drops to --s3 and bleeds to the
-   viewport edge (N7), so twelve tiles at 390px clear 27px. */
-.figure { background: var(--surface); border: 1px solid var(--rule); padding: var(--s5); margin: 0; }
-.figure h3 { font-size: var(--t-body); }
-.figure .sub { color: var(--ink-2); margin: 0 0 var(--s4); }
-/* The state readout (B3, B4, S1) sits under the legend, above the source
-   line: the CurveReadout's shape (.hg-readout), one rule above it so it
-   reads as the figure's own answer and not as a legend entry. */
-.figure .hg-readout { border-top: 1px solid var(--rule); padding-top: var(--s3); margin-top: var(--s3); max-width: none; }
-@media (max-width: 519.98px) {
-  .figure { padding: var(--s3); margin: 0 calc(-1 * var(--s4)); border-inline: 0; }
+/* The map runs to both edges of the phone: the gutter the other children keep
+   is 32px of width, and on a twelve-column cartogram 32px is more than one
+   tile. This is the one child of .hg-picture that gives it back. */
+.hg-picture > .map { padding-inline: 0; }
+
+/* ONE LEFT EDGE, above 64rem. The shared class lets a figure leave the prose
+   column and centre itself at --figure-max, which is right for a chart whose
+   x axis wants every pixel. It is wrong here, twice over: a centred figure put
+   the picture's own left edge 144px inside the three page disclosures under
+   it, so the page read as two documents; and a cartogram that takes the whole
+   56rem is 73px a tile and eight rows deep, which at 1280 pushed its own
+   scale and legend past the fold — a map on the first screen with its key on
+   the second.
+   So the figure keeps the page's column and the MAP takes a width of its own:
+   48rem, a 64px tile, still more than twice the phone's, with the whole object
+   — sentence, tiles, scale, bounds, key — inside one 900px screen (measured).
+   Everything on the page then starts at the same x, which is what a one-column
+   document should do. */
+@media (min-width: 64rem) {
+  .hg-picture.picture { margin-inline: 0; }
+  .hg-picture.picture > :not(.map) { padding-inline: 0; }
+  /* The scale explains the map, so it is the map's width, not the column's. */
+  .picture > .map, .picture > .legend { max-width: 48rem; }
 }
 
-.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
-/* A tile is a button that opens its state's detail, sized to its square
-   rather than to --touch: the 44px equivalent control is the table row
-   (WCAG 2.5.8's equivalent-target exception), and a 44px tile would not fit
-   twelve to a phone. The one place type goes below --t-tick: a postal code
-   sized to its tile. It is a label on a figure, not prose, and the table
-   repeats every value. The four tile states — shaded, no cliff, past the
-   axis, not computed — are the hg-tile--* classes; shaded is a --loss-N
-   background from the bin. */
+/* StateTiles (#13). Equal squares on a twelve-column grid, as large as the
+   width allows — the picture is the page, so the tiles take the room rather
+   than sitting in a card beside a list (charts.md § The map is the picture).
+   The gap grows a little with the tile so the block reads as one object at
+   both ends of the range. */
+.map { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(2px, 0.3vw, 4px); }
+/* A tile is a button that opens its state, sized to its square rather than to
+   --touch: the 44px equivalent control is the ranked row and the table row
+   under "Every state, every measure" (WCAG 2.5.8's equivalent-target
+   exception), and a 44px tile would not fit twelve to a phone. The one place
+   type goes below --t-tick: a postal code sized to its tile. It is a label on
+   a figure, not prose, and every value is written out below. The four tile
+   states — shaded, no cliff, past the axis, not computed — are the hg-tile--*
+   classes; shaded is a --loss-N or --keep-N background from the bin. */
 .tile { position: relative; aspect-ratio: 1; display: flex; align-items: center;
-        justify-content: center; font-size: clamp(10px, 2.4vw, 12px);
+        justify-content: center; font-size: clamp(10px, 1.9vw, 15px);
         font-weight: var(--w-semi); letter-spacing: 0.01em;
         min-height: 0; padding: 0; margin: 0; border: 0; font-family: inherit; cursor: pointer; }
-/* The button's own ground and ink, at zero specificity: this file loads
-   after tokens.css, and a plain `.tile { background: none }` beat the hatch
-   (measured: no tile hatched). The hg-tile--* states and the inline bin
-   fill must win. */
+/* The button's own ground and ink, at zero specificity: this file loads after
+   tokens.css, and a plain `.tile { background: none }` beat the hatch
+   (measured: no tile hatched). The hg-tile--* states and the inline bin fill
+   must win. */
 :where(.tile) { background: none; color: var(--ink); }
 /* Selection and focus are two marks in two places (S4): the selected tile
-   takes a 2px ring INSIDE its square in the label ink already chosen for
-   contrast on its fill (--surface on bins 3–5, --ink on 1–2, --ink-2 on the
-   three special tiles); the system focus ring stays outside. */
-.tile[aria-current="true"] { box-shadow: inset 0 0 0 2px currentColor; }
+   takes a ring INSIDE its square in the label ink already chosen for contrast
+   on its fill (--surface on bins 3–5, --ink on 1–2, --ink-2 on the three
+   special tiles); the system focus ring stays outside. The ring is 2px at
+   phone size and 3px where the tile has the room, so a 73px square does not
+   wear a hairline. */
+.tile[aria-current="true"] { box-shadow: inset 0 0 0 clamp(2px, 0.35vw, 3px) currentColor; }
 .tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 0; z-index: 3; }
 
-.scale { display: flex; align-items: stretch; gap: 2px; margin: var(--s4) 0 var(--s2); }
+/* ── The legend strip, inside the figure ────────────────────────────────
+   The ramp, its printed bounds and the marks that are on this map: one strip
+   under the tiles, not a column beside them.
+
+   THE RAMP IS THE WIDTH OF THE MAP, at every width, and its bounds sit under
+   it. The first draft gave the ramp a third of the line and the key the rest,
+   which read tidily on the keep rate — seven labels of five characters — and
+   broke on every dollar measure: six bounds of "$148,000" want 348px and had
+   320, so the safe-exit scale printed "$108,000$116,000$124,000…" with no
+   gaps between the figures (measured at 1280). A scale as wide as the thing it
+   explains also puts each bound where its swatch ends, which is what a printed
+   bound is for. The key follows on its own line. */
+/* The strip closes with a rule the width of the picture, so the readout under
+   it reads as the map's caption rather than as one more line of key. The rule
+   belongs to the legend and not to the readout, whose own box is capped at a
+   reading measure — a border there drew a rule that stopped two thirds of the
+   way across and made the figure look ragged. */
+.legend { margin-top: var(--s4); padding-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
+.scale { display: flex; align-items: stretch; gap: 2px; }
 .scale .sw { flex: 1; height: 12px; }
 /* A diverging scale is two scales meeting at zero, so the gap where they meet
    is wider than the gaps inside each arm: the hue change says which way is
    which, and this says where the turn is. The bound printed under it reads
    "0¢". */
 .scale .sw--hinge { margin-inline-start: 4px; }
-/* Six bounds between five steps; or, for a count, one label centred under
-   each class that exists (S5; --n is the number of classes). */
+/* Six bounds between five steps; or, for a count, one label centred under each
+   class that exists (S5; --n is the number of classes). */
 .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
-                font-size: var(--t-micro); font-variant-numeric: tabular-nums; }
+                font-size: var(--t-micro); font-variant-numeric: tabular-nums;
+                margin-top: var(--s1); }
 .scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
+.legend .hg-key { margin-top: var(--s2); }
+
+/* The one caution the map on the screen has earned. A callout, so it reads as
+   an aside and not as a failure; its own top margin, because the shared class
+   assumes prose above it. */
+.mapCaution { margin: var(--s4) 0 0; }
+
+/* CurveReadout (#4) as the map's caption: one rule above it, so it reads as
+   the figure's own answer and not as one more legend entry. */
+.picture .hg-readout { margin-top: var(--s4); max-width: var(--measure-wide); }
+.picture .hg-readout b { font-variant-numeric: tabular-nums; }
+
+/* The selected state's provenance, inside the figure, under its own readout.
+   Rows are .hg-rows with the inventory's column; below 520px the program sits
+   above its note, so a three-word program name does not squeeze the note into
+   a 30-character column. */
+/* The state's block keeps the disclosure's own rule and margin: it is a row
+   in the stack under the map, like "How to read this map" below it. */
+.state .hg-rows { --col: 11rem; margin-top: var(--s3); }
+.state .hg-rows > li > div > .hg-tag { margin-bottom: var(--s1); }
+.state .sub { color: var(--ink-2); margin: 0; }
+.state h3 { margin-top: var(--s3); }
+/* EligibilityBoundary (#23): one row after the state's lists, set off by the
+   lifted-out mark the rank groups use (a 2px strong rule), because it is not
+   one more correction; the chip sits after the name in the name column, the
+   way the ledger tags its row, and the row's sentence is at the row's own
+   size — the facts are the content, the publishers the cite. */
+.state .boundary { margin-top: var(--s4); border-top: 2px solid var(--rule-strong); }
+.state .boundary > li { border-top: 0; }
+.state .boundary .hg-tag { vertical-align: 2px; }
+.state .boundary .hg-cite { margin-top: var(--s1); }
+.state .hg-source { margin-top: var(--s5); }
+
+/* The two controls, under the picture rather than above it (§ The page is its
+   picture: not a filter above the fold). They are the household and the
+   measure — what the numbers are, not what they say — so they sit where the
+   citizen surface puts its chips: after the answer, in reach, out of the way.
+   A rule above them says they belong to the figure and not to the page. */
+.controls { border-top: 1px solid var(--rule); padding-top: var(--s4); margin-top: var(--s4);
+            border-bottom: 0; }
+.controls > div { flex: 1 1 18rem; }
+.estimates { margin: var(--s3) 0 0; }
+
+/* "How to read this map": the figure's own disclosure, so its top rule closes
+   the picture. */
+.howto > :not(summary) { margin-block: var(--s3); max-width: var(--measure-wide); }
+.howto > :last-child { margin-bottom: var(--s4); }
+.howto .hg-key { flex-direction: column; gap: var(--s2); }
+.glossary { color: var(--ink-2); }
+
+/* ── The three page disclosures ─────────────────────────────────────────
+   A stack of rules under the figure: the summary is the heading, and the body
+   indents nothing — the page is one column and a nested margin would read as
+   a card. */
+#everything { margin-top: var(--s6); }
+#sourcesPanel { border-bottom: 1px solid var(--rule); }
+#everything > :not(summary), #methodPanel > :not(summary), #sourcesPanel > :not(summary) { margin-block: var(--s3); }
+#everything > :last-child, #methodPanel > :last-child, #sourcesPanel > :last-child { margin-bottom: var(--s5); }
 
 /* The ranked reading. A dot on a shared, non-zero axis — never a bar, whose
-   length would have to be read from zero and would make a $115k–$134k
-   spread look identical. That rule holds wherever the axis has no zero on
-   it, which is every measure but one: the keep rate's axis CONTAINS zero,
-   and zero is the fact — a family that ends the climb poorer than it began,
-   or one that keeps something. There a bar is the right mark and a dot the
-   wrong one, so the diverging strip draws bars from the hinge, left for a
-   state that loses and right for one that keeps (Plan 9). Each row is a
-   control (S2): the 44px control beside the map that the tile, sized to its
-   square, cannot be. Above 62rem the list sits beside the map at its 26px
-   density — a pointer needs no more, and WCAG 2.5.8's floor is 24px — and
-   the table keeps the 44px rows. */
+   length would have to be read from zero and would make a $115k–$134k spread
+   look identical. That rule holds wherever the axis has no zero on it, which
+   is every measure but one: the keep rate's axis CONTAINS zero, and zero is
+   the fact — a family that ends the climb poorer than it began, or one that
+   keeps something. There a bar is the right mark and a dot the wrong one, so
+   the diverging strip draws bars from the hinge, left for a state that loses
+   and right for one that keeps (Plan 9). Each row is a control (S2): the 44px
+   control that the tile, sized to its square, cannot be. Above 62rem the rows
+   go to their 26px density — a pointer needs no more, and WCAG 2.5.8's floor
+   is 24px — and the table keeps the 44px rows. */
 .rank { list-style: none; margin: 0; padding: 0; }
 .rank li { border-bottom: 1px solid var(--rule); }
 /* Four columns: the rank ordinal (N3; a shared range, "1–12", in the
    lower-bound group, and empty in the other lifted-out groups, where a rank
-   would be a claim), the code, the track, the value. On the one-step loss
-   the value carries the step's earnings beside it ("$12,062 at $38,000",
-   rerun S5), and the value column widens for it. */
+   would be a claim), the code, the track, the value. On the one-step loss the
+   value carries the step's earnings beside it ("$12,062 at $38,000", rerun
+   S5), and the value column widens for it. */
 .rank .hg-row-btn { display: grid; grid-template-columns: 2.4rem 2.1rem 1fr 5.4rem; gap: var(--s3);
                     align-items: center; }
 .rank.with-at .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 10.2rem; }
@@ -117,16 +231,16 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .rank .dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-inline-start: -5px;
              border-radius: 50%; box-shadow: 0 0 0 2px var(--plane); }
 /* The diverging strip: the hinge is one rule the whole list long, at --zero
-   (the share of the axis below zero, set by render.ts from the bins), and
-   each row's bar runs from it to the state's own rate. The rule is drawn on
-   the row, over the track's ground and under the bar, so a reader sees the
-   same vertical line down every row and the bars hanging off it. */
+   (the share of the axis below zero, set by render.ts from the bins), and each
+   row's bar runs from it to the state's own rate. The rule is drawn on the
+   row, over the track's ground and under the bar, so a reader sees the same
+   vertical line down every row and the bars hanging off it. */
 .rank.diverging .track::after { content: ""; position: absolute; inset-block: 0;
                                 inset-inline-start: var(--zero); width: 1px; background: var(--ink-3); }
 .rank .bar { position: absolute; top: 3px; height: 8px; min-width: 2px; }
-/* The past-the-axis mark is the tile's own: a dashed-edged square on the
-   sunk ground at the far end of the track (a dashed circle read as a
-   spinner, rerun N2). */
+/* The past-the-axis mark is the tile's own: a dashed-edged square on the sunk
+   ground at the far end of the track (a dashed circle read as a spinner,
+   rerun N2). */
 .rank .past { position: absolute; inset-inline-end: 0; top: 2px; width: 10px; height: 10px; box-sizing: border-box;
               background: var(--surface-sunk); outline: 1px dashed var(--control-edge); outline-offset: -1px; }
 .rank .incomplete-mark { position: absolute; inset-inline: 0; top: 4px; height: 6px; }
@@ -134,9 +248,9 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 /* The selected row: the sunk ground plus the 3px ink bar, the tile's mark in
    the row's slot (S3); the tint alone measured 1.08:1. */
 .rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
-/* The axis bounds sit above the list, where a reader meets them first (N3),
-   on the rows' own grid so a bound stands over the end of the track it bounds
-   — it used to be a flex row with a guessed 5.5rem indent, which put the high
+/* The axis bounds sit above the list, where a reader meets them first (N3), on
+   the rows' own grid so a bound stands over the end of the track it bounds —
+   it used to be a flex row with a guessed 5.5rem indent, which put the high
    bound a value-column too far right. `--v` is the value column's width, which
    the page sets to match the rows (the one-step loss widens it). */
 .rank-axis { display: grid; grid-template-columns: 2.4rem 2.1rem 1fr var(--v, 5.4rem); gap: var(--s3);
@@ -144,14 +258,14 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
              font-variant-numeric: tabular-nums; }
 .rank-axis .ends { grid-column: 3; position: relative; display: flex; justify-content: space-between; }
 /* Zero, over the hinge every bar hangs off — on its own line above the two
-   ends, because where the hinge sits depends on the data: on this run it is
-   at 78% of the axis, and on a phone's 120px track "0¢" and "+30¢" landed on
-   top of each other. A line of its own costs 14px and cannot collide. */
+   ends, because where the hinge sits depends on the data: on this run it is at
+   78% of the axis, and on a phone's 120px track "0¢" and "+30¢" landed on top
+   of each other. A line of its own costs 14px and cannot collide. */
 .rank-axis--diverging { padding-top: 1.15em; }
 .rank-axis .zero { position: absolute; top: -1.15em; inset-inline-start: var(--zero); transform: translateX(-50%); }
-/* The lifted-out blocks (B4, B1): never the tail of the order. The
-   lower-bound block leads it (context-blind B1), under the strip's heading
-   and above the axis, closed by the same rule the others open with. */
+/* The lifted-out blocks (B4, B1): never the tail of the order. The lower-bound
+   block leads it (context-blind B1), under the strip's heading and above the
+   axis, closed by the same rule the others open with. */
 .rank-group { margin: var(--s5) 0 0; padding-top: var(--s3);
               border-top: 2px solid var(--rule-strong); }
 .rank-group--lead { margin: 0 0 var(--s4); padding: 0 0 var(--s3); border-top: 0;
@@ -160,39 +274,14 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .rank-group .rank .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 8rem; }
 .rank-group p { color: var(--ink-2); font-size: var(--t-micro); margin: var(--s2) 0 0; }
 
-/* CorrectionsApplied (B3) and the state's SourceNote, under the map and
-   scoped to the selected state. Rows are .hg-rows with the inventory's
-   column; below 520px the program sits above its note, so a three-word
-   program name does not squeeze the note into a 30-character column. */
-.state { margin-top: var(--s6); }
-/* The heading takes focus when a table row selects its state (S1); the
-   margin keeps it clear of the viewport's top edge, and a heading needs no ring. */
-.state h3 { scroll-margin-top: var(--s7); }
-.state h3:focus { outline: none; }
-.state .hg-rows { --col: 11rem; margin-top: var(--s3); }
-.state .hg-rows > li > div > .hg-tag { margin-bottom: var(--s1); }
-.state .sub { color: var(--ink-2); margin: 0; }
-/* The step sentence leads the block (B3): the same sentence as the readout, in ink. */
-.state #stateStep { color: var(--ink); margin-bottom: var(--s2); }
-/* EligibilityBoundary (#23): one row after the state's lists, set off by the
-   lifted-out mark the rank groups use (a 2px strong rule), because it is
-   not one more correction; the chip sits after the name in the name
-   column, the way the ledger tags its row, and the row's sentence is at the
-   row's own size — the facts are the content, the publishers the cite. */
-.state .boundary { margin-top: var(--s4); border-top: 2px solid var(--rule-strong); }
-.state .boundary > li { border-top: 0; }
-.state .boundary .hg-tag { vertical-align: 2px; }
-.state .boundary .hg-cite { margin-top: var(--s1); }
-.state .hg-source { margin-top: var(--s5); }
-
-/* The order control scopes the table alone, so it sits with the table (S7)
-   and stays the width of its words; the line under it says so once (N3). */
+/* The order control scopes the table alone, so it sits with the table (S7) and
+   stays the width of its words; the line under it says so once (N3). */
 .table-order { padding-top: 0; border-bottom: 0; }
 .table-order > div { flex: 0 1 26rem; }
 .table-order .hg-source { margin: var(--s1) 0 0; }
-/* The column definitions (rerun S3): above the table, the term in ink and
-   its sentence a step lighter. A run-in list on a phone; from 62rem a
-   two-column grid, term beside sentence, so eight lines stay eight lines. */
+/* The column definitions (rerun S3): above the table, the term in ink and its
+   sentence a step lighter. A run-in list on a phone; from 62rem a two-column
+   grid, term beside sentence, so eight lines stay eight lines. */
 .defs { margin: 0 0 var(--s4); font-size: var(--t-small); color: var(--ink-2); max-width: var(--measure-wide); }
 .defs dt { display: inline; font-weight: var(--w-semi); color: var(--ink); }
 .defs dt::after { content: " — "; font-weight: var(--w-reg); color: var(--ink-2); }
@@ -204,10 +293,10 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   .defs dt, .defs dd { display: block; }
 }
 
-/* POSITION under a figure (Plan 9): how many families like this earn less
-   than the earnings in the cell above it. A second line in the same cell,
-   one step lighter and smaller, so the figure still reads as the figure —
-   the Figures column's subsidy note is the same shape. */
+/* POSITION under a figure (Plan 9): how many families like this earn less than
+   the earnings in the cell above it. A second line in the same cell, one step
+   lighter and smaller, so the figure still reads as the figure — the Figures
+   column's subsidy note is the same shape. */
 .hg-table .num small { display: block; color: var(--ink-3); font-size: var(--t-micro);
                        font-weight: var(--w-reg); }
 
@@ -235,17 +324,28 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .hg-table tbody th { padding: 0 var(--s3) 0 var(--s1); }
 .hg-table thead th:first-child { padding-inline-start: var(--s1); }
 /* The state column stays put while the rest scrolls sideways (S10), on the
-   page's ground so the cells passing under it do not show through; the
-   inline padding is the focus ring's room, the rule its right edge. */
+   page's ground so the cells passing under it do not show through; the inline
+   padding is the focus ring's room, the rule its right edge.
+   THE OUTER SHADOW is the fix for a truncated figure that looked like a whole
+   one: the sticky cell used to end exactly at its own edge, so a cell sliding
+   under it was clipped mid-number and Alaska's $75,000 read "5,000" (places
+   keep-rate read, N7). Three pixels of the page's own ground travel with the
+   column, so a neighbour is hidden, never half-shown. */
 .hg-table th:first-child { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--plane);
-                           box-shadow: inset -1px 0 0 var(--rule); }
+                           box-shadow: 3px 0 0 var(--plane), inset -1px 0 0 var(--rule); }
 .hg-table thead th:first-child { z-index: 2; }
-/* The selected row's ground travels with its sticky cell; the ink bar is the system's (tokens.css). */
-.hg-table tr:has(> * > [aria-current="true"]) > th:first-child { background: var(--surface-sunk); }
-/* One left bar, one meaning — selection (S7): an incomplete row is flagged
-   by its cells' own words, and at a narrow width by the amber word beside
-   its code, on screen without a swipe (S10). Hidden from 62rem, where the
-   Figures column is in view. */
+/* The selected row's ground travels with its sticky cell — and so does its ink
+   bar, which the gutter shadow above would otherwise replace: a selection
+   marked by ground alone measures 1.08:1, which is what the shared rule in
+   tokens.css exists to prevent. Three shadows, one job each: the page's ground
+   in the gutter, the ink bar inside the cell's leading edge, the column's rule
+   on its trailing one. */
+.hg-table tr:has(> * > [aria-current="true"]) > th:first-child { background: var(--surface-sunk);
+                                                                 box-shadow: 3px 0 0 var(--plane), inset 3px 0 0 var(--ink), inset -1px 0 0 var(--rule); }
+/* One left bar, one meaning — selection (S7): an incomplete row is flagged by
+   its cells' own words, and at a narrow width by the amber word beside its
+   code, on screen without a swipe (S10). Hidden from 62rem, where the Figures
+   column is in view. */
 .flag-mark { display: inline-block; margin-inline-start: var(--s2); color: var(--caution); font-size: var(--t-micro);
              font-weight: var(--w-med); }
 @media (min-width: 62rem) { .flag-mark { display: none; } }
@@ -255,31 +355,31 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .flag { color: var(--ink-2); white-space: nowrap; }
 .flag small { display: block; font-size: var(--t-micro); color: var(--ink-3); }
 .flag.no { color: var(--caution); font-weight: var(--w-med); }
-/* From 62rem the scroller is open (above) and the table's width is the
-   page's: an unbreakable reason and nine unbreakable headers have nowhere to
-   go but past the viewport, and a longer language than English finds that
-   edge — measured at 1280, es-US pushed the document 38px wide and the
-   pseudo-locale 296px, English fitting exactly. So they wrap here, the same
-   fix print already needed for the same reason (@media print below). Below
-   62rem they stay on one line: there the table scrolls in its own box and a
-   wrapped reason made the two incomplete rows 90px tall (N9). */
+/* From 62rem the scroller is open (above) and the table's width is the page's:
+   an unbreakable reason and nine unbreakable headers have nowhere to go but
+   past the viewport, and a longer language than English finds that edge —
+   measured at 1280, es-US pushed the document 38px wide and the pseudo-locale
+   296px, English fitting exactly. So they wrap here, the same fix print
+   already needed for the same reason (@media print below). Below 62rem they
+   stay on one line: there the table scrolls in its own box and a wrapped
+   reason made the two incomplete rows 90px tall (N9). */
 @media (min-width: 62rem) { .flag, .hg-table thead th.num { white-space: normal; } }
-/* A group heading inside the sorted table (B1): the strip's h4, as a row.
-   Its words, like the caption's, wrap inside the viewport and stay put while
-   the 48rem table scrolls under them, so a heading is never clipped
-   mid-word on a phone. */
+/* A group heading inside the sorted table (B1): the strip's h4, as a row. Its
+   words, like the caption's, wrap inside the viewport and stay put while the
+   48rem table scrolls under them, so a heading is never clipped mid-word on a
+   phone. */
 .hg-table tr.group th { font-size: var(--t-small); font-weight: var(--w-semi); color: var(--ink);
                         padding-top: var(--s4); border-bottom-color: var(--rule-strong); position: static; box-shadow: none; }
 .hg-table tr.group th > span, .hg-table caption > span { display: block; position: sticky; inset-inline-start: 0;
                                                            max-width: calc(100vw - 2 * var(--s4)); }
 
-.method ul { margin: 0 0 var(--s4); padding-inline-start: var(--s5); max-width: var(--measure-wide); }
-.method li { margin-bottom: var(--s2); }
-.method h3 { margin-top: var(--s5); }
+#methodPanel ul { margin: 0 0 var(--s4); padding-inline-start: var(--s5); max-width: var(--measure-wide); }
+#methodPanel li { margin-bottom: var(--s2); }
 
-/* Paper (B2): tokens.css reasserts the light set and hides every control;
-   this page only keeps its inks on the marks it draws itself, opens the
-   scroller so the table is not clipped, and keeps the two columns. */
+/* Paper (B2): tokens.css reasserts the light set, hides every control and
+   opens every disclosure, so the printed page is the whole page in the
+   screen's order. This page only keeps its inks on the marks it draws itself
+   and opens the scroller so the table is not clipped. */
 @media print {
   .tile, .scale .sw, .rank .dot, .rank .past, .rank .hg-row-btn[aria-current="true"] {
     print-color-adjust: exact; -webkit-print-color-adjust: exact;
@@ -287,31 +387,40 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   /* Paper does not scroll: the state column is a column again, and the swipe hint has nothing to say. */
   .hg-table th:first-child { position: static; box-shadow: none; }
   .hg-scroll-x[data-more]::before { display: none; }
-  /* The lede and the glossary widen to about 90 characters a line, and an
-     empty readout — "select a state" — has nothing to say on paper: together
-     they keep the figure, which must not break, on the first page at Letter
-     (measured at 816px: a 379px masthead pushed the 723px figure whole onto
-     page 2; at 68ch the masthead is 306px and the figure ends at 1002px). */
-  .lede { max-width: none; font-size: var(--t-small); }
+  /* An empty readout — "select a state" — has nothing to say on paper. The two
+     controls are screen chrome and carry .hg-no-print; what they set is on
+     paper all the same, in "How to read this map", which says the household
+     the figures are for and the measure the map shades. */
   #readout:not(:has(b)) { display: none; }
-  .split { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); }
+  /* The map is the picture on paper too, but a full-width cartogram at Letter
+     is 8 rows of 63px and pushes its own legend onto page 2. Two thirds of the
+     column still gives a 47px tile, which is larger than any screen at 390 —
+     and the scale that explains it keeps the same width, so a printed bound
+     still stands under the swatch it names. */
+  .map, .legend { max-width: 66%; }
   .hg-scroll-x { overflow: visible; }
   .hg-scroll-x table { min-width: 0; font-size: var(--t-micro); }
   .hg-table thead th { position: static; }
-  /* On paper the flag and the column headers wrap: an unbreakable reason,
-     and then nine unbreakable headers, pushed the table past the page's
-     width, and Chromium shrank the whole PDF to fit it (measured at 816px:
-     808px of table in a 784px column with the headers on one line). */
+  /* On paper the flag and the column headers wrap: an unbreakable reason, and
+     then nine unbreakable headers, pushed the table past the page's width, and
+     Chromium shrank the whole PDF to fit it (measured at 816px: 808px of table
+     in a 784px column with the headers on one line). */
   .flag, .hg-table thead th.num { white-space: normal; }
   /* Since Plan 9 the table carries thirteen columns, and the two step cells
-     ("$38,000 → $39,000") are the widest things in it. On paper they wrap
-     too — measured at 816px, thirteen unbreakable step cells made 955px of
-     table in a 784px column, and Chromium shrank the whole PDF to fit,
-     taking every drawn position with it. */
+     ("$38,000 → $39,000") are the widest things in it. On paper they wrap too —
+     measured at 816px, thirteen unbreakable step cells made 955px of table in a
+     784px column, and Chromium shrank the whole PDF to fit, taking every drawn
+     position with it. */
   .hg-table td.num { white-space: normal; }
-  /* The method panel is taller than a page, so avoiding a break inside it
-     only moved it to a fresh page behind a stranded heading (measured: a
-     page holding one paragraph). Headings stay with what follows instead. */
-  .figure, .state, .rank-group { break-inside: avoid; }
+  /* The picture opens with its own two disclosures on paper and is then 2,200px
+     tall, so "do not break inside the figure" is an instruction Chromium
+     cannot follow and would spend a page refusing to (the same lesson the
+     method panel taught: avoiding a break inside something taller than a page
+     only strands a heading on a page of its own). What must not break is the
+     MAP and the strip that reads it; the sentence stays with them. Measured at
+     Letter: the sentence, all 51 tiles, the scale, the bounds and the key land
+     on page 1, and the selected state's readout with them. */
+  .map, .legend, .state, .rank-group { break-inside: avoid; }
+  .hg-answer { break-after: avoid; }
   h2, h3 { break-after: avoid; }
 }

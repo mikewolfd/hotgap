@@ -643,6 +643,65 @@ the figure box: title, household shape, what the measure means, the bin bounds,
 the units, the source, the policy year, the sweep date, the model version, and
 *estimates only*. Nothing that matters is in the surrounding page.
 
+### The map is the picture (2026-09-18)
+
+The rule the picture-first pass added, and the map's half of
+`inventory.md` § The page is its picture. The money curve's own half is
+§ Direct labels and § The scroll rule above.
+
+**Everything the map needs is inside the `<figure>`, and nothing that is not
+about the map is.** In this order:
+
+1. **The sentence, as `<figcaption>`, first child.** The national reading of
+   the selected measure — the extreme state and its figure, and how far across
+   the country the thing goes — so the picture's accessible name is the answer
+   and nothing stands between the masthead and the two of them. The one figure
+   it underlines is the one drawn on the loss ramp, which makes the sentence
+   the map's first key.
+2. **The tiles**, full-bleed on a phone and as large as the width allows. They
+   are the one child that gives back the page's gutter: on a twelve-column
+   cartogram 32px of gutter is more than a tile.
+3. **The legend, as one strip**: the ramp, its printed bounds, and only the
+   tile states that are on THIS map. The other three are drawn again, with the
+   tiles' own classes, inside *How to read this map* — a key is not a lesson,
+   and a reader who needs the whole grammar is one press away.
+4. **The one caution the map on the screen has earned**, in one line, in the
+   open. The two boxed warnings live in full inside the disclosure; the one
+   that is true of the tiles a reader is looking at comes out of it, because
+   then it is not a rule but a warning, and nothing that warns hides.
+5. **The readout — the map's caption.** The selected state's sentences,
+   directly under the tiles. Never a block a screen away with a link to it.
+6. **That state's provenance**, closed, named for what is inside it (*Where
+   {state}'s numbers come from*), and absent until a state is chosen. It says
+   where the numbers came from and never repeats the readout above it.
+7. **The controls that change the picture**, under it, never above: a filter
+   above the fold is the thing the contract forbids, and the default view
+   answers without them.
+8. **The estimates line**, which never hides.
+9. ***How to read this map***, the figure's own disclosure: what the map
+   shades, all four tile states with their marks, the bin bounds, the keyboard,
+   the two warnings in full, and the glossary.
+
+**The map's width is the map's, not the figure's.** The shared `.hg-picture`
+centres a figure at `--figure-max` so a curve's x axis can have every pixel. A
+cartogram is square and eight rows deep, so the same licence costs it its own
+key: at 56rem the tile is 73px and at 1280 the scale and legend fall past the
+fold. The figure keeps the page's column — one left edge for the whole document
+— and the map takes 48rem, a 64px tile, measured so the sentence, the tiles,
+the scale, the bounds and the key are all inside one 900px screen.
+
+**A tile is a 27–64px control, and its equivalent target is a row.** WCAG
+2.5.8's exception, as before: twelve 44px tiles will not fit a phone, and the
+ranked row and the table row for the same state are the full-size controls.
+Since they moved behind *Every state, every measure*, the keyboard sentence in
+*How to read this map* says where they are.
+
+**On paper the map does not break, and the figure may.** A figure whose
+disclosures are open is taller than a page, so `break-inside: avoid` on it is
+an instruction the engine cannot follow and spends a page refusing to. What
+must not break is the tiles and the strip that reads them; the sentence stays
+with them by `break-after: avoid`.
+
 ---
 
 ## Both charts

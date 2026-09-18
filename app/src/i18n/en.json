@@ -1034,15 +1034,13 @@
   "places": {
     "pageTitle": "HotGap — what a raise costs, state by state",
     "wordmark": "HotGap",
-    "skip": "Skip to the data table",
-    "title": "What a raise costs, state by state",
+    "skip": "Skip to the answer",
     "lede": {
       "counted": {
-        "withDc": "{states} states and the District of Columbia, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. ",
-        "plain": "{states} states, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household. "
+        "withDc": "{states} states and the District of Columbia, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household.",
+        "plain": "{states} states, {households} household shapes, one earnings scale — from $0 past 400% of the poverty line for that household."
       },
-      "figure": "Each figure is what one household in that state keeps of each extra dollar it earns on the way from the poverty line to twice it — its *keep rate*. Below zero, the family ends that climb poorer than it started.",
-      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap. Estimates only."
+      "glossary": "A *cliff* is a $1,000 raise that cuts net income by {floor} or more; a *danger zone* is a run of earnings across which the household never gets ahead. A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have. The figures come from [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, run by HotGap."
     },
     "status": {
       "loading": "Loading the weekly run…",
@@ -1052,7 +1050,7 @@
     "filters": {
       "household": "Household",
       "measure": "Measure",
-      "csv": "Download these rows (CSV)",
+      "csv": "Download the numbers (CSV)",
       "groups": {
         "road": "On the road out of poverty",
         "axis": "Anywhere on the curve"
@@ -1061,7 +1059,7 @@
     "measures": {
       "biggestLoss": {
         "title": "Largest one-step loss",
-        "option": "Largest one-step loss ($)",
+        "option": "Largest one-step loss — the worst single step anywhere on the curve ($)",
         "describe": "Net income lost in the worst single $1,000 step of earnings."
       },
       "dangerWidth": {
@@ -1081,7 +1079,7 @@
       },
       "cliffCount": {
         "title": "Number of cliffs",
-        "option": "Number of cliffs",
+        "option": "Number of cliffs — anywhere on the curve, not only on the road out of poverty",
         "describe": "Steps down of {floor} or more anywhere on the curve."
       },
       "deferredCliffCount": {
@@ -1121,16 +1119,16 @@
     },
     "pastAxis": "past the axis",
     "figure": {
-      "title": "{measure}, by state",
-      "sub": "{household}, renting in the state's most populous county. {describe}",
-      "description": "A grid of the fifty states and the District of Columbia, each a square in roughly its geographic position, shaded by the selected measure. A state with no cliff is an empty square; a state whose figure runs past the axis has a dashed edge; a state the model cannot complete is hatched rather than shaded. Each square is a button that opens that state's corrections under the map; the arrow keys move between squares and Enter selects. Every value is listed in the table below this figure.",
+      "sub": "Every figure on it is {household}, renting in the state's most populous county.",
+      "description": "A grid of the fifty states and the District of Columbia, each a square in roughly its geographic position, shaded by the selected measure. Each square is a button that opens that state's numbers under the map. Every value is written out under “Every state, every measure” below.",
       "tile": {
         "value": "{state}: {value}",
         "none": "{state}: no cliff found",
         "past": "{state}: past the axis",
         "incomplete": "{state}: {programs} not modelled — figures incomplete",
         "roadNone": "{state}: no cliff on the road out of poverty",
-        "roadPast": "{state}: the road runs off the axis"
+        "roadPast": "{state}: the road runs off the axis",
+        "leapAtLeast": "{state}: at least {value} — the exact size runs past the axis"
       },
       "legend": {
         "none": "No cliff found ({n})",
@@ -1145,7 +1143,7 @@
         "diverging": "{down} steps of {downWidth} below zero and {up} of {upWidth} above it, from {lo} to {hi}",
         "divergingOneSide": "{n} steps of {width} from zero, from {lo} to {hi}"
       },
-      "source": "HotGap, from PolicyEngine {year} rules on {model}. Weekly run of {date}. Net income after health-insurance premiums. Estimates only.",
+      "source": "Estimates only. PolicyEngine {year} rules, run of {date}.",
       "binsLine": {
         "plain": "Bins: {bins} over the {comparable} states with a comparable figure.",
         "none": "Bins: {bins} over the {comparable} states with a comparable figure; {none} with no cliff found.",
@@ -1158,10 +1156,11 @@
         "countValue": "{n} of the {total} comparable states have {value}.",
         "countRange": "{n} of the {total} comparable states have {lo} to {hi}.",
         "dollars": "{n} of the {total} comparable states fall between {lo} and {hi}."
-      }
+      },
+      "title": "{measure}, state by state"
     },
     "readout": {
-      "empty": "Select a state on the map or in the table.",
+      "empty": "Select a state to read its numbers.",
       "step": "{n, plural, one {{state} — {loss} lost at {step}, when {programs} ends.} other {{state} — {loss} lost at {step}, when {programs} end.} =0 {{state} — {loss} lost at {step}; no single program explains the drop.}}",
       "floor": "{n, plural, one {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {{state} — at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
       "worstStep": "{n, plural, one {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} ends.} other {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} end.} =0 {Largest single loss anywhere on the curve: {loss} at {step}; no single program explains the drop.}}",
@@ -1180,24 +1179,19 @@
       },
       "none": "{state} — no cliff found: no {step} step of earnings on this household's curve cut net income by {floor} or more, up to {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; 1 cliff is deferred to a later renewal.} other {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; {deferred} cliffs are deferred to a later renewal.}}",
-      "renter": {
-        "county": "Renter, {county}.",
-        "unknown": "Renter in the state's most populous county."
-      },
-      "details": "Details below ↓",
       "road": {
         "holds": "The road does not collapse: no {step} step of earnings between {lo} and {hi} cut net income by {floor} or more.",
         "collapseNoProgram": "The road collapses at {at}, where the family loses {drop} in one step; no single program explains the drop.",
-        "position": "{n} in 100 families like this in {state} earn less than that.",
+        "position": "{n} in 100 families like this earn less than that.",
         "offAxis": "{state} — this household's road out of poverty, from the poverty line to twice it, falls outside the earnings this state was swept over, so it has no keep rate.",
-        "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step."
+        "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step.",
+        "rate": "{state} — {rate} climbing out of poverty."
       },
       "axisPosition": "{n} in 100 families like this earn less than that.",
       "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve.",
       "carePrice": "There is no county child-care price for {state} in the source database, so a {care} stands in — and child care is what ends at most of these cliffs."
     },
     "rank": {
-      "heading": "Ranked",
       "row": {
         "plain": "{rank} {state}: {value}",
         "withAt": "{rank} {state}: {value}, {at}"
@@ -1237,7 +1231,8 @@
         "note": "{n, plural, one {{m, plural, one {{programs} is not modelled here, so a real cliff may be missing from this curve. This is not a low state; it is an unmeasured one.} other {{programs} are not modelled here, so a real cliff may be missing from this curve. This is not a low state; it is an unmeasured one.}}} other {{m, plural, one {{programs} is not modelled here, so a real cliff may be missing from these curves. They are not low states; they are unmeasured ones.} other {{programs} are not modelled here, so a real cliff may be missing from these curves. They are not low states; they are unmeasured ones.}}}}"
       },
       "bins": "Bins are recomputed for every measure — equal-width steps of a dollar measure, classes of whole numbers for a count — so a shade means nothing across two different measures. Read the bin bounds, not the colour.",
-      "position": "{n} in 100 earn less"
+      "position": "{n} in 100 earn less",
+      "headingBy": "Ranked: {order}"
     },
     "table": {
       "heading": "All {n}, every measure",
@@ -1265,12 +1260,12 @@
         "dangerWidth": "Danger zones, total width",
         "leap": "The leap",
         "safeExit": "Safe exit",
-        "cliffCount": "Cliffs",
+        "cliffCount": "Cliffs anywhere",
         "deferredCliffCount": "Deferred",
         "figures": "Figures",
         "keepRate": "Keep rate",
         "roadCliffCount": "Cliffs on the road",
-        "roadWorst": "Where the road collapses",
+        "roadWorst": "Road's worst loss",
         "roadWorstAt": "Road's worst step"
       },
       "defs": {
@@ -1279,7 +1274,11 @@
         "figures": "Complete, or the program the model cannot compute in that state, which makes the row's figures floors; and whether HotGap added the child-care subsidy to net income, where PolicyEngine had left it out.",
         "roadWorstAt": "The $1,000 step of earnings at which the road's largest single loss lands.",
         "position": "Of families like this one in that state, how many in 100 earn less than the figure beside it. From Census survey data, and cross-sectional: how many families already earn less, never one family's chance of getting there.",
-        "positionTerm": "Families earning less"
+        "positionTerm": "Families earning less",
+        "pastAxisTerm": "past the axis",
+        "pastAxis": "The figure runs off the top of the earnings scale, so the state has a bound and not a value. Never chart it as one.",
+        "lowerBoundTerm": "≥ a figure",
+        "lowerBound": "A figure the scale bounds from below: the real one is this or larger, and the earnings scale ended before it could be measured."
       },
       "none": "none",
       "complete": "complete",
@@ -1292,8 +1291,6 @@
       "carePrice": "child-care price: {care}"
     },
     "detail": {
-      "choose": "Corrections applied — choose a state",
-      "chooseSub": "Select a state on the map or in the table to read what HotGap changed on top of PolicyEngine before its figures were read.",
       "heading": "Corrections applied in {state} ({n})",
       "applied": "applied",
       "noBlock": "This run recorded no coverage block for this state.",
@@ -1342,7 +1339,7 @@
       },
       "care": {
         "county": "county price",
-        "stateMedianCounty": "state median county price",
+        "stateMedianCounty": "median of the state's other counties",
         "nationalMedian": "national median price",
         "unknown": "not recorded"
       },
@@ -1355,7 +1352,8 @@
         "dated": "{care}, {year} study",
         "undated": "{care}"
       },
-      "sourceReach": "Families earning less: {vintages}, grown to {year} dollars."
+      "sourceReach": "Families earning less: {vintages}, grown to {year} dollars.",
+      "wherefrom": "Where {state}'s numbers come from"
     },
     "csv": {
       "subsidy": {
@@ -1374,14 +1372,14 @@
         "money": "The money line is **health-adjusted**: household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included.",
         "household": "Each household is a typical renter in the state's most populous county — named under the map for the selected state — with HUD Fair Market Rent, Census county estimates, and the DOL National Database of Childcare Prices preschool price for that county, carried to {year} dollars by the BLS Employment Cost Index. The study year behind the price, and whether a state or national median stood in for a county the database lacks, differ by state and are printed in the source line under the map.",
         "takeUp": "The CCDF child care subsidy is **on** for this run and off for a household's own lookup. Head Start and housing vouchers are off in both: they are rationed, and assuming a family holds one inflates its numbers.",
-        "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in the *deferred* column and are lifted out of every other figure here. They are real losses; they do not land in the year of the raise.",
+        "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in every figure here like any other cliff, and named again in the *deferred* column. They are real losses; what the column says is which of them wait for a renewal rather than landing with the raise.",
         "corrections": "Where a state's figure needed a correction on top of PolicyEngine — a premium ladder applied locally, the child care subsidy added back into net income, a parent Medicaid limit taken from the state's handbook, a coverage-gap premium — it is listed under the map for the selected state, from the run's own coverage record, not from copy kept here.",
         "download": "The download is the table's rows in the table's order, one per state, with these columns: {columns}. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds.",
         "road": "**The road out of poverty** is the earnings from the federal poverty guideline for this household's size to twice it — $26,650 to $53,300 for a family of three at {year} rules, and Alaska and Hawaii on their own higher guidelines. It is federal on purpose, so every state's road is the same road and what differs is how the state's rules treat a family walking it. Its top carries one $1,000 step of allowance, because a program limit sitting on the twice-poverty line lands in the step that starts at the first sampled point at or above it.",
         "keepRate": "**The keep rate** is what the household keeps of each extra dollar earned across that road: the change in net income divided by the change in pay. It is one minus the effective marginal tax rate, the measure the benefits-cliff literature reports, said in cents because that is how a person hears it. Below zero the family ends the climb poorer than it began.",
         "position": "**Families earning less** puts a dollar figure where families are: of households like this one in that state, the share earning less than it, from Census survey data ({vintages}) grown to {year} dollars. It is cross-sectional — how many families already earn less — and never one family's chance of reaching that pay. A cell the survey cannot support is left empty rather than filled with a zero.",
         "modeledFamily": "**Every figure is the modelled family**, not an average of real ones: a renter in the state's most populous county, with children in paid care where every parent works, claiming what the rules entitle them to. A real household with a different rent, a different care arrangement or a benefit it never applied for has a different curve.",
-        "groups": "**The measures are two questions.** *On the road out of poverty* asks what happens to a family climbing from the poverty line to twice it — where the families this tool is for actually are. *Anywhere on the curve* asks where the tallest wall in the state stands, whatever pay it stands at; measured on this run that wall sits above the median family's earnings in 39 states of 50, which is why it is no longer the page's first answer."
+        "groups": "**The measures are two questions.** *On the road out of poverty* asks what happens to a family climbing from the poverty line to twice it — where the families this tool is for actually are. *Anywhere on the curve* asks where the tallest wall in the state stands, whatever pay it stands at; for this household that wall sits above the median family's earnings in {n} states of {total}, which is why it is no longer the page's first answer."
       },
       "axis": {
         "plain": "For {household} the axis runs from $0 to {top}; a figure that runs past the axis runs past that.",
@@ -1416,7 +1414,73 @@
       "tick": "{cents, plural, =0 {0¢} other {{sign, select, loses {−{cents}¢} other {+{cents}¢}}}}",
       "span": "{cents}¢"
     },
-    "roadOffAxis": "road runs off the axis"
+    "roadOffAxis": "road runs off the axis",
+    "answer": {
+      "places": {
+        "withDc": "the {n} states and the District of Columbia",
+        "plain": "the {n} states"
+      },
+      "keepRate": {
+        "some": "In {bad} of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started.",
+        "none": "Nowhere in {places} does {household} end the climb from poverty to twice poverty poorer than they started; the state that comes closest is {state}, which {value}.",
+        "all": "In every one of {places}, {household} climbing from the poverty line to twice it ends up poorer than they started — worst of all is {state}, which {value}."
+      },
+      "roadCliffCount": {
+        "some": "{state} puts {n, plural, one {{count} cliff} other {{count} cliffs}} on the road out of poverty, more than anywhere else; of {places}, {miss, plural, =0 {every one has at least one} one {just one has none} other {{miss} have none}}.",
+        "none": "Nothing on the road out of poverty costs this household {floor} in a single step, in any of {places}."
+      },
+      "roadWorst": {
+        "some": "The road out of poverty collapses hardest in {state}: {drop} of income gone between {at} and {to} of pay.",
+        "none": "The road out of poverty holds across {places}: nothing on it costs this household {floor} in a single step."
+      },
+      "biggestLoss": {
+        "some": "The largest one-step loss on the map is {state}'s {drop}, between {at} and {to} of pay; of {places}, {miss, plural, =0 {every one has a cliff somewhere on this household's curve} one {just one has no cliff at all} other {{miss} have no cliff at all}}.",
+        "none": "No curve in {places} has a single step down of {floor} or more for this household."
+      },
+      "dangerWidth": {
+        "some": "{state} has the widest danger zones: {width} of earnings across which more pay leaves this household no better off.",
+        "none": "Nowhere in {places} does more pay leave this household no better off."
+      },
+      "leap": {
+        "some": "It takes a raise of {leap} in one move to clear the worst danger zone in {state} — the largest leap on the map.",
+        "none": "No household in {places} has a danger zone to clear."
+      },
+      "safeExit": {
+        "some": "This household is clear of every danger zone only above {exit} in {state}, the highest safe exit on the map.",
+        "open": "{n, plural, one {In one state the last danger zone had not closed by the top of the axis; the highest exit measured elsewhere is {state}'s {exit}.} other {In {n} states the last danger zone had not closed by the top of the axis; the highest exit measured elsewhere is {state}'s {exit}.}}",
+        "none": "No danger zone is left anywhere in {places} for this household."
+      },
+      "cliffCount": {
+        "some": "{state}'s curve carries {n, plural, one {{count} cliff} other {{count} cliffs}} for this household, more than any other state.",
+        "none": "No curve in {places} has a step down of {floor} or more for this household."
+      },
+      "deferredCliffCount": {
+        "some": "{state} has the most cliffs that wait: {n, plural, one {{count} lands} other {{count} land}} at a later renewal rather than with the raise.",
+        "none": "No cliff in {places} waits for a later renewal; every one lands with the raise."
+      }
+    },
+    "howTo": {
+      "heading": "How to read this map",
+      "measure": "The map shades {measure}: {describe}",
+      "keyboard": "Each square is a button: the arrow keys move between them and Enter opens one. Its full-size twin is the row for the same state under “Every state, every measure”, which is also where every figure is written out.",
+      "key": {
+        "shaded": "a comparable figure, shaded by the scale above",
+        "none": "no cliff found — a measurement of zero, not a small loss",
+        "roadNone": "no cliff between the poverty line and twice it",
+        "past": "past the axis — a bound, not a value",
+        "roadPast": "the road runs off this state's axis — no rate to compare",
+        "incomplete": "figures incomplete — a program the model cannot compute here is missing from them"
+      }
+    },
+    "caution": {
+      "hatched": "{n, plural, one {**Hatched is not low.** One state is hatched: {programs} is not modelled there, so its figures are floors and it is neither shaded nor ranked.} other {**Hatched is not low.** {n} states are hatched: {programs} is not modelled there, so their figures are floors and they are neither shaded nor ranked.}}",
+      "past": "{n, plural, one {**Past the axis is not a number.** One state's figure runs off the top of the earnings scale, so it is a bound and must not be charted as a value.} other {**Past the axis is not a number.** {n} states' figures run off the top of the earnings scale, so they are bounds and must not be charted as values.}}",
+      "roadPast": "{n, plural, one {**No rate to compare.** In one state this household's road out of poverty falls outside the earnings that state was swept over.} other {**No rate to compare.** In {n} states this household's road out of poverty falls outside the earnings those states were swept over.}}"
+    },
+    "panels": {
+      "everything": "Every state, every measure",
+      "sources": "Where these numbers come from"
+    }
   },
   "shared": {
     "program": {
