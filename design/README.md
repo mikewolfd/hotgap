@@ -20,6 +20,17 @@ step, eleven steps, fifty-one worst steps. A component that shows a step, with
 its dollar, its rule and its timing, is reusable across all three. What changes
 is the count, and with the count, the density.
 
+**One question, three lenses.** Since Plan 9 (2026-09-18) the three surfaces
+also ask one question, and it is the question the tool exists to answer: *of
+each extra dollar you earn, what do you keep, and where does the road collapse?*
+The citizen asks it of the next stretch from where they stand, the caseworker of
+this family under each what-if, and the journalist of a typical family in every
+state. The answer is the **keep rate** — what a household holds on to of each
+extra dollar between the poverty line and twice it, which is one minus the
+effective marginal tax rate the benefits-cliff literature reports — and it is
+one measure with a definition, not a score. The whole-axis measures stay exactly
+what they were; what changed is which question the page answers first.
+
 They diverge in exactly one place, on purpose: **what is allowed to be
 implicit.** The citizen surface leaves the mechanism implicit and makes the
 consequence explicit ("child care help ends; you keep about $25,400 less"). The
@@ -187,10 +198,10 @@ registers, and the citizen register is not a simplification of the professional
 one — it is a different sentence. "Child care help ends. The state stops paying
 part of your day care bill." Program names appear on the citizen surface only
 after the plain phrase, as an aside ("It is called SNAP"), composed from the
-one phrase table in `inventory.md`, never inline. The citizen page is gated at
-Flesch-Kincaid ≤ 5.9 (it measured **2.12**, worst single string 7.85 — both
-under the repo's corpus and per-string limits — on the 2026-09-15 sketch; the
-gate itself is a separate port).
+one phrase table in `inventory.md`, never inline. Copy in each register is
+reviewed by social workers, not scored by a formula (decided 2026-09-18): a
+readability index cannot see a hard word in a three-word label, and the people
+who say these sentences to families every day can.
 
 **2. One answer against many what-ifs.** The citizen surface gives one answer and
 refuses to offer alternatives, because offering paths reads as advice. The
@@ -269,10 +280,9 @@ has to survive the crossing.
   it never meets a regulation citation. In Spanish that is `usted`, not `tú`:
   this is a government benefits page, the reader may be filling out a form
   beside it, and the formal address is what the notices they already hold use.
-  English's readability gate (Flesch–Kincaid ≤ 5.9) does not transfer — the
-  formula is English — so the target in Spanish is the same *plainness*, judged
-  by a reader, not a number: short clauses, common words, no nominalisations
-  ("cuando le paguen más", not "en caso de un incremento salarial").
+  Plainness is judged by a reader in every language, English included: short
+  clauses, common words, no nominalisations ("cuando le paguen más", not "en
+  caso de un incremento salarial").
 - **The caseworker surface** is professional and dense: the regulation, the
   dollar figure and the date in one line. Spanish keeps the citation exactly as
   the English has it — a CFR number is not translated — and keeps the
@@ -293,7 +303,7 @@ and URL parameter names are machine contracts. Money stays US dollars.
 
 | Tag | Status | Register | Notes |
 | --- | --- | --- | --- |
-| `en` | source | all three, as above | The file every other language is a copy of; the readability gate runs on it. |
+| `en` | source | all three, as above | The file every other language is a copy of. |
 | `es-US` | **draft, unreviewed** | drafted to match | Machine-written 2026-09-17. `_.reviewed` is `null`. US Spanish, not Castilian: `usted`, and the vocabulary of the US benefits system. |
 
 **What a native reviewer of `es-US` should look at first**, in this order:
@@ -319,8 +329,14 @@ and URL parameter names are machine contracts. Money stays US dollars.
 - **An input flow.** The archived system's fourteen-question wizard was built for
   one persona and is what made it too narrow. Input design is a separate brief;
   until it lands, a value chip in the `ScenarioBar` is not a button.
-- **Any composite score or ranking badge.** Six measures disagree with each other
-  by design; collapsing them would invent a fact.
+- **Any composite score or ranking badge.** The measures disagree with each
+  other by design; collapsing them would invent a fact. The keep rate does not
+  change this and is not an exception to it: it is a **measure**, with its own
+  definition, its own units and its own literature, ranked by the map the way
+  the other eight are — not a weighting of them, and not an index. A page may
+  say "New Mexico keeps 30¢ of each extra dollar and Wisconsin loses 105¢",
+  because that is one quantity measured two places. It may not say "New Mexico
+  scores best", because nothing on this site scores a state.
 - **Head Start, employer coverage and the state premium wrap surfaces.** They are
   in the evaluation and in the inventory's reach, but the offline archetype curve
   cannot produce them, and a sketch with invented numbers would be worse than a
