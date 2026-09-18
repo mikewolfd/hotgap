@@ -60,6 +60,33 @@ const flagName = (f: HouseholdFlagName): string => {
   return (key ? copy.editor.chips[key] : undefined) ?? (copy.whatIf.names as Record<string, string>)[f] ?? f;
 };
 
+/**
+ * The tag a what-if's line carries on the picture (design/charts.md § A
+ * what-if is a second line): the answer that changed, in the fewest words
+ * that name it — the pay itself for a pay what-if, otherwise the control's
+ * own name, which is already the shortest name the office uses. A diff that
+ * moved several answers is tagged by the first; the column's full name is in
+ * the comparison and in the line's key entry, one press away.
+ *
+ * It is a tag, not the identity: the lines are told apart by their dashes
+ * too, so a tag the collision rule has to drop costs a reader the name and
+ * not the distinction.
+ */
+export function whatIfTag(diff: Diff, flags: HouseholdFlags): string {
+  const W = copy.whatIf;
+  const moved = diff.state ?? diff.zip;
+  if (moved) return moved.toUpperCase();
+  for (const [f, v] of Object.entries(diff) as [HouseholdFlagName, string | boolean | null][]) {
+    if (f === "married") return v === true ? W.married : W.single;
+    if (f === "pay" && v !== null && v !== false) {
+      const unit = (PAY_UNITS as readonly string[]).includes(flags.unit ?? "") ? (flags.unit as PayUnit) : "hour";
+      return payInUnit(Number(v), unit);
+    }
+    return flagName(f);
+  }
+  return "";
+}
+
 /** A what-if's name from its diff, against the flags it was applied to: "CCDF subsidy on", "Pay $55,000 a year", "Married". */
 export function whatIfLabel(diff: Diff, flags: HouseholdFlags): string {
   const W = copy.whatIf, parts: string[] = [];

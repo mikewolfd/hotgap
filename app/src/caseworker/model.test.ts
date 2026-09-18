@@ -6,8 +6,8 @@ import { cliffsBetween, evaluateOffline, loadSummary, rawAnswersFromFlags, reach
 import { describe, expect, it } from "vitest";
 import { dateWords, listOf, lossFigure, ordinal, signedMoney } from "../lib/format.js";
 import {
-  assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, notInSweep, onTheWay, sourceLine, tiles, unclaimedNote, verdict,
+  againLine, answerParts, answerText, assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
+  modeled, notInSweep, onTheWay, sourceLine, tiles, unclaimedNote,
 } from "./model.js";
 
 const answers = (flags: Record<string, string | boolean>) => {
@@ -36,20 +36,36 @@ describe("figures, through Intl in the locale (lib/format.ts)", () => {
   });
 });
 
-describe("the verdict, caseworker register", () => {
-  it("names the household's own zone, its peak, the exit and the raise, then the zones beyond it", () => {
-    const v = verdict(co);
-    expect(v.line).toBe("In a danger zone. Between $36,000 and $45,000 of earnings, net never gets back to the $84,732 it reaches at $36,000. Clear at $45,000: a raise of $7,000.");
-    expect(v.again).toBe("It happens again between $45,000 and $119,000.");
-    expect(v.sub).toBe("It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.");
+/* Rewritten 2026-09-18 with the page (design/PICTURE-FIRST-2026-09-18.md): the
+   verdict's three sentences became ONE — the figure's own caption, professional
+   and in the third person — and the zones beyond this one became `againLine`,
+   at the head of the disclosure a counselor opens second. The figures are the
+   same figures, off the same sweep; what moved is how many sentences carry them. */
+describe("the answer, one sentence in the caseworker register", () => {
+  it("names the household's own zone, its exit and the raise that clears it — and nothing else", () => {
+    expect(answerText(co)).toBe("This family loses money on every raise between $36,000 and $45,000; $7,000 clears the stretch.");
+    /* Each dollar figure wears the key of the mark it names, so the sentence doubles as the chart's key. */
+    expect(answerParts(co).flatMap((p) => ("slot" in p ? [[p.slot, p.text, p.key]] : []))).toEqual([
+      ["start", "$36,000", "hg-amt hg-amt--gap"],
+      ["exit", "$45,000", "hg-amt hg-amt--gap"],
+      ["raise", "$7,000", "hg-amt hg-amt--gap"],
+    ]);
   });
-  it("has a sentence for every curve shape", () => {
+  it("says the zones beyond it, and where they end, one press away rather than in the answer", () => {
+    expect(againLine(co)).toBe("It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.");
+    expect(answerText(co)).not.toContain("again");
+  });
+  it("has one sentence for every curve shape", () => {
     const shape = (patch: Partial<HouseholdEvaluation["analysis"]>, personal: Partial<HouseholdEvaluation["personal"]> = {}) =>
-      verdict({ ...co, analysis: { ...co.analysis, ...patch }, personal: { ...co.personal, ...personal } }).line;
-    expect(shape({ verdict: "always_up" })).toMatch(/^No danger zone/);
-    expect(shape({ verdict: "cliff_behind" })).toMatch(/^Past the cliff/);
-    expect(shape({ verdict: "cliff_ahead", nextCliff: { startEarnings: 54000 } as never })).toBe("A cliff ahead: at $55,000 net drops $25,449. Below it, more pay is more money.");
-    expect(shape({}, { raiseIsLowerBound: true })).toMatch(/^In a danger zone with no exit on the axis\. From \$36,000 up to \$150,000/);
+      answerText({ ...co, analysis: { ...co.analysis, ...patch }, personal: { ...co.personal, ...personal } });
+    expect(shape({ verdict: "always_up" })).toBe("Every raise leaves this family better off; nothing drops anywhere up to $150,000.");
+    expect(shape({ verdict: "cliff_behind" })).toBe("The worst is behind this family: from $55,000 up, every raise is more money.");
+    expect(shape({ verdict: "cliff_ahead", nextCliff: { startEarnings: 54000 } as never })).toBe("This family is clear up to $55,000; past it a raise costs about $25,449 a year.");
+    expect(shape({}, { raiseIsLowerBound: true })).toBe("This family loses money on every raise above $36,000, and no exit turns up below $150,000.");
+    /* Every one of them is one sentence: the budget the page is measured against starts here. */
+    for (const s of [shape({ verdict: "always_up" }), shape({ verdict: "cliff_behind" }), answerText(co)]) {
+      expect(s.split(/\.\s/).length).toBe(1);
+    }
   });
 });
 
@@ -255,16 +271,20 @@ describe("what the model does not include, and where the numbers came from", () 
 });
 
 describe("the client sheet", () => {
-  it("is the citizen catalog's sentence and the same thresholds in plain words", () => {
+  it("opens with the pay and the money kept, then the citizen catalog's sentence and the same thresholds in plain words", () => {
     const h = handout(co, summary);
     expect(h.title).toBe("Your pay and your help — Colorado, one parent, two children");
-    // The citizen page's own answer for this household (audit D4), rewritten to the desk rule on 2026-09-18
-    // (design/PICTURE-FIRST-2026-09-18.md): one sentence, the exit and the leap, then "again" from the next
-    // zone's start. The pay and the money kept left the sentence there and have not been given a home on this
-    // sheet yet — the caseworker pass should decide where they go.
-    expect(h.paragraphs[0]).toBe("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now. It happens again between $46,000 and $119,000.");
-    expect(h.paragraphs[1]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
-    expect(h.paragraphs[2]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");
-    expect(h.paragraphs[3]).toBe("Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.");
+    // The two facts the citizen answer gave up on 2026-09-18 (design/PICTURE-FIRST-2026-09-18.md): on the
+    // screen the pay is in the ScenarioBar and the money kept is the label on the diamond; paper has
+    // neither, so the sheet's first line carries them. They are the same figures the page's own diamond and
+    // its chips show — an evaluation's, not a re-derivation.
+    expect(h.paragraphs[0]).toBe("You're paid $38,000 a year, and with help counted you keep $84,371.");
+    expect(h.paragraphs[0]).toContain(`$${co.analysis.currentEarnings.toLocaleString("en-US")}`);
+    // Then the citizen page's own answer for this household (audit D4): one sentence, the exit and the leap,
+    // then "again" from the next zone's start. One catalog, one sentence, on both surfaces.
+    expect(h.paragraphs[1]).toBe("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now. It happens again between $46,000 and $119,000.");
+    expect(h.paragraphs[2]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
+    expect(h.paragraphs[3]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");
+    expect(h.paragraphs[4]).toBe("Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.");
   });
 });

@@ -606,10 +606,10 @@
     },
     "page": {
       "title": "Benefits cliffs for one household, with what-ifs",
-      "skip": "Skip to the threshold ledger",
+      "skip": "Skip to the answer",
       "coverageHeading": "Model coverage in {state}",
       "correctionsHeading": "Corrections applied in {state}",
-      "readoutHint": "Arrow keys, or drag, to read any point. Square brackets step between cliffs.",
+      "readoutHint": "Drag, or use the arrow keys, to read any pay.",
       "dropsHeading": "Every step down",
       "dropsCaption": "Select a row or its mark for the breakdown.",
       "dropsCols": {
@@ -626,10 +626,19 @@
         "program": "Program",
         "who": "Who"
       },
-      "compareHeading": "Compare",
+      "compareHeading": "Compare the what-ifs",
       "compareCaption": "The same rules asked of each what-if.",
-      "compareEmpty": "No what-if yet. Press a take-up chip, or change a value in the bar above, to add one beside the base.",
-      "assumptionsHeading": "What this model does not include"
+      "compareEmpty": "No what-if yet. Press a take-up chip, or Add a what-if, and its curve joins this one.",
+      "assumptionsHeading": "What we assumed",
+      "readoutKeys": "Square brackets step between cliffs; Enter opens a cliff's row and Escape closes it.",
+      "howTo": "How to read this picture",
+      "stepsHeading": "What this family faces, step by step",
+      "sourcesHeading": "Where these numbers come from",
+      "reachHeading": "How common this pay is",
+      "estimates": "These are estimates from the rules in force, not a determination. A caseworker decides real help.",
+      "who": "{adults} in {state}, {earnings} of earnings.",
+      "archetype": "These are the committed sweep's numbers for a household of this shape in {state}, not this family's own live call.",
+      "stillArchetype": "Still the committed sweep's numbers for a household of this shape in {state}: the live call did not answer."
     },
     "status": {
       "loading": "Evaluating… net income is checked at {count} pay levels. A household not seen before takes a few seconds.",
@@ -698,11 +707,6 @@
       }
     },
     "verdict": {
-      "alwaysUp": "No danger zone. Net rises with every step of earnings on the axis.",
-      "cliffAhead": "A cliff ahead: at {at} net drops {drop}. Below it, more pay is more money.",
-      "cliffBehind": "Past the cliff. The big drop is below current earnings; from here, more pay is more money.",
-      "stuck": "In a danger zone with no exit on the axis. From {start} up to {top} of earnings, net never gets back to the {peak} it reaches at {start}.",
-      "inZone": "In a danger zone. Between {start} and {exit} of earnings, net never gets back to the {peak} it reaches at {start}. Clear at {exit}: a raise of {raise}.",
       "again": "It happens again between {exit} and {safe}.",
       "safeFrom": {
         "exact": "Safe from {safe}: a raise of {leap}.",
@@ -879,7 +883,9 @@
         "deferred": "Deferred cliff",
         "current": "Current earnings",
         "leap": "The leap, to the exit",
-        "safe": "Safe from here"
+        "safe": "Safe from here",
+        "road": "The road out of poverty",
+        "whatIf": "What-if: {tag}"
       },
       "readout": {
         "lead": "Earnings {earnings} → net {net}.",
@@ -904,7 +910,17 @@
       },
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
-      "deferred": "{n, plural, one {{n} cliff lands at a later renewal (hollow dot, dashed connector); it counts in every figure here.} other {{n} cliffs land at a later renewal (hollow dots, dashed connectors); they count in every figure here.}}"
+      "deferred": "{n, plural, one {{n} cliff lands at a later renewal (hollow dot, dashed connector); it counts in every figure here.} other {{n} cliffs land at a later renewal (hollow dots, dashed connectors); they count in every figure here.}}",
+      "labels": {
+        "net": "net {net}",
+        "ends": "{program} ends",
+        "road": {
+          "keeps": "keeps {cents}¢ of each extra dollar",
+          "loses": "loses {cents}¢ of each extra dollar"
+        }
+      },
+      "whatIfLines": "{n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}}",
+      "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}"
     },
     "compare": {
       "rows": {
@@ -997,9 +1013,18 @@
       "printed": {
         "dated": "Printed from HotGap. {year} rules. Sweep of {sweep}.",
         "undated": "Printed from HotGap. {year} rules."
-      }
+      },
+      "payAndKeep": "You're paid {pay} a year, and with help counted you keep {kept}."
     },
-    "pageTitle": "HotGap — caseworker"
+    "pageTitle": "HotGap — caseworker",
+    "answer": {
+      "inZone": "This family loses money on every raise between {start} and {exit}; {raise} clears the stretch.",
+      "inZone:stuck": "This family loses money on every raise above {start}, and no exit turns up below {top}.",
+      "cliffAhead": "This family is clear up to {at}; past it a raise costs about {drop} a year.",
+      "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",
+      "cliffBehind": "The worst is behind this family: from {wage} up, every raise is more money.",
+      "alwaysUp": "Every raise leaves this family better off; nothing drops anywhere up to {top}."
+    }
   },
   "places": {
     "pageTitle": "HotGap — what a raise costs, state by state",

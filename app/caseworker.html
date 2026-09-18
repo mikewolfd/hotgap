@@ -7,111 +7,135 @@
   <script type="module" src="/src/caseworker/main.ts"></script>
 </head>
 <body>
-<!-- Every word on this page comes from src/caseworker/copy.ts (app/README.md § Languages); the skeleton holds ids. -->
-<a class="hg-skip" href="#ledger" id="skip"></a>
+<!-- Every word on this page comes from src/caseworker/copy.ts (app/README.md § Languages); the skeleton holds ids.
+
+     Picture first (design/PICTURE-FIRST-2026-09-18.md, design/inventory.md
+     § The page is its picture): one line of masthead, one sentence, then the
+     figure — and nothing else above the fold. Everything the page used to
+     lay out in two columns is behind five named disclosures, closed by
+     default, open on paper, in the DOM throughout.
+
+     What never hides, whatever the word budget costs: the status region, the
+     archetype notice, the incomplete-state caution and the error callout.
+     They sit above the figure and, on a page where nothing is wrong, they
+     are empty and cost the reader nothing. -->
+<a class="hg-skip" href="#answer" id="skip"></a>
 <!-- The editor prepends the ScenarioBar, the four-facts screen and the one-value
      dialog to #app, so the sticky top row's containing block is the whole page (S1). -->
 <div id="app">
 <main class="hg-page page">
   <h1 class="hg-visually-hidden" id="pageTitle"></h1>
-  <p class="hg-source" id="status" role="status"></p>
-  <div class="hg-callout hg-callout--caution" id="alert" role="alert" hidden></div>
+
+  <div class="notices">
+    <!-- Paper has no ScenarioBar: the wordmark and whose household this is, print only. -->
+    <p class="hg-print-only masthead" id="masthead"></p>
+    <p class="hg-source" id="status" role="status"></p>
+    <!-- Whose numbers these are (S5, M4): an archetype curve is never quietly shown as this family's own,
+         so the notice and its Try again stay in the open while every other provenance line is a press away. -->
+    <div class="hg-callout hg-callout--caution" id="whose" hidden>
+      <p id="whoseText"></p>
+      <button class="hg-button hg-button--small" type="button" id="retrySource"></button>
+    </div>
+    <!-- IncompleteMarker (#16): what the model cannot compute in this state that could move this household. -->
+    <div class="hg-callout hg-callout--caution" id="incomplete" hidden></div>
+    <div class="hg-callout hg-callout--caution" id="alert" role="alert" hidden></div>
+  </div>
 
   <div id="content" hidden>
-    <div class="verdict">
-      <div>
-        <p class="verdict-line" id="verdictLine" tabindex="-1"></p>
-        <p class="verdict-sub" id="verdictSub"></p>
+    <!-- The figure is the page. Its first child is the answer, so the picture's accessible name IS the answer. -->
+    <figure class="hg-picture" id="picture">
+      <figcaption class="hg-answer" id="answer" tabindex="-1"></figcaption>
+      <!-- The curve is a fixed y-axis gutter beside a scroller holding the whole earnings axis (design/charts.md § The scroll rule). -->
+      <div class="hg-chart hg-chart--scroll" id="chartWrap" tabindex="0" role="group" aria-roledescription="interactive chart" aria-describedby="chartKeys">
+        <svg class="hg-chart__gutter" id="curveAxis" aria-hidden="true"></svg>
+        <div class="hg-scroll-x hg-chart__scroll" id="curveScroll">
+          <svg id="curve" aria-hidden="true"></svg>
+          <div class="hg-marks" id="marks"></div>
+        </div>
       </div>
+      <p class="hg-chart__hint" id="curveRange" aria-hidden="true"></p>
+      <p class="hg-readout hg-no-print" id="readout" aria-live="polite"></p>
+      <!-- How the chart is operated: visually hidden and always exposed, because a describedby inside a closed disclosure is a description nobody has. -->
+      <p class="hg-visually-hidden" id="chartKeys"></p>
+      <details class="hg-disclosure" id="howto">
+        <summary id="howToSummary"></summary>
+        <p class="chart-title" id="curveTitle"></p>
+        <ul class="hg-key" id="key"></ul>
+        <p class="hg-source" id="curveCap"></p>
+      </details>
+    </figure>
+
+    <!-- 1. The rows a cliff mark opens: this household's own figures, every step down, and what each was made of. -->
+    <details class="hg-disclosure" id="steps-panel">
+      <summary><h2 id="stepsHeading"></h2></summary>
+      <p id="again"></p>
       <div class="tiles" id="tiles"></div>
-    </div>
-
-    <!-- Coverage notice and corrections sit under the verdict, before the columns (B1, B3). -->
-    <div class="provenance">
-      <section>
-        <h2 id="coverageHeading"></h2>
-        <div id="coverage"></div>
-      </section>
-      <section>
-        <h2 id="correctionsHeading"></h2>
-        <ol class="hg-rows hg-rows--stack" id="corrections"></ol>
-        <p class="hg-cite" id="correctionsRest"></p>
-      </section>
-    </div>
-
-    <!-- Four grid items: the curve with its drops, the ledger, the comparison (full width once it holds more than one what-if — B2), the assumptions. -->
-    <div class="cols">
-      <section class="lead">
-        <figure class="curve">
-          <h2 id="curveTitle"></h2>
-          <!-- The curve is a fixed y-axis gutter beside a scroller holding the whole earnings axis (design/charts.md § The scroll rule). -->
-          <div class="hg-chart hg-chart--scroll" id="chartWrap" tabindex="0" role="group" aria-roledescription="interactive chart" aria-describedby="curveCap">
-            <svg class="hg-chart__gutter" id="curveAxis" aria-hidden="true"></svg>
-            <div class="hg-scroll-x hg-chart__scroll" id="curveScroll">
-              <svg id="curve" aria-hidden="true"></svg>
-              <div class="hg-marks" id="marks"></div>
-            </div>
-          </div>
-          <p class="hg-chart__hint" id="curveRange" aria-hidden="true"></p>
-          <p class="hg-readout hg-no-print" id="readout" aria-live="polite"></p>
-          <ul class="hg-key" id="key"></ul>
-          <figcaption class="hg-source" id="curveCap"></figcaption>
-        </figure>
-
-        <h2 id="drops"></h2>
-        <div class="hg-scroll-x">
-          <table class="hg-table drops">
-            <caption class="hg-no-print" id="dropsCaption"></caption>
-            <thead>
-              <tr><th scope="col" id="colEarnings"></th><th scope="col" class="num" id="colDrop"></th><th scope="col" id="colLost"></th><th scope="col" id="colDriver"></th></tr>
-            </thead>
-            <tbody id="dropRows"></tbody>
-          </table>
-        </div>
-        <p class="footnote" id="dropsEmpty" hidden></p>
-
-        <div class="hg-panel breakdown">
-          <h3 id="bdTitle"></h3>
-          <div class="bd" id="bdBars"></div>
-          <p class="footnote" id="bdFootnote"></p>
-        </div>
-      </section>
-
-      <section class="ledger-section">
-        <h2 id="ledger" tabindex="-1"></h2>
-        <table class="hg-table ledger">
-          <caption id="ledgerCaption"></caption>
+      <h3 id="drops"></h3>
+      <p class="hg-source hg-no-print" id="dropsCaption"></p>
+      <div class="hg-scroll-x">
+        <table class="hg-table drops">
           <thead>
-            <tr><th scope="col" class="num" id="lColEarnings"></th><th scope="col" id="lColProgram"></th><th scope="col" id="lColWho"></th></tr>
+            <tr><th scope="col" id="colEarnings"></th><th scope="col" class="num" id="colDrop"></th><th scope="col" id="colLost"></th><th scope="col" id="colDriver"></th></tr>
           </thead>
-          <tbody id="ledgerRows"></tbody>
+          <tbody id="dropRows"></tbody>
         </table>
-        <p class="footnote" id="ledgerNote"></p>
-      </section>
-
-      <section class="compare-section" id="compareSection">
-        <h2 id="compare" tabindex="-1"></h2>
-        <div class="hg-scroll-x">
-          <table class="hg-table compare">
-            <caption id="compareCaption"></caption>
-            <thead><tr id="compareHead"></tr></thead>
-            <tbody id="compareRows"></tbody>
-            <tfoot id="compareFoot" hidden></tfoot>
-          </table>
-        </div>
-        <!-- On the way (Plan 9): the cliffs between the base's own pay and a pay what-if's, one list per qualifying column. -->
-        <div class="on-the-way" id="onTheWay"></div>
-        <p class="footnote hg-no-print" id="compareEmpty"></p>
-        <p class="footnote" id="compareNote"></p>
-      </section>
-
-      <div class="hg-panel assumptions">
-        <h3 id="assumptionsHeading"></h3>
-        <ul class="assumed" id="assumed"></ul>
-        <p class="hg-source" id="sourceNote"></p>
-        <button class="hg-button hg-button--small" type="button" id="retrySource" hidden></button>
       </div>
-    </div>
+      <p class="footnote" id="dropsEmpty" hidden></p>
+      <div class="hg-panel breakdown">
+        <h3 id="bdTitle"></h3>
+        <div class="bd" id="bdBars"></div>
+        <p class="footnote" id="bdFootnote"></p>
+      </div>
+    </details>
+
+    <!-- 2. The comparison in numbers; the comparison in lines is on the picture above. -->
+    <details class="hg-disclosure" id="compare-panel">
+      <summary><h2 id="compare" tabindex="-1"></h2></summary>
+      <div class="hg-scroll-x">
+        <table class="hg-table compare">
+          <caption id="compareCaption"></caption>
+          <thead><tr id="compareHead"></tr></thead>
+          <tbody id="compareRows"></tbody>
+          <tfoot id="compareFoot" hidden></tfoot>
+        </table>
+      </div>
+      <!-- On the way (Plan 9): the cliffs between the base's own pay and a pay what-if's, one list per qualifying column. -->
+      <div class="on-the-way" id="onTheWay"></div>
+      <p class="footnote hg-no-print" id="compareEmpty"></p>
+      <p class="footnote" id="compareNote"></p>
+    </details>
+
+    <!-- 3. ThresholdLedger (#7) and the EligibilityBoundary row inside it. -->
+    <details class="hg-disclosure" id="ledger-panel">
+      <summary><h2 id="ledger" tabindex="-1"></h2></summary>
+      <table class="hg-table ledger">
+        <caption id="ledgerCaption"></caption>
+        <thead>
+          <tr><th scope="col" class="num" id="lColEarnings"></th><th scope="col" id="lColProgram"></th><th scope="col" id="lColWho"></th></tr>
+        </thead>
+        <tbody id="ledgerRows"></tbody>
+      </table>
+      <p class="footnote" id="ledgerNote"></p>
+    </details>
+
+    <!-- 4. The household the curve was run for, and what the model leaves out of it. -->
+    <details class="hg-disclosure" id="assumed-panel">
+      <summary><h2 id="assumptionsHeading"></h2></summary>
+      <ul class="assumed" id="assumed"></ul>
+      <h3 id="reachHeading"></h3>
+      <p class="footnote" id="reachNote"></p>
+    </details>
+
+    <!-- 5. Provenance: the coverage block when it is not a caution, the corrections, the SourceNote. -->
+    <details class="hg-disclosure" id="sources-panel">
+      <summary><h2 id="sourcesHeading"></h2></summary>
+      <div id="coverage"></div>
+      <h3 id="correctionsHeading"></h3>
+      <ol class="hg-rows hg-rows--stack" id="corrections"></ol>
+      <p class="hg-cite" id="correctionsRest"></p>
+      <p class="hg-source" id="sourceNote"></p>
+      <p class="footnote" id="estimates"></p>
+    </details>
 
     <!-- The client sheet, in the citizen register, paper only. -->
     <section class="handout hg-print-only" id="handout"></section>

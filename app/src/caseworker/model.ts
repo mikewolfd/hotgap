@@ -27,7 +27,7 @@ import {
 import { sceneOf } from "../citizen/model.js";
 import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
-import { catalog, coreText, deferralUntil, fill, limitWords } from "../lib/copy.js";
+import { catalog, coreText, deferralUntil, fill, limitWords, parts } from "../lib/copy.js";
 import { careHousehold, incompleteFor, unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
@@ -39,7 +39,7 @@ export { stateName };
 const pct = (share: number): number => Math.round(share * 100);
 
 /** "42 in 100 families like this earn less" — core's road.position message (Plan 9); "" where the ladder has no cell, never read as 0. */
-const positionWords = (n: number | null): string => (n === null ? "" : fill(catalog.core.road.position, { n: Math.round(n) }));
+export const positionWords = (n: number | null): string => (n === null ? "" : fill(catalog.core.road.position, { n: Math.round(n) }));
 /** "keeps 12¢ of each extra dollar" / "loses 40¢ of each extra dollar" — core's keepRateWords and road.rate own the sign word and the rounding (Plan 9), so the compare row and the tiles cannot round or word a rate differently. */
 const keepRateSentence = (rate: number): string => { const { sign, cents } = keepRateWords(rate); return fill(catalog.core.road.rate, { sign, cents }); };
 /** A tile's qualifying line with the cliff's position parenthesised onto it, the way the reach tile already parenthesises its n (§ StatTiles); "" position adds nothing. */
@@ -75,23 +75,75 @@ const archetypeOf = (ev: HouseholdEvaluation): string => pickArchetypeId(ev.answ
 export const notInSweep = (base: HouseholdEvaluation, ev: HouseholdEvaluation): boolean =>
   ev.source === "archetype" && archetypeOf(ev) === archetypeOf(base) && ev.analysis.currentEarnings === base.analysis.currentEarnings;
 
-// ── Verdict (M2), the caseworker register ───────────────────────────────
-export interface Verdict { line: string; sub: string; /** "It happens again…", when more zones lie beyond the household's. */ again: string }
+// ── AnswerSentence (#1), the caseworker register ────────────────────────
+/**
+ * ONE sentence per curve shape, professional and in the third person — the
+ * counselor's reading of this household, said to a colleague across the desk
+ * (design/README.md § Where the personas conflict, 1). It is the figure's own
+ * caption since 2026-09-18, so it is the only prose above the fold, and each
+ * dollar figure carries the key of the mark it names: the exit rule and the
+ * leap bracket in `--gap`, a cliff's dot in `--cliff`.
+ *
+ * What left this sentence, and where it went: the zone's peak, which the
+ * picture draws as a rule and the diamond labels in dollars; and the
+ * "it happens again" clause, which is `againLine` at the head of *What this
+ * family faces, step by step*, one press away, with its safe exit. A second
+ * and third sentence above the fold is the writing the owner's first reader
+ * said nobody reads.
+ */
+type AnswerKey = keyof typeof copy.answer;
 
-export function verdict(ev: HouseholdEvaluation): Verdict {
-  const a = ev.analysis, p = ev.personal, e = ev.escape, v = copy.verdict;
-  const next = cliffAt(ev, a.nextCliff);
-  const start = usd(p.zone?.startEarnings ?? 0), peak = usd(p.zone?.peakNet ?? 0), exit = usd(p.escapeEarnings ?? 0);
-  const again = a.verdict === "in_danger_zone" && !p.raiseIsLowerBound && e.safeExitEarnings !== null && e.safeExitEarnings !== p.escapeEarnings
-    ? t("verdict.again", { exit, safe: usd(e.safeExitEarnings) }) : "";
-  const line = a.verdict === "always_up" ? v.alwaysUp
-    : a.verdict === "cliff_ahead" ? t("verdict.cliffAhead", { at: usd(next!.endEarnings), drop: usd(next!.drop) })
-    : a.verdict === "cliff_behind" ? v.cliffBehind
-    : p.raiseIsLowerBound ? t("verdict.stuck", { start, top: usd(top(ev)), peak })
-    : t("verdict.inZone", { start, exit, peak, raise: usd(p.raiseToClear ?? 0) });
-  const sub = again ? `${again} ${t(`verdict.safeFrom.${e.leapIsLowerBound ? "atLeast" : "exact"}`, { safe: usd(e.safeExitEarnings!), leap: usd(e.leap) })}`
-    : e.safeExitEarnings === null ? v.neverSafe : "";
-  return { line, sub, again };
+function answerKey(ev: HouseholdEvaluation): AnswerKey {
+  const v = ev.analysis.verdict, p = ev.personal;
+  if (v === "in_danger_zone") return p.raiseIsLowerBound || p.escapeEarnings === null ? "inZone:stuck" : "inZone";
+  if (v === "cliff_ahead") return cliffAt(ev, ev.analysis.nextCliff)?.deferral ? "cliffAhead:waits" : "cliffAhead";
+  return v === "cliff_behind" ? "cliffBehind" : "alwaysUp";
+}
+
+/** The slots for this shape; `fill` throws on an argument nothing asked for, which is what keeps one sentence to one set of facts. */
+function answerSlots(ev: HouseholdEvaluation, key: AnswerKey): Record<string, string> {
+  const a = ev.analysis, p = ev.personal;
+  switch (key) {
+    case "inZone": return { start: usd(p.zone?.startEarnings ?? 0), exit: usd(p.escapeEarnings ?? 0), raise: usd(p.raiseToClear ?? 0) };
+    case "inZone:stuck": return { start: usd(p.zone?.startEarnings ?? a.currentEarnings), top: usd(top(ev)) };
+    case "cliffAhead":
+    case "cliffAhead:waits": {
+      // The threshold is the step's landing point (§ Where a program ends).
+      const c = cliffAt(ev, a.nextCliff) ?? a.cliffs.find((x) => x.endEarnings > a.currentEarnings) ?? null;
+      return { at: usd(c?.endEarnings ?? a.currentEarnings), drop: usd(c?.drop ?? 0) };
+    }
+    case "cliffBehind": return { wage: usd((cliffAt(ev, a.worstCliff) ?? a.cliffs[a.cliffs.length - 1])?.endEarnings ?? a.currentEarnings) };
+    default: return { top: usd(top(ev)) };
+  }
+}
+
+/** The mark each slot is keyed to (a class on the span), or none. */
+const SLOT_KEY: Record<string, string> = {
+  start: "hg-amt hg-amt--gap", exit: "hg-amt hg-amt--gap", raise: "hg-amt hg-amt--gap",
+  at: "hg-amt hg-amt--cliff", wage: "hg-amt hg-amt--cliff", drop: "hg-amt hg-amt--cliff",
+};
+
+export type AnswerPart = { text: string } | { slot: string; text: string; key: string | null };
+
+export function answerParts(ev: HouseholdEvaluation): AnswerPart[] {
+  const key = answerKey(ev);
+  return parts(copy.answer[key], answerSlots(ev, key)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
+}
+
+export const answerText = (ev: HouseholdEvaluation): string => answerParts(ev).map((p) => p.text).join("");
+
+/**
+ * The zones beyond this household's, and the pay past which none remain —
+ * the clause that used to ride under the verdict. It leads *What this family
+ * faces, step by step*, because it is the second thing a counselor says, not
+ * the first.
+ */
+export function againLine(ev: HouseholdEvaluation): string {
+  const p = ev.personal, e = ev.escape, v = copy.verdict;
+  const again = ev.analysis.verdict === "in_danger_zone" && !p.raiseIsLowerBound && e.safeExitEarnings !== null && e.safeExitEarnings !== p.escapeEarnings
+    ? t("verdict.again", { exit: usd(p.escapeEarnings ?? 0), safe: usd(e.safeExitEarnings) }) : "";
+  if (again) return `${again} ${t(`verdict.safeFrom.${e.leapIsLowerBound ? "atLeast" : "exact"}`, { safe: usd(e.safeExitEarnings!), leap: usd(e.leap) })}`;
+  return e.safeExitEarnings === null ? v.neverSafe : "";
 }
 
 // ── StatTiles (#2) ──────────────────────────────────────────────────────
@@ -324,8 +376,17 @@ export function onTheWay(base: HouseholdEvaluation, ev: HouseholdEvaluation): On
 export const columnSub = (ev: HouseholdEvaluation): string =>
   t("compare.sub", { adults: copy.compare.adults[ev.answers.married ? "two" : "one"], earnings: usd(ev.analysis.currentEarnings) });
 
+/**
+ * What reach is and is not, for *What we assumed* — where the household's own
+ * facts are, and where a counselor goes to check what a percentile means.
+ * It sat under the CompareTable until 2026-09-18; the number and its margin
+ * stay on the tile, and the margin travels with the number in every register
+ * (design/README.md § Where the personas conflict, 5).
+ */
+export const reachSentence = (ev: HouseholdEvaluation): string => t("compare.reachNote", { state: stateName(ev.answers.state) });
+
 export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluation[], unanswered = 0): string {
-  const C = copy.compare, s = [t("compare.reachNote", { state: stateName(base.answers.state) })];
+  const C = copy.compare, s: string[] = [];
   const other = others.find((o) => archetypeOf(o) !== archetypeOf(base) && o.reach.current !== null && base.reach.current !== null);
   if (other) s.push(t("compare.ladderNote", { other: archetypeOf(other), base: archetypeOf(base) }));
   if (others.some((o) => o.source === "archetype")) s.push(C.archetypeNote);
@@ -376,13 +437,20 @@ export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
 
 // ── The client sheet (citizen register, from the same objects) ──────────
 /**
- * The sheet opens with the citizen page's own answer for this household
- * (design/inventory.md M2, review S8): the catalog's sentence and its
- * "again" line from the citizen's scene, so the two surfaces cannot say
- * different things to the same family — including the deferred clause the
- * catalog carries (TODO(system) 16). Yearly figures: the sheet is printed
- * for a client whose own unit the caseworker's flags carry, but the paper
- * says a year, as it always has.
+ * The sheet's first line is the two facts the citizen answer gave up on
+ * 2026-09-18 — the pay the family is paid and the money it keeps. On the
+ * screen the pay is in the ScenarioBar and the money kept is the label on the
+ * diamond, so the sentence did not need them; paper carries neither, and a
+ * client sheet that opens "More pay won't leave you better off" without
+ * saying what the pay is is a sheet about nobody. Second person, because the
+ * sheet is handed to the family (review S8).
+ *
+ * Then the citizen page's own answer for this household (design/inventory.md
+ * M2): the catalog's sentence and its "again" line from the citizen's scene,
+ * so the two surfaces cannot say different things to the same family —
+ * including the deferred clause the catalog carries (TODO(system) 16).
+ * Yearly figures: the sheet is printed for a client whose own unit the
+ * caseworker's flags carry, but the paper says a year, as it always has.
  */
 export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): { title: string; paragraphs: string[] } {
   const a = ev.analysis, step = stepOf(ev), h = modeled(ev), H = copy.handout;
@@ -391,7 +459,10 @@ export function handout(ev: HouseholdEvaluation, summary: SummaryJson | null): {
   const kids = h.childAges.length;
   const snapEnd = ledgerRows(ev).find((r) => r.id === "snap"), child = ev.escape.childCoverageEndEarnings;
   const scene = sceneOf(ev, { unit: "year" }), again = againText(scene);
-  const p: string[] = [verdictText(scene) + (again ? ` ${again}` : "")];
+  const p: string[] = [
+    t("handout.payAndKeep", { pay: usd(a.currentEarnings), kept: usd(a.currentNet) }),
+    verdictText(scene) + (again ? ` ${again}` : ""),
+  ];
   if (cc > 0) p.push(t("handout.careShare", { amount: usd(cc), phrase: phrase("childcare") }));
   if (w) {
     const lost = w.programsLost.map(phrase), slots = { at: usd(w.endEarnings), drop: usd(w.drop) };

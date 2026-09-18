@@ -1,19 +1,26 @@
-// Rendering: the verdict and tiles, the coverage notice (IncompleteMarker),
-// CorrectionsApplied, the DropLedger and BreakdownBars, the ThresholdLedger,
-// the CompareTable, the assumed list with the SourceNote, and the client
-// sheet. Every string is copy.ts's or comes from the evaluation and the
-// coverage block through model.ts; nothing is typed here. Each function is
-// O(its rows).
+// Rendering: the AnswerSentence, the tiles, the coverage notice
+// (IncompleteMarker), CorrectionsApplied, the DropLedger and BreakdownBars,
+// the ThresholdLedger, the CompareTable, the assumed list with the
+// SourceNote, and the client sheet. Every string is copy.ts's or comes from
+// the evaluation and the coverage block through model.ts; nothing is typed
+// here. Each function is O(its rows).
+//
+// Since 2026-09-18 the page is its picture (design/inventory.md § The page is
+// its picture), so these functions fill two kinds of place: what is always on
+// the screen — the answer, and any caution — and what sits inside one of the
+// five named disclosures. Which is which is the skeleton's decision
+// (caseworker.html), not this module's; the one rule it enforces is that a
+// caution goes to the notices and a fact goes behind a press.
 import { CLIFF_MIN, type CorrectionNote, type HouseholdEvaluation, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { coreText, deferralUntil, limitWords, type Params } from "../lib/copy.js";
+import { catalog, coreText, deferralUntil, limitWords, type Params } from "../lib/copy.js";
 import { correctionRows, sourceWord } from "../lib/corrections.js";
-import { $, fillText } from "../lib/dom.js";
+import { $, fillText, h as el } from "../lib/dom.js";
 import { esc, listOf, listOfItems, lossFigure, money as usd, signedMoney } from "../lib/format.js";
 import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import {
-  assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, onTheWay, sourceLine, stateName, tiles, verdict, type Provenance,
+  againLine, answerParts, assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
+  modeled, onTheWay, positionWords, reachSentence, sourceLine, stateName, tiles, type Provenance,
 } from "./model.js";
 
 /** The page's fixed words — headings, captions, column heads — from copy.ts into the skeleton, once. */
@@ -22,31 +29,50 @@ export function renderStatic(): void {
   /* The tab's own name: the skeleton's <title> is English so a page has one before the catalog is in (places/render.ts does the same). */
   document.title = copy.pageTitle;
   fillText({
-    pageTitle: P.title, skip: P.skip, readout: P.readoutHint, drops: P.dropsHeading, dropsCaption: P.dropsCaption,
+    pageTitle: P.title, skip: P.skip, readout: P.readoutHint, chartKeys: `${P.readoutHint} ${P.readoutKeys}`,
+    howToSummary: P.howTo, stepsHeading: P.stepsHeading, drops: P.dropsHeading, dropsCaption: P.dropsCaption,
     colEarnings: P.dropsCols.earnings, colDrop: P.dropsCols.drop, colLost: P.dropsCols.lost, colDriver: P.dropsCols.driver,
     bdFootnote: P.breakdownFootnote, ledger: P.ledgerHeading, ledgerCaption: P.ledgerCaption,
     lColEarnings: P.ledgerCols.earnings, lColProgram: P.ledgerCols.program, lColWho: P.ledgerCols.who,
-    compare: P.compareHeading, compareCaption: P.compareCaption, compareEmpty: P.compareEmpty, assumptionsHeading: P.assumptionsHeading,
-    retrySource: copy.status.tryAgain,
+    compare: P.compareHeading, compareCaption: P.compareCaption, compareEmpty: P.compareEmpty,
+    assumptionsHeading: P.assumptionsHeading, reachHeading: P.reachHeading, sourcesHeading: P.sourcesHeading,
+    estimates: P.estimates, retrySource: copy.status.tryAgain,
   });
 }
 
-export function renderVerdict(ev: HouseholdEvaluation, cell: ReachLadder | null): void {
-  const v = verdict(ev);
-  $("verdictLine").textContent = v.line;
-  $("verdictSub").textContent = v.sub;
+/**
+ * AnswerSentence (#1): one sentence, as the figure's own caption, each dollar
+ * figure wearing the key of the mark it names. The zones beyond this one and
+ * the tiles go where a counselor looks second — at the head of *What this
+ * family faces, step by step*.
+ */
+export function renderAnswer(ev: HouseholdEvaluation, cell: ReachLadder | null): void {
+  $("answer").replaceChildren(...answerParts(ev).map((p) => ("slot" in p && p.key ? el("span", { class: p.key }, p.text) : p.text)));
+  const again = againLine(ev);
+  $("again").textContent = again;
+  $("again").hidden = again === "";
   $("tiles").innerHTML = tiles(ev, cell).map((t) =>
     `<div class="tile"><span class="lab">${esc(t.label)}</span><span class="val hg-figure">${esc(t.value)}</span><span class="sub">${esc(t.sub)}</span></div>`).join("");
+  $("reachNote").textContent = reachSentence(ev);
 }
 
-/** IncompleteMarker (#16): from coverage[state].unmodeled[] and every state's block — the count is rendered, never typed. */
+/**
+ * IncompleteMarker (#16): from coverage[state].unmodeled[] and every state's
+ * block — the count is rendered, never typed. The caution states go to the
+ * notices, where nothing hides them; a state the model completes is
+ * provenance, not a warning, and sits in *Where these numbers come from*
+ * (§ The page is its picture: nothing that warns hides — and nothing that
+ * does not warn is allowed to cost the reader the first screen).
+ */
 export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | undefined, summary: SummaryJson | null): void {
   const st = stateName(ev.answers.state), C = copy.coverage;
   $("coverageHeading").textContent = t("page.coverageHeading", { state: st });
   $("correctionsHeading").textContent = t("page.correctionsHeading", { state: st });
   const swatch = `<span class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete" aria-hidden="true"></span>`;
+  const caution = $("incomplete"), quiet = $("coverage");
+  const warn = (html: string) => { caution.innerHTML = html; caution.hidden = false; quiet.innerHTML = ""; };
   if (!cov) {
-    $("coverage").innerHTML = `<div class="hg-callout hg-callout--caution"><p><strong>${esc(t("coverage.unknown", { state: st }))}</strong> ${esc(summary ? C.noBlock : C.notLoaded)}</p></div>`;
+    warn(`<p><strong>${esc(t("coverage.unknown", { state: st }))}</strong> ${esc(summary ? C.noBlock : C.notLoaded)}</p>`);
     return;
   }
   /* Against the household the curve models (an archetype curve is the swept renter, not the flags typed). */
@@ -54,10 +80,14 @@ export function renderCoverage(ev: HouseholdEvaluation, cov: StateCoverage | und
   const mine = incompleteHere(cov, h);
   const states = summary ? incompleteStates(summary, h) : [];
   const elsewhere = t("coverage.elsewhere", { n: states.length, states: listOfItems(states) });
-  $("coverage").innerHTML = mine.length
-    ? `<div class="hg-callout hg-callout--caution"><p>${swatch} <strong>${esc(t("coverage.incomplete", { state: st }))}</strong> ${esc(t("coverage.incompleteBody", { programs: listOf(mine) }))}</p></div>`
-    : `<div class="hg-callout"><p><strong>${esc(t("coverage.complete", { state: st }))}</strong> ${esc(C.completeBody)}` +
-      (states.length ? ` ${esc(elsewhere)} ${swatch} ${esc(C.elsewhereAfterMark)}` : "") + `</p></div>`;
+  if (mine.length) {
+    warn(`<p>${swatch} <strong>${esc(t("coverage.incomplete", { state: st }))}</strong> ${esc(t("coverage.incompleteBody", { programs: listOf(mine) }))}</p>`);
+    return;
+  }
+  caution.hidden = true;
+  caution.innerHTML = "";
+  quiet.innerHTML = `<p><strong>${esc(t("coverage.complete", { state: st }))}</strong> ${esc(C.completeBody)}` +
+    (states.length ? ` ${esc(elsewhere)} ${swatch} ${esc(C.elsewhereAfterMark)}` : "") + `</p>`;
 }
 
 /** CorrectionsApplied (#18): coverage[state].corrections, applies === true; the rest named as checked. */
@@ -83,15 +113,23 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
   $("correctionsRest").textContent = rest.length ? t("corrections.rest", { items: rest.join(" ") }) : "";
 }
 
-/** DropLedger (#8): every cliff as a row whose button selects it. */
+/**
+ * DropLedger (#8): every cliff as a row whose button selects it. Each row
+ * carries its position — how many families like this one are already past
+ * that pay (Plan 9) — because the tiles carry it for two cliffs and a
+ * counselor defending the fourth one needs it too.
+ */
 export function renderDrops(ev: HouseholdEvaluation, onSelect: (i: number) => void): void {
   const rows = $("dropRows"), D = copy.drops;
-  rows.innerHTML = ev.analysis.cliffs.map((c) =>
-    `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button></td>` +
-    `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
-    `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
-    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: deferralUntil(c.deferral.reason) }))}</span>` : "") + `</td>` +
-    `<td>${esc(t(`drops.drivers.${c.driver}`))}</td></tr>`).join("");
+  rows.innerHTML = ev.analysis.cliffs.map((c) => {
+    const position = positionWords(c.position);
+    return `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button>` +
+      (position ? `<span class="hg-cite">${esc(position)}</span>` : "") + `</td>` +
+      `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
+      `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
+      (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: deferralUntil(c.deferral.reason) }))}</span>` : "") + `</td>` +
+      `<td>${esc(t(`drops.drivers.${c.driver}`))}</td></tr>`;
+  }).join("");
   rows.querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => b.addEventListener("click", () => onSelect(i)));
   $("dropsEmpty").textContent = t("drops.empty", { min: usd(CLIFF_MIN) });
   $("dropsEmpty").hidden = ev.analysis.cliffs.length > 0;
@@ -174,8 +212,6 @@ export function renderCompare(base: HouseholdEvaluation, cols: Column[], on: { r
   foot.querySelectorAll<HTMLButtonElement>("[data-retry]").forEach((b) => b.addEventListener("click", () => on.retry(Number(b.dataset.retry))));
   $("compareNote").textContent = compareNote(base, cols.flatMap((c) => (c.ev && c.ev !== base ? [c.ev] : [])), cols.filter((c) => c.state === "unanswered").length);
   $("compareEmpty").hidden = cols.length > 1;
-  /* With more than one what-if the table takes both grid columns (B2); the page's grid reads the attribute. */
-  $("compareSection").toggleAttribute("data-wide", cols.length > 2);
   renderOnTheWay(base, cols);
 }
 
@@ -201,6 +237,16 @@ function renderOnTheWay(base: HouseholdEvaluation, cols: Column[]): void {
           (it.deferred ? ` <span class="hg-badge">${esc(copy.drops.deferred)}</span>` : "") +
           (it.position ? `<span class="hg-cite">${esc(it.position)}</span>` : "") + `</li>`).join("")}</ul>`
       : `<p class="footnote">${esc(OW.empty)}</p>`) + `</div>`).join("");
+}
+
+/**
+ * Paper has no ScenarioBar (review N5), and since the page opens with the
+ * answer it has no wordmark either: one print-only line says whose numbers
+ * these are, above the sentence, the way the citizen sheet does.
+ */
+export function renderMasthead(ev: HouseholdEvaluation): void {
+  $("masthead").replaceChildren(el("strong", {}, catalog.editor.wordmark), " ",
+    t("page.who", { adults: copy.compare.adults[ev.answers.married ? "two" : "one"], state: stateName(ev.answers.state), earnings: usd(ev.analysis.currentEarnings) }));
 }
 
 export function renderAssumed(ev: HouseholdEvaluation, prov: Provenance): void {

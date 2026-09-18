@@ -49,6 +49,23 @@ export const pathD = (points: [number, number][]): string => points.map(([x, y],
 export const seriesPath = (d: string, animate: boolean): SVGPathElement =>
   svg("path", { d, fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1, class: animate ? "hg-draw" : undefined });
 
+/**
+ * A what-if's curve on the base household's picture (design/charts.md
+ * § A what-if is a second line, 2026-09-18): the same geometry, a quieter
+ * 1.5px stroke in the series-2 ink the CompareTable already rules its what-if
+ * columns with, and a dash of its own. Three dashes, so three lines are told
+ * apart by pattern and by their tag, never by colour alone — and greyscale,
+ * a photocopier and a colour-blind reader all keep the distinction.
+ */
+export const WHAT_IF_DASH = ["7 4", "2 3", "10 4 2 4"] as const;
+export const whatIfPath = (d: string, i: number): SVGPathElement =>
+  svg("path", { d, fill: "none", stroke: "var(--series-2)", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round",
+    "stroke-dasharray": WHAT_IF_DASH[i % WHAT_IF_DASH.length], "data-whatif": i });
+
+/** MarkKey entry for a what-if line, drawn in its own dash so the key says which line is which. */
+export const whatIfKeyMark = (i: number): string =>
+  `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-2)" stroke-width="1.5" stroke-dasharray="${WHAT_IF_DASH[i % WHAT_IF_DASH.length]}"/>`;
+
 /** A zone: the household's takes the wash and the hatch, any other the hatch alone (S7). */
 export function zoneRects(x0: number, x1: number, top: number, bottom: number, own: boolean, hatchId: string): SVGRectElement[] {
   const rect = (fill: string) => svg("rect", { x: x0, y: top, width: x1 - x0, height: bottom - top, fill });

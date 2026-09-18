@@ -1,28 +1,46 @@
 // MoneyCurve (#3), CurveReadout (#4) and MarkKey (#5) for the caseworker:
-// the full axis, the line, the household's zone with its peak rule,
-// exit and leap bracket, every other zone as hatch, cliff marks as 44px
-// controls with the collision rule, and the keyboard model (design/charts.md
-// § 1, M6, S8, S12), over the primitives both charts share (lib/chart;
-// audit D10). One selection model: a mark and its DropLedger row share
-// `selected`, which main.ts owns; this module reports presses and mirrors
-// the selection onto the marks. Every word is copy.ts's.
+// the full axis, the line, the household's zone with its peak rule, exit and
+// leap bracket, every other zone as hatch, cliff marks as 44px controls with
+// the collision rule, and the keyboard model (design/charts.md § 1, M6, S8,
+// S12), over the primitives both charts share (lib/chart; audit D10).
 //
-// A draw is O(points + cliffs + zones); a width change redraws once; print
-// redraws synchronously at a fixed width (review N6).
-import type { Cliff, HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+// Since 2026-09-18 (design/PICTURE-FIRST-2026-09-18.md) this figure is the
+// page, and two things follow. The prose that used to sit beside it is gone,
+// so the marks carry it: the direct labels are drawn in the priority order
+// charts.md sets, through the shared placer and its collision test
+// (lib/chart/labels.ts). And the comparison is drawn here rather than read
+// off a table: every what-if that has an evaluation is a second line on this
+// picture — quieter, its own dash, a one-word tag — so a counselor sees the
+// two curves against each other before she sees any number
+// (charts.md § A what-if is a second line).
+//
+// One selection model: a mark and its DropLedger row share `selected`, which
+// main.ts owns; this module reports presses and mirrors the selection onto
+// the marks. Every word is copy.ts's.
+//
+// A draw is O(points × (1 + what-ifs) + cliffs + zones); a width change
+// redraws once; print redraws synchronously at a fixed width (review N6).
+import { keepRateWords, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
 import { clusterCliffs, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
+import { MAX_DROP_LABELS, placer, type Spot } from "../lib/chart/labels.js";
 
 import { svg as mk } from "../lib/dom.js";
 import { lossFigure, money as usd, tickMoney } from "../lib/format.js";
+import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
 export interface ChartHost { wrap: HTMLElement; gutter: SVGSVGElement; scroll: HTMLElement; hint: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
 
+/** A what-if drawn on the base's picture: its curve, the pay it stands at, and the tag that names it. */
+export interface WhatIfLine { tag: string; earnings: number[]; net: number[]; at: number }
+
 export interface Chart {
   /** Draw an evaluation; `source` closes the caption. The first draw animates the line. */
   render(ev: HouseholdEvaluation, source: string): void;
+  /** The what-if curves drawn on this picture, in the CompareTable's own column order. */
+  setWhatIfs(lines: WhatIfLine[]): void;
   /** Mirror the page's selection onto the marks; a press also moves the cursor and the readout to the cliff, the initial selection does not. */
   setSelected(i: number | null, opts?: { moveCursor?: boolean }): void;
   /** Focus returns to a cliff's mark when its row closes. */
@@ -31,7 +49,7 @@ export interface Chart {
 }
 
 /** A mark on this chart: its cluster (the cliffs under it, by index into the cliff list) and its control. */
-interface Mark { cluster: Cluster; members: number[]; x: number; y: number; btn: HTMLButtonElement }
+interface Mark { cluster: Cluster; members: number[]; x: number; y: number; landY: number; waiting: boolean; btn: HTMLButtonElement }
 
 /** The width the curve is drawn at on paper, whatever the screen was (review N6): 42rem at 16px. */
 const PRINT_WIDTH = 672;
@@ -39,10 +57,15 @@ const PRINT_WIDTH = 672;
 const GUTTER = { narrow: 44, wide: 52 } as const;
 /** A mark's ring, the box a direct label must clear (review S4). */
 const RING = 10;
-/** One line of a 13px label, the step a colliding label is lifted by. */
-const LINE = 14;
 /** The dot radii this chart draws at: a merged mark is r6, a single r4; the cursor's dot r4. */
 const DOT = 4, DOT_MERGED = 6;
+/** How many what-if curves the picture carries; the rest keep their column and their rows, and the caption says so. */
+export const MAX_WHAT_IF_LINES = 3;
+/** The foot the road out of poverty needs below the x ticks: its bar and the one line written on it. */
+const ROAD_FOOT = 26;
+
+const LOSS_LABEL = "hg-label hg-label--loss hg-label--halo";
+const INK_LABEL = "hg-label hg-label--ink hg-label--halo";
 
 export function mountChart(host: ChartHost, on: { select(i: number, announce?: string): void; close(): void }): Chart {
   const { wrap, svg, marks: marksEl, readout } = host;
@@ -52,33 +75,27 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   let net: number[] = [], earn: number[] = [];
   let cursor = 0, layer: Layer | null = null, cursorNodes: SVGElement[] = [], marks: Mark[] = [], drawn = false;
   let diamond: SVGElement | null = null, selected: number | null = null;
+  let whatIfs: WhatIfLine[] = [];
+  /* The pay at the scroller's left edge once the reader has moved it; whether this draw is for paper; the viewport it drew into. */
+  let anchor: number | null = null, printing = false, viewportW = 0;
+
+  const label = placer(svg, () => ({ print: printing, scrollLeft: host.scroll.scrollLeft, viewport: viewportW, W: layer?.W ?? 0 }));
 
   const cliffs = (): Cliff[] => ev!.analysis.cliffs;
   const markSentence = (m: Mark): string => m.members.length === 1 ? cliffSentence(cliffs()[m.members[0]])
     : t("chart.merged", { n: m.members.length, from: usd(cliffs()[m.members[0]].startEarnings), to: usd(cliffs()[m.members[m.members.length - 1]].endEarnings), sum: usd(m.members.reduce((s, i) => s + cliffs()[i].drop, 0)) });
   const zoneOf = (e: number) => ev!.analysis.dangerZones.find((z) => e > z.startEarnings && (z.endEarnings === null || e < z.endEarnings)) ?? null;
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
-  const label = (x: number, y: number, text: string, extra: Record<string, string | number> = {}, cls = "") =>
-    mk("text", { class: `hg-label hg-label--halo${cls ? ` ${cls}` : ""}`, x, y, ...extra }, text);
   const mkSpan = (text: string) => { const el = document.createElement("span"); el.textContent = text; return el; };
+  /** The lines this picture draws: the ones with points inside the base's axis, capped. */
+  const drawnWhatIfs = (): WhatIfLine[] => whatIfs.slice(0, MAX_WHAT_IF_LINES);
   /** The line's value at any earnings, interpolated between the two axis points around it. */
   const netAt = (e: number): number => {
     const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(net.length - 2, Math.floor(f)));
     return net[i] + (net[i + 1] - net[i]) * Math.max(0, Math.min(1, f - i));
   };
-  /**
-   * A direct label must not sit on a mark's ring (review S4): once it is in
-   * the tree its box is measured, and while it crosses a ring it is lifted
-   * a line — the same test the marks run against each other.
-   */
-  const clearRings = (el: SVGTextElement, rings: { x: number; y: number }[]): void => {
-    for (let tries = 0; tries < 3; tries++) {
-      const b = el.getBBox();
-      const hit = rings.some((r) => b.x < r.x + RING && b.x + b.width > r.x - RING && b.y < r.y + RING && b.y + b.height > r.y - RING);
-      if (!hit) return;
-      el.setAttribute("y", String(Number(el.getAttribute("y")) - LINE));
-    }
-  };
+  /** What ends at a cliff, as the second line of its direct label; nothing where the cliff names no program. */
+  const endsLine = (c: Cliff): string | null => (c.programsLost.length ? t("chart.labels.ends", { program: programName(c.programsLost[0]) }) : null);
 
   function draw(width = Math.max(320, wrap.clientWidth), print = false): void {
     if (!ev) return;
@@ -87,19 +104,24 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const box = width, narrow = !print && box < 520;
     const gutter = narrow ? GUTTER.narrow : GUTTER.wide;
     const viewport = Math.max(200, box - gutter);
-    const pad = { t: 30, r: 20, b: 34, l: PLOT_LEAD };
+    const road = ev.road;
+    const pad = { t: 30, r: 20, b: 34 + (road ? ROAD_FOOT : 0), l: PLOT_LEAD };
     const x0 = earn[0], x1 = earn[earn.length - 1];
+    const lines = drawnWhatIfs();
     /* Axis honesty (charts.md): the floor is computed, never typed, and the
-       visible range is at least 2.5× the largest plotted drop (S14). */
-    let lo = Math.min(...net), hi = Math.max(...net);
+       visible range is at least 2.5× the largest plotted drop (S14). Every
+       line drawn is inside the range — a what-if curve running off the top
+       would be a comparison the picture cannot be read against. */
+    let lo = Math.min(...net, ...lines.flatMap((l) => l.net)), hi = Math.max(...net, ...lines.flatMap((l) => l.net));
     const maxDrop = Math.max(0, ...cliffs().map((c) => c.drop)), need = 2.5 * maxDrop;
     if (hi - lo < need) { const ext = (need - (hi - lo)) / 2; lo -= ext; hi += ext; }
     const n = narrow ? 3 : 5;
     let step = niceStep(hi - lo, n), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
     while ((y1 - y0) / step > n + 1) { step = niceUp(step); y0 = Math.floor(lo / step) * step; y1 = Math.ceil(hi / step) * step; }
-    /* The plot is as tall as the biggest drop needs to clear 24px, clamped — the same rule and the
+    /* The plot is as tall as the biggest drop needs to clear 24px, clamped, and — since the figure is the
+       page — at least what is left of the reader's first screen (charts.md § Height). The same rule and the
        same numbers as the citizen's, so one figure is not read at a different scale from the other. */
-    const H = plotHeight(y1 - y0, maxDrop) + pad.t + pad.b;
+    const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screenLeft() - pad.t - pad.b) + pad.t + pad.b;
     /* Where the reader lands, and therefore the scale: the window in one viewport, the rest a swipe away.
        Paper cannot scroll, so the whole axis is fitted to the column instead (charts.md § The scroll rule). */
     const view = windowFor({ current: A.currentEarnings, zone: P.zone, stuck: P.raiseIsLowerBound, exit: P.escapeEarnings, next: A.nextCliff, worst: A.worstCliff, top: x1, step: earn[1] - earn[0] });
@@ -107,9 +129,15 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const W = print ? viewport : plotWidth(x1, pad, scale);
     const L = layerFor(W, H, pad, x0, x1, y0, y1), { px, py } = L;
     const plotTop = pad.t, plotBot = H - pad.b;
+    /* The placer reads where the reader is looking, so the scroll and the viewport have to be current before any label is drawn. */
+    layer = L; printing = print; viewportW = viewport;
+    host.scroll.scrollLeft = print ? 0
+      : anchor === null ? scrollFor(L, viewport, view, A.currentEarnings)
+      : Math.max(0, Math.min(W - viewport, px(anchor)));
 
     sizeSvg(svg, W, H);
     svg.textContent = "";
+    label.reset();
     svg.append(hatchDefs("cw-hatch"));
     /* The y axis holds still in its gutter while the curve scrolls under it. */
     const yTicks: number[] = [];
@@ -122,10 +150,24 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     for (const v of yTicks) svg.append(mk("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
     /* The x ticks scroll with the curve, one about every 110px — or half as many on paper, where the axis is squeezed and the type floor still holds. */
     const xs = niceStep(x1 - x0, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110))));
-    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, tickMoney(e, "year")));
+    for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: plotBot + 22, "text-anchor": "middle" }, tickMoney(e, "year")));
     svg.append(mk("line", { x1: 0, y1: plotBot, x2: W, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
+    /* The road out of poverty (charts.md § Direct labels, 6): a bar under the x
+       ticks, outside the plot, where it cannot be read as part of the curve. */
+    const roadY = plotBot + 46;
+    if (road) {
+      const [ra, rb] = [px(road.lo), px(road.hi)];
+      svg.append(mk("path", { d: `M${ra} ${roadY - 4} V${roadY + 4} M${ra} ${roadY} H${rb} M${rb} ${roadY - 4} V${roadY + 4}`,
+        fill: "none", stroke: "var(--rule-strong)", "stroke-width": 1, "data-road": "true" }));
+    }
+
     const yRange = y1 - y0;
+    /* The what-ifs first, under the base: the household's own curve is never the line a reader has to hunt for. */
+    for (const [i, l] of lines.entries()) {
+      const pts = l.earnings.map((e, k) => [px(e), py(l.net[k])] as [number, number]).filter(([x]) => x >= 0 && x <= W);
+      if (pts.length > 1) svg.append(whatIfPath(pathD(pts), i));
+    }
     svg.append(seriesPath(pathD(net.map((v, i) => [px(earn[i]), py(v)])), !drawn));   /* the one orchestrated moment, first draw only */
 
     /* Cliff marks, with the collision rule (S8): adjacent dots closer than 10px
@@ -140,17 +182,17 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     for (const cl of clusterCliffs(cliffs(), px)) {
       const members = cl.cliffs.map((c) => cliffs().indexOf(c));
       const x = cl.x, y = py(net[indexOf(ev, cl.cliffs[0].startEarnings)]), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
-      if (cl.cliffs.some((c) => c.deferral)) {
-        svg.append(waitStub(x, y, 18));
-        svg.append(label(x + 7, y - 8, K.later));
-      }
+      const waiting = cl.cliffs.some((c) => c.deferral !== null);
+      let landY = y;
+      if (waiting) svg.append(waitStub(x, y, 18));
       if (cl.later) svg.append(waitDot(x, y, r));
       else {
         const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => net[indexOf(ev!, c.endEarnings)]));
-        svg.append(...dropMark(x, y, py(land), r));
+        landY = py(land);
+        svg.append(...dropMark(x, y, landY, r));
       }
       /* The marks layer: one 44px button per mark, over the SVG (M6). */
-      const mark: Mark = { cluster: cl, members, x, y, btn: null as unknown as HTMLButtonElement };
+      const mark: Mark = { cluster: cl, members, x, y, landY, waiting, btn: null as unknown as HTMLButtonElement };
       mark.btn = markButton(x, y, L, markSentence(mark), cl.cliffs.length, cl.later);
       mark.btn.addEventListener("click", () => on.select(mark.members[0], markSentence(mark)));
       /* A mark reached by keyboard may be off screen: focus scrolls it into view. */
@@ -158,43 +200,112 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       marksEl.append(mark.btn);
       marks.push(mark);
     }
-    const rings = marks.map((m) => ({ x: m.x, y: m.y }));
 
-    /* Direct labels: the largest drop and the leap (charts.md § Direct labels), lifted off any ring they cross. */
-    const w = cliffAt(ev, A.worstCliff);
-    if (w) {
-      const wm = marks.find((m) => m.members.includes(cliffs().indexOf(w)))!;
-      const mid = (net[indexOf(ev, w.startEarnings)] + net[indexOf(ev, w.endEarnings)]) / 2;
-      const worstLabel = label(wm.x + 9, py(mid) + 4, lossFigure(w.drop), {}, "hg-label--loss hg-label--strong");
-      svg.append(worstLabel); clearRings(worstLabel, rings);
-    }
+    /* The household's zone: the peak rule, the exit, and the leap bracket. The
+       peak's own dollar went on 2026-09-18 — it printed, two inches from the
+       diamond's label, a number within a rounding of it (citizen review S3). */
+    const yPeak = P.zone ? py(P.zone.peakNet) : NaN;
+    const bx1 = P.zone ? px(P.zone.endEarnings ?? x1) : NaN;
+    const lx0 = px(A.currentEarnings);
+    const bracket = P.zone !== null;
     if (P.zone) {
-      const bx0 = px(P.zone.startEarnings), bx1 = px(P.zone.endEarnings ?? x1), yp = py(P.zone.peakNet);
-      svg.append(mk("line", { x1: bx0, y1: yp, x2: bx1, y2: yp, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      const peak = label(bx0 - 4, yp - 6, usd(P.zone.peakNet), { "text-anchor": "end" }, "hg-label--loss");
-      svg.append(peak); clearRings(peak, rings);
-      /* The leap: a bracket along the peak rule from the diamond to the exit, labelled once. */
-      const lx0 = px(A.currentEarnings), lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
-      svg.append(mk("path", { d: `M${lx0} ${yp - 4} V${yp + 4} M${lx0} ${yp} H${lx1}${P.raiseIsLowerBound ? "" : ` M${lx1} ${yp - 4} V${yp + 4}`}`, fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
-      /* Below 520px the merged cliff mark sits on the peak, so the label starts under the bracket; either way it clears every ring. */
-      const leap = label(lx0 + 8, narrow ? yp + 17 : yp - 6, t(`chart.leap.${P.raiseIsLowerBound ? "atLeast" : "exact"}`, { raise: usd(P.raiseToClear ?? 0) }), {}, "hg-label--loss hg-label--strong");
-      svg.append(leap); clearRings(leap, rings);
-      if (!P.raiseIsLowerBound) {
-        svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
-        const both = safe === P.escapeEarnings;
-        if (!narrow || both) svg.append(label(bx1 + 4, plotTop - 8, both ? K.backToEvenAndSafe : K.backToEven));
-      }
+      svg.append(mk("line", { x1: px(P.zone.startEarnings), y1: yPeak, x2: bx1, y2: yPeak, stroke: "var(--loss-3)", "stroke-width": 1 }));
+      const lx1 = P.raiseIsLowerBound ? W - pad.r : bx1;
+      svg.append(mk("path", { d: `M${lx0} ${yPeak - 4} V${yPeak + 4} M${lx0} ${yPeak} H${lx1}${P.raiseIsLowerBound ? "" : ` M${lx1} ${yPeak - 4} V${yPeak + 4}`}`, fill: "none", stroke: "var(--loss-3)", "stroke-width": 1 }));
+      if (!P.raiseIsLowerBound) svg.append(mk("line", { x1: bx1, y1: plotTop, x2: bx1, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
     }
-    if (safe !== null && safe !== P.escapeEarnings) {
-      const sx = px(safe);
-      svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
-      svg.append(label(sx - 4, plotTop - 8, K.safeFromHere, { "text-anchor": "end" }));
-    }
+    const safeApart = safe !== null && safe !== P.escapeEarnings;
+    const sx = safeApart ? px(safe) : NaN;
+    if (safeApart) svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
+
     /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
     const cx = px(A.currentEarnings), cy = py(netAt(A.currentEarnings));
     const [dropLine, diamondPath] = household(cx, cy, plotBot);
     svg.append(dropLine, diamondPath);
     diamond = diamondPath;
+
+    /* ── The direct labels, in the priority order charts.md sets ────────
+       Each is offered its spots and drawn at the first clear one, or dropped:
+       every figure here is also in the readout, the drop row and the table. */
+    for (const m of marks) label.block({ x: m.x - RING, y: m.y - RING, w: 2 * RING, h: 2 * RING });
+    label.block({ x: cx - 7, y: cy - 7, w: 14, h: 14 });
+
+    /* 1. What the household keeps now, at its own diamond: the one place the y axis is named in dollars. */
+    label.place([t("chart.labels.net", { net: usd(netAt(A.currentEarnings)) })],
+      [{ x: cx, y: cy - 14, anchor: "middle" }, { x: cx, y: cy + 26, anchor: "middle" },
+        { x: cx + 14, y: cy + 4, anchor: "start" }, { x: cx - 14, y: cy + 4, anchor: "end" },
+        { x: cx, y: cy - 34, anchor: "middle" }, { x: cx, y: plotTop - 8, anchor: "middle" }],
+      `${INK_LABEL} hg-label--strong`, true);
+
+    /* 2. The largest drop: its money and what ends there, two lines, the heaviest ink on the picture. Always drawn. */
+    const dropSpots = (m: Mark): Spot[] => {
+      const tall = m.landY - m.y >= 24;
+      return [
+        ...(tall ? [{ x: m.x + 12, y: (m.y + m.landY) / 2 + 4, anchor: "start" } as Spot] : []),
+        { x: m.x + 12, y: m.y - 9, anchor: "start" },
+        { x: m.x + 12, y: m.landY + 14, anchor: "start" },
+        { x: m.x, y: m.y - 26, anchor: "middle" },
+        { x: m.x - 12, y: m.y - 9, anchor: "end" },
+        { x: m.x - 12, y: m.landY + 14, anchor: "end" },
+      ];
+    };
+    /* A drop's label is two lines — its money, then what ends there. A number with no cause is half a label;
+       the second line is dropped only when the two-line box finds no clear spot and the one-line box does. */
+    const dropLabel = (m: Mark, cls: string, force = false): boolean => {
+      const money = lossFigure(m.cluster.cliffs.reduce((sum, c) => sum + c.drop, 0));
+      const ends = m.cluster.cliffs.length === 1 ? endsLine(m.cluster.cliffs[0]) : null;
+      const both = ends !== null ? [money, ends] : [money];
+      if (label.place(both, dropSpots(m), cls)) return true;
+      if (ends !== null && label.place([money], dropSpots(m), cls)) return true;
+      return force ? label.place(both, dropSpots(m), cls, true) : false;
+    };
+    const w = cliffAt(ev, A.worstCliff);
+    const worstMark = w ? marks.find((m) => m.cluster.cliffs.includes(w)) : undefined;
+    let labelled = 0;
+    if (worstMark) { dropLabel(worstMark, `${LOSS_LABEL} hg-label--strong`, true); labelled++; }
+
+    /* 3. Every what-if line's tag, on its own curve: a second line with no name is a line that lies, so this
+          comes before the base's own rules. Dash and tag together, never colour alone. */
+    for (const [i, l] of lines.entries()) {
+      const lx = px(Math.min(Math.max(l.at, x0), x1));
+      const ly = py(l.net[Math.max(0, Math.min(l.net.length - 1, Math.round((Math.min(Math.max(l.at, x0), x1) - l.earnings[0]) / Math.max(1, l.earnings[1] - l.earnings[0]))))]);
+      label.place([l.tag],
+        [{ x: lx + 10, y: ly - 6, anchor: "start" }, { x: lx + 10, y: ly + 16, anchor: "start" },
+          { x: lx - 10, y: ly - 6, anchor: "end" }, { x: lx, y: ly - 22, anchor: "middle" }],
+        `hg-label hg-label--whatif hg-label--halo hg-label--med hg-label--wi${i}`);
+    }
+
+    /* 4. The way back, on its rule — dropped on a phone, where the caption says it instead. */
+    if (P.zone && !P.raiseIsLowerBound && !narrow) {
+      label.place([safe === P.escapeEarnings ? K.backToEvenAndSafe : K.backToEven], [{ x: bx1 + 5, y: plotTop + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
+    }
+    if (safeApart && !narrow) label.place([K.safeFromHere], [{ x: sx + 5, y: plotTop + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
+
+    /* 5. "later", over each deferred mark's dashed stub: solid means this year, dashed means a later renewal. */
+    for (const m of marks) {
+      if (m.waiting) label.place([K.later], [{ x: m.x, y: m.y - 24, anchor: "middle" }], "hg-label hg-label--med hg-label--halo");
+    }
+
+    /* 6. The leap, once, on its bracket. */
+    if (bracket) {
+      label.place([t(`chart.leap.${P.raiseIsLowerBound ? "atLeast" : "exact"}`, { raise: usd(P.raiseToClear ?? 0) })],
+        [{ x: (lx0 + (P.raiseIsLowerBound ? W - pad.r : bx1)) / 2, y: yPeak - 7, anchor: "middle" },
+          { x: lx0 + 8, y: yPeak + 17, anchor: "start" }], `${LOSS_LABEL} hg-label--strong`);
+    }
+
+    /* 7. The keep rate, written once on the road it measures: core owns the sign and the rounding, so no
+          surface invents its own (app/README.md § Keep rate). */
+    if (road && road.keepRate !== null) {
+      const { sign, cents } = keepRateWords(road.keepRate);
+      label.place([t(`chart.labels.road.${sign}`, { cents })], [{ x: (px(road.lo) + px(road.hi)) / 2, y: roadY + 18, anchor: "middle" }], "hg-label");
+    }
+
+    /* 8. Every remaining drop, biggest first, while there is room: a crowded stretch would otherwise spend
+          its last label on the smallest step in it. */
+    for (const m of [...marks].filter((m) => m !== worstMark).sort((a, b) => b.cluster.cliffs.reduce((n, c) => n + c.drop, 0) - a.cluster.cliffs.reduce((n, c) => n + c.drop, 0))) {
+      if (labelled >= MAX_DROP_LABELS) break;
+      if (dropLabel(m, `${LOSS_LABEL} hg-label--med`)) labelled++;
+    }
 
     /* The caption's clauses each come from their condition (review S5); the axis clause
        says whether the whole axis is on screen or in a scroller (§ The scroll rule). */
@@ -202,22 +313,31 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
       t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
       DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
+      whatIfs.length ? t("chart.whatIfLines", { n: lines.length, held: whatIfs.length - lines.length }) : "",
       source,
-    ].join(" ");
+    ].filter(Boolean).join(" ");
     /* The axis's own ends under the figure: the cue that the picture keeps going. */
     host.hint.replaceChildren(mkSpan(t("chart.rangeFrom", { from: usd(x0) })), mkSpan(t("chart.rangeTo", { to: usd(x1) })));
-    renderKey(A.dangerZones.length > (P.zone ? 1 : 0), cliffs().some((c) => !c.deferral), DEFERRED.length > 0, !!P.zone, safe !== null);
-    layer = L; printing = print; viewportW = viewport;
-    /* Where the reader is looking: the window on the first draw of an evaluation (§ The scroll rule), and after that the pay they left at the left edge. */
-    host.scroll.scrollLeft = print ? 0
-      : anchor === null ? scrollFor(L, viewport, view, A.currentEarnings)
-      : Math.max(0, Math.min(W - viewport, px(anchor)));
+    renderKey(A.dangerZones.length > (P.zone ? 1 : 0), cliffs().some((c) => !c.deferral), DEFERRED.length > 0, !!P.zone, safe !== null, road !== null, lines);
     drawn = true;
     syncMarks(); paintCursor();
   }
 
+  /**
+   * How much of the reader's FIRST screen is still free below the figure's own
+   * top (charts.md § Height): on a phone that is the difference between a
+   * picture you look at and a picture you scroll past. Read once per draw,
+   * never per scroll, and measured from the top of the document, because "the
+   * first screen" is where a person lands. RESERVED is the figure's own words
+   * under the plot — the axis hint, the readout and the disclosure's summary.
+   */
+  const RESERVED = 150;
+  function screenLeft(): number {
+    if (!wrap.isConnected) return 0;
+    return Math.max(0, Math.round(innerHeight - (wrap.getBoundingClientRect().top + scrollY) - RESERVED));
+  }
+
   /* The pay at the scroller's left edge, once the reader has moved it: a redraw for a resize must not yank the curve back to the start. */
-  let anchor: number | null = null, printing = false, viewportW = 0;
   host.scroll.addEventListener("scroll", () => {
     if (!layer || printing) return;
     const { pad, W } = layer, x0 = earn[0], x1 = earn[earn.length - 1];
@@ -230,10 +350,13 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     host.scroll.scrollLeft = scrollToShow(x, host.scroll.scrollLeft, viewportW, layer.W);
   }
 
-  /* MarkKey (#5): each entry draws the actual mark; entries follow the marks drawn. */
-  function renderKey(otherZones: boolean, immediate: boolean, deferred: boolean, zone: boolean, safe: boolean): void {
+  /* MarkKey (#5): each entry draws the actual mark; entries follow the marks drawn. Since the direct labels
+     carry the answer it is the fallback rather than the first read, and it lives inside the figure's own
+     "How to read this picture" (inventory.md § The page is its picture). */
+  function renderKey(otherZones: boolean, immediate: boolean, deferred: boolean, zone: boolean, safe: boolean, road: boolean, lines: WhatIfLine[]): void {
     host.key.replaceChildren(
       keyEntry(K.key.net, KEY_MARK.line),
+      ...lines.map((l, i) => keyEntry(t("chart.key.whatIf", { tag: l.tag }), whatIfKeyMark(i))),
       ...(zone ? [keyEntry(K.key.ownZone, KEY_MARK.band)] : []),
       ...(otherZones ? [keyEntry(zone ? K.key.otherZones : K.key.zones, KEY_MARK.other)] : []),
       ...(immediate ? [keyEntry(K.key.immediate, KEY_MARK.drop)] : []),
@@ -241,6 +364,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       keyEntry(K.key.current, KEY_MARK.you),
       ...(zone ? [keyEntry(K.key.leap, KEY_MARK.leap)] : []),
       ...(safe ? [keyEntry(K.key.safe, KEY_MARK.safe)] : []),
+      ...(road ? [keyEntry(K.key.road, KEY_MARK.road)] : []),
     );
   }
 
@@ -302,6 +426,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       selected = null;
       anchor = null;   /* a new evaluation lands on its own window, not the last one's scroll */
       draw();
+    },
+    setWhatIfs(next) {
+      whatIfs = next;
+      if (ev) draw();
     },
     setSelected(i, { moveCursor = true } = {}) {
       selected = i;

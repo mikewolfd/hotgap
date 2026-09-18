@@ -610,10 +610,10 @@
     },
     "page": {
       "title": "Precipicios de beneficios de un hogar, con escenarios",
-      "skip": "Ir al registro de umbrales",
+      "skip": "Ir a la respuesta",
       "coverageHeading": "Cobertura del modelo en {state}",
       "correctionsHeading": "Correcciones aplicadas en {state}",
-      "readoutHint": "Flechas, o arrastre, para leer cualquier punto. Los corchetes saltan entre precipicios.",
+      "readoutHint": "Arrastre, o use las flechas, para leer cualquier sueldo.",
       "dropsHeading": "Cada escalón hacia abajo",
       "dropsCaption": "Seleccione una fila o su marca para ver el desglose.",
       "dropsCols": {
@@ -630,10 +630,19 @@
         "program": "Programa",
         "who": "Quién"
       },
-      "compareHeading": "Comparar",
+      "compareHeading": "Comparar los escenarios",
       "compareCaption": "Las mismas reglas aplicadas a cada escenario.",
-      "compareEmpty": "Todavía no hay escenarios. Pulse un chip de participación, o cambie un valor en la barra de arriba, para agregar uno junto al caso base.",
-      "assumptionsHeading": "Lo que este modelo no incluye"
+      "compareEmpty": "Todavía no hay escenarios. Pulse un chip de participación, o Agregar un escenario, y su curva se dibuja junto a esta.",
+      "assumptionsHeading": "Lo que supusimos",
+      "readoutKeys": "Los corchetes saltan entre precipicios; Enter abre la fila de uno y Escape la cierra.",
+      "howTo": "Cómo leer esta gráfica",
+      "stepsHeading": "Lo que enfrenta esta familia, escalón por escalón",
+      "sourcesHeading": "De dónde salen estas cifras",
+      "reachHeading": "Qué tan común es este sueldo",
+      "estimates": "Son estimaciones según las reglas vigentes, no una determinación. Un trabajador social decide la ayuda real.",
+      "who": "{adults} en {state}, {earnings} de ingresos.",
+      "archetype": "Estas son las cifras del barrido comprometido para un hogar de esta forma en {state}, no la llamada en vivo de esta familia.",
+      "stillArchetype": "Siguen siendo las cifras del barrido comprometido para un hogar de esta forma en {state}: la llamada en vivo no respondió."
     },
     "status": {
       "loading": "Evaluando… el ingreso neto se revisa en {count} niveles de pago. Un hogar nuevo tarda unos segundos.",
@@ -702,11 +711,6 @@
       }
     },
     "verdict": {
-      "alwaysUp": "Sin zona de peligro. El neto sube con cada escalón de ingresos del eje.",
-      "cliffAhead": "Un precipicio por delante: en {at} el neto cae {drop}. Por debajo, más pago es más dinero.",
-      "cliffBehind": "Pasado el precipicio. La gran caída está por debajo de los ingresos actuales; de aquí en adelante, más pago es más dinero.",
-      "stuck": "En una zona de peligro sin salida en el eje. De {start} hasta {top} de ingresos, el neto nunca vuelve a los {peak} que alcanza en {start}.",
-      "inZone": "En una zona de peligro. Entre {start} y {exit} de ingresos, el neto nunca vuelve a los {peak} que alcanza en {start}. Sale en {exit}: un aumento de {raise}.",
       "again": "Pasa otra vez entre {exit} y {safe}.",
       "safeFrom": {
         "exact": "Seguro desde {safe}: un aumento de {leap}.",
@@ -883,7 +887,9 @@
         "deferred": "Precipicio diferido",
         "current": "Ingresos actuales",
         "leap": "El salto, hasta la salida",
-        "safe": "Seguro de aquí en adelante"
+        "safe": "Seguro de aquí en adelante",
+        "road": "El camino para salir de la pobreza",
+        "whatIf": "Escenario: {tag}"
       },
       "readout": {
         "lead": "Ingresos {earnings} → neto {net}.",
@@ -908,7 +914,17 @@
       },
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
-      "deferred": "{n, plural, one {{n} precipicio llega en una renovación posterior (punto hueco, raya discontinua); cuenta en cada cifra de aquí.} other {{n} precipicios llegan en una renovación posterior (puntos huecos, rayas discontinuas); cuentan en cada cifra de aquí.}}"
+      "deferred": "{n, plural, one {{n} precipicio llega en una renovación posterior (punto hueco, raya discontinua); cuenta en cada cifra de aquí.} other {{n} precipicios llegan en una renovación posterior (puntos huecos, rayas discontinuas); cuentan en cada cifra de aquí.}}",
+      "labels": {
+        "net": "neto {net}",
+        "ends": "se termina {program}",
+        "road": {
+          "keeps": "se queda con {cents}¢ de cada dólar extra",
+          "loses": "pierde {cents}¢ de cada dólar extra"
+        }
+      },
+      "whatIfLines": "{n, plural, one {Un escenario se dibuja aquí como una segunda línea, que se distingue por su trazo y su etiqueta.} other {{n} escenarios se dibujan aquí como líneas adicionales, que se distinguen por sus trazos y sus etiquetas.}}",
+      "whatIfHeld": "{held, plural, one {Queda un escenario más en la comparación que no está en la gráfica.} other {Quedan {held} escenarios más en la comparación que no están en la gráfica.}}"
     },
     "compare": {
       "rows": {
@@ -987,21 +1003,30 @@
       "wouldPay": "{program} pagaría {annual} al año"
     },
     "handout": {
-      "title": "Su pago y su ayuda — {state}, {parents}, {children}",
+      "title": "Su sueldo y su ayuda — {state}, {parents}, {children}",
       "parents": {
         "one": "una madre o un padre",
         "two": "dos padres"
       },
       "children": "{n, plural, =0 {sin niños} one {un niño} other {{words} niños}}",
       "careShare": "{amount} de lo que le queda es {phrase} que se paga directo a su guardería.",
-      "biggestDrop": "{n, plural, =0 {La caída más grande está en {at} de pago: su descuento en los impuestos se achica y le quedan {drop} menos.} one {La caída más grande está en {at} de pago: se termina {phrases} y le quedan {drop} menos.} other {La caída más grande está en {at} de pago: se terminan {phrases} y le quedan {drop} menos.}}",
+      "biggestDrop": "{n, plural, =0 {La caída más grande está en {at} de sueldo: su descuento en los impuestos se achica y le quedan {drop} menos.} one {La caída más grande está en {at} de sueldo: se termina {phrases} y le quedan {drop} menos.} other {La caída más grande está en {at} de sueldo: se terminan {phrases} y le quedan {drop} menos.}}",
       "snapEnds": "La ayuda para la comida se termina en {at}.",
-      "kidsCoverage": "El plan de salud de sus niños se termina en {at} de pago, pero no ese mismo año. Se termina en su próxima revisión anual, hasta 12 meses después.",
+      "kidsCoverage": "El plan de salud de sus niños se termina en {at} de sueldo, pero no ese mismo año. Se termina en su próxima revisión anual, hasta 12 meses después.",
       "estimates": "Son estimaciones. Un trabajador social decide la ayuda real.",
       "printed": {
         "dated": "Impreso desde HotGap. Reglas de {year}. Barrido del {sweep}.",
         "undated": "Impreso desde HotGap. Reglas de {year}."
-      }
+      },
+      "payAndKeep": "A usted le pagan {pay} al año y, contando la ayuda, le quedan {kept}."
+    },
+    "answer": {
+      "inZone": "Esta familia pierde dinero con cada aumento entre {start} y {exit}; {raise} la saca del tramo.",
+      "inZone:stuck": "Esta familia pierde dinero con cada aumento por encima de {start}, y no aparece salida por debajo de {top}.",
+      "cliffAhead": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año.",
+      "cliffAhead:waits": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año, en la próxima renovación y no ese mismo día.",
+      "cliffBehind": "Lo peor ya quedó atrás para esta familia: de {wage} en adelante, cada aumento es más dinero.",
+      "alwaysUp": "Cada aumento deja mejor a esta familia; nada cae en ningún punto hasta {top}."
     }
   },
   "places": {

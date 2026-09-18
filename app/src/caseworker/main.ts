@@ -17,10 +17,10 @@ import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
 import { coreText } from "../lib/copy.js";
 import { CHIP_ORDER, copy, t } from "./copy.js";
-import { chartLabel, curveTitle, notInSweep, sourceLine, unclaimedNote, type Provenance } from "./model.js";
+import { chartLabel, curveTitle, notInSweep, sourceLine, stateName, unclaimedNote, type Provenance } from "./model.js";
 import { $ } from "../lib/dom.js";
-import { renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderStatic, renderVerdict, syncDrops, type Column } from "./render.js";
-import { applyDiff, diffFlags, sameDiff, whatIfLabel, type Diff } from "./scenarios.js";
+import { renderAnswer, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderMasthead, renderStatic, syncDrops, type Column } from "./render.js";
+import { applyDiff, diffFlags, sameDiff, whatIfLabel, whatIfTag, type Diff } from "./scenarios.js";
 import { pageQuery, parsePage } from "./url.js";
 
 const S = copy.status, W = copy.whatIf;
@@ -56,6 +56,8 @@ let selected: number | null = null;
 let latest = 0;
 /* True while the base's evaluation is in flight; a what-if added then waits for it. */
 let baseInFlight = false;
+/* Whether the last run was a Try again: a still-archetype answer says "still" rather than repeating itself. */
+let retriedSource = false;
 
 renderStatic();
 const editor = mountEditor($("app"), {
@@ -68,6 +70,10 @@ const editor = mountEditor($("app"), {
   /* The caseworker register, and the counselor's order: facts, the take-up toggles, then the rest (review S1, S2). */
   copy: copy.editor,
   order: CHIP_ORDER,
+  /* The chips stay behind the summary line's Edit at every width since 2026-09-18: they are the household,
+     not the answer (design/inventory.md § The page is its picture), and the figure has to start on the
+     first line after the masthead at 1280 as well as at 390. Every press still adds a what-if. */
+  collapse: "always",
   actions: [
     /* "Add a what-if" opens the screen led by "Add as a what-if", so it always ends in a what-if (review S3). */
     { label: copy.actions.whatIf, short: copy.actions.whatIfShort, needsAnswers: true, onClick: () => editor.open("pay", { lead: "alt" }) },
@@ -82,12 +88,18 @@ const content = $("content");
 const status = $("status");
 const alert = $("alert");
 
+/** Open one of the page's named disclosures: a mark, a link or an action reveals the rows it is about. */
+const openPanel = (id: string): void => { const d = document.getElementById(id) as HTMLDetailsElement | null; if (d) d.open = true; };
+
 /* One selection model (M6): a cliff mark, a DropLedger row and the BreakdownBars share `selected`. */
 function select(i: number, announce?: string, opts: { moveCursor?: boolean } = {}): void {
   if (!baseEv) return;
   selected = i;
   chart.setSelected(i, opts);
   if (announce) chart.say(announce);
+  /* The rows are behind a disclosure now: a mark opens it before it opens the row inside it (M6). The
+     initial selection is not a press and does not open anything — it would cost the picture the fold. */
+  if (opts.moveCursor !== false) openPanel("steps-panel");
   syncDrops(i, { scroll: opts.moveCursor !== false });
   renderBreakdown(baseEv, i);
 }
@@ -128,6 +140,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   const v = validateAnswers(rawAnswersFromFlags(flags));
   if (!v.ok) { editor.showError(v.detail, v.message); return; }
   baseFlags = flags;
+  if (submitted) retriedSource = false;   /* a new household is not a retry of the last one */
   writeUrl(push);
   const id = ++latest;
   baseInFlight = true;
@@ -144,7 +157,7 @@ async function runBase(flags: HouseholdFlags, { submitted, push }: { submitted: 
   }
   if (!(await renderAll(r.evaluation, flags, id))) return;
   status.textContent = "";
-  if (submitted) { editor.close(); if (push) $("verdictLine").focus(); }
+  if (submitted) { editor.close(); if (push) $("answer").focus(); }
   for (let i = 0; i < whatIfs.length; i++) void runWhatIf(i);
 }
 
@@ -156,7 +169,8 @@ async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags, id: num
   const cov = summary?.coverage?.[ev.answers.state];
   const prov: Provenance = { cov, summary, county };
   content.hidden = false;
-  renderVerdict(ev, reachCell(ev.answers.state, pickArchetypeId(ev.answers)));
+  renderMasthead(ev);
+  renderAnswer(ev, reachCell(ev.answers.state, pickArchetypeId(ev.answers)));
   renderCoverage(ev, cov, summary);
   renderCorrections(cov);
   $("curveTitle").textContent = curveTitle(ev);
@@ -172,7 +186,12 @@ async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags, id: num
   renderCompareTable();
   renderAssumed(ev, prov);
   $("sourceNote").dataset.source = ev.source;
-  $("retrySource").hidden = ev.source !== "archetype";
+  /* Whose numbers these are stays in the open (§ The page is its picture: nothing that warns hides): the
+     SourceNote's own archetype sentence is provenance and sits with the sources, but a page must never
+     quietly show one family's curve as another's. */
+  const archetype = ev.source === "archetype";
+  $("whose").hidden = !archetype;
+  if (archetype) $("whoseText").textContent = t(`page.${retriedSource ? "stillArchetype" : "archetype"}`, { state: stateName(ev.answers.state) });
   renderHandout(ev, summary);
   if (flags.zip) editor.setCounty(flags.zip, county ?? undefined);
   editor.setNote(unclaimedNote(ev));
@@ -194,6 +213,8 @@ function addWhatIf(flags: HouseholdFlags): void {
   link.href = "#compare"; link.textContent = W.compareLink;
   note.append(`${t("whatIf.added", { label })} `, link, W.addedAfterLink, baseEv ? ` ${unclaimedNote(baseEv)}` : "");
   editor.setNote(note);
+  /* A person asked for this comparison, so the disclosure it lands in is open by the time the link is pressed. */
+  openPanel("compare-panel");
   writeUrl(false);
   renderCompareTable();
   /* With the base still computing, runBase asks every what-if once it lands. */
@@ -224,6 +245,12 @@ function removeWhatIf(i: number): void {
   $("compare").focus();
 }
 
+/**
+ * The comparison, in both of the places it now lives: as lines on the
+ * picture, which is where a counselor sees it first, and as the table behind
+ * *Compare the what-ifs*, which is where she reads the figures off. One
+ * source for both, so a column and its line can never disagree.
+ */
 function renderCompareTable(): void {
   if (!baseEv || !baseFlags) return;
   const cols: Column[] = [
@@ -231,10 +258,20 @@ function renderCompareTable(): void {
     ...whatIfs.map((w, i) => ({ title: whatIfLabel(w.diff, applyDiff(baseFlags!, w.diff)), ev: w.ev, state: w.state, reason: w.reason, index: i })),
   ];
   renderCompare(baseEv, cols, { remove: removeWhatIf, retry: (i) => void runWhatIf(i) });
+  /* Only an answered what-if is a line: a column still computing, failed, or outside the sweep has no curve to draw. */
+  chart.setWhatIfs(whatIfs.flatMap((w) => (w.ev
+    ? [{ tag: whatIfTag(w.diff, applyDiff(baseFlags!, w.diff)), earnings: w.ev.curve.points.map((p) => p.earnings), net: w.ev.curve.points.map((p) => p.netIncome), at: w.ev.analysis.currentEarnings }]
+    : [])));
 }
 
+/* Paper wants every disclosure open: a closed <details> prints nothing, and on paper there is nobody to
+   press anything. The figure's own "How to read this picture" comes with them, so a printed page carries
+   the key and the caption (design/inventory.md § The page is its picture). */
+addEventListener("beforeprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.dataset.wasOpen = String(d.open); d.open = true; } });
+addEventListener("afterprint", () => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details.hg-disclosure")) { d.open = d.dataset.wasOpen === "true"; delete d.dataset.wasOpen; } });
+
 // ── Start ───────────────────────────────────────────────────────────────
-$("retrySource").addEventListener("click", () => { if (baseFlags) void runBase(baseFlags, { submitted: false, push: false }); });
+$("retrySource").addEventListener("click", () => { if (baseFlags) { retriedSource = true; void runBase(baseFlags, { submitted: false, push: false }); } });
 
 function start(): void {
   latest++;   /* whatever was in flight belongs to the URL we left */
