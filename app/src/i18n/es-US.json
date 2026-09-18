@@ -192,7 +192,11 @@
       "in_danger_zone": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso hasta que le paguen {exit}: un aumento de {leap}.",
       "in_danger_zone:stuck": "Le pagan {pay}. Le quedan {kept}. Ganar más no suma a eso en el rango de pago que revisamos, hasta {top}. No encontramos un punto donde vuelva a salir ganando.",
       "cliff_behind": "Le pagan {pay}. Le quedan {kept}. La gran caída está por debajo de su pago actual. De aquí en adelante, ganar más es más para usted.",
-      "waits": " Una cosa más: en {at}, {phrase} se termina, pero no ese mismo día. Más adelante, le quedarían unos {drop} menos al año."
+      "waits": {
+        "head_start_program_year": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Un niño o una niña en el programa se queda hasta el fin del próximo año escolar.",
+        "child_continuous_eligibility": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Los niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
+        "transitional_medical_assistance": " En {at}, {phrase} se acaba: unos {drop} al año. Pero no ese día. Usted lo conserva de 6 a 12 meses más."
+      }
     },
     "again": "Pasa otra vez de {from} a {to}.",
     "againMany": "Pasa {n} veces más, entre {from} y {to}.",
@@ -223,16 +227,13 @@
       "outZone": " Aquí, ganar más es más dinero.",
       "markWould": "Una caída cerca de {pay}. Aquí le quedarían unos {drop} menos al año.",
       "markPast": "Una caída cerca de {pay}. Aquí le quedan unos {drop} menos al año.",
-      "markLater": "Una caída cerca de {pay} que espera. Más adelante, le quedarían unos {drop} menos al año.",
+      "markLater": "Una bajada cerca de {pay}. Aquí se quedaría con unos {drop} menos al año. Llega más tarde, no ese día.",
       "markMerged": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año.",
       "markMergedWaits": "{n} caídas de {from} a {to}. Juntas, unos {sum} al año. Parte de ello espera a un día más adelante.",
       "axisNote": "Los números del lado empiezan en {floor}, no en $0, para que las caídas se vean bien.",
       "axisNoteBare": "Los números del lado empiezan en {floor}, no en $0.",
-      "biggestBeyond": " La caída más grande, de unos {drop} al año en {pay}, queda fuera del dibujo.",
       "safeBeyond": " Desde {safe} en adelante, ganar más siempre suma a lo que le queda.",
       "safeNever": " En el rango de pago que revisamos, hasta {top}, no encontramos un punto más allá de todos los tramos planos.",
-      "ghost": " La línea punteada es lo que pasa si el cambio de más adelante ocurre.",
-      "ghostNow": " La línea punteada es donde está usted ahora: el cambio de más adelante ya le llegó.",
       "estimates": " Son estimaciones. Usan las reglas de {year} en {state}.",
       "aria": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}. Es plana de {zoneFrom} a {zoneTo}.{more}{worst} El hogar está en {pay}, dentro de un tramo plano.",
       "ariaMore": " Vuelve a ser plana de {from} a {to}.",
@@ -248,7 +249,11 @@
         "leap": "+{leap}",
         "leapMore": "más de +{leap}",
         "drop": "−{drop}"
-      }
+      },
+      "scrolls": "El dibujo cubre todo el sueldo de {from} a {to}. Deslícelo a los lados para ver el resto.",
+      "wholeOnPaper": "El dibujo cubre todo el sueldo de {from} a {to}.",
+      "rangeFrom": "← {from}",
+      "rangeTo": "{to} →"
     },
     "key": {
       "line": "El dinero que le queda",
@@ -335,18 +340,14 @@
       "laterLoss": "Más adelante, le quedarían unos {drop} menos al año.",
       "biggest": " Esta es la caída más grande.",
       "waitsBadge": "Espera",
-      "waitsTail": " No se termina ese mismo día.",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "waits": {
+        "head_start_program_year": " No se acaba ese día. Un niño o una niña en el programa se queda hasta el fin del próximo año escolar.",
+        "child_continuous_eligibility": " No se acaba ese día. Los niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
+        "transitional_medical_assistance": " No se acaba ese día. Usted lo conserva de 6 a 12 meses más."
+      }
     },
     "waits": {
-      "head": "Un cambio espera",
-      "headMany": "{n} cambios esperan",
-      "reasons": {
-        "child_continuous_eligibility": "En {at} sus niños dejan de poder recibir {phrase}. Pero la ley les da a los niños un año completo cada vez. Así que se termina en su próxima revisión anual, hasta 12 meses después.",
-        "head_start_program_year": "En {at} sus niños dejan de poder recibir {phrase}. Pero un niño que ya está en el programa se queda hasta el final del próximo año del programa.",
-        "transitional_medical_assistance": "En {at} usted deja de poder recibir {phrase}. Pero la ley le da de 6 a 12 meses más."
-      },
-      "foot": "No lo dibujamos como una caída hoy, porque no lo es.",
       "thisHelp": "esta ayuda",
       "kids": "{noun} de sus niños",
       "own": "{noun} para usted"
@@ -882,9 +883,14 @@
         "fromZero": "El eje vertical empieza en {floor}; el rango visible es {ratio} veces la mayor caída.",
         "aboveZero": "El eje vertical empieza en {floor}, no en $0; el rango visible es {ratio} veces la mayor caída."
       },
-      "liftedGhost": "Las caídas diferidas se sacan de la línea trazada, que es lo que describe analysis.dangerZones; la curva real que las incluye es la línea fantasma punteada.",
-      "liftedNoGhost": "Las caídas diferidas se sacan de la línea trazada, que es lo que describe analysis.dangerZones; aquí son demasiado pequeñas para dibujarlas.",
-      "noneDeferred": "Ningún precipicio de esta curva está diferido."
+      "noneDeferred": "Ningún precipicio de esta curva está diferido.",
+      "span": {
+        "scrolls": "El eje de x va de {from} a {to}; deslice la curva de lado a lado para verla toda.",
+        "whole": "El eje de x va de {from} a {to}, entero en la página."
+      },
+      "rangeFrom": "← {from}",
+      "rangeTo": "{to} →",
+      "deferred": "{n, plural, one {{n} precipicio llega en una renovación posterior (punto hueco, raya discontinua); cuenta en cada cifra de aquí.} other {{n} precipicios llegan en una renovación posterior (puntos huecos, rayas discontinuas); cuentan en cada cifra de aquí.}}"
     },
     "compare": {
       "rows": {

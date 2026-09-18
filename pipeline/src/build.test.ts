@@ -148,18 +148,20 @@ describe("buildSummary", () => {
     const results = fullResultsFor("CA");
     results.CA["single-1"] = fixturePoints;
     const summary = buildSummary("g", ["CA"], results);
-    // The $22,103 Head Start loss at $30k is deferred to the next program
-    // year, so the biggest immediate loss is the 400%-FPL subsidy end and the
-    // leap is the zone that end opens, not the Head Start one.
+    // The Head Start loss at $30k ($21,971 under California's premium wrap)
+    // lands at the next program year and, since 2026-09-17, counts: it is the
+    // biggest loss and the leap is its $30k–$74k trough. (Pinned 2026-09-15 at
+    // the $3,868 subsidy end and a $7,000 leap, with the deferred drop lifted
+    // out.) cliffCount now counts every cliff, the deferred one included.
     expect(summary.states.CA["single-1"]).toEqual({
-      biggestLoss: 3868,
-      biggestLossAt: 84000,
-      biggestLossPrograms: ["aca"],
-      dangerWidth: expect.any(Number),
-      cliffCount: 3,
+      biggestLoss: 21971,
+      biggestLossAt: 30000,
+      biggestLossPrograms: ["headstart"],
+      dangerWidth: 56000,
+      cliffCount: 4,
       deferredCliffCount: 1,
       safeExit: 91000,
-      leap: 7000,
+      leap: 44000,
       leapIsLowerBound: false,
       axisTop: 100000,
     });

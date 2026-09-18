@@ -36,8 +36,10 @@ export interface CliffBreakdown {
  * Three federal rules carry a household past the income threshold that ends a
  * program, so the money does not change the month the raise lands — it changes
  * at a renewal that can be up to a year away. A cliff carrying one of these is
- * still a real loss and still reported; it just must not drive the verdict,
- * the danger zones, or the leap (see evaluate.ts).
+ * a real loss and counts like any other — in the verdict, the danger zones,
+ * the leap and every summary metric (evaluate.ts, the owner's rule of
+ * 2026-09-17); the deferral is the label a surface puts on it: when the loss
+ * lands, and under which rule.
  */
 export type DeferralReason =
   | "head_start_program_year"
@@ -48,6 +50,12 @@ export interface Deferral {
   reason: DeferralReason;
   /** When the loss actually lands, in the household's own words: messages/en.json `deferral.<reason>` rendered; a surface renders the reason's code in its language. */
   until: string;
+  /**
+   * True when every named loss on this cliff waits. False when the label sits
+   * beside a drop the household also feels this month — SNAP and Head Start in
+   * one step keep the SNAP, and the chart keeps the solid drop.
+   */
+  complete: boolean;
 }
 
 /**
@@ -78,7 +86,12 @@ export interface Cliff {
   // with no nameable program (an SSDI stop lives in otherBenefits; a premium
   // jump is not a program) still says what it was.
   driver: keyof CliffBreakdown;
-  /** Set when nothing this cliff costs is lost in the year of the raise. */
+  /**
+   * Set when any of this cliff's losses wait for a renewal: a label, never an
+   * exemption. Immediate programs on the same step stay in the drop;
+   * `deferral.complete` is false then, and the hollow-dot mark is only for a
+   * cliff whose every named loss waits.
+   */
   deferral: Deferral | null;
 }
 export interface DangerZone {
@@ -219,16 +232,17 @@ function deferralOf(
   if (adultMedicaidEnds && !excused.has("medicaid")) excused.delete("medicaid");
 
   if (reasons.length === 0) return null;
-  // Anything named on this cliff that no rule carries forward makes the whole
-  // cliff immediate — a household losing SNAP and Head Start in one step feels
-  // the SNAP the same month. An EMPTY list of named programs still qualifies:
-  // that is the premium-jump case, where the parent's coverage ending is the
-  // whole cliff but the sticker value was too small to be named.
-  if (programsLost.some((id) => !excused.has(id))) return null;
+  // The label stays even when something on the step is unexcused: SNAP and
+  // Head Start in one step is a real SNAP loss this month *and* a Head Start
+  // wait. `complete` is the hollow-dot bit — true only when every named
+  // program is carried forward. An EMPTY list of named programs still
+  // qualifies as complete: that is the premium-jump case, where the parent's
+  // coverage ending is the whole cliff but the sticker was too small to name.
+  const complete = !programsLost.some((id) => !excused.has(id));
   // Several rules can fire at once (children age off CHIP in the same step a
   // parent's TMA starts). Report the first in this fixed order; `until` says
   // the horizon either way, and the CLI prints the whole cliff, not the label.
-  return { reason: reasons[0], until: DEFERRAL_UNTIL[reasons[0]] };
+  return { reason: reasons[0], until: DEFERRAL_UNTIL[reasons[0]], complete };
 }
 
 export function analyzeCurve(points: CurvePoint[], currentEarnings: number, opts: AnalyzeOptions = {}): CurveAnalysis {

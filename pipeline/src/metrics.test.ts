@@ -14,22 +14,25 @@ const evaluated = (points: CurvePoint[], state = "CA") =>
 
 describe("stateMetrics on the committed CA fixture", () => {
   // The CA single-parent-one-kid fixture, evaluated as the CA single-1
-  // archetype: its $22,103 Head Start loss at $30k is deferred to the next
-  // program year, so the biggest immediate loss is the 400%-FPL subsidy end
-  // ($3,868 at $84k) and the leap is that zone's width. safeExit is unchanged.
-  // This fixture isn't one of the archetypes — it only pins the math.
+  // archetype: its Head Start loss at $30k ($21,971 under California's
+  // premium wrap) lands at the next program year, and since 2026-09-17 it
+  // counts like any other cliff — it is the biggest loss, and the leap is the
+  // $30k–$74k trough it opens (the 2026-09-15 pin read the $3,868 subsidy end
+  // at $84k and a $7,000 leap, with the Head Start drop lifted out). safeExit
+  // is unchanged: the last zone still closes at $91k. This fixture isn't one
+  // of the archetypes — it only pins the math.
   it("computes biggestLoss, cliffCount, dangerWidth, safeExit, and leap", () => {
     const m = stateMetrics(evaluated(fixturePoints));
-    expect(m.biggestLoss).toBe(3868);
-    expect(m.cliffCount).toBe(3);
+    expect(m.biggestLoss).toBe(21971);
+    expect(m.cliffCount).toBe(4);
     expect(m.deferredCliffCount).toBe(1);
-    expect(m.dangerWidth).toBeGreaterThan(0);
+    expect(m.dangerWidth).toBe(56000);
     expect(m.safeExit).toBe(91000);
-    expect(m.leap).toBe(7000);
-    // The worst step carries its own facts (places review B3): the subsidy
-    // end at $84k, the immediate cliff, not the deferred Head Start one at $30k.
-    expect(m.biggestLossAt).toBe(84000);
-    expect(m.biggestLossPrograms).toEqual(["aca"]);
+    expect(m.leap).toBe(44000);
+    // The worst step carries its own facts (places review B3): the Head Start
+    // end at $30k, deferred and counted.
+    expect(m.biggestLossAt).toBe(30000);
+    expect(m.biggestLossPrograms).toEqual(["headstart"]);
     // The axis the cell was swept to, so "past the axis" can be said in dollars (places rerun S6, N9).
     expect(m.axisTop).toBe(100000);
   });

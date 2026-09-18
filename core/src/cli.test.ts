@@ -47,7 +47,7 @@ describe("CLI correction notices", () => {
     expect(vi.mocked(evaluateOffline).mock.calls[0][0].hoursPerWeek).toBeNull();
   });
 
-  it("prints deferred cliffs in their own block, and labels the refundable CTC", async () => {
+  it("prints a deferred cliff in the one cliff block with its label row, and labels the refundable CTC", async () => {
     const hs = { programs: { headstart: 12000, ctc: 1500 }, childPrograms: { headstart: 12000 }, totalCtc: 6600 };
     const ca = answersWith({ childAges: [4], monthlyRent: null, monthlyChildcare: 900, annualEarnings: 10000, getsHeadStart: true });
     const points = [
@@ -63,11 +63,14 @@ describe("CLI correction notices", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     expect(await main(["curve", "--state", "CA", "--kids", "4", "--earnings", "10000", "--offline"])).toBe(0);
     const out = log.mock.calls[0][0] as string;
-    expect(out).toContain("later, at the next renewal");
-    expect(out).toContain("45 CFR 1302.12(j)(1)");
-    // The immediate block is above it and holds only the SNAP cliff.
-    expect(out.indexOf("snap")).toBeLessThan(out.indexOf("later, at the next renewal"));
-    expect(out.indexOf("headstart")).toBeGreaterThan(out.indexOf("later, at the next renewal"));
+    // One block in axis order — the Head Start cliff first, labelled with when
+    // it lands (2026-09-17: counted, never set apart) — then the SNAP cliff.
+    expect(out).toContain("lands later, at the end of the next Head Start program year (45 CFR 1302.12(j)(1))");
+    expect(out.indexOf("headstart")).toBeLessThan(out.indexOf("lands later"));
+    expect(out.indexOf("lands later")).toBeLessThan(out.indexOf("snap"));
+    expect(out).not.toContain("later, at the next renewal");
+    // …and it drives the verdict: the household at $10,000 stands at the top of the Head Start hole.
+    expect(out).toContain("verdict: cliff ahead");
     // Two child-tax-credit numbers, each labeled for what it is.
     expect(out).toContain("ctc (refundable)");
     expect(out).toContain("program ends: ");

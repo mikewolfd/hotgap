@@ -8,14 +8,14 @@ surface renders the component, not that it could.
 |---|---|---|:-:|:-:|:-:|
 | 1 | **AnswerSentence** | The verdict written as one sentence at display size, with each dollar figure underlined in the colour of the mark it names — so the sentence doubles as the chart's key. One sentence shape per curve shape (§ Verdict catalog); the second figure it names is the leap (S7). | ● | | |
 | 2 | **StatTile** | Label, one number, one qualifying line. Proportional figures, same sans, no sparkline unless the trend is the point. | | ● | |
-| 3 | **MoneyCurve** | The line of net income against earnings, with the household's band, the exit and the leap bracket, cliffs as controls, deferred cliffs, a reference line and the household's position. Lifts deferred drops before plotting. Rules in `charts.md` § 1. | ● | ● | |
+| 3 | **MoneyCurve** | The line of net income against earnings, with the household's band, the exit and the leap bracket, cliffs as controls, deferred cliffs, a reference line and the household's position. Plots the real curve — every drop full size, in place (2026-09-17). **The whole earnings axis, scrolled sideways, never cropped** (2026-09-17): the y-axis holds still in a gutter outside the scroller, the x-ticks move with the curve, `windowFor` picks where the reader lands, and the axis's ends are rendered beneath it from the data as "← $0 … $150,000 →". Rules in `charts.md` § 1 and § The scroll rule. | ● | ● | |
 | 4 | **CurveReadout** | The live `aria-live` line under the curve that reports the point under the cursor, the keyboard caret, or the cliff mark just activated. Replaces a floating tooltip. | ● | ● | |
 | 5 | **MarkKey** | The non-series key: band, immediate cliff, deferred cliff, position. Never a colour swatch alone — each entry draws the actual mark. | ● | ● | |
-| 6 | **StepList** | The citizen reading of thresholds: a dollar in a fixed left column, a plain sentence beside it, one rule per step. Rendered from the cliff list under the one threshold convention (§ Where a program ends). A row is the card a cliff mark opens (M6). | ● | | |
-| 7 | **ThresholdLedger** | The professional reading of the same data: earnings, program, who holds it (adult or child), and the citation that governs it. Same convention and same source as StepList. | | ● | |
+| 6 | **StepList** | The citizen reading of thresholds: a dollar in a fixed left column, a plain sentence beside it, one rule per step. Rendered from the cliff list under the one threshold convention (§ Where a program ends). A row is the card a cliff mark opens (M6). A deferred cliff is a row like any other, its loss line counted, carrying DeferredBadge (#10) and the rule's clause. | ● | | |
+| 7 | **ThresholdLedger** | The professional reading of the same data: earnings, program, who holds it (adult or child), and the citation that governs it. Same convention and same source as StepList, deferred rows included and badged. | | ● | |
 | 8 | **DropLedger** | Every cliff as a row — step, drop, programs lost, driver, deferred badge. Selecting a row, or its cliff mark on the chart, drives the breakdown: one selection, not two. | | ● | |
 | 9 | **BreakdownBars** | Four signed bars from a centre zero showing where a drop came from: benefits, credits, premiums, other. States the sum. | | ● | |
-| 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Dashed everywhere, always. One declaration: `.hg-badge`. | ● | ● | |
+| 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Since 2026-09-17 it is the *only* thing a deferral does to a reading: the row, the mark and the figures are an ordinary cliff's, and the badge plus its clause ("it does not end that day", then the rule) say when the money goes. Dashed everywhere, always. One declaration: `.hg-badge`. | ● | ● | |
 | 11 | **ScenarioBar** | The household's inputs as chips — state, county, shape, earnings, rent, childcare, and the take-up toggles — plus *add a what-if* and *print*. Phone behaviour and chip semantics in § ScenarioBar. | | ● | |
 | 12 | **CompareTable** | Two or three scenarios in columns against the same rows. Column identity is a rule under the header, never coloured text. | | ● | |
 | 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. | | | ● |
@@ -42,7 +42,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | StepList | `.hg-rows`, `.hg-rows__at`, `.hg-rows__loss` (the drop line); `[aria-current="true"]` on the open row |
 | MarkKey | `.hg-key` |
 | CurveReadout | `.hg-readout` |
-| MoneyCurve | `.hg-chart` (wrapper), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls; `--later` on a merged mark whose every cliff waits, whose hollow dot takes `--ink-3`), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch) and its weight `--strong` (the largest drop, the leap, "you") or `--med` (the peak, the exit, "later") — never a bare `font-weight` on `<text>`, `.hg-draw` |
+| MoneyCurve | `.hg-chart` (wrapper), `.hg-chart--scroll` (the figure's flex row) + `.hg-chart__gutter` (the y axis, outside the scroller) + `.hg-chart__scroll` (`.hg-scroll-x`, the plot and its marks) + `.hg-chart__hint` (the axis's ends, outside the scroller), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls; `--later` on a merged mark whose every cliff waits, whose hollow dot takes `--ink-3`), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch) and its weight `--strong` (the largest drop, the leap, "you") or `--med` (the peak, the exit, "later") — never a bare `font-weight` on `<text>`, `.hg-draw` |
 | StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete` (an SVG mask on a pseudo-element, so it prints — B1 of the places review); `.hg-swatch` with the same modifiers, in a `.hg-key` list |
 | Callout | `.hg-callout`, `--note`, `--caution` |
 | Button | `.hg-button`, `--primary`, `--small` |
@@ -270,6 +270,23 @@ says to what the page showed. When more zones lie beyond the household's
 (`escape.safeExitEarnings` differs from `personal.escapeEarnings`), the
 answer-sub carries one more sentence, from the data: "It happens again
 between {exit} and {safeExit}." — see `charts.md` § 1 for the drawn rule.
+
+**The timing clause.** When a deferred cliff (`evaluation.deferred`) starts
+at or above the household's own pay, the sentence above it takes one more
+clause. Its money is already in the figures — since 2026-09-17 a deferred
+loss counts like any other, so it can be the `{drop}` of `cliff_ahead` or
+the step that sets `{exit}` and `{leap}` — and the clause only says when it
+lands, keyed by `Cliff.deferral.reason` so the reader gets the rule and not
+the word *later*: "At {at}, {phrase} stops: about {drop} a year. But not
+that day." then, per reason, "A child in it stays to the end of the next
+program year." (`head_start_program_year`), "Kids keep it to their next
+yearly check, up to 12 months later."
+(`child_continuous_eligibility`), or "You keep it for 6 to 12 more months."
+(`transitional_medical_assistance`). `{at}` is keyed `amt`; the rest is
+prose, because the figure it would underline is already underlined above.
+This replaced a *One more thing…* clause whose job was to restore a loss
+the lifted curve had left out, and a two-screens-down callout that said the
+drop was not real today — both gone with the lift.
 
 ## Program phrases (M3)
 

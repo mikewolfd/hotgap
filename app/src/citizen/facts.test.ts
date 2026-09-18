@@ -13,11 +13,12 @@ describe("tableRows", () => {
   test("the peak, the household, the exit, every cliff in the window and safe-from-here, each keep read off the plotted curve", () => {
     const s = sceneOf(makeEvaluation(), year);
     const rows = tableRows(s);
+    // The deferred $72k step counts (2026-09-17), so it opens the last zone and safe-from-here moves from $67k to $74k.
     expect(rows.map((r) => [r.at, r.mark])).toEqual([
       [41_000, "The top of your flat stretch"], [42_000, "A drop"], [43_000, "You now"], [46_000, "Back to even"],
-      [55_000, "A drop"], [67_000, "Safe from here"], [72_000, "A drop that waits"],
+      [55_000, "A drop"], [72_000, "A drop that waits"], [74_000, "Safe from here"],
     ]);
-    for (const r of rows) if (r.mark !== "You now") expect(r.keep).toBe(s.lifted[s.idx(r.at)]);
+    for (const r of rows) if (r.mark !== "You now") expect(r.keep).toBe(s.net[s.idx(r.at)]);
     expect(rows.filter((r) => r.drop).map((r) => r.drop)).toEqual([2500, 9000, 1500]);
   });
   test("a household with no zone has no peak or exit row; no cliffs, no drop rows", () => {
@@ -172,7 +173,9 @@ describe("EligibilityBoundary (#23)", () => {
   test("with the toggle on, says only that it was counted, and the tick leaves the picture", () => {
     const s = sceneOf(makeEvaluation({ liheap: boundary({ counted: true }) }), year);
     expect(said(boundaryText(s))).toMatch(/^You said you get help with heating bills \(LIHEAP\)\. We put it in your line: about \$\d[\d,]* a year, up to \$40,000 a year\.$/);
-    expect(s.boundaryInWindow).toBe(false);
-    expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryInWindow).toBe(true);
+    // The tick marks a limit the household has NOT crossed; counted, there is no limit left to mark.
+    // It is no longer a question of a window: since the curve scrolls, the whole axis is the picture.
+    expect(s.boundaryOnAxis).toBe(false);
+    expect(sceneOf(makeEvaluation({ liheap: boundary() }), year).boundaryOnAxis).toBe(true);
   });
 });

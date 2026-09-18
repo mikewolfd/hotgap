@@ -88,17 +88,23 @@ export interface HouseholdEvaluation {
   source: CurveSource;
   curve: CurveResponse;
   /**
-   * Cliffs are every cliff on the real curve; every other field — the verdict,
-   * the danger zones, the worst cliff — describes the curve with the deferred
-   * ones neutralized, because a household that takes the raise does not lose a
-   * deferred program this year. `currentNet` stays the real curve's.
-   * Two object-identity traps follow: `worstCliff`/`nextCliff` are computed
-   * on the lifted curve and are never the same objects as entries of
-   * `cliffs` (compare by `startEarnings`), and `dangerZones` describe the
-   * lifted curve, not `points` — a plot of both must lift `points` too.
+   * The full reading of the real curve: every cliff, and the verdict, the
+   * danger zones, the worst cliff and the safe exit measured with every one
+   * of them in place — including a cliff a federal rule defers to a later
+   * renewal. Until 2026-09-17 those were lifted out of everything but
+   * `cliffs` (a household that takes the raise does not lose a deferred
+   * program this year); the owner overruled that: the family WILL lose the
+   * money, and the tool exists to show the impact, so the deferral is a
+   * label on the cliff (`Cliff.deferral`: when it lands, under which rule),
+   * never a reason to leave it out. `worstCliff` and `nextCliff` are entries
+   * of `cliffs`, and `dangerZones` describe `points` as they are.
    */
   analysis: CurveAnalysis;
-  /** The subset of `analysis.cliffs` that lands at a future renewal, not now. */
+  /**
+   * The subset of `analysis.cliffs` whose loss lands at a future renewal,
+   * not with the raise — counted in every figure above, listed here so a
+   * surface can badge them (`deferral.until` says when and under which rule).
+   */
   deferred: Cliff[];
   escape: EscapeAnalysis;
   personal: PersonalEscape;
@@ -668,34 +674,6 @@ function esiSummary(a: HouseholdAnswers, points: CurvePoint[], currentEarnings: 
   return { tier, annualContribution: tier === null ? 0 : ESI_EMPLOYEE_CONTRIBUTION[tier] };
 }
 
-/**
- * The curve as it would read if every deferred loss arrived with the raise
- * that causes it: each deferred step's drop is added back to every point above
- * it, so the step flattens to zero and the points beyond keep their shape.
- *
- * THIS IS THE ONLY PLACE HOTGAP ALTERS A CURVE FOR TIMING. Every other
- * correction in this file changes a number PolicyEngine got wrong; this one
- * changes WHEN a number that is right arrives, and it is never the curve that
- * is reported — `evaluateCurve` returns the real points and uses this copy
- * only to decide danger zones, safe exit, the leap and this household's own
- * path. A deferred cliff is still listed, still carries its full drop, and
- * still says what carries the household past it. Exported because it is the
- * line a chart plots (design/charts.md § The lift): a page calls this with
- * `evaluation.deferred` rather than lifting the points again. O(points).
- */
-export function immediateCurve(points: CurvePoint[], deferred: Cliff[]): CurvePoint[] {
-  if (deferred.length === 0) return points;
-  const dropAt = new Map(deferred.map((c) => [c.startEarnings, c.drop]));
-  let lift = 0;
-  return points.map((p) => {
-    const lifted = lift === 0 ? p : { ...p, netIncome: p.netIncome + lift };
-    // The drop happens BETWEEN this point and the next, so it lifts the next
-    // point and everything above it, never this one.
-    lift += dropAt.get(p.earnings) ?? 0;
-    return lifted;
-  });
-}
-
 function personalEscape(analysis: CurveAnalysis): PersonalEscape {
   const zone = zoneAt(analysis.dangerZones, analysis.currentEarnings);
   const axisTop = analysis.points[analysis.points.length - 1].earnings;
@@ -766,38 +744,29 @@ export function evaluateCurve(
   // removed must not then be charged Part B against a premium that is gone).
   const points = source === "live" ? applyMedicare(helped, answers) : helped;
 
-  // Two readings of the same curve. `full` is what happens: every cliff,
-  // including the ones a federal rule defers to a renewal up to a year out.
-  // `immediate` is what happens THIS year, and it is what the verdict, the
-  // danger zones, the safe exit, the leap and this household's own path are
-  // measured on — a family whose Head Start slot is guaranteed through the
-  // next program year is not standing in a $20,000 hole the day they take the
-  // raise, and telling them to leap over one is telling them not to take it.
+  // One reading of the curve, with every cliff in it — including the ones a
+  // federal rule defers to a renewal up to a year out. From 2026-09-15 to
+  // 2026-09-17 a second, "immediate" reading (the deferred drops added back
+  // above their steps) drove the verdict, the danger zones, the safe exit,
+  // the leap and this household's own path, on the reasoning that a family
+  // whose Head Start slot is guaranteed through the next program year is not
+  // standing in a $20,000 hole the day they take the raise. The owner
+  // reversed that on 2026-09-17: the family will lose that money, and the
+  // tool exists to show the impact — so a deferred loss counts everywhere,
+  // and the deferral is the label on its cliff (when it lands, under which
+  // rule), reported through `deferred` for the badge.
   //
   // Transitional Medical Assistance is the one deferral that needs to know
   // WHICH adult lost the coverage, so it is withheld on a curve that cannot
   // say who holds it — the same guard the coverage gap and the per-age
-  // thresholds use. Excusing a cliff is the strong claim; a curve that cannot
-  // tell a parent's Medicaid from a child's does not get to make it.
-  const opts = {
+  // thresholds use. Labelling a cliff deferred is a claim about the rule; a
+  // curve that cannot tell a parent's Medicaid from a child's does not get
+  // to make it.
+  const analysis = analyzeCurve(points, curve.currentEarnings, {
     hasChildren: knowsWhoHolds && modeled.childAges.length > 0,
     isAdultGroupLoss: adultGroupLossTest(modeled),
-  };
-  const full = analyzeCurve(points, curve.currentEarnings, opts);
-  const deferred = full.cliffs.filter((c) => c.deferral !== null);
-  const immediate = analyzeCurve(immediateCurve(points, deferred), curve.currentEarnings, opts);
-  const analysis: CurveAnalysis = {
-    ...immediate,
-    // The real curve and its real cliffs; only the verdicts come from the
-    // counterfactual. currentNet especially: it is this household's money
-    // today, and a household already above a deferred step really has lost it.
-    points,
-    cliffs: full.cliffs,
-    currentNet: full.currentNet,
-  };
-  // Program thresholds read the points' program values, which the lift never
-  // touches — only netIncome moves — so escapeAnalysis sees the same
-  // thresholds either way and takes its zones from the immediate reading.
+  });
+  const deferred = analysis.cliffs.filter((c) => c.deferral !== null);
   const escape = knowsWhoHolds
     ? escapeAnalysis(points, analysis)
     : { ...escapeAnalysis(points, analysis), programEndsByAge: { adults: {}, children: {} }, childCoverageEndEarnings: null };

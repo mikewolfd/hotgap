@@ -1,5 +1,5 @@
 // MoneyCurve (#3), CurveReadout (#4) and MarkKey (#5) for the caseworker:
-// the full axis, the lifted line, the household's zone with its peak rule,
+// the full axis, the line, the household's zone with its peak rule,
 // exit and leap bracket, every other zone as hatch, cliff marks as 44px
 // controls with the collision rule, and the keyboard model (design/charts.md
 // § 1, M6, S8, S12), over the primitives both charts share (lib/chart;
@@ -9,15 +9,16 @@
 //
 // A draw is O(points + cliffs + zones); a width change redraws once; print
 // redraws synchronously at a fixed width (review N6).
-import { immediateCurve, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
-import { clusterCliffs, layerFor, niceStep, niceUp, type Cluster, type Layer } from "../lib/chart/geometry.js";
+import type { Cliff, HouseholdEvaluation } from "@hotgap/core";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { clusterCliffs, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
+
 import { svg as mk } from "../lib/dom.js";
 import { lossFigure, money as usd, tickMoney } from "../lib/format.js";
 import { copy, t } from "./copy.js";
 import { cliffAt, cliffSentence, indexOf } from "./model.js";
 
-export interface ChartHost { wrap: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
+export interface ChartHost { wrap: HTMLElement; gutter: SVGSVGElement; scroll: HTMLElement; hint: HTMLElement; svg: SVGSVGElement; marks: HTMLElement; readout: HTMLElement; key: HTMLElement; cap: HTMLElement }
 
 export interface Chart {
   /** Draw an evaluation; `source` closes the caption. The first draw animates the line. */
@@ -34,6 +35,8 @@ interface Mark { cluster: Cluster; members: number[]; x: number; y: number; btn:
 
 /** The width the curve is drawn at on paper, whatever the screen was (review N6): 42rem at 16px. */
 const PRINT_WIDTH = 672;
+/** The gutter the y axis holds still in, outside the scroller — wide enough for "$100k" at the tick size. */
+const GUTTER = { narrow: 44, wide: 52 } as const;
 /** A mark's ring, the box a direct label must clear (review S4). */
 const RING = 10;
 /** One line of a 13px label, the step a colliding label is lifted by. */
@@ -46,7 +49,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   const K = copy.chart;
   let ev: HouseholdEvaluation | null = null;
   let source = "";
-  let lifted: number[] = [], earn: number[] = [];
+  let net: number[] = [], earn: number[] = [];
   let cursor = 0, layer: Layer | null = null, cursorNodes: SVGElement[] = [], marks: Mark[] = [], drawn = false;
   let diamond: SVGElement | null = null, selected: number | null = null;
 
@@ -57,10 +60,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
   const label = (x: number, y: number, text: string, extra: Record<string, string | number> = {}, cls = "") =>
     mk("text", { class: `hg-label hg-label--halo${cls ? ` ${cls}` : ""}`, x, y, ...extra }, text);
-  /** The lifted line's value at any earnings, interpolated between the two axis points around it. */
-  const liftedAt = (e: number): number => {
-    const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(lifted.length - 2, Math.floor(f)));
-    return lifted[i] + (lifted[i + 1] - lifted[i]) * Math.max(0, Math.min(1, f - i));
+  const mkSpan = (text: string) => { const el = document.createElement("span"); el.textContent = text; return el; };
+  /** The line's value at any earnings, interpolated between the two axis points around it. */
+  const netAt = (e: number): number => {
+    const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(net.length - 2, Math.floor(f)));
+    return net[i] + (net[i + 1] - net[i]) * Math.max(0, Math.min(1, f - i));
   };
   /**
    * A direct label must not sit on a mark's ring (review S4): once it is in
@@ -76,45 +80,53 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     }
   };
 
-  function draw(width = Math.max(320, wrap.clientWidth)): void {
+  function draw(width = Math.max(320, wrap.clientWidth), print = false): void {
     if (!ev) return;
-    const A = ev.analysis, P = ev.personal, DEFERRED = ev.deferred, IMMEDIATE = cliffs().filter((c) => !c.deferral);
-    const net = ev.curve.points.map((p) => p.netIncome), safe = ev.escape.safeExitEarnings;
-    const W = width, narrow = W < 520;
-    const H = narrow ? 240 : 320;
-    const pad = { t: 30, r: 14, b: 34, l: 52 };
+    const A = ev.analysis, P = ev.personal, DEFERRED = ev.deferred;
+    const safe = ev.escape.safeExitEarnings;
+    const box = width, narrow = !print && box < 520;
+    const gutter = narrow ? GUTTER.narrow : GUTTER.wide;
+    const viewport = Math.max(200, box - gutter);
+    const pad = { t: 30, r: 20, b: 34, l: PLOT_LEAD };
     const x0 = earn[0], x1 = earn[earn.length - 1];
     /* Axis honesty (charts.md): the floor is computed, never typed, and the
        visible range is at least 2.5× the largest plotted drop (S14). */
-    let lo = Math.min(...lifted), hi = Math.max(...lifted);
-    const maxDrop = Math.max(0, ...IMMEDIATE.map((c) => c.drop)), need = 2.5 * maxDrop;
+    let lo = Math.min(...net), hi = Math.max(...net);
+    const maxDrop = Math.max(0, ...cliffs().map((c) => c.drop)), need = 2.5 * maxDrop;
     if (hi - lo < need) { const ext = (need - (hi - lo)) / 2; lo -= ext; hi += ext; }
     const n = narrow ? 3 : 5;
     let step = niceStep(hi - lo, n), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
     while ((y1 - y0) / step > n + 1) { step = niceUp(step); y0 = Math.floor(lo / step) * step; y1 = Math.ceil(hi / step) * step; }
+    /* The plot is as tall as the biggest drop needs to clear 24px, clamped — the same rule and the
+       same numbers as the citizen's, so one figure is not read at a different scale from the other. */
+    const H = plotHeight(y1 - y0, maxDrop) + pad.t + pad.b;
+    /* Where the reader lands, and therefore the scale: the window in one viewport, the rest a swipe away.
+       Paper cannot scroll, so the whole axis is fitted to the column instead (charts.md § The scroll rule). */
+    const view = windowFor({ current: A.currentEarnings, zone: P.zone, stuck: P.raiseIsLowerBound, exit: P.escapeEarnings, next: A.nextCliff, worst: A.worstCliff, top: x1, step: earn[1] - earn[0] });
+    const scale = print ? (viewport - pad.l - pad.r) / x1 : scaleFor(viewport, view, x1);
+    const W = print ? viewport : plotWidth(x1, pad, scale);
     const L = layerFor(W, H, pad, x0, x1, y0, y1), { px, py } = L;
     const plotTop = pad.t, plotBot = H - pad.b;
 
-    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", String(H));
+    sizeSvg(svg, W, H);
     svg.textContent = "";
     svg.append(hatchDefs("cw-hatch"));
+    /* The y axis holds still in its gutter while the curve scrolls under it. */
+    const yTicks: number[] = [];
+    for (let v = y0; v <= y1 + 1; v += step) yTicks.push(v);
+    axisGutter(host.gutter, gutter, H, yTicks, py, (v) => tickMoney(v, "year"));
 
     /* Zones: the household's own gets the wash, the peak rule, the exit and the
        bracket; every other zone is hatch alone (S7). */
     for (const z of A.dangerZones) svg.append(...zoneRects(px(z.startEarnings), px(z.endEarnings ?? x1), plotTop, plotBot, isPersonal(z), "cw-hatch"));
-    for (let v = y0; v <= y1 + 1; v += step) {
-      svg.append(mk("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-      svg.append(mk("text", { class: "hg-tick", x: pad.l - 7, y: py(v) + 4, "text-anchor": "end" }, tickMoney(v, "year")));
-    }
-    const xs = niceStep(x1 - x0, narrow ? 3 : 6);
+    for (const v of yTicks) svg.append(mk("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    /* The x ticks scroll with the curve, one about every 110px — or half as many on paper, where the axis is squeezed and the type floor still holds. */
+    const xs = niceStep(x1 - x0, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110))));
     for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: H - 12, "text-anchor": "middle" }, tickMoney(e, "year")));
-    svg.append(mk("line", { x1: pad.l, y1: plotBot, x2: W - pad.r, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
+    svg.append(mk("line", { x1: 0, y1: plotBot, x2: W, y2: plotBot, stroke: "var(--axis)", "stroke-width": 1 }));
 
-    /* The ghost (S14): the real curve, drawn only when a deferred drop would be
-       visible; the caption sentence comes from the same test below. */
-    const yRange = y1 - y0, ghost = DEFERRED.some((d) => d.drop / yRange > 0.015);
-    if (ghost) svg.append(ghostPath(pathD(net.map((v, i) => [px(earn[i]), py(v)])), "5 4"));
-    svg.append(seriesPath(pathD(lifted.map((v, i) => [px(earn[i]), py(v)])), !drawn));   /* the one orchestrated moment, first draw only */
+    const yRange = y1 - y0;
+    svg.append(seriesPath(pathD(net.map((v, i) => [px(earn[i]), py(v)])), !drawn));   /* the one orchestrated moment, first draw only */
 
     /* Cliff marks, with the collision rule (S8): adjacent dots closer than 10px
        merge into one mark with a count — a mixed cluster keeps the waits
@@ -122,22 +134,27 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
        B1); the ledger is where they separate. */
     marks = [];
     marksEl.textContent = "";
+    /* The marks layer is the PLOT's box, not the scroller's viewport, so a mark scrolls with its dot. */
+    marksEl.style.width = `${W}px`;
+    marksEl.style.height = `${H}px`;
     for (const cl of clusterCliffs(cliffs(), px)) {
       const members = cl.cliffs.map((c) => cliffs().indexOf(c));
-      const x = cl.x, y = py(lifted[indexOf(ev, cl.cliffs[0].startEarnings)]), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
+      const x = cl.x, y = py(net[indexOf(ev, cl.cliffs[0].startEarnings)]), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
       if (cl.cliffs.some((c) => c.deferral)) {
         svg.append(waitStub(x, y, 18));
         svg.append(label(x + 7, y - 8, K.later));
       }
       if (cl.later) svg.append(waitDot(x, y, r));
       else {
-        const land = Math.min(...cl.cliffs.filter((c) => !c.deferral).map((c) => lifted[indexOf(ev!, c.endEarnings)]));
+        const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => net[indexOf(ev!, c.endEarnings)]));
         svg.append(...dropMark(x, y, py(land), r));
       }
       /* The marks layer: one 44px button per mark, over the SVG (M6). */
       const mark: Mark = { cluster: cl, members, x, y, btn: null as unknown as HTMLButtonElement };
       mark.btn = markButton(x, y, L, markSentence(mark), cl.cliffs.length, cl.later);
       mark.btn.addEventListener("click", () => on.select(mark.members[0], markSentence(mark)));
+      /* A mark reached by keyboard may be off screen: focus scrolls it into view. */
+      mark.btn.addEventListener("focus", () => reveal(x));
       marksEl.append(mark.btn);
       marks.push(mark);
     }
@@ -147,7 +164,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const w = cliffAt(ev, A.worstCliff);
     if (w) {
       const wm = marks.find((m) => m.members.includes(cliffs().indexOf(w)))!;
-      const mid = (lifted[indexOf(ev, w.startEarnings)] + lifted[indexOf(ev, w.endEarnings)]) / 2;
+      const mid = (net[indexOf(ev, w.startEarnings)] + net[indexOf(ev, w.endEarnings)]) / 2;
       const worstLabel = label(wm.x + 9, py(mid) + 4, lossFigure(w.drop), {}, "hg-label--loss hg-label--strong");
       svg.append(worstLabel); clearRings(worstLabel, rings);
     }
@@ -174,20 +191,43 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       svg.append(label(sx - 4, plotTop - 8, K.safeFromHere, { "text-anchor": "end" }));
     }
     /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
-    const cx = px(A.currentEarnings), cy = py(liftedAt(A.currentEarnings));
+    const cx = px(A.currentEarnings), cy = py(netAt(A.currentEarnings));
     const [dropLine, diamondPath] = household(cx, cy, plotBot);
     svg.append(dropLine, diamondPath);
     diamond = diamondPath;
 
-    /* The caption's clauses each come from their condition (review S5). */
+    /* The caption's clauses each come from their condition (review S5); the axis clause
+       says whether the whole axis is on screen or in a scroller (§ The scroll rule). */
     host.cap.textContent = [
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
-      DEFERRED.length ? (ghost ? K.liftedGhost : K.liftedNoGhost) : K.noneDeferred,
+      t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
+      DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
       source,
     ].join(" ");
-    renderKey(A.dangerZones.length > (P.zone ? 1 : 0), IMMEDIATE.length > 0, DEFERRED.length > 0, !!P.zone, safe !== null);
-    layer = L; drawn = true;
+    /* The axis's own ends under the figure: the cue that the picture keeps going. */
+    host.hint.replaceChildren(mkSpan(t("chart.rangeFrom", { from: usd(x0) })), mkSpan(t("chart.rangeTo", { to: usd(x1) })));
+    renderKey(A.dangerZones.length > (P.zone ? 1 : 0), cliffs().some((c) => !c.deferral), DEFERRED.length > 0, !!P.zone, safe !== null);
+    layer = L; printing = print; viewportW = viewport;
+    /* Where the reader is looking: the window on the first draw of an evaluation (§ The scroll rule), and after that the pay they left at the left edge. */
+    host.scroll.scrollLeft = print ? 0
+      : anchor === null ? scrollFor(L, viewport, view, A.currentEarnings)
+      : Math.max(0, Math.min(W - viewport, px(anchor)));
+    drawn = true;
     syncMarks(); paintCursor();
+  }
+
+  /* The pay at the scroller's left edge, once the reader has moved it: a redraw for a resize must not yank the curve back to the start. */
+  let anchor: number | null = null, printing = false, viewportW = 0;
+  host.scroll.addEventListener("scroll", () => {
+    if (!layer || printing) return;
+    const { pad, W } = layer, x0 = earn[0], x1 = earn[earn.length - 1];
+    anchor = x0 + ((host.scroll.scrollLeft - pad.l) / (W - pad.l - pad.r)) * (x1 - x0);
+  }, { passive: true });
+
+  /** Bring a plot-space x into view — a focused mark or the keyboard caret has to be visible. */
+  function reveal(x: number): void {
+    if (!layer || printing) return;
+    host.scroll.scrollLeft = scrollToShow(x, host.scroll.scrollLeft, viewportW, layer.W);
   }
 
   /* MarkKey (#5): each entry draws the actual mark; entries follow the marks drawn. */
@@ -208,7 +248,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     cursorNodes.forEach((n) => n.remove()); cursorNodes = [];
     if (!layer || !ev) return;
     const { px, py, pad, H } = layer;
-    const e = earn[cursor], v = lifted[cursor];
+    const e = earn[cursor], v = net[cursor];
     const [l, dot] = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
     svg.insertBefore(l, diamond); svg.insertBefore(dot, diamond);   /* the household's diamond stays on top */
     cursorNodes = [l, dot];
@@ -229,7 +269,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
      the next stop, not skipped (review N4). */
   attachCursor(wrap, {
     svg, layer: () => layer, range: () => [0, earn.length - 1], cursor: () => cursor, shift: 10, pointer: "drag",
-    set(i) { cursor = i; paintCursor(); },
+    set(i, by) { cursor = i; paintCursor(); if (by === "key") reveal(layer ? layer.px(earn[i]) : 0); },
     bracket(key, target) {
       const onMark = target.closest(".hg-mark");
       const here = onMark ? marks.findIndex((m) => m.btn === onMark) : -1;
@@ -257,10 +297,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   return {
     render(next, src) {
       ev = next; source = src;
-      /* THE LIFT (design/charts.md § 1): the line the zones and the verdict describe is core's immediate curve, deferred drops removed. */
-      lifted = immediateCurve(next.curve.points, next.deferred).map((p) => p.netIncome); earn = next.curve.points.map((p) => p.earnings);
+      net = next.curve.points.map((p) => p.netIncome); earn = next.curve.points.map((p) => p.earnings);
       cursor = indexOf(next, next.analysis.currentEarnings);
       selected = null;
+      anchor = null;   /* a new evaluation lands on its own window, not the last one's scroll */
       draw();
     },
     setSelected(i, { moveCursor = true } = {}) {

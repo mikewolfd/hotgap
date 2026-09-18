@@ -16,7 +16,7 @@
 //     catalog). {pay}, {wage}, {exit}, {leap} and {top} are in the person's own
 //     unit (M5); {kept} and {drop} are yearly money. verdict.waits is the
 //     deferred cliff at or above the person's pay (design/REVIEW-citizen B1; the
-//     catalog needs this clause, TODO(system) 16): the loss the lifted curve leaves out.
+//     catalog needs this clause, TODO(system) 16): the money is already in the figures; this says when it lands.
 //   noncash.* — help inside "money you keep" that never reaches the household as cash (S6).
 //   boundary.* — EligibilityBoundary (#23): three facts and an invitation, never
 //     a drop. {pay} is in the person's own unit; {min}, {max}, {amount} are yearly

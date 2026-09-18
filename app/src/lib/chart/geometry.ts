@@ -1,10 +1,12 @@
 // MoneyCurve (#3) geometry the two charts share, pure (design/charts.md
 // § 1; audit D10): nice gridline steps, the ticks inside a range, the
-// collision rule that merges cliff dots into one mark, and the layer that
-// maps money to pixels. Each page keeps its own scene → layout — the
-// citizen crops a window in the person's unit, the caseworker draws the
-// full annual axis — and its own words. O(cliffs) for the clusters, O(1)
-// for the rest; a layout is computed once per draw, never per pointer event.
+// collision rule that merges cliff dots into one mark, the layer that maps
+// money to pixels, and the scroll rule: both charts draw the whole axis at
+// `PX_PER_1K` and scroll it, so a viewport never crops the curve. Each page
+// keeps its own scene → layout — the citizen's x ticks are in the person's
+// unit, the caseworker's annual — and its own words. O(cliffs) for the
+// clusters, O(1) for the rest; a layout is computed once per draw, never per
+// pointer event.
 import type { Cliff } from "@hotgap/core";
 
 const NICE = [1, 2, 2.5, 5, 10];
@@ -29,7 +31,7 @@ export function niceTicks(lo: number, hi: number, step: number): number[] {
   return out;
 }
 
-/** One mark: the cliffs under it, its x, and whether every one of them waits for a renewal (a hollow dot). */
+/** One mark: the cliffs under it, its x, and whether every named loss under it waits (a hollow dot). */
 export interface Cluster { cliffs: Cliff[]; x: number; later: boolean }
 
 /**
@@ -46,12 +48,126 @@ export function clusterCliffs(cliffs: Cliff[], px: (earnings: number) => number,
   }
   for (const cl of out) {
     cl.x = cl.cliffs.reduce((sum, c) => sum + px(c.startEarnings), 0) / cl.cliffs.length;
-    cl.later = cl.cliffs.every((c) => c.deferral !== null);
+    cl.later = cl.cliffs.every((c) => c.deferral?.complete === true);
   }
   return out;
 }
 
 export interface Pad { t: number; r: number; b: number; l: number }
+
+/**
+ * The scroll rule (design/charts.md § The scroll rule, 2026-09-17): both
+ * charts draw the WHOLE earnings axis inside `.hg-scroll-x`, at one uniform
+ * scale, and no viewport ever decides which part of the curve exists.
+ *
+ * The scale is chosen so the INITIAL VIEW is the window the old crop rule
+ * picked, at the legibility it had: one screen of scroller shows the same
+ * pay the cropped chart used to show, and everything the crop threw away is
+ * a swipe either side of it. That is why the scale is not a constant — a
+ * constant either squeezes a $44,000 window into a phone or stretches a
+ * $750,000 axis (which the caseworker's live curves reach) to nine thousand
+ * pixels, twenty-nine screens of swiping to cross.
+ *
+ * `MAX_SCREENS` is the guard on the second case: past six screens the axis
+ * stops being reachable by hand, so the scale zooms out until it is. The
+ * initial view then shows MORE pay than the window, never less — nothing is
+ * cropped either way, which is the whole point.
+ */
+export const MAX_SCREENS = 6;
+
+/** The lead-in inside the scrolled plot, so the point at $0 clears the gutter's edge fade. */
+export const PLOT_LEAD = 12;
+
+/** Pixels per dollar of earnings: the window filling one screen, unless that would make the axis longer than `MAX_SCREENS` of them. */
+export function scaleFor(viewport: number, window: [number, number], top: number): number {
+  const ideal = viewport / Math.max(1, window[1] - window[0]);
+  return Math.min(ideal, (MAX_SCREENS * viewport) / Math.max(1, top));
+}
+
+/** The scrolled plot's own width: the whole axis at `scale`, plus the lead-in and the room the last x-tick label needs. */
+export const plotWidth = (top: number, pad: Pad, scale: number): number => pad.l + pad.r + top * scale;
+
+/**
+ * The floor the plot's height is chosen by (design/charts.md § The scroll
+ * rule): the curve's biggest drop should stand at least this tall.
+ */
+export const DROP_FLOOR = 24;
+/** What a figure is allowed to be. Past the ceiling it is a scrolling page, not a picture. */
+export const PLOT_H = { min: 260, max: 560 } as const;
+
+/**
+ * The plot's height from the data, for both charts. The y-range is the whole
+ * curve's now, so the biggest drop is a far smaller share of it than it was
+ * inside a crop — on the citizen review's eight households it runs 2.7% to
+ * 8% — and height is the only thing left that buys those pixels back. So the
+ * plot is exactly as tall as the biggest drop needs to clear `DROP_FLOOR`,
+ * clamped.
+ *
+ * The ceiling bites, and `charts.md` records where: four of the eight would
+ * need a plot 600–880px tall to reach 24px, which is not a figure any more.
+ * They get the ceiling and fall short. That is the price of the owner's rule
+ * that the curve is never cropped, and it is paid in the one place that can
+ * afford it — the drop's *height*, not its dollars, which the direct label,
+ * the readout, the StepList row and the DataTable all carry in text.
+ */
+export function plotHeight(yRange: number, maxDrop: number): number {
+  const want = maxDrop > 0 ? Math.ceil((DROP_FLOOR * yRange) / maxDrop) : PLOT_H.min;
+  return Math.min(PLOT_H.max, Math.max(PLOT_H.min, want));
+}
+
+/** The context the initial view carries around what it must show: a third before, two thirds after, where the climb back is. */
+export const WINDOW_MARGIN = 30_000;
+
+/**
+ * The part of the curve the reader must land on, in annual dollars: the
+ * household, its own danger zone and that zone's exit, the next cliff, and
+ * the curve's biggest drop when it lies within the margin — plus the margin.
+ * Never a fixed fraction of the axis (design/REVIEW-citizen B2: a half-axis
+ * view spent the picture on the climb and made a $2,400 step two pixels
+ * tall). Snapped to the points.
+ *
+ * Both doors land the same way, which is why this lives here. It used to be
+ * the citizen chart's CROP, and the rest of the curve did not exist; since
+ * 2026-09-17 it only chooses where the reader starts.
+ */
+export function windowFor(s: { current: number; zone: { startEarnings: number } | null; stuck: boolean; exit: number | null; next: { endEarnings: number } | null; worst: { startEarnings: number; endEarnings: number } | null; top: number; step: number }): [number, number] {
+  const { current, zone, stuck, exit, next, worst, top, step } = s;
+  let lo = Math.min(current, zone?.startEarnings ?? current);
+  let hi = Math.max(current, stuck || exit === null ? current : exit, next?.endEarnings ?? current);
+  if (worst && worst.endEarnings <= hi + WINDOW_MARGIN && worst.startEarnings >= lo - WINDOW_MARGIN) {
+    lo = Math.min(lo, worst.startEarnings);
+    hi = Math.max(hi, worst.endEarnings);
+  }
+  lo -= WINDOW_MARGIN / 3;
+  hi += (2 * WINDOW_MARGIN) / 3;
+  if (lo < 0) { hi -= lo; lo = 0; }
+  if (hi > top) { lo = Math.max(0, lo - (hi - top)); hi = top; }
+  return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step];
+}
+
+/**
+ * Where to scroll so the reader lands on the part of the curve that answers
+ * the question — what the crop rule used to choose, as a position instead of
+ * a truncation. The window is centred in the viewport; then `current` is
+ * pulled inside it by `margin`, because the "you" mark being on screen is
+ * the one thing the initial view owes the reader (proof (a)).
+ */
+export function scrollFor(L: Layer, viewport: number, window: [number, number], current: number, margin = 44): number {
+  const max = Math.max(0, L.W - viewport);
+  const [a, b] = [L.px(window[0]), L.px(window[1])];
+  let left = Math.min(max, Math.max(0, (a + b) / 2 - viewport / 2));
+  const cx = L.px(current);
+  if (cx - left > viewport - margin) left = cx - viewport + margin;
+  if (cx - left < margin) left = cx - margin;
+  return Math.round(Math.min(max, Math.max(0, left)));
+}
+
+/** The scroll position that brings plot-space `x` inside the viewport with `margin` to spare, or the position unchanged when it already is. */
+export function scrollToShow(x: number, left: number, viewport: number, W: number, margin = 44): number {
+  const max = Math.max(0, W - viewport);
+  const want = x - left < margin ? x - margin : x - left > viewport - margin ? x - viewport + margin : left;
+  return Math.round(Math.min(max, Math.max(0, want)));
+}
 
 /** The drawing layer: the box, its padding, and money → pixels. */
 export interface Layer {

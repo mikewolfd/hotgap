@@ -9,7 +9,8 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import type { Cliff } from "@hotgap/core";
-import { attachCursor, cursorNodes as cursorMarks, dropMark, ghostPath, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { scrollToShow } from "../lib/chart/geometry.js";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
 import { copy, parts, t } from "./copy.js";
@@ -51,11 +52,11 @@ function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolea
   );
 }
 
-/** The spoken shape of the curve, from the data. */
+/** The spoken shape of the curve, from the data — the whole axis, because that is what is drawn. */
 function ariaLabel(s: Scene): string {
   const { m } = s;
   const worst = s.worst ? t("chart.ariaWorst", { at: m.payUnit(s.worst.endEarnings), what: worstPhrase(s) }) : "";
-  const [x0, x1] = s.window;
+  const [x0, x1] = [0, s.top];
   if (!s.zone) return t("chart.ariaNoZone", { from: m.payUnit(x0), to: m.payUnit(x1), worst, pay: m.payUnit(s.current) });
   const more = s.otherZones.filter((z) => z.startEarnings > s.zone!.startEarnings)
     .map((z) => t("chart.ariaMore", { from: m.pay(z.startEarnings), to: m.pay(z.endEarnings ?? s.top) })).join("");
@@ -78,17 +79,22 @@ function markLabel(s: Scene, cl: Cluster): string {
 
 export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Chart {
   const { m } = s;
-  const [x0, x1] = s.window;
+  const [x0, x1] = [0, s.top];
   const picture = svg("svg", { "aria-hidden": "true" });
+  const gutterSvg = svg("svg", { class: "hg-chart__gutter", "aria-hidden": "true" });
   const marksLayer = h("div", { class: "hg-marks" });
-  const wrapper = h("div", { class: "hg-chart", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption chartKeys", "aria-label": ariaLabel(s) }, picture, marksLayer);
-  const hasOther = s.otherZones.some((z) => (z.endEarnings ?? Infinity) >= x0 && z.startEarnings <= x1);
-  const hasDrop = s.inWindow.some((c) => c.deferral === null);
-  const hasLater = s.inWindow.some((c) => c.deferral !== null);
+  /* The figure is a fixed gutter beside a scroller (charts.md § The scroll rule): the money labels hold still while the
+     axis moves. The chart's one tab stop and its role stay on the wrapper that holds both. */
+  const { scroll } = scrollerParts(gutterSvg, picture, marksLayer);
+  const wrapper = h("div", { class: "hg-chart hg-chart--scroll", id: "chart", tabindex: "0", role: "group", "aria-roledescription": "interactive chart", "aria-describedby": "curveCaption chartKeys", "aria-label": ariaLabel(s) }, gutterSvg, scroll);
+  const hint = h("p", { class: "hg-chart__hint", id: "chartRange", "aria-hidden": "true" });
+  const hasOther = s.otherZones.length > 0;
+  const hasDrop = s.cliffs.some((c) => c.deferral?.complete !== true);
+  const hasLater = s.deferred.length > 0;
   /* How the chart is operated: the readout says it until the first touch or key — the bracket keys only where there are marks and, at a
      desktop width, keys (N2) — and a visually hidden copy says all of it to a screen reader through aria-describedby. */
-  const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint") + (s.inWindow.length && innerWidth >= 720 ? t("chart.readoutMarks") : ""));
-  const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.inWindow.length ? t("chart.readoutMarks") : ""));
+  const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint") + (s.cliffs.length && innerWidth >= 720 ? t("chart.readoutMarks") : ""));
+  const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.cliffs.length ? t("chart.readoutMarks") : ""));
   const caption = h("figcaption", { id: "curveCaption" });
   /* EligibilityBoundary (#23): one line under the key, whether or not the tick is in the window; nothing when the curve ends below the
      limit. The invitation to the toggle is its own sentence and stays off paper, where there is nothing to turn on (liheap review S2);
@@ -100,7 +106,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   figure.append(
     h("div", { class: "chart-head" }, h("span", { class: "chart-title" }, t("chart.title")),
       h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
-    wrapper, readout, keys, keyList(s, hasOther, hasLater, hasDrop, s.boundaryInWindow),
+    wrapper, hint, readout, keys, keyList(s, hasOther, hasLater, hasDrop, s.boundaryOnAxis),
     ...(boundary ? [h("p", { class: "boundary", id: "boundary", "data-counted": boundaryState }, boundary.facts, ...(boundary.invite ? [" ", h("span", { class: "hg-no-print" }, boundary.invite)] : []))] : []),
     caption,
   );
@@ -123,16 +129,16 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   };
   const clear = (b: Box) => !boxes.some((o) => overlaps(b, o));
 
-  function draw(width = wrapper.clientWidth): void {
-    L = layout(s, width);
+  function draw(width = wrapper.clientWidth, print = false): void {
+    L = layout(s, width, print);
     boxes.length = 0;
     const { W, H, narrow, pad, px, py, y0, y1, i0, i1 } = L;
     const top = pad.t, bottom = H - pad.b;
-    picture.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    picture.setAttribute("width", String(W));
-    picture.setAttribute("height", String(H));
+    sizeSvg(picture, W, H);
     picture.textContent = "";
     picture.append(hatchDefs("hatch"));
+    /* The y axis in its own gutter, at the same py the gridlines below use, so the two halves read as one figure. */
+    axisGutter(gutterSvg, L.gutter, H, L.yTicks, py, (v) => tickMoney(v, "year"));
 
     /* Zones: the household's gets the wash, every other one hatch alone (rule 1). */
     const clip = (z: { startEarnings: number; endEarnings: number | null }) => [px(Math.max(z.startEarnings, x0)), px(Math.min(z.endEarnings ?? x1, x1))];
@@ -144,16 +150,15 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const [bx0, bx1] = s.zone ? clip({ startEarnings: s.zone.startEarnings, endEarnings: s.stuck ? x1 : s.zone.endEarnings }) : [0, 0];
     if (s.zone) picture.append(...zoneRects(bx0, bx1, top, bottom, true, "hatch"));
 
-    /* Gridlines on nice values; ticks take .hg-tick (S13). */
+    /* Gridlines on nice values, across the whole plot; the labels are in the gutter, the x ticks scroll with the curve (S13). */
     for (const v of L.yTicks) {
-      if (v > y0 && v < y1) picture.append(svg("line", { x1: pad.l, y1: py(v), x2: W - pad.r, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
-      picture.append(svg("text", { x: pad.l - 8, y: py(v) + 4, "text-anchor": "end", class: "hg-tick" }, tickMoney(v, "year")));
+      if (v > y0 && v < y1) picture.append(svg("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
     }
     for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: H - 14, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
-    picture.append(svg("line", { x1: pad.l, y1: bottom, x2: W - pad.r, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
+    picture.append(svg("line", { x1: 0, y1: bottom, x2: W, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
 
     /* EligibilityBoundary (#23): a tick on the axis where energy assistance stops — no dot, no connector, no drop. */
-    if (s.boundaryInWindow) {
+    if (s.boundaryOnAxis) {
       const tx = px(s.boundary!.earningsLimit);
       picture.append(svg("line", { x1: tx, y1: bottom - 8, x2: tx, y2: bottom, stroke: "var(--ink-3)", "stroke-width": 2, "stroke-linecap": "round", "data-boundary": "true" }));
     }
@@ -167,7 +172,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
       boxes.push(textBox(bx0 - 16, yPeak - 9, peak, "end"));
     }
 
-    /* The exit, and safe-from-here when it is a different pay (rule 2). */
+    /* The exit, and safe-from-here when it is a different pay (rule 2). Both are on the axis or they do not exist. */
     const exitInWindow = s.zone !== null && !s.stuck && s.exit !== null && s.exit <= x1;
     if (exitInWindow) {
       const ex = px(s.exit!);
@@ -185,19 +190,15 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
 
     /* The line: one series, 2px, round caps, no fill; .hg-draw on the first draw only. */
     const window = Array.from({ length: i1 - i0 + 1 }, (_, k) => i0 + k);
-    picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.lifted[i])])), firstDraw));
-
-    /* The ghost: the real curve, only when a deferred drop is visible at this range. */
-    if (L.ghost) picture.append(ghostPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), "4 3"));
+    picture.append(seriesPath(pathD(window.map((i) => [px(s.earningsAt(i)), py(s.net[i])])), firstDraw));
 
     /* The leap (S7): a bracket 20px above the peak rule, from the diamond to the exit, labelled once. */
-    /* The diamond sits at the household's own money today (analysis.currentNet is the real curve's), which is off the lifted line only past a deferred step, where the ghost shows why. */
     const cx = px(s.current);
     let cy = py(s.currentNet);
     clusters = L.clusters;
     /* The diamond must not cover a mark (B1): within a dot's reach of one, it slides down its own drop line. */
     const RING = 10;
-    const dotY = (cl: Cluster) => py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]);
+    const dotY = (cl: Cluster) => py(s.net[s.idx(cl.cliffs[0].startEarnings)]);
     if (clusters.some((cl) => Math.abs(cl.x - cx) < RING && Math.abs(dotY(cl) - cy) < RING)) cy += 2 * RING;
     const diamond: Box = { x: cx - 7, y: cy - 7, w: 14, h: 14 };
     for (const cl of clusters) boxes.push({ x: cl.x - RING, y: dotY(cl) - RING, w: 2 * RING, h: 2 * RING });
@@ -230,22 +231,22 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
         picture.append(waitDot(cl.x, y, r));
         continue;
       }
-      const land = Math.min(...cl.cliffs.filter((c) => c.deferral === null).map((c) => s.lifted[s.idx(c.endEarnings)]));
+      const land = Math.min(...cl.cliffs.filter((c) => c.deferral?.complete !== true).map((c) => s.net[s.idx(c.endEarnings)]));
       picture.append(...dropMark(cl.x, y, py(land), r));
       /* The chart's other direct label: the biggest drop. Beside a tall
-         connector first; else above the dot, below the landing, or on the
-         other side of the connector — the first spot that lies on nothing
-         already drawn (S3). */
+         connector first; else above the dot or below the landing — always
+         to the right of the mark, so a connector flush with the left clip
+         cannot put the number in the gutter (S1). */
       if (L.labelled && cl.cliffs.includes(L.labelled)) {
         const label = t("chart.labels.drop", { drop: m.money(L.labelled.drop) });
         const tall = py(land) - y >= 24;
-        const spots: [number, number, "start" | "end"][] = [
-          ...(tall ? [[cl.x + 12, (y + py(land)) / 2 + 4, "start"] as [number, number, "start"]] : []),
-          [cl.x + 12, y - 9, "start"], [cl.x + 12, py(land) + 14, "start"], [cl.x - 12, y - 9, "end"], [cl.x - 12, py(land) + 14, "end"],
+        const spots: [number, number][] = [
+          ...(tall ? [[cl.x + 12, (y + py(land)) / 2 + 4] as [number, number]] : []),
+          [cl.x + 12, y - 9], [cl.x + 12, py(land) + 14],
         ];
-        const spot = spots.find(([x, yy, a]) => clear(textBox(x, yy, label, a))) ?? spots[0];
-        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": spot[2], class: `${LOSS_LABEL} hg-label--strong` }, label));
-        boxes.push(textBox(spot[0], spot[1], label, spot[2]));
+        const spot = spots.find(([x, yy]) => clear(textBox(x, yy, label, "start"))) ?? spots[0];
+        picture.append(svg("text", { x: spot[0], y: spot[1], "text-anchor": "start", class: `${LOSS_LABEL} hg-label--strong` }, label));
+        boxes.push(textBox(spot[0], spot[1], label, "start"));
       }
     }
 
@@ -253,19 +254,42 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     picture.append(...household(cx, cy, bottom));
     picture.append(svg("text", { x: cx, y: top - 8, "text-anchor": "middle", class: "hg-label hg-label--ink hg-label--strong" }, copy.chart.labels.you));
 
-    /* The caption, from the values just computed (never typed). */
-    let text = y0 > 0 ? t(L.maxDrop >= 0.1 * (y1 - y0) ? "chart.axisNote" : "chart.axisNoteBare", { floor: m.money(y0) }) : "";
-    if (s.worst && !L.labelled) text += t("chart.biggestBeyond", { drop: m.about(s.worst.drop), pay: m.pay(s.worst.endEarnings) });
+    /* The caption, from the values just computed (never typed). The axis clause says
+       whether the reader is looking at a slice of a scroller or the whole thing at
+       once, because on paper there is nothing to scroll (§ The scroll rule). */
+    let text = t(print ? "chart.wholeOnPaper" : "chart.scrolls", { from: m.pay(0), to: m.pay(s.top) });
+    if (y0 > 0) text += " " + t(L.maxDrop >= 0.1 * (y1 - y0) ? "chart.axisNote" : "chart.axisNoteBare", { floor: m.money(y0) });
     if (s.safeExit === null) text += t("chart.safeNever", { top: m.pay(s.top) });
     else if (s.safeExit > 0 && !safeSaid) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
-    // A household already past a deferred step is on the dashed line today (evaluate.ts: currentNet stays the real curve's).
-    if (L.ghost) text += t(s.deferred.some((c) => c.startEarnings < s.current) ? "chart.ghostNow" : "chart.ghost");
     caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
+
+    /* The axis's own ends under the figure, from the data: what tells the reader the picture goes on (inventory.md § MoneyCurve). */
+    hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
 
     wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
     firstDraw = false;
     paintMarks();
+    restoreScroll();
     if (touched) paintCursor();
+  }
+
+  /* Where the reader is looking survives a redraw: the initial position is the
+     scene's window (§ The scroll rule), and after that it is whatever pay the
+     reader left at the left edge — a resize must not yank the curve back. */
+  let anchor: number | null = null;
+  function restoreScroll(): void {
+    if (!L) return;
+    scroll.scrollLeft = L.print ? 0 : anchor === null ? L.scrollLeft : Math.max(0, Math.min(L.W - L.viewport, L.px(anchor)));
+  }
+  scroll.addEventListener("scroll", () => {
+    if (!L || L.print) return;
+    anchor = (scroll.scrollLeft - L.pad.l) / (L.W - L.pad.l - L.pad.r) * s.top;
+  }, { passive: true });
+
+  /** Bring a plot-space x into view (the keyboard's job: a focused mark or the caret must be visible — proof (b)). */
+  function reveal(x: number): void {
+    if (!L || L.print) return;
+    scroll.scrollLeft = scrollToShow(x, scroll.scrollLeft, L.viewport, L.W);
   }
 
   /* Cliff marks as controls (M6): one 44px button per cluster and per deferred cliff. */
@@ -275,9 +299,12 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     // A repaint (a resize) must not drop the mark that has focus.
     const focused = (document.activeElement as HTMLElement | null)?.closest(".hg-mark")?.getAttribute("data-key") ?? null;
     marksLayer.textContent = "";
+    /* The marks layer is the PLOT's box, not the scroller's viewport, so a mark's percent position is a position on the axis and scrolls with its dot. */
+    marksLayer.style.width = `${L.W}px`;
+    marksLayer.style.height = `${L.H}px`;
     for (const cl of clusters) {
       const key = keyOf(cl.cliffs[0]);
-      const b = markButton(cl.x, L.py(s.lifted[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
+      const b = markButton(cl.x, L.py(s.net[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
         { "data-key": String(key), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
       b.addEventListener("click", () => {
         touched = true;
@@ -286,6 +313,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
         readout.textContent = markLabel(s, cl);
         hooks.onActivate(cl.cliffs[0]);
       });
+      /* A mark reached by keyboard may be off screen: focus scrolls it into view (M6's scroll-into-view, now in two directions). */
+      b.addEventListener("focus", () => reveal(cl.x));
       marksLayer.append(b);
     }
     if (focused !== null) markFor(Number(focused))?.focus();
@@ -300,7 +329,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const { px, py, pad, H } = L;
     /* At the household's own point the diamond is the cursor: the readout gives the person's pay and money, not the nearest sampled point's. */
     const atYou = cursor === s.idx(s.current);
-    const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.lifted[cursor];
+    const e = atYou ? s.current : s.earningsAt(cursor), v = atYou ? s.currentNet : s.net[cursor];
     if (!atYou) {
       cursorNodes = cursorMarks(px(e), py(v), pad.t, H - pad.b, DOT);
       picture.append(...cursorNodes);
@@ -316,7 +345,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
      from the one that has focus, else from the wrapper ] goes to the first and [ to the last. */
   attachCursor(wrapper, {
     svg: picture, layer: () => L, range: () => [L!.i0, L!.i1], cursor: () => cursor, shift: 5, pointer: "hover",
-    set(i) { cursor = i; touched = true; paintCursor(); },
+    set(i, by) { cursor = i; touched = true; paintCursor(); if (by === "key" && L) reveal(L.px(s.earningsAt(i))); },
     bracket(key) {
       const marks = [...marksLayer.querySelectorAll<HTMLButtonElement>(".hg-mark")];
       if (!marks.length) return;

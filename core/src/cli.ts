@@ -136,34 +136,23 @@ function report(ev: HouseholdEvaluation): string {
 
   const row = (at: string, drop: string, lost: string, hrs: string) =>
     `  ${at.padEnd(10)}${drop.padEnd(10)}${lost.padEnd(32)}${hrs}`;
-  // Indices are into analysis.cliffs, which is what minWage.cliffs is built
-  // from, so a filtered block still finds its own hours column.
-  const cliffLines = (pick: (c: Cliff) => boolean): string[] =>
-    analysis.cliffs.flatMap((c, i) => {
-      if (!pick(c)) return [];
-      const hours = ev.minWage?.cliffs[i]?.hoursPerWeek ?? null;
-      return [
-        row(money(c.startEarnings), money(c.drop), c.programsLost.map(programName).join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)),
-        // Every dollar of the drop attributed, so "lost SNAP" is never read as
-        // the whole explanation when most of the fall was a premium.
-        `  ${" ".repeat(10)}${breakdownOf(c)}`,
-        // …and, for a deferred one, what carries them past it — on its own
-        // row, because two deferred cliffs rarely share a rule.
-        ...(c.deferral ? [`  ${" ".repeat(10)}until ${c.deferral.until}`] : []),
-      ];
-    });
+  // One block, every cliff: a deferred one is counted like the rest and
+  // carries its label — when the loss lands, under which rule — on its own
+  // row, because two deferred cliffs rarely share a rule. minWage.cliffs is
+  // built from analysis.cliffs in the same order, so the index is the hours.
+  const cliffLines = analysis.cliffs.flatMap((c, i) => {
+    const hours = ev.minWage?.cliffs[i]?.hoursPerWeek ?? null;
+    return [
+      row(money(c.startEarnings), money(c.drop), c.programsLost.map(programName).join(", ") || DRIVER_LABEL[c.driver], hours === null ? "" : String(hours)),
+      // Every dollar of the drop attributed, so "lost SNAP" is never read as
+      // the whole explanation when most of the fall was a premium.
+      `  ${" ".repeat(10)}${breakdownOf(c)}`,
+      ...(c.deferral ? [`  ${" ".repeat(10)}lands later, at ${c.deferral.until}`] : []),
+    ];
+  });
 
-  const now = cliffLines((c) => c.deferral === null);
-  if (now.length === 0) out.push(`no cliffs on this curve${ev.deferred.length ? " that arrive with the raise" : ""}`);
-  else out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""), ...now);
-
-  // Deferred cliffs are real losses that simply do not land in the year of the
-  // raise, so they get their own block and stay out of the verdict, the danger
-  // zones and the leap above.
-  if (ev.deferred.length) {
-    out.push("", "later, at the next renewal — these do not arrive with the raise, so nothing above counts them");
-    out.push(...cliffLines((c) => c.deferral !== null));
-  }
+  if (cliffLines.length === 0) out.push("no cliffs on this curve");
+  else out.push(row("at", "drop", "programs lost", ev.minWage ? `~hrs/wk at ${wage(ev.minWage.wage)} min wage` : ""), ...cliffLines);
 
   // This household's own position first — the state-level safe exit and leap
   // below answer a different question (the worst zone anywhere on the curve).

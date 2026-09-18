@@ -55,6 +55,9 @@ export function pdfPages(objects) {
 /** A page's height in points, from its MediaBox. */
 export const pageHeight = (page) => Number(page.dict.match(/\/MediaBox\s*\[\s*[-\d.]+\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)/)[1]);
 
+/** A page's width in points, from the same MediaBox. */
+export const pageWidth = (page) => Number(page.dict.match(/\/MediaBox\s*\[\s*[-\d.]+\s+[-\d.]+\s+([-\d.]+)/)[1]);
+
 /** A page's content stream(s), concatenated. */
 export function pageContent(objects, page) {
   const list = page.dict.match(/\/Contents\s*(\[[^\]]*\]|\d+ 0 R)/)[1];

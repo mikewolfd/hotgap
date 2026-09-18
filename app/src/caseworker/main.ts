@@ -75,7 +75,7 @@ const editor = mountEditor($("app"), {
   ],
 });
 const chart = mountChart(
-  { wrap: $("chartWrap"), svg: $("curve") as unknown as SVGSVGElement, marks: $("marks"), readout: $("readout"), key: $("key"), cap: $("curveCap") },
+  { wrap: $("chartWrap"), gutter: $("curveAxis") as unknown as SVGSVGElement, scroll: $("curveScroll"), hint: $("curveRange"), svg: $("curve") as unknown as SVGSVGElement, marks: $("marks"), readout: $("readout"), key: $("key"), cap: $("curveCap") },
   { select, close: closeSelection },
 );
 const content = $("content");

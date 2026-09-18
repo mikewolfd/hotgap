@@ -122,13 +122,15 @@ that leap lands among real households' incomes.
     only — the committed archetype sweep never models ESI)
   - `deferred` — the subset of `analysis.cliffs` that lands at a future
     renewal rather than with the raise that causes it (see `analyzeCurve`'s
-    `deferral`, above). `analysis.cliffs` lists every cliff, deferred ones
-    included, and `currentNet` is the real curve's — but `analysis.verdict`,
-    its danger zones, `escape`, and `personal` are all read off a curve with
-    those deferred drops lifted out (an internal helper in `evaluate.ts`;
-    the only place HotGap alters a curve for timing rather than for a wrong
-    number): a household whose Head Start slot carries through the next
-    program year is not standing in that hole the day it takes the raise
+    `deferral`, above). It is a **label**, not an exclusion: since
+    2026-09-17 `analysis` is read off the real curve, so a deferred loss
+    counts in the verdict, the danger zones, the leap, the safe exit and
+    every summary metric, and `deferred` only says which of the counted
+    cliffs land later and under which rule (the badge's data — when, and
+    the citation). The owner's rule: the family will lose that money, and
+    the tool exists to show the impact of a raise, so the impact is the
+    figure and the timing is a clause beside it. HotGap no longer keeps a
+    second, lifted reading of the curve anywhere
   - `esi` — the employer-plan tier (`single` / `plusOne` / `family`, AHRQ
     MEPS-IC 2024) and dollar contribution charged at this household's own
     earnings, following who the plan has to cover: a per-adult Medicaid
@@ -262,11 +264,12 @@ All under `core/data/`:
   to, so a page can print "past $150,000" rather than "past the axis".
   `cliffCount` and `deferredCliffCount` come
   from the same `evaluateCurve` that `evaluateHousehold` and
-  `evaluateOffline` both call — every cliff, real or deferred, counts
-  toward one or the other, and `biggestLoss`, the danger zones, and `leap`
-  all read the curve with deferred losses lifted out, so none of the three
-  can be driven by a Head Start or continuous-eligibility cliff that does
-  not land this year.
+  `evaluateOffline` both call. Since 2026-09-17 `cliffCount` counts every
+  cliff and `deferredCliffCount` is the subset of those that land at a
+  later renewal, and `biggestLoss`, the danger zones and `leap` all read
+  the real curve, so a Head Start or continuous-eligibility cliff can drive
+  any of them — it is a loss the household takes, and the `deferred` count
+  beside it says how much of the figure waits.
   Massachusetts summary metrics include the local TAFDC correction and an
   approximation notice. State files retain PolicyEngine's TANF and the
   `maTafdc` inputs used to replay that correction; use `evaluateOffline` to
@@ -407,6 +410,24 @@ received), `--offline`, `--json`.
   household says otherwise (`--no-snap` etc.). Then the curve is the money
   it lives on without them, and the report says what each would pay at
   today's earnings, from a second curve with everything claimed.
+- A loss a federal rule defers to a later renewal still counts as a cliff,
+  from 2026-09-17. Head Start's program-year carry-over (45 CFR
+  1302.12(j)(1)), a child's 12 months of continuous Medicaid or CHIP
+  eligibility (42 CFR 435.926) and a parent's Transitional Medical
+  Assistance (42 U.S.C. 1396r-6) all mean a household crosses the threshold
+  before the money stops. HotGap used to lift those drops out of the curve
+  it read the verdict from, on the reasoning that a family whose Head Start
+  slot is guaranteed through the next program year is not standing in the
+  hole the day it takes the raise. That reasoning is withdrawn: the family
+  loses the money, and a tool built to show what a raise does has to show
+  it. So the verdict, the danger zones, the leap, the safe exit and every
+  `summary.json` metric are read off the real curve, and the deferral is a
+  label on the cliff instead — the DeferredBadge saying when the loss lands
+  and under which rule, plus a timing clause on the answer ("… but not that
+  day"). There is no second, lifted curve anywhere in HotGap; the honest
+  reading and the drawn reading are the same one. What moved: the
+  California single-parent pipeline fixture's largest one-step loss went
+  $3,868 → $21,971 at $30,000, because Head Start is now its worst step.
 - Minimum-wage framing (`minWageContext`, the "~hrs/wk" column) is context,
   not eligibility — nothing in the calculation depends on it.
 - Reach is cross-sectional only: "N% of similar households earn at or below
