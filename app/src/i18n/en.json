@@ -1161,7 +1161,6 @@
       "carePrice": "There is no county child-care price for {state} in the source database, so a {care} stands in — and child care is what ends at most of these cliffs."
     },
     "rank": {
-      "heading": "Ranked",
       "row": {
         "plain": "{rank} {state}: {value}",
         "withAt": "{rank} {state}: {value}, {at}"

@@ -1164,7 +1164,6 @@
       "carePrice": "No hay un precio de cuidado infantil por condado para {state} en la base de datos de origen, así que se usa {care} en su lugar, y el cuidado infantil es lo que termina en la mayoría de estos precipicios."
     },
     "rank": {
-      "heading": "Clasificación",
       "row": {
         "plain": "{rank} {state}: {value}",
         "withAt": "{rank} {state}: {value}, {at}"
