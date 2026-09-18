@@ -4,11 +4,30 @@
 // code's pick; every figure arrives formatted. Pure, no DOM; model.test.ts
 // pins the sentences here. Where a message is several sentences, they are
 // joined with a space in the order the reader meets them; a list is Intl's.
-import { LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
+import { keepRateWords, LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
+import { bind, catalog } from "../lib/copy.js";
 import { dayWords, listOf, listOfItems, modelLine, numberWords } from "../lib/format.js";
 import { programName } from "../lib/names.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, t } from "./copy.js";
+
+/** The sentences core writes, in the active language (`core.*`, app/README.md § Keep rate) — the road's own, which every surface says the same way. */
+const ct = bind(catalog.core);
+
+// ── The keep rate (Plan 9) ───────────────────────────────────────────────
+/* The sign word and the rounding are core's `keepRateWords`, never this
+   page's: the map, the citizen answer and the caseworker sheet cannot word
+   or round one rate three ways. What is this page's is how much room the
+   phrase gets — the whole phrase where a reader meets the measure for the
+   first time, the short form in a ranked row or a table cell, and a signed
+   tick on the scale, where five labels share the figure's width. */
+
+/** "keeps 30¢ of each extra dollar" — core's own phrase, for the legend and the tile. */
+export const keepPhrase = (rate: number): string => ct("road.rate", keepRateWords(rate));
+/** "keeps 30¢" — the ranked row's value and the table's cell. */
+export const keepShort = (rate: number): string => t("keep.short", keepRateWords(rate));
+/** "+30¢", "−56¢", "0¢" — a bin bound on the scale. */
+export const keepTick = (rate: number): string => t("keep.tick", keepRateWords(rate));
 
 /** "3 and 7" for two children, "1, 4, 9" for more (the label's own form, kept from the first review). */
 const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.map(String)) : listOfItems(ages.map(String)));
@@ -73,13 +92,18 @@ export const rankOrdinal = (n: number): string => t("rank.ordinal", { n });
 export const rowLabel = (rank: string, state: string, value: string, at?: string): string =>
   at ? t("rank.row.withAt", { rank, state, value, at }) : t("rank.row.plain", { rank, state, value });
 
+/** Which bound lifted a row out of the ranking: the axis, from above or below — or, on a road measure, a road that runs off the axis entirely. */
+export type LowerKey = "leap" | "safeExit" | "road";
+
 /** The lower-bound group's heading: it leads the order and shares ranks 1–n (B1). */
-export const lowerTitle = (key: "leap" | "safeExit", n: number): string => t(`rank.lower.${key}`, { n });
+export const lowerTitle = (key: LowerKey, n: number): string => t(`rank.lower.${key}`, { n });
 
 /** Why the ranks are shared, and the one thing the data lets a reader say about the worst. */
-export function lowerNote(key: "leap" | "safeExit", n: number, top: { state: string; v: string } | null, floor?: { state: string; v: string; reaches: boolean }): string {
+export function lowerNote(key: LowerKey, n: number, top: { state: string; v: string } | null, floor?: { state: string; v: string; reaches: boolean }): string {
   const lead = t(`rank.lower.note.${key}`, { n });
-  if (!top) return lead;
+  /* A road off the axis is not a bound on a figure — there is no figure —
+     so there is nothing to say about the largest one. */
+  if (key === "road" || !top) return lead;
   const tail = key === "leap" && floor
     ? t(`rank.lower.note.leapTop.${floor.reaches ? "reaches" : "larger"}`, { topState: top.state, topValue: top.v, floorState: floor.state, ...(floor.reaches ? {} : { floorValue: floor.v }) })
     : t("rank.lower.note.safeExitTop", { topState: top.state, topValue: top.v });
@@ -118,6 +142,8 @@ export const hatchedLine = (n: number, programs: string[]): string => t("figure.
 export const binsLine = (bins: string, comparable: number, none: number, past: number): string =>
   t(`figure.binsLine.${none && past ? "nonePast" : none ? "none" : past ? "past" : "plain"}`, { bins, comparable, ...(none ? { none } : {}), ...(past ? { past } : {}) });
 export const classesLine = (n: number, lo: number, hi: number): string => t("figure.bins.classes", { n, words: numberWords(n), lo, hi });
+/** The diverging scale's bounds: one width, both sides, and the two ends (charts.md § 2). */
+export const divergingLine = (width: string, lo: string, hi: string): string => t("figure.bins.diverging", { width, lo, hi });
 /** The axis the selected household was swept to, in dollars (rerun N9), with the states whose guidelines lengthen it. */
 export const axisLine = (household: string, top: string, exceptions: { state: string; top: string }[]): string =>
   exceptions.length

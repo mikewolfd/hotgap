@@ -165,6 +165,32 @@
   --loss-wash:  rgba(113,51,102,0.10);    /* danger-zone band fill */
   --loss-hatch: rgba(113,51,102,0.32);    /* 45° hatch over the band */
 
+  /* The keep ramp — the SECOND arm of a diverging scale, and the only thing
+     it is for: a measure with a meaningful zero, which today is the keep rate
+     (charts.md § 2). Below zero is the loss ramp; above it, this. 1 = the
+     step against zero, 5 = the most kept, the same direction the loss ramp
+     runs, at the same five luminances (0.42 → 0.03 light, 0.09 → 0.66 dark),
+     so a class's depth means the same distance from zero on either arm.
+
+     WHY WARM. The pair has to survive the two common dichromacies, because
+     across the hinge hue is what carries the sign. Measured (Viénot 1999
+     simulation, CIE76 ΔE between the two arms' matching steps, light and
+     dark): plum vs this warm arm is 38+ under protanopia and deuteranopia;
+     plum vs the blue money line collapses to 2.4, and plum vs teal to 5.6 —
+     both unusable for about one man in twelve. Tritanopia loses this pair
+     instead (ΔE 0), as it loses every warm/cool diverging scale; it is
+     ~0.01% of readers against ~8%, and the sign is carried in words as well,
+     in the legend's two ends, in every tile's own name, and in the ranked
+     strip, whose bars run left of zero for a state that loses.
+
+     It is a RAMP, not the categorical --series-2 slot, which stays what it
+     is: a what-if or a compared state. Nothing here is a status colour. */
+  --keep-1: #D7A376;
+  --keep-2: #C7762F;
+  --keep-3: #9A571D;
+  --keep-4: #6F3E12;
+  --keep-5: #492709;
+
   /* Chart chrome */
   --grid: #E1E5EA;
   --axis: #AEB7C0;
@@ -200,6 +226,13 @@
     --loss-ink:   light-dark(#713366, #D9A2C9);
     --loss-wash:  light-dark(rgba(113,51,102,0.10), rgba(217,162,201,0.13));
     --loss-hatch: light-dark(rgba(113,51,102,0.32), rgba(217,162,201,0.34));
+    /* Re-derived against #161B20 and reversed with the loss ramp, so on a dark
+       ground the step against zero is the one nearest the surface. */
+    --keep-1: light-dark(#D7A376, #764922);
+    --keep-2: light-dark(#C7762F, #9E5F27);
+    --keep-3: light-dark(#9A571D, #CF7C32);
+    --keep-4: light-dark(#6F3E12, #DAA97E);
+    --keep-5: light-dark(#492709, #E6D1BE);
     --grid: light-dark(#E1E5EA, #232A31);
     --axis: light-dark(#AEB7C0, #3F4A53);
     --note:    light-dark(#1F5CB4, #7FB2F0);

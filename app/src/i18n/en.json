@@ -999,7 +999,11 @@
     "filters": {
       "household": "Household",
       "measure": "Measure",
-      "csv": "Download these rows (CSV)"
+      "csv": "Download these rows (CSV)",
+      "groups": {
+        "road": "On the road out of poverty",
+        "axis": "Anywhere on the curve"
+      }
     },
     "measures": {
       "biggestLoss": {
@@ -1031,6 +1035,21 @@
         "title": "Deferred cliffs",
         "option": "Deferred cliffs — of the cliffs counted, those that land at a later renewal",
         "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
+      },
+      "keepRate": {
+        "title": "Keep rate on the road out of poverty",
+        "option": "Keep rate — of each extra dollar earned from poverty to twice poverty, the cents the household keeps (¢)",
+        "describe": "Of each extra dollar earned between the poverty line and twice the poverty line, the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started."
+      },
+      "roadCliffCount": {
+        "title": "Cliffs on the road out of poverty",
+        "option": "Cliffs on the road out of poverty — the cliffs a household meets between poverty and twice poverty",
+        "describe": "Steps down of {floor} or more between the poverty line and twice the poverty line."
+      },
+      "roadWorst": {
+        "title": "Where the road collapses",
+        "option": "Where the road collapses — the largest single loss between poverty and twice poverty ($)",
+        "describe": "Net income lost in the worst single $1,000 step between the poverty line and twice the poverty line."
       }
     },
     "household": {
@@ -1051,16 +1070,21 @@
         "value": "{state}: {value}",
         "none": "{state}: no cliff found",
         "past": "{state}: past the axis",
-        "incomplete": "{state}: {programs} not modelled — figures incomplete"
+        "incomplete": "{state}: {programs} not modelled — figures incomplete",
+        "roadNone": "{state}: no cliff on the road out of poverty",
+        "roadPast": "{state}: the road runs off the axis"
       },
       "legend": {
         "none": "No cliff found ({n})",
         "past": "Runs past the top of the axis ({n})",
-        "incomplete": "{programs} not modelled — figures incomplete, not low ({n})"
+        "incomplete": "{programs} not modelled — figures incomplete, not low ({n})",
+        "roadNone": "No cliff on the road out of poverty ({n})",
+        "roadPast": "Road runs off the axis ({n})"
       },
       "bins": {
         "steps": "five equal-width steps from {lo} to {hi}",
-        "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}"
+        "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}",
+        "diverging": "steps of {width} either side of zero, from {lo} to {hi}"
       },
       "source": "HotGap, from PolicyEngine {year} rules on {model}. Weekly run of {date}. Net income after health-insurance premiums. Estimates only.",
       "binsLine": {
@@ -1124,13 +1148,18 @@
             "larger": "The largest measured leap is {topState}'s {topValue}; {floorState}'s is at least {floorValue} and may be larger."
           },
           "safeExit": "{n, plural, one {This state had not closed its last danger zone by the top of the axis, so it takes the top rank.} other {None of these had closed the last danger zone by the top of the axis, so any could be the highest; they share the top ranks the way a tie does.}}",
-          "safeExitTop": "The highest measured safe exit is {topState}'s {topValue}."
-        }
+          "safeExitTop": "The highest measured safe exit is {topState}'s {topValue}.",
+          "road": "{n, plural, one {This household's road out of poverty falls outside the earnings this state was swept over, so it has no keep rate to compare.} other {These households' road out of poverty falls outside the earnings these states were swept over, so they have no keep rate to compare.}}"
+        },
+        "road": "{n, plural, one {The road runs off the axis (1)} other {The road runs off the axis ({n})}}"
       },
       "none": {
         "heading": "No cliff found ({n})",
         "value": "no cliff",
-        "note": "No step down of {floor} or more anywhere on this household's curve. A measurement of zero, not the smallest loss: these states are left out of the bins."
+        "note": "No step down of {floor} or more anywhere on this household's curve. A measurement of zero, not the smallest loss: these states are left out of the bins.",
+        "roadHeading": "No cliff on the road out of poverty ({n})",
+        "roadValue": "no cliff on the road",
+        "roadNote": "No step down of {floor} or more between the poverty line and twice the poverty line. A measurement of zero, not the smallest loss: these states are left out of the bins."
       },
       "incomplete": {
         "heading": "Not ranked — figures incomplete ({n})",
@@ -1146,7 +1175,8 @@
         "state": "State, A to Z",
         "measure": {
           "dollars": "{title}, largest first",
-          "count": "{title}, most first"
+          "count": "{title}, most first",
+          "cents": "{title}, most regressive first"
         },
         "hint": "Orders this table only; the map and the ranking follow the Measure above."
       },
@@ -1154,7 +1184,8 @@
       "byState": "by state",
       "byMeasure": {
         "dollars": "by {title}, largest first",
-        "count": "by {title}, most first"
+        "count": "by {title}, most first",
+        "cents": "by {title}, most regressive first"
       },
       "cols": {
         "state": "State",
@@ -1165,12 +1196,17 @@
         "safeExit": "Safe exit",
         "cliffCount": "Cliffs",
         "deferredCliffCount": "Deferred",
-        "figures": "Figures"
+        "figures": "Figures",
+        "keepRate": "Keep rate",
+        "roadCliffCount": "Cliffs on the road",
+        "roadWorst": "Where the road collapses",
+        "roadWorstAt": "Road's worst step"
       },
       "defs": {
         "label": "What the columns mean",
         "biggestLossAt": "The $1,000 step of earnings at which the largest one-step loss lands.",
-        "figures": "Complete, or the program the model cannot compute in that state, which makes the row's figures floors; and whether HotGap added the child-care subsidy to net income, where PolicyEngine had left it out."
+        "figures": "Complete, or the program the model cannot compute in that state, which makes the row's figures floors; and whether HotGap added the child-care subsidy to net income, where PolicyEngine had left it out.",
+        "roadWorstAt": "The $1,000 step of earnings at which the road's largest single loss lands."
       },
       "none": "none",
       "complete": "complete",
@@ -1293,7 +1329,12 @@
       "pastAxisCaution": "**Past the axis is not a number.** Where a state's *last* danger zone runs off the top of the axis rather than closing, the safe exit is unknown; the leap is a lower bound only when the *worst* zone is the one that runs off. The two can differ, so a state can show an exact leap and no safe exit. Those cells read *past the axis* here and must not be charted as a value.",
       "source": "Run of {date} on {model}. Licence: AGPL-3.0-only. Estimates only — a caseworker decides real benefits.",
       "cite": "Cite as: HotGap, *What a raise costs, state by state*, {year} rules on PolicyEngine ({model}), run of {date}, {url}."
-    }
+    },
+    "keep": {
+      "short": "{sign, select, loses {loses {cents}¢} other {keeps {cents}¢}}",
+      "tick": "{cents, plural, =0 {0¢} other {{sign, select, loses {−{cents}¢} other {+{cents}¢}}}}"
+    },
+    "roadOffAxis": "road runs off the axis"
   },
   "shared": {
     "program": {

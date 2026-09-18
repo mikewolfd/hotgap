@@ -4,7 +4,7 @@
 // never only the ones that differ from a default — a default can move with
 // the sweep, and a link to "the default household" would then move with it.
 import { withLang } from "../lib/copy.js";
-import { MEASURES, measureByKey, type MeasureKey, type SortKey } from "./model.js";
+import { DEFAULT_MEASURE, measureByKey, type MeasureKey, type SortKey } from "./model.js";
 
 export interface View {
   household: string;
@@ -27,7 +27,10 @@ export function parseView(search: string, d: ViewDomain): View {
   const measureKey = q.get("measure");
   const sort = q.get("sort");
   const state = q.get("state");
-  const measure = measureKey && measureByKey(measureKey) ? (measureKey as MeasureKey) : MEASURES[0].key;
+  /* Every `?measure=` ever written still resolves: the six whole-axis keys are
+     unchanged and the three road keys are new, so an old link lands on exactly
+     the measure it named, and only a bare URL takes the new default. */
+  const measure = measureKey && measureByKey(measureKey) ? (measureKey as MeasureKey) : DEFAULT_MEASURE;
   return {
     household: household && d.households.includes(household) ? household : d.defaultHousehold,
     measure,

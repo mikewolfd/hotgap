@@ -4,8 +4,8 @@ import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from 
 import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, numberWords } from "../lib/format.js";
 import { copy, t } from "./copy.js";
-import { archLabel, bins, group, incompleteFor, MEASURES, measureByKey, paysForCare, rowsFor, tableRows } from "./model.js";
-import { axisLine, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, rowLabel, servedLine, worstStepLine } from "./words.js";
+import { archLabel, bins, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, paysForCare, rowsFor, tableRows, valueOf } from "./model.js";
+import { axisLine, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -75,10 +75,17 @@ describe("counts in words (lib/format.ts numberWords)", () => {
 });
 
 describe("the measures, from copy", () => {
-  it("are the six pipeline keys in the FilterRow's order, the two counts without a unit, each option naming its own referent (S2)", () => {
-    expect(MEASURES.map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
-    expect(MEASURES.map((m) => m.unit)).toEqual(["$", "$", "$", "$", "", ""]);
+  it("are the nine pipeline keys in the FilterRow's order, the road's three first, the counts without a unit, each option naming its own referent (S2)", () => {
+    expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "", "$", "$", "$", "$", "$", "", ""]);
+    // Two groups, two questions: the road out of poverty, and the whole curve.
+    expect(measuresIn("road").map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst"]);
+    expect(measuresIn("axis").map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(MEASURES.every((m) => (m.worst === "low") === (m.key === "keepRate"))).toBe(true);
+    expect(DEFAULT_MEASURE).toBe("keepRate");
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
+    expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);
+    expect(measureByKey("roadWorst")!.title).toBe("Where the road collapses");
     expect(measureByKey("leap")!.option).toContain("worst danger zone");
     expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
     // dangerWidth is every zone's width added together (pipeline/src/metrics.ts); the widest one's width is the leap.
@@ -174,22 +181,57 @@ describe("bins and group", () => {
     expect(b.classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
     expect([10, 18, 26, 34, 50].map(b.index)).toEqual([0, 1, 2, 3, 4]);
     expect(bins([7], "$").index(7)).toBe(0);
-    expect(bins([], "$")).toMatchObject({ lo: 0, hi: 0, classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, lo: 0, hi: 0 })) });
+    expect(bins([], "$")).toMatchObject({ lo: 0, hi: 0, classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, hue: "loss", lo: 0, hi: 0 })) });
   });
   it("a count takes classes of whole numbers, never a repeated bound, spread over the ramp (S5)", () => {
     // Deferred cliffs on the 2026-09-16 sweep: every state has 0 or 1.
     const two = bins([0, 1, 0, 1], "");
     expect(two).toMatchObject({ kind: "classes", lo: 0, hi: 1 });
-    expect(two.classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }, { ramp: 4, lo: 1, hi: 1 }]);
-    expect([0, 1].map(two.index)).toEqual([0, 4]);
+    expect(two.classes).toEqual([{ ramp: 0, hue: "loss", lo: 0, hi: 0 }, { ramp: 4, hue: "loss", lo: 1, hi: 1 }]);
+    // `index` names the CLASS, and the class carries its ramp step and its ramp.
+    expect([0, 1].map(two.index)).toEqual([0, 1]);
+    expect([0, 1].map((v) => two.classes[two.index(v)].ramp)).toEqual([0, 4]);
     // Sixteen distinct counts fit four classes of four, not six of three.
     const wide = bins([4, 19], "");
-    expect(wide.classes).toEqual([{ ramp: 0, lo: 4, hi: 7 }, { ramp: 1, lo: 8, hi: 11 }, { ramp: 3, lo: 12, hi: 15 }, { ramp: 4, lo: 16, hi: 19 }]);
-    expect([4, 7, 8, 12, 19].map(wide.index)).toEqual([0, 0, 1, 3, 4]);
+    expect(wide.classes.map((c) => [c.lo, c.hi, c.ramp])).toEqual([[4, 7, 0], [8, 11, 1], [12, 15, 3], [16, 19, 4]]);
+    expect([4, 7, 8, 12, 19].map(wide.index)).toEqual([0, 0, 1, 2, 3]);
     // Exactly five values are five classes of one; one value is one class.
     expect(bins([2, 6], "").classes.map((c) => [c.lo, c.hi, c.ramp])).toEqual([[2, 2, 0], [3, 3, 1], [4, 4, 2], [5, 5, 3], [6, 6, 4]]);
-    expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, lo: 3, hi: 3 }]);
-    expect(bins([], "").classes).toEqual([{ ramp: 0, lo: 0, hi: 0 }]);
+    expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 3, hi: 3 }]);
+    expect(bins([], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 0, hi: 0 }]);
+  });
+  it("a measure with a meaningful zero diverges: zero is always a bin edge, one width both sides, five swatches at most (charts.md § 2)", () => {
+    const bounds = (b: ReturnType<typeof divergingBins>) => [b.classes[0].lo, ...b.classes.map((c) => c.hi)];
+    // The committed sweep's single-2 range: the losing side is three times
+    // longer, so it takes three classes and the keeping side one.
+    const d = divergingBins(-1.0486, 0.3042);
+    expect(d.kind).toBe("diverging");
+    expect(d.classes.map((c) => c.hue)).toEqual(["loss", "loss", "loss", "keep"]);
+    const w = 1.0486 / 3;
+    expect(bounds(d)).toEqual([-1.0486, -2 * w, -w, 0, 0.3042]);
+    expect(bounds(d)).toContain(0);
+    expect(d.classes.map((c) => c.ramp)).toEqual([4, 2, 0, 2]);
+    expect(d.width).toBeCloseTo(w, 10);
+    // Every set of values puts zero on a bound, including one that never
+    // crosses it — and then the scale runs from zero, not from the lowest
+    // state, which is the one place this page bins from zero on purpose.
+    for (const [lo, hi] of [[-1.42, 0.348], [0.269, 0.571], [-0.08, 0.335], [-0.3, -0.05], [0, 0]] as const) {
+      const b = divergingBins(lo, hi);
+      expect(bounds(b), `${lo}..${hi}`).toContain(0);
+      expect(b.classes.length, `${lo}..${hi}`).toBeLessThanOrEqual(5);
+      expect(b.classes.every((c) => c.ramp >= 0 && c.ramp <= 4)).toBe(true);
+      // Monotone: every class's bounds rise left to right, losing arm first.
+      expect(bounds(b)).toEqual([...bounds(b)].sort((x, z) => x - z));
+    }
+    // All positive: the whole scale is the keep arm, from zero.
+    const up = divergingBins(0.269, 0.571);
+    expect(up.classes.every((c) => c.hue === "keep")).toBe(true);
+    expect(up.lo).toBe(0);
+    expect(up.zero).toBe(0);
+    // A value on a bound belongs to the class nearer zero, and zero itself to the keep arm.
+    expect(d.classes[d.index(0)].hue).toBe("keep");
+    expect(d.index(-w)).toBe(2);
+    expect(d.index(-1.0486)).toBe(0);
   });
   it("orders the table by state, or by one measure: its lower-bound rows first (B1), then its ranking, then none and incomplete", () => {
     expect(tableRows(fixture, single1, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);
@@ -285,8 +327,68 @@ describe("the committed sweep", () => {
       expect(rows.map((r) => r.st)).toEqual([...STATE_CODES].sort());
       const g = group(rows, m);
       expect(g.ranked.length + g.past.length + g.none.length + g.incomplete.length).toBe(rows.length);
-      for (const r of g.ranked) expect(Number.isFinite(g.bins.index(r.value as number))).toBe(true);
-      for (const r of g.none) expect(r.m.cliffCount).toBe(0);
+      for (const r of g.ranked) expect(g.bins.classes[g.bins.index(r.value as number)]).toBeDefined();
+      // "No cliff" is the whole-axis fact on an axis measure and the road's on a road measure.
+      for (const r of g.none) expect(m.group === "road" ? r.m.roadCliffCount : r.m.cliffCount).toBe(0);
     }
+  });
+  it("the keep rate ranks the most regressive states first, bins them on the losing arm, and keeps New Mexico on the top keeping step", () => {
+    const keep = measureByKey("keepRate")!;
+    const g = group(rowsFor(summary, single2, keep), keep);
+    // Rank 1 is the lowest rate, not the highest: a state that takes back more
+    // than the raise is more regressive than one that takes back less.
+    expect(g.ranked.slice(0, 5).map((r) => r.st)).toEqual(["WI", "CO", "NJ", "OR", "NV"]);
+    expect(g.ranked.map((r) => r.value as number)).toEqual([...g.ranked.map((r) => r.value as number)].sort((a, z) => a - z));
+    expect(g.ranked[g.ranked.length - 1].st).toBe("NM");
+    // Every state is comparable on this measure: a state with no cliff still
+    // has a keep rate, so New Mexico is shaded and binned, never lifted out.
+    expect(g.none).toEqual([]);
+    expect(g.past).toEqual([]);
+    expect(g.ranked.length + g.incomplete.length).toBe(51);
+    const arm = (st: string) => g.bins.classes[g.bins.index(summary.states[st][single2.id].keepRate!)];
+    for (const st of ["WI", "CO", "NJ", "OR"]) expect(arm(st).hue, st).toBe("loss");
+    expect(arm("WI").ramp).toBe(4);
+    // New Mexico keeps the most, so it sits on the keep arm's top step.
+    expect(arm("NM")).toEqual(g.bins.classes[g.bins.classes.length - 1]);
+    expect(arm("NM").hue).toBe("keep");
+    expect(valueOf(summary.states.NM[single2.id], "keepRate")).toBeCloseTo(0.3042, 4);
+  });
+  it("the road's two lifted-out groups are its own facts: no cliff on the road, and a road that runs off the axis", () => {
+    const count = measureByKey("roadCliffCount")!, worst = measureByKey("roadWorst")!;
+    const g = group(rowsFor(summary, single2, count), count);
+    expect(g.none.map((r) => r.st)).toContain("NM");
+    for (const r of g.none) expect(r.m.roadCliffCount).toBe(0);
+    for (const r of g.ranked) expect(r.m.roadCliffCount).toBeGreaterThan(0);
+    // Where the road collapses plots the worst road cliff's drop.
+    const gw = group(rowsFor(summary, single2, worst), worst);
+    expect(gw.ranked[0].value).toBe(summary.states[gw.ranked[0].st][single2.id].roadWorst!.drop);
+    expect(valueOf(summary.states.MO[single2.id], "roadWorst")).toBe(16_428);
+    // No cell of the committed sweep has a road off its axis, so the path is
+    // pinned on a synthetic one: keepRate null is what says the road is gone.
+    const off: SummaryJson = { ...fixture, states: { ...fixture.states,
+      JJ: { "single-1": metrics({ keepRate: null, roadLo: null, roadHi: null, roadCliffCount: 0, roadWorst: null }), "married-1": metrics() } },
+      coverage: { ...fixture.coverage, JJ: coverage() } };
+    for (const m of [measureByKey("keepRate")!, count, worst]) {
+      const rows = rowsFor(off, single1, m);
+      expect(rows.find((r) => r.st === "JJ")!.kind, m.key).toBe("past");
+      expect(group(rows, m).past.map((r) => r.st), m.key).toEqual(["JJ"]);
+    }
+    // On a whole-axis measure the same cell is an ordinary row: the road is not its subject.
+    expect(rowsFor(off, single1, loss).find((r) => r.st === "JJ")!.kind).toBe("shaded");
+    expect(lowerTitle("road", 1)).toBe("The road runs off the axis (1)");
+    expect(lowerNote("road", 1, null)).toMatch(/^This household's road out of poverty falls outside/);
+  });
+  it("says a rate the way core words it, in the room each place has", () => {
+    const mo = summary.states.MO[single2.id].keepRate!;
+    expect(keepShort(mo)).toBe("loses 56¢");
+    expect(keepPhrase(mo)).toBe("loses 56¢ of each extra dollar");
+    expect(keepTick(mo)).toBe("−56¢");
+    const nm = summary.states.NM[single2.id].keepRate!;
+    expect(keepShort(nm)).toBe("keeps 30¢");
+    expect(keepPhrase(nm)).toBe("keeps 30¢ of each extra dollar");
+    expect(keepTick(nm)).toBe("+30¢");
+    // Zero keeps nothing and loses nothing, and says so.
+    expect(keepShort(0)).toBe("keeps 0¢");
+    expect(keepTick(0)).toBe("0¢");
   });
 });
