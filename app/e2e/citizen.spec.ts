@@ -1,9 +1,15 @@
 // The citizen surface, end to end, through the Worker (app/README.md
 // § Proofs): the California single parent with a 3- and a 7-year-old at
 // $30,000, at 390 and 1280, light and dark. Measured, not asserted: the
+// weight of the page (weight.mjs, the same function the owner runs), the
 // marks against the cliff list, the table against the plotted curve, the
 // type floors on the SVG text, the loss ink's contrast on its ground, and a
 // screenshot beside the audit's (design/audit/app/citizen-*).
+//
+// The page is picture first since 2026-09-18 (design/PICTURE-FIRST-2026-09-18.md):
+// one sentence, the figure, then three named disclosures. So the proofs open
+// a disclosure before reading what is inside it, which is also the proof that
+// it opens.
 //
 // HOTGAP_EXPECT_SOURCE=archetype runs the archetype assertions instead
 // (start wrangler with a dead HOTGAP_PE_URL first; the README says how).
@@ -12,11 +18,22 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
 import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, outDir, rgb } from "./support.js";
+import { MEASURE, OPEN_ALL } from "./weight.mjs";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
 /** Plan 9 § Citizen's own review: the keep-next sentence in the answer's rhythm, and the far-cliffs clause. */
 const KEEP_RATE_DIR = outDir("design/review/keep-rate");
+
+/** What the picture-first pass promises a reader, per width (PICTURE-FIRST § Proofs). */
+const BUDGET = { words: 120, figureTop: 120, share: { 390: 0.5, 1280: 0.6 } } as const;
+
+/** Open a named disclosure by pressing it, which is also the proof that pressing it works. */
+async function openPanel(page: Page, name: string): Promise<void> {
+  const panel = page.locator("details.hg-disclosure", { has: page.getByRole("heading", { name, exact: true }) }).first();
+  if (!(await panel.evaluate((d) => (d as HTMLDetailsElement).open))) await panel.locator("summary").first().click();
+  await expect(panel).toHaveAttribute("open", "");
+}
 
 interface Ev {
   analysis: {
@@ -38,7 +55,7 @@ async function loaded(page: Page): Promise<Ev> {
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
   await page.goto(HOUSEHOLD);
   const ev = (await (await evaluated).json()) as Ev;
-  await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
+  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
   await page.locator("#chart svg path").first().waitFor();
   return ev;
 }
@@ -53,29 +70,51 @@ for (const scheme of ["light", "dark"] as const) {
       const ev = await loaded(page);
       await expect(page.locator("#source")).toHaveAttribute("data-source", "live");
 
+      /* The page's weight, by the same function `node e2e/weight.mjs` runs: one
+         sentence and the picture, and the picture on the first screen. */
+      const weight = await page.evaluate(MEASURE);
+      console.log(`${scheme} ${width}: ${weight.total} words (${weight.html} prose + ${weight.svg} in the picture); figure top ${weight.figureTop}px, ${weight.figureShare} of screen 1`);
+      expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
+      expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop);
+      expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[width as 390 | 1280]);
+      /* …and nothing was deleted to get there: every disclosure open carries the page it carried before. */
+      await page.evaluate(OPEN_ALL);
+      const opened = await page.evaluate(MEASURE);
+      expect(opened.html).toBeGreaterThan(6 * weight.html);
+      await page.evaluate(() => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details")) d.open = false; });
+      /* The answer is the figure's own caption, so the picture's accessible name IS the answer. */
+      await expect(page.locator("figure > figcaption#answer")).toHaveCount(1);
+
       /* The verdict is the danger-zone shape, keyed to the marks, and its figures are the evaluation's. */
       const answer = page.locator("#answer");
-      await expect(answer).toContainText("More pay does not add to that until you are paid");
-      await expect(answer.locator(".amt-keep")).toHaveCount(1);
-      await expect(answer.locator(".amt-gap")).toHaveCount(2);
-      expect(dollars((await answer.textContent())!).slice(0, 4)).toEqual([ev.analysis.currentEarnings, Math.round(ev.analysis.currentNet), ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
-      /* "It happens again from A to B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
-      const again = await page.locator("#again").textContent();
+      await expect(answer).toContainText("More pay won't leave you better off until you're past");
+      await expect(answer.locator(".hg-amt--gap")).toHaveCount(2);
+      await expect(answer.locator(".hg-amt--keep")).toHaveCount(0);
+      expect(dollars((await answer.textContent())!)).toEqual([ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
+      /* What the answer stopped saying is on the picture instead: what this household keeps now, at its own diamond. */
+      const youKeep = await page.locator("#chart svg text.hg-label--ink").allTextContents();
+      expect(youKeep.join(" ")).toContain(`$${Math.round(ev.analysis.currentNet).toLocaleString("en-US")}`);
+
+      /* "It happens again between A and B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
+      await openPanel(page, "What happens at each step");
+      /* The sentence exists only when there is one to say: no further zone, no paragraph. */
+      const againEl = page.locator("#again");
+      const again = (await againEl.count()) ? await againEl.textContent() : null;
       const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
       if (beyond.length) {
         expect(again).toMatch(/^It happens/);
         expect(dollars(again!).slice(0, 2)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
-      } else expect(again).not.toMatch(/^It happens/);
+      } else expect(again).toBeNull();
       /* Far cliffs framed by company (Plan 9 § Citizen): the clause names the first cliff at or past FAR_POSITION
          from that same first further zone on, and "n in 10" is its own position, in tenths — never typed. */
       const farCliff = beyond.length
         ? ev.analysis.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= 80) ?? null
         : null;
       if (farCliff) {
-        expect(again).toContain("beyond what");
+        expect(again).toContain("are past what");
         expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings, farCliff.startEarnings]);
         expect(again).toContain(`${Math.round((farCliff.position ?? 0) / 10)} in 10`);
-      } else expect(again).not.toContain("beyond what");
+      } else expect(again ?? "").not.toContain("are past what");
 
       /* Your keep rate on the next stretch (Plan 9 § Citizen): the two money figures are keepNext.over and
          keepNext.kept × keepNext.over from the response — the first at the pay-unit step ($500 a year), the second at the change step ($100 a year: lib/format.ts payChangeRounded, so a kept $400 is never "$0");
@@ -106,6 +145,10 @@ for (const scheme of ["light", "dark"] as const) {
 
       /* One StepList row per cliff (at its landing point), and the marks are every cliff on the axis. */
       for (const c of ev.analysis.cliffs) await expect(page.locator(`#step-${c.endEarnings}`)).toHaveCount(1);
+      /* The disclosures hold what the page stopped saying by default, under the names the system fixed. */
+      for (const name of ["What happens at each step", "What we assumed about you", "Where these numbers come from"]) {
+        await expect(page.locator("details.hg-disclosure", { has: page.getByRole("heading", { name, exact: true }) })).toHaveCount(1);
+      }
       const marks = page.locator(".hg-mark");
       const markKeys = (await marks.evaluateAll((els) => els.map((el) => Number((el as HTMLElement).dataset.key)))).sort((a, b) => a - b);
       const spoken = await page.locator("#chart").getAttribute("aria-label");
@@ -150,6 +193,8 @@ for (const scheme of ["light", "dark"] as const) {
       const labels = await page.locator("#chart svg text.hg-label--loss").allTextContents();
       const dropLabel = labels.find((x) => x.startsWith("−"));
       expect(dollars(dropLabel!)).toEqual([Math.round(worst.drop)]);
+      /* The label the page promises says what ends there as well as what it costs (charts.md § Direct labels, 2). */
+      if (worst.programsLost.length) expect(labels.some((x) => x.endsWith(" ends"))).toBe(true);
       await expect(page.locator("#curveCaption")).not.toContainText("outside the picture");
 
       /* Type floors (design/inventory.md § Type floors), measured on every SVG text. */
@@ -166,7 +211,11 @@ for (const scheme of ["light", "dark"] as const) {
       /* A mark click moves the cursor, opens its row in place and scrolls it into view (M6); Close hands focus back. */
       const first = marks.first();
       const key = await first.getAttribute("data-key");
+      /* A mark opens the steps disclosure before it opens the row inside it (M6). */
+      await page.locator("#steps-panel > summary").click();
+      await expect(page.locator("#steps-panel")).not.toHaveAttribute("open", "");
       await first.click();
+      await expect(page.locator("#steps-panel")).toHaveAttribute("open", "");
       await expect(first).toHaveAttribute("aria-expanded", "true");
       const row = page.locator(`#step-${key}`);
       await expect(row).toHaveAttribute("aria-current", "true");
@@ -195,7 +244,8 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(row).not.toHaveAttribute("aria-current", "true");
       await expect(marks.first()).toBeFocused();
 
-      /* "Show the numbers": every row's pay is a curve point and its keep is that point's plotted value. */
+      /* "Show the numbers", inside the steps panel: every row's pay is a curve point and its keep is that point's plotted value. */
+      await openPanel(page, "What happens at each step");
       await page.getByText("Show the numbers").click();
       const rows = await page.locator("#numbers tbody tr").evaluateAll((trs) => trs.map((tr) => {
         const [at, keep, drop, mark] = [...tr.querySelectorAll("td")].map((td) => td.textContent ?? "");
@@ -215,32 +265,40 @@ for (const scheme of ["light", "dark"] as const) {
       if (width === 1280 && scheme === "light") await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}-table-open.png`), fullPage: false });
       await page.getByText("Show the numbers").click();
 
-      /* Contrast, as the audit measured it, from the resolved colours: the loss ink on the ground it sits on. */
+      /* Contrast, as the audit measured it, from the resolved colours: every ink
+         on the ground it sits on — which since 2026-09-18 is the surface, because
+         the picture is the page and a picture wants paper under it. The "you keep"
+         label at the diamond joins the two that were measured before. */
       const c = await page.evaluate(() => {
         const cs = (el: Element | null) => (el ? getComputedStyle(el) : null);
-        const loss = cs(document.querySelector(".hg-rows__loss"))!;
-        const rowGround = cs(document.body)!.backgroundColor;
-        const label = document.querySelector("#chart svg text.hg-label--loss");
-        const tick = document.querySelector("#chart svg text.hg-tick");
-        const band = cs(document.querySelector(".band"))!.backgroundColor;
-        return { lossInk: loss.color, rowGround, labelInk: label ? cs(label)!.fill : null, tickInk: tick ? cs(tick)!.fill : null, surface: band, keyed: cs(document.querySelector(".amt-keep"))!.boxShadow };
+        const ground = cs(document.body)!.backgroundColor;
+        const fill = (sel: string) => { const el = document.querySelector(sel); return el ? cs(el)!.fill : null; };
+        return {
+          lossInk: cs(document.querySelector(".hg-rows__loss"))!.color, ground,
+          labelInk: fill("#chart svg text.hg-label--loss"), inkLabel: fill("#chart svg text.hg-label--ink"),
+          tickInk: fill("#chart svg text.hg-tick"), roadInk: fill("#chart svg text.hg-label:not([class*='--'])"),
+          keyed: cs(document.querySelector(".hg-amt--gap"))!.boxShadow,
+        };
       });
-      const lossOnPlane = contrast(rgb(c.lossInk), rgb(c.rowGround));
-      const tickOnPlane = contrast(rgb(c.tickInk!), rgb(c.rowGround));
-      console.log(`${scheme} ${width}: loss ink ${c.lossInk} on plane ${c.rowGround} = ${lossOnPlane.toFixed(2)}:1; tick ink on plane = ${tickOnPlane.toFixed(2)}:1; label ink ${c.labelInk}; keyed underline ${c.keyed}`);
-      expect(lossOnPlane).toBeGreaterThanOrEqual(4.5);
-      expect(tickOnPlane).toBeGreaterThanOrEqual(4.5);
-      if (c.labelInk) expect(contrast(rgb(c.labelInk), rgb(c.rowGround))).toBeGreaterThanOrEqual(4.5);
+      const on = (ink: string) => contrast(rgb(ink), rgb(c.ground));
+      console.log(`${scheme} ${width}: ground ${c.ground}; loss ink ${c.lossInk} = ${on(c.lossInk).toFixed(2)}:1; tick = ${on(c.tickInk!).toFixed(2)}:1; drop label = ${c.labelInk && on(c.labelInk).toFixed(2)}:1; "you keep" = ${c.inkLabel && on(c.inkLabel).toFixed(2)}:1; road = ${c.roadInk && on(c.roadInk).toFixed(2)}:1; keyed underline ${c.keyed}`);
+      expect(on(c.lossInk)).toBeGreaterThanOrEqual(4.5);
+      expect(on(c.tickInk!)).toBeGreaterThanOrEqual(4.5);
+      for (const ink of [c.labelInk, c.inkLabel, c.roadInk]) if (ink) expect(on(ink)).toBeGreaterThanOrEqual(4.5);
+      /* The keyed underline is a real box-shadow in the mark's own colour, not a transparent default. */
+      expect(c.keyed).not.toContain("rgba(0, 0, 0, 0)");
 
-      /* The page as a whole. */
+      /* The page as a whole, and the first screen on its own — what a person meets. */
       await noOverflow(page);
       await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}-screen1.png`), fullPage: false });
       await page.screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}.png`), fullPage: true });
       if (scheme === "light") {
         await page.locator("#result figure").screenshot({ path: resolve(OUT, `citizen-${width}-${scheme}-chart.png`) });
-        // Plan 9 § Citizen's own review: the band (answer, keep-next, again, sub) at full page width and cropped tight, so the new sentence's rhythm can be read on its own.
+        // Plan 9 § Citizen's own review, re-pointed 2026-09-18: the keep rate moved onto the road it measures, so
+        // what is cropped tight is the figure — the sentence and its picture, which are now one object.
         await page.screenshot({ path: resolve(KEEP_RATE_DIR, `citizen-${width}.png`), fullPage: true });
-        await page.locator("section.band").screenshot({ path: resolve(KEEP_RATE_DIR, `citizen-${width}-band.png`) });
+        await page.locator("#result figure").screenshot({ path: resolve(KEEP_RATE_DIR, `citizen-${width}-band.png`) });
       }
       expect(errors).toEqual([]);
     });
@@ -260,12 +318,14 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
   await snap.click();
   expect((await evaluated).status()).toBe(200);
-  await expect(page.locator("#result [role=status]")).toContainText("You are paid");
+  await expect(page.locator("#result [role=status]")).toContainText("More pay won't");
   await expect(page.locator("#answer")).not.toHaveText(before!);
   // A fresh line was drawn for the new household, once.
   await expect(page.locator("#chart svg path.hg-draw")).toHaveCount(1);
+  await openPanel(page, "Where these numbers come from");
   await expect(page.locator("#source")).toContainText("These are your own numbers");
   // The sweep's summary is what names the reach data's vintage; without it the line is bare.
+  await openPanel(page, "What we assumed about you");
   await expect(page.locator("#result .hg-source", { hasText: "Census" })).toContainText(/survey data \(ACS \d{4}.*Grown to \d{4} dollars/);
   expect(errors).toEqual([]);
 });
@@ -281,7 +341,9 @@ test("print from OS dark: the numbers open, the buttons go, and the PDF's text i
   writeFileSync(resolve(OUT, "citizen-letter-from-dark.pdf"), pdf);
   await page.evaluate(() => dispatchEvent(new Event("beforeprint")));
   await page.emulateMedia({ media: "print" });
-  expect(await page.locator("details.hg-disclosure").evaluate((d) => (d as HTMLDetailsElement).open)).toBe(true);
+  /* Paper opens every disclosure, the figure's own included, so the printed page carries the key, the caption and the sources. */
+  expect(await page.locator("details.hg-disclosure").evaluateAll((ds) => ds.every((d) => (d as HTMLDetailsElement).open))).toBe(true);
+  expect(await page.locator("details.hg-disclosure").count()).toBeGreaterThanOrEqual(4);
   await expect(page.getByRole("button", { name: "Print" })).toBeHidden();
   const ink = await page.evaluate(() => [getComputedStyle(document.body).color, getComputedStyle(document.body).backgroundColor]);
   expect(contrast(rgb(ink[0]), rgb(ink[1]))).toBeGreaterThanOrEqual(7);
@@ -301,15 +363,19 @@ test(`the archetype path says so in the source line, with Try again (source ${EX
   await loaded(page);
   const source = page.locator("#source");
   await expect(source).toHaveAttribute("data-source", "archetype");
-  await expect(source).toContainText("We could not get your exact numbers right now. These are numbers for a family like yours in your state.");
-  // …and the same sentence stands above the answer, where the numbers are met (review S5).
-  await expect(page.locator("#whose")).toHaveText("We could not get your exact numbers right now. These are numbers for a family like yours in your state.");
-  await expect(source.getByRole("button", { name: "Try again" })).toBeVisible();
+  /* The notice a reader must not miss stands ABOVE the figure, in the open, with its own Try again —
+     never behind a disclosure (design/inventory.md § The page is its picture). */
+  const whose = page.locator("#whose");
+  await expect(whose).toBeVisible();
+  await expect(whose).toContainText("We couldn't get your own numbers right now, so these are for a family like yours in your state.");
+  await expect(whose.getByRole("button", { name: "Try again" })).toBeVisible();
+  await openPanel(page, "Where these numbers come from");
   // The sweep's own model and stamp are what produced these numbers.
   await expect(source).toContainText(/Sweep of [A-Z][a-z]{2} \d{1,2}, \d{4}/);
   await expect(source).toContainText(/from policyengine-us [\d.]+ with 2026 rules/);
   // The assumed list describes the swept household, not the person's echoed answers.
-  await expect(page.locator(".assumed")).toContainText("The usual rent in California");
+  await openPanel(page, "What we assumed about you");
+  await expect(page.locator(".assumed")).toContainText("the usual rent in California");
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-archetype.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
@@ -330,7 +396,8 @@ test(`a plateau household shows the flat-stretch wording (source ${EXPECT_SOURCE
   expect(kept).toBeLessThan(0.10);
   const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
   expect(next === null || next.startEarnings >= ev.analysis.currentEarnings + over).toBe(true);
-  await expect(page.locator("#keep-next")).toContainText("That is a flat stretch: more pay, little more money.");
+  await openPanel(page, "What happens at each step");
+  await expect(page.locator("#keep-next")).toContainText("that's a flat stretch: more pay, barely more money");
   expect(dollars((await page.locator("#keep-next").textContent())!)).toEqual([over, Math.round((kept * over) / 500) * 500]);
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-plateau.png"), fullPage: true });
   expect(errors).toEqual([]);
@@ -338,8 +405,8 @@ test(`a plateau household shows the flat-stretch wording (source ${EXPECT_SOURCE
 
 /* EligibilityBoundary (#23, Plan 7): Texas and Massachusetts, the two renders the plan pins; then the toggle. */
 for (const [state, zip, expected] of [
-  ["Texas", "78701", "Above $40,000 a year, you can no longer apply for help with heating bills in Texas. It is called LIHEAP. It is worth $1,200 a winter if you get it. Fewer than 1 in 10 families who could get it here do. If you get it, turn it on to see it in your line."],
-  ["Massachusetts", "02108", "Above $83,500 a year, you can no longer apply for help with heating bills in Massachusetts. It is called LIHEAP. It is worth $355 to $430 a winter if you get it. About 2 in 10 families who could get it here do. If you get it, turn it on to see it in your line."],
+  ["Texas", "78701", "Above $40,000 a year you can't apply for help with heating bills in Texas any more. It's called LIHEAP. It's worth $1,200 a winter if you get it. Fewer than 1 in 10 families here who could get it do. If you get it, turn it on and we'll put it in your line."],
+  ["Massachusetts", "02108", "Above $83,500 a year you can't apply for help with heating bills in Massachusetts any more. It's called LIHEAP. It's worth $355 to $430 a winter if you get it. About 2 in 10 families here who could get it do. If you get it, turn it on and we'll put it in your line."],
 ] as const) {
   test(`${state}: where help with heating bills stops is one line under the key and a tick on the axis, never a drop (source ${EXPECT_SOURCE})`, async ({ page }) => {
     // A household the droplet has not seen before can take over a minute (Massachusetts runs the TAFDC feedback loop).
@@ -350,17 +417,19 @@ for (const [state, zip, expected] of [
     await page.goto(`/?zip=${zip}&kids=3%2C7&pay=30000&unit=year`);
     const ev = (await (await evaluated).json()) as { liheap: { earningsLimit: number; counted: boolean } | null; analysis: { cliffs: { programsLost: string[] }[] } };
     await page.locator("#chart svg path").first().waitFor();
+    /* Three facts at the end of the steps, never a drop among them. */
+    await openPanel(page, "What happens at each step");
     await expect(page.locator("#boundary")).toHaveText(expected);
     await expect(page.locator("#boundary")).toHaveAttribute("data-counted", "false");
     // The invitation is its own sentence and stays off paper (liheap review S2).
-    await expect(page.locator("#boundary .hg-no-print")).toHaveText("If you get it, turn it on to see it in your line.");
+    await expect(page.locator("#boundary .hg-no-print")).toHaveText("If you get it, turn it on and we'll put it in your line.");
     expect(ev.liheap?.counted).toBe(false);
     // Not a cliff, not a mark: nothing on the picture at the limit but the axis tick.
     expect(ev.analysis.cliffs.every((c) => !c.programsLost.includes("liheap"))).toBe(true);
     // The tick is drawn only when the limit lies inside the crop (model.ts boundaryInWindow), and the key entry shows with it — never one without the other.
     const ticks = await page.locator("#chart svg line[data-boundary]").count();
     expect(ticks).toBeLessThanOrEqual(1);
-    await expect(page.locator("figure .hg-key li:not([hidden])", { hasText: "Where help with heating bills stops" })).toHaveCount(ticks);
+    await expect(page.locator("figure .hg-key li:not([hidden])", { hasText: "Where heating help stops" })).toHaveCount(ticks);
     expect(errors).toEqual([]);
   });
 }
@@ -377,8 +446,10 @@ test(`Texas: the toggle puts $1,200 into the line to the limit and the boundary 
   expect([at(13000), at(19000), at(39000), at(40000)]).toEqual([1800, 1500, 1200, 0]);
   expect(ev.liheap?.counted).toBe(true);
   await page.locator("#chart svg path").first().waitFor();
-  await expect(page.locator("#boundary")).toHaveText("You said you get help with heating bills (LIHEAP). We put it in your line: about $1,200 a year, up to $40,000 a year.");
+  await openPanel(page, "What happens at each step");
+  await expect(page.locator("#boundary")).toHaveText("You told us you get help with heating bills (LIHEAP), so it's in your line: about $1,200 a year, up to $40,000 a year.");
   await expect(page.locator("#chart svg line[data-boundary]")).toHaveCount(0);
-  await expect(page.locator(".assumed")).toContainText("help with heating bills (LIHEAP energy assistance). We count each as if you get it.");
+  await openPanel(page, "What we assumed about you");
+  await expect(page.locator(".assumed")).toContainText("help with heating bills (LIHEAP energy assistance). We counted each one as if you get it.");
   expect(errors).toEqual([]);
 });

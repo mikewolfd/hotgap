@@ -41,8 +41,8 @@ const DEFAULT_PAGES = [
   { name: "journalist", path: "/places.html" },
 ];
 
-/** Count the words a person can actually see, and measure the first figure against the first screen. */
-const MEASURE = () => {
+/** Count the words a person can actually see, and measure the first figure against the first screen. Exported so the proofs weigh a page with the same function the owner runs. */
+export const MEASURE = () => {
   // Eyes, not the accessibility tree: an aria-hidden SVG is still a picture a
   // person reads words off, and a visually-hidden paragraph is not, however
   // loudly a screen reader says it.
@@ -62,6 +62,21 @@ const MEASURE = () => {
     return false;
   };
   const words = (s) => (s.match(/\S+/g) ?? []).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+  // A word scrolled out of a scroller is like a word inside a closed
+  // disclosure: it is in the DOM, it is reachable, and nobody is reading it.
+  // The money curve is 1,889px of plot inside a 608px box, so counting its
+  // whole axis would have said the picture carries three times the words it
+  // shows — a number that flatters nothing and measures nothing.
+  const clipped = (el) => {
+    const r = el.getBoundingClientRect();
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (!/auto|scroll|hidden|clip/.test(cs.overflowX + cs.overflowY)) continue;
+      const b = n.getBoundingClientRect();
+      if (r.right <= b.left || r.left >= b.right || r.bottom <= b.top || r.top >= b.bottom) return true;
+    }
+    return false;
+  };
   let html = 0, svg = 0;
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let node = walk.nextNode(); node; node = walk.nextNode()) {
@@ -69,7 +84,7 @@ const MEASURE = () => {
     if (!n) continue;
     const el = node.parentElement;
     if (!el || hidden(el)) continue;
-    if (!el.getClientRects().length) continue;
+    if (!el.getClientRects().length || clipped(el)) continue;
     if (el.ownerSVGElement || el.tagName === "svg") svg += n;
     else html += n;
   }
@@ -91,7 +106,7 @@ const MEASURE = () => {
 };
 
 /** Every disclosure on the page open: the proof that what was folded away is still there. */
-const OPEN_ALL = () => {
+export const OPEN_ALL = () => {
   for (const d of document.querySelectorAll("details")) d.open = true;
 };
 
@@ -106,6 +121,11 @@ async function measure(page, base, path, { open }) {
   return page.evaluate(MEASURE);
 }
 
+/* The rest is the command line. Imported (by e2e/citizen.spec.ts, which
+   weighs the page with the same function), it does nothing. */
+if (!process.argv[1]?.endsWith("weight.mjs")) { /* imported: no side effects */ } else await main();
+
+async function main() {
 const args = process.argv.slice(2);
 const base = (args[0] ?? "http://localhost:8806").replace(/\/$/, "");
 const paths = args.slice(1);
@@ -133,3 +153,4 @@ for (const r of rows) {
   console.log(`| ${r.page} | ${r.width} | ${fmt(r.shut)} | ${fmt(r.opened)} | ${r.shut.figureTop ?? "—"}px | ${r.shut.figureShare} | ${r.shut.figureHeight ?? "—"}px |`);
 }
 console.log("");
+}

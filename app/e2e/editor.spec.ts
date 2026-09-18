@@ -38,7 +38,7 @@ test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ pag
   await page.goto("/");
   await fillFourFacts(page);
   await page.getByRole("button", { name: "See my answer" }).click();
-  await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
+  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
   await expect(page.locator("#source")).toHaveAttribute("data-source", EXPECT_SOURCE);
   // The household is in the URL, in the CLI's words.
   const url = new URL(page.url());
@@ -48,20 +48,22 @@ test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ pag
   expect(url.searchParams.get("unit")).toBe("year");
   // The editor closed, the bar summarizes the four facts.
   await expect(page.locator("#editor")).toBeHidden();
-  await expect(page.locator(".hg-scenario__summary span")).toContainText("94110 · CA · 1 adult, kids 3 & 7 · $30,000 a year");
+  // The summary is one phrase a person would say, not facts joined by middle dots (PICTURE-FIRST).
+  await expect(page.locator(".hg-scenario__summary span")).toContainText("A parent with kids aged 3 & 7 in California, paid $30,000 a year.");
   expect(errors).toEqual([]);
 });
 
 test("landing on a shared link evaluates at once", async ({ page }) => {
   await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-  await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
+  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
   await expect(page.locator("#editor")).toBeHidden();
 });
 
 test("a hand-typed link with a lower-case state and a yearly earnings figure still works, chips included", async ({ page }) => {
   const errors = consoleErrors(page);
   await page.goto("/?state=tx&kids=3&earnings=30000");
-  await expect(page.locator("#answer")).toContainText("You are paid $30,000 a year.");
+  /* Whatever this household's curve turns out to be, the answer is one sentence with the figures in it. */
+  await expect(page.locator("#answer")).toHaveText(/\$[\d,]+/);
   // `earnings` was rewritten as pay in years; the state is the code core knows.
   const url = new URL(page.url());
   expect([url.searchParams.get("pay"), url.searchParams.get("unit"), url.searchParams.get("earnings")]).toEqual(["30000", "year", null]);
@@ -93,7 +95,7 @@ for (const width of [390, 1280]) {
     const errors = consoleErrors(page);
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-    await expect(page.locator("#answer")).toContainText("You are paid");
+    await expect(page.locator("#answer")).toContainText("More pay won't");
     await noOverflow(page);
     // The chips hide behind the summary's Edit control — below 720px on every
     // surface, and at every width on the citizen page, which has no controls
@@ -151,9 +153,9 @@ for (const width of [390, 1280]) {
     await expect(housing).toHaveAttribute("aria-pressed", "true");
     expect(new URL(page.url()).searchParams.get("housing")).toBe("1");
     expect((await evaluatedAgain).status()).toBe(200);
-    await expect(page.locator("#result [role=status]")).toContainText("You are paid");
+    await expect(page.locator("#result [role=status]")).toContainText("More pay won't");
     await expect(housing).toBeFocused();
-    await expect(page.locator("#answer")).toContainText("You are paid");
+    await expect(page.locator("#answer")).toContainText("More pay won't");
     expect(errors).toEqual([]);
   });
 }

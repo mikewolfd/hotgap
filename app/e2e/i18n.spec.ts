@@ -124,7 +124,14 @@ interface PageUnder { name: string; url: string; ready: (page: Page) => Promise<
 const PAGES: PageUnder[] = [
   {
     name: "citizen", url: "/?zip=94110&kids=3%2C7&pay=30000&unit=year",
-    ready: async (page) => { await page.locator("#chart svg path").first().waitFor(); await page.locator("#source[data-source]").waitFor(); },
+    /* Picture first (PICTURE-FIRST-2026-09-18): the citizen page keeps most of
+       its strings behind three named disclosures, so the gate opens them — a
+       string it cannot see is a string it cannot check. */
+    ready: async (page) => {
+      await page.locator("#chart svg path").first().waitFor();
+      await page.evaluate(() => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details")) d.open = true; });
+      await page.locator("#source[data-source]").waitFor();
+    },
   },
   {
     name: "caseworker", url: "/caseworker.html?zip=80903&kids=3%2C7&pay=38000&unit=year&rent=1735&childcare=2773&childcare-subsidy=1&whatif=childcare-subsidy%3D&whatif=pay%3D55000",

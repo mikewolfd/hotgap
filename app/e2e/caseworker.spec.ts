@@ -119,7 +119,11 @@ for (const width of [390, 1280]) for (const scheme of ["light", "dark"] as const
     }
     if (width < 720) {
       // Below 720px the chips hide behind Edit; the summary line is the place, once (N9).
-      await expect(page.locator(".hg-scenario__summary span")).toHaveText("CO · El Paso · 1 adult, kids 3 & 7 · $38,000 a year");
+      /* The line is a phrase, not facts joined by middle dots, since 2026-09-18
+         (design/PICTURE-FIRST-2026-09-18.md; the ZIP left it, and the state is
+         its name). This surface's register may want its own words for it — the
+         caseworker pass decides, through mountEditor's `copy` override. */
+      await expect(page.locator(".hg-scenario__summary span")).toHaveText("A parent with kids aged 3 & 7 in El Paso, Colorado, paid $38,000 a year.");
       await expect(page.locator("#inputs")).toBeHidden();
       measured[`N9-summary-${scheme}`] = await page.evaluate(() => ({ text: document.querySelector(".hg-scenario__summary span")!.textContent, h: document.querySelector(".hg-scenario__summary span")!.getBoundingClientRect().height }));
       // S7: the breakdown's track is the panel's width, its axis words one line.
@@ -498,7 +502,10 @@ test("print from OS-dark: the controls and the bar leave, the client sheet arriv
   expect(Number(shown.curveWidth) + Number(shown.gutterWidth)).toBe(672);
   expect(shown.gutterWidth).toBe("52");
   await expect(page.locator("#handout h2")).toHaveText("Your pay and your help — Colorado, one parent, two children");
-  await expect(page.locator("#handout")).toContainText("You are paid $38,000 a year. You keep $84,371.");   /* the citizen catalog's sentence (audit D4) */
+  /* The citizen catalog's sentence (audit D4), rewritten to the desk rule on 2026-09-18: one sentence, the
+     exit and the leap. The pay and the money kept left it; this sheet has not been given another home for
+     them yet, and the caseworker pass should decide where they go. */
+  await expect(page.locator("#handout")).toContainText("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now.");
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.evaluate(() => document.getElementById("handout")!.scrollIntoView());
   await page.screenshot({ path: after("S8-print-handout") });
