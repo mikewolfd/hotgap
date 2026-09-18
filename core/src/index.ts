@@ -4,6 +4,8 @@
 //   buildPEPayload(answers)           HouseholdAnswers → PolicyEngine request
 //   fetchCurve(answers)               → CurveResponse via the public PolicyEngine API
 //   analyzeCurve / escapeAnalysis     cliffs, danger zones, safe exit, the leap
+//   roadSummary / keepRate            what a household keeps of each extra
+//                                     dollar between poverty and twice poverty
 //   reachForHousehold                 where an income falls among real households
 //   minWageContext                    hours-a-week-at-minimum-wage framing
 //   evaluateHousehold(answers)        all of the above in one call, with an

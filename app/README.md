@@ -170,12 +170,71 @@ functions only — nothing that talks to PolicyEngine (`fetchCurve`,
 - `STATE_NAMES`, `STATE_CODES`, `FIPS_TO_USPS`, `IMMIGRATION_STATUSES`, `PROGRAM_IDS`, `CASH_PROGRAMS`
 - `stateDefaults`, `childcareMonthlyFor`, `CHILDCARE_MAX_AGE`, `stateDefaultsProvenance`
 - `pickArchetypeId`, `ARCHETYPES`, `answersFor` (the swept household an archetype curve models), `countyName`, `DEFERRAL_UNTIL`, `COVERAGE_PROGRAMS`, `PROGRAM_END_MIN`
-- `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
+- `povertyRoad`, `keepRate`, `cliffsBetween`, `keepNext`, `keepRateWords`, `KEEP_NEXT_OVER` (§ Keep rate)
+- `loadSummary`, `loadStateFile`, `readData`, `reachCell`, `reachForArchetype`, `reachAtEarnings`, `minWageContext`, `evaluateCurve`, `evaluateOffline`, `analyzeCurve`, `escapeAnalysis` — after `provideData` with the file each needs (fetched from `/data/…` or imported from `@hotgap/core/data/*.json`, which Vite inlines: `state-defaults.json` 24 KB and `zip3-state.json` 12 KB are; `zip5-county.json` at 528 KB and a state file are not)
 
 `cd app && npx vite build` prints each page's chunks with their gzip sizes;
 the two small tables are inlined into the shared chunk, and the caseworker
 page fetches `summary.json`, `reach.json` and, for a live household with a
 county, `county-names.json` at runtime.
+
+## Keep rate
+
+The one question every surface asks: *of each extra dollar you earn, what do
+you keep, and where does the road collapse?* (Plan 9,
+`docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`; the definition and
+its two caveats are in the root README § Honesty.) Core computes it; a page
+renders it. What a page gets, and what it means:
+
+**`HouseholdEvaluation.road: RoadSummary | null`** — the road out of poverty,
+100% → 200% of the 2025 federal poverty guideline for the household's size,
+snapped to the sweep's step. Null when either end runs off this curve's axis
+(no swept cell: `axisSpec` always reaches past four times the poverty line).
+
+| field | type | meaning |
+|---|---|---|
+| `lo`, `hi` | `number` | the road's ends, in earnings on the axis |
+| `keepRate` | `number \| null` | dollars kept per extra dollar over the whole road; `0.30` is 30¢ kept, `-0.63` is 63¢ poorer. Null only when an end is not a sampled point |
+| `cliffs` | `Cliff[]` | every cliff whose step starts in `[lo, hi)`, in earnings order — `cliffsBetween` |
+| `worst` | `Cliff \| null` | the largest of them: where the road collapses |
+| `familiesBelowHi` | `number \| null` | 0–100, families like this earning less than `hi`; null where the PUMS cell is missing or suppressed, never 0 |
+
+**`Cliff.position: number | null`** — 0–100, how many families like this one
+in this state earn less than `startEarnings`. On every cliff in
+`analysis.cliffs`, and so on `worstCliff`, `nextCliff` and `deferred`, which
+are the same objects. Null where the reach ladder has no trustworthy cell;
+never read a null as 0. Cross-sectional: how many families already earn less,
+never a family's odds of getting there.
+
+**`PersonalEscape.keepNext: { over, kept } | null`** — `over` dollars ahead
+(the next `KEEP_NEXT_OVER` = $10,000, shrinking to the axis end) and `kept`
+dollars kept per dollar across them, measured from the last sampled point at
+or below the household's pay. Null with less than one step of axis left. A
+stretch can be flat with no cliff in it: that is a plateau, and this is the
+number that says so.
+
+**`StateMetrics`** (`summary.json`, every state × archetype cell) carries the
+same six facts for the map: `keepRate` (4 decimals), `roadLo`, `roadHi`,
+`roadCliffCount`, `roadWorst: { drop, at, programs } | null`, and
+`biggestLossPosition` (0–100, one decimal) — the position of the WHOLE-AXIS
+worst step, so a table can say "$33,587 at $97,000 — 80 in 100 families like
+this earn less". `roadLo`/`roadHi` are null and `roadCliffCount` is 0 when
+there is no road; `keepRate` being null is what says so.
+
+**Message codes** (`core/src/messages/*.json`, rendered through `coreText`).
+Money arrives already formatted by `lib/format.ts` — the locale's dollars, and
+on the citizen page the person's own pay unit; `cents` and `n` are counts.
+`keepRateWords(rate)` gives the `sign`/`cents` pair, so no surface invents its
+own rounding or sign word.
+
+| code | parameters |
+|---|---|
+| `road.sentence` | `state`, `household` (the archetype phrase), `sign` (`keeps` \| `loses`), `cents` (always positive) |
+| `road.rate` | `sign`, `cents` — the legend/strip phrase: "keeps 30¢ of each extra dollar" / "loses 63¢ of each extra dollar" |
+| `road.collapse` | `at`, `program`, `drop` |
+| `road.position` | `n` — "{n} in 100 families like this earn less" |
+| `road.keepNext` | `over`, `kept` |
+| `road.plateau` | `over`, `kept` |
 
 ## Languages
 
@@ -186,10 +245,10 @@ decided 2026-09-16; what follows is what is there.
 **Where the words are.** `src/i18n/en.json` holds all 1,076 messages a person
 can read, namespaced by surface — `editor` 124, `citizen` 253, `caseworker`
 369, `places` 207, `shared` 123 — and `src/i18n/es-US.json` holds a Spanish
-message for every one of them. `core/src/messages/<locale>.json` holds the 37
+message for every one of them. `core/src/messages/<locale>.json` holds the 43
 sentences core writes for a person to read (`coverage`, `program`, `liheap`,
-`validate`, `place`, `api`, `deferral`), which every surface renders in its own
-language. A file's `_` key is its own record — its language, its status, its
+`road`, `validate`, `place`, `api`, `deferral`), which every surface renders in
+its own language. A file's `_` key is its own record — its language, its status, its
 date — never a message. The four `copy` modules are typed views into the
 catalog, not stores: `export const copy = catalog.citizen`.
 

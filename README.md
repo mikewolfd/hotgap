@@ -93,7 +93,14 @@ that leap lands among real households' incomes.
   loses it, so reporting that point as "ctc ends" told a family it had lost
   a credit it still had in full
 - `reachForHousehold` — where an income falls among real households, on the
-  same householder-plus-spouse earnings basis the ladders are built on
+  same householder-plus-spouse earnings basis the ladders are built on;
+  `reachAtEarnings` does the one conversion every caller needs, adding the
+  spouse's fixed pay back to a figure taken off the earnings axis
+- `povertyRoad` / `keepRate` / `cliffsBetween` / `roadSummary` / `keepNext`
+  (`road.ts`) — the road out of poverty and what a household keeps walking
+  it, in cents per extra dollar (§ Honesty). `roadSummary` also says how
+  many families like this one earn less than the road's top, and every
+  `Cliff` gains a `position` saying the same of the pay its step starts at
 - `minWageContext` — hours-a-week-at-minimum-wage framing
 - `evaluateHousehold(answers)` — the one-shot: all of the above in order,
   with an offline archetype-curve fallback when the live API fails. It also
@@ -428,6 +435,25 @@ received), `--offline`, `--json`.
   reading and the drawn reading are the same one. What moved: the
   California single-parent pipeline fixture's largest one-step loss went
   $3,868 → $21,971 at $30,000, because Head Start is now its worst step.
+- The keep rate is an effective marginal tax rate, measured over one fixed
+  stretch of the curve. Of each extra dollar a household earns climbing from
+  100% to 200% of the federal poverty guideline for its size — the road out
+  of poverty — it is the share left after taxes take theirs and benefits fall
+  away: `(net(hi) − net(lo)) / (hi − lo)`, stated in cents because that is
+  how a person hears it. One minus it is the EMTR the Atlanta Fed's CLIFF
+  tool, CBO and the benefits-cliff literature report; a cliff is an EMTR
+  above 100%, which is a keep rate below zero. Two things it is not. It is
+  the MODELED family's rate (§ Archetype curves above: a renter in the
+  state's largest county, every parent working, each child priced for care,
+  claiming what it is entitled to), not any real household's. And the road is
+  FEDERAL on purpose, so every state's road is the same road: the obvious
+  alternative — each state's own minimum wage to its own median — was
+  measured first and rejected, because it makes the poorest states look
+  kindest, a $7.25 floor and a $30,000 median describing a road too short and
+  too low to cross a cliff. Where a state's own families sit on the fixed
+  road is reported separately, as `familiesBelowHi` and each cliff's
+  `position`, and never folded into the rate. Plan 9,
+  `docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`.
 - Minimum-wage framing (`minWageContext`, the "~hrs/wk" column) is context,
   not eligibility — nothing in the calculation depends on it.
 - Reach is cross-sectional only: "N% of similar households earn at or below
