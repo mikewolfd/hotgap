@@ -234,8 +234,12 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the scale's two ends say in words which way is which, in core's own phrasing", mapNow.legend.slice(0, 2));
     check(mapNow.tiles.MO.label === `${STATE_NAMES.MO}: ${phraseOf("MO")}` && mapNow.tiles.NM.label === `${STATE_NAMES.NM}: ${phraseOf("NM")}`,
       "a tile's name is its state and its rate, said the way core says it", [mapNow.tiles.MO.label, mapNow.tiles.NM.label]);
-    check(mapNow.bins.startsWith("Bins: steps of ") && / either side of zero, from −\d+¢ to \+\d+¢ over the \d+ states with a comparable figure\./.test(mapNow.bins),
-      "the caption gives the one width and the two ends, signed", mapNow.bins);
+    /* Each arm is cut over its own reach, so the two step widths differ and the
+       caption prints both — a reader must not take a step on one arm for a
+       step on the other. */
+    check(/^Bins: three steps of \d+¢ below zero and three of \d+¢ above it, from −\d+¢ to \+\d+¢ over the \d+ states with a comparable figure\.$/.test(mapNow.bins)
+      && mapNow.swatches.length === 6,
+      "the caption gives each arm's own step and the two ends, signed, over six swatches", mapNow.bins);
     /* The strip: bars from one hinge, left for a state that loses. */
     const strip0 = await page.evaluate(() => {
       const rank = document.querySelector("#rank") as HTMLElement;

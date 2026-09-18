@@ -202,8 +202,15 @@ export const hatchedLine = (n: number, programs: string[]): string => t("figure.
 export const binsLine = (bins: string, comparable: number, none: number, past: number): string =>
   t(`figure.binsLine.${none && past ? "nonePast" : none ? "none" : past ? "past" : "plain"}`, { bins, comparable, ...(none ? { none } : {}), ...(past ? { past } : {}) });
 export const classesLine = (n: number, lo: number, hi: number): string => t("figure.bins.classes", { n, words: numberWords(n), lo, hi });
-/** The diverging scale's bounds: one width, both sides, and the two ends (charts.md § 2). */
-export const divergingLine = (width: string, lo: string, hi: string): string => t("figure.bins.diverging", { width, lo, hi });
+/**
+ * The diverging scale's bounds: each arm's own step and the two ends
+ * (charts.md § 2). Both widths are printed because they differ — each arm is
+ * cut over its own reach — and a reader must not take a step on one arm for a
+ * step on the other. With states on one side only there is one width to name.
+ */
+export const divergingLine = (down: string | null, up: string | null, lo: string, hi: string): string =>
+  down !== null && up !== null ? t("figure.bins.diverging", { down, up, lo, hi })
+    : t("figure.bins.divergingOneSide", { width: (down ?? up)!, lo, hi });
 /** The axis the selected household was swept to, in dollars (rerun N9), with the states whose guidelines lengthen it. */
 export const axisLine = (household: string, top: string, exceptions: { state: string; top: string }[]): string =>
   exceptions.length

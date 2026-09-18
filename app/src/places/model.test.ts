@@ -200,38 +200,46 @@ describe("bins and group", () => {
     expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 3, hi: 3 }]);
     expect(bins([], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 0, hi: 0 }]);
   });
-  it("a measure with a meaningful zero diverges: zero is always a bin edge, one width both sides, five swatches at most (charts.md § 2)", () => {
+  it("a measure with a meaningful zero diverges: zero is always a bin edge, each arm cut over its own reach (charts.md § 2)", () => {
     const bounds = (b: ReturnType<typeof divergingBins>) => [b.classes[0].lo, ...b.classes.map((c) => c.hi)];
-    // The committed sweep's single-2 range: the losing side is three times
-    // longer, so it takes three classes and the keeping side one.
+    // The committed sweep's single-2 range. Three steps each side, each arm
+    // over its own reach: a shared width would give the short arm one class
+    // and paint half the map — twenty-five states — one flat colour.
     const d = divergingBins(-1.0486, 0.3042);
     expect(d.kind).toBe("diverging");
-    expect(d.classes.map((c) => c.hue)).toEqual(["loss", "loss", "loss", "keep"]);
-    const w = 1.0486 / 3;
-    expect(bounds(d)).toEqual([-1.0486, -2 * w, -w, 0, 0.3042]);
+    expect(d.classes.map((c) => c.hue)).toEqual(["loss", "loss", "loss", "keep", "keep", "keep"]);
+    const w = 1.0486 / 3, u = 0.3042 / 3;
+    expect(bounds(d)).toEqual([-1.0486, -2 * w, -w, 0, u, 2 * u, 0.3042]);
     expect(bounds(d)).toContain(0);
-    expect(d.classes.map((c) => c.ramp)).toEqual([4, 2, 0, 2]);
-    expect(d.width).toBeCloseTo(w, 10);
+    expect(d.classes.map((c) => c.ramp)).toEqual([4, 2, 0, 0, 2, 4]);
+    expect(d.width!.down).toBeCloseTo(w, 10);
+    expect(d.width!.up).toBeCloseTo(u, 10);
     // Every set of values puts zero on a bound, including one that never
     // crosses it — and then the scale runs from zero, not from the lowest
     // state, which is the one place this page bins from zero on purpose.
     for (const [lo, hi] of [[-1.42, 0.348], [0.269, 0.571], [-0.08, 0.335], [-0.3, -0.05], [0, 0]] as const) {
       const b = divergingBins(lo, hi);
       expect(bounds(b), `${lo}..${hi}`).toContain(0);
-      expect(b.classes.length, `${lo}..${hi}`).toBeLessThanOrEqual(5);
+      expect(b.classes.length, `${lo}..${hi}`).toBeLessThanOrEqual(6);
       expect(b.classes.every((c) => c.ramp >= 0 && c.ramp <= 4)).toBe(true);
       // Monotone: every class's bounds rise left to right, losing arm first.
       expect(bounds(b)).toEqual([...bounds(b)].sort((x, z) => x - z));
+      // Every state on the scale falls in a class of the arm its sign names.
+      for (const v of [lo, hi, (lo + hi) / 2]) expect(b.classes[b.index(v)].hue, `${v}`).toBe(v < 0 ? "loss" : "keep");
     }
-    // All positive: the whole scale is the keep arm, from zero.
+    // All on one side: the whole scale is that arm, from zero, and only one width to name.
     const up = divergingBins(0.269, 0.571);
     expect(up.classes.every((c) => c.hue === "keep")).toBe(true);
-    expect(up.lo).toBe(0);
-    expect(up.zero).toBe(0);
+    expect(up.classes.length).toBe(3);
+    expect([up.lo, up.zero, up.width!.down]).toEqual([0, 0, null]);
+    const dn = divergingBins(-0.3, -0.05);
+    expect(dn.classes.every((c) => c.hue === "loss")).toBe(true);
+    expect([dn.hi, dn.zero, dn.width!.up]).toEqual([0, 1, null]);
     // A value on a bound belongs to the class nearer zero, and zero itself to the keep arm.
     expect(d.classes[d.index(0)].hue).toBe("keep");
     expect(d.index(-w)).toBe(2);
     expect(d.index(-1.0486)).toBe(0);
+    expect(d.index(0.3042)).toBe(5);
   });
   it("orders the table by state, or by one measure: its lower-bound rows first (B1), then its ranking, then none and incomplete", () => {
     expect(tableRows(fixture, single1, "state").map((r) => r.st)).toEqual(["AA", "BB", "CC", "DD", "EE", "FF", "GG"]);

@@ -203,8 +203,8 @@ export interface Bins {
   index: (v: number) => number;
   /** Where zero sits on the scale, 0–1, on a diverging scale only: the hinge the strip's bars start from. */
   zero?: number;
-  /** The one step width both sides of a diverging scale are cut to (the outermost class is clipped to the observed end). */
-  width?: number;
+  /** A diverging scale's two step widths, one per arm — null where no state falls on that side. They differ, and the caption says so. */
+  width?: { down: number | null; up: number | null };
 }
 
 /* Bins across the OBSERVED range of the COMPARABLE states. Binning from 0
@@ -249,59 +249,56 @@ export function bins(values: number[], unit: Measure["unit"]): Bins {
 /** Rounding slack, so a width that divides its side exactly does not buy a sliver of a class. */
 const EPS = 1e-9;
 
+/** How many equal steps each arm of a diverging scale is cut into; two arms, six swatches at most (charts.md § 2). */
+const ARM_CLASSES = 3;
+
 /**
  * The diverging scale, for a measure whose zero means something — on this page
  * only the keep rate, where zero is the line between a family that ends a
  * raise poorer and one that keeps a little of it (charts.md § 2).
  *
- * Three properties, in this order:
+ * **Zero is always a bin edge**, and each ARM is binned over its own reach:
+ * three equal steps from zero out to the furthest state on that side, plum
+ * below and the keep ramp above, each arm lightest against the hinge and
+ * deepest at its end. An arm with no state on it has no classes at all.
  *
- * 1. **Zero is always a bin edge.** The span is stretched to include zero
- *    (`min(lo, 0)` to `max(hi, 0)`), so a scale whose states all keep starts
- *    at zero rather than at the lowest state — the one place this page bins
- *    from zero rather than over the observed range, because here zero is the
- *    fact the reader is looking for and not an empty corner of the scale.
- * 2. **One width, both sides.** A class's depth means the same distance from
- *    zero whichever ramp it is on, so 35¢ lost and 35¢ kept are the same step
- *    of their ramps and a reader can compare across the hinge.
- * 3. **Five swatches at most** (charts.md § 2). The width is the longer side
- *    divided by as many classes as fit: the most that side can take while the
- *    shorter side's classes still leave five or fewer in total.
- *
- * Below zero the classes are the plum loss ramp, above it the keep ramp, each
- * lightest next to zero and deepest at its end. A side with one class alone
- * takes the ramp's middle step rather than its lightest, or "keeps something"
- * would be drawn in the palest tint the ramp has.
+ * The obvious alternative — ONE width for both arms, so that a class's depth
+ * means the same distance from zero whichever ramp it is on — was built first
+ * and looked wrong on the page. The arms are wildly asymmetric (on the
+ * committed sweep a single parent of two loses up to 105¢ and keeps at most
+ * 30¢), so a shared width gives the short arm one class: twenty-five states,
+ * half the map, painted one flat colour, with New Mexico's 30¢ drawn exactly
+ * like a state that keeps a third of a cent. The property it bought is one a
+ * reader cannot use anyway — comparing depth ACROSS two hues is not something
+ * the eye does reliably — while the resolution it cost is the thing the map is
+ * for. So each arm uses its ramp end to end over its own range, which is the
+ * same instinct the count rule already follows, and the caption prints both
+ * widths so nobody reads a step on one arm as a step on the other.
  */
 export function divergingBins(loValue: number, hiValue: number): Bins {
   const lo = Math.min(loValue, 0), hi = Math.max(hiValue, 0);
-  const down = -lo, up = hi;
-  const long = Math.max(down, up), short = Math.min(down, up);
-  let width = long || 1;
-  for (let k = 5; k >= 1; k--) {
-    const w = long / k;
-    if (w > 0 && k + Math.ceil(short / w - EPS) <= 5) { width = w; break; }
-  }
-  const nDown = Math.ceil(down / width - EPS), nUp = Math.ceil(up / width - EPS);
-  /* Spread over the ramp so the two ends of a side are the ramp's two ends
+  const nDown = lo < 0 ? ARM_CLASSES : 0, nUp = hi > 0 ? ARM_CLASSES : 0;
+  const down = -lo / (nDown || 1), up = hi / (nUp || 1);
+  /* Spread over the ramp so the two ends of an arm are the ramp's two ends
      (charts.md § 2); `i` counts outward from zero, so the lightest step is
      always the one against the hinge. */
   const ramp = (i: number, n: number) => (n === 1 ? 2 : Math.round((i * 4) / (n - 1)));
   const classes: BinClass[] = [];
-  for (let i = nDown - 1; i >= 0; i--) classes.push({ ramp: ramp(i, nDown), hue: "loss", lo: Math.max(lo, -(i + 1) * width), hi: i ? -i * width : 0 });
-  for (let i = 0; i < nUp; i++) classes.push({ ramp: ramp(i, nUp), hue: "keep", lo: i * width, hi: Math.min(hi, (i + 1) * width) });
+  for (let i = nDown - 1; i >= 0; i--) classes.push({ ramp: ramp(i, nDown), hue: "loss", lo: -(i + 1) * down, hi: i ? -i * down : 0 });
+  for (let i = 0; i < nUp; i++) classes.push({ ramp: ramp(i, nUp), hue: "keep", lo: i * up, hi: (i + 1) * up });
   if (!classes.length) classes.push({ ramp: 2, hue: "keep", lo: 0, hi: 0 });
   /* A value at a boundary falls in the class NEARER zero, on either side, so
      the hinge itself belongs to no loss class: zero keeps nothing and loses
      nothing, and it is drawn on the keep ramp's first step where one exists. */
   const at = (v: number) => (v < 0
-    ? nDown - (Math.ceil(-v / width - EPS) || 1)
-    : v === 0 ? nDown : nDown + Math.ceil(v / width - EPS) - 1);
+    ? nDown - (Math.ceil(-v / down - EPS) || 1)
+    : v === 0 ? nDown : nDown + Math.ceil(v / up - EPS) - 1);
   return {
     lo, hi, kind: "diverging", classes,
     index: (v) => Math.min(classes.length - 1, Math.max(0, at(v))),
     zero: (hi - lo ? -lo / (hi - lo) : 0) || 0,
-    width,
+    /** The two arms' step widths: they differ, and the caption says so. */
+    width: { down: nDown ? down : null, up: nUp ? up : null },
   };
 }
 

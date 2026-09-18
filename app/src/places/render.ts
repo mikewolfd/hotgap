@@ -201,7 +201,7 @@ export function renderFigure(s: Scene): void {
   const bins = g.bins.kind === "steps"
     ? t("figure.bins.steps", { lo: value(g.bins.lo, measure), hi: value(g.bins.hi, measure) })
     : g.bins.kind === "diverging"
-      ? divergingLine(keepSpan(g.bins.width ?? 0), tick(g.bins.lo, measure), tick(g.bins.hi, measure))
+      ? divergingLine(g.bins.width?.down == null ? null : keepSpan(g.bins.width.down), g.bins.width?.up == null ? null : keepSpan(g.bins.width.up), tick(g.bins.lo, measure), tick(g.bins.hi, measure))
       : classesLine(g.bins.classes.length, g.bins.lo, g.bins.hi);
   /* One class holding nine comparable states in ten explains a near-monochrome map (N11). */
   const share = g.bins.classes.map((_, i) => g.ranked.filter((r) => g.bins.index(r.value as number) === i).length);
@@ -249,7 +249,9 @@ export function renderFigure(s: Scene): void {
   /* The scale draws the classes that exist: five steps with their six bounds
      between them, or a count's classes each labelled with what it holds (S5). */
   const { classes } = g.bins;
-  $("scale").innerHTML = classes.map((c) => `<span class="sw" style="background:var(--${c.hue}-${c.ramp + 1})"></span>`).join("");
+  /* The swatch where the two arms meet takes a wider gap before it: the hue
+     change says which way is which, the gap says where the turn is. */
+  $("scale").innerHTML = classes.map((c, i) => `<span class="sw${i > 0 && classes[i - 1].hue !== c.hue ? " sw--hinge" : ""}" style="background:var(--${c.hue}-${c.ramp + 1})"></span>`).join("");
   const labels = $("scaleLabels");
   labels.classList.toggle("classes", g.bins.kind === "classes");
   labels.style.setProperty("--n", String(classes.length));
@@ -446,7 +448,15 @@ export function renderRank(s: Scene): void {
       : `<span class="dot" style="inset-inline-start:${pos(v)}%;${fill}"></span>`;
     return rankRow(r, mark, value(r.value, measure), rankOrdinal(rank));
   }).join("");
-  $("rankAxis").innerHTML = `<span>${tick(g.bins.lo, measure)}</span><span>${tick(g.bins.hi, measure)}</span>`;
+  /* The bounds stand over the track they bound, on the rows' own grid, and on
+     a diverging scale zero stands over the hinge the bars hang off. */
+  const axis = $("rankAxis"), diverging = g.bins.kind === "diverging";
+  axis.style.setProperty("--v", withAt ? "10.2rem" : "5.4rem");
+  axis.style.setProperty("--zero", `${zero * 100}%`);
+  axis.classList.toggle("rank-axis--diverging", diverging);
+  axis.innerHTML = `<span class="ends"><span>${tick(g.bins.lo, measure)}</span>` +
+    (diverging ? `<span class="zero">${tick(0, measure)}</span>` : "") +
+    `<span>${tick(g.bins.hi, measure)}</span></span>`;
 
   /* Lifted out, each into its own labelled block — never a tail of the list,
      where "last" reads as "smallest". */

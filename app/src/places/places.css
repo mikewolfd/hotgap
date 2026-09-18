@@ -74,6 +74,11 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 
 .scale { display: flex; align-items: stretch; gap: 2px; margin: var(--s4) 0 var(--s2); }
 .scale .sw { flex: 1; height: 12px; }
+/* A diverging scale is two scales meeting at zero, so the gap where they meet
+   is wider than the gaps inside each arm: the hue change says which way is
+   which, and this says where the turn is. The bound printed under it reads
+   "0¢". */
+.scale .sw--hinge { margin-inline-start: 4px; }
 /* Six bounds between five steps; or, for a count, one label centred under
    each class that exists (S5; --n is the number of classes). */
 .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
@@ -117,7 +122,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    the row, over the track's ground and under the bar, so a reader sees the
    same vertical line down every row and the bars hanging off it. */
 .rank.diverging .track::after { content: ""; position: absolute; inset-block: 0;
-                                inset-inline-start: var(--zero); width: 1px; background: var(--rule-strong); }
+                                inset-inline-start: var(--zero); width: 1px; background: var(--ink-3); }
 .rank .bar { position: absolute; top: 3px; height: 8px; min-width: 2px; }
 /* The past-the-axis mark is the tile's own: a dashed-edged square on the
    sunk ground at the far end of the track (a dashed circle read as a
@@ -129,10 +134,21 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 /* The selected row: the sunk ground plus the 3px ink bar, the tile's mark in
    the row's slot (S3); the tint alone measured 1.08:1. */
 .rank .hg-row-btn[aria-current="true"] { background: var(--surface-sunk); box-shadow: inset 3px 0 0 var(--ink); }
-/* The axis bounds sit above the list, where a reader meets them first (N3). */
-.rank-axis { display: flex; justify-content: space-between; color: var(--ink-3);
-             font-size: var(--t-micro); padding: 0 0 var(--s1) 5.5rem;
+/* The axis bounds sit above the list, where a reader meets them first (N3),
+   on the rows' own grid so a bound stands over the end of the track it bounds
+   — it used to be a flex row with a guessed 5.5rem indent, which put the high
+   bound a value-column too far right. `--v` is the value column's width, which
+   the page sets to match the rows (the one-step loss widens it). */
+.rank-axis { display: grid; grid-template-columns: 2.4rem 2.1rem 1fr var(--v, 5.4rem); gap: var(--s3);
+             color: var(--ink-3); font-size: var(--t-micro); padding: 0 0 var(--s1);
              font-variant-numeric: tabular-nums; }
+.rank-axis .ends { grid-column: 3; position: relative; display: flex; justify-content: space-between; }
+/* Zero, over the hinge every bar hangs off — on its own line above the two
+   ends, because where the hinge sits depends on the data: on this run it is
+   at 78% of the axis, and on a phone's 120px track "0¢" and "+30¢" landed on
+   top of each other. A line of its own costs 14px and cannot collide. */
+.rank-axis--diverging { padding-top: 1.15em; }
+.rank-axis .zero { position: absolute; top: -1.15em; inset-inline-start: var(--zero); transform: translateX(-50%); }
 /* The lifted-out blocks (B4, B1): never the tail of the order. The
    lower-bound block leads it (context-blind B1), under the strip's heading
    and above the axis, closed by the same rule the others open with. */

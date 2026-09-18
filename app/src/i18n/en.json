@@ -1089,7 +1089,8 @@
       "bins": {
         "steps": "five equal-width steps from {lo} to {hi}",
         "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}",
-        "diverging": "steps of {width} either side of zero, from {lo} to {hi}"
+        "diverging": "three steps of {down} below zero and three of {up} above it, from {lo} to {hi}",
+        "divergingOneSide": "three steps of {width} from zero, from {lo} to {hi}"
       },
       "source": "HotGap, from PolicyEngine {year} rules on {model}. Weekly run of {date}. Net income after health-insurance premiums. Estimates only.",
       "binsLine": {
