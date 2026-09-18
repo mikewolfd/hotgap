@@ -62,9 +62,22 @@ export const whatIfPath = (d: string, i: number): SVGPathElement =>
   svg("path", { d, fill: "none", stroke: "var(--series-2)", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round",
     "stroke-dasharray": WHAT_IF_DASH[i % WHAT_IF_DASH.length], "data-whatif": i });
 
-/** MarkKey entry for a what-if line, drawn in its own dash so the key says which line is which. */
-export const whatIfKeyMark = (i: number): string =>
-  `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-2)" stroke-width="1.5" stroke-dasharray="${WHAT_IF_DASH[i % WHAT_IF_DASH.length]}"/>`;
+/**
+ * A what-if that is the SAME curve at a different pay — a raise, and nothing
+ * else changed — is not a second line: its line would lie exactly under the
+ * base's and say nothing, while claiming there are two curves. It is a second
+ * POSITION on the one curve, drawn the way position is drawn everywhere in
+ * this system: a diamond. Hollow and in the what-if ink, so it is never
+ * mistaken for the household's own filled one.
+ */
+export const whatIfDot = (x: number, y: number, i: number): SVGPathElement =>
+  svg("path", { d: `M${x} ${y - 5} L${x + 5} ${y} L${x} ${y + 5} L${x - 5} ${y} Z`, fill: "var(--surface)", stroke: "var(--series-2)", "stroke-width": 2, "data-whatif": i, "data-kind": "position" });
+
+/** MarkKey entry for a what-if, drawn as the mark it actually is: its own dash, or the hollow diamond. */
+export const whatIfKeyMark = (i: number, position = false): string =>
+  position
+    ? `<path d="M11 1.5 L15.5 6 L11 10.5 L6.5 6 Z" fill="var(--surface)" stroke="var(--series-2)" stroke-width="1.5"/>`
+    : `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-2)" stroke-width="1.5" stroke-dasharray="${WHAT_IF_DASH[i % WHAT_IF_DASH.length]}"/>`;
 
 /** A zone: the household's takes the wash and the hatch, any other the hatch alone (S7). */
 export function zoneRects(x0: number, x1: number, top: number, bottom: number, own: boolean, hatchId: string): SVGRectElement[] {

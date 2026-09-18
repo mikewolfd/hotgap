@@ -20,7 +20,7 @@ import { programName } from "../lib/names.js";
 import { copy, t } from "./copy.js";
 import {
   againLine, answerParts, assumed, cite, columnSub, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, onTheWay, positionWords, reachSentence, sourceLine, stateName, tiles, type Provenance,
+  modeled, onTheWay, reachSentence, sourceLine, stateName, tiles, type Provenance,
 } from "./model.js";
 
 /** The page's fixed words — headings, captions, column heads — from copy.ts into the skeleton, once. */
@@ -114,22 +114,24 @@ export function renderCorrections(cov: StateCoverage | undefined): void {
 }
 
 /**
- * DropLedger (#8): every cliff as a row whose button selects it. Each row
- * carries its position — how many families like this one are already past
- * that pay (Plan 9) — because the tiles carry it for two cliffs and a
- * counselor defending the fourth one needs it too.
+ * DropLedger (#8): every cliff as a row whose button selects it.
+ *
+ * This pass briefly put each cliff's position — how many families like this
+ * one already earn more — on every row, so the fourth cliff would be as
+ * defensible as the two the tiles carry. Two readers stopped on it: a parent
+ * said she did not need to be ranked while she was sitting there, and a
+ * counselor said the percentile was for her and not for them. Ten rows of it
+ * was nine too many; the two facts a counselor reads out keep theirs on the
+ * tiles, where they are one press away and not in front of the family.
  */
 export function renderDrops(ev: HouseholdEvaluation, onSelect: (i: number) => void): void {
   const rows = $("dropRows"), D = copy.drops;
-  rows.innerHTML = ev.analysis.cliffs.map((c) => {
-    const position = positionWords(c.position);
-    return `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button>` +
-      (position ? `<span class="hg-cite">${esc(position)}</span>` : "") + `</td>` +
-      `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
-      `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
-      (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: deferralUntil(c.deferral.reason) }))}</span>` : "") + `</td>` +
-      `<td>${esc(t(`drops.drivers.${c.driver}`))}</td></tr>`;
-  }).join("");
+  rows.innerHTML = ev.analysis.cliffs.map((c) =>
+    `<tr><td><button class="hg-row-btn" type="button">${esc(t("drops.range", { from: usd(c.startEarnings), to: usd(c.endEarnings) }))}</button></td>` +
+    `<td class="num money">${esc(lossFigure(c.drop))}</td>` +
+    `<td>${c.programsLost.length ? esc(listOfItems(c.programsLost.map(programName))) : `<span class="unnamed">${esc(D.noneNamed)}</span>`}` +
+    (c.deferral ? ` <span class="hg-badge">${esc(D.deferred)}</span><span class="hg-cite">${esc(t("drops.until", { when: deferralUntil(c.deferral.reason) }))}</span>` : "") + `</td>` +
+    `<td>${esc(t(`drops.drivers.${c.driver}`))}</td></tr>`).join("");
   rows.querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => b.addEventListener("click", () => onSelect(i)));
   $("dropsEmpty").textContent = t("drops.empty", { min: usd(CLIFF_MIN) });
   $("dropsEmpty").hidden = ev.analysis.cliffs.length > 0;

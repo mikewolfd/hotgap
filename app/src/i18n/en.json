@@ -884,7 +884,7 @@
         "current": "Current earnings",
         "leap": "The leap, to the exit",
         "safe": "Safe from here",
-        "road": "The road out of poverty",
+        "road": "100% to 200% of the poverty guideline",
         "whatIf": "What-if: {tag}"
       },
       "readout": {
@@ -912,15 +912,20 @@
       "rangeTo": "{to} →",
       "deferred": "{n, plural, one {{n} cliff lands at a later renewal (hollow dot, dashed connector); it counts in every figure here.} other {{n} cliffs land at a later renewal (hollow dots, dashed connectors); they count in every figure here.}}",
       "labels": {
-        "net": "net {net}",
+        "net": {
+          "help": "net {net}, help counted",
+          "tax": "net {net} after tax"
+        },
         "ends": "{program} ends",
         "road": {
           "keeps": "keeps {cents}¢ of each extra dollar",
           "loses": "loses {cents}¢ of each extra dollar"
-        }
+        },
+        "merged": "{n} drops together"
       },
       "whatIfLines": "{n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}}",
-      "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}"
+      "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}",
+      "whatIfPositions": "{n, plural, one {One what-if is this same curve at a different pay: its hollow diamond marks where it lands.} other {{n} what-ifs are this same curve at a different pay: their hollow diamonds mark where they land.}}"
     },
     "compare": {
       "rows": {

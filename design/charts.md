@@ -317,6 +317,13 @@ Drawn in this order, each only if it fits:
    drop labels on the picture, 2 included. Biggest first and not in axis
    order, because a crowded stretch would otherwise spend the last label on
    the smallest step in it: a $677 drop named beside a $2,387 one that is not.
+   **Only marks inside the box the reader is looking through** (caseworker,
+   2026-09-18): a label for a mark off the edge of the view is drawn half
+   under the scroller's clip, where it reads as broken text rather than as
+   "more over there" — two readers, in two languages, stopped on "…o TANF"
+   against the left edge — and it spends a label the reader cannot see. 2 is
+   exempt: it always draws, wherever its mark is, which is the promise the
+   page makes.
 
 **A what-if line's tag comes third**, between 2 and 3 (caseworker,
 2026-09-18). It is not a fact about the household's own curve, but a line
@@ -329,6 +336,15 @@ paragraph on. A number with no cause is half a label. Where the two-line box
 finds no clear spot and the one-line box does, the money goes alone; the
 largest drop keeps both lines even when it has to be forced, because it is the
 label the page promises.
+
+**A merged mark's second line is its count**, not a program (caseworker,
+2026-09-18): its money is the *sum* of the cliffs under it, and because dots
+merge by pixel distance that sum is a different figure at a phone's scale from
+the one a laptop prints for the same step — a counselor said she would not
+know which number to read out. *2 drops together* says what the figure is; the
+rows are where they separate. Naming one of several programs there would be a
+half-truth, which is why the citizen review left the line blank; a count is
+true and it is the thing that was missing.
 
 **Collisions.** Each label's candidate spots are tested against the dots (with
 the open ring's box), the diamond, and every label already placed. The spots
@@ -370,6 +386,13 @@ CompareTable is what she opens to read the figures off.
   the ink the CompareTable already rules its what-if columns with, so a line
   and its column are one mark — and drawn *under* the base line, which is
   never the curve a reader has to hunt for.
+- **A raise is not a second line.** A what-if that changes only pay is
+  answered with the *same points*: its line would lie exactly under the base's,
+  say nothing, and claim there are two curves. It is a second **position** on
+  the one curve, and position is a diamond everywhere in this system — hollow
+  and in the what-if ink, so it is never the household's own filled one. The
+  test is the points, not the diff: the same raise in another state is a real
+  second curve and gets a line.
 - **How many.** Three. A fourth what-if keeps its column, its keep rate and
   its on-the-way list, and the caption says how many lines are drawn and how
   many are not. A column that is still computing, that failed, or that the

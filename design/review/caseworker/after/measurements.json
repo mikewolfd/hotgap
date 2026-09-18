@@ -1,32 +1,31 @@
 {
  "PF-weight-390-light": {
   "html": 84,
-  "svg": 23,
-  "total": 107,
+  "svg": 26,
+  "total": 110,
   "figureTop": 118,
   "figureShare": 0.86,
   "figureHeight": 746
  },
  "PF-weight-open-390-light": {
-  "html": 1429,
-  "svg": 23,
-  "total": 1452,
+  "html": 1351,
+  "svg": 26,
+  "total": 1377,
   "figureTop": 118,
   "figureShare": 0.86,
-  "figureHeight": 1192
+  "figureHeight": 1220
  },
  "PF-labels-390-light": [
-  "net $84,371",
+  "net $84,371, help counted",
   "−$27,893",
+  "2 drops together",
   "loses 97¢ of each extra dollar",
-  "−$3,904",
-  "TANF cash assistance ends",
-  "−$3,821",
-  "Premium tax credit ends"
+  "−$857",
+  "−$780"
  ],
  "S4-labels-390-light": [
   {
-   "t": "net $84,371",
+   "t": "net $84,371, help counted",
    "hit": 0
   },
   {
@@ -34,23 +33,19 @@
    "hit": 0
   },
   {
+   "t": "2 drops together",
+   "hit": 0
+  },
+  {
    "t": "loses 97¢ of each extra dollar",
    "hit": 0
   },
   {
-   "t": "−$3,904",
+   "t": "−$857",
    "hit": 0
   },
   {
-   "t": "TANF cash assistance ends",
-   "hit": 0
-  },
-  {
-   "t": "−$3,821",
-   "hit": 0
-  },
-  {
-   "t": "Premium tax credit ends",
+   "t": "−$780",
    "hit": 0
   }
  ],
@@ -81,32 +76,31 @@
  },
  "PF-weight-390-dark": {
   "html": 84,
-  "svg": 23,
-  "total": 107,
+  "svg": 26,
+  "total": 110,
   "figureTop": 118,
   "figureShare": 0.86,
   "figureHeight": 746
  },
  "PF-weight-open-390-dark": {
-  "html": 1429,
-  "svg": 23,
-  "total": 1452,
+  "html": 1351,
+  "svg": 26,
+  "total": 1377,
   "figureTop": 118,
   "figureShare": 0.86,
-  "figureHeight": 1192
+  "figureHeight": 1220
  },
  "PF-labels-390-dark": [
-  "net $84,371",
+  "net $84,371, help counted",
   "−$27,893",
+  "2 drops together",
   "loses 97¢ of each extra dollar",
-  "−$3,904",
-  "TANF cash assistance ends",
-  "−$3,821",
-  "Premium tax credit ends"
+  "−$857",
+  "−$780"
  ],
  "S4-labels-390-dark": [
   {
-   "t": "net $84,371",
+   "t": "net $84,371, help counted",
    "hit": 0
   },
   {
@@ -114,23 +108,19 @@
    "hit": 0
   },
   {
+   "t": "2 drops together",
+   "hit": 0
+  },
+  {
    "t": "loses 97¢ of each extra dollar",
    "hit": 0
   },
   {
-   "t": "−$3,904",
+   "t": "−$857",
    "hit": 0
   },
   {
-   "t": "TANF cash assistance ends",
-   "hit": 0
-  },
-  {
-   "t": "−$3,821",
-   "hit": 0
-  },
-  {
-   "t": "Premium tax credit ends",
+   "t": "−$780",
    "hit": 0
   }
  ],
@@ -161,35 +151,34 @@
  },
  "PF-weight-1280-light": {
   "html": 88,
-  "svg": 32,
-  "total": 120,
+  "svg": 38,
+  "total": 126,
   "figureTop": 110,
   "figureShare": 0.87,
   "figureHeight": 786
  },
  "PF-weight-open-1280-light": {
-  "html": 1444,
-  "svg": 32,
-  "total": 1476,
+  "html": 1366,
+  "svg": 38,
+  "total": 1404,
   "figureTop": 110,
   "figureShare": 0.88,
-  "figureHeight": 1092
+  "figureHeight": 1120
  },
  "PF-labels-1280-light": [
-  "net $84,371",
+  "net $84,371, help counted",
   "−$25,449",
   "CCDF child care subsidy ends",
   "back to even",
   "safe from here",
   "loses 97¢ of each extra dollar",
-  "−$3,904",
-  "TANF cash assistance ends",
-  "−$3,821",
-  "Premium tax credit ends"
+  "−$2,444",
+  "SNAP ends",
+  "−$857"
  ],
  "S4-labels-1280-light": [
   {
-   "t": "net $84,371",
+   "t": "net $84,371, help counted",
    "hit": 0
   },
   {
@@ -213,19 +202,15 @@
    "hit": 0
   },
   {
-   "t": "−$3,904",
+   "t": "−$2,444",
    "hit": 0
   },
   {
-   "t": "TANF cash assistance ends",
+   "t": "SNAP ends",
    "hit": 0
   },
   {
-   "t": "−$3,821",
-   "hit": 0
-  },
-  {
-   "t": "Premium tax credit ends",
+   "t": "−$857",
    "hit": 0
   }
  ],
@@ -375,35 +360,34 @@
  },
  "PF-weight-1280-dark": {
   "html": 88,
-  "svg": 32,
-  "total": 120,
+  "svg": 38,
+  "total": 126,
   "figureTop": 110,
   "figureShare": 0.87,
   "figureHeight": 786
  },
  "PF-weight-open-1280-dark": {
-  "html": 1444,
-  "svg": 32,
-  "total": 1476,
+  "html": 1366,
+  "svg": 38,
+  "total": 1404,
   "figureTop": 110,
   "figureShare": 0.88,
-  "figureHeight": 1092
+  "figureHeight": 1120
  },
  "PF-labels-1280-dark": [
-  "net $84,371",
+  "net $84,371, help counted",
   "−$25,449",
   "CCDF child care subsidy ends",
   "back to even",
   "safe from here",
   "loses 97¢ of each extra dollar",
-  "−$3,904",
-  "TANF cash assistance ends",
-  "−$3,821",
-  "Premium tax credit ends"
+  "−$2,444",
+  "SNAP ends",
+  "−$857"
  ],
  "S4-labels-1280-dark": [
   {
-   "t": "net $84,371",
+   "t": "net $84,371, help counted",
    "hit": 0
   },
   {
@@ -427,19 +411,15 @@
    "hit": 0
   },
   {
-   "t": "−$3,904",
+   "t": "−$2,444",
    "hit": 0
   },
   {
-   "t": "TANF cash assistance ends",
+   "t": "SNAP ends",
    "hit": 0
   },
   {
-   "t": "−$3,821",
-   "hit": 0
-  },
-  {
-   "t": "Premium tax credit ends",
+   "t": "−$857",
    "hit": 0
   }
  ],
@@ -498,13 +478,12 @@
  ],
  "PF-whatif-dashes": [
   "7 4",
-  "2 3",
-  "10 4 2 4"
+  "2 3"
  ],
  "PF-weight-1280-3-whatifs": {
   "html": 88,
-  "svg": 39,
-  "total": 127,
+  "svg": 44,
+  "total": 132,
   "figureTop": 110,
   "figureShare": 0.87,
   "figureHeight": 786
@@ -649,38 +628,36 @@
   ]
  },
  "ES-labels-390": [
-  "neto $84,371",
+  "neto $84,371, con la ayuda contada",
   "−$27,893",
+  "2 caídas juntas",
   "pierde 97¢ de cada dólar extra",
-  "−$3,904",
-  "se termina Asistencia en efectivo TANF",
-  "−$3,821",
-  "se termina Crédito fiscal para las primas"
+  "−$857",
+  "−$780"
  ],
  "ES-weight-390": {
-  "html": 95,
-  "svg": 25,
-  "total": 120,
+  "html": 100,
+  "svg": 28,
+  "total": 128,
   "figureTop": 118,
   "figureShare": 0.86,
   "figureHeight": 746
  },
  "ES-labels-1280": [
-  "neto $84,371",
+  "neto $84,371, con la ayuda contada",
   "−$25,449",
-  "se termina Subsidio de cuidado infantil CCDF",
+  "Subsidio de cuidado infantil CCDF: termina aquí",
   "de vuelta a la par",
-  "seguro de aquí en adelante",
+  "a salvo de aquí en adelante",
   "pierde 97¢ de cada dólar extra",
-  "−$3,904",
-  "se termina Asistencia en efectivo TANF",
-  "−$3,821",
-  "se termina Crédito fiscal para las primas"
+  "−$2,444",
+  "SNAP: termina aquí",
+  "−$857"
  ],
  "ES-weight-1280": {
-  "html": 100,
-  "svg": 36,
-  "total": 136,
+  "html": 105,
+  "svg": 45,
+  "total": 150,
   "figureTop": 110,
   "figureShare": 0.88,
   "figureHeight": 811

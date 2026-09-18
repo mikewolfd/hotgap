@@ -103,7 +103,7 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     // ── The picture says what the prose used to (design/charts.md § Direct labels).
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`PF-labels-${width}-${scheme}`] = labels;
-    expect(labels).toContain("net $84,371");                      /* 1: the y axis named in dollars at the diamond */
+    expect(labels).toContain("net $84,371, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
     expect(labels.some((l) => /^−\$\d/.test(l ?? ""))).toBe(true); /* 2: the largest drop always draws */
     expect(labels.some((l) => /¢ of each extra dollar$/.test(l ?? ""))).toBe(true);   /* 6: the keep rate on the road out of poverty */
     // The peak's own dollar went with this pass: it printed a number within a rounding of "net" two inches away.
@@ -143,7 +143,9 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(page.locator("#tiles")).toContainText("percentile, ±$8,000 (n = 393)");
     // Every drop row carries its own position now, so the fourth cliff is as defensible as the two on the tiles.
     await expect(page.locator('#dropRows [aria-current="true"]')).toHaveText(/^\$54,000 → \$55,000/);
-    await expect(page.locator("#dropRows tr").first().locator(".hg-cite")).toContainText("in 100 families like this earn less");
+    // The position stays on the two tiles a counselor reads out and off every row: three of four fresh
+    // readers flinched at being ranked, and ten rows of it was nine too many.
+    await expect(page.locator("#dropRows tr").first().locator(".hg-cite")).toHaveCount(0);
     await expect(page.locator("#bdTitle")).toHaveText("Where the $25,449 went — $54,000 to $55,000");
     await expect(page.locator("#bdBars")).toContainText("Sums to $25,449, the drop. Driver: benefits.");
 
@@ -286,12 +288,13 @@ test("390px: a take-up chip adds a what-if, evaluated live, and the URL carries 
   expect((await evaluatedRaise).status()).toBe(200);
   await expect(page.locator('[data-chip="pay"] .hg-chip__v')).toHaveText("$38,000 a year");   /* the chips show the base */
 
-  // The comparison IS the picture: the what-if's curve joins the base's, with its own tag.
+  // The comparison IS the picture. A raise with nothing else changed is the SAME curve at a different pay,
+  // so it is not a second line — its line would lie exactly under the base's and claim there are two
+  // curves. It is a hollow diamond where that pay lands, and the caption says which kind it is.
   await expect(page.locator("#curve path[data-whatif]")).toHaveCount(1);
+  await expect(page.locator('#curve path[data-whatif][data-kind="position"]')).toHaveCount(1);
   await expect(page.locator("#curve text.hg-label--whatif")).toHaveText(["$55,000"]);
-  await expect(page.locator("#curveCap")).toContainText("One what-if is drawn here as a second line, told apart by its dash and its tag.");
-  // A dash, not a colour: the lines are distinguishable in greyscale and on a photocopier.
-  expect(await page.evaluate(() => document.querySelector("#curve path[data-whatif]")!.getAttribute("stroke-dasharray"))).toBeTruthy();
+  await expect(page.locator("#curveCap")).toContainText("One what-if is this same curve at a different pay: its hollow diamond marks where it lands.");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: pf("390-one-whatif") });
 
@@ -320,8 +323,13 @@ test("390px: a take-up chip adds a what-if, evaluated live, and the URL carries 
   await expect(page.locator("#compareHead th").nth(3)).toContainText("CCDF subsidy off");
   await expect(page.locator("#compareRows tr").first().locator("td").nth(2)).toHaveText(/^\$[\d,]+$/);
   await expect(page.locator("#compareEmpty")).toBeHidden();
-  // Two columns, two lines: the picture and the table cannot disagree about how many what-ifs there are.
+  // Two columns, two marks: the picture and the table cannot disagree about how many what-ifs there are.
+  // Turning the subsidy off is a different household, so that one IS a second curve, and a dashed one —
+  // a dash, not a colour, so the two lines are told apart in greyscale and on a photocopier.
   await expect(page.locator("#curve path[data-whatif]")).toHaveCount(2);
+  const line = page.locator('#curve path[data-whatif]:not([data-kind="position"])');
+  await expect(line).toHaveCount(1);
+  expect(await line.getAttribute("stroke-dasharray")).toBeTruthy();
   // The same chip again is already compared; nothing is added twice.
   await chip.click();
   await expect(note).toContainText("is already compared");
@@ -359,16 +367,20 @@ test("1280px: three what-ifs are three lines on one picture and four columns in 
   await rendered(page);
   await expect(page.locator("#compareHead th")).toHaveCount(5);
 
-  // The comparison is the picture, and the budget survives it.
+  // The comparison is the picture, and the budget survives it. Three what-ifs, three marks, each named:
+  // two are different households and draw their own curves; the raise is this curve at another pay.
   await expect(page.locator("#curve path[data-whatif]")).toHaveCount(3);
   const tags = await page.locator("#curve text.hg-label--whatif").allTextContents();
   measured["PF-whatif-tags-1280"] = tags;
   expect(tags).toEqual(["CCDF subsidy", "Housing voucher", "$55,000"]);
-  // Three dashes, three lines, all distinct — identity that survives greyscale.
-  const dashes = await page.evaluate(() => [...document.querySelectorAll("#curve path[data-whatif]")].map((p) => p.getAttribute("stroke-dasharray")));
+  // Distinct dashes, so identity survives greyscale; the position mark carries none and is a shape instead.
+  const dashes = await page.evaluate(() => [...document.querySelectorAll('#curve path[data-whatif]:not([data-kind="position"])')].map((p) => p.getAttribute("stroke-dasharray")));
   measured["PF-whatif-dashes"] = dashes;
-  expect(new Set(dashes).size).toBe(3);
-  await expect(page.locator("#curveCap")).toContainText("3 what-ifs are drawn here as second lines");
+  expect(dashes.length).toBe(2);
+  expect(new Set(dashes).size).toBe(2);
+  await expect(page.locator('#curve path[data-whatif][data-kind="position"]')).toHaveCount(1);
+  await expect(page.locator("#curveCap")).toContainText("2 what-ifs are drawn here as second lines");
+  await expect(page.locator("#curveCap")).toContainText("One what-if is this same curve at a different pay");
   const weight = await page.evaluate(MEASURE);
   measured["PF-weight-1280-3-whatifs"] = weight;
   expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
@@ -556,13 +568,13 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
   for (const width of [390, 1280] as const) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await page.goto(`${HOUSEHOLD}&lang=es-US`);
-    await expect(page.locator("#answer")).toHaveText("Esta familia pierde dinero con cada aumento entre $36,000 y $45,000; $7,000 la saca del tramo.");
+    await expect(page.locator("#answer")).toHaveText("Esta familia pierde dinero con cada aumento entre $36,000 y $45,000; con $7,000 más al año ya sale de la zona.");
     await expect(page.locator("#howToSummary")).toHaveText("Cómo leer esta gráfica");
     await expect(page.locator("#stepsHeading")).toHaveText("Lo que enfrenta esta familia, escalón por escalón");
     await expect(page.locator("#compare")).toHaveText("Comparar los escenarios");
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`ES-labels-${width}`] = labels;
-    expect(labels).toContain("neto $84,371");
+    expect(labels).toContain("neto $84,371, con la ayuda contada");
     expect(labels.some((l) => /¢ de cada dólar extra$/.test(l ?? ""))).toBe(true);
     const weight = await page.evaluate(MEASURE);
     measured[`ES-weight-${width}`] = weight;

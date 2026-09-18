@@ -21,7 +21,7 @@
 // A draw is O(points × (1 + what-ifs) + cliffs + zones); a width change
 // redraws once; print redraws synchronously at a fixed width (review N6).
 import { keepRateWords, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
 import { clusterCliffs, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
 import { MAX_DROP_LABELS, placer, type Spot } from "../lib/chart/labels.js";
 
@@ -87,8 +87,16 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   const zoneOf = (e: number) => ev!.analysis.dangerZones.find((z) => e > z.startEarnings && (z.endEarnings === null || e < z.endEarnings)) ?? null;
   const isPersonal = (z: { startEarnings: number } | null) => !!z && !!ev!.personal.zone && z.startEarnings === ev!.personal.zone.startEarnings;
   const mkSpan = (text: string) => { const el = document.createElement("span"); el.textContent = text; return el; };
-  /** The lines this picture draws: the ones with points inside the base's axis, capped. */
+  /** The what-ifs this picture carries, capped; the rest keep their column and their rows. */
   const drawnWhatIfs = (): WhatIfLine[] => whatIfs.slice(0, MAX_WHAT_IF_LINES);
+  /**
+   * Whether a what-if's curve IS the base's — a raise, and nothing else
+   * changed, which the sweep answers with the same points at a different
+   * position. Read off the points rather than off the diff, because the same
+   * raise in another state is a real second curve.
+   */
+  const samePoints = (l: WhatIfLine): boolean =>
+    l.net.length === net.length && l.net.every((v, i) => v === net[i] && l.earnings[i] === earn[i]);
   /** The line's value at any earnings, interpolated between the two axis points around it. */
   const netAt = (e: number): number => {
     const f = (e - earn[0]) / (earn[1] - earn[0]), i = Math.max(0, Math.min(net.length - 2, Math.floor(f)));
@@ -108,6 +116,9 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const pad = { t: 30, r: 20, b: 34 + (road ? ROAD_FOOT : 0), l: PLOT_LEAD };
     const x0 = earn[0], x1 = earn[earn.length - 1];
     const lines = drawnWhatIfs();
+    /* Two kinds, told apart by the data: a what-if with a curve of its own, and one that is the base's own
+       curve at a different pay. The caption names them separately because they are different claims. */
+    const positions = lines.filter(samePoints), curves = lines.filter((l) => !samePoints(l));
     /* Axis honesty (charts.md): the floor is computed, never typed, and the
        visible range is at least 2.5× the largest plotted drop (S14). Every
        line drawn is inside the range — a what-if curve running off the top
@@ -163,8 +174,12 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     }
 
     const yRange = y1 - y0;
-    /* The what-ifs first, under the base: the household's own curve is never the line a reader has to hunt for. */
+    /* The what-ifs first, under the base: the household's own curve is never the line a reader has to hunt for.
+       A what-if whose curve IS the base's — a raise, and nothing else changed — draws no line; it is a second
+       position on the one curve, and its diamond goes on top with the marks (charts.md § A what-if is a
+       second line). Read off the data, not off the diff: the same raise in another state is a real second curve. */
     for (const [i, l] of lines.entries()) {
+      if (samePoints(l)) continue;
       const pts = l.earnings.map((e, k) => [px(e), py(l.net[k])] as [number, number]).filter(([x]) => x >= 0 && x <= W);
       if (pts.length > 1) svg.append(whatIfPath(pathD(pts), i));
     }
@@ -218,6 +233,14 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const sx = safeApart ? px(safe) : NaN;
     if (safeApart) svg.append(mk("line", { x1: sx, y1: plotTop, x2: sx, y2: plotBot, stroke: "var(--loss-3)", "stroke-width": 1 }));
 
+    /* A what-if that is the same curve at a different pay: its own hollow diamond on the one line, under the
+       household's own, which is drawn last and stays the filled one. */
+    for (const [i, l] of lines.entries()) {
+      if (!samePoints(l)) continue;
+      const lx = Math.min(Math.max(l.at, x0), x1);
+      svg.append(whatIfDot(px(lx), py(netAt(lx)), i));
+    }
+
     /* The diamond sits on the line at the household's own pay, which may fall between two axis points. */
     const cx = px(A.currentEarnings), cy = py(netAt(A.currentEarnings));
     const [dropLine, diamondPath] = household(cx, cy, plotBot);
@@ -230,8 +253,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     for (const m of marks) label.block({ x: m.x - RING, y: m.y - RING, w: 2 * RING, h: 2 * RING });
     label.block({ x: cx - 7, y: cy - 7, w: 14, h: 14 });
 
-    /* 1. What the household keeps now, at its own diamond: the one place the y axis is named in dollars. */
-    label.place([t("chart.labels.net", { net: usd(netAt(A.currentEarnings)) })],
+    /* 1. What the household keeps now, at its own diamond: the one place the y axis is named in dollars —
+          and, in two words, why it is not the pay. A counselor read "net $84,371" beside a $38,000 wage and
+          said her client would decide the page was about some other family. */
+    const kept = netAt(A.currentEarnings);
+    label.place([t(`chart.labels.net.${kept >= A.currentEarnings ? "help" : "tax"}`, { net: usd(kept) })],
       [{ x: cx, y: cy - 14, anchor: "middle" }, { x: cx, y: cy + 26, anchor: "middle" },
         { x: cx + 14, y: cy + 4, anchor: "start" }, { x: cx - 14, y: cy + 4, anchor: "end" },
         { x: cx, y: cy - 34, anchor: "middle" }, { x: cx, y: plotTop - 8, anchor: "middle" }],
@@ -252,8 +278,12 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     /* A drop's label is two lines — its money, then what ends there. A number with no cause is half a label;
        the second line is dropped only when the two-line box finds no clear spot and the one-line box does. */
     const dropLabel = (m: Mark, cls: string, force = false): boolean => {
+      const n = m.cluster.cliffs.length;
       const money = lossFigure(m.cluster.cliffs.reduce((sum, c) => sum + c.drop, 0));
-      const ends = m.cluster.cliffs.length === 1 ? endsLine(m.cluster.cliffs[0]) : null;
+      /* A merged mark's money is the SUM of the cliffs under it, and at a phone's scale that is a different
+         figure from the one a laptop prints for the same step — a counselor said she would not know which
+         number to read out. The second line says how many it added up; the rows are where they separate. */
+      const ends = n === 1 ? endsLine(m.cluster.cliffs[0]) : t("chart.labels.merged", { n });
       const both = ends !== null ? [money, ends] : [money];
       if (label.place(both, dropSpots(m), cls)) return true;
       if (ends !== null && label.place([money], dropSpots(m), cls)) return true;
@@ -264,15 +294,17 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     let labelled = 0;
     if (worstMark) { dropLabel(worstMark, `${LOSS_LABEL} hg-label--strong`, true); labelled++; }
 
-    /* 3. Every what-if line's tag, on its own curve: a second line with no name is a line that lies, so this
-          comes before the base's own rules. Dash and tag together, never colour alone. */
-    for (const [i, l] of lines.entries()) {
-      const lx = px(Math.min(Math.max(l.at, x0), x1));
-      const ly = py(l.net[Math.max(0, Math.min(l.net.length - 1, Math.round((Math.min(Math.max(l.at, x0), x1) - l.earnings[0]) / Math.max(1, l.earnings[1] - l.earnings[0]))))]);
+    /* 3. Every what-if's tag, at its own pay on its own curve: a second mark with no name is a mark that
+          lies, so this comes before the base's own rules. Dash (or the hollow diamond) and tag together,
+          never colour alone. */
+    for (const l of lines) {
+      const at = Math.min(Math.max(l.at, x0), x1);
+      const k = Math.max(0, Math.min(l.net.length - 1, Math.round((at - l.earnings[0]) / Math.max(1, l.earnings[1] - l.earnings[0]))));
+      const lx = px(at), ly = py(l.net[k]);
       label.place([l.tag],
         [{ x: lx + 10, y: ly - 6, anchor: "start" }, { x: lx + 10, y: ly + 16, anchor: "start" },
           { x: lx - 10, y: ly - 6, anchor: "end" }, { x: lx, y: ly - 22, anchor: "middle" }],
-        `hg-label hg-label--whatif hg-label--halo hg-label--med hg-label--wi${i}`);
+        "hg-label hg-label--whatif hg-label--halo hg-label--med");
     }
 
     /* 4. The way back, on its rule — dropped on a phone, where the caption says it instead. */
@@ -301,8 +333,13 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     }
 
     /* 8. Every remaining drop, biggest first, while there is room: a crowded stretch would otherwise spend
-          its last label on the smallest step in it. */
-    for (const m of [...marks].filter((m) => m !== worstMark).sort((a, b) => b.cluster.cliffs.reduce((n, c) => n + c.drop, 0) - a.cluster.cliffs.reduce((n, c) => n + c.drop, 0))) {
+          its last label on the smallest step in it. Only marks inside the box the reader is looking
+          through: a label for a mark off the left of the view is drawn half under the scroller's edge,
+          where it reads as broken text rather than as "more over there" — two readers, in two languages,
+          stopped on "…o TANF" against the left edge. The label the page promises (2) is exempt: it always
+          draws, wherever its mark is. The mark, the readout and the row carry the rest. */
+    const inView = (x: number) => print || (x >= host.scroll.scrollLeft && x <= host.scroll.scrollLeft + viewport);
+    for (const m of [...marks].filter((m) => m !== worstMark && inView(m.x)).sort((a, b) => b.cluster.cliffs.reduce((n, c) => n + c.drop, 0) - a.cluster.cliffs.reduce((n, c) => n + c.drop, 0))) {
       if (labelled >= MAX_DROP_LABELS) break;
       if (dropLabel(m, `${LOSS_LABEL} hg-label--med`)) labelled++;
     }
@@ -313,7 +350,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
       t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
       DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
-      lines.length ? t("chart.whatIfLines", { n: lines.length }) : "",
+      curves.length ? t("chart.whatIfLines", { n: curves.length }) : "",
+      positions.length ? t("chart.whatIfPositions", { n: positions.length }) : "",
       whatIfs.length > lines.length ? t("chart.whatIfHeld", { held: whatIfs.length - lines.length }) : "",
       source,
     ].filter(Boolean).join(" ");
@@ -357,7 +395,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   function renderKey(otherZones: boolean, immediate: boolean, deferred: boolean, zone: boolean, safe: boolean, road: boolean, lines: WhatIfLine[]): void {
     host.key.replaceChildren(
       keyEntry(K.key.net, KEY_MARK.line),
-      ...lines.map((l, i) => keyEntry(t("chart.key.whatIf", { tag: l.tag }), whatIfKeyMark(i))),
+      ...lines.map((l, i) => keyEntry(t("chart.key.whatIf", { tag: l.tag }), whatIfKeyMark(i, samePoints(l)))),
       ...(zone ? [keyEntry(K.key.ownZone, KEY_MARK.band)] : []),
       ...(otherZones ? [keyEntry(zone ? K.key.otherZones : K.key.zones, KEY_MARK.other)] : []),
       ...(immediate ? [keyEntry(K.key.immediate, KEY_MARK.drop)] : []),
