@@ -203,8 +203,8 @@ export interface Bins {
   index: (v: number) => number;
   /** Where zero sits on the scale, 0–1, on a diverging scale only: the hinge the strip's bars start from. */
   zero?: number;
-  /** A diverging scale's two step widths, one per arm — null where no state falls on that side. They differ, and the caption says so. */
-  width?: { down: number | null; up: number | null };
+  /** A diverging scale's two arms: each one's step width (null where no state falls on that side) and how many steps it was given. */
+  width?: { down: number | null; up: number | null; nDown: number; nUp: number };
 }
 
 /* Bins across the OBSERVED range of the COMPARABLE states. Binning from 0
@@ -249,8 +249,21 @@ export function bins(values: number[], unit: Measure["unit"]): Bins {
 /** Rounding slack, so a width that divides its side exactly does not buy a sliver of a class. */
 const EPS = 1e-9;
 
-/** How many equal steps each arm of a diverging scale is cut into; two arms, six swatches at most (charts.md § 2). */
-const ARM_CLASSES = 3;
+/** How many swatches a diverging scale has in all: two arms share them (charts.md § 2). */
+const DIVERGING_CLASSES = 6;
+
+/**
+ * The figure a RANK is decided on: the one the page prints.
+ *
+ * The keep rate is stored to four decimals and printed in whole cents, so
+ * ranking on the stored figure gave two states the page shows as equal —
+ * Ohio and North Carolina, both "loses 42¢" — the ranks 14 and 15, with no
+ * tie mark and no tiebreak a reader could apply (the cold read's B2,
+ * 2026-09-18). A ranking must be reproducible from what is on the page, so
+ * ties are ties at the precision the reader is given. Every other measure is
+ * already printed at its stored precision, and rounds to itself.
+ */
+export const rankValue = (v: number, m: Measure): number => (m.unit === "¢" ? Math.round(v * 100) : v);
 
 /**
  * The diverging scale, for a measure whose zero means something — on this page
@@ -258,9 +271,10 @@ const ARM_CLASSES = 3;
  * raise poorer and one that keeps a little of it (charts.md § 2).
  *
  * **Zero is always a bin edge**, and each ARM is binned over its own reach:
- * three equal steps from zero out to the furthest state on that side, plum
- * below and the keep ramp above, each arm lightest against the hinge and
- * deepest at its end. An arm with no state on it has no classes at all.
+ * equal steps from zero out to the furthest state on that side, plum below and
+ * the keep ramp above, each arm lightest against the hinge and deepest at its
+ * end. An arm with no state on it has no classes at all, and the other then
+ * takes five — the ramp's own depth.
  *
  * The obvious alternative — ONE width for both arms, so that a class's depth
  * means the same distance from zero whichever ramp it is on — was built first
@@ -271,13 +285,24 @@ const ARM_CLASSES = 3;
  * like a state that keeps a third of a cent. The property it bought is one a
  * reader cannot use anyway — comparing depth ACROSS two hues is not something
  * the eye does reliably — while the resolution it cost is the thing the map is
- * for. So each arm uses its ramp end to end over its own range, which is the
- * same instinct the count rule already follows, and the caption prints both
- * widths so nobody reads a step on one arm as a step on the other.
+ * for. So each arm uses its ramp over its own range, and the caption prints
+ * both widths so nobody reads a step on one arm as a step on the other.
+ *
+ * **The six swatches are split in proportion to how far each arm reaches**,
+ * at least one each. Cutting both arms the same number of ways was the first
+ * try and it flattened the wrong side: three steps over 105¢ of losses put
+ * Ohio at −42¢ and Nevada at −67¢ in one class while two states a single cent
+ * apart on the keeping side were drawn differently (the cold read's S6,
+ * 2026-09-18). Resolution follows the spread now — four plum classes of 26¢
+ * and two keep classes of 15¢ on the committed sweep — so the arm with more
+ * ground to cover gets more of the scale to cover it with.
  */
 export function divergingBins(loValue: number, hiValue: number): Bins {
   const lo = Math.min(loValue, 0), hi = Math.max(hiValue, 0);
-  const nDown = lo < 0 ? ARM_CLASSES : 0, nUp = hi > 0 ? ARM_CLASSES : 0;
+  const span = -lo + hi;
+  const share = span > 0 ? Math.floor((DIVERGING_CLASSES * -lo) / span) : 0;
+  const nDown = lo < 0 ? (hi > 0 ? Math.min(5, Math.max(1, share)) : 5) : 0;
+  const nUp = hi > 0 ? (lo < 0 ? Math.min(5, Math.max(1, DIVERGING_CLASSES - nDown)) : 5) : 0;
   const down = -lo / (nDown || 1), up = hi / (nUp || 1);
   /* Spread over the ramp so the two ends of an arm are the ramp's two ends
      (charts.md § 2); `i` counts outward from zero, so the lightest step is
@@ -297,8 +322,8 @@ export function divergingBins(loValue: number, hiValue: number): Bins {
     lo, hi, kind: "diverging", classes,
     index: (v) => Math.min(classes.length - 1, Math.max(0, at(v))),
     zero: (hi - lo ? -lo / (hi - lo) : 0) || 0,
-    /** The two arms' step widths: they differ, and the caption says so. */
-    width: { down: nDown ? down : null, up: nUp ? up : null },
+    /** Each arm's step width and how many steps it has: both differ, and the caption says so. */
+    width: { down: nDown ? down : null, up: nUp ? up : null, nDown, nUp },
   };
 }
 
@@ -320,9 +345,11 @@ export function group(rows: StateRow[], measure: Measure): Grouped {
   const shaded = by("shaded"), none = by("none"), incomplete = by("incomplete");
   /* Rank 1 is the worst state, which on the keep rate is the lowest figure:
      a state that takes back more than the raise is more regressive than one
-     that takes back less, and the ranking leads with it. */
+     that takes back less, and the ranking leads with it. The comparison is on
+     the figure the page PRINTS (`rankValue`), so two states the reader sees as
+     equal are equal here; the sort is stable, so they keep postal order. */
   const sign = measure.worst === "low" ? -1 : 1;
-  const ranked = shaded.slice().sort((a, z) => sign * ((z.value as number) - (a.value as number)));
+  const ranked = shaded.slice().sort((a, z) => sign * (rankValue(z.value as number, measure) - rankValue(a.value as number, measure)));
   const past = measure.key === "leap" ? by("past").sort((a, z) => (z.value as number) - (a.value as number)) : by("past");
   return {
     ranked, past, none, incomplete,

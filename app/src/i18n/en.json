@@ -1089,8 +1089,8 @@
       "bins": {
         "steps": "five equal-width steps from {lo} to {hi}",
         "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}",
-        "diverging": "three steps of {down} below zero and three of {up} above it, from {lo} to {hi}",
-        "divergingOneSide": "three steps of {width} from zero, from {lo} to {hi}"
+        "diverging": "{down} steps of {downWidth} below zero and {up} of {upWidth} above it, from {lo} to {hi}",
+        "divergingOneSide": "{n} steps of {width} from zero, from {lo} to {hi}"
       },
       "source": "HotGap, from PolicyEngine {year} rules on {model}. Weekly run of {date}. Net income after health-insurance premiums. Estimates only.",
       "binsLine": {
@@ -1140,7 +1140,8 @@
         "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step."
       },
       "axisPosition": "{n} in 100 families like this earn less than that.",
-      "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve."
+      "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve.",
+      "carePrice": "There is no county child-care price for {state} in the source database, so a {care} stands in — and child care is what ends at most of these cliffs."
     },
     "rank": {
       "heading": "Ranked",
@@ -1197,7 +1198,7 @@
         },
         "hint": "Orders this table only; the map and the ranking follow the Measure above."
       },
-      "caption": "All six measures for {household}, {order}. PolicyEngine {year} rules, run of {date}.",
+      "caption": "Every measure for {household}, {order}. PolicyEngine {year} rules, run of {date}.",
       "byState": "by state",
       "byMeasure": {
         "dollars": "by {title}, largest first",
@@ -1234,7 +1235,8 @@
       "floorMark": "floor",
       "swipe": "Swipe for more →",
       "note": "Every row keeps the number the model returned, including the rows it cannot complete, because a reporter needs to see what came back. Those rows are flagged in the last column and are not shaded on the map or placed in the ranking. Select a state on the map or in this table to read the corrections behind its numbers under the map; the arrow keys move between states and Enter selects.",
-      "position": "{n} in 100"
+      "position": "{n} in 100",
+      "carePrice": "child-care price: {care}"
     },
     "detail": {
       "choose": "Corrections applied — choose a state",

@@ -202,18 +202,25 @@ describe("bins and group", () => {
   });
   it("a measure with a meaningful zero diverges: zero is always a bin edge, each arm cut over its own reach (charts.md § 2)", () => {
     const bounds = (b: ReturnType<typeof divergingBins>) => [b.classes[0].lo, ...b.classes.map((c) => c.hi)];
-    // The committed sweep's single-2 range. Three steps each side, each arm
-    // over its own reach: a shared width would give the short arm one class
-    // and paint half the map — twenty-five states — one flat colour.
+    // The committed sweep's single-2 range. Six classes split in proportion to
+    // how far each arm reaches — four plum, two keep — each arm over its own
+    // range: one shared width would give the short arm a single class and
+    // paint half the map one flat colour, and cutting both arms the same
+    // number of ways flattened the long one instead.
     const d = divergingBins(-1.0486, 0.3042);
     expect(d.kind).toBe("diverging");
-    expect(d.classes.map((c) => c.hue)).toEqual(["loss", "loss", "loss", "keep", "keep", "keep"]);
-    const w = 1.0486 / 3, u = 0.3042 / 3;
-    expect(bounds(d)).toEqual([-1.0486, -2 * w, -w, 0, u, 2 * u, 0.3042]);
+    expect(d.classes.map((c) => c.hue)).toEqual(["loss", "loss", "loss", "loss", "keep", "keep"]);
+    const w = 1.0486 / 4, u = 0.3042 / 2;
+    expect(bounds(d)).toEqual([-1.0486, -3 * w, -2 * w, -w, 0, u, 0.3042]);
     expect(bounds(d)).toContain(0);
-    expect(d.classes.map((c) => c.ramp)).toEqual([4, 2, 0, 0, 2, 4]);
+    expect(d.classes.map((c) => c.ramp)).toEqual([4, 3, 1, 0, 0, 4]);
+    expect([d.width!.nDown, d.width!.nUp]).toEqual([4, 2]);
     expect(d.width!.down).toBeCloseTo(w, 10);
     expect(d.width!.up).toBeCloseTo(u, 10);
+    // The two states the old split drew alike now fall in different classes,
+    // and the two a cent apart on the short arm fall in the same one.
+    expect(d.index(-0.42)).not.toBe(d.index(-0.67));
+    expect(d.index(0.20)).toBe(d.index(0.21));
     // Every set of values puts zero on a bound, including one that never
     // crosses it — and then the scale runs from zero, not from the lowest
     // state, which is the one place this page bins from zero on purpose.
@@ -227,17 +234,20 @@ describe("bins and group", () => {
       // Every state on the scale falls in a class of the arm its sign names.
       for (const v of [lo, hi, (lo + hi) / 2]) expect(b.classes[b.index(v)].hue, `${v}`).toBe(v < 0 ? "loss" : "keep");
     }
-    // All on one side: the whole scale is that arm, from zero, and only one width to name.
+    // All on one side: the whole scale is that arm, from zero, at the ramp's
+    // own depth — five steps, not six, because a ramp has five.
     const up = divergingBins(0.269, 0.571);
     expect(up.classes.every((c) => c.hue === "keep")).toBe(true);
-    expect(up.classes.length).toBe(3);
+    expect(up.classes.length).toBe(5);
+    expect(up.classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
     expect([up.lo, up.zero, up.width!.down]).toEqual([0, 0, null]);
     const dn = divergingBins(-0.3, -0.05);
     expect(dn.classes.every((c) => c.hue === "loss")).toBe(true);
+    expect(dn.classes.length).toBe(5);
     expect([dn.hi, dn.zero, dn.width!.up]).toEqual([0, 1, null]);
     // A value on a bound belongs to the class nearer zero, and zero itself to the keep arm.
     expect(d.classes[d.index(0)].hue).toBe("keep");
-    expect(d.index(-w)).toBe(2);
+    expect(d.index(-w)).toBe(3);
     expect(d.index(-1.0486)).toBe(0);
     expect(d.index(0.3042)).toBe(5);
   });
@@ -373,7 +383,14 @@ describe("the committed sweep", () => {
     // Rank 1 is the lowest rate, not the highest: a state that takes back more
     // than the raise is more regressive than one that takes back less.
     expect(g.ranked.slice(0, 5).map((r) => r.st)).toEqual(["WI", "CO", "NJ", "OR", "NV"]);
-    expect(g.ranked.map((r) => r.value as number)).toEqual([...g.ranked.map((r) => r.value as number)].sort((a, z) => a - z));
+    /* Ordered by the figure the page PRINTS, so two states a reader sees as
+       equal are equal here and keep postal order between them — Ohio and North
+       Carolina both print "loses 42¢" and the ranking may not claim otherwise
+       (the cold read's B2). Whole cents, ascending, ties intact. */
+    const cents = g.ranked.map((r) => Math.round((r.value as number) * 100));
+    expect(cents).toEqual([...cents].sort((a, z) => a - z));
+    const tied = g.ranked.filter((r) => Math.round((r.value as number) * 100) === -42).map((r) => r.st);
+    expect(tied).toEqual(["NC", "OH"]);
     expect(g.ranked[g.ranked.length - 1].st).toBe("NM");
     // Every state is comparable on this measure: a state with no cliff still
     // has a keep rate, so New Mexico is shaded and binned, never lifted out.

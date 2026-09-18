@@ -1091,8 +1091,8 @@
       "bins": {
         "steps": "cinco escalones de igual ancho de {lo} a {hi}",
         "classes": "{n, plural, one {{words} clase de {lo} a {hi}} other {{words} clases de {lo} a {hi}}}",
-        "diverging": "tres pasos de {down} por debajo de cero y tres de {up} por encima, de {lo} a {hi}",
-        "divergingOneSide": "tres pasos de {width} desde cero, de {lo} a {hi}"
+        "diverging": "{down} pasos de {downWidth} por debajo de cero y {up} de {upWidth} por encima, de {lo} a {hi}",
+        "divergingOneSide": "{n} pasos de {width} desde cero, de {lo} a {hi}"
       },
       "source": "HotGap, con las reglas de {year} de PolicyEngine en {model}. Corrida semanal del {date}. Ingreso neto después de las primas del seguro de salud. Solo estimaciones.",
       "binsLine": {
@@ -1142,7 +1142,8 @@
         "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar."
       },
       "axisPosition": "{n} de cada 100 familias como esta ganan menos que eso.",
-      "axisSameAsRoad": "Ese derrumbe es también la mayor pérdida en un solo escalón de toda la curva."
+      "axisSameAsRoad": "Ese derrumbe es también la mayor pérdida en un solo escalón de toda la curva.",
+      "carePrice": "No hay un precio de cuidado infantil por condado para {state} en la base de datos de origen, así que se usa {care} en su lugar, y el cuidado infantil es lo que termina en la mayoría de estos precipicios."
     },
     "rank": {
       "heading": "Clasificación",
@@ -1199,7 +1200,7 @@
         },
         "hint": "Ordena solo esta tabla; el mapa y la clasificación siguen la medida de arriba."
       },
-      "caption": "Las seis medidas para {household}, {order}. Reglas de {year} de PolicyEngine, corrida del {date}.",
+      "caption": "Todas las medidas para {household}, {order}. Reglas de PolicyEngine de {year}, corrida del {date}.",
       "byState": "por estado",
       "byMeasure": {
         "dollars": "por {title}, de mayor a menor",
@@ -1236,7 +1237,8 @@
       "floorMark": "piso",
       "swipe": "Deslice para ver más →",
       "note": "Cada fila conserva el número que devolvió el modelo, incluidas las filas que no puede completar, porque un reportero necesita ver lo que salió. Esas filas están marcadas en la última columna y no se sombrean en el mapa ni entran en la clasificación. Seleccione un estado en el mapa o en esta tabla para leer las correcciones detrás de sus números debajo del mapa; las flechas se mueven entre estados y Enter selecciona.",
-      "position": "{n} de cada 100"
+      "position": "{n} de cada 100",
+      "carePrice": "precio del cuidado de niños: {care}"
     },
     "detail": {
       "choose": "Correcciones aplicadas — elija un estado",

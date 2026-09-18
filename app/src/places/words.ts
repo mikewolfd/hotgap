@@ -70,6 +70,8 @@ export const axisPosition = (n: number): string => t("readout.axisPosition", { n
 /** A cell whose road runs off its own axis: there is no rate to say. */
 export const roadOffAxisLine = (state: string): string => t("readout.road.offAxis", { state });
 export const roadCliffCountLine = (state: string, n: number): string => t("readout.measure.roadCliffCount", { state, n });
+/** Where a state's child-care price is not its own county's: the input that qualifies most of these cliffs, said beside them. */
+export const carePriceLine = (care: string, state: string): string => t("readout.carePrice", { care, state });
 
 /** "3 and 7" for two children, "1, 4, 9" for more (the label's own form, kept from the first review). */
 const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.map(String)) : listOfItems(ages.map(String)));
@@ -208,9 +210,10 @@ export const classesLine = (n: number, lo: number, hi: number): string => t("fig
  * cut over its own reach — and a reader must not take a step on one arm for a
  * step on the other. With states on one side only there is one width to name.
  */
-export const divergingLine = (down: string | null, up: string | null, lo: string, hi: string): string =>
-  down !== null && up !== null ? t("figure.bins.diverging", { down, up, lo, hi })
-    : t("figure.bins.divergingOneSide", { width: (down ?? up)!, lo, hi });
+export const divergingLine = (arms: { down: string | null; up: string | null; nDown: number; nUp: number }, lo: string, hi: string): string =>
+  arms.down !== null && arms.up !== null
+    ? t("figure.bins.diverging", { down: numberWords(arms.nDown), downWidth: arms.down, up: numberWords(arms.nUp), upWidth: arms.up, lo, hi })
+    : t("figure.bins.divergingOneSide", { n: numberWords(arms.nDown || arms.nUp), width: (arms.down ?? arms.up)!, lo, hi });
 /** The axis the selected household was swept to, in dollars (rerun N9), with the states whose guidelines lengthen it. */
 export const axisLine = (household: string, top: string, exceptions: { state: string; top: string }[]): string =>
   exceptions.length

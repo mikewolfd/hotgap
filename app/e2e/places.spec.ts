@@ -237,9 +237,17 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Each arm is cut over its own reach, so the two step widths differ and the
        caption prints both — a reader must not take a step on one arm for a
        step on the other. */
-    check(/^Bins: three steps of \d+¢ below zero and three of \d+¢ above it, from −\d+¢ to \+\d+¢ over the \d+ states with a comparable figure\.$/.test(mapNow.bins)
+    check(/^Bins: \w+ steps of \d+¢ below zero and \w+ of \d+¢ above it, from −\d+¢ to \+\d+¢ over the \d+ states with a comparable figure\.$/.test(mapNow.bins)
       && mapNow.swatches.length === 6,
-      "the caption gives each arm's own step and the two ends, signed, over six swatches", mapNow.bins);
+      "the caption gives each arm's own count and step and the two ends, signed, over six swatches", mapNow.bins);
+    /* The six classes are split in proportion to how far each arm reaches, so
+       the arm with more ground to cover gets more of the scale (the cold
+       read's S6): Ohio at −42¢ and Nevada at −67¢ must not share a class. */
+    const classOf = (st: string) => mapNow.tiles[st].bg;
+    check(armsOnScale.filter((a) => a === "loss").length === 4 && armsOnScale.filter((a) => a === "keep").length === 2
+      && classOf("OH") !== classOf("NV") && classOf("GA") !== classOf("NE"),
+      "the longer arm takes more of the scale: four plum classes to two keep ones, and two states 25¢ apart are not one colour",
+      { OH: classOf("OH"), NV: classOf("NV"), arms: armsOnScale });
     /* The strip: bars from one hinge, left for a state that loses. */
     const strip0 = await page.evaluate(() => {
       const rank = document.querySelector("#rank") as HTMLElement;
@@ -256,11 +264,28 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the strip's bars hang off one hinge: a losing state's runs left of zero, a keeping state's right, and no row carries the sequential dot", strip0);
     check(strip0.MO.value === shortOf("MO") && strip0.NM.value === shortOf("NM") && strip0.WI.value === shortOf("WI"),
       "each ranked row's value is its own rate, in core's words", { MO: strip0.MO.value, NM: strip0.NM.value, WI: strip0.WI.value });
-    /* Rank 1 is the LOWEST rate: the worst state here is the most regressive one. */
-    const keepOrder = await page.$$eval("#rank .hg-row-btn", (els) => els.map((el) => (el as HTMLElement).dataset.st!));
-    const expectKeepOrder = STATES.filter((st) => !expectIncompleteFor(st, "single-2")).sort((a, b) => metrics(a, "single-2").keepRate! - metrics(b, "single-2").keepRate!);
-    check(keepOrder.join() === expectKeepOrder.join() && keepOrder[0] === expectKeepOrder[0] && keepOrder[keepOrder.length - 1] === "NM",
-      `the keep rate ranks the most regressive state first (${expectKeepOrder[0]}) and the least last (NM)`, keepOrder.slice(0, 5));
+    /* Rank 1 is the LOWEST rate: the worst state here is the most regressive
+       one. The order is on the figure the page PRINTS — whole cents — so two
+       states a reader sees as equal sit together in postal order, and the rank
+       they share is the same rank (the cold read's B2). */
+    const centsOf = (st: string) => Math.round(metrics(st, "single-2").keepRate! * 100);
+    const keepRows = await page.$$eval("#rank .hg-row-btn", (els) => els.map((el) => [(el as HTMLElement).dataset.st!, el.querySelector(".n")!.textContent!, el.querySelector(".v")!.textContent!] as [string, string, string]));
+    const keepOrder = keepRows.map(([st]) => st);
+    const keepable = STATES.filter((st) => !expectIncompleteFor(st, "single-2"));
+    const expectKeepOrder = keepable.slice().sort((a, b) => centsOf(a) - centsOf(b) || a.localeCompare(b));
+    check(keepOrder.join() === expectKeepOrder.join() && keepOrder[keepOrder.length - 1] === "NM",
+      `the keep rate ranks the most regressive state first (${expectKeepOrder[0]}) and the least last (NM), on the cents it prints`, keepOrder.slice(0, 5));
+    /* Competition ranking at the printed precision: every state sharing a
+       printed rate shares one rank, and the next distinct rate skips to the
+       rank after them. Ohio and North Carolina both print "loses 42¢". */
+    const rankByCents = new Map<number, string>();
+    for (const [st, n] of keepRows) { const c = centsOf(st); if (rankByCents.has(c)) continue; rankByCents.set(c, n); }
+    const sharedRanks = keepRows.every(([st, n]) => n === rankByCents.get(centsOf(st)));
+    const skips = [...rankByCents].every(([c, n]) => Number(n.replace(".", "")) === 1 + keepable.filter((st) => centsOf(st) < c).length);
+    const tiedPairs = [...new Set(keepable.map(centsOf))].filter((c) => keepable.filter((st) => centsOf(st) === c).length > 1);
+    check(sharedRanks && skips && tiedPairs.length > 0,
+      `every state printing the same rate shares one rank, and the next rate skips past them (${tiedPairs.length} rates are shared here)`,
+      { OH: keepRows.find(([st]) => st === "OH"), NC: keepRows.find(([st]) => st === "NC") });
     /* Nothing is lifted out on this measure: a state with no cliff still has a rate. */
     const keepGroups = await page.evaluate(() => ({ none: (document.querySelector("#noneGroup") as HTMLElement).hidden, lower: (document.querySelector("#lowerGroup") as HTMLElement).hidden, ranked: document.querySelectorAll("#rank li").length }));
     check(keepGroups.none && keepGroups.lower && keepGroups.ranked === STATES.length - STATES.filter((st) => expectIncompleteFor(st, "single-2")).length,
@@ -479,8 +504,21 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const nm = metrics("NM", "single-2");
     await page.click('.tile[data-st="NM"]');
     const nmLines = await page.evaluate(() => (document.querySelector("#readout") as HTMLElement).innerText.split("\n").map((l) => l.trim()));
-    check(nm.cliffCount === 0 && nmLines[nmLines.length - 1] === `New Mexico — no cliff found: no ${money(STEP)} step of earnings on this household's curve cut net income by ${money(CLIFF_MIN)} or more, up to ${money(nm.axisTop)}. Renter, ${coverage.NM.vintages.county.name}. Details below ↓`,
-      "New Mexico's readout gives the data's reason for no cliff: no step cut net income by the floor, up to the axis top (rerun S6)", nmLines);
+    /* New Mexico is the page's most quotable claim — the one state with no
+       cliff anywhere — and one of two whose child-care price is a national
+       median standing in for a county the source database lacks. Child care
+       ends the worst step on the road in most states, so the substitution
+       travels with the claim rather than sitting in the smallest text on the
+       page (the cold read's B3). */
+    const nmCare = "There is no county child-care price for New Mexico in the source database, so a national median price stands in — and child care is what ends at most of these cliffs.";
+    check(nm.cliffCount === 0 && coverage.NM.vintages.childcare.preschool.startsWith("nationalMedian")
+      && nmLines[nmLines.length - 1] === `New Mexico — no cliff found: no ${money(STEP)} step of earnings on this household's curve cut net income by ${money(CLIFF_MIN)} or more, up to ${money(nm.axisTop)}. Renter, ${coverage.NM.vintages.county.name}. ${nmCare} Details below ↓`,
+      "New Mexico's readout gives the data's reason for no cliff (rerun S6) and says its child-care price is not a county one (Plan 9 cold read B3)", nmLines);
+    /* A state priced from its own county says nothing of the kind. */
+    await page.click('.tile[data-st="OH"]');
+    const ohCareLine = await page.evaluate(() => (document.querySelector("#readout") as HTMLElement).innerText);
+    check(coverage.OH.vintages.childcare.preschool.startsWith("county") && !/child-care price/.test(ohCareLine),
+      "Ohio, priced from Franklin County's own study, carries no such caveat", coverage.OH.vintages.childcare.preschool);
     /* With no cliff anywhere, the road line does not also claim the smaller
        thing — the last line already says the stronger one. */
     check(nmLines.length === 2 && nmLines[0] === roadLead("NM") && !/road does not collapse/.test(nmLines[0]) && nm.keepRate! > 0,
@@ -587,6 +625,22 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       return clone.textContent!;
     });
     check(!/\bsweep\b|\bendpoint\b|policyengine-us #|PR #|nj_property_tax_relief|PolicyEngine variable/i.test(ownText), "no sweep, endpoint, issue number or variable name in the page's own words (N7)");
+    /* NO TEMPLATE SLOT REACHES THE PAGE. `t()` throws on an unfilled argument,
+       which is the guard — but a message rendered as a bare string bypasses it,
+       and one did: the method's definition of the road printed "at {year}
+       rules" between the two dollar figures a reporter would quote, and a cold
+       reader found it (2026-09-18, S2). This check does not care how a string
+       reached the page, only that no `{slot}` survived the trip. */
+    const slots = await page.evaluate(() => {
+      const out: string[] = [];
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        const m = n.textContent?.match(/\{[a-zA-Z][a-zA-Z0-9]*\}/g);
+        if (m) out.push(`${m.join(" ")} in "${n.textContent!.trim().slice(0, 70)}"`);
+      }
+      return out;
+    });
+    check(slots.length === 0, "no message reached the page with a {slot} left unfilled", slots);
     const variableTitle = await page.evaluate(() => { (document.querySelector('.tile[data-st="NJ"]') as HTMLElement).click(); return [...document.querySelectorAll("#other .hg-cite")].map((el) => (el as HTMLElement).title); });
     check(variableTitle.length === coverage.NJ.otherBenefits.length && variableTitle.every((t, i) => t === `PolicyEngine variable: ${coverage.NJ.otherBenefits[i].variable}`), "the other-benefit variable lives in the cite's title, not in the prose (N7)", variableTitle);
     check((await page.$eval("#tableNote", (el) => el.textContent!)).includes("the arrow keys move between states and Enter selects"), "the keyboard note says Enter selects (N10)");
@@ -655,7 +709,9 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       same = c[col("state")] === r[0][0].replace(/floor$/, "").trim() && num(r[COL.biggestLoss][0]) === c[col("biggest_one_step_loss")] && num(r[COL.dangerWidth][0]) === c[col("danger_zone_width")]
         && (r[COL.biggestLossAt][0] === "none" ? c[col("biggest_loss_at")] === "" : r[COL.biggestLossAt][0].startsWith(`${money(Number(c[col("biggest_loss_at")]))} → `))
         && num(r[COL.leap][0]) === c[col("leap")] && num(r[COL.safeExit][0]) === c[col("safe_exit")] && num(r[COL.cliffCount][0]) === c[col("cliff_count")] && num(r[COL.deferred][0]) === c[col("deferred_cliff_count")]
-        && r[COL.figures][0].startsWith(c[col("figures")]) && (c[col("childcare_subsidy_footing")] === "added by HotGap") === r[COL.figures].join(" ").endsWith("child-care subsidy added by HotGap")
+        && r[COL.figures][0].startsWith(c[col("figures")]) && (c[col("childcare_subsidy_footing")] === "added by HotGap") === r[COL.figures].join(" ").includes("child-care subsidy added by HotGap")
+        /* The Figures cell also carries the child-care PRICE's footing where it is not the state's own county's (cold read B3). */
+        && r[COL.figures].join(" ").includes("child-care price:") === !c[col("childcare_price_vintage")].startsWith("county")
         /* The road's four columns and the three positions round-trip too. */
         && (c[col("keep_rate_cents")] === "" ? r[COL.keepRate][0] === "road runs off the axis" : r[COL.keepRate][0] === `${Number(c[col("keep_rate_cents")]) < 0 ? "loses" : "keeps"} ${Math.abs(Number(c[col("keep_rate_cents")]))}¢`)
         && num(r[COL.roadCliffCount][0]) === c[col("road_cliff_count")] && num(r[COL.roadWorst][0]) === c[col("road_worst_drop")]

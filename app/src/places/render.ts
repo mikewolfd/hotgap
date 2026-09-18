@@ -13,9 +13,9 @@ import { languageSwitch } from "../lib/lang.js";
 import { stateName } from "../lib/names.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { bites, MEASURES, measureByKey, measuresIn, positionAt, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
-import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, type LowerKey, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, type LowerKey, worstStepLine } from "./words.js";
 
 /** Everything one render pass reads. */
 export interface Scene {
@@ -45,6 +45,24 @@ const stepWords = (at: number): string => t("rank.step", { from: money(at), to: 
 const orderName = (m: Measure): string => t(`table.order.measure.${shape(m)}`, { title: m.title });
 /** The id of the table column a measure fills, and of its definition line. */
 const colId = (key: string): string => `col${key[0].toUpperCase()}${key.slice(1)}`;
+/**
+ * The child-care price's footing, in the reader's words, where it is NOT this
+ * state's own county price — and null where it is.
+ *
+ * It qualifies the claim rather than decorating it, so it travels with the
+ * claim (inventory.md § Program phrases). Child care ends the worst step on
+ * the road in most states on this sweep, and the one state with no cliff at
+ * all — New Mexico — is one of two whose child-care price is a national median
+ * standing in for a county the source database lacks. A cold reader read "no
+ * cliff found" as a finding about New Mexico's rules, found the substitution
+ * in the smallest text on the page, and called the pairing the page's least
+ * comparable input under its most quotable claim (2026-09-18, B3).
+ */
+function carePriceFooting(cov: StateCoverage | undefined): string | null {
+  const [basis] = (cov?.vintages.childcare?.preschool ?? "").split(" ");
+  if (!basis || basis === "county") return null;
+  return (copy.detail.care as Record<string, string>)[basis] ?? null;
+}
 /** How wide a group heading row spans: counted off the table's own head, so adding a column cannot leave a heading short. */
 const colspan = (): number => $("colState").parentElement!.children.length;
 /**
@@ -153,7 +171,7 @@ export function renderOnce(summary: SummaryJson): void {
      money line, the household and the caveat that it is a modelled one. */
   const items = [
     t("method.items.engine", { year: summary.year }),
-    M.road, M.keepRate, M.groups,
+    t("method.items.road", { year: summary.year }), M.keepRate, M.groups,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
     M.money, t("method.items.household", { year: summary.year }), M.modeledFamily, M.takeUp, M.deferred, M.corrections,
     t("method.items.download", { columns: listOfItems([...CSV_HEADER]) }),
@@ -201,7 +219,7 @@ export function renderFigure(s: Scene): void {
   const bins = g.bins.kind === "steps"
     ? t("figure.bins.steps", { lo: value(g.bins.lo, measure), hi: value(g.bins.hi, measure) })
     : g.bins.kind === "diverging"
-      ? divergingLine(g.bins.width?.down == null ? null : keepSpan(g.bins.width.down), g.bins.width?.up == null ? null : keepSpan(g.bins.width.up), tick(g.bins.lo, measure), tick(g.bins.hi, measure))
+      ? divergingLine({ ...g.bins.width!, down: g.bins.width!.down == null ? null : keepSpan(g.bins.width!.down), up: g.bins.width!.up == null ? null : keepSpan(g.bins.width!.up) }, tick(g.bins.lo, measure), tick(g.bins.hi, measure))
       : classesLine(g.bins.classes.length, g.bins.lo, g.bins.hi);
   /* One class holding nine comparable states in ten explains a near-monochrome map (N11). */
   const share = g.bins.classes.map((_, i) => g.ranked.filter((r) => g.bins.index(r.value as number) === i).length);
@@ -348,12 +366,16 @@ function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCo
      saying so rather than the same figure printed twice. */
   /* An incomplete state keeps the long form, because the floor caveat rides on it. */
   const sameCliff = !missing.length && m.roadWorst !== null && m.roadWorst.at === m.biggestLossAt && m.roadWorst.drop === m.biggestLoss;
-  if (m.cliffCount === 0 || m.biggestLossAt === null) lines.push(`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${renter}`);
-  else if (sameCliff) lines.push(`${esc(axisSameAsRoad())} ${renter}`);
+  /* The child-care price's footing closes the block where it is not this
+     state's own county price: the input that qualifies most of these cliffs. */
+  const care = carePriceFooting(cov);
+  const tail = [renter, care === null ? null : esc(carePriceLine(care, plain))].filter((x): x is string => x !== null).join(" ");
+  if (m.cliffCount === 0 || m.biggestLossAt === null) lines.push(`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${tail}`);
+  else if (sameCliff) lines.push(`${esc(axisSameAsRoad())} ${tail}`);
   else {
     const worst = worstStepLine(b(money(m.biggestLoss)), esc(stepWords(m.biggestLossAt)), m.biggestLossPrograms, missing.map(esc));
     const at = m.biggestLossPosition;
-    lines.push([worst, at === null ? null : esc(axisPosition(Math.round(at))), renter].filter((x): x is string => x !== null).join(" "));
+    lines.push([worst, at === null ? null : esc(axisPosition(Math.round(at))), tail].filter((x): x is string => x !== null).join(" "));
   }
   return lines;
 }
@@ -440,7 +462,8 @@ export function renderRank(s: Scene): void {
   $("rank").style.setProperty("--zero", `${zero * 100}%`);
   let rank = 0;
   $("rank").innerHTML = g.ranked.map((r, i) => {
-    if (i === 0 || r.value !== g.ranked[i - 1].value) rank = n + i + 1;
+    /* A tie is a tie at the precision the page prints (model.ts `rankValue`). */
+    if (i === 0 || rankValue(r.value as number, measure) !== rankValue(g.ranked[i - 1].value as number, measure)) rank = n + i + 1;
     const v = r.value as number, c = g.bins.classes[g.bins.index(v)];
     const fill = `background:var(--${c.hue}-${c.ramp + 1})`;
     const mark = g.bins.kind === "diverging"
@@ -505,8 +528,15 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
     const { m } = r, none = m.cliffCount === 0, noRoadCliff = m.roadCliffCount === 0, missing = r.incomplete.map(unmodeledName);
     const floor = (v: string) => (missing.length ? t("rank.floor", { value: v }) : v);
     const cell = (v: number) => (none ? T.none : floor(money(v)));
+    /* The Figures cell is where a reader compares footings down the column
+       without a click (rerun S4): whether HotGap added the child-care subsidy,
+       and — since the cold read — whether the state's child-care PRICE is its
+       own county's or a median standing in for one. Both qualify the same
+       program, which ends the worst step on the road in most states. */
+    const cov = s.summary.coverage?.[r.st], care = carePriceFooting(cov);
     const figures = esc(missing.length ? t("table.floor", { programs: listOf(missing) }) : T.complete) +
-      (s.summary.coverage?.[r.st]?.corrections.childcareSubsidy.source === "added by HotGap" ? `<small>${esc(T.subsidyAdded)}</small>` : "");
+      (cov?.corrections.childcareSubsidy.source === "added by HotGap" ? `<small>${esc(T.subsidyAdded)}</small>` : "") +
+      (care === null ? "" : `<small>${esc(t("table.carePrice", { care }))}</small>`);
     return headingFor(r, rows[i - 1]) + `<tr>` +
       `<th scope="row"><button class="hg-row-btn" type="button" data-st="${r.st}" aria-label="${esc(name(r.st))}"` +
       `${control(r.st, s.sel, tabbable)}>${r.st}${missing.length ? `<span class="flag-mark" aria-hidden="true">${esc(T.floorMark)}</span>` : ""}</button></th>` +
