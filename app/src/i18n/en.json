@@ -1059,7 +1059,12 @@
         "bothWork": "2 adults, both working",
         "oneWorks": "2 adults, one working"
       },
-      "children": "{n, plural, =0 {no children} one {{n} child ({ages})} other {{n} children ({ages})}}"
+      "children": "{n, plural, =0 {no children} one {{n} child ({ages})} other {{n} children ({ages})}}",
+      "phrase": {
+        "single": "{n, plural, =0 {a single adult with no children} one {a single parent of one child} other {a single parent of {words} children}}",
+        "oneWorks": "{n, plural, =0 {a couple with no children, one of them earning} one {a couple with one child and one parent earning} other {a couple with {words} children and one parent earning}}",
+        "bothWork": "{n, plural, =0 {a couple with no children, both earning} one {a couple with one child and both parents earning} other {a couple with {words} children and both parents earning}}"
+      }
     },
     "pastAxis": "past the axis",
     "figure": {
@@ -1105,8 +1110,8 @@
       "empty": "Select a state on the map or in the table.",
       "step": "{n, plural, one {{state} — {loss} lost at {step}, when {programs} ends.} other {{state} — {loss} lost at {step}, when {programs} end.} =0 {{state} — {loss} lost at {step}; no single program explains the drop.}}",
       "floor": "{n, plural, one {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {{state} — at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
-      "worstStep": "{n, plural, one {Worst step: {loss} lost at {step}, when {programs} ends.} other {Worst step: {loss} lost at {step}, when {programs} end.} =0 {Worst step: {loss} lost at {step}; no single program explains the drop.}}",
-      "worstStepFloor": "{n, plural, one {{m, plural, one {Worst step: at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {Worst step: at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {Worst step: at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {Worst step: at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
+      "worstStep": "{n, plural, one {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} ends.} other {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} end.} =0 {Largest single loss anywhere on the curve: {loss} at {step}; no single program explains the drop.}}",
+      "worstStepFloor": "{n, plural, one {{m, plural, one {Largest single loss anywhere on the curve: at least {loss} at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {Largest single loss anywhere on the curve: at least {loss} at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {Largest single loss anywhere on the curve: at least {loss} at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {Largest single loss anywhere on the curve: at least {loss} at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {Largest single loss anywhere on the curve: at least {loss} at {step}; a floor, because {missing} is not modelled.} other {Largest single loss anywhere on the curve: at least {loss} at {step}; a floor, because {missing} are not modelled.}}}}",
       "measure": {
         "dangerWidth": "{state} — {width} of earnings lie inside danger zones.",
         "dangerWidthOpen": "{state} — at least {width} of earnings lie inside danger zones; the last one had not closed by {top}, the top of the axis.",
@@ -1116,7 +1121,8 @@
         "safeExitPast": "{state} — no safe exit found: the last danger zone had not closed by {top}, the top of the axis.",
         "cliffCount": "{n, plural, one {{deferred, plural, =0 {{state} — 1 cliff on this household's curve, none deferred.} other {{state} — 1 cliff on this household's curve, and {deferred} more deferred to a later renewal.}}} other {{deferred, plural, =0 {{state} — {n} cliffs on this household's curve, none deferred.} other {{state} — {n} cliffs on this household's curve, and {deferred} more deferred to a later renewal.}}}}",
         "deferred": "{deferred, plural, =0 {{n, plural, one {{state} — no cliff deferred to a later renewal; its one cliff lands with the raise.} other {{state} — no cliff deferred to a later renewal; all {n} land with the raise.}}} one {{n, plural, one {{state} — 1 cliff deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — 1 cliff deferred to a later renewal, on top of {n} that land with the raise.}}} other {{n, plural, one {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that land with the raise.}}}}",
-        "floorTail": "{n, plural, one {Incomplete: {missing} is not modelled, so the figure is a floor.} other {Incomplete: {missing} are not modelled, so the figure is a floor.}}"
+        "floorTail": "{n, plural, one {Incomplete: {missing} is not modelled, so the figure is a floor.} other {Incomplete: {missing} are not modelled, so the figure is a floor.}}",
+        "roadCliffCount": "{n, plural, one {{state} — 1 cliff on the road out of poverty.} other {{state} — {n} cliffs on the road out of poverty.}}"
       },
       "none": "{state} — no cliff found: no {step} step of earnings on this household's curve cut net income by {floor} or more, up to {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; 1 cliff is deferred to a later renewal.} other {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; {deferred} cliffs are deferred to a later renewal.}}",
@@ -1124,7 +1130,16 @@
         "county": "Renter, {county}.",
         "unknown": "Renter in the state's most populous county."
       },
-      "details": "Details below ↓"
+      "details": "Details below ↓",
+      "road": {
+        "holds": "The road does not collapse: no {step} step of earnings between {lo} and {hi} cut net income by {floor} or more.",
+        "collapseNoProgram": "The road collapses at {at}, where the family loses {drop} in one step; no single program explains the drop.",
+        "position": "{n} in 100 families like this in {state} earn less than that.",
+        "offAxis": "{state} — this household's road out of poverty, from the poverty line to twice it, falls outside the earnings this state was swept over, so it has no keep rate.",
+        "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step."
+      },
+      "axisPosition": "{n} in 100 families like this earn less than that.",
+      "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve."
     },
     "rank": {
       "heading": "Ranked",
@@ -1332,7 +1347,8 @@
     },
     "keep": {
       "short": "{sign, select, loses {loses {cents}¢} other {keeps {cents}¢}}",
-      "tick": "{cents, plural, =0 {0¢} other {{sign, select, loses {−{cents}¢} other {+{cents}¢}}}}"
+      "tick": "{cents, plural, =0 {0¢} other {{sign, select, loses {−{cents}¢} other {+{cents}¢}}}}",
+      "span": "{cents}¢"
     },
     "roadOffAxis": "road runs off the axis"
   },

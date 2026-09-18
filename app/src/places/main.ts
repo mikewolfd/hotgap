@@ -5,7 +5,7 @@
 // so a link lands on exactly it.
 import "../../../design/tokens.css";
 import "./places.css";
-import { DEFAULT_ARCHETYPE, type SummaryJson } from "@hotgap/core";
+import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
 import { $ } from "../lib/dom.js";
 import { copy, t } from "./copy.js";
 import { csvFor, csvName } from "./csv.js";
@@ -18,6 +18,21 @@ async function load(): Promise<SummaryJson> {
   const res = await fetch("/data/summary.json");
   if (!res.ok) throw new Error(t("status.http", { status: res.status }));
   return res.json() as Promise<SummaryJson>;
+}
+
+/**
+ * The ACS reach ladders, for POSITION — how many families like this one earn
+ * less than a figure on the axis (model.ts `positionAt`). Fetched beside the
+ * run rather than bundled: 183 KB the other two pages already fetch the same
+ * way, against a 384 KB run. A failure is not the page's failure — every
+ * position reads null and the figures stand without it — so it is caught here
+ * and never reaches the alert line, which is for a run that did not load.
+ */
+async function loadReach(): Promise<void> {
+  try {
+    const res = await fetch("/data/reach.json");
+    if (res.ok) provideData({ "reach.json": await res.json() });
+  } catch { /* positions stay null; nothing else on the page depends on it */ }
 }
 
 function main(summary: SummaryJson): void {
@@ -152,7 +167,9 @@ function main(summary: SummaryJson): void {
 }
 
 renderStatic();
-load().then((summary) => {
+/* Both files before the first render, so no figure is drawn without its
+   positions and then redrawn with them. */
+Promise.all([load(), loadReach()]).then(([summary]) => {
   $("status").hidden = true;
   main(summary);
 }).catch((err: unknown) => {

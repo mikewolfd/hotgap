@@ -13,9 +13,9 @@ import { languageSwitch } from "../lib/lang.js";
 import { stateName } from "../lib/names.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { bites, MEASURES, measureByKey, measuresIn, valueOf, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { bites, MEASURES, measureByKey, measuresIn, positionAt, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
-import { axisLine, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, incompleteNote, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, rowLabel, stepLine, type LowerKey, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, type LowerKey, worstStepLine } from "./words.js";
 
 /** Everything one render pass reads. */
 export interface Scene {
@@ -157,7 +157,7 @@ export function renderFigure(s: Scene): void {
   const bins = g.bins.kind === "steps"
     ? t("figure.bins.steps", { lo: value(g.bins.lo, measure), hi: value(g.bins.hi, measure) })
     : g.bins.kind === "diverging"
-      ? divergingLine(tick(g.bins.width ?? 0, measure), tick(g.bins.lo, measure), tick(g.bins.hi, measure))
+      ? divergingLine(keepSpan(g.bins.width ?? 0), tick(g.bins.lo, measure), tick(g.bins.hi, measure))
       : classesLine(g.bins.classes.length, g.bins.lo, g.bins.hi);
   /* One class holding nine comparable states in ten explains a near-monochrome map (N11). */
   const share = g.bins.classes.map((_, i) => g.ranked.filter((r) => g.bins.index(r.value as number) === i).length);
@@ -237,31 +237,79 @@ export function renderFigure(s: Scene): void {
 }
 
 /**
- * The state's sentences (B3, B4; rerun B2): the selected measure's figure
- * leads in its own sentence — on the one-step loss that is the worst step
- * itself, with the programs it ends — then the worst step as a second line
- * where it is not the measure, then the county the household rents in. A
- * state with no cliff says what the model found instead, up to the axis it
- * was swept to (rerun S6). The readout under the map and the first lines of
- * the detail block are the same sentences; bold on the state and the figure
- * is the readout's own mark (`.hg-readout b`). Every figure is the row's.
+ * The state's sentences (B3, B4; rerun B2; Plan 9), in three lines and always
+ * in this order, whatever measure is selected:
+ *
+ * 1. **The road out of poverty.** What this household keeps of each extra
+ *    dollar walking from the poverty line to twice it, where that road
+ *    collapses, and how many families like it earn less than the collapse.
+ *    This leads on every measure, because it is the question the page exists
+ *    to answer and the one a reader can act on.
+ * 2. **The selected measure's own sentence**, where the measure is not the
+ *    keep rate (line 1 is its sentence), not where the road collapses (line 1
+ *    carries it) and not the one-step loss (line 3 is its sentence).
+ * 3. **The whole-axis worst, labelled and last**, with its own position. It is
+ *    a true fact about the rules and it stays; it is not the answer, and on
+ *    the committed sweep it names a cliff above the median family's earnings
+ *    in 39 states of 50. Then the county the household rents in.
+ *
+ * A state with no cliff anywhere says what the model found instead, up to the
+ * axis it was swept to (rerun S6). The readout under the map and the first
+ * lines of the detail block are the same sentences; bold on the state and the
+ * figures is the readout's own mark (`.hg-readout b`). Every figure is the
+ * row's, and every position the reach ladder's.
  */
-function stateLines(r: StateRow, measure: Measure, cov: StateCoverage | undefined, marked: boolean): string[] {
+function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCoverage | undefined, marked: boolean): string[] {
   const { m } = r;
   const b = (text: string) => (marked ? `<b>${esc(text)}</b>` : esc(text));
   const county = cov?.vintages.county.name ?? null;
-  const st = b(name(r.st)), top = money(m.axisTop), renter = esc(county ? t("readout.renter.county", { county }) : copy.readout.renter.unknown);
+  const plain = name(r.st), st = b(plain), top = money(m.axisTop);
+  const renter = esc(county ? t("readout.renter.county", { county }) : copy.readout.renter.unknown);
   const missing = r.incomplete.map(unmodeledName);
-  if (m.cliffCount === 0 || m.biggestLossAt === null) return [`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${renter}`];
-  const step = esc(stepWords(m.biggestLossAt)), loss = b(money(m.biggestLoss));
-  if (measure.key === "biggestLoss") return [`${stepLine(st, loss, step, m.biggestLossPrograms, missing.map(esc))} ${renter}`];
-  const lead = measure.key === "dangerWidth" ? (m.safeExit === null ? t("readout.measure.dangerWidthOpen", { state: st, width: b(money(m.dangerWidth)), top }) : t("readout.measure.dangerWidth", { state: st, width: b(money(m.dangerWidth)) }))
-    : measure.key === "leap" ? (m.leapIsLowerBound ? t("readout.measure.leapAtLeast", { state: st, leap: b(money(m.leap)), top }) : t("readout.measure.leap", { state: st, leap: b(money(m.leap)) }))
-    : measure.key === "safeExit" ? (m.safeExit === null ? t("readout.measure.safeExitPast", { state: st, top }) : t("readout.measure.safeExit", { state: st, exit: b(money(m.safeExit)) }))
-    : measure.key === "cliffCount" ? cliffCountLine(st, m.cliffCount, m.deferredCliffCount)
-    : deferredLine(st, m.deferredCliffCount, m.cliffCount);
-  const worst = worstStepLine(money(m.biggestLoss), step, m.biggestLossPrograms, missing.map(esc));
-  return [lead + (missing.length ? ` ${esc(floorTail(missing))}` : ""), `${worst} ${renter}`];
+  const lines: string[] = [];
+
+  /* 1. The road. Off this cell's axis there is no rate to say, and the line
+     says that rather than a figure nothing stands behind. */
+  if (m.keepRate === null) lines.push(esc(roadOffAxisLine(plain)));
+  else {
+    const road = [roadSentence(st, esc(householdPhrase(arch.married, arch.id.includes("dual"), arch.childAges)), m.keepRate, (n) => b(String(n)))];
+    if (m.roadWorst) {
+      road.push(roadCollapse(b(money(m.roadWorst.at)), b(money(m.roadWorst.drop)), m.roadWorst.programs));
+      const at = positionAt(r.st, arch, m.roadWorst.at);
+      if (at !== null) road.push(esc(roadPosition(Math.round(at), plain)));
+    } else if (m.cliffCount > 0 && m.roadLo !== null && m.roadHi !== null) {
+      /* Only where the curve has a cliff SOMEWHERE is "the road holds" news.
+         With none anywhere, line 3 says the stronger thing and this would
+         only repeat it in a shorter range. */
+      road.push(esc(roadHolds(money(STEP), money(m.roadLo), money(m.roadHi), money(CLIFF_MIN))));
+    }
+    lines.push(road.join(" "));
+  }
+
+  /* 2. The selected measure, where line 1 or line 3 is not already its sentence. */
+  const lead = measure.key === "keepRate" || measure.key === "roadWorst" || measure.key === "biggestLoss" ? null
+    : measure.key === "roadCliffCount" ? roadCliffCountLine(st, m.roadCliffCount)
+      : m.cliffCount === 0 ? null
+        : measure.key === "dangerWidth" ? (m.safeExit === null ? t("readout.measure.dangerWidthOpen", { state: st, width: b(money(m.dangerWidth)), top }) : t("readout.measure.dangerWidth", { state: st, width: b(money(m.dangerWidth)) }))
+          : measure.key === "leap" ? (m.leapIsLowerBound ? t("readout.measure.leapAtLeast", { state: st, leap: b(money(m.leap)), top }) : t("readout.measure.leap", { state: st, leap: b(money(m.leap)) }))
+            : measure.key === "safeExit" ? (m.safeExit === null ? t("readout.measure.safeExitPast", { state: st, top }) : t("readout.measure.safeExit", { state: st, exit: b(money(m.safeExit)) }))
+              : measure.key === "cliffCount" ? cliffCountLine(st, m.cliffCount, m.deferredCliffCount)
+                : deferredLine(st, m.deferredCliffCount, m.cliffCount);
+  if (lead !== null) lines.push(lead + (missing.length ? ` ${esc(floorTail(missing))}` : ""));
+
+  /* 3. The whole axis, last, with who is standing below it — or, where the
+     road's own collapse is already the tallest wall on the curve, one sentence
+     saying so rather than the same figure printed twice. */
+  /* An incomplete state keeps the long form, because the floor caveat rides on it. */
+  const sameCliff = !missing.length && m.roadWorst !== null && m.roadWorst.at === m.biggestLossAt && m.roadWorst.drop === m.biggestLoss;
+  if (m.cliffCount === 0 || m.biggestLossAt === null) lines.push(`${noneLine(st, money(STEP), money(CLIFF_MIN), top, m.deferredCliffCount)} ${renter}`);
+  else if (sameCliff) lines.push(`${esc(axisSameAsRoad())} ${renter}`);
+  else {
+    const worst = worstStepLine(b(money(m.biggestLoss)), esc(stepWords(m.biggestLossAt)), m.biggestLossPrograms, missing.map(esc));
+    const at = m.biggestLossPosition;
+    lines.push([worst, at === null ? null : esc(axisPosition(Math.round(at))), renter].filter((x): x is string => x !== null).join(" "));
+  }
+  return lines;
 }
 
 /** The readout beside the map: the selected state's sentences with a link to its block, or how to select one. O(1). */
@@ -269,7 +317,7 @@ export function renderReadout(s: Scene): void {
   const el = $("readout");
   const r = s.sel ? s.rows.find((x) => x.st === s.sel) : undefined;
   if (!r) { el.textContent = copy.readout.empty; return; }
-  el.innerHTML = `${stateLines(r, s.measure, s.summary.coverage?.[r.st], true).join("<br>")} <a href="#stateTitle">${esc(copy.readout.details)}</a>`;
+  el.innerHTML = `${stateLines(r, s.measure, s.arch, s.summary.coverage?.[r.st], true).join("<br>")} <a href="#stateTitle">${esc(copy.readout.details)}</a>`;
 }
 
 /**
@@ -447,7 +495,7 @@ export function renderDetail(s: Scene): void {
   const cov = sel ? summary.coverage?.[sel] : undefined;
   const row = sel ? s.rows.find((r) => r.st === sel) : undefined;
   $("stateStep").hidden = !row;
-  if (row) $("stateStep").innerHTML = stateLines(row, s.measure, cov, false).join("<br>");
+  if (row) $("stateStep").innerHTML = stateLines(row, s.measure, s.arch, cov, false).join("<br>");
   if (!sel || !cov) {
     $("stateTitle").textContent = sel ? t("detail.heading", { state: name(sel), n: 0 }) : D.choose;
     $("stateSub").textContent = sel ? D.noBlock : D.chooseSub;

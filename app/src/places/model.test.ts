@@ -5,7 +5,7 @@ import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, numberWords } from "../lib/format.js";
 import { copy, t } from "./copy.js";
 import { archLabel, bins, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, paysForCare, rowsFor, tableRows, valueOf } from "./model.js";
-import { axisLine, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, rowLabel, servedLine, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadSentence, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -272,10 +272,34 @@ describe("the sentences, from copy through words.ts", () => {
     expect(deferredLine("Ohio", 0, 10)).toBe("Ohio — no cliff deferred to a later renewal; all 10 land with the raise.");
     expect(deferredLine("Colorado", 1, 14)).toBe("Colorado — 1 cliff deferred to a later renewal, on top of 14 that land with the raise.");
     expect(deferredLine("Alabama", 0, 1)).toBe("Alabama — no cliff deferred to a later renewal; its one cliff lands with the raise.");
-    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["childcare"], [])).toBe("Worst step: $12,062 lost at $38,000 → $39,000, when CCDF child care subsidy ends.");
-    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["snap", "wic"], ["X Premium Savings"])).toBe("Worst step: at least $12,062 lost at $38,000 → $39,000, when SNAP and WIC end; a floor, because X Premium Savings is not modelled.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["childcare"], [])).toBe("Largest single loss anywhere on the curve: $12,062 at $38,000 → $39,000, when CCDF child care subsidy ends.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["snap", "wic"], ["X Premium Savings"])).toBe("Largest single loss anywhere on the curve: at least $12,062 at $38,000 → $39,000, when SNAP and WIC end; a floor, because X Premium Savings is not modelled.");
     expect(noneLine("New Mexico", "$1,000", "$200", "$150,000", 0)).toBe("New Mexico — no cliff found: no $1,000 step of earnings on this household's curve cut net income by $200 or more, up to $150,000.");
     expect(noneLine("Nowhere", "$1,000", "$200", "$150,000", 1)).toMatch(/no cliff lands with the raise: .* 1 cliff is deferred to a later renewal\.$/);
+  });
+  it("the readout's road lead is core's own sentences, the household said as a sentence names it, and the position a sentence of its own", () => {
+    expect(householdPhrase(false, false, [3, 7])).toBe("a single parent of two children");
+    expect(householdPhrase(false, false, [])).toBe("a single adult with no children");
+    expect(householdPhrase(true, false, [3])).toBe("a couple with one child and one parent earning");
+    expect(householdPhrase(true, true, [1, 4, 9])).toBe("a couple with three children and both parents earning");
+    expect(roadSentence("Missouri", householdPhrase(false, false, [3, 7]), -0.5632))
+      .toBe("Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar.");
+    expect(roadSentence("New Mexico", householdPhrase(false, false, [3, 7]), 0.3042))
+      .toBe("New Mexico — a single parent of two children who earns their way from poverty to twice poverty keeps 30¢ of every extra dollar.");
+    expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
+      .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
+    expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");
+    expect(roadCollapse("$54,000", "$3,513", [])).toBe("The road collapses at $54,000, where the family loses $3,513 in one step; no single program explains the drop.");
+    expect(roadHolds("$1,000", "$27,000", "$55,000", "$200"))
+      .toBe("The road does not collapse: no $1,000 step of earnings between $27,000 and $55,000 cut net income by $200 or more.");
+    expect(roadPosition(47, "Missouri")).toBe("47 in 100 families like this in Missouri earn less than that.");
+    expect(axisPosition(87)).toBe("87 in 100 families like this earn less than that.");
+    expect(roadCliffCountLine("Missouri", 7)).toBe("Missouri — 7 cliffs on the road out of poverty.");
+    expect(roadCliffCountLine("Alabama", 1)).toBe("Alabama — 1 cliff on the road out of poverty.");
+    expect(roadOffAxisLine("Nowhere")).toMatch(/^Nowhere — this household's road out of poverty/);
+    // The whole-axis worst is now labelled for what it is, and last.
+    expect(worstStepLine("$10,370", "$118,000 → $119,000", ["aca"], []))
+      .toBe("Largest single loss anywhere on the curve: $10,370 at $118,000 → $119,000, when Premium tax credit ends.");
   });
   it("the axis line names the common top and the exceptions in dollars (rerun N9)", () => {
     expect(axisLine("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))

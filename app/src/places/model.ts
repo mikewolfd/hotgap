@@ -2,7 +2,7 @@
 // household and a measure, the four tile states, the five bins, and the
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
-import { CHILDCARE_MAX_AGE, CLIFF_MIN, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { CHILDCARE_MAX_AGE, CLIFF_MIN, FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL, reachAtEarnings, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
 import { fill } from "../lib/copy.js";
 import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, unmodeledName, type CareHousehold } from "../lib/coverage.js";
 import { money } from "../lib/format.js";
@@ -104,6 +104,26 @@ export const archLabel = (a: Archetype): string => householdLabel(a.married, wor
    bill). The same test the pipeline uses to flag a state's subsidy as
    unmodeled (build.ts: the archetypes whose monthlyChildcare is > 0). */
 export const paysForCare = (a: Archetype): boolean => a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || worksBoth(a));
+
+/**
+ * POSITION: of families like this one in this state, the share (0–100)
+ * earning less than a figure on the axis — the fact that says whether a cliff
+ * is one anybody stands at (Plan 9). Cross-sectional: how many families
+ * already earn less, never a family's odds of getting there.
+ *
+ * The lookup is core's (`reachAtEarnings`), including the part that is easy to
+ * get wrong: the axis varies the householder's own pay while the ACS ladder's
+ * yardstick is householder PLUS spouse, so the swept spouse's wages are added
+ * back before the lookup. The archetype's spouse earns what core's own sweep
+ * gives them — a federal minimum wage year on the two-earner rows, nothing on
+ * the rest — and the summary's archetype record carries the earner count in
+ * its id, which `worksBoth` reads.
+ *
+ * Null, never 0, where the page has not been handed `reach.json`, where the
+ * PUMS cell is missing or suppressed, or where there is no figure to place.
+ */
+export const positionAt = (st: string, a: Archetype, earnings: number | null): number | null =>
+  reachAtEarnings({ state: st, married: a.married, childAges: a.childAges, spouseAnnualEarnings: worksBoth(a) ? FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL : 0 }, earnings);
 
 /* IncompleteMarker (B1): keyed off coverage[state].unmodeled[], never a list
    kept here, under the one rule every surface reads (lib/coverage.ts) — the
