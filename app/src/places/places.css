@@ -52,6 +52,25 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    tile. This is the one child of .hg-picture that gives it back. */
 .hg-picture > .map { padding-inline: 0; }
 
+/* ONE LEFT EDGE, above 64rem. The shared class lets a figure leave the prose
+   column and centre itself at --figure-max, which is right for a chart whose
+   x axis wants every pixel. It is wrong here, twice over: a centred figure put
+   the picture's own left edge 144px inside the three page disclosures under
+   it, so the page read as two documents; and a cartogram that takes the whole
+   56rem is 73px a tile and eight rows deep, which at 1280 pushed its own
+   scale and legend past the fold — a map on the first screen with its key on
+   the second.
+   So the figure keeps the page's column and the MAP takes a width of its own:
+   48rem, a 64px tile, still more than twice the phone's, with the whole object
+   — sentence, tiles, scale, bounds, key — inside one 900px screen (measured).
+   Everything on the page then starts at the same x, which is what a one-column
+   document should do. */
+@media (min-width: 64rem) {
+  .hg-picture.picture { margin-inline: 0; }
+  .hg-picture.picture > :not(.map) { padding-inline: 0; }
+  .picture > .map { max-width: 48rem; }
+}
+
 /* StateTiles (#13). Equal squares on a twelve-column grid, as large as the
    width allows — the picture is the page, so the tiles take the room rather
    than sitting in a card beside a list (charts.md § The map is the picture).
@@ -89,7 +108,12 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    under the tiles, not a column beside them. Above 40rem the ramp and the
    words share a line, because the ramp needs about a third of the width and
    the words the rest. */
-.legend { margin-top: var(--s4); }
+/* The strip closes with a rule the width of the picture, so the readout under
+   it reads as the map's caption rather than as one more line of key. The rule
+   belongs to the legend and not to the readout, whose own box is capped at a
+   reading measure — a border there drew a rule that stopped two thirds of the
+   way across and made the figure look ragged. */
+.legend { margin-top: var(--s4); padding-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
 .scale { display: flex; align-items: stretch; gap: 2px; }
 .scale .sw { flex: 1; height: 12px; }
 /* A diverging scale is two scales meeting at zero, so the gap where they meet
@@ -119,15 +143,15 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 
 /* CurveReadout (#4) as the map's caption: one rule above it, so it reads as
    the figure's own answer and not as one more legend entry. */
-.picture .hg-readout { border-top: 1px solid var(--rule); padding-top: var(--s3);
-                       margin-top: var(--s4); max-width: var(--measure-wide); }
+.picture .hg-readout { margin-top: var(--s4); max-width: var(--measure-wide); }
 .picture .hg-readout b { font-variant-numeric: tabular-nums; }
 
 /* The selected state's provenance, inside the figure, under its own readout.
    Rows are .hg-rows with the inventory's column; below 520px the program sits
    above its note, so a three-word program name does not squeeze the note into
    a 30-character column. */
-.state { border-top: 0; margin-top: 0; }
+/* The state's block keeps the disclosure's own rule and margin: it is a row
+   in the stack under the map, like "How to read this map" below it. */
 .state .hg-rows { --col: 11rem; margin-top: var(--s3); }
 .state .hg-rows > li > div > .hg-tag { margin-bottom: var(--s1); }
 .state .sub { color: var(--ink-2); margin: 0; }
@@ -351,11 +375,11 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   /* Paper does not scroll: the state column is a column again, and the swipe hint has nothing to say. */
   .hg-table th:first-child { position: static; box-shadow: none; }
   .hg-scroll-x[data-more]::before { display: none; }
-  /* An empty readout — "select a state" — has nothing to say on paper, and the
-     two controls are screen chrome. Between them they keep the figure, which
-     must not break, on the first page at Letter. */
+  /* An empty readout — "select a state" — has nothing to say on paper. The two
+     controls are screen chrome and carry .hg-no-print; what they set is on
+     paper all the same, in "How to read this map", which says the household
+     the figures are for and the measure the map shades. */
   #readout:not(:has(b)) { display: none; }
-  .controls { display: none !important; }
   /* The map is the picture on paper too, but a full-width cartogram at Letter
      is 8 rows of 63px and pushes its own legend onto page 2. Two thirds of the
      column still gives a 47px tile, which is larger than any screen at 390. */
@@ -374,9 +398,15 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
      784px column, and Chromium shrank the whole PDF to fit, taking every drawn
      position with it. */
   .hg-table td.num { white-space: normal; }
-  /* The method panel is taller than a page, so avoiding a break inside it only
-     moved it to a fresh page behind a stranded heading (measured: a page
-     holding one paragraph). Headings stay with what follows instead. */
-  .picture, .state, .rank-group { break-inside: avoid; }
+  /* The picture opens with its own two disclosures on paper and is then 2,200px
+     tall, so "do not break inside the figure" is an instruction Chromium
+     cannot follow and would spend a page refusing to (the same lesson the
+     method panel taught: avoiding a break inside something taller than a page
+     only strands a heading on a page of its own). What must not break is the
+     MAP and the strip that reads it; the sentence stays with them. Measured at
+     Letter: the sentence, all 51 tiles, the scale, the bounds and the key land
+     on page 1, and the selected state's readout with them. */
+  .map, .legend, .state, .rank-group { break-inside: avoid; }
+  .hg-answer { break-after: avoid; }
   h2, h3 { break-after: avoid; }
 }
