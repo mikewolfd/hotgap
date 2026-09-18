@@ -97,5 +97,25 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
 }
 
 /** Named by the household as the reader knows it, not by the archetype id (N7), and the run's ISO date — a file name is a machine contract: "hotgap-1-adult-2-children-3-and-7-2026-09-16.csv". */
+/**
+ * The instant's calendar day in the reader's own zone, as `YYYY-MM-DD` — the
+ * same day `dateWords` puts on the page, in the shape a filename wants. Built
+ * from parts rather than a locale's own short form, which is `16/09/2026` in
+ * half the world and would sort wrong in a folder of downloads.
+ */
+const isoDay = (iso: string): string => {
+  const parts = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso));
+  const at = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${at("year")}-${at("month")}-${at("day")}`;
+};
+
+/**
+ * The file's day is the day the PAGE prints, not the instant's UTC day.
+ * `generated.slice(0, 10)` is the UTC date, and the run at 01:29 UTC on the
+ * 17th is the 16th everywhere west of Greenwich — so every line on the page
+ * said "run of Sep 16, 2026" while the file it handed a reporter was named
+ * `…-2026-09-17.csv`. A cold reader met both and did not know which date to
+ * put in a footnote (2026-09-18, N2). One instant, one day, the reader's.
+ */
 export const csvName = (a: Archetype, generated: string): string =>
-  `hotgap-${archLabel(a).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${generated.slice(0, 10)}.csv`;
+  `hotgap-${archLabel(a).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${isoDay(generated)}.csv`;

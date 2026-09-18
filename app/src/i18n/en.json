@@ -1029,7 +1029,7 @@
     "measures": {
       "biggestLoss": {
         "title": "Largest one-step loss",
-        "option": "Largest one-step loss ($)",
+        "option": "Largest one-step loss — the worst single step anywhere on the curve ($)",
         "describe": "Net income lost in the worst single $1,000 step of earnings."
       },
       "dangerWidth": {
@@ -1049,7 +1049,7 @@
       },
       "cliffCount": {
         "title": "Number of cliffs",
-        "option": "Number of cliffs",
+        "option": "Number of cliffs — anywhere on the curve, not only on the road out of poverty",
         "describe": "Steps down of {floor} or more anywhere on the curve."
       },
       "deferredCliffCount": {
@@ -1097,7 +1097,8 @@
         "past": "{state}: past the axis",
         "incomplete": "{state}: {programs} not modelled — figures incomplete",
         "roadNone": "{state}: no cliff on the road out of poverty",
-        "roadPast": "{state}: the road runs off the axis"
+        "roadPast": "{state}: the road runs off the axis",
+        "leapAtLeast": "{state}: at least {value} — the exact size runs past the axis"
       },
       "legend": {
         "none": "No cliff found ({n})",
@@ -1229,12 +1230,12 @@
         "dangerWidth": "Danger zones, total width",
         "leap": "The leap",
         "safeExit": "Safe exit",
-        "cliffCount": "Cliffs",
+        "cliffCount": "Cliffs anywhere",
         "deferredCliffCount": "Deferred",
         "figures": "Figures",
         "keepRate": "Keep rate",
         "roadCliffCount": "Cliffs on the road",
-        "roadWorst": "Where the road collapses",
+        "roadWorst": "Road's worst loss",
         "roadWorstAt": "Road's worst step"
       },
       "defs": {
@@ -1308,7 +1309,7 @@
       },
       "care": {
         "county": "county price",
-        "stateMedianCounty": "state median county price",
+        "stateMedianCounty": "median of the state's other counties",
         "nationalMedian": "national median price",
         "unknown": "not recorded"
       },
@@ -1341,14 +1342,14 @@
         "money": "The money line is **health-adjusted**: household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included.",
         "household": "Each household is a typical renter in the state's most populous county — named under the map for the selected state — with HUD Fair Market Rent, Census county estimates, and the DOL National Database of Childcare Prices preschool price for that county, carried to {year} dollars by the BLS Employment Cost Index. The study year behind the price, and whether a state or national median stood in for a county the database lacks, differ by state and are printed in the source line under the map.",
         "takeUp": "The CCDF child care subsidy is **on** for this run and off for a household's own lookup. Head Start and housing vouchers are off in both: they are rationed, and assuming a family holds one inflates its numbers.",
-        "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in the *deferred* column and are lifted out of every other figure here. They are real losses; they do not land in the year of the raise.",
+        "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in every figure here like any other cliff, and named again in the *deferred* column. They are real losses; what the column says is which of them wait for a renewal rather than landing with the raise.",
         "corrections": "Where a state's figure needed a correction on top of PolicyEngine — a premium ladder applied locally, the child care subsidy added back into net income, a parent Medicaid limit taken from the state's handbook, a coverage-gap premium — it is listed under the map for the selected state, from the run's own coverage record, not from copy kept here.",
         "download": "The download is the table's rows in the table's order, one per state, with these columns: {columns}. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds.",
         "road": "**The road out of poverty** is the earnings from the federal poverty guideline for this household's size to twice it — $26,650 to $53,300 for a family of three at {year} rules, and Alaska and Hawaii on their own higher guidelines. It is federal on purpose, so every state's road is the same road and what differs is how the state's rules treat a family walking it. Its top carries one $1,000 step of allowance, because a program limit sitting on the twice-poverty line lands in the step that starts at the first sampled point at or above it.",
         "keepRate": "**The keep rate** is what the household keeps of each extra dollar earned across that road: the change in net income divided by the change in pay. It is one minus the effective marginal tax rate, the measure the benefits-cliff literature reports, said in cents because that is how a person hears it. Below zero the family ends the climb poorer than it began.",
         "position": "**Families earning less** puts a dollar figure where families are: of households like this one in that state, the share earning less than it, from Census survey data ({vintages}) grown to {year} dollars. It is cross-sectional — how many families already earn less — and never one family's chance of reaching that pay. A cell the survey cannot support is left empty rather than filled with a zero.",
         "modeledFamily": "**Every figure is the modelled family**, not an average of real ones: a renter in the state's most populous county, with children in paid care where every parent works, claiming what the rules entitle them to. A real household with a different rent, a different care arrangement or a benefit it never applied for has a different curve.",
-        "groups": "**The measures are two questions.** *On the road out of poverty* asks what happens to a family climbing from the poverty line to twice it — where the families this tool is for actually are. *Anywhere on the curve* asks where the tallest wall in the state stands, whatever pay it stands at; measured on this run that wall sits above the median family's earnings in 39 states of 50, which is why it is no longer the page's first answer."
+        "groups": "**The measures are two questions.** *On the road out of poverty* asks what happens to a family climbing from the poverty line to twice it — where the families this tool is for actually are. *Anywhere on the curve* asks where the tallest wall in the state stands, whatever pay it stands at; for this household that wall sits above the median family's earnings in {n} states of {total}, which is why it is no longer the page's first answer."
       },
       "axis": {
         "plain": "For {household} the axis runs from $0 to {top}; a figure that runs past the axis runs past that.",

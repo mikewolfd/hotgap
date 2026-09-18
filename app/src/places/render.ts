@@ -184,7 +184,7 @@ export function renderOnce(summary: SummaryJson): void {
      money line, the household and the caveat that it is a modelled one. */
   const items = [
     t("method.items.engine", { year: summary.year }),
-    t("method.items.road", { year: summary.year }), M.keepRate, M.groups,
+    t("method.items.road", { year: summary.year }), M.keepRate,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
     M.money, t("method.items.household", { year: summary.year }), M.modeledFamily, M.takeUp, M.deferred, M.corrections,
   ].map((text) => `<li>${rich(text)}</li>`);
@@ -193,6 +193,9 @@ export function renderOnce(summary: SummaryJson): void {
      about a file and not about a rule. */
   $("csvColumns").innerHTML = rich(t("method.items.download", { columns: listOfItems([...CSV_HEADER]) }));
   items.splice(1, 0, `<li id="axisLine"></li>`);
+  /* Two per-view items: the axis this household was swept to, and how far up
+     the curve the tallest wall stands for it. Both are counted per render. */
+  items.splice(4, 0, `<li id="groupsLine"></li>`);
   $("methodList").innerHTML = items.join("");
   /* A gap every state shares is listed once here, never under a state (S8): the `all` entries, one per program. */
   const everywhere = new Map<string, string>();
@@ -214,16 +217,36 @@ export function renderOnce(summary: SummaryJson): void {
 const control = (st: string, sel: string | null, tabbable: string | undefined): string =>
   `${st === sel ? ` aria-current="true"` : ""} tabindex="${st === tabbable ? 0 : -1}"`;
 
-/* The tile's own sentence, for the hover title and the accessible name. On a
-   road measure the two lifted-out states say what they are on the road: no
-   cliff between poverty and twice poverty, or a road off this cell's axis. */
-function tileTitle(r: StateRow, measure: Measure): string {
+/**
+ * The tile's own sentence, for the hover title and the accessible name. On a
+ * road measure the two lifted-out states say what they are on the road: no
+ * cliff between poverty and twice poverty, or a road off this cell's axis.
+ *
+ * Two things a cold reader asked the tile for and got from the table instead
+ * (2026-09-18):
+ *
+ * - **A LEAP THE AXIS BOUNDS SAYS ITS FLOOR.** The tile read "past the axis"
+ *   while the ranked row read "≥ $53,000" and the table read the same — three
+ *   answers to one question, and the map was the one hiding a figure the rest
+ *   of the page was willing to print.
+ * - **A SUBSTITUTED CHILD-CARE PRICE TRAVELS WITH THE TILE.** New Mexico is
+ *   the best state on the map, the state that sets the top of the scale, and
+ *   one of three whose child-care price is a median standing in for a county
+ *   the source database lacks — while child care is what ends most of these
+ *   cliffs. The footing was a click away in the readout (places review B3);
+ *   it is on the tile now, in the same words the table's Figures cell uses.
+ */
+function tileTitle(r: StateRow, measure: Measure, cov: StateCoverage | undefined): string {
   const state = name(r.st), road = measure.group === "road";
+  const care = carePriceFooting(cov);
+  const footing = care === null ? "" : ` — ${t("table.carePrice", { care })}`;
   switch (r.kind) {
-    case "incomplete": return t("figure.tile.incomplete", { state, programs: listOf(r.incomplete.map(unmodeledName)) });
-    case "none": return t(road ? "figure.tile.roadNone" : "figure.tile.none", { state });
-    case "past": return t(road ? "figure.tile.roadPast" : "figure.tile.past", { state });
-    default: return t("figure.tile.value", { state, value: longValue(r.value, measure) });
+    case "incomplete": return t("figure.tile.incomplete", { state, programs: listOf(r.incomplete.map(unmodeledName)) }) + footing;
+    case "none": return t(road ? "figure.tile.roadNone" : "figure.tile.none", { state }) + footing;
+    case "past": return (measure.key === "leap" && r.value !== null
+      ? t("figure.tile.leapAtLeast", { state, value: value(r.value, measure) })
+      : t(road ? "figure.tile.roadPast" : "figure.tile.past", { state })) + footing;
+    default: return t("figure.tile.value", { state, value: longValue(r.value, measure) }) + footing;
   }
 }
 
@@ -298,7 +321,7 @@ export function renderFigure(s: Scene): void {
          loss 2; the keep ramp is built to the same floor (charts.md § 2). */
       style += `;background:var(--${c.hue}-${c.ramp + 1});color:var(--${c.ramp >= 2 ? "surface" : "ink"})`;
     }
-    const title = tileTitle(r, measure);
+    const title = tileTitle(r, measure, summary.coverage?.[st]);
     tiles.push(`<button type="button" class="${cls}" data-st="${st}" style="${style}" ` +
       `title="${esc(title)}" aria-label="${esc(title)}"${control(st, s.sel, tabbable)}>${st}</button>`);
   }
@@ -651,6 +674,13 @@ export function renderMethod(s: Scene): void {
   const [common] = [...tops].sort((a, z) => z[1].length - a[1].length)[0] ?? [0];
   const exceptions = s.rows.filter((r) => r.m.axisTop !== common).map((r) => ({ state: name(r.st), top: money(r.m.axisTop) }));
   $("axisLine").textContent = axisLine(label, money(common), exceptions);
+  /* "that wall sits above the median family's earnings in 39 states of 50" was
+     TYPED, and it is a fact about one household in eleven: on the committed
+     sweep the same count is 39 for a single parent of two and 3 for a
+     two-earner couple with two. Counted here, per household, off the same
+     positions the table prints. */
+  const placed = s.rows.filter((r) => r.m.biggestLossPosition !== null);
+  $("groupsLine").innerHTML = rich(t("method.items.groups", { n: placed.filter((r) => (r.m.biggestLossPosition as number) > 50).length, total: placed.length }));
 }
 
 /** The suggested citation, from the run's facts and the page's own address for this view (N13). */

@@ -187,6 +187,18 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o)) && /worst danger zone/.test(options[5]) && /no danger zone remains/.test(options[6])
       && /from poverty to twice poverty/.test(options[0]) && /between poverty and twice poverty/.test(options[1]),
       "every measure option stands on its own (S2)", options);
+    /* A CLOSED select shows the option without its <optgroup> label, so every
+       measure that has a near-twin in the other group must name its own window
+       in the option itself. "Largest one-step loss ($)" and "Number of cliffs"
+       carried none, and sat one line from "Where the road collapses — …
+       between poverty and twice poverty" and "Cliffs on the road out of
+       poverty" — a cold reader filed two of them as the same measure
+       (2026-09-18, B2 and B3). The four are pinned as a set, because the
+       defect is the PAIR reading alike, not either option alone. */
+    const twins: [number, number][] = [[1, 7], [2, 3]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
+    check(twins.every(([road, axis]) => /povert/i.test(options[road]) && /curve/i.test(options[axis])),
+      "each measure with a twin in the other group names its own window in the option a closed select shows (B2, B3)",
+      twins.map(([road, axis]) => [options[road], options[axis]]));
     /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */
     const widthTotal = STATES.filter((st) => metrics(st, "single-2").cliffCount > 0 && metrics(st, "single-2").dangerWidth > metrics(st, "single-2").leap).length;
     check(widthTotal > 0 && /^Total width of the danger zones/.test(options[4]) && !/worst|widest/.test(options[4]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[4], statesWhereTotalExceedsLeap: widthTotal });
@@ -205,7 +217,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     }));
     const headText = defs.heads.map(([t]) => t).join("|");
     check(defs.terms.length === 15 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
-      && headText === "Keep rate|Cliffs on the road|Where the road collapses|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs|Deferred|Figures"
+      && headText === "Keep rate|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
       && /worst danger zone/.test(defs.heads[7][1][0]!) && /no danger zone remains/.test(defs.heads[8][1][0]!) && /added together/.test(defs.heads[6][1][0]!) && /floors/.test(defs.heads[11][1][0]!)
       && /poorer than it started/.test(defs.heads[0][1][0]!),
       "thirteen column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
@@ -260,6 +272,23 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const hatched = tiles.filter((t) => t.mask.includes("data:image/svg+xml")).map((t) => t.st).sort();
     check(hatched.join() === expectIncomplete.join(), "the incomplete states, and only they, carry the SVG hatch mask", { hatched, expectIncomplete });
     console.log(`     tile width ${tiles[0].w.toFixed(1)}px`);
+
+    /* B6: a leap the axis bounds says its floor ON THE TILE, as the ranked row
+       and the table already did — the map was the one place on the page that
+       hid a figure the rest of it was willing to print. B8: a child-care price
+       that is not the state's own county's travels with the tile, in the same
+       words the table's Figures cell uses, because the map is where a reader
+       meets the state and New Mexico sets the top of the scale. */
+    await page.selectOption("#metric", "leap");
+    const bounded = STATES.filter((st) => metrics(st, "single-2").leapIsLowerBound);
+    const leapTitles = await page.evaluate((sts) => Object.fromEntries((sts as string[]).map((st) => [st, document.querySelector(`.tile[data-st="${st}"]`)!.getAttribute("title")!])), bounded);
+    check(bounded.length > 0 && bounded.every((st) => leapTitles[st] === `${STATE_NAMES[st]}: at least ${money(metrics(st, "single-2").leap)} — the exact size runs past the axis`),
+      `on the leap the ${bounded.length} bounded tiles say their floor, the figure the strip and the table print (B6)`, leapTitles);
+    await page.selectOption("#metric", "keepRate");
+    const substituted = STATES.filter((st) => !coverage[st].vintages.childcare.preschool.startsWith("county"));
+    const careTitles = await page.evaluate((sts) => Object.fromEntries((sts as string[]).map((st) => [st, document.querySelector(`.tile[data-st="${st}"]`)!.getAttribute("title")!])), [...substituted, "OH"]);
+    check(substituted.length > 0 && substituted.every((st) => / — child-care price: /.test(careTitles[st])) && !/child-care price/.test(careTitles.OH),
+      `the ${substituted.length} states priced from a median, not their own county, say so on the tile; Ohio, priced from its own county, does not (B8)`, careTitles);
 
     /* Contrast, as the audit measured it, from the resolved colours. */
     const measureContrast = async (mode: string) => {
@@ -356,7 +385,11 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const highState = STATES.reduce((a, st) => (rate(st) > rate(a) ? st : a));
     check(mapNow.legend[0] === phraseOf(lowState) && mapNow.legend[1] === phraseOf(highState),
       "the scale's two ends say in words which way is which, in core's own phrasing", mapNow.legend.slice(0, 2));
-    check(mapNow.tiles.MO.label === `${STATE_NAMES.MO}: ${phraseOf("MO")}` && mapNow.tiles.NM.label === `${STATE_NAMES.NM}: ${phraseOf("NM")}`,
+    /* A tile's name OPENS with its state and its rate, in core's own phrasing.
+       New Mexico's then carries the child-care footing (B8), which is why this
+       is a prefix and not an equality: the footing is part of the name on the
+       three states it applies to, and absent on the other forty-eight. */
+    check(mapNow.tiles.MO.label === `${STATE_NAMES.MO}: ${phraseOf("MO")}` && mapNow.tiles.NM.label.startsWith(`${STATE_NAMES.NM}: ${phraseOf("NM")}`),
       "a tile's name is its state and its rate, said the way core says it", [mapNow.tiles.MO.label, mapNow.tiles.NM.label]);
     /* Each arm is cut over its own reach, so the two step widths differ and the
        caption prints both — a reader must not take a step on one arm for a
@@ -669,6 +702,15 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const tops = new Map<number, string[]>(); for (const st of STATES) { const t = metrics(st, "single-2").axisTop; tops.set(t, [...(tops.get(t) ?? []), st]); }
     const [common] = [...tops].sort((a, b) => b[1].length - a[1].length)[0];
     const exceptions = STATES.filter((st) => metrics(st, "single-2").axisTop !== common).map((st) => `${money(metrics(st, "single-2").axisTop)} in ${STATE_NAMES[st]}`);
+    /* "that wall sits above the median family's earnings in 39 states of 50"
+       was TYPED into copy, and it is a fact about one household in eleven: the
+       same count is 3 for a two-earner couple with two children (2026-09-18,
+       N4). Counted per household now, off the positions the table prints. */
+    const placed = STATES.filter((st) => metrics(st, "single-2").biggestLossPosition !== null);
+    const aboveMedian = placed.filter((st) => (metrics(st, "single-2").biggestLossPosition as number) > 50);
+    const groupsLine = await page.$eval("#groupsLine", (el) => el.textContent!);
+    check(groupsLine.includes(`that wall sits above the median family's earnings in ${aboveMedian.length} states of ${placed.length}`),
+      `how far up the curve the tallest wall stands is counted for the household on the screen (${aboveMedian.length} of ${placed.length}), never typed (N4)`, groupsLine.slice(-90));
     const axisLine = await page.$eval("#axisLine", (el) => el.textContent);
     check(axisLine === `For 1 adult, 2 children (3 and 7) the axis runs from $0 to ${money(common)}${exceptions.length ? ` (${exceptions.join(", ")})` : ""}; a figure that runs past the axis runs past that.`, "the method names the household's axis top in dollars, and the exceptions (rerun N9)", axisLine);
     /* Texas's three corrections each carry a chip, the coverage-gap one the CSV's own word (rerun N7). */
@@ -787,6 +829,18 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const variableTitle = await page.evaluate(() => { (document.querySelector('.tile[data-st="NJ"]') as HTMLElement).click(); return [...document.querySelectorAll("#other .hg-cite")].map((el) => (el as HTMLElement).title); });
     check(variableTitle.length === coverage.NJ.otherBenefits.length && variableTitle.every((t, i) => t === `PolicyEngine variable: ${coverage.NJ.otherBenefits[i].variable}`), "the other-benefit variable lives in the cite's title, not in the prose (N7)", variableTitle);
     check((await page.$eval("#tableNote", (el) => el.textContent!)).includes("the arrow keys move between states and Enter selects"), "the keyboard note says Enter selects (N10)");
+    /* THE METHOD AND THE MEASURE AGREE ABOUT WHAT DEFERRED COUNTS. core's
+       `deferred` are the SAME Cliff objects as `analysis.cliffs`
+       (evaluate.ts), so a deferred cliff is INSIDE cliffCount — deferral is a
+       label, not an exclusion (owner, 2026-09-17). The measure's definition
+       said so; the method still said they were "lifted out of every other
+       figure here", and a cold reader who believed the method would have
+       written that Ohio has eleven cliffs rather than ten (2026-09-18, B5). */
+    const deferredItem = (await page.$$eval("#methodList li", (els) => els.map((el) => el.textContent!))).find((t) => /deferred to a future renewal/.test(t));
+    check(deferredItem !== undefined && /counted in every figure here like any other cliff/.test(deferredItem) && !/lifted out/.test(deferredItem)
+      && /of the cliffs counted/i.test(options[8]),
+      "the method says a deferred cliff is counted like any other and named again in its own column, which is what the measure's own definition says and what core does (B5)",
+      deferredItem?.slice(0, 130));
 
     /* Nebraska's case (S9): an exact leap beside an unknown safe exit, and the past-the-axis cell points at the box that explains it. */
     const single = (st: string) => metrics(st, "single-2");
@@ -882,6 +936,16 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(roadCols && anyPosition.length > 40 && anyPosition.every((c) => Number(c[col("families_below_road_top")]) > 0 && Number(c[col("families_below_road_top")]) <= 100),
       "every CSV row's road columns equal the file's, and its positions are inside 0–100 — empty, never 0, where the survey cannot support the cell", { withRoadTop: anyPosition.length, sample: anyPosition[0]?.[col("families_below_road_top")] });
     check(/^hotgap-2-adults-both-working-2-children-3-and-7-\d{4}-\d\d-\d\d\.csv$/.test(download.suggestedFilename()), "the CSV is named by the household as the reader knows it (N7)", download.suggestedFilename());
+    /* ONE INSTANT, ONE DAY, THE READER'S. The filename took the UTC date and
+       the page prints the reader's, so a run stamped 01:29 UTC handed a
+       reporter a file dated the 17th under a line saying "run of Sep 16" —
+       and a cold reader did not know which to put in a footnote (2026-09-18,
+       N2). This is the same check the page's own dates get, applied to the
+       one date a reader takes away with them. */
+    const fileDay = download.suggestedFilename().match(/(\d{4}-\d\d-\d\d)\.csv$/)![1];
+    check(dayWords(fileDay) === dateWords(summary.generated),
+      "the CSV's filename carries the same calendar day the page prints, in the reader's zone (N2)",
+      { fileDay, fileDayInWords: dayWords(fileDay), page: dateWords(summary.generated), utc: summary.generated });
     check(head.slice(0, 7).join() === "state,state_name,archetype_id,archetype,biggest_one_step_loss,biggest_loss_at,biggest_loss_programs" && (await page.$eval("#csvColumns", (el) => el.textContent!)).includes(head.join(", ")),
       "the CSV's header order is the one the sources panel's download line prints", head.length);
     const prov = body.every((c) => c[col("sweep_generated")] === summary.generated && c[col("model_endpoint")] === summary.model!.endpoint

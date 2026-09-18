@@ -1032,7 +1032,7 @@
     "measures": {
       "biggestLoss": {
         "title": "Mayor pérdida en un escalón",
-        "option": "Mayor pérdida en un escalón ($)",
+        "option": "Mayor pérdida en un escalón — el peor escalón en cualquier punto de la curva ($)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
       },
       "dangerWidth": {
@@ -1052,7 +1052,7 @@
       },
       "cliffCount": {
         "title": "Número de precipicios",
-        "option": "Número de precipicios",
+        "option": "Número de precipicios — en cualquier punto de la curva, no solo en el camino para salir de la pobreza",
         "describe": "Escalones hacia abajo de {floor} o más en cualquier punto de la curva."
       },
       "deferredCliffCount": {
@@ -1100,7 +1100,8 @@
         "past": "{state}: más allá del eje",
         "incomplete": "{state}: {programs} no modelado — cifras incompletas",
         "roadNone": "{state}: sin precipicios en el camino para salir de la pobreza",
-        "roadPast": "{state}: el camino queda fuera del eje"
+        "roadPast": "{state}: el camino queda fuera del eje",
+        "leapAtLeast": "{state}: al menos {value} — el tamaño exacto se sale del eje"
       },
       "legend": {
         "none": "No se encontró precipicio ({n})",
@@ -1232,12 +1233,12 @@
         "dangerWidth": "Zonas de peligro, ancho total",
         "leap": "El salto",
         "safeExit": "Salida segura",
-        "cliffCount": "Precipicios",
+        "cliffCount": "Precipicios en toda la curva",
         "deferredCliffCount": "Diferidos",
         "figures": "Cifras",
         "keepRate": "Lo que se queda de cada dólar",
         "roadCliffCount": "Precipicios en el camino",
-        "roadWorst": "Dónde se derrumba el camino",
+        "roadWorst": "Mayor pérdida del camino",
         "roadWorstAt": "Peor escalón del camino"
       },
       "defs": {
@@ -1311,7 +1312,7 @@
       },
       "care": {
         "county": "precio del condado",
-        "stateMedianCounty": "precio del condado mediano del estado",
+        "stateMedianCounty": "mediana de los demás condados del estado",
         "nationalMedian": "precio mediano nacional",
         "unknown": "no registrado"
       },
@@ -1344,14 +1345,14 @@
         "money": "La línea de dinero está **ajustada por salud**: el ingreso neto del hogar menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado. No se incluyen deducibles ni copagos.",
         "household": "Cada hogar es un inquilino típico del condado más poblado del estado (nombrado debajo del mapa para el estado seleccionado), con la renta justa de mercado de HUD, las estimaciones de condado del Censo y el precio de preescolar de la Base de Datos Nacional de Precios de Cuidado Infantil del DOL para ese condado, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. El año del estudio detrás del precio, y si una mediana estatal o nacional reemplazó a un condado que la base de datos no tiene, varían por estado y se imprimen en la línea de fuente debajo del mapa.",
         "takeUp": "El subsidio de cuidado infantil CCDF está **activado** en esta corrida y desactivado en la consulta de un hogar propio. Head Start y los vales de vivienda están desactivados en ambas: están racionados, y suponer que una familia tiene uno infla sus números.",
-        "deferred": "Los precipicios diferidos a una renovación futura (la continuidad de Head Start hasta el fin del año del programa, los 12 meses de elegibilidad continua de Medicaid o CHIP de un niño, la Asistencia Médica de Transición de un padre) se cuentan en la columna *diferidos* y se sacan de todas las demás cifras de aquí. Son pérdidas reales; no caen en el año del aumento.",
+        "deferred": "Los precipicios diferidos a una renovación posterior — la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre — se cuentan en todas las cifras de aquí como cualquier otro precipicio, y se nombran otra vez en la columna *diferidos*. Son pérdidas reales; lo que dice la columna es cuáles de ellas esperan a una renovación en vez de caer con el aumento.",
         "corrections": "Cuando la cifra de un estado necesitó una corrección sobre PolicyEngine (una escala de primas aplicada localmente, el subsidio de cuidado infantil devuelto al ingreso neto, un límite de Medicaid para padres tomado del manual del estado, una prima por brecha de cobertura), aparece debajo del mapa para el estado seleccionado, a partir del propio registro de cobertura de la corrida, no de un texto guardado aquí.",
         "download": "La descarga son las filas de la tabla en el orden de la tabla, una por estado, con estas columnas: {columns}. Las celdas de dólares vacías son un estado sin precipicio o una salida segura más allá del eje; las banderas dicen qué cifras son pisos o cotas inferiores.",
         "road": "**El camino para salir de la pobreza** son los ingresos que van desde la guía federal de pobreza para el tamaño de este hogar hasta el doble de esa guía: de $26,650 a $53,300 para una familia de tres con las reglas de {year}, y Alaska y Hawái con sus propias guías más altas. Es federal a propósito, para que el camino sea el mismo en todos los estados y lo que cambie sea cómo tratan sus reglas a una familia que lo recorre. Su tope lleva un escalón de $1,000 de holgura, porque un límite de programa situado justo en la línea del doble de la pobreza cae en el escalón que empieza en el primer punto muestreado igual o superior a ella.",
         "keepRate": "**Lo que se queda de cada dólar** es lo que el hogar conserva de cada dólar extra ganado a lo largo de ese camino: el cambio en el ingreso neto dividido entre el cambio en el pago. Es uno menos la tasa impositiva marginal efectiva, la medida que reporta la literatura sobre precipicios de beneficios, dicha en centavos porque así es como la escucha una persona. Por debajo de cero, la familia termina el ascenso más pobre de lo que empezó.",
         "position": "**Familias que ganan menos** sitúa una cifra en dólares donde están las familias: de los hogares como este en ese estado, la proporción que gana menos que esa cifra, según datos de encuesta del Censo ({vintages}) llevados a dólares de {year}. Es de corte transversal —cuántas familias ya ganan menos— y nunca la probabilidad de que una familia llegue a ese pago. Una celda que la encuesta no puede sostener se deja vacía en lugar de llenarse con un cero.",
         "modeledFamily": "**Cada cifra es la familia modelada**, no un promedio de familias reales: un inquilino del condado más poblado del estado, con los hijos en cuidado pagado cuando ambos padres trabajan, que reclama aquello a lo que las reglas le dan derecho. Un hogar real con otra renta, otro arreglo de cuidado o un beneficio que nunca solicitó tiene otra curva.",
-        "groups": "**Las medidas son dos preguntas.** *En el camino para salir de la pobreza* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están de verdad las familias para las que existe esta herramienta. *En cualquier punto de la curva* pregunta dónde está el muro más alto del estado, al pago que sea; medido en esta corrida, ese muro está por encima de los ingresos de la familia mediana en 39 estados de 50, y por eso ya no es la primera respuesta de la página."
+        "groups": "**Las medidas son dos preguntas.** *En el camino para salir de la pobreza* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están las familias para las que existe esta herramienta. *En cualquier punto de la curva* pregunta dónde está el muro más alto del estado, sea cual sea el pago en el que esté; para este hogar ese muro queda por encima de los ingresos de la familia mediana en {n} estados de {total}, y por eso ya no es la primera respuesta de la página."
       },
       "axis": {
         "plain": "Para {household} el eje va de $0 a {top}; una cifra que se sale del eje se sale de eso.",
