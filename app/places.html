@@ -32,8 +32,12 @@
   <figure class="hg-picture picture">
     <figcaption class="hg-answer" id="answer" tabindex="-1"></figcaption>
 
-    <!-- StateTiles (#13): 51 buttons on the cartogram, full-bleed on a phone. -->
-    <div class="map" id="grid" role="group" aria-labelledby="answer" aria-describedby="figDesc"></div>
+    <!-- StateTiles (#13): 51 buttons on the cartogram, full-bleed on a phone.
+         The group takes a NAME OF ITS OWN, from the measure, rather than the
+         figcaption's: a screen reader has just heard the answer sentence on
+         entering the figure, and hearing thirty words again on entering the
+         tiles is the same duplication the page cut everywhere it could see it. -->
+    <div class="map" id="grid" role="group" aria-describedby="figDesc"></div>
     <p class="hg-visually-hidden" id="figDesc"></p>
 
     <!-- The legend, inside the figure, as one compact strip: the ramp, its printed bounds, and

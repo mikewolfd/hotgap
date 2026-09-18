@@ -1128,7 +1128,8 @@
         "countValue": "{n} de los {total} estados comparables tienen {value}.",
         "countRange": "{n} de los {total} estados comparables tienen de {lo} a {hi}.",
         "dollars": "{n} de los {total} estados comparables quedan entre {lo} y {hi}."
-      }
+      },
+      "title": "{measure}, estado por estado"
     },
     "readout": {
       "empty": "Seleccione un estado para leer sus cifras.",

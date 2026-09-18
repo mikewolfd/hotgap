@@ -269,6 +269,7 @@ export function renderFigure(s: Scene): void {
   $("figSrc").textContent = t("figure.source", { year: summary.year, date: dateWords(summary.generated) });
   $("figScope").textContent = `${countedLede(s.rows.length, summary.archetypes.length, s.rows.some((r) => r.st === "DC"))} ${t("figure.sub", { household: s.archLabel })}`;
   $("figMeasure").textContent = t("howTo.measure", { measure: measure.title, describe: measure.describe });
+  $("grid").setAttribute("aria-label", t("figure.title", { measure: measure.title }));
   $("binsLine").textContent = [
     binsLine(bins, g.ranked.length, g.none.length, g.past.length),
     oneClass,
