@@ -360,8 +360,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       whatIfs.length > lines.length ? t("chart.whatIfHeld", { held: whatIfs.length - lines.length }) : "",
       source,
     ].filter(Boolean).join(" ");
-    /* The axis's own ends under the figure: the cue that the picture keeps going. */
-    host.hint.replaceChildren(mkSpan(t("chart.rangeFrom", { from: usd(x0) })), mkSpan(t("chart.rangeTo", { to: usd(x1) })));
+    /* The axis's own ends under the figure, and between them the words that
+       say it slides, only while it does (the citizen chart's rule; a thumb
+       reader on 2026-09-19 never learned the chart moved). */
+    const slides = host.scroll.scrollWidth > host.scroll.clientWidth + 1;
+    host.hint.replaceChildren(mkSpan(t("chart.rangeFrom", { from: usd(x0) })), ...(slides ? [mkSpan(t("chart.rangeMid"))] : []), mkSpan(t("chart.rangeTo", { to: usd(x1) })));
     renderKey(A.dangerZones.length > (P.zone ? 1 : 0), cliffs().some((c) => !c.deferral), DEFERRED.length > 0, !!P.zone, safe !== null, road !== null, lines);
     drawn = true;
     syncMarks(); paintCursor();

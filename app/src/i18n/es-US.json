@@ -260,7 +260,7 @@
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
       "howTo": "Cómo leer esta imagen",
-      "rangeMid": "su sueldo"
+      "rangeMid": "deslice para ver más"
     },
     "key": {
       "line": "El dinero que le queda",
@@ -929,7 +929,8 @@
       },
       "whatIfLines": "{n, plural, one {Un escenario se dibuja aquí como una segunda línea, que se distingue por su trazo y su etiqueta.} other {{n} escenarios se dibujan aquí como líneas adicionales, que se distinguen por sus trazos y sus etiquetas.}}",
       "whatIfHeld": "{held, plural, one {Queda un escenario más en la comparación que no está en la gráfica.} other {Quedan {held} escenarios más en la comparación que no están en la gráfica.}}",
-      "whatIfPositions": "{n, plural, one {Un escenario es esta misma curva con otro sueldo: su rombo hueco marca dónde cae.} other {{n} escenarios son esta misma curva con otro sueldo: sus rombos huecos marcan dónde caen.}}"
+      "whatIfPositions": "{n, plural, one {Un escenario es esta misma curva con otro sueldo: su rombo hueco marca dónde cae.} other {{n} escenarios son esta misma curva con otro sueldo: sus rombos huecos marcan dónde caen.}}",
+      "rangeMid": "deslice para ver más"
     },
     "compare": {
       "rows": {

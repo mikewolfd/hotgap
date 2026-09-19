@@ -256,7 +256,7 @@
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
       "howTo": "How to read this picture",
-      "rangeMid": "your pay"
+      "rangeMid": "swipe to see more"
     },
     "key": {
       "line": "Money you keep",
@@ -925,7 +925,8 @@
       },
       "whatIfLines": "{n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}}",
       "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}",
-      "whatIfPositions": "{n, plural, one {One what-if is this same curve at a different pay: its hollow diamond marks where it lands.} other {{n} what-ifs are this same curve at a different pay: their hollow diamonds mark where they land.}}"
+      "whatIfPositions": "{n, plural, one {One what-if is this same curve at a different pay: its hollow diamond marks where it lands.} other {{n} what-ifs are this same curve at a different pay: their hollow diamonds mark where they land.}}",
+      "rangeMid": "swipe to see more"
     },
     "compare": {
       "rows": {

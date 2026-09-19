@@ -1,4 +1,4 @@
-# Copy review for social workers — 2026-09-18
+# Copy review for social workers — 2026-09-18 (updated 2026-09-19)
 
 Every sentence a person can read on HotGap, in English and the Spanish draft, one row each. Mark the **Notes** column: *OK*, or write what it should say. Slots in braces (`{pay}`, `{state}`) are filled from the family's own numbers and stay as they are; plural forms are the `one`/`other` pairs. The three surfaces speak in three registers (`design/README.md`): the citizen page to the family in the second person, the caseworker page to a counselor, the map to a reporter.
 
@@ -215,7 +215,7 @@ Row counts and the source files: `app/src/i18n/en.json`, `app/src/i18n/es-US.jso
 | `citizen.chart.rangeFrom` | ← {from} | ← {from} |  |
 | `citizen.chart.rangeTo` | {to} → | {to} → |  |
 | `citizen.chart.howTo` | How to read this picture | Cómo leer esta imagen |  |
-| `citizen.chart.rangeMid` | your pay | su sueldo |  |
+| `citizen.chart.rangeMid` | swipe to see more | deslice para ver más |  |
 | `citizen.key.line` | Money you keep | El dinero que le queda |  |
 | `citizen.key.band` | Your flat stretch | Su tramo plano |  |
 | `citizen.key.other` | Other flat stretches | Otros tramos planos |  |
@@ -404,7 +404,7 @@ Row counts and the source files: `app/src/i18n/en.json`, `app/src/i18n/es-US.jso
 | `citizen.keepNext.plateau` | Of the next {over} you earn, you'd keep about {kept} — that's a flat stretch: more pay, barely more money. | De los próximos {over} que gane, le quedarían unos {kept}: eso es un tramo plano, más sueldo y apenas más dinero. |  |
 | `citizen.beyondReach` |  The ones past {at} are past what {n} in 10 families like yours earn. |  Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya. |  |
 
-## Caseworker page — 399 strings
+## Caseworker page — 400 strings
 
 | key | English | Spanish (draft) | Notes |
 |---|---|---|---|
@@ -730,6 +730,7 @@ Row counts and the source files: `app/src/i18n/en.json`, `app/src/i18n/es-US.jso
 | `caseworker.chart.whatIfLines` | {n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}} | {n, plural, one {Un escenario se dibuja aquí como una segunda línea, que se distingue por su trazo y su etiqueta.} other {{n} escenarios se dibujan aquí como líneas adicionales, que se distinguen por sus trazos y sus etiquetas.}} |  |
 | `caseworker.chart.whatIfHeld` | {held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}} | {held, plural, one {Queda un escenario más en la comparación que no está en la gráfica.} other {Quedan {held} escenarios más en la comparación que no están en la gráfica.}} |  |
 | `caseworker.chart.whatIfPositions` | {n, plural, one {One what-if is this same curve at a different pay: its hollow diamond marks where it lands.} other {{n} what-ifs are this same curve at a different pay: their hollow diamonds mark where they land.}} | {n, plural, one {Un escenario es esta misma curva con otro sueldo: su rombo hueco marca dónde cae.} other {{n} escenarios son esta misma curva con otro sueldo: sus rombos huecos marcan dónde caen.}} |  |
+| `caseworker.chart.rangeMid` | swipe to see more | deslice para ver más |  |
 | `caseworker.compare.rows.net` | Net after premiums | Neto después de primas |  |
 | `caseworker.compare.rows.change` | Change from now | Cambio desde ahora |  |
 | `caseworker.compare.rows.keep` | Keeps of each extra dollar | Lo que se queda de cada dólar extra |  |

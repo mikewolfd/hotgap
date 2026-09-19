@@ -399,10 +399,16 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     else if (s.safeExit > 0 && !safeSaid) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
     caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
 
-    /* The axis's own ends under the figure, from the data, and the axis's own
-       name between them: what tells the reader the picture goes on, and what
-       it goes along (inventory.md § MoneyCurve). */
-    hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), h("span", {}, t("chart.rangeMid")), h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
+    /* The axis's own ends under the figure, from the data, and between them
+       the one thing a phone needs told in words: that the picture slides. A
+       thumb reader on 2026-09-19 read the old middle word, "your pay", as a
+       you-are-here marker and never learned the chart moved; the diamond
+       already says where you are. The middle is drawn only while the plot
+       overflows its scroller, so no wide screen gains a word
+       (inventory.md § MoneyCurve; feedback: every graph swipes). */
+    const slides = wrapper.querySelector<HTMLElement>(".hg-scroll-x");
+    const mid = slides && slides.scrollWidth > slides.clientWidth + 1 ? [h("span", {}, t("chart.rangeMid"))] : [];
+    hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), ...mid, h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
 
     wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
     firstDraw = false;
