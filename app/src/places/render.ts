@@ -316,9 +316,12 @@ export function renderFigure(s: Scene): void {
     else {
       const c = g.bins.classes[g.bins.index(r.value as number)];
       /* Label ink chosen by the fill — the one place text may sit on a colour.
-         --ink to ramp step 1, --surface from step 2 (S3), on either ramp: the
-         floor is 5.16:1 light / 4.51:1 dark on loss 1 and 5.37:1 / 5.41:1 on
-         loss 2; the keep ramp is built to the same floor (charts.md § 2). */
+         The two steps NEAREST the page's own ground take --ink and the rest
+         --surface, on either ramp and in either mode (S3), because step 1 is
+         the step nearest the ground by construction. Measured floor: 5.16:1
+         light / 4.51:1 dark on the last --ink step, 5.37:1 / 5.41:1 on the
+         first --surface one. No step's L* may fall in the band where neither
+         ink reaches 4.5:1 — 49–53 light, 47–54 dark (charts.md § 2). */
       style += `;background:var(--${c.hue}-${c.ramp + 1});color:var(--${c.ramp >= 2 ? "surface" : "ink"})`;
     }
     const title = tileTitle(r, measure, summary.coverage?.[st]);

@@ -170,28 +170,52 @@
   --series-3: #1E8E6A;
 
   /* The loss ramp. ONE hue, five steps, magnitude only — see README § The ramp
-     that is not red and green. 1 = smallest drop. */
+     that is not red and green. 1 = smallest drop, and 1 is also the step
+     nearest the page's own ground, which is what the tile-label rule keys on.
+
+     --loss-6 is a SIXTH step, one rung deeper than the ramp's own end, and it
+     belongs to the diverging scale alone (charts.md § the diverging ramp).
+     There the two arms share one lightness axis of six rungs instead of each
+     spanning the whole of it, so the map reads as one severity ramp in
+     greyscale; six rungs need six plum steps, and the rung the keep ramp can
+     never reach is the deepest. A sequential ramp is still five steps and
+     must not use it. */
   --loss-1: #D19FC2;
   --loss-2: #B276A3;
   --loss-3: #945185;
   --loss-4: #713366;
   --loss-5: #4D1E43;
+  --loss-6: #350F2D;  /* L* 11.2, 16.1:1 on surface — diverging scales only */
   --loss-ink:   #713366;                  /* 7.4:1 on plane — text-safe plum */
   --loss-wash:  rgba(113,51,102,0.10);    /* danger-zone band fill */
   --loss-hatch: rgba(113,51,102,0.32);    /* 45° hatch over the band */
 
   /* The keep ramp — the SECOND arm of a diverging scale, and the only thing
      it is for: a measure with a meaningful zero, which today is the keep rate
-     (charts.md § 2). Below zero is the loss ramp; above it, this. 1 = the
-     step against zero, 5 = the most kept, the same direction the loss ramp
-     runs, at the same five luminances (0.42 → 0.03 light, 0.09 → 0.66 dark),
-     so a class's depth means the same distance from zero on either arm.
+     (charts.md § 2). Below zero is the loss ramp; above it, this. Step 1 is
+     the step nearest the page's own ground on both ramps — palest in light,
+     darkest in dark — at the loss ramp's own five luminances (0.42 → 0.03
+     light, 0.09 → 0.66 dark), so a rung of the shared lightness axis is the
+     same darkness in either hue.
+
+     WHICH END IS WHICH CHANGED ON 2026-09-18. Step 1 used to be the step
+     against zero and step 5 the most kept, so each arm ran pale → deep away
+     from the hinge and the two arms' ENDS measured L* 19.7 and 19.6: the best
+     state in the country and the worst were the same darkness, and a
+     greyscale print, a photocopy or a monochrome screen said nothing
+     (REVIEW-picture-first-places-2026-09-18 B1). The two arms now PARTITION
+     one lightness axis rather than each spanning it — plum takes the deep
+     rungs, this ramp the pale ones — so step 5 is the step against zero and
+     step 1 is the most kept. No value here moved; only which end of the scale
+     each one stands for. charts.md § the diverging ramp is the rule.
 
      WHY WARM. The pair has to survive the two common dichromacies, because
      across the hinge hue is what carries the sign. Measured (Viénot 1999
-     simulation, CIE76 ΔE between the two arms' matching steps, light and
-     dark): plum vs this warm arm is 38+ under protanopia and deuteranopia;
-     plum vs the blue money line collapses to 2.4, and plum vs teal to 5.6 —
+     simulation, CIE76 ΔE between the two arms' matching steps, and re-derived
+     with the Machado 2009 matrices — three derivations agreeing within 2 ΔE):
+     plum vs this warm arm is 38.1 in light and 33.4 in dark, and 37.3 / 30.4
+     across the hinge, where the arms actually meet on a map. Plum vs the blue
+     money line collapses to 2.4, and plum vs teal to 5.6 —
      both unusable for about one man in twelve. Tritanopia loses this pair
      instead (ΔE 0), as it loses every warm/cool diverging scale; it is
      ~0.01% of readers against ~8%, and the sign is carried in words as well,
@@ -238,16 +262,25 @@
     --loss-3: light-dark(#945185, #BC7BAB);
     --loss-4: light-dark(#713366, #D9A2C9);
     --loss-5: light-dark(#4D1E43, #F0C9E2);
+    --loss-6: light-dark(#350F2D, #FAE1F1);  /* dark: L* 91.9, 14.1:1 on surface */
     --loss-ink:   light-dark(#713366, #D9A2C9);
     --loss-wash:  light-dark(rgba(113,51,102,0.10), rgba(217,162,201,0.13));
     --loss-hatch: light-dark(rgba(113,51,102,0.32), rgba(217,162,201,0.34));
     /* Re-derived against #161B20 and reversed with the loss ramp, so on a dark
-       ground the step against zero is the one nearest the surface. */
+       ground step 1 — the most kept — is the one nearest the surface. */
     --keep-1: light-dark(#D7A376, #764922);
     --keep-2: light-dark(#C7762F, #9E5F27);
     --keep-3: light-dark(#9A571D, #CF7C32);
     --keep-4: light-dark(#6F3E12, #DAA97E);
-    --keep-5: light-dark(#492709, #E6D1BE);
+    /* Dark step 5 took chroma on 2026-09-18 — same hue (70.6°), same L*
+       (85.1), C* 12.8 → 25.9 — because it is now the rung against zero and
+       sits one rung from --loss-6 on a map where a single state loses. At
+       C* 12.8 the two pale ends were both near-grey and a dichromat read
+       ΔE 18.8 across the hinge; at 25.9 the pair measures 30.4 protan /
+       32.3 deutan, and the arms' matching steps 33.6 / 33.4. The old value
+       also failed the ramp's own recorded floor (charts.md § the diverging
+       ramp), which had carried a light-mode figure as if it were both. */
+    --keep-5: light-dark(#492709, #F5CEA7);
     --grid: light-dark(#E1E5EA, #232A31);
     --axis: light-dark(#AEB7C0, #3F4A53);
     --note:    light-dark(#1F5CB4, #7FB2F0);
@@ -326,12 +359,15 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    2px stripe / 6px period: 5.11:1 in light, 5.97:1 in dark (the audit's
    "6.0" is this figure rounded), so the PATTERN is legible, which is the
    channel that survives greyscale and a CMS re-compression. Mean luminance
-   of the tile: light 0.64 (above --loss-1's 0.42), dark 0.13 (between
-   --loss-1's 0.09 and --loss-3's 0.28) — so in light mode it is the stripe
-   contrast, not the average, that keeps a hatched tile from sorting as
-   "lighter than the lowest bin". The old --rule stripes measured 1.29:1 /
-   1.20:1 and collapsed to a flat pale square. Outline is left to each use
-   site: a 6px rank strip and a 40px tile want different edges.
+   of the tile: light 0.641 (above the ramp's 0.013–0.422), dark 0.128 (just
+   under its 0.087–0.805) — so it is the stripe contrast, not the average,
+   that keeps a hatched tile from sorting as a step of the ramp. The old
+   --rule stripes measured 1.29:1 / 1.20:1 and collapsed to a flat pale
+   square. Outline is left to each use site: a 6px rank strip and a 40px tile
+   want different edges. The stripe is never drawn OVER a bin — an incomplete
+   state is not shaded (charts.md § Not computed, rule 1) — and the
+   measurement is why it may not be: on a bin it would fall to 1.02–2.94 in
+   light and 1.21–2.91 in dark, invisible over the middle of the ramp.
 
    The stripes are an SVG mask over a pseudo-element in --ink-3, not a
    repeating-linear-gradient (places review B1): Chromium's PDF backend

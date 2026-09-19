@@ -465,38 +465,134 @@ takes two ramps, not one. On this site that is the keep rate, where zero is the
 line between a family that ends a climb out of poverty poorer than it began and
 one that keeps a little of each extra dollar. Below zero is the plum loss ramp,
 which already means "money lost" everywhere else on the site; above it the
-**keep ramp** (`--keep-1..5`), the second arm, warm. Five rules:
+**keep ramp** (`--keep-1..5`), the second arm, warm. Six rules:
 
 1. **Zero is always a bin edge**, and it is printed. The span is stretched to
    include zero — a scale whose states all keep starts at zero rather than at
    the lowest state — which is the one place this system bins from zero rather
    than over the observed range, because here zero is the fact a reader is
    looking for and not an empty corner of the scale.
-2. **Each arm is cut over its own reach**: three equal steps from zero out to
-   the furthest state on that side, the arm's ramp end to end, lightest against
-   the hinge. One width shared by both arms was built first and rejected on the
-   page: the arms are wildly asymmetric (105¢ and 30¢ on the committed sweep),
-   so the short arm got a single class and half the map was one flat colour. The
-   property a shared width buys — depth meaning the same distance from zero on
-   either ramp — is one a reader cannot use, because comparing depth across two
-   hues is not something the eye does reliably.
-3. **Both widths are printed**, for the same reason: "three steps of 35¢ below
-   zero and three of 10¢ above it, from −105¢ to +30¢". A step on one arm is not
+2. **Each arm is cut over its own reach**: equal steps from zero out to the
+   furthest state on that side. One width shared by both arms was built first
+   and rejected on the page: the arms are wildly asymmetric (105¢ and 30¢ on
+   the committed sweep), so the short arm got a single class and half the map
+   was one flat colour. The property a shared width buys — depth meaning the
+   same distance from zero on either ramp — is one a reader cannot use, because
+   comparing depth across two hues is not something the eye does reliably.
+3. **Both widths are printed**, for the same reason: "four steps of 26¢ below
+   zero and two of 15¢ above it, from −105¢ to +30¢". A step on one arm is not
    a step on the other and the caption must not let a reader think it is.
 4. **Six swatches, not five**, because this is two scales meeting. The gap where
    they meet is wider than the gaps inside each arm: the hue change says which
    way is which, the gap says where the turn is.
-5. **The hue is the sign, so the pair has to survive colour blindness.**
-   Measured with a Viénot 1999 dichromat simulation, CIE76 ΔE between the arms'
-   matching steps, both themes: plum against the warm keep ramp is 38 or better
-   under protanopia and deuteranopia; plum against the blue money line collapses
-   to 2.4 and plum against teal to 5.6 — both unusable for about one man in
-   twelve. Tritanopia loses this pair instead, as it loses every warm/cool
-   diverging scale, and that is ~0.01% of readers against ~8%. The sign is
-   carried in words as well, three more times: the scale's two ends are named in
-   full ("loses 105¢ of each extra dollar"), every tile's own name says its
-   rate, and the ranked strip's bars run left of the hinge for a state that
-   loses. `app/src/places/model.ts` `divergingBins` is the rule.
+5. **The two arms partition ONE lightness axis; neither spans it** (the rule
+   this section did not have until 2026-09-18 — see below). Six swatches means
+   six rungs, darkest for the state that loses most and palest for the one that
+   keeps most, and each arm takes a contiguous run of them: the losing arm the
+   deep rungs, the keeping arm the pale ones, meeting at zero. Lightness
+   carries the whole ranking and hue carries only the sign. An arm alone on the
+   scale has nobody to leave a rung for and slides to the five its own ramp can
+   draw.
+6. **The hue is the sign, so the pair has to survive colour blindness.**
+   Measured with a Viénot 1999 dichromat simulation, CIE76 ΔE in both themes,
+   and re-derived with the Machado 2009 matrices and with the same Viénot
+   matrix applied in gamma space — three derivations, agreeing within 2 ΔE — so
+   the figure is not one implementation agreeing with itself. Plum against the
+   warm keep arm, rung for rung: **38.1 light, 33.4 dark**, the weakest pair
+   either way. Across the hinge, where the two arms actually meet on a map, the
+   weakest pair over every split the data produces is **37.3 light and 30.4
+   dark**. Plum against the blue money line collapses to 2.4 and plum against
+   teal to 5.6 — both unusable for about one man in twelve. Tritanopia loses
+   this pair instead, as it loses every warm/cool diverging scale, and that is
+   ~0.01% of readers against ~8%. The sign is carried in words as well, three
+   more times: the scale's two ends are named in full ("loses 105¢ of each
+   extra dollar"), every tile's own name says its rate, and the ranked strip's
+   bars run left of the hinge for a state that loses.
+   `app/src/places/model.ts` `divergingBins` is the rule.
+
+   *The figure this rule carried until 2026-09-18 was "38 or better under
+   protanopia and deuteranopia" in **both** themes. It was a light-mode
+   measurement written as if it were both: dark's palest pair measured 19.2,
+   because `--keep-5` dark had fallen to C\* 12.8 and both pale ends were
+   near-grey. That token took chroma in the same pass (C\* 25.9, same hue, same
+   L\*), which is what makes the dark figures above hold.*
+
+#### Lightness is the ranking (2026-09-18)
+
+Both arms used to run pale at the hinge and deep at their own far end — the
+standard diverging form, and what rule 2 used to say. Measured off the built
+page, **the two ends came out at L\* 19.7 and 19.6**. The best state in the
+country and the worst were the same darkness. Every contrast floor on this page
+passed, because both ends are 12.8:1 on the same ground; the map still said
+nothing in greyscale, and to a reader using the near-universal *dark means
+severe* convention it said the opposite of the truth — that Texas and New
+Mexico are among the worst states in America
+(`REVIEW-picture-first-places-2026-09-18.md` B1). Lightness was the one axis
+the rule had never considered, and the map is now the page.
+
+**The axis, and how a class finds its rung.** One ramp step sits on each rung,
+at the same darkness in either hue, so `--loss-6` and `--keep-1` are the two
+ends of a single scale rather than the ends of two:
+
+| rung | 1 worst | 2 | 3 | 4 | 5 | 6 best |
+| --- | --- | --- | --- | --- | --- | --- |
+| plum | `--loss-6` | `--loss-5` | `--loss-4` | `--loss-3` | `--loss-2` | — |
+| keep | — | `--keep-5` | `--keep-4` | `--keep-3` | `--keep-2` | `--keep-1` |
+| L\* light | 11.2 | 19.7 / 19.6 | 31.4 / 31.5 | 44.1 / 43.9 | 57.1 / 57.4 | 70.8 |
+| L\* dark | 91.9 | 84.9 / 85.2 | 72.8 / 72.8 | 59.7 / 59.8 | 47.3 / 46.4 | 35.5 |
+| on the ground | 16.1 / 14.1 | 12.8 / 11.7 | 8.6 / 8.2 | 5.4 / 5.4 | 3.4 / 3.4 | 2.16 / 2.27 |
+| label | `--surface` | `--surface` | `--surface` | `--surface` | `--ink` | `--ink` |
+| label contrast | 16.1 / 14.1 | 12.8 / 11.7 | 8.6 / 8.2 | 5.4 / 5.4 | 5.16 / 4.51 | 8.06 / 6.98 |
+
+The ramp step a class draws with is its rung counted from the far end
+(`rungRamp`), so a diverging scale's classes run 5, 4, 3, 2, 1, 0 from the
+worst state to the best whatever the split is, and the step a class carries is
+**also** how its label is inked: **the two steps nearest the page's own ground
+take `--ink`, the rest `--surface`** — one rule, both ramps, both themes,
+unchanged from the sequential scale's. It works because the palette is built to
+dodge the band where neither ink reaches 4.5:1: L\* 49–53 in light and 47–54 in
+dark. **No rung's L\* may land in it.** The floor measured on the map is 4.51:1.
+
+**`--loss-6` is the price.** Six rungs need six plum steps and the loss ramp had
+five, because the sequential ramp spends all five on one arm and its palest is
+already at the 2.15:1 floor against the page. So the loss ramp gained a sixth,
+deeper step, used by diverging scales alone. Nothing else moved: every other
+ramp value on this page is the one it was, and a sequential measure — the
+worst drop, the leap, the safe exit, the counts — draws exactly as before.
+
+**What greyscale keeps, and what it drops.** The map now reads as one severity
+ramp: dark is worse, all the way across, in either theme (in dark the ramp
+reverses with the rest of the system, so severity is distance from the ground).
+Measured on the rendered page, converted with Rec. 601 luma, the six rungs land
+at **11.3 → 19.9 → 31.9 → 45.2 → 55.9 → 70.7 L\*** in light and **92.7 → 86.3
+→ 74.4 → 61.3 → 45.2 → 34.9** in dark: best against worst is 59.5 and 57.8 L\*
+apart, against a floor of 25, and the smallest gap between neighbours is 8.6.
+
+What it drops is the pale hinge. Zero used to be the lightest band on the map,
+so "near the line" was a place a reader could see; it is now a mid-tone where
+the hue turns. That is the trade this rule takes on purpose, because in
+greyscale the hue is gone and the sign with it, so a pale hinge would mark a
+turn a reader cannot follow, while the order is the thing a greyscale map is
+actually read for. Zero is still a printed bound, still the widest gap in the
+legend, and still said in words on every tile and at both ends of the scale.
+
+**The check is the conversion, not the colours** (`app/e2e/places.spec.ts`).
+Contrast ratios could not see this defect and neither could a reading of the
+computed fills, so the proof screenshots the tiles, hands the PNG back to the
+browser's own decoder, converts the raster with Rec. 601 luma and reads the
+tones off it. Two things are asserted, because the end-to-end gap alone would
+not have caught the interior: the two ends stand ≥ 25 L\* apart, and **the
+greyscale never inverts the ranking** — over every pair of shaded states, a
+state that keeps more is never drawn as the worse tone.
+
+**The hatch is not on this axis and must not be.** An incomplete state is never
+shaded (§ Not computed rule 1), and the measurement says why it cannot be: the
+`--ink-3` stripes measure 5.11:1 light and 5.97:1 dark on their own
+`--surface-sunk` ground, but over a rung of the ramp they would fall to
+1.02–2.94 in light and 1.21–2.91 in dark — invisible over the middle of the
+scale. The hatched tile's mean luminance is 0.641 light and 0.128 dark, still
+outside the ramp's 0.013–0.422 in light and just under its 0.087–0.805 in dark,
+so what separates it is the *pattern* and the solid outline, as before.
 
 **The ranked strip follows the same zero.** The standing rule — a dot on a
 shared axis, never a bar, because a bar's length has to be read from a zero the

@@ -91,7 +91,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    type goes below --t-tick: a postal code sized to its tile. It is a label on
    a figure, not prose, and every value is written out below. The four tile
    states — shaded, no cliff, past the axis, not computed — are the hg-tile--*
-   classes; shaded is a --loss-N or --keep-N background from the bin. */
+   classes; shaded is a --loss-N or --keep-N background from the bin, on one
+   lightness axis both ramps share (charts.md § the diverging ramp). */
 .tile { position: relative; aspect-ratio: 1; display: flex; align-items: center;
         justify-content: center; font-size: clamp(10px, 1.9vw, 15px);
         font-weight: var(--w-semi); letter-spacing: 0.01em;
@@ -103,8 +104,9 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 :where(.tile) { background: none; color: var(--ink); }
 /* Selection and focus are two marks in two places (S4): the selected tile
    takes a ring INSIDE its square in the label ink already chosen for contrast
-   on its fill (--surface on bins 3–5, --ink on 1–2, --ink-2 on the three
-   special tiles); the system focus ring stays outside. The ring is 2px at
+   on its fill (--ink on the two steps nearest the page's ground, --surface on
+   the rest, --ink-2 on the three special tiles); the system focus ring stays
+   outside. The ring is 2px at
    phone size and 3px where the tile has the room, so a 73px square does not
    wear a hairline. */
 .tile[aria-current="true"] { box-shadow: inset 0 0 0 clamp(2px, 0.35vw, 3px) currentColor; }

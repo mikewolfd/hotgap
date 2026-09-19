@@ -75,6 +75,18 @@ const OPTION_WORDS = () => {
   return { n, rects };
 };
 
+/**
+ * CIE L\* of a grey — the axis the eye reads darkness on, and the one the
+ * greyscale check states its floor in. Contrast ratios cannot stand in for
+ * it: a diverging ramp whose two ends are 12.81:1 and 12.85:1 on the same
+ * ground passes every contrast floor the page has and still draws the best
+ * state in the country and the worst as one tone (review B1).
+ */
+const greyL = (luma: number): number => {
+  const c = luma / 255, lin = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  return 116 * (lin > 216 / 24389 ? Math.cbrt(lin) : ((24389 / 27) * lin + 16) / 116) - 16;
+};
+
 const TZ = "America/New_York";
 const dateIn = (iso: string, timeZone: string) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone }).format(new Date(iso));
 const dateWords = (iso: string) => dateIn(iso, TZ);
@@ -340,6 +352,95 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     };
     await measureContrast("light");
 
+    /**
+     * THE GREYSCALE CHECK (review B1). The defect that sent this palette back
+     * was invisible to every measurement the page had: the two arms each ran
+     * pale-at-the-hinge to deep-at-its-own-end, so the best state and the
+     * worst both landed at L* ~19.7 and a newspaper printing the map in grey,
+     * a photocopy or a monochrome screen drew a meaningless picture — while
+     * every contrast floor above passed, because both ends were 12.8:1 on the
+     * same ground. Sign was carried by hue alone and depth said the opposite
+     * of the truth.
+     *
+     * So the check is the conversion itself, not an assertion about colours:
+     * screenshot the tiles, hand the PNG back to the browser's own decoder,
+     * convert the RASTER with Rec. 601 luma — what a print driver, a
+     * photocopier and an e-ink screen do — and read the tones off it. Nothing
+     * here re-derives what the page computed, and it sees a filter, an
+     * overlay or an opacity that a computed-style reading would not.
+     *
+     * Two things are checked, because the end-to-end gap alone would not have
+     * caught the interior: the ends stand GREY_FLOOR apart, and the greyscale
+     * never inverts the ranking — for every pair of shaded states, the one
+     * that keeps more is the lighter tone in light mode and the darker one in
+     * dark, where severity is distance from the ground.
+     */
+    const GREY_FLOOR = 25;
+    const measureGrey = async (mode: string, archId: string) => {
+      const shaded = STATES.filter((st) => !expectIncompleteFor(st, archId) && typeof metrics(st, archId).keepRate === "number");
+      const shot = (await page.locator("#grid").screenshot()).toString("base64");
+      const { tones, grey } = await page.evaluate(async ({ png, sts }) => {
+        const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${png}`)).blob());
+        const cv = new OffscreenCanvas(bmp.width, bmp.height), ctx = cv.getContext("2d")!;
+        ctx.drawImage(bmp, 0, 0);
+        const img = ctx.getImageData(0, 0, bmp.width, bmp.height);
+        const { data, width } = img;
+        const grid = document.querySelector("#grid")!.getBoundingClientRect();
+        const px = bmp.width / grid.width;   // device pixels per CSS pixel
+        const out: Record<string, number> = {};
+        for (const st of sts) {
+          const el = document.querySelector(`.tile[data-st="${st}"]`);
+          if (!el) continue;
+          const b = el.getBoundingClientRect();
+          const x0 = Math.round((b.left - grid.left) * px), y0 = Math.round((b.top - grid.top) * px);
+          const w = Math.round(b.width * px), h = Math.round(b.height * px);
+          const inset = (n: number) => Math.max(1, Math.round(n * 0.22));
+          const counts = new Map<number, number>();
+          for (let y = y0 + inset(h); y < y0 + h - inset(h); y++)
+            for (let x = x0 + inset(w); x < x0 + w - inset(w); x++) {
+              const i = (y * width + x) * 4;
+              const luma = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+              counts.set(luma, (counts.get(luma) ?? 0) + 1);
+            }
+          /* The MODE of the patch, not its mean: the postal code's glyphs and
+             the selected tile's inset ring are inside it too, and a mean would
+             stir them into the fill. */
+          out[st] = [...counts].reduce((a, c) => (c[1] > a[1] ? c : a))[0];
+        }
+        /* And the picture itself, converted the same way, so the finding can
+           be looked at and not only read off a list of numbers. */
+        for (let i = 0; i < data.length; i += 4) data[i] = data[i + 1] = data[i + 2] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        ctx.putImageData(img, 0, 0);
+        const blob = await cv.convertToBlob({ type: "image/png" });
+        const url = await new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(blob); });
+        return { tones: out, grey: url.split(",")[1] };
+      }, { png: shot, sts: shaded });
+      writeFileSync(`${OUT}/journalist-${width}-${mode}-map-grey.png`, Buffer.from(grey, "base64"));
+
+      const rate = (st: string) => metrics(st, archId).keepRate!;
+      const worst = shaded.reduce((a, st) => (rate(st) < rate(a) ? st : a));
+      const best = shaded.reduce((a, st) => (rate(st) > rate(a) ? st : a));
+      const L = (st: string) => greyL(tones[st]);
+      const ends = Math.abs(L(best) - L(worst));
+      check(ends >= GREY_FLOOR, `${mode}: in greyscale the best state and the worst stand ${GREY_FLOOR} L* apart (B1)`,
+        { worst: `${worst} ${L(worst).toFixed(1)}`, best: `${best} ${L(best).toFixed(1)}`, apart: ends.toFixed(1) });
+      /* Light: keeping more is lighter. Dark: severity is distance from the
+         ground, so keeping more is darker — the loss ramp's own reversal. */
+      const dir = mode === "dark" ? -1 : 1;
+      let worstPair: [string, string, number] | null = null;
+      for (const a of shaded) for (const b of shaded) {
+        if (rate(a) >= rate(b)) continue;
+        const slip = dir * (L(a) - L(b));                    // ≤ 0 when the order holds
+        if (slip > 0 && (!worstPair || slip > worstPair[2])) worstPair = [a, b, slip];
+      }
+      check(worstPair === null, `${mode}: greyscale never inverts the ranking — a state that keeps more is never drawn as the worse tone`,
+        worstPair ? { [`${worstPair[0]} keeps less than ${worstPair[1]}`]: `${L(worstPair[0]).toFixed(1)} vs ${L(worstPair[1]).toFixed(1)} L*`, by: worstPair[2].toFixed(1) } : "no inversion in any of the " + shaded.length + " states");
+      const steps = [...new Set(shaded.slice().sort((a, b) => rate(a) - rate(b)).map((st) => L(st).toFixed(1)))];
+      console.log(`     ${mode} greyscale rungs, worst state first: ${steps.join(" → ")} L*`);
+      return { ends, steps };
+    };
+    await measureGrey("light", "single-2");
+
     /* THE DIVERGING MAP (Plan 9). The page opens on it, so this is measured
        before anything changes the view. Every expected value is read from the
        committed run through core's own `keepRateWords`, so the page and the
@@ -360,8 +461,11 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
          light-dark() pair and not a colour. */
       const probe = document.createElement("span");
       document.body.append(probe);
-      const read = (hue: string) => [1, 2, 3, 4, 5].map((i) => { probe.style.background = `var(--${hue}-${i})`; return getComputedStyle(probe).backgroundColor; });
-      const out = { loss: read("loss"), keep: read("keep") };
+      const read = (hue: string, steps: number) => Array.from({ length: steps }, (_, i) => { probe.style.background = `var(--${hue}-${i + 1})`; return getComputedStyle(probe).backgroundColor; });
+      /* Six plum steps, five keep: on a diverging scale the two arms share one
+         lightness axis of six rungs, and only the losing arm reaches the
+         deepest (charts.md § the diverging ramp). */
+      const out = { loss: read("loss", 6), keep: read("keep", 5) };
       probe.remove();
       return out;
     });
@@ -1113,6 +1217,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     await page.locator("#statePanel").screenshot({ path: `${OUT}/journalist-${width}-light-${width === 390 ? "CO" : "TX"}.png` });
     await page.emulateMedia({ colorScheme: "dark" });
     await measureContrast("dark");
+    await measureGrey("dark", "single-2");
     await page.screenshot({ path: `${OUT}/journalist-${width}-dark.png`, fullPage: true });
     await page.locator(".picture").screenshot({ path: `${OUT}/journalist-${width}-dark-map${width === 390 ? "-legend" : ""}.png` });
     if (width === 1280) {
