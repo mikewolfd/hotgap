@@ -213,7 +213,12 @@ describe("bins and group", () => {
     const w = 1.0486 / 4, u = 0.3042 / 2;
     expect(bounds(d)).toEqual([-1.0486, -3 * w, -2 * w, -w, 0, u, 0.3042]);
     expect(bounds(d)).toContain(0);
-    expect(d.classes.map((c) => c.ramp)).toEqual([4, 3, 1, 0, 0, 4]);
+    /* The two arms partition ONE lightness axis, deepest rung for the state
+       that loses most and palest for the one that keeps most, so the ramp
+       step falls by exactly one all the way across whatever the split is —
+       the fix for the ends measuring the same darkness (charts.md § the
+       diverging ramp). */
+    expect(d.classes.map((c) => c.ramp)).toEqual([5, 4, 3, 2, 1, 0]);
     expect([d.width!.nDown, d.width!.nUp]).toEqual([4, 2]);
     expect(d.width!.down).toBeCloseTo(w, 10);
     expect(d.width!.up).toBeCloseTo(u, 10);
@@ -228,22 +233,31 @@ describe("bins and group", () => {
       const b = divergingBins(lo, hi);
       expect(bounds(b), `${lo}..${hi}`).toContain(0);
       expect(b.classes.length, `${lo}..${hi}`).toBeLessThanOrEqual(6);
-      expect(b.classes.every((c) => c.ramp >= 0 && c.ramp <= 4)).toBe(true);
+      // Only the losing arm may reach the loss ramp's sixth step; the keep
+      // ramp has five, and the palest rung is the one it never gives up.
+      expect(b.classes.every((c) => c.ramp >= 0 && c.ramp <= (c.hue === "loss" ? 5 : 4))).toBe(true);
       // Monotone: every class's bounds rise left to right, losing arm first.
       expect(bounds(b)).toEqual([...bounds(b)].sort((x, z) => x - z));
+      // And so does lightness: the ramp step falls by one at every class, so
+      // no two classes share a rung and the worst is always the darkest.
+      expect(b.classes.map((c) => c.ramp), `${lo}..${hi}`).toEqual(b.classes.map((_, i) => b.classes[0].ramp - i));
       // Every state on the scale falls in a class of the arm its sign names.
       for (const v of [lo, hi, (lo + hi) / 2]) expect(b.classes[b.index(v)].hue, `${v}`).toBe(v < 0 ? "loss" : "keep");
     }
     // All on one side: the whole scale is that arm, from zero, at the ramp's
-    // own depth — five steps, not six, because a ramp has five.
+    // own depth — five steps, not six, because a ramp has five. With no
+    // partner to leave a rung for it slides to the five its own ramp draws,
+    // and the state that keeps LEAST is still the darkest.
     const up = divergingBins(0.269, 0.571);
     expect(up.classes.every((c) => c.hue === "keep")).toBe(true);
     expect(up.classes.length).toBe(5);
-    expect(up.classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
+    expect(up.classes.map((c) => c.ramp)).toEqual([4, 3, 2, 1, 0]);
     expect([up.lo, up.zero, up.width!.down]).toEqual([0, 0, null]);
     const dn = divergingBins(-0.3, -0.05);
     expect(dn.classes.every((c) => c.hue === "loss")).toBe(true);
     expect(dn.classes.length).toBe(5);
+    // Alone, the losing arm is the sequential ramp exactly — steps 1–5, no sixth.
+    expect(dn.classes.map((c) => c.ramp)).toEqual([4, 3, 2, 1, 0]);
     expect([dn.hi, dn.zero, dn.width!.up]).toEqual([0, 1, null]);
     // A value on a bound belongs to the class nearer zero, and zero itself to the keep arm.
     expect(d.classes[d.index(0)].hue).toBe("keep");
@@ -434,7 +448,10 @@ describe("the committed sweep", () => {
     expect(g.ranked.length + g.incomplete.length).toBe(51);
     const arm = (st: string) => g.bins.classes[g.bins.index(summary.states[st][single2.id].keepRate!)];
     for (const st of ["WI", "CO", "NJ", "OR"]) expect(arm(st).hue, st).toBe("loss");
-    expect(arm("WI").ramp).toBe(4);
+    // Wisconsin loses the most, so it sits on the axis's deepest rung — the
+    // loss ramp's sixth step, which only a diverging scale reaches.
+    expect(arm("WI")).toEqual(g.bins.classes[0]);
+    expect(arm("WI").ramp).toBe(5);
     // New Mexico keeps the most, so it sits on the keep arm's top step.
     expect(arm("NM")).toEqual(g.bins.classes[g.bins.classes.length - 1]);
     expect(arm("NM").hue).toBe("keep");

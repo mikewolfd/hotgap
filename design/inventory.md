@@ -460,13 +460,28 @@ rate three ways. A surface chooses only how much room the phrase gets:
 | A legend end, a tile's own name | the whole phrase (`core.road.rate`) | keeps 30¢ of each extra dollar |
 | A ranked row's value, a table cell | the short form | keeps 30¢ |
 | A scale bound, an axis end | signed cents | +30¢, −56¢, 0¢ |
-| A bin's width | unsigned cents, because a width is a distance | 35¢ |
+| A bin's width | unsigned cents, because a width is a distance | 26¢ |
 | The readout's first sentence | `core.road.sentence` | Missouri — a single parent of two children who earns their way from poverty to twice poverty ends up 56¢ poorer for every extra dollar. |
 
 Zero keeps nothing and loses nothing, and says "keeps 0¢", which is true and
 reads as the plateau it is. Below zero the family ends the climb **poorer than
 it started** — that is what the lede says, once, rather than a minus sign a
 reader has to interpret.
+
+**DARKNESS IS THE RANKING, HUE IS THE SIGN** (2026-09-18). The measure is
+signed, but the reading a person takes off a map is *how bad*, and that reading
+is the whole order from the state that loses most to the state that keeps most
+— not distance from zero, which would make keeping 30¢ as emphatic as losing
+30¢. So the six bins take the six rungs of one lightness axis in that order,
+the losing arm on the deep rungs and the keeping arm on the pale ones, and the
+plum/tan turn marks zero. Drawn the other way — each arm pale at the hinge and
+deep at its own end — the best state in the country and the worst came out at
+L\* 19.6 and 19.7, and a greyscale print, a photocopy or a monochrome screen
+told a reader that New Mexico was among the worst states in America
+(`REVIEW-picture-first-places-2026-09-18.md` B1). The rule, the rungs and the
+greyscale check are `charts.md` § the diverging ramp; the rung is
+`divergingBins`; **the label ink follows the rung**, `--ink` on the two steps
+nearest the page's own ground and `--surface` on the rest, both themes.
 
 **Where it appears.** On the journalist page it is the default measure, first in
 the *On the road out of poverty* group, drawn on the diverging ramp with zero

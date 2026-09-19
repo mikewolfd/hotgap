@@ -180,7 +180,7 @@ export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): S
 }
 
 export interface BinClass {
-  /** The ramp step (0–4) this class is drawn with. */
+  /** The ramp step this class is drawn with, 0-based: 0–4 on a sequential scale, 0–5 on a diverging one, where the losing arm can reach the loss ramp's sixth step. Step 0 is the one nearest the page's own ground, which is what the tile-label ink keys on. */
   ramp: number;
   /** Which ramp: the plum loss ramp, or — on a diverging scale, above zero — the keep ramp. */
   hue: "loss" | "keep";
@@ -253,6 +253,22 @@ const EPS = 1e-9;
 const DIVERGING_CLASSES = 6;
 
 /**
+ * The rungs of the ONE lightness axis the two arms share, worst first.
+ *
+ * Both ramps are cut at the same six luminances, and a class's ramp step is
+ * its rung counted from the far end — `--loss-6` is the deepest rung and
+ * `--keep-1` the palest — so a scale's classes run 5, 4, 3, 2, 1, 0 from the
+ * state that loses most to the state that keeps most, whatever the split.
+ * That is the whole fix for the lightness collapse: lightness now carries the
+ * WHOLE order and hue carries the sign, instead of both arms spending the
+ * same darkness on their own far end (charts.md § the diverging ramp).
+ *
+ * Only the loss ramp has a sixth step, and only an arm that shares the axis
+ * needs it: an arm alone on the scale takes the five rungs its own ramp has.
+ */
+const rungRamp = (rung: number): number => DIVERGING_CLASSES - rung;
+
+/**
  * The figure a RANK is decided on: the one the page prints.
  *
  * The keep rate is stored to four decimals and printed in whole cents, so
@@ -272,9 +288,18 @@ export const rankValue = (v: number, m: Measure): number => (m.unit === "¢" ? M
  *
  * **Zero is always a bin edge**, and each ARM is binned over its own reach:
  * equal steps from zero out to the furthest state on that side, plum below and
- * the keep ramp above, each arm lightest against the hinge and deepest at its
- * end. An arm with no state on it has no classes at all, and the other then
- * takes five — the ramp's own depth.
+ * the keep ramp above. An arm with no state on it has no classes at all, and
+ * the other then takes five — the ramp's own depth.
+ *
+ * **The two arms partition one lightness axis; they do not each span it**
+ * (2026-09-18). Both ramps used to run pale-at-the-hinge to deep-at-the-end,
+ * which put the best state in the country and the worst at L* 19.6 and 19.7 —
+ * the same darkness — so the map said nothing in greyscale and told a reader
+ * who reads depth as severity the opposite of the truth
+ * (REVIEW-picture-first-places-2026-09-18 B1). The six classes now take the
+ * six rungs of one axis in order, darkest for the state that loses most and
+ * palest for the one that keeps most, so lightness carries the whole ranking
+ * and hue carries only the sign. See `rungRamp`.
  *
  * The obvious alternative — ONE width for both arms, so that a class's depth
  * means the same distance from zero whichever ramp it is on — was built first
@@ -304,13 +329,21 @@ export function divergingBins(loValue: number, hiValue: number): Bins {
   const nDown = lo < 0 ? (hi > 0 ? Math.min(5, Math.max(1, share)) : 5) : 0;
   const nUp = hi > 0 ? (lo < 0 ? Math.min(5, Math.max(1, DIVERGING_CLASSES - nDown)) : 5) : 0;
   const down = -lo / (nDown || 1), up = hi / (nUp || 1);
-  /* Spread over the ramp so the two ends of an arm are the ramp's two ends
-     (charts.md § 2); `i` counts outward from zero, so the lightest step is
-     always the one against the hinge. */
-  const ramp = (i: number, n: number) => (n === 1 ? 2 : Math.round((i * 4) / (n - 1)));
+  /* Each arm takes a CONTIGUOUS run of the shared rungs, deepest first, and
+     the two runs meet at zero: the losing arm ends on the rung below the
+     hinge, the keeping arm starts on the one above it. `i` counts outward
+     from zero on each arm, so the rung nearest the hinge is the pale one on
+     the losing side and the deep one on the keeping side — the order across
+     the whole scale, not within an arm, is what lightness carries now.
+
+     An arm alone on the scale has no partner to leave room for, so it slides
+     to the five rungs its own ramp can draw: the losing arm to rungs 6–2,
+     which is the sequential ramp exactly, and the keeping arm to rungs 2–6. */
+  const loEnd = nUp ? nDown : DIVERGING_CLASSES;
+  const upStart = Math.max(nDown, 1);
   const classes: BinClass[] = [];
-  for (let i = nDown - 1; i >= 0; i--) classes.push({ ramp: ramp(i, nDown), hue: "loss", lo: -(i + 1) * down, hi: i ? -i * down : 0 });
-  for (let i = 0; i < nUp; i++) classes.push({ ramp: ramp(i, nUp), hue: "keep", lo: i * up, hi: (i + 1) * up });
+  for (let i = nDown - 1; i >= 0; i--) classes.push({ ramp: rungRamp(loEnd - i), hue: "loss", lo: -(i + 1) * down, hi: i ? -i * down : 0 });
+  for (let i = 0; i < nUp; i++) classes.push({ ramp: rungRamp(upStart + 1 + i), hue: "keep", lo: i * up, hi: (i + 1) * up });
   if (!classes.length) classes.push({ ramp: 2, hue: "keep", lo: 0, hi: 0 });
   /* A value at a boundary falls in the class NEARER zero, on either side, so
      the hinge itself belongs to no loss class: zero keeps nothing and loses
