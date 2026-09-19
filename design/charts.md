@@ -867,6 +867,19 @@ where Alaska is, reads west to east the way the country is drawn, keeps
 California on the first screen, and clips a tile at the right edge, which is
 the same "there is more this way" a clipped column gives every wide table.
 
+**And it says so, in four words, only while it does.** A thumb reader given
+nothing but the URL concluded that Maine is not on this map: the top row is
+Alaska and then white space to the screen's edge, so the one wordless cue a
+swiping figure has — a tile clipped at the edge — is missing in exactly the
+row she was searching. *"No scrollbar at rest, no arrow, and not one word
+telling me to swipe."* So `.mapSwipe` sits under the tiles and outside the
+scroller, where `.hg-chart__hint` sits on the curve, carrying the table's own
+`table.swipe` words. It is absent at every width where the map fits, so it is
+never a rule about a gesture the reader cannot make. A selected tile is also
+brought inside the scroller (`revealTile`), because tapping the four visible
+pixels of New York used to leave its selection ring cut in half by the screen
+edge.
+
 The cost is named rather than hidden: about three of twelve columns are off
 screen at any moment on a 390px phone, so the smallest screen no longer shows
 all fifty-one states at one glance. The ranked row and the table row remain

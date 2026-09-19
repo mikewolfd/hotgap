@@ -231,6 +231,9 @@ the picture.
 | journalist | 390 | 166 | 57px | 0.93 | 1006px |
 | journalist | 1280 | 173 | 57px | 0.94 | 1078px |
 
+One cell of it moved afterwards, and only one: the thumb reader's verdict
+added four words to the journalist page at 390 (§ The thumb reader, T1).
+
 The citizen and caseworker figures sit at **118px** against a 120px budget,
 which is why the Edit button's hit area had to grow downward rather than the
 summary row growing taller: there were two pixels to spend.
@@ -323,6 +326,93 @@ its state and fills the readout inside the figure.
 
 Renders with every measured hit box outlined: `design/review/touch/`.
 
+---
+
+## The thumb reader
+
+Two sub-agents, each given a local URL, a 390 × 844 window and one
+instruction: *"You're on your phone with one thumb. Try to: swipe the chart
+to see more, tap a dot on the line, find your state on the map and tap it,
+open 'What we assumed', change the household. Say in three sentences what was
+easy, what you missed, and what fought you."* They were given no source and
+no context. Both came back with the same top finding, in almost the same
+words.
+
+**On the map.** *"The top row of the map shows Alaska on the left and then
+nothing but white all the way to the right edge, so I concluded Maine simply
+wasn't on this map… the map is 550px of country in a 390px window with no
+scrollbar at rest, no arrow, and not one word anywhere on the page —
+including inside 'How to read this map' — telling me to swipe."* And: *"I
+tapped the 4-pixel sliver of 'N' at the right edge and got New York… after
+selecting it the map didn't slide New York into view; it stayed half
+off-screen with half its selection ring clipped."*
+
+**On the curve.** *"I did not realise the chart slid sideways at all — on
+first load it shows $20k–$60k and looks like the whole picture, so I never
+saw the biggest drop in my life, the $7,059 one at $107,000, until I
+dragged."*
+
+### What was fixed in answer to it
+
+**T1. The map says it swipes, in four words, and only while it does.** A
+figure cannot put the words inside its scroller — `.hg-scroll-x`'s own
+`data-more` is a block in the scrolling content, which inside a twelve-column
+grid would be a thirteenth cell — so the line sits under the map, outside the
+scroller, where `.hg-chart__hint` sits on the curve. The words are the
+table's own `table.swipe`, already in both catalogs, so no string was added
+to translate. It is measured rather than assumed from the width: a longer
+language makes the same twelve columns wider.
+
+This is the one thing in this pass that moved the weight table, and it is
+reported rather than hidden. The journalist page at 390 goes **166 → 169
+words** against a 200-word budget, and its figure 1,006 → 1,033px against a
+0.5 floor it meets at 0.93. Every other cell of that table, including all
+three surfaces at 1280, is unchanged to the word: the line does not exist at
+a width where the map fits.
+
+**T2. A selected tile is brought inside the map's own scroller**
+(`revealTile`). The page's own scroll is deliberately left alone —
+`scrollIntoView` would take the vertical with it, and the readout is directly
+under the map already.
+
+**T3. A picture that scrolls shows its scrollbar** — `.hg-scroll-x--bar`, on
+the money curve and the map, under `(pointer: coarse)` only, so no desktop
+figure moves by a pixel. **This one could not be verified here**: headless
+Chromium draws overlay scrollbars in every emulation mode it offers, so
+`scrollbar-width: thin` computes but reserves 0px, and there is no way from
+this harness to see what iOS Safari or Android Chrome would draw. It ships as
+a belt beside T1's braces and is named as unverified rather than counted as a
+fix.
+
+### What was left, and why
+
+- **The curve has no swipe word.** T1's fix is not available to it: the
+  citizen surface has no equivalent string in either catalog, and inventing
+  one is a copy change to a file the social workers are reading this week.
+  The curve does have `← $0 … $150,000 →` outside the scroller and now a
+  scrollbar on touch. **Recommended next**: one line of copy, and it is the
+  single highest-value four words on the site.
+- **"your pay" in the citizen hint never moves.** The reader: *"it sits at a
+  fixed spot and never moves, so it looks like a you-are-here marker and
+  isn't one."* True, and a real defect — the hint is a flex row with the
+  middle label centred. Fixing it is a change to the figure's layout and
+  copy, not to a hit area.
+- **Tapping a cliff mark throws the page ~1,300px down to the step list**, so
+  the chart the reader just tapped leaves the screen. That scroll-into-view is
+  `charts.md`'s documented behaviour for the citizen surface (M6's three
+  review rules) and changing it is a interaction decision, not a touch fix.
+- **The underlined "26" in the journalist headline reads as a link.** The
+  underline is the AnswerSentence's own convention — a figure underlined in
+  the colour of the mark it names — so this is the answer sentence's rule to
+  revisit, not this pass's.
+- **Two marks at $37,000 and $40,000 are visibly half-width and touching.**
+  That is N3's arithmetic, seen by a person. It is the honest picture of a
+  curve with two cliffs $3,000 apart.
+
+---
+
+## After the thumb reader
+
 Two existing proofs measured the old rules and were moved, with the reason
 here and in the same commit:
 
@@ -336,3 +426,15 @@ here and in the same commit:
   DC being 73 L\* lighter than Connecticut and as an inverted ramp, at 390
   only. It now reads the tones at each end of the scroller and takes each
   tile from the pass that holds it whole.
+- `places.spec.ts`'s *"the row stays where it was"* held the focused table row
+  to 0.5px through a selection that adds seven hundred pixels above it. What
+  holds it is the browser's scroll anchoring, whose residue is sub-pixel and
+  not zero — measured at 0.17px on a first selection and 0.75px once T1's
+  line had added 28px to the figure. The tolerance is now 1.5px: the rule is
+  that the page does not jump, and 0.5px was measuring the instrument's own
+  floor.
+
+Everything green from the project's own runners: `npm run typecheck`,
+`npx vitest run` (669 passed), `cd app && npx vite build`, and all six
+Playwright suites through `wrangler dev` (54 passed, 3 skipped — the
+archetype-source variants).

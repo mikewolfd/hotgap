@@ -135,6 +135,13 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .tile[aria-current="true"] { box-shadow: inset 0 0 0 clamp(2px, 0.35vw, 3px) currentColor; }
 .tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 0; z-index: 3; }
 
+/* The map's own "there is more this way", outside the scroller and under it,
+   where the curve puts its axis hint (render.ts `mapSwipeHint`). Gone at
+   every width where the map fits, so it is never a rule about a gesture the
+   reader cannot make. It is a non-map child of .hg-picture, so it keeps the
+   page's gutter and lines up with the sentence above the map. */
+.mapSwipe { margin: var(--s2) 0 0; text-align: end; }
+
 /* ── The legend strip, inside the figure ────────────────────────────────
    The ramp, its printed bounds and the marks that are on this map: one strip
    under the tiles, not a column beside them.

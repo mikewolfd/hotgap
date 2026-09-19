@@ -431,6 +431,18 @@ for (const device of PHONES) {
             `${surface} [${i}] ${id}: overscroll-behavior-x contains the swipe`, style.overscrollX);
           await page.evaluate(() => scrollTo(0, 0));
         }
+
+        /* THE CUE, where a figure cannot put it inside the scroller. A thumb
+           reader read the map's empty first row as "Maine is not on this map"
+           and named the absence exactly: "no scrollbar at rest, no arrow, and
+           not one word telling me to swipe". The words appear only where the
+           map overflows, so this is measured both ways. */
+        if (surface === "places") {
+          const over = await page.locator("#grid").evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+          const said = await page.locator(".mapSwipe").isVisible();
+          check(said === over, `places: the map says it swipes exactly when it does`, `overflows ${over}, line shown ${said}`);
+          if (over) check((await page.locator(".mapSwipe").textContent() ?? "").trim().length > 0, "places: …in the page's own words", (await page.locator(".mapSwipe").textContent())?.trim());
+        }
         expect(errors).toEqual([]);
       });
     }

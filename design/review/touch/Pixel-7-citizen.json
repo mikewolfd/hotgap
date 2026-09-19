@@ -110,7 +110,7 @@
    "ok": true
   },
   {
-   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-scroll-x--bar > div.hg-marks > button.hg-mark",
    "name": "A drop near $29,000 a year. You keep about $",
    "box": [
     44,
@@ -130,7 +130,7 @@
    "ok": true
   },
   {
-   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-scroll-x--bar > div.hg-marks > button.hg-mark",
    "name": "A drop near $37,000 a year. Past it you'd ke",
    "box": [
     25,
@@ -151,7 +151,7 @@
    "why": "25px is the whole room between two cliffs (2.5.5 Essential)"
   },
   {
-   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-scroll-x--bar > div.hg-marks > button.hg-mark",
    "name": "A drop near $40,000 a year. Past it you'd ke",
    "box": [
     25,
@@ -172,7 +172,7 @@
    "why": "25px is the whole room between two cliffs (2.5.5 Essential)"
   },
   {
-   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-scroll-x--bar > div.hg-marks > button.hg-mark",
    "name": "A drop near $107,000 a year. Past it you'd k",
    "box": [
     44,

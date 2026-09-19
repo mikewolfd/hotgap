@@ -226,6 +226,15 @@ all of them without asking:
   `@media (pointer: coarse)` — only there, so no desktop column moves. The
   rule sits *after* the `.hg-select` rule it corrects: `font: inherit` on a
   class beats a bare element selector wherever it is written.
+- **A picture that scrolls says so.** A table says "swipe" in its own words
+  drawn at the top of its scroller (`data-more`); a figure has nowhere inside
+  to put them — the curve's would scroll off the left edge with the plot, and
+  a line inside a twelve-column grid would become a grid cell. So a figure
+  says it OUTSIDE the scroller (`.hg-chart__hint` on the curve, `.mapSwipe`
+  under the map) and takes `.hg-scroll-x--bar`, which shows a real scrollbar
+  where a finger is the input. Two thumb readers earned this: between them
+  they missed the biggest drop on the citizen curve and concluded Maine was
+  not on the map.
 - **A picture is not text.** `.hg-picture` is `user-select: none`, with
   selection restored for every element inside it that carries prose — the
   answer sentence a reporter quotes, the readout, the key, the table cells.

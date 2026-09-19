@@ -342,7 +342,8 @@ export function renderFigure(s: Scene): void {
      keeps California on the first screen, and clips a tile at the right edge,
      which is the same "there is more this way" a clipped column gives every
      wide table on the site. */
-  grid.classList.add("hg-scroll-x");
+  grid.classList.add("hg-scroll-x", "hg-scroll-x--bar");
+  mapSwipeHint(grid);
 
   /* The scale draws the classes that exist: five steps with their six bounds
      between them, or a count's classes each labelled with what it holds (S5). */
@@ -814,4 +815,55 @@ export function applySelection(sel: string | null): void {
       if (st === sel) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
     }
   }
+  revealTile(sel);
+}
+
+/**
+ * THE MAP SAYS IT SCROLLS, in the page's own four words, and only while it
+ * does. A thumb reader on 2026-09-19 concluded that Maine is not on this map:
+ * the top row is Alaska and then white space to the screen's edge, so the one
+ * wordless cue a swiping figure has — a tile clipped at the edge — is absent
+ * in exactly the row she was searching. "No scrollbar at rest, no arrow, and
+ * not one word telling me to swipe."
+ *
+ * The line sits OUTSIDE the scroller, the way `.hg-chart__hint` does on the
+ * curve, because `.hg-scroll-x`'s own `data-more` draws a block INSIDE the
+ * scroller — right for a table, and inside a twelve-column grid it would be a
+ * thirteenth cell. The words are the table's own (`table.swipe`, already in
+ * both catalogs), so this adds no string to translate; it appears only where
+ * the map overflows, so no desktop width gains a word, and it is measured
+ * rather than assumed from the width, because a longer language makes the
+ * same twelve columns wider.
+ */
+function mapSwipeHint(grid: HTMLElement): void {
+  let line = document.querySelector<HTMLElement>(".mapSwipe");
+  if (!line) {
+    line = h("p", { class: "mapSwipe hg-source", "aria-hidden": "true" });
+    grid.after(line);
+  }
+  const el = line;
+  /* Next frame: the first render happens while `#main` is still hidden, where
+     a scroller measures zero and every map would look like it fits. */
+  requestAnimationFrame(() => {
+    el.textContent = copy.table.swipe;
+    el.hidden = grid.scrollWidth <= grid.clientWidth + 1;
+  });
+}
+
+/**
+ * A selected tile is brought inside the map's own scroller, and nothing else
+ * moves. Where the map swipes, a tile at the edge is half a tile: a thumb
+ * reader tapped the four visible pixels of New York, got New York, and then
+ * read its answer beside a square whose selection ring was cut in half by the
+ * screen edge (REVIEW-touch, the thumb reader). The page's own scroll is left
+ * alone on purpose — `scrollIntoView` would take the vertical with it, and the
+ * readout is directly under the map already (main.ts § Selecting a state).
+ */
+function revealTile(sel: string | null): void {
+  const grid = $("grid");
+  const el = sel && grid.querySelector<HTMLElement>(`.tile[data-st="${sel}"]`);
+  if (!el || grid.scrollWidth <= grid.clientWidth) return;
+  const t = el.getBoundingClientRect(), g = grid.getBoundingClientRect(), edge = 8;
+  if (t.left < g.left + edge) grid.scrollLeft -= g.left + edge - t.left;
+  else if (t.right > g.right - edge) grid.scrollLeft += t.right - (g.right - edge);
 }

@@ -184,7 +184,8 @@ export interface Scroller {
 
 export function scrollerParts(gutter: SVGSVGElement, plot: SVGSVGElement, marks: HTMLElement): Omit<Scroller, "wrap"> {
   /* tabindex -1 and no role: the scroller must not be a second tab stop in front of the chart's own (M6). */
-  const scroll = h("div", { class: "hg-scroll-x hg-chart__scroll" }, plot, marks);
+  /* --bar: a picture that scrolls shows its scrollbar on a touch device, because it has nowhere to put the words a table uses (tokens.css). */
+  const scroll = h("div", { class: "hg-scroll-x hg-scroll-x--bar hg-chart__scroll" }, plot, marks);
   return { gutter, scroll, plot, marks };
 }
 

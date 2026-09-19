@@ -870,6 +870,28 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-scroll-x[data-more]::before { content: attr(data-more); display: block; text-align: end;
                                   color: var(--ink-3); font-size: var(--t-micro); padding: 0 0 var(--s2); }
 
+/* A PICTURE THAT SCROLLS SHOWS ITS SCROLLBAR (--bar, on the money curve and
+   the phone's map). A table says "swipe" in its own words, drawn at the top
+   of the scroller where a reader meets it; a figure has nowhere to put words
+   — the curve's would scroll off the left edge with the plot, and a line
+   inside a twelve-column grid would become a grid cell. So the picture shows
+   the one wordless, universal affordance instead.
+   It earned its pixels from two thumb readers on 2026-09-19, who between them
+   missed the biggest drop on the citizen curve and concluded Maine was not on
+   the map: "no scrollbar at rest, no arrow, and not one word telling me to
+   swipe". The edge fade `.hg-scroll-x` already draws is invisible here —
+   behind the tiles, and the same colour as the ground in the map's empty
+   first row, which is exactly the row Maine is in.
+   Only where a finger is the input. An overlay scrollbar appears on a
+   desktop the moment a wheel moves, and reserving five pixels at every width
+   would move every figure on the site by five pixels. */
+@media (pointer: coarse) {
+  .hg-scroll-x--bar { scrollbar-width: thin; scrollbar-color: var(--rule-strong) var(--surface-sunk); }
+  .hg-scroll-x--bar::-webkit-scrollbar { height: 5px; }
+  .hg-scroll-x--bar::-webkit-scrollbar-track { background: var(--surface-sunk); border-radius: 999px; }
+  .hg-scroll-x--bar::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 999px; }
+}
+
 /* ── Interactive chart (M6, S8, S12) ─────────────────────────────────── */
 
 /* The chart wrapper: role="group", aria-roledescription="interactive chart",

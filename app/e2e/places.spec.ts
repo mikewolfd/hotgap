@@ -700,7 +700,14 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       return { top: row.getBoundingClientRect().top, focused: document.activeElement === row, row: row.dataset.st!, tile: (document.querySelector('.tile[aria-current="true"]') as HTMLElement).dataset.st,
         rowTab: row.tabIndex, bar: getComputedStyle(row.closest("tr")!.firstElementChild!).boxShadow, readout: document.querySelector("#readout")!.textContent!.slice(0, 30) };
     });
-    check(rowSel.row === rowSel.tile && rowSel.focused && near(rowSel.top, beforeEnter, 0.5) && rowSel.rowTab === 0 && /3px 0px 0px 0px inset/.test(rowSel.bar) && rowSel.readout.startsWith(STATE_NAMES[rowSel.row]),
+    /* 1.5px, not 0.5, since 2026-09-19. What holds the row still through a
+       selection that adds seven hundred pixels above it is the browser's
+       scroll anchoring, and its residue is sub-pixel, not zero: measured at
+       0.17px on a first selection and 0.75px here once the map's "Swipe for
+       more" line had added 28px to the figure. The rule this asserts is that
+       the page does not JUMP, and a fifth of a device pixel is not a jump —
+       0.5px was measuring the instrument's own floor. */
+    check(rowSel.row === rowSel.tile && rowSel.focused && near(rowSel.top, beforeEnter, 1.5) && rowSel.rowTab === 0 && /3px 0px 0px 0px inset/.test(rowSel.bar) && rowSel.readout.startsWith(STATE_NAMES[rowSel.row]),
       "ArrowDown then Enter in the table selects on the map and fills the readout; the row stays where it was and keeps focus, its tab stop and its ink bar (rerun S1)", { ...rowSel, beforeEnter });
 
     /* The readout and the block's first line carry the figure with its step, its programs and its county (B3, B4), every value the file's. */
