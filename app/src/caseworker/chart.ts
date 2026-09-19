@@ -21,7 +21,7 @@
 // A draw is O(points × (1 + what-ifs) + cliffs + zones); a width change
 // redraws once; print redraws synchronously at a fixed width (review N6).
 import { keepRateWords, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
 import { clusterCliffs, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
 import { MAX_DROP_LABELS, placer, type Spot } from "../lib/chart/labels.js";
 
@@ -194,7 +194,12 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     /* The marks layer is the PLOT's box, not the scroller's viewport, so a mark scrolls with its dot. */
     marksEl.style.width = `${W}px`;
     marksEl.style.height = `${H}px`;
-    for (const cl of clusterCliffs(cliffs(), px)) {
+    const clustered = clusterCliffs(cliffs(), px);
+    /* The hit bands, before any button is made: a mark takes 44px or the gap
+       to its nearest neighbour, whichever is less, so two never stack
+       (lib/chart/draw.ts `markWidths`). */
+    const hitW = markWidths(clustered.map((cl) => cl.x));
+    for (const [ci, cl] of clustered.entries()) {
       const members = cl.cliffs.map((c) => cliffs().indexOf(c));
       const x = cl.x, y = py(net[indexOf(ev, cl.cliffs[0].startEarnings)]), r = cl.cliffs.length > 1 ? DOT_MERGED : DOT;
       const waiting = cl.cliffs.some((c) => c.deferral !== null);
@@ -208,7 +213,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       }
       /* The marks layer: one 44px button per mark, over the SVG (M6). */
       const mark: Mark = { cluster: cl, members, x, y, landY, waiting, btn: null as unknown as HTMLButtonElement };
-      mark.btn = markButton(x, y, L, markSentence(mark), cl.cliffs.length, cl.later);
+      mark.btn = markButton(x, y, L, markSentence(mark), cl.cliffs.length, cl.later, {}, hitW[ci]);
       mark.btn.addEventListener("click", () => on.select(mark.members[0], markSentence(mark)));
       /* A mark reached by keyboard may be off screen: focus scrolls it into view. */
       mark.btn.addEventListener("focus", () => reveal(x));
@@ -437,6 +442,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
      the next stop, not skipped (review N4). */
   attachCursor(wrap, {
     svg, layer: () => layer, range: () => [0, earn.length - 1], cursor: () => cursor, shift: 10, pointer: "drag",
+    scroller: () => host.scroll,
     set(i, by) { cursor = i; paintCursor(); if (by === "key") reveal(layer ? layer.px(earn[i]) : 0); },
     bracket(key, target) {
       const onMark = target.closest(".hg-mark");

@@ -9,7 +9,7 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import { keepRateWords, type Cliff } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, pathD, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { scrollToShow } from "../lib/chart/geometry.js";
 import { h, svg } from "../lib/dom.js";
 import { tickMoney } from "../lib/format.js";
@@ -440,10 +440,14 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     /* The marks layer is the PLOT's box, not the scroller's viewport, so a mark's percent position is a position on the axis and scrolls with its dot. */
     marksLayer.style.width = `${L.W}px`;
     marksLayer.style.height = `${L.H}px`;
-    for (const cl of clusters) {
+    /* The hit bands, before any button is made: a mark takes 44px or the gap
+       to its nearest neighbour, whichever is less, so two never stack
+       (lib/chart/draw.ts `markWidths`). */
+    const hitW = markWidths(clusters.map((cl) => cl.x));
+    for (const [ci, cl] of clusters.entries()) {
       const key = keyOf(cl.cliffs[0]);
       const b = markButton(cl.x, L.py(s.net[s.idx(cl.cliffs[0].startEarnings)]), L, markLabel(s, cl), cl.cliffs.length, cl.later,
-        { "data-key": String(key), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) });
+        { "data-key": String(key), "aria-controls": `step-${key}`, "aria-expanded": String(open === key) }, hitW[ci]);
       b.addEventListener("click", () => {
         touched = true;
         cursor = s.idx(cl.cliffs[0].startEarnings);
@@ -483,6 +487,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
      from the one that has focus, else from the wrapper ] goes to the first and [ to the last. */
   attachCursor(wrapper, {
     svg: picture, layer: () => L, range: () => [L!.i0, L!.i1], cursor: () => cursor, shift: 5, pointer: "hover",
+    scroller: () => scroll,
     set(i, by) { cursor = i; touched = true; paintCursor(); if (by === "key" && L) reveal(L.px(s.earningsAt(i))); },
     bracket(key) {
       const marks = [...marksLayer.querySelectorAll<HTMLButtonElement>(".hg-mark")];

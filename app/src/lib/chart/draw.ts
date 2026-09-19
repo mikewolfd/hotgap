@@ -115,11 +115,48 @@ export function cursorNodes(x: number, y: number, top: number, bottom: number, r
   ];
 }
 
-/** A cliff mark as a control (M6): a 44px .hg-mark button centred on the dot by percent of the box, with its count when merged (S8). */
-export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H">, label: string, count: number, later: boolean, attrs: Record<string, string> = {}): HTMLButtonElement {
+/** The mark's hit square (WCAG 2.5.5), before a neighbour takes some of it back. */
+export const MARK_HIT = 44;
+
+/**
+ * How wide each mark's hit area may be, given where the marks are.
+ *
+ * A 44px button centred on every dot is 44px of intention and less than that
+ * of hit area: where two cliffs are 24px apart the two buttons overlap by 20,
+ * the topmost takes both taps, and the lower one measured 0×0 on the
+ * caseworker's $51,000 cliff — a control a thumb could not reach at all
+ * (REVIEW-touch B2). So the marks TILE the axis instead of stacking on it:
+ * each takes 44px, or the whole gap to its nearest neighbour when that is
+ * less, so two bands touch and never lie on top of one another. Where the
+ * There is NO floor under the gap, and that is the decision rather than an
+ * omission: a floor of 24px (WCAG 2.5.8's own) put two bands back on top of
+ * one another by 3px on the caseworker's $51,000 and $53,000 cliffs, which is
+ * the defect this function exists to remove. Where the axis gives a mark less
+ * than 44px it gets what there is — a cliff's position IS the datum, so the
+ * dots cannot be moved apart to make room (2.5.5 Essential), and every tap
+ * still lands on the nearest one. `app/e2e/touch.spec.ts` allows a short mark
+ * only when its width is exactly the room between it and its neighbour, so a
+ * mark cannot be short for any other reason without the proof saying so.
+ *
+ * O(n) on a sorted list of positions, which `clusters` already is.
+ */
+export function markWidths(xs: number[]): number[] {
+  return xs.map((x, i) => {
+    const gap = Math.min(i > 0 ? x - xs[i - 1] : Infinity, i < xs.length - 1 ? xs[i + 1] - x : Infinity);
+    return Math.min(MARK_HIT, gap);
+  });
+}
+
+/** A cliff mark as a control (M6): a 44px .hg-mark button centred on the dot by percent of the box, narrowed to its band where its neighbour is nearer than 44px, with its count when merged (S8). */
+export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H">, label: string, count: number, later: boolean, attrs: Record<string, string> = {}, width = MARK_HIT): HTMLButtonElement {
   const b = h("button", { type: "button", class: "hg-mark", tabindex: "-1", "aria-label": label, ...attrs });
   b.style.left = `${(x / L.W) * 100}%`;
   b.style.top = `${(y / L.H) * 100}%`;
+  /* The height is always the full square: marks are laid along the x axis, so
+     only x can collide. Both are set here rather than in the class, which
+     keeps the .hg-mark rule to what is true of every mark. */
+  b.style.width = `${width}px`;
+  b.style.marginLeft = `${-width / 2}px`;
   if (count > 1) b.append(h("span", { class: later ? "hg-mark__count hg-mark__count--later" : "hg-mark__count", "aria-hidden": "true" }, String(count)));
   return b;
 }
@@ -220,8 +257,29 @@ export interface CursorModel {
   /** The layer the pointer maps through, once one is drawn. */
   layer(): Layer | null;
   svg: SVGSVGElement;
+  /** The box the plot scrolls in, so a finger held still over a travelling curve keeps reading (§ A finger on the curve). */
+  scroller?(): HTMLElement;
 }
 
+/**
+ * A FINGER ON THE CURVE (design/charts.md § A finger on the curve).
+ *
+ * A horizontal drag on a scrolling plot is two gestures wearing one coat: a
+ * scrub ("what does this pay come to?") and a swipe ("show me further along").
+ * They cannot both win, and the browser decides — once a pan is recognised it
+ * sends `pointercancel` and no listener here hears the finger again. This pass
+ * lets the pan win, because the plot is three to six screens wide and a
+ * gesture that cannot reach the rest of the axis would make the scroll rule of
+ * 2026-09-17 unreachable by the one input most readers have.
+ *
+ * The readout is not lost to that choice: it reads the pay under the finger
+ * on touchdown, follows the finger for as long as the browser has not claimed
+ * the gesture, and then — while the finger is still down — re-reads on every
+ * scroll of the plot, because the pay under a still thumb changes when the
+ * curve travels beneath it. So "move along the line for any pay" holds on a
+ * phone with the line doing the moving, and no pixel of the axis is walled
+ * off. A mouse is unchanged: it never pans, so hover and drag scrub as before.
+ */
 export function attachCursor(wrapper: HTMLElement, m: CursorModel): void {
   const move = (clientX: number): void => {
     const L = m.layer();
@@ -230,8 +288,29 @@ export function attachCursor(wrapper: HTMLElement, m: CursorModel): void {
     m.set(indexAtX(L, clientX, r.left, r.width, lo, hi), "pointer");
   };
   const onMark = (e: Event) => !!(e.target as HTMLElement).closest(".hg-mark");
-  wrapper.addEventListener("pointerdown", (e) => { if (m.pointer === "hover" || !onMark(e)) move(e.clientX); });
-  wrapper.addEventListener("pointermove", (e) => { if (m.pointer === "hover" || (e.buttons && !onMark(e))) move(e.clientX); });
+  /** Where the finger is, while it is down; null for every other pointer. */
+  let fingerX: number | null = null;
+  wrapper.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") fingerX = e.clientX;
+    if (m.pointer === "hover" || !onMark(e)) move(e.clientX);
+  });
+  wrapper.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "touch") {
+      /* A finger that has not been claimed by the pan yet: it is scrubbing. */
+      if (fingerX !== null && !onMark(e)) { fingerX = e.clientX; move(e.clientX); }
+      return;
+    }
+    if (m.pointer === "hover" || (e.buttons && !onMark(e))) move(e.clientX);
+  });
+  /* Only a real lift clears it. `pointercancel` is what the PAN sends, and it
+     means the browser took the gesture, not that the thumb left the glass —
+     clearing on it would end the readout at the moment the swipe begins,
+     which is the moment the pay under the thumb starts to change. */
+  const lift = (): void => { fingerX = null; };
+  wrapper.addEventListener("pointerup", lift);
+  wrapper.addEventListener("touchend", lift);
+  wrapper.addEventListener("touchcancel", lift);
+  m.scroller?.().addEventListener("scroll", () => { if (fingerX !== null) move(fingerX); }, { passive: true });
   wrapper.addEventListener("keydown", (e) => {
     if (!m.layer()) return;
     const [lo, hi] = m.range(), step = e.shiftKey ? m.shift : 1, at = m.cursor();
