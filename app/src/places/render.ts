@@ -328,7 +328,21 @@ export function renderFigure(s: Scene): void {
     tiles.push(`<button type="button" class="${cls}" data-st="${st}" style="${style}" ` +
       `title="${esc(title)}" aria-label="${esc(title)}"${control(st, s.sel, tabbable)}>${st}</button>`);
   }
-  $("grid").innerHTML = tiles.join("");
+  const grid = $("grid");
+  grid.innerHTML = tiles.join("");
+  /* The map is its own scroller below 550px (places.css § THE TILE IS A 44px
+     CONTROL): the class is added here rather than written into the skeleton
+     because it is the tiles' behaviour, and it is idempotent.
+     IT OPENS AT ITS LEFT EDGE, which is to say nothing sets scrollLeft. A
+     centred start was tried and rendered: it hides the whole Pacific column —
+     Alaska, Washington, Oregon, California, Hawaii — and it opens the picture
+     on an EMPTY first row, because Alaska and Maine are the only tiles in it
+     and centring cuts them both off. Left-aligned, the map starts in the
+     corner where Alaska is, reads west to east the way the country is drawn,
+     keeps California on the first screen, and clips a tile at the right edge,
+     which is the same "there is more this way" a clipped column gives every
+     wide table on the site. */
+  grid.classList.add("hg-scroll-x");
 
   /* The scale draws the classes that exist: five steps with their six bounds
      between them, or a count's classes each labelled with what it holds (S5). */

@@ -283,6 +283,55 @@ dollar, the *back to even* label is dropped, the leap keeps its label. The
 gutter is 44px instead of 52px. The caseworker curve is scrolled the same way
 as the citizen's, and its compare columns are untouched by any of it.
 
+### A finger on the curve (2026-09-19)
+
+A horizontal drag on a scrolling plot is two gestures in one coat — a scrub
+("what does this pay come to?") and a swipe ("show me further along") — and
+they cannot both win. The browser decides: once it recognises a pan it sends
+`pointercancel` and no listener hears the finger again.
+
+**The pan wins.** The plot is three to six screens wide, and a gesture that
+cannot reach the rest of the axis would make § The scroll rule unreachable by
+the one input most readers have. So the plot carries no `touch-action` of its
+own and inherits `pan-x pan-y` from `.hg-scroll-x` around it; only the gutter,
+which is outside the scroller and has nothing to pan, keeps `pan-y`.
+
+**The readout is not lost to that choice.** It reads the pay under the finger
+on touchdown, follows the finger for as long as the browser has not claimed
+the gesture, and then — while the finger is still down — re-reads on every
+scroll of the plot, because *the pay under a still thumb changes when the
+curve travels beneath it*. "Move along the line for any pay" holds on a phone
+with the line doing the moving, and no pixel of the axis is walled off.
+`pointercancel` deliberately does not end it: it means the browser took the
+gesture, not that the thumb left the glass. A mouse never pans, so hover and
+drag scrub exactly as before, and the keyboard is untouched
+(`lib/chart/draw.ts` `attachCursor`).
+
+The rule that used to sit here, `touch-action: pan-y` on every SVG in a chart,
+was right for a fixed crop and outlived the scroll rule by a month: because
+`touch-action` is the INTERSECTION of the whole ancestor chain, it beat the
+scroller's own `pan-x pan-y` and no finger could move either curve at all,
+while a mouse wheel over the same pixel moved it 180px
+(`REVIEW-touch-2026-09-19` B1).
+
+### A mark takes 44px, or all the room there is (2026-09-19)
+
+Every cliff mark is a 44px hit square on its dot — **narrowed to the gap to
+its nearest neighbour where that gap is less than 44px**, so the marks tile
+the axis and two are never stacked (`lib/chart/draw.ts` `markWidths`). The
+merge rule above is about drawing; this is about the thumb, and they are
+separate numbers on purpose.
+
+44px buttons centred on dots 25px apart overlap by 20, the topmost takes both
+taps, and the loser is unreachable — the caseworker's $51,000 cliff measured
+0×0 to a hit test while reading as fully compliant from the stylesheet. There
+is no floor under the gap: 24px (WCAG 2.5.8's) put two bands back on top of
+each other by 3px on that same axis. A cliff's x IS the pay it happens at, so
+the dots cannot be moved apart to make room without the picture telling a lie
+— WCAG 2.5.5's *Essential* exception — and `app/e2e/touch.spec.ts` allows a
+short mark only when its box is exactly the room available and nothing is
+covering it, so a mark short for any other reason is still a finding.
+
 ### Direct labels (rewritten 2026-09-18)
 
 The old rule was *exactly two on the citizen chart* — the largest drop and the
@@ -786,11 +835,48 @@ fold. The figure keeps the page's column — one left edge for the whole documen
 — and the map takes 48rem, a 64px tile, measured so the sentence, the tiles,
 the scale, the bounds and the key are all inside one 900px screen.
 
-**A tile is a 27–64px control, and its equivalent target is a row.** WCAG
-2.5.8's exception, as before: twelve 44px tiles will not fit a phone, and the
-ranked row and the table row for the same state are the full-size controls.
-Since they moved behind *Every state, every measure*, the keyboard sentence in
-*How to read this map* says where they are.
+### A tile is a 44px control, and the phone map swipes (2026-09-19)
+
+Until 2026-09-19 a tile was a 27–64px square and the ranked row was its
+44px equivalent (WCAG 2.5.8's exception). The owner overruled that: *"the
+hitboxes are the right size"* means the tiles themselves. The arithmetic then
+settles the rest — **the cartogram is twelve columns, so twelve 44px tiles and
+eleven 2px gaps are 550px, and a phone is 390 to 412.** The whole country at
+44px and the whole country on one screen cannot both be true.
+
+Two ways out were measured and dropped. Enlarging the hit area through the gap
+is dead on arrival: 12 × 44 is 528 however the pixels are arranged, so
+adjacent hit areas must overlap — by eleven pixels each way at the current
+gap. Re-flowing the grid to eight columns by twelve rows does fit 390px, and
+nobody would recognise it; a cartogram's whole value is that it looks like the
+country.
+
+**So the map swipes, at a 44px tile, below 550px** — which is what the owner
+asked for. The column is `minmax(var(--touch), 1fr)`, so above 550px nothing
+changes: at 48rem the tile is still 64px and the map does not scroll. Below
+it the columns hold at 44px and `.hg-scroll-x` on the grid makes the overflow
+a swipe, with the edge fade and the `overscroll-behavior` every wide table
+here already has.
+
+**It opens at its left edge**, and nothing sets `scrollLeft`. A centred start
+was written, rendered and thrown away: it hides the entire Pacific column —
+Alaska, Washington, Oregon, California, Hawaii — and it opens the picture on
+an *empty first row*, because Alaska and Maine are the only tiles in that row
+and centring cuts them both off. Left-aligned, the map starts in the corner
+where Alaska is, reads west to east the way the country is drawn, keeps
+California on the first screen, and clips a tile at the right edge, which is
+the same "there is more this way" a clipped column gives every wide table.
+
+The cost is named rather than hidden: about three of twelve columns are off
+screen at any moment on a 390px phone, so the smallest screen no longer shows
+all fifty-one states at one glance. The ranked row and the table row remain
+the same state's other controls, which is now a convenience rather than an
+obligation. The postal code's floor rose with the square — 10px in a 33px tile
+was the one type on the site below `--t-tick`, and in a 44px tile it read as a
+tile that had lost its label, so the clamp starts at the tick floor.
+
+Measured in `design/REVIEW-touch-2026-09-19.md`; proved by
+`app/e2e/touch.spec.ts`.
 
 **On paper the map does not break, and the figure may.** A figure whose
 disclosures are open is taller than a page, so `break-inside: avoid` on it is

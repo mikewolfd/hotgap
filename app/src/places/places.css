@@ -83,18 +83,41 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    than sitting in a card beside a list (charts.md § The map is the picture).
    The gap grows a little with the tile so the block reads as one object at
    both ends of the range. */
-.map { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(2px, 0.3vw, 4px); }
-/* A tile is a button that opens its state, sized to its square rather than to
-   --touch: the 44px equivalent control is the ranked row and the table row
-   under "Every state, every measure" (WCAG 2.5.8's equivalent-target
-   exception), and a 44px tile would not fit twelve to a phone. The one place
-   type goes below --t-tick: a postal code sized to its tile. It is a label on
-   a figure, not prose, and every value is written out below. The four tile
-   states — shaded, no cliff, past the axis, not computed — are the hg-tile--*
-   classes; shaded is a --loss-N or --keep-N background from the bin, on one
-   lightness axis both ramps share (charts.md § the diverging ramp). */
+/* THE TILE IS A 44px CONTROL EVERYWHERE, AND BELOW 550px THE MAP SWIPES
+   (charts.md § A tile is a 44px control, and the phone map swipes). The
+   column is `minmax(--touch, 1fr)`, so the grid's own minimum content width
+   is 12 × 44 + 11 × 2 = 550px: at or above that the columns are 1fr and grow
+   with the width exactly as before — at 48rem the tile is still 64px and
+   nothing scrolls — and below it the columns hold at 44px and the map
+   overflows its box, which `.hg-scroll-x` (on the element, from places.html)
+   turns into a swipe with an edge fade on whichever side still has country.
+   410px of a 550px map is on the screen at once on a Pixel 7; the scroll
+   opens at its left edge; render.ts says why a centred start was rejected.
+
+   The 2px of padding is the focus ring's room: a scroll container clips both
+   axes (an `overflow-x: auto` box computes `visible` to `auto` in y), and
+   without it the ring on Alaska's tile — the top-left one, and the first one
+   a keyboard reaches — would be shaved off by its own scroller.
+   `scroll-padding` keeps a tile the arrow keys move to off the fade. */
+.map { display: grid; grid-template-columns: repeat(12, minmax(var(--touch), 1fr)); gap: clamp(2px, 0.3vw, 4px);
+       padding: 2px; scroll-padding: 2px var(--s4); }
+/* A tile is a button that opens its state, and since 2026-09-19 it is a
+   44px control on every screen — the owner overruled the 27–33px trade the
+   keep-rate review recorded (charts.md § A tile is a 44px control). The
+   square is the column's, so it is 44px where the map swipes and larger
+   wherever the width allows. `min-height: 0` still undoes the shared 44px
+   floor, because on this grid the HEIGHT comes from `aspect-ratio` and the
+   floor would stretch a wide tile into a rectangle; the column minimum is
+   what keeps it square AND 44. The postal code's floor rose with the square:
+   10px in a 33px tile was the one type on the site below --t-tick, and in a
+   44px tile it read as a tile that had lost its label, so the clamp now
+   starts AT the tick floor. It is a label on a figure, not prose, and every
+   value is written out below. The four tile states — shaded, no cliff, past
+   the axis, not computed — are the hg-tile--* classes; shaded is a --loss-N
+   or --keep-N background from the bin, on one lightness axis both ramps
+   share (charts.md § the diverging ramp). */
 .tile { position: relative; aspect-ratio: 1; display: flex; align-items: center;
-        justify-content: center; font-size: clamp(10px, 1.9vw, 15px);
+        justify-content: center; font-size: clamp(var(--t-tick), 1.9vw, 15px);
         font-weight: var(--w-semi); letter-spacing: 0.01em;
         min-height: 0; padding: 0; margin: 0; border: 0; font-family: inherit; cursor: pointer; }
 /* The button's own ground and ink, at zero specificity: this file loads after
