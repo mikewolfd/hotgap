@@ -331,11 +331,49 @@ a { color: var(--link); text-underline-offset: 3px; }
   border-radius: var(--r-control);
 }
 
-/* Every interactive thing clears 44px. */
+/* Every interactive thing clears 44px, and none of them waits 300ms to find
+   out whether a tap was a double-tap-to-zoom: `manipulation` is `auto` minus
+   that gesture, so a swipe still pans and a pinch still zooms — the page's
+   own zoom is never taken away from anyone (REVIEW-touch-2026-09-19). */
+button, [role="button"], summary, select, input, a, .hg-row-btn, .hg-mark, .tile {
+  touch-action: manipulation;
+}
 button, [role="button"], summary, select, input, .hg-row-btn {
   min-height: var(--touch);
   font-family: inherit;
   font-size: inherit;
+}
+
+/* THE HIT AREA MAY BE BIGGER THAN THE THING (design/inventory.md § .hg-hit).
+   A transparent box centred on the control, at least --touch square, so a
+   15px link or a 32px button takes a thumb without growing on the screen.
+   Three rules travel with it: the visual never moves; the box is CENTRED, so
+   it grows evenly and cannot reach in one direction only; and no two of these
+   boxes may overlap — `app/e2e/touch.spec.ts` re-derives that by geometry,
+   because a hit test can only ever report the winner. */
+.hg-hit, .hg-lang a, .hg-button--small, .hg-table .hg-row-btn { position: relative; }
+.hg-hit::before, .hg-lang a::before, .hg-button--small::before, .hg-table .hg-row-btn::before {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: max(100%, var(--touch)); height: max(100%, var(--touch));
+}
+/* …and two anchored variants, for the two places where something else already
+   owns the pixels on one side, so a centred box would spend half of itself on
+   ground it cannot have. Both grow from the control's OWN edge, which keeps
+   the visual inside the box and keeps the growth on the side that is free.
+   - `--down`: the summary line's Edit sits directly under the sticky bar,
+     whose z-index of 5 takes every pixel above it. Centred it measured
+     48×42; raising the button over the bar instead would have shown Edit
+     sliding across the wordmark on every scroll.
+   - `--start`: a wide table's first column is flush with its scroller's left
+     edge, and `overflow-x` clips whatever crosses it. Centred, the state
+     button's box measured 42 wide — the missing two were outside the
+     scroller. Grown from its own left edge it runs into the row's own
+     number cells, which hold no targets, so the row reads as one control. */
+.hg-hit--down::before, .hg-scenario__summary .hg-button--small::before {
+  top: 0; transform: translate(-50%, 0);
+}
+.hg-hit--start::before, .hg-table .hg-row-btn::before {
+  left: 0; transform: translate(0, -50%);
 }
 
 /* Numbers in columns align; standalone big numbers do not. */
@@ -489,6 +527,17 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
    column: prose keeps its measure, the plot gets more axis per screen. */
 .hg-picture { margin: 0 calc(-1 * var(--s4)); }
 .hg-picture > :not(.hg-chart) { padding-inline: var(--s4); }
+/* A PICTURE IS NOT TEXT, so dragging across one must move it, not highlight
+   it: a swipe over the curve used to leave "−$3,513" and two tick labels
+   selected in blue, and the next tap dismissed the selection instead of
+   opening a mark. The words INSIDE the figure are still words — the answer
+   sentence a reporter quotes, the readout, the key, the table — so selection
+   comes straight back for every element that carries prose. Two rules, and
+   the next figure gets both without asking. */
+.hg-picture { user-select: none; -webkit-user-select: none; }
+.hg-picture :is(figcaption, p, li, td, th, caption, summary, dd, dt) {
+  user-select: text; -webkit-user-select: text;
+}
 @media (min-width: 64rem) {
   .hg-picture { margin-inline: calc((min(var(--figure-max), 100vw - 4 * var(--s4)) - 100%) / -2); }
 }
@@ -727,6 +776,19 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
   color: var(--ink); border-radius: var(--r-control); padding: 0 var(--s3);
   width: 100%; max-width: 100%; font: inherit;
 }
+/* A FINGER ZOOMS THE PAGE WHEN A FIELD IS UNDER 16px, and then it does not
+   zoom back: that is iOS's rule, not a preference. The two panel surfaces set
+   a 15px base (.hg-dense), which every field inherits through the `font:
+   inherit` above, so on a phone those are the fields that trip it — measured
+   at 15px on all three of the journalist page's selects. Lifted only where a
+   coarse pointer is the input: a mouse never zooms, so no desktop column
+   moves by a pixel. It sits AFTER the rule it corrects, because `font:
+   inherit` on a class beats a bare element selector wherever it is written —
+   the first draft of this put it three hundred lines up and measured 15px
+   afterwards. */
+@media (pointer: coarse) {
+  input, select, textarea, .hg-select, .hg-input, .hg-filters select { font-size: max(16px, 1rem); }
+}
 
 /* SkipLink (#22), one declaration (S13). */
 .hg-skip { position: absolute; inset-inline-start: -9999px; }
@@ -779,9 +841,21 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    ground is the surface's page ground; a scroller inside a panel sets
    --scroll-ground to the panel's. A page may also name the gesture:
    `data-more="Swipe for more →"` (its own copy) prints under the table in
-   the source line's voice, and only while the page finds an overflow. */
+   the source line's voice, and only while the page finds an overflow.
+
+   A SWIPE IS THE GESTURE THIS CLASS EXISTS FOR (REVIEW-touch-2026-09-19), so
+   it states the three things a finger needs and a mouse never asks for:
+   `touch-action` lets the browser pan it in both directions rather than
+   waiting on a script; `overscroll-behavior-x: contain` keeps the end of a
+   swipe inside the figure, where on iOS it would otherwise be a back
+   gesture and a reader who swiped one tile too far would lose the page; and
+   `-webkit-overflow-scrolling: touch` is the momentum, which is the default
+   now and is written down so a future reset cannot quietly take it away. */
 .hg-scroll-x {
   overflow-x: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   --scroll-ground: var(--plane);
   --scroll-shadow: color-mix(in srgb, var(--ink) 22%, transparent);
   background:
@@ -803,7 +877,17 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    real buttons at tabindex="-1", reached with [ and ] from the wrapper. */
 .hg-chart { position: relative; }
 .hg-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-.hg-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.hg-chart svg { display: block; width: 100%; height: auto; }
+/* `touch-action: pan-y` used to sit on every SVG in here. It was right for a
+   chart that was a fixed crop, where a sideways drag could only be a scrub;
+   it outlived the scroll rule of 2026-09-17 by two days short of a month and
+   then silently forbade the one gesture that rule exists for. Because
+   touch-action is the INTERSECTION of the whole ancestor chain, `pan-y` on
+   the plot beat `pan-x pan-y` on the scroller around it, and a finger could
+   not move the curve at all — while a mouse wheel over the same pixel moved
+   it 180px (REVIEW-touch B1, the control that found it). The plot now says
+   nothing and inherits the scroller's; the gutter, which is outside the
+   scroller and has nothing to pan, keeps pan-y (below). */
 
 /* The scrolling curve (design/charts.md § The scroll rule): the whole earnings
    axis is drawn at a fixed px-per-$1,000 inside .hg-scroll-x, and the y axis
@@ -812,7 +896,7 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
    page — the scale IS the geometry — so neither may be stretched to its box. */
 .hg-chart--scroll { display: flex; align-items: flex-start; }
 .hg-chart--scroll > svg, .hg-chart--scroll .hg-chart__scroll > svg { width: auto; flex: none; }
-.hg-chart__gutter { flex: none; }
+.hg-chart__gutter { flex: none; touch-action: pan-y; }
 /* The plot is the scroller's scrolling content, and the marks layer is the
    plot's own box (not the viewport's), so a mark travels with its dot. The
    page sets its width and height; position stays at the content's origin. */
@@ -841,7 +925,12 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 /* A cliff mark as a control: a 44px hit area centred on the drawn dot,
    positioned over the SVG in percent of its box. The dot stays in the SVG;
    the button is transparent, so the mark's drawing rules in charts.md are
-   unchanged. aria-expanded says whether its row is open. */
+   unchanged. aria-expanded says whether its row is open.
+   The WIDTH below is the default and the page may narrow it: where two cliffs
+   are closer than 44px the marks tile the axis instead of stacking on it, and
+   `lib/chart/draw.ts` markWidths sets the width and the margin inline
+   (charts.md § A mark takes 44px, or all the room there is). The height is
+   never narrowed — marks lie along x, so only x can collide. */
 .hg-marks { position: absolute; inset: 0; pointer-events: none; }
 .hg-mark {
   position: absolute; width: var(--touch); height: var(--touch);
@@ -850,9 +939,12 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
   pointer-events: auto; cursor: pointer;
 }
 .hg-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: -6px; border-radius: 50%; }
+/* The open ring is a fixed 20px circle on the dot, not an inset of the
+   button: a mark narrowed to its band (lib/chart/draw.ts `markWidths`) is as
+   little as 24px wide, and `inset: 12px` on that box drew a ring 0px across. */
 .hg-mark[aria-expanded="true"]::after {
-  content: ""; position: absolute; inset: 12px; border-radius: 50%;
-  border: 2px solid var(--ink);
+  content: ""; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px;
+  transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid var(--ink);
 }
 /* A merged mark (S8): dots closer than 10px become one mark with a count,
    drawn by the page as a --loss-4 dot with the count in --surface ink. */

@@ -18,7 +18,7 @@ surface renders the component, not that it could.
 | 10 | **DeferredBadge** | The dashed-outline chip that marks a loss landing at a future renewal, with its rule and citation. Since 2026-09-17 it is the *only* thing a deferral does to a reading: the row, the mark and the figures are an ordinary cliff's, and the badge plus its clause ("it does not end that day", then the rule) say when the money goes. Dashed everywhere, always. One declaration: `.hg-badge`. | ● | ● | |
 | 11 | **ScenarioBar** | The household's inputs as chips — state, county, shape, earnings, rent, childcare, and the take-up toggles — plus *add a what-if* and *print*. Phone behaviour and chip semantics in § ScenarioBar. | | ● | |
 | 12 | **CompareTable** | Two or three scenarios in columns against the same rows. Column identity is a rule under the header, never coloured text. | | ● | |
-| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. Since 2026-09-18 it is the journalist page's picture: full-bleed on a phone, 48rem above 64rem, with the AnswerSentence as its `<figcaption>` and everything it needs — legend, caution, readout, controls — inside the same figure (`charts.md` § The map is the picture). | | | ● |
+| 13 | **StateTiles** | The 51-tile cartogram: equal squares, postal code on every tile, printed bins, and **four** mutually distinct tile states — shaded, *no cliff*, *past the axis*, *not computed* (`charts.md` § 2). Each tile is a button that opens its state; the group is one tab stop. Since 2026-09-18 it is the journalist page's picture: full-bleed on a phone, 48rem above 64rem, with the AnswerSentence as its `<figcaption>` and everything it needs — legend, caution, readout, controls — inside the same figure (`charts.md` § The map is the picture). Since 2026-09-19 **the tile is 44px everywhere**, so below 550px the map is its own `.hg-scroll-x` and swipes, opening at its left edge (`charts.md` § A tile is a 44px control, and the phone map swipes). | | | ● |
 | 14 | **RankStrip** | The sorted companion to the map — state, dot on a shared axis, value — answering *how much* where the map answers *where*, with the axis bounds above the list. Each row is a `.hg-row-btn` that opens its state: the full-size control that a tile sized to its square cannot be (`charts.md` § 2). States with no cliff and states the model cannot complete are each lifted out into their own labelled block, never left at the bottom of the order. Since 2026-09-18 it opens *Every state, every measure* beside the DataTable — fifty-one ranked rows are two hundred words and the map is the page — and its heading says which measure it ranks and which way, in the order control's own words. | | | ● |
 | 15 | **DataTable** | The text equivalent and the thing a reporter copies: every row, every measure, in its own horizontal scroller, with a CSV export carrying its own provenance columns. A no-cliff cell prints *none*, never `$0`. | ● | ● | ● |
 | 16 | **IncompleteMarker** | The 45° hatch (`.hg-hatch-incomplete`) and its companions — the legend entry that says *figures incomplete, not low*, the not-ranked block, the flag column, the caseworker's one-line state notice. Rendered from `coverage[state].unmodeled[]` on every pass (§ IncompleteMarker). | | ● | ● |
@@ -42,7 +42,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | StepList | `.hg-rows`, `.hg-rows__at`, `.hg-rows__loss` (the drop line); `[aria-current="true"]` on the open row |
 | MarkKey | `.hg-key` |
 | CurveReadout | `.hg-readout` |
-| MoneyCurve | `.hg-chart` (wrapper), `.hg-chart--scroll` (the figure's flex row) + `.hg-chart__gutter` (the y axis, outside the scroller) + `.hg-chart__scroll` (`.hg-scroll-x`, the plot and its marks) + `.hg-chart__hint` (the axis's ends, outside the scroller), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls; `--later` on a merged mark whose every cliff waits, whose hollow dot takes `--ink-3`), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch) and its weight `--strong` (the largest drop, the leap, "you") or `--med` (the peak, the exit, "later") — never a bare `font-weight` on `<text>`, `.hg-draw` |
+| MoneyCurve | `.hg-chart` (wrapper), `.hg-chart--scroll` (the figure's flex row) + `.hg-chart__gutter` (the y axis, outside the scroller, and the one SVG that keeps `touch-action: pan-y`) + `.hg-chart__scroll` (`.hg-scroll-x`, the plot and its marks) + `.hg-chart__hint` (the axis's ends, outside the scroller), `.hg-marks` + `.hg-mark` + `.hg-mark__count` (cliff controls, 44px square or the room between two dots, whichever is less — `charts.md` § A mark takes 44px; `--later` on a merged mark whose every cliff waits, whose hollow dot takes `--ink-3`), `.hg-tick`, `.hg-label` with `--loss`, `--ink`, `--halo` (a word in a mark's ink; a halo over the hatch) and its weight `--strong` (the largest drop, the leap, "you") or `--med` (the peak, the exit, "later") — never a bare `font-weight` on `<text>`, `.hg-draw` |
 | StateTiles, RankStrip legend | `.hg-tile--none`, `.hg-tile--past`, `.hg-tile--incomplete` + `.hg-hatch-incomplete` (an SVG mask on a pseudo-element, so it prints — B1 of the places review); `.hg-swatch` with the same modifiers, in a `.hg-key` list |
 | Callout | `.hg-callout`, `--note`, `--caution` |
 | Button | `.hg-button`, `--primary`, `--small` |
@@ -56,6 +56,7 @@ layout that is genuinely its own (its column grid, its masthead).
 | AnswerSentence | `.hg-answer`; `.hg-amt` with `--keep` (the line), `--gap` (the exit rule and the bracket), `--cliff` (a cliff dot); `--measure-answer` is its measure and `--t-answer` its size. The page keeps only the margins |
 | The figure | `.hg-picture` — not `.hg-figure`, which is a StatTile's number and was there first — margin only: it bleeds to the screen's edges below 64rem (the y-axis gutter travelling inside it) and leaves the prose column above, capped at `--figure-max`. Every non-chart child keeps the page's gutter. **Leaving the column is for a chart whose x axis wants every pixel**; a surface whose picture is square may keep the column and size the picture itself instead, which is what the journalist map does above 64rem (`charts.md` § The map is the picture) |
 | Page column, wordmark | `.hg-page` (centred, `--s4` gutters, `--s8` foot; the page sets `--page-max` on its own class: citizen 40rem, journalist 68rem, caseworker 76rem); `.hg-wordmark` (weight and size; the editor's row tracks it −0.01em, the journalist masthead does not — one value once settled) |
+| Touch | `.hg-hit` (+ `--down`, `--start`) is the enlarged hit area, § `.hg-hit`; `.hg-scroll-x` carries `touch-action`, `overscroll-behavior-x` and the momentum; `touch-action: manipulation` is on every control in the shared layer, and `.hg-picture` is `user-select: none` with prose exempted — a page declares none of these |
 | Anything | `[hidden]` wins over every display a class sets — a page never re-declares it |
 
 Four rules that go with the map:
@@ -171,6 +172,65 @@ Four rules that go with them:
   numbers come from* when it does not (`caseworker/render.ts`,
   `renderCoverage`). A warning is what a reader would act on, not every
   sentence about the data.
+
+## `.hg-hit` — when the hit area may be bigger than the thing
+
+Every target clears 44×44 CSS px (WCAG 2.5.5). The *visual* may be smaller,
+and for three of them it is: a 15px language link, a 32px `.hg-button--small`,
+a 31px state button in a table's first column. `.hg-hit` is how — a
+transparent box centred on the control, `max(100%, var(--touch))` square, as a
+`::before`, so the box grows and the drawing does not move.
+
+Three rules travel with it, and a measurement enforces each:
+
+1. **The visual never moves.** The box is a pseudo-element; nothing about the
+   control's own layout changes, which is why this pass added no pixel to any
+   header (`REVIEW-touch-2026-09-19` N4: the weight table is identical).
+2. **No two hit areas may overlap.** A 44px box that took its neighbour's
+   pixels is 44px of intention and less than that of hit area — and the tap it
+   wins was the neighbour's. `app/e2e/touch.spec.ts` re-derives every overlap
+   by geometry, because a hit test can only ever report the winner.
+3. **Centred, unless something else already owns that side.** Two anchored
+   variants exist and no more:
+   - `.hg-hit--down`, for a control in a row directly under the sticky
+     scenario bar, whose `z-index: 5` takes every pixel above it. The summary
+     line's *Edit* measured 48×42 with a 44px box; the top six were the bar's,
+     and raising the button over the bar would have shown *Edit* sliding
+     across the wordmark on every scroll.
+   - `.hg-hit--start`, for the first column of a wide table, which is flush
+     with its scroller's left edge, where `overflow-x` clips whatever crosses
+     it. Grown from its own left edge the box runs into the row's number
+     cells, which hold no targets, so the row reads as one control.
+
+A chart's cliff marks are the one place a target may finish *under* 44px, and
+only by arithmetic: `charts.md` § A mark takes 44px, or all the room there is.
+
+## Touch: what a phone user meets and a laptop user never does
+
+Measured in `REVIEW-touch-2026-09-19` and proved by `app/e2e/touch.spec.ts` at
+Pixel 7 and iPhone 14. The rules live in `tokens.css` so a new surface gets
+all of them without asking:
+
+- **`.hg-scroll-x` is the swipe.** `touch-action: pan-x pan-y` (the browser
+  pans it, no script), `overscroll-behavior-x: contain` (the end of a swipe is
+  not a back-navigation on iOS), `-webkit-overflow-scrolling: touch` (the
+  momentum, written down so a future reset cannot take it away). A wide table,
+  a money curve and the phone's map are all this one class.
+- **`touch-action: manipulation` on every control** — `auto` minus
+  double-tap-to-zoom, so a swipe still pans, a pinch still zooms, and no tap
+  waits 300ms. The page's own zoom is never taken away from anyone: the
+  viewport meta carries `width=device-width, initial-scale=1` and never
+  `user-scalable=no`.
+- **A field under 16px zooms iOS, and it does not zoom back.** The two panel
+  surfaces set a 15px base, so `input, select, textarea` take 16px under
+  `@media (pointer: coarse)` — only there, so no desktop column moves. The
+  rule sits *after* the `.hg-select` rule it corrects: `font: inherit` on a
+  class beats a bare element selector wherever it is written.
+- **A picture is not text.** `.hg-picture` is `user-select: none`, with
+  selection restored for every element inside it that carries prose — the
+  answer sentence a reporter quotes, the readout, the key, the table cells.
+  Without it a swipe across the curve left two tick labels highlighted and the
+  next tap dismissed the selection instead of opening a mark.
 
 ## `--control-edge`
 
