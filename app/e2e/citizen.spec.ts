@@ -161,10 +161,21 @@ for (const scheme of ["light", "dark"] as const) {
       for (const k of markKeys) expect(onAxis.some((c) => c.endEarnings === k)).toBe(true);
       expect(markKeys.length).toBeGreaterThan(0);
       let covered = 0;
-      for (const b of await marks.all()) {
+      /* A mark is 44px tall always and 44px wide WHERE THE AXIS HAS THE ROOM
+         (2026-09-19, REVIEW-touch B2; lib/chart/draw.ts `markWidths`). This
+         used to read `width >= 44` flatly, and what that pin actually held
+         was a pile of overlapping buttons: at 390 two cliffs 25px apart gave
+         two 44px marks, the upper one took both taps and the lower measured
+         0×0 to a hit test. The marks now tile the axis — each takes 44px or
+         the whole gap to its neighbour — so the rule a mark owes is that it
+         takes every pixel available to it, which is what is asserted here,
+         against the marks' own spacing. */
+      const centres = (await marks.evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; }))).sort((a, b) => a - b);
+      for (const [i, b] of (await marks.all()).entries()) {
         expect(await b.getAttribute("aria-label")).toMatch(/drop/);
         const box = (await b.boundingBox())!;
-        expect(box.width).toBeGreaterThanOrEqual(44);
+        const room = Math.min(i > 0 ? centres[i] - centres[i - 1] : Infinity, i < centres.length - 1 ? centres[i + 1] - centres[i] : Infinity);
+        expect(box.width).toBeGreaterThanOrEqual(Math.min(44, room) - 0.5);
         expect(box.height).toBeGreaterThanOrEqual(44);
         const badge = b.locator(".hg-mark__count");
         covered += (await badge.count()) ? Number(await badge.textContent()) : 1;

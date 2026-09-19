@@ -376,10 +376,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
      * dark, where severity is distance from the ground.
      */
     const GREY_FLOOR = 25;
-    const measureGrey = async (mode: string, archId: string) => {
-      const shaded = STATES.filter((st) => !expectIncompleteFor(st, archId) && typeof metrics(st, archId).keepRate === "number");
-      const shot = (await page.locator("#grid").screenshot()).toString("base64");
-      const { tones, grey } = await page.evaluate(async ({ png, sts }) => {
+    /**
+     * One pass of the greyscale read: the tones of every tile that is
+     * WHOLLY inside this screenshot, by the mode of its patch. Lifted out of
+     * `measureGrey` on 2026-09-19 so the phone's swiping map can be read in
+     * two passes, one at each end of its scroller.
+     */
+    const sample = (png: string, sts: string[]) => page.evaluate(async ({ png, sts }) => {
         const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${png}`)).blob());
         const cv = new OffscreenCanvas(bmp.width, bmp.height), ctx = cv.getContext("2d")!;
         ctx.drawImage(bmp, 0, 0);
@@ -392,6 +395,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
           const el = document.querySelector(`.tile[data-st="${st}"]`);
           if (!el) continue;
           const b = el.getBoundingClientRect();
+          /* Only a tile wholly inside the scroller's box is in this bitmap. */
+          if (b.left < grid.left - 0.5 || b.right > grid.right + 0.5) continue;
           const x0 = Math.round((b.left - grid.left) * px), y0 = Math.round((b.top - grid.top) * px);
           const w = Math.round(b.width * px), h = Math.round(b.height * px);
           const inset = (n: number) => Math.max(1, Math.round(n * 0.22));
@@ -414,7 +419,30 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         const blob = await cv.convertToBlob({ type: "image/png" });
         const url = await new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(blob); });
         return { tones: out, grey: url.split(",")[1] };
-      }, { png: shot, sts: shaded });
+    }, { png, sts });
+
+    const measureGrey = async (mode: string, archId: string) => {
+      const shaded = STATES.filter((st) => !expectIncompleteFor(st, archId) && typeof metrics(st, archId).keepRate === "number");
+      /* TWO PASSES SINCE 2026-09-19, because the map swipes on a phone
+         (charts.md § A tile is a 44px control). An element screenshot captures
+         a scroller's BOX, not its content, and a tile past the right edge was
+         being sampled off the end of the bitmap — which read as DC being 73 L*
+         lighter than Connecticut and as an inverted ramp, at 390 only. The
+         tones are read at each end of the scroller and each tile is taken from
+         the pass that holds it whole; `sample` below skips the rest. */
+      const stops = await page.locator("#grid").evaluate((el) => (el.scrollWidth > el.clientWidth + 1 ? [0, el.scrollWidth - el.clientWidth] : [0]));
+      const tones: Record<string, number> = {};
+      let grey = "";
+      for (const pos of stops) {
+        await page.locator("#grid").evaluate((el, p) => { el.scrollLeft = p; }, pos);
+        const shot = (await page.locator("#grid").screenshot()).toString("base64");
+        const pass = await sample(shot, shaded.filter((st) => !(st in tones)));
+        Object.assign(tones, pass.tones);
+        grey ||= pass.grey;
+      }
+      await page.locator("#grid").evaluate((el) => { el.scrollLeft = 0; });
+      check(shaded.every((st) => st in tones), `${mode}: every shaded tile was sampled from a pass that holds it whole`,
+        `${Object.keys(tones).length} of ${shaded.length}`);
       writeFileSync(`${OUT}/journalist-${width}-${mode}-map-grey.png`, Buffer.from(grey, "base64"));
 
       const rate = (st: string) => metrics(st, archId).keepRate!;

@@ -1,0 +1,286 @@
+{
+ "hits": [
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > nav.hg-lang.hg-no-print > a",
+   "name": "Español",
+   "box": [
+    55,
+    23
+   ],
+   "hit": [
+    55.9,
+    45
+   ],
+   "doc": [
+    127.4,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > div.hg-scenario__actions > button.hg-button",
+   "name": "Change my answers",
+   "box": [
+    94,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    248.6,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > div.hg-scenario__actions > button.hg-button",
+   "name": "Print",
+   "box": [
+    70,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    338.9,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "main#app > header.hg-scenario > div.hg-scenario__summary.hg-no-print > button.hg-button.hg-button--small",
+   "name": "Edit",
+   "box": [
+    46,
+    32
+   ],
+   "hit": [
+    46.7,
+    46
+   ],
+   "doc": [
+    351.1,
+    89.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "main#app > a.hg-skip",
+   "name": "Skip to the answer",
+   "box": [
+    138,
+    26
+   ],
+   "hit": [
+    0,
+    0
+   ],
+   "doc": [
+    -9930.2,
+    131.5
+   ],
+   "within": [],
+   "ok": true,
+   "why": "off-canvas until focused"
+  },
+  {
+   "sel": "div#chart.hg-chart.hg-chart--scroll",
+   "name": "A line of the money this household keeps as ",
+   "box": [
+    390,
+    397
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    195,
+    430.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "name": "A drop near $29,000 a year. You keep about $",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    44.7,
+    44.7
+   ],
+   "doc": [
+    121.3,
+    462.3
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "name": "A drop near $37,000 a year. Past it you'd ke",
+   "box": [
+    23,
+    44
+   ],
+   "hit": [
+    23,
+    44.9
+   ],
+   "doc": [
+    182.8,
+    464.1
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "23px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "name": "A drop near $40,000 a year. Past it you'd ke",
+   "box": [
+    23,
+    44
+   ],
+   "hit": [
+    23.6,
+    44.5
+   ],
+   "doc": [
+    205.9,
+    463.4
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "23px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#chart.hg-chart.hg-chart--scroll > div.hg-scroll-x.hg-chart__scroll > div.hg-marks > button.hg-mark",
+   "name": "A drop near $107,000 a year. Past it you'd k",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    44.9
+   ],
+   "doc": [
+    721,
+    347
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "details#howto.hg-disclosure > summary",
+   "name": "How to read this picture",
+   "box": [
+    358,
+    50
+   ],
+   "hit": [
+    67.9,
+    51.3
+   ],
+   "doc": [
+    195,
+    746
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#steps-panel.hg-disclosure > summary",
+   "name": "What happens at each step",
+   "box": [
+    358,
+    50
+   ],
+   "hit": [
+    67.9,
+    51.3
+   ],
+   "doc": [
+    195,
+    1215.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#steps-panel.hg-disclosure > details.hg-disclosure > summary",
+   "name": "Show the numbers",
+   "box": [
+    358,
+    50
+   ],
+   "hit": [
+    67.9,
+    51.3
+   ],
+   "doc": [
+    195,
+    2684
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#assumed-panel.hg-disclosure > summary",
+   "name": "What we assumed",
+   "box": [
+    358,
+    50
+   ],
+   "hit": [
+    67.9,
+    51.3
+   ],
+   "doc": [
+    195,
+    3242.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#sources-panel.hg-disclosure > summary",
+   "name": "Where these numbers come from",
+   "box": [
+    358,
+    50
+   ],
+   "hit": [
+    67.9,
+    51.3
+   ],
+   "doc": [
+    195,
+    4825.9
+   ],
+   "within": [],
+   "ok": true
+  }
+ ],
+ "overlaps": []
+}

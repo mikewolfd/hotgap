@@ -1,0 +1,2997 @@
+{
+ "hits": [
+  {
+   "sel": "a#skip.hg-skip",
+   "name": "Skip to the answer",
+   "box": [
+    121,
+    23
+   ],
+   "hit": [
+    0,
+    0
+   ],
+   "doc": [
+    -9938.3,
+    11.6
+   ],
+   "within": [],
+   "ok": true,
+   "why": "off-canvas until focused"
+  },
+  {
+   "sel": "header.hg-page.page > nav.hg-lang.hg-no-print > a",
+   "name": "Español",
+   "box": [
+    55,
+    23
+   ],
+   "hit": [
+    55.9,
+    45
+   ],
+   "doc": [
+    116.4,
+    28
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "button#csvBtn.hg-button.hg-button--small",
+   "name": "Download the numbers (CSV)",
+   "box": [
+    200,
+    32
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    273.9,
+    28
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Alaska: keeps 12¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    22,
+    248.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Maine: keeps 9¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    528,
+    248.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Vermont: keeps 4¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    482,
+    294.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "New Hampshire: keeps 14¢ of each extra dolla",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    528,
+    294.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Washington: keeps 22¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    22,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Idaho: loses 40¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    68,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Montana: loses 60¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    114,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "North Dakota: keeps 21¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Minnesota: keeps 9¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    206,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Illinois: keeps 3¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    252,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Wisconsin: loses 105¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    298,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Michigan: loses 55¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    344,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "New York: keeps 4¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    390,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Massachusetts: loses 3¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    436,
+    340.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Oregon: loses 75¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    22,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Nevada: loses 67¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    68,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Wyoming: loses 21¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    114,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "South Dakota: keeps 16¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Iowa: loses 53¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    206,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Indiana: loses 32¢ of each extra dollar — ch",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    252,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Ohio: loses 42¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    298,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Pennsylvania: loses 57¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    344,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "New Jersey: loses 94¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    390,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Connecticut: keeps 0¢ of each extra dollar —",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    436,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Rhode Island: keeps 7¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    482,
+    386.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "California: keeps 9¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    22,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Utah: keeps 13¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    68,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Colorado: loses 97¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    114,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Nebraska: loses 62¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Missouri: loses 56¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    206,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Kentucky: keeps 13¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    252,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "West Virginia: loses 28¢ of each extra dolla",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    298,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Virginia: loses 3¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    344,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Maryland: keeps 13¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    390,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Delaware: loses 52¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    436,
+    432.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Arizona: loses 38¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    68,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "New Mexico: keeps 30¢ of each extra dollar —",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    114,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Kansas: keeps 10¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Arkansas: keeps 17¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    206,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Tennessee: keeps 21¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    252,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "North Carolina: loses 42¢ of each extra doll",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    298,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "South Carolina: keeps 24¢ of each extra doll",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    344,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Washington, DC: loses 12¢ of each extra doll",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    390,
+    478.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Oklahoma: keeps 9¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    524.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Louisiana: keeps 20¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    206,
+    524.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Mississippi: keeps 15¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    252,
+    524.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Alabama: loses 35¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    298,
+    524.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Georgia: loses 45¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    344,
+    524.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Hawaii: loses 19¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    43,
+    45
+   ],
+   "doc": [
+    22,
+    570.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Texas: keeps 16¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    160,
+    570.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#grid.map.hg-scroll-x > button.tile",
+   "name": "Florida: loses 20¢ of each extra dollar",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    390,
+    570.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "select#arch.hg-select",
+   "name": "1 adult, no children 1 adult, 1 child (3) 1 ",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    44.8
+   ],
+   "doc": [
+    195,
+    850.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "select#metric.hg-select",
+   "name": "Keep rate — of each extra dollar earned from",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    44.6
+   ],
+   "doc": [
+    195,
+    930.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "summary#howToHeading",
+   "name": "How to read this map",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    1039.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "p#glossary.glossary > a",
+   "name": "PolicyEngine",
+   "box": [
+    87,
+    16
+   ],
+   "hit": [
+    67.9,
+    17.3
+   ],
+   "doc": [
+    59.7,
+    2204.7
+   ],
+   "within": [],
+   "ok": true,
+   "why": "inline in prose (2.5.5 Inline)"
+  },
+  {
+   "sel": "details#everything.hg-disclosure > summary",
+   "name": "Every state, every measure",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    2296.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "1. Wisconsin: loses 105¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2457.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "2. Colorado: loses 97¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2502.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "3. New Jersey: loses 94¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2547.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "4. Oregon: loses 75¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2592.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "5. Nevada: loses 67¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2637.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "6. Nebraska: loses 62¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2682.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "7. Montana: loses 60¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2727.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "8. Pennsylvania: loses 57¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2772.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "9. Missouri: loses 56¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2817.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "10. Michigan: loses 55¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2862.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "11. Iowa: loses 53¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2907.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "12. Delaware: loses 52¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2952.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "13. Georgia: loses 45¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    2997.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "14. North Carolina: loses 42¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3042.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "14. Ohio: loses 42¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3087.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "16. Idaho: loses 40¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3132.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "17. Arizona: loses 38¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3177.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "18. Alabama: loses 35¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3222.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "19. Indiana: loses 32¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3267.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "20. West Virginia: loses 28¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3312.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "21. Wyoming: loses 21¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3357.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "22. Florida: loses 20¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3402.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "23. Hawaii: loses 19¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3447.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "24. Washington, DC: loses 12¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3492.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "25. Massachusetts: loses 3¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3537.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "25. Virginia: loses 3¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3582.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "27. Connecticut: keeps 0¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3627.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "28. Illinois: keeps 3¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3672.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "29. New York: keeps 4¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3717.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "29. Vermont: keeps 4¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3762.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "31. Rhode Island: keeps 7¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3807.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "32. California: keeps 9¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3852.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "32. Maine: keeps 9¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3897.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "32. Minnesota: keeps 9¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3942.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "32. Oklahoma: keeps 9¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    3987.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "36. Kansas: keeps 10¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4032.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "37. Alaska: keeps 12¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4077.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "38. Kentucky: keeps 13¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4122.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "38. Maryland: keeps 13¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4167.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "38. Utah: keeps 13¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4212.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "41. New Hampshire: keeps 14¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4257.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "42. Mississippi: keeps 15¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4302.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "43. South Dakota: keeps 16¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4347.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "43. Texas: keeps 16¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4392.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "45. Arkansas: keeps 17¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4437.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "46. Louisiana: keeps 20¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4482.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "47. North Dakota: keeps 21¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4527.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "47. Tennessee: keeps 21¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4572.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "49. Washington: keeps 22¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4617.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "50. South Carolina: keeps 24¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4662.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#rank.rank.diverging > li > button.hg-row-btn",
+   "name": "51. New Mexico: keeps 30¢",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    195,
+    4707.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "select#sort.hg-select",
+   "name": "State, A to Z Keep rate on the road out of p",
+   "box": [
+    358,
+    44
+   ],
+   "hit": [
+    67.9,
+    44.7
+   ],
+   "doc": [
+    195,
+    4902.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Alaska",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6308.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Alabama",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6368.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Arkansas",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6429
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Arizona",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6489.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "California",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6549.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Colorado",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6610.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Connecticut",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6680.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Washington, DC",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6751.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Delaware",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6811.5
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Florida",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6871.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Georgia",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6932.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Hawaii",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    6992.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Iowa",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7053
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Idaho",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7113.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Illinois",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7173.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Indiana",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7234.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Kansas",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7294.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Kentucky",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7355
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Louisiana",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7415.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Massachusetts",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7475.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Maryland",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7536.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Maine",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7596.5
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Michigan",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7656.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Minnesota",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7717.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Missouri",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7777.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Mississippi",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7838.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Montana",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7898.5
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "North Carolina",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    7958.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "North Dakota",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8019.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Nebraska",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8079.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "New Hampshire",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8140
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "New Jersey",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8200.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "New Mexico",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8270.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Nevada",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8341.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "New York",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8401.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Ohio",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8462.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Oklahoma",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8522.5
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Oregon",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8582.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Pennsylvania",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8643.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Rhode Island",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8703.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "South Carolina",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8764.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "South Dakota",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8824.5
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Tennessee",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8884.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Texas",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    8945.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Utah",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9005.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Virginia",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9066
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Vermont",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9126.4
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Washington",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9186.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Wisconsin",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9247.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "West Virginia",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9307.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#tbody > tr > th > button.hg-row-btn",
+   "name": "Wyoming",
+   "box": [
+    31,
+    44
+   ],
+   "hit": [
+    45,
+    45
+   ],
+   "doc": [
+    35.5,
+    9368
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#methodPanel.hg-disclosure > summary",
+   "name": "How these numbers were made",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    47.2
+   ],
+   "doc": [
+    195,
+    9591.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "ul#methodList > li > a",
+   "name": "PolicyEngine",
+   "box": [
+    87,
+    16
+   ],
+   "hit": [
+    67.9,
+    17.1
+   ],
+   "doc": [
+    83.7,
+    9649.1
+   ],
+   "within": [],
+   "ok": true,
+   "why": "inline in prose (2.5.5 Inline)"
+  },
+  {
+   "sel": "ul#excludes > li > a",
+   "name": "reported to PolicyEngine",
+   "box": [
+    163,
+    16
+   ],
+   "hit": [
+    67.9,
+    17.2
+   ],
+   "doc": [
+    126.8,
+    11980.7
+   ],
+   "within": [],
+   "ok": true,
+   "why": "inline in prose (2.5.5 Inline)"
+  },
+  {
+   "sel": "details#sourcesPanel.hg-disclosure > summary",
+   "name": "Where these numbers come from",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    12429.6
+   ],
+   "within": [],
+   "ok": true
+  }
+ ],
+ "overlaps": []
+}

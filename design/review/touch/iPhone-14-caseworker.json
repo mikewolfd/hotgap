@@ -1,0 +1,677 @@
+{
+ "hits": [
+  {
+   "sel": "a#skip.hg-skip",
+   "name": "Skip to the answer",
+   "box": [
+    121,
+    23
+   ],
+   "hit": [
+    0,
+    0
+   ],
+   "doc": [
+    -9938.3,
+    11.6
+   ],
+   "within": [],
+   "ok": true,
+   "why": "off-canvas until focused"
+  },
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > nav.hg-lang.hg-no-print > a",
+   "name": "Español",
+   "box": [
+    55,
+    23
+   ],
+   "hit": [
+    55.9,
+    45
+   ],
+   "doc": [
+    127.4,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > div.hg-scenario__actions > button.hg-button",
+   "name": "Add a what-if",
+   "box": [
+    82,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    258.8,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div.hg-scenario.hg-scenario--sticky > div.hg-scenario__top > div.hg-scenario__actions > button.hg-button.hg-button--primary",
+   "name": "Print the client sheet",
+   "box": [
+    66,
+    44
+   ],
+   "hit": [
+    66.9,
+    45
+   ],
+   "doc": [
+    341,
+    34
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#app > header.hg-scenario > div.hg-scenario__summary.hg-no-print > button.hg-button.hg-button--small",
+   "name": "Edit",
+   "box": [
+    42,
+    32
+   ],
+   "hit": [
+    45,
+    46
+   ],
+   "doc": [
+    353.1,
+    89.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#chartWrap.hg-chart.hg-chart--scroll",
+   "name": "Net income after premiums against earnings, ",
+   "box": [
+    390,
+    350
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    195,
+    406.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $6,000 to $7,000: −$3,904. TANF cas",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    44.6,
+    44.9
+   ],
+   "doc": [
+    -97.6,
+    437.1
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $26,000 to $27,000: −$627. No progr",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    44.5,
+    44.9
+   ],
+   "doc": [
+    43.6,
+    379.9
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $37,000 to $38,000: −$219. Medicaid",
+   "box": [
+    28,
+    44
+   ],
+   "hit": [
+    28.2,
+    44.7
+   ],
+   "doc": [
+    121.3,
+    376.7
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "28px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $41,000 to $42,000: −$305. No progr",
+   "box": [
+    28,
+    44
+   ],
+   "hit": [
+    29.2,
+    44.6
+   ],
+   "doc": [
+    149.5,
+    376.3
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "28px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $46,000 to $47,000: −$361. No progr",
+   "box": [
+    35,
+    44
+   ],
+   "hit": [
+    35.8,
+    44.9
+   ],
+   "doc": [
+    184.8,
+    376
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "35px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $51,000 to $52,000: −$780. No progr",
+   "box": [
+    18,
+    44
+   ],
+   "hit": [
+    16.5,
+    44.8
+   ],
+   "doc": [
+    220.1,
+    376.8
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "18px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "2 drops between $53,000 and $55,000, togethe",
+   "box": [
+    18,
+    44
+   ],
+   "hit": [
+    21,
+    45
+   ],
+   "doc": [
+    237.8,
+    379.3
+   ],
+   "within": [
+    5
+   ],
+   "ok": true,
+   "why": "18px is the whole room between two cliffs (2.5.5 Essential)"
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $60,000 to $61,000: −$857. No progr",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    44.6,
+    44.5
+   ],
+   "doc": [
+    283.7,
+    464.5
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "div#marks.hg-marks > button.hg-mark",
+   "name": "Cliff at $106,000 to $107,000: −$3,821. Prem",
+   "box": [
+    44,
+    44
+   ],
+   "hit": [
+    44.5,
+    44.9
+   ],
+   "doc": [
+    608.5,
+    389.1
+   ],
+   "within": [
+    5
+   ],
+   "ok": true
+  },
+  {
+   "sel": "summary#howToSummary",
+   "name": "How to read this picture",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    728.2
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#steps-panel.hg-disclosure > summary",
+   "name": "What this family faces, step by step",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    1283
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#tiles.tiles > div.tile",
+   "name": "Net, after premiums $84,371 at $38,000 earne",
+   "box": [
+    113,
+    73
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    72.6,
+    1413.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#tiles.tiles > div.tile",
+   "name": "Raise to clear the zone $7,000 to $45,000 ea",
+   "box": [
+    130,
+    73
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    218,
+    1413.8
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#tiles.tiles > div.tile",
+   "name": "Next cliff $305 at $41,000 → $42,000 (42 in ",
+   "box": [
+    256,
+    93
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    144,
+    1521.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#tiles.tiles > div.tile",
+   "name": "Largest drop anywhere on the curve $25,449 a",
+   "box": [
+    256,
+    93
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    144,
+    1638.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "div#tiles.tiles > div.tile",
+   "name": "Reach at current earnings 40th percentile, ±",
+   "box": [
+    166,
+    73
+   ],
+   "hit": [
+    67.9,
+    67.9
+   ],
+   "doc": [
+    99.2,
+    1745.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$6,000 → $7,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    1926.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$26,000 → $27,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    1987.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$37,000 → $38,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2048.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$41,000 → $42,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2109.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$46,000 → $47,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2170.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$51,000 → $52,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2231.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$53,000 → $54,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2292.6
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$54,000 → $55,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2354.9
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$60,000 → $61,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2417.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "tbody#dropRows > tr > td > button.hg-row-btn",
+   "name": "$106,000 → $107,000",
+   "box": [
+    150,
+    44
+   ],
+   "hit": [
+    67.9,
+    45
+   ],
+   "doc": [
+    91.2,
+    2478.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#compare-panel.hg-disclosure > summary",
+   "name": "Compare the what-ifs",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    3050.1
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#ledger-panel.hg-disclosure > summary",
+   "name": "Where each program ends",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    3879.3
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#assumed-panel.hg-disclosure > summary",
+   "name": "What we assumed",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    5415.7
+   ],
+   "within": [],
+   "ok": true
+  },
+  {
+   "sel": "details#sources-panel.hg-disclosure > summary",
+   "name": "Where these numbers come from",
+   "box": [
+    358,
+    47
+   ],
+   "hit": [
+    67.9,
+    48.2
+   ],
+   "doc": [
+    195,
+    6087.5
+   ],
+   "within": [],
+   "ok": true
+  }
+ ],
+ "overlaps": []
+}
