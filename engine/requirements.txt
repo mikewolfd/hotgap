@@ -15,7 +15,7 @@
 # its own override on. 2.5.3 counts state SSI supplements as SNAP unearned
 # income; 2.6.x is state tax and reform aggregates. The federal CCDF chain
 # 2.5.0 removed was never requested.
-policyengine-us==2.6.7
+policyengine-us==2.6.10
 policyengine-core==3.32.6
 spm-calculator==1.0.0.post1
 
