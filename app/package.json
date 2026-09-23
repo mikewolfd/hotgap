@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@hotgap/core": "*",
-    "intl-messageformat": "^12.1.0"
+    "intl-messageformat": "^12.1.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
