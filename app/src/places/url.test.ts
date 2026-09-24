@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseView, viewQuery } from "./url.js";
+import { parseView, tryItHref, viewQuery } from "./url.js";
 
 const domain = { households: ["single-0", "single-2", "married-dual-2"], states: ["CO", "NJ", "TX"], defaultHousehold: "single-2" };
 
@@ -30,5 +30,13 @@ describe("the view in the query string", () => {
     expect(parseView("?household=nope&measure=leap&sort=up&state=ZZ", domain))
       .toEqual({ household: "single-2", measure: "leap", sort: "state", state: null });
     expect(parseView("?state=TX", domain).state).toBe("TX");
+  });
+});
+
+describe("the link to the household tool from a state", () => {
+  it("carries the state, the children's ages and marriage in core's flag names, and nothing for a childless single adult", () => {
+    expect(tryItHref("TX", { married: false, childAges: [3, 7] })).toBe("/?state=TX&kids=3%2C7");
+    expect(tryItHref("NJ", { married: true, childAges: [1, 4, 9] })).toBe("/?state=NJ&married=1&kids=1%2C4%2C9");
+    expect(tryItHref("CO", { married: false, childAges: [] })).toBe("/?state=CO");
   });
 });

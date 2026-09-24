@@ -43,10 +43,10 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .page:has(> #status[hidden]) { display: none; }
 
 /* ── The picture ────────────────────────────────────────────────────────
-   Everything the map needs is inside the <figure>, in one column, in the
-   order a reader meets it: the sentence, the tiles, the legend, the caution
-   the map has earned, the readout, the state's own provenance, the two
-   controls, the estimates line, and "How to read this map". The shared class
+   Everything the map needs is inside the <figure>, in the order a reader
+   meets it: the sentence, the two controls that change it, the tiles, the
+   legend, the caution the map has earned, the readout, the state's own
+   provenance, the estimates line, and "How to read this map". The shared class
    bleeds it to the screen's edges below 64rem and caps it at --figure-max
    above; every non-map child keeps the page's gutter. */
 .picture { padding-block: var(--s4) 0; }
@@ -57,6 +57,24 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    is 32px of width, and on a twelve-column cartogram 32px is more than one
    tile. This is the one child of .hg-picture that gives it back. */
 .hg-picture > .map { padding-inline: 0; }
+
+/* The two controls, directly under the sentence they change and above the
+   tiles (design critique 2026-09-24: Household and Measure rewrite the
+   headline, and under the map they read as page furniture). Compact: from
+   40rem one row, each label beside its select and each select its content's
+   width, so the pair costs one 44px line; on a phone each select takes the
+   full width under its label, because a couple's household ("2 adults, both
+   working, 2 children (3 and 7)") does not fit beside one (measured at 390).
+   The option words are short (copy's `measures.*.option`); each measure's
+   definition is in "How to read this map". */
+.controls { display: grid; gap: var(--s3); padding: 0; margin: 0 0 var(--s4); border: 0; }
+.controls label { font-size: var(--t-small); color: var(--ink-2); margin-bottom: var(--s1); }
+@media (min-width: 40rem) {
+  .controls { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); }
+  .controls > div { display: flex; align-items: center; gap: var(--s3); flex: 0 1 auto; }
+  .controls label { margin-bottom: 0; }
+  .controls .hg-select { width: auto; }
+}
 
 /* ONE LEFT EDGE, above 64rem. The shared class lets a figure leave the prose
    column and centre itself at --figure-max, which is right for a chart whose
@@ -77,42 +95,51 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   /* The scale explains the map, so it is the map's width, not the column's. */
   .picture > .map, .picture > .legend { max-width: 48rem; }
 }
+/* THE READOUT BESIDE THE MAP, from 64rem (design critique 2026-09-24: the
+   map was 60% of the column and the rest of its height was empty). The map
+   and its strip keep their 48rem; the selected state's sentences take the
+   column's remaining ~19rem, level with the tiles, so choosing a state
+   answers beside the square that was pressed instead of under the legend.
+   The sentence, the controls and everything after the legend keep the whole
+   column. The rows are counted from the skeleton: sentence, controls, map,
+   legend, caution — the visually hidden description is absolutely placed
+   and the swipe line is hidden at this width, so neither takes a cell. */
+@media (min-width: 64rem) {
+  .picture { display: grid; grid-template-columns: minmax(0, 48rem) minmax(0, 1fr); column-gap: var(--s6); }
+  .picture > * { grid-column: 1 / -1; }
+  .picture > :is(.map, .legend, .mapCaution, .mapSwipe) { grid-column: 1; }
+  .hg-picture.picture > .hg-readout { grid-column: 2; grid-row: 3 / span 3; align-self: start; margin-top: 0; }
+}
 
 /* StateTiles (#13). Equal squares on a twelve-column grid, as large as the
    width allows — the picture is the page, so the tiles take the room rather
    than sitting in a card beside a list (charts.md § The map is the picture).
    The gap grows a little with the tile so the block reads as one object at
    both ends of the range. */
-/* THE TILE IS A 44px CONTROL EVERYWHERE, AND BELOW 550px THE MAP SWIPES
-   (charts.md § A tile is a 44px control, and the phone map swipes). The
-   column is `minmax(--touch, 1fr)`, so the grid's own minimum content width
-   is 12 × 44 + 11 × 2 = 550px: at or above that the columns are 1fr and grow
-   with the width exactly as before — at 48rem the tile is still 64px and
-   nothing scrolls — and below it the columns hold at 44px and the map
-   overflows its box, which `.hg-scroll-x` (on the element, from places.html)
-   turns into a swipe with an edge fade on whichever side still has country.
-   410px of a 550px map is on the screen at once on a Pixel 7; the scroll
-   opens at its left edge; render.ts says why a centred start was rejected.
+/* THE WHOLE COUNTRY ON A PHONE (design critique 2026-09-24, reversing the
+   44px-and-swipe rule of 2026-09-19): at 390 the east coast — New York, New
+   Jersey, Massachusetts — was off the screen until a swipe, and seeing the
+   country at once matters more than the size of one square. The columns are
+   `minmax(0, 1fr)`, so twelve of them always fit: a 30px tile at 390 (27px at
+   360), still above WCAG 2.5.8's 24px target floor, and 64px at 48rem exactly
+   as before. The element keeps `.hg-scroll-x` (render.ts) for a longer
+   language or a zoomed page, but at these widths nothing overflows.
 
    The 2px of padding is the focus ring's room: a scroll container clips both
    axes (an `overflow-x: auto` box computes `visible` to `auto` in y), and
    without it the ring on Alaska's tile — the top-left one, and the first one
    a keyboard reaches — would be shaved off by its own scroller.
    `scroll-padding` keeps a tile the arrow keys move to off the fade. */
-.map { display: grid; grid-template-columns: repeat(12, minmax(var(--touch), 1fr)); gap: clamp(2px, 0.3vw, 4px);
+.map { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(2px, 0.3vw, 4px);
        padding: 2px; scroll-padding: 2px var(--s4); }
-/* A tile is a button that opens its state, and since 2026-09-19 it is a
-   44px control on every screen — the owner overruled the 27–33px trade the
-   keep-rate review recorded (charts.md § A tile is a 44px control). The
-   square is the column's, so it is 44px where the map swipes and larger
-   wherever the width allows. `min-height: 0` still undoes the shared 44px
-   floor, because on this grid the HEIGHT comes from `aspect-ratio` and the
-   floor would stretch a wide tile into a rectangle; the column minimum is
-   what keeps it square AND 44. The postal code's floor rose with the square:
-   10px in a 33px tile was the one type on the site below --t-tick, and in a
-   44px tile it read as a tile that had lost its label, so the clamp now
-   starts AT the tick floor. It is a label on a figure, not prose, and every
-   value is written out below. The four tile states — shaded, no cliff, past
+/* A tile is a button that opens its state. The square is the column's: 30px
+   at 390 and larger wherever the width allows. `min-height: 0` undoes the
+   shared 44px floor, because on this grid the HEIGHT comes from
+   `aspect-ratio` and the floor would stretch a narrow tile into a rectangle.
+   The postal code starts at the tick floor, 12px, which a 30px square holds
+   with room either side of "WV", and grows with the tile to 15px. It is a
+   label on a figure, not prose, and every value is written out below. The
+   ink on each fill is chosen in render.ts and measured there. The four tile states — shaded, no cliff, past
    the axis, not computed — are the hg-tile--* classes; shaded is a --loss-N
    or --keep-N background from the bin, on one lightness axis both ramps
    share (charts.md § the diverging ramp). */
@@ -173,7 +200,11 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
                 font-size: var(--t-micro); font-variant-numeric: tabular-nums;
                 margin-top: var(--s1); }
 .scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
+/* The ramp is the key to the shading; the strip's own list carries only the
+   tile states that are not on the ramp (no cliff, past the axis, incomplete),
+   and none of them on most views. */
 .legend .hg-key { margin-top: var(--s2); }
+.legend .hg-key:empty { display: none; }
 
 /* The one caution the map on the screen has earned. A callout, so it reads as
    an aside and not as a failure; its own top margin, because the shared class
@@ -206,14 +237,9 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 .state .boundary .hg-cite { margin-top: var(--s1); }
 .state .hg-source { margin-top: var(--s5); }
 
-/* The two controls, under the picture rather than above it (§ The page is its
-   picture: not a filter above the fold). They are the household and the
-   measure — what the numbers are, not what they say — so they sit where the
-   citizen surface puts its chips: after the answer, in reach, out of the way.
-   A rule above them says they belong to the figure and not to the page. */
-.controls { border-top: 1px solid var(--rule); padding-top: var(--s4); margin-top: var(--s4);
-            border-bottom: 0; }
-.controls > div { flex: 1 1 18rem; }
+/* The link to the household tool, the readout's last line: this state and
+   this household shape, as a family's own starting point. */
+.picture .hg-readout .tryIt { color: var(--ink); font-weight: var(--w-med); }
 .estimates { margin: var(--s3) 0 0; }
 
 /* "How to read this map": the figure's own disclosure, so its top rule closes

@@ -270,6 +270,26 @@ export function excuseCrowdedMarks(hits: Hit[], minSize: number, tol: number): v
   }
 }
 
+/**
+ * The second exception, also checked rather than asserted: a map tile under
+ * 44px. Since 2026-09-24 the twelve-column map fits a phone whole (a 30px tile
+ * at 390) rather than swiping at 44px, because seeing the country at once
+ * matters more than the size of one square. Every tile has an EQUIVALENT
+ * control on the same page at the full size — its state's row in the ranking
+ * and in the table, which this proof holds to 44px like everything else (WCAG
+ * 2.5.5 "Equivalent"). What it must not become is a blanket: the tile must
+ * still clear 2.5.8's 24px floor and own its whole box.
+ */
+export function excuseMapTiles(hits: Hit[], tol: number): void {
+  for (const m of hits) {
+    if (m.ok || !/button\.tile$/.test(m.sel)) continue;
+    if (Math.min(...m.box) >= 24 && m.hit[0] >= m.box[0] - tol && m.hit[1] >= m.box[1] - tol) {
+      m.ok = true;
+      m.why = "the state's 44px row in the ranking and the table (2.5.5 Equivalent)";
+    }
+  }
+}
+
 /* ── The gestures ─────────────────────────────────────────────────────── */
 
 /**
@@ -331,6 +351,7 @@ for (const device of PHONES) {
 
         const hits = await page.evaluate(MEASURE_HITS, [MIN, TOL] as [number, number]);
         excuseCrowdedMarks(hits, MIN, TOL);
+        excuseMapTiles(hits, TOL);
         const small = hits.filter((x) => !x.ok);
         const excused = hits.filter((x) => x.why);
         console.log(`${device} ${surface}: ${hits.length} targets, ${small.length} under ${MIN}px, ${excused.length} under the criterion's own exceptions`);
@@ -570,6 +591,7 @@ for (const device of PHONES) {
            measured hit box, drawn where the probe found it. */
         const hits = await page.evaluate(MEASURE_HITS, [MIN, TOL] as [number, number]);
         excuseCrowdedMarks(hits, MIN, TOL);
+        excuseMapTiles(hits, TOL);
         /* Land again before drawing. Probing scrolls every scroller it walks,
            and the boxes were recorded in the frame the page OPENS in — drawn
            over a plot the probe had pushed $60,000 along its axis, the marks

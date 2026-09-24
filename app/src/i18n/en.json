@@ -1060,47 +1060,47 @@
     "measures": {
       "biggestLoss": {
         "title": "Largest one-step loss",
-        "option": "Largest one-step loss — the worst single step anywhere on the curve ($)",
+        "option": "Largest loss anywhere ($)",
         "describe": "Net income lost in the worst single $1,000 step of earnings."
       },
       "dangerWidth": {
         "title": "Total width of the danger zones",
-        "option": "Total width of the danger zones — every stretch where more pay leaves the household no better off, added together ($)",
+        "option": "Total danger-zone width ($)",
         "describe": "Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together."
       },
       "leap": {
         "title": "The leap",
-        "option": "The leap — the raise needed to clear the worst danger zone ($)",
+        "option": "The leap ($)",
         "describe": "The raise a household must clear in one move to get past its worst danger zone."
       },
       "safeExit": {
         "title": "Safe exit",
-        "option": "Safe exit — earnings above which no danger zone remains ($)",
+        "option": "Safe exit ($)",
         "describe": "Earnings above which no danger zone remains: where the last one closes."
       },
       "cliffCount": {
         "title": "Number of cliffs",
-        "option": "Number of cliffs — anywhere on the curve, not only on the road out of poverty",
+        "option": "Cliffs anywhere on the curve",
         "describe": "Steps down of {floor} or more anywhere on the curve."
       },
       "deferredCliffCount": {
         "title": "Deferred cliffs",
-        "option": "Deferred cliffs — of the cliffs counted, those that land at a later renewal",
+        "option": "Deferred cliffs",
         "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
       },
       "keepRate": {
         "title": "Keep rate on the road out of poverty",
-        "option": "Keep rate — of each extra dollar earned from poverty to twice poverty, the cents the household keeps (¢)",
+        "option": "Keep rate (¢)",
         "describe": "Of each extra dollar earned between the poverty line and twice the poverty line, the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started."
       },
       "roadCliffCount": {
         "title": "Cliffs on the road out of poverty",
-        "option": "Cliffs on the road out of poverty — the cliffs a household meets between poverty and twice poverty",
+        "option": "Cliffs on the road",
         "describe": "Steps down of {floor} or more between the poverty line and twice the poverty line."
       },
       "roadWorst": {
         "title": "Where the road collapses",
-        "option": "Where the road collapses — the largest single loss between poverty and twice poverty ($)",
+        "option": "Where the road collapses ($)",
         "describe": "Net income lost in the worst single $1,000 step between the poverty line and twice the poverty line."
       }
     },
@@ -1162,6 +1162,7 @@
     },
     "readout": {
       "empty": "Select a state to read its numbers.",
+      "tryIt": "Try this for your own family",
       "step": "{n, plural, one {{state} — {loss} lost at {step}, when {programs} ends.} other {{state} — {loss} lost at {step}, when {programs} end.} =0 {{state} — {loss} lost at {step}; no single program explains the drop.}}",
       "floor": "{n, plural, one {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} ends; a floor, because {missing} are not modelled.}}} other {{m, plural, one {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}, when {programs} end; a floor, because {missing} are not modelled.}}} =0 {{m, plural, one {{state} — at least {loss} lost at {step}; a floor, because {missing} is not modelled.} other {{state} — at least {loss} lost at {step}; a floor, because {missing} are not modelled.}}}}",
       "worstStep": "{n, plural, one {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} ends.} other {Largest single loss anywhere on the curve: {loss} at {step}, when {programs} end.} =0 {Largest single loss anywhere on the curve: {loss} at {step}; no single program explains the drop.}}",

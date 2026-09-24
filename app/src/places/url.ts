@@ -3,6 +3,7 @@
 // or a measure key>&state=<postal code>. Every key is written once anything changes,
 // never only the ones that differ from a default — a default can move with
 // the sweep, and a link to "the default household" would then move with it.
+import { searchParamsFromFlags } from "@hotgap/core";
 import { withLang } from "../lib/copy.js";
 import { DEFAULT_MEASURE, measureByKey, type MeasureKey, type SortKey } from "./model.js";
 
@@ -46,4 +47,14 @@ export function viewQuery(v: View): string {
   const q = new URLSearchParams({ household: v.household, measure: v.measure, sort: v.sort });
   if (v.state) q.set("state", v.state);
   return "?" + withLang(q).toString();
+}
+
+/**
+ * The household tool for a state and a household's shape: the state, the
+ * children's ages and, for a couple, `married` — core's own flag vocabulary
+ * (`searchParamsFromFlags`), so the tool opens with those answers filled in
+ * and asks for the rest. The language travels with it.
+ */
+export function tryItHref(state: string, household: { married: boolean; childAges: readonly number[] }): string {
+  return `/?${withLang(searchParamsFromFlags({ state, kids: household.childAges.join(","), married: household.married }))}`;
 }
