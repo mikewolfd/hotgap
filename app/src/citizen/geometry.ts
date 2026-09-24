@@ -1,16 +1,17 @@
 // MoneyCurve (#3) geometry for the citizen curve, pure (design/charts.md
 // § 1 and § The scroll rule): the whole earnings axis at a fixed scale, the
-// y-range of the whole curve honouring the 2.5× rule, ticks on nice values
+// y-range fitted to the curve in view honouring the 2.5× rule, ticks on nice values
 // in the display unit, where to scroll first, and the layout the draw reads.
 // The nice steps, the scale, the clusters and the pixel maps are
 // lib/chart/geometry.ts's (audit D10).
 //
 // Since 2026-09-17 nothing here crops: `Scene.window` is where to scroll,
-// not what to draw, so every figure below is the whole curve's. O(points)
+// not what to draw: every point is drawn, and only the y-range is fitted to
+// the part of the curve the reader is looking at (2026-09-24). O(points)
 // per layout; a layout is computed once per draw (a new evaluation or a
 // resize), never per pointer event or per scroll.
 import { fromAnnual, toAnnual, type Cliff } from "@hotgap/core";
-import { clusterCliffs, layerFor, niceStep, niceTicks, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
+import { clusterCliffs, fitY, layerFor, niceStep, niceTicks, plotHeight, plotWidth, PLOT_LEAD, refits, scaleFor, scrollFor, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
 import type { Scene } from "./model.js";
 
 /** The gutter the y axis lives in, outside the scroller: wide enough for "$100k" at the tick size. */
@@ -23,33 +24,32 @@ const PAD: Pad = { t: 26, r: 24, b: 38, l: PLOT_LEAD };
 /**
  * The extra foot the road out of poverty needs (charts.md § Direct labels,
  * 6): its bar and the one line of keep rate written on it, below the x-tick
- * labels so nothing that measures pay sits inside the plot.
+ * labels so nothing that measures pay sits inside the plot — and a second
+ * line for the road's two ends where the first has no room for them.
  */
-export const ROAD_FOOT = 26;
+export const ROAD_FOOT = 40;
 
 /**
- * Axis honesty: the y-range covers the WHOLE curve — no crop chooses which
- * drops the reader is allowed to compare — and is still at least 2.5× the
- * largest drop on it. Floor and ceiling are padded 6%, extended equally to
- * meet the need, then snapped outward to a quarter of the gridline step.
- *
- * The padding was 14% when this was a crop, where the slice's ends were
- * arbitrary and a line running into the edge looked cut off. The whole
- * curve's ends are real points at real pay, so they need breathing room and
- * not a margin; and every dollar of slack here is a dollar of range that
- * makes every drop shorter in pixels (§ The scroll rule's 24px floor).
+ * Axis honesty over a fitted range (lib/chart/geometry.ts `fitY`): the
+ * y-range fits the points whose pay lies in [e0, e1] — the viewport's pay,
+ * or the whole axis on paper and by default — and is at least 2.5× the
+ * largest drop on the WHOLE curve, so no view makes any drop look bigger
+ * than the rule allows. Snapped outward to a quarter of the gridline step.
+ * `lo`/`hi` are the fitted points' own extremes, for the refit test.
  */
-export function yRange(s: Scene, narrow: boolean): { y0: number; y1: number; stepY: number; maxDrop: number } {
+export function yRange(s: Scene, narrow: boolean, e0 = 0, e1 = s.top): { y0: number; y1: number; stepY: number; maxDrop: number; lo: number; hi: number } {
   const maxDrop = Math.max(0, ...s.cliffs.map((c) => c.drop));
-  const need = 2.5 * maxDrop;
-  const lo = Math.min(...s.net, s.currentNet), hi = Math.max(...s.net, s.currentNet);
-  const padY = (hi - lo) * 0.06;
-  let y0 = lo - padY, y1 = hi + padY;
-  if (y1 - y0 < need) { const ext = (need - (y1 - y0)) / 2; y0 -= ext; y1 += ext; }
-  const stepY = niceStep(Math.max(1, y1 - y0), narrow ? 4 : 5);
+  /* The points either side of the view's edges too, so the line where it leaves the viewport is inside the range. */
+  const last = s.net.length - 1, at = (e: number) => (e - s.earningsAt(0)) / s.step;
+  const i0 = Math.min(last, Math.max(0, Math.floor(at(e0)))), i1 = Math.max(i0, Math.min(last, Math.ceil(at(e1))));
+  const values = s.net.slice(i0, i1 + 1);
+  if (s.current >= e0 && s.current <= e1) values.push(s.currentNet);
+  const [lo, hi] = [Math.min(...values), Math.max(...values)];
+  const [f0, f1] = fitY(values, maxDrop);
+  const stepY = niceStep(Math.max(1, f1 - f0), narrow ? 4 : 5);
   // Snapped outward on a quarter of the gridline step: a whole step took a $19,000 floor to $0 (B2), and the floor need not be a tick.
   const snap = stepY / 4;
-  return { y0: Math.floor(y0 / snap) * snap, y1: Math.ceil(y1 / snap) * snap, stepY, maxDrop };
+  return { y0: Math.floor(f0 / snap) * snap, y1: Math.ceil(f1 / snap) * snap, stepY, maxDrop, lo, hi };
 }
 
 /**
@@ -71,6 +71,8 @@ export interface Layout extends Layer {
   /** The whole curve: every point is drawn, so these are the point list's ends. */
   i0: number; i1: number;
   y0: number; y1: number; stepY: number; maxDrop: number;
+  /** The extremes of the points in view, which the y-range was fitted to. */
+  lo: number; hi: number;
   yTicks: number[];
   xTicks: { value: number; annual: number }[];
   clusters: Cluster[];
@@ -103,29 +105,49 @@ export const MAX_DROP_LABELS = 3;
  * is the whole figure's — the gutter comes off it, and what is left is the
  * viewport the axis scrolls through (or, on paper, the plot's whole width).
  */
-export function layout(s: Scene, width: number, print = false, screen = 0): Layout {
+export function layout(s: Scene, width: number, print = false, screen = 0, at: number | null = null): Layout {
   const box = Math.max(300, width);
   const narrow = !print && box < 520;
   const gutter = narrow ? GUTTER.narrow : GUTTER.wide;
   const viewport = Math.max(200, box - gutter);
-  const { y0, y1, stepY, maxDrop } = yRange(s, narrow);
   const foot = s.road ? ROAD_FOOT : 0;
   const pad: Pad = { ...PAD, b: PAD.b + foot };
-  /* The second height floor (charts.md § Height): what is left of the first
-     screen, handed in by the page, because only the page knows where the
-     figure starts. Paper has no screen and passes none. */
-  const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
   /* Paper cannot scroll, so the whole axis is fitted to the column; a screen draws the axis
      at the scale that puts the window in one viewport and scrolls the rest (§ The scroll rule). */
   const scale = print ? (viewport - pad.l - pad.r) / s.top : scaleFor(viewport, s.window, s.top);
   const W = print ? viewport : plotWidth(s.top, pad, scale);
+  /* x does not depend on y, so where the reader looks is known before the y-range is: the landing
+     position, or `at` — the pay the reader left at the scroller's left edge. */
+  const xOnly = layerFor(W, 1, pad, 0, s.top, 0, 1);
+  const landing = print ? 0 : scrollFor(xOnly, viewport, s.window, s.current);
+  const scrollLeft = print ? 0 : at === null ? landing : Math.round(Math.max(0, Math.min(W - viewport, xOnly.px(at))));
+  const payAt = (x: number) => (x - pad.l) / scale;
+  const inView = (left: number) => yRange(s, narrow, print ? 0 : payAt(left), print ? s.top : payAt(left + viewport));
+  const { y0, y1, stepY, maxDrop, lo, hi } = inView(scrollLeft);
+  /* The height is the LANDING view's (charts.md § Height, and the second floor: what is left of the
+     first screen, handed in by the page), so a refit on scroll never moves the page under the reader.
+     Paper has no screen and passes none. */
+  const fit = at === null || print ? { y0, y1 } : inView(landing);
+  const H = plotHeight(fit.y1 - fit.y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
   const layer = layerFor(W, H, pad, 0, s.top, y0, y1);
   return {
-    ...layer, narrow, i0: 0, i1: s.net.length - 1, y0, y1, stepY, maxDrop, gutter, viewport, print, scale,
+    ...layer, narrow, i0: 0, i1: s.net.length - 1, y0, y1, stepY, maxDrop, lo, hi, gutter, viewport, print, scale,
     yTicks: niceTicks(y0, y1, stepY),
     xTicks: xTicks(s, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110)))),
     clusters: clusterCliffs(s.cliffs, layer.px),
-    scrollLeft: print ? 0 : scrollFor(layer, viewport, s.window, s.current),
+    scrollLeft,
     labelled: s.worst,
   };
+}
+
+/**
+ * Whether the reader, scrolled to `left`, is looking at a curve the drawn
+ * y-range no longer serves (lib/chart/geometry.ts `refits`): the page asks
+ * once the scroller comes to rest, and redraws only when it does.
+ */
+export function needsRefit(s: Scene, L: Layout, left: number): boolean {
+  if (L.print) return false;
+  const payAt = (x: number) => (x - L.pad.l) / L.scale;
+  const v = yRange(s, L.narrow, payAt(left), payAt(left + L.viewport));
+  return refits([L.y0, L.y1], [v.y0, v.y1], v.lo, v.hi);
 }

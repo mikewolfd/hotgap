@@ -1141,16 +1141,20 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* A left bar is a positive inset x-offset (the sticky column's right-edge rule is a negative one); the only one allowed is the selection's, in ink, on the selected row. */
     const leftBar = (shadow: string) => shadow.split("),").map((part) => part.match(/^\s*(rgba?\([^)]*\)) (-?\d+)px -?\d+px -?\d+px -?\d+px inset/)).filter((m): m is RegExpMatchArray => !!m && Number(m[2]) > 0).map((m) => m[1]);
     check(cells.every((c) => leftBar(c.bar).every((colour) => c.selected && colour === c.ink)), "an incomplete row carries no grey left bar; the only left bar is the selected row's, in ink (S7)", cells.map((c) => [c.st, c.selected, c.bar]));
-    const scrollerState = await page.$eval("#scroller", (el) => ({ over: el.scrollWidth > el.clientWidth, more: (el as HTMLElement).dataset.more ?? null, gradients: (getComputedStyle(el).backgroundImage.match(/linear-gradient/g) ?? []).length, overflow: getComputedStyle(el).overflowX }));
+    /* The edge fade is measured since 2026-09-24 (lib/scroll.ts): at the scroller's left edge only the END
+       has more, so only that side carries the attribute tokens.css draws the shadow from. And "swipe" is a
+       touch word: a fine pointer is told to scroll. */
+    const scrollerState = await page.$eval("#scroller", (el) => ({ over: el.scrollWidth > el.clientWidth, more: (el as HTMLElement).dataset.more ?? null, start: el.hasAttribute("data-overflow-start"), end: el.hasAttribute("data-overflow-end"), overflow: getComputedStyle(el).overflowX }));
+    const moreWords = (await page.evaluate(() => matchMedia("(hover: hover) and (pointer: fine)").matches)) ? "Scroll for more →" : "Swipe for more →";
     if (width === 390) {
       check(cells.every((c) => c.mark && c.mark.visible && c.mark.text === "floor" && c.mark.scrollLeft === 0 && c.mark.right <= c.mark.edge), "at 390 the incomplete rows' amber mark sits in the state cell, on screen without a swipe (S10)", cells.map((c) => c.mark));
-      check(scrollerState.over && scrollerState.gradients === 4 && scrollerState.more === "Swipe for more →", "at 390 the table overflows its scroller, the system's edge fade is drawn and the page's swipe words are set (S10)", scrollerState);
+      check(scrollerState.over && scrollerState.end && !scrollerState.start && scrollerState.more === moreWords, "at 390 the table overflows its scroller, the system's edge fade is drawn on the side with more and the page's words for the gesture are set (S10)", scrollerState);
       const hint = await page.$eval("#scroller", (el) => { const cs = getComputedStyle(el, "::before"); return { content: cs.content, before: getComputedStyle(el, "::after").content, top: el.getBoundingClientRect().top, table: el.querySelector("table")!.getBoundingClientRect().top }; });
-      check(hint.content === '"Swipe for more →"' && hint.before === "none" && hint.table > hint.top, "at 390 the swipe words are drawn at the top of the scroller, above the table, not after fifty rows (rerun N6)", hint);
+      check(hint.content === `"${moreWords}"` && hint.before === "none" && hint.table > hint.top, "at 390 the swipe words are drawn at the top of the scroller, above the table, not after fifty rows (rerun N6)", hint);
       const stickyState = await page.$eval("#tbody th", (el) => ({ position: getComputedStyle(el).position, left: getComputedStyle(el).left }));
       check(stickyState.position === "sticky" && stickyState.left === "0px", "at 390 the state column is sticky (S10)", stickyState);
     } else {
-      check(!scrollerState.over && scrollerState.more === null && scrollerState.overflow === "visible", "at 1280 the table fits and no swipe words are set (S10)", scrollerState);
+      check(!scrollerState.over && scrollerState.more === null && !scrollerState.start && !scrollerState.end && scrollerState.overflow === "visible", "at 1280 the table fits: no swipe words and no edge fade (S10; TASKS 2026-09-24)", scrollerState);
     }
     /* "Ranked" was the whole label, and a cold reader could not tell whether
        rank 1 was the best state or the worst (places keep-rate read, S4). */

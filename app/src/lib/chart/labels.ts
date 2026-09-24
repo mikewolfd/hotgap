@@ -10,10 +10,11 @@
 //
 // O(labels × boxes), with a handful of each; called once per draw.
 //
-// TODO(system): src/citizen/chart.ts holds this same placer inline — it was
-// written there first and left untouched by the caseworker pass so its
-// freshly reviewed proofs stayed a control on this change. The citizen chart
-// should import this module next time it is opened; the two must not drift.
+// Since 2026-09-24 both charts draw through this one placer (the citizen's
+// inline copy is gone), and it knows two more things: the CURVE is an
+// obstacle — "TANF cash assistance ends" was struck through by the line it
+// labels — and a label with no clear spot is nudged up, then down, a line at
+// a time before it is dropped (a greedy vertical nudge, TASKS 2026-09-24).
 import { svg } from "../dom.js";
 
 /** An approximate character width and line height at the 13px label floor: enough to reserve a box before the text exists. */
@@ -46,11 +47,19 @@ export interface Placer {
   /** Reserve a box nothing may be drawn over — a mark's ring, the diamond. */
   block(box: Box): void;
   /**
+   * Reserve a polyline — the curve, a rule a label must not sit on — as one
+   * thin box per segment, so a label clears the line itself and not its
+   * bounding box. O(points), once per draw.
+   */
+  blockLine(points: [number, number][]): void;
+  /**
    * Draw one label of one or two lines at the first clear spot, or nowhere.
-   * `force` falls back to the first spot for the label that must be drawn.
+   * `force` falls back to the first spot for the label that must be drawn;
+   * `nudge` false skips the vertical nudge, for a label that reads only
+   * beside its mark and is better dropped than floated away from it.
    * Returns whether it was drawn.
    */
-  place(lines: string[], spots: Spot[], cls: string, force?: boolean): boolean;
+  place(lines: string[], spots: Spot[], cls: string, force?: boolean, nudge?: boolean): boolean;
 }
 
 const overlaps = (a: Box, b: Box): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -97,13 +106,35 @@ export function placer(picture: SVGSVGElement, view: () => View): Placer {
   return {
     reset() { boxes.length = 0; },
     block(box) { boxes.push(box); },
-    place(lines, spots, cls, force = false) {
-      let last: { nodes: SVGTextElement[]; box: Box } | null = null;
-      for (const sp of spots) {
-        last = draw(lines, sp, cls);
-        if (!boxes.some((o) => overlaps(last!.box, o))) { boxes.push(last.box); return true; }
-        for (const n of last.nodes) n.remove();
-        last = null;
+    blockLine(points) {
+      for (let i = 1; i < points.length; i++) {
+        const [[ax, ay], [bx, by]] = [points[i - 1], points[i]];
+        boxes.push({ x: Math.min(ax, bx) - 1, y: Math.min(ay, by) - 1.5, w: Math.abs(bx - ax) + 2, h: Math.abs(by - ay) + 3 });
+      }
+    },
+    place(lines, spots, cls, force = false, nudge = true) {
+      /* A cheap test first, on the estimate shrunk a little so it can only under-claim: a spot whose
+         rough box is already taken is skipped without drawing and measuring it, which keeps the nudge's
+         extra spots from costing a layout each. */
+      const est = Math.max(...lines.map((line) => line.length)) * CH * 0.8;
+      const rough = (sp: Spot): Box => {
+        const left = sp.anchor === "start" ? sp.x : sp.anchor === "middle" ? sp.x - est / 2 : sp.x - est, [lo, hi] = windowFor(sp.x);
+        return { x: Math.min(Math.max(left, lo), hi - est), y: sp.y - LH + 4, w: est, h: LH * lines.length - 4 };
+      };
+      const tryAt = (sp: Spot): boolean => {
+        if (boxes.some((o) => overlaps(rough(sp), o))) return false;
+        const at = draw(lines, sp, cls);
+        /* Inside the picture top to bottom, too: a nudged label must not leave the SVG and be cut off. */
+        const inside = at.box.y >= 0 && at.box.y + at.box.h <= (picture.viewBox.baseVal?.height || Infinity);
+        if (inside && !boxes.some((o) => overlaps(at.box, o))) { boxes.push(at.box); return true; }
+        for (const n of at.nodes) n.remove();
+        return false;
+      };
+      for (const sp of spots) if (tryAt(sp)) return true;
+      /* The greedy nudge: every spot again, a line higher, then a line lower, out to two lines — further and a label no longer reads as its mark's — above
+         first, because above the line is where the plot keeps its room. */
+      for (const k of nudge ? [-1, 1, -2, 2] : []) {
+        for (const sp of spots) if (tryAt({ ...sp, y: sp.y + k * LH })) return true;
       }
       /* Nowhere clear. The label the page promises is drawn at its first spot anyway; every other one is
          dropped, because its money is in the readout, the row and the table, all a key press away. */

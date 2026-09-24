@@ -44,7 +44,6 @@ body { background: var(--surface); }
    headline's top margin collapsing out through it and pushing the whole
    picture down the page. */
 .result figure { padding-block: var(--s4) 0; }
-.result .hg-chart__scroll { --scroll-ground: var(--surface); }
 /* The figure's own words under the plot, each on the page's gutter. */
 .result .hg-chart__hint { margin-top: var(--s2); }
 .result .caption { font-size: var(--t-small); color: var(--ink-2); margin: var(--s3) 0 0; max-width: var(--measure); }

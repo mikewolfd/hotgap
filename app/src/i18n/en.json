@@ -249,14 +249,18 @@
           "loses": "you lose {cents}¢ of each extra dollar"
         },
         "youKeepHelp": "you keep {kept}, help counted",
-        "youKeepTax": "you keep {kept} after tax"
+        "youKeepTax": "you keep {kept} after tax",
+        "roadFrom": "poverty line",
+        "roadTo": "2× poverty",
+        "again": "flat again"
       },
       "scrolls": "The picture covers every pay from {from} to {to} — slide it sideways to see the rest.",
       "wholeOnPaper": "The picture covers every pay from {from} to {to}.",
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
       "howTo": "How to read this picture",
-      "rangeMid": "swipe to see more"
+      "rangeMid": "swipe to see more",
+      "rangeMidPointer": "scroll to see more"
     },
     "key": {
       "line": "Money you keep",
@@ -921,12 +925,16 @@
           "keeps": "keeps {cents}¢ of each extra dollar",
           "loses": "loses {cents}¢ of each extra dollar"
         },
-        "merged": "{n} drops together"
+        "merged": "{n} drops together",
+        "roadFrom": "poverty line",
+        "roadTo": "2× poverty line",
+        "again": "another danger zone"
       },
       "whatIfLines": "{n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}}",
       "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}",
       "whatIfPositions": "{n, plural, one {One what-if is this same curve at a different pay: its hollow diamond marks where it lands.} other {{n} what-ifs are this same curve at a different pay: their hollow diamonds mark where they land.}}",
-      "rangeMid": "swipe to see more"
+      "rangeMid": "swipe to see more",
+      "rangeMidPointer": "scroll to see more"
     },
     "compare": {
       "rows": {
@@ -1287,6 +1295,7 @@
       "subsidyAdded": "child-care subsidy added by HotGap",
       "floorMark": "floor",
       "swipe": "Swipe for more →",
+      "scroll": "Scroll for more →",
       "note": "Every row keeps the number the model returned, including the rows it cannot complete, because a reporter needs to see what came back. Those rows are flagged in the last column and are not shaded on the map or placed in the ranking. Select a state on the map or in this table to read the corrections behind its numbers under the map; the arrow keys move between states and Enter selects.",
       "position": "{n} in 100",
       "carePrice": "child-care price: {care}"
