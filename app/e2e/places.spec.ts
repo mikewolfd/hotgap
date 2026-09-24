@@ -115,7 +115,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(errors.length === 0, "no console errors on load", errors);
     const scroll = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
     check(scroll[0] <= scroll[1], "no horizontal scroll", { scrollWidth: scroll[0], innerWidth: scroll[1] });
-    const status = await page.$eval("#status", (el) => (el as HTMLElement).hidden);
+    const status = await page.$eval("#status", (el) => (el as HTMLElement).hidden !== false);
     check(status, "the load status line is hidden once the sweep is in");
 
     /* ── THE PICTURE IS THE PAGE ──────────────────────────────────────────
@@ -262,7 +262,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        screen comes out of the disclosure, in one line. On the keep rate no
        state is hatched or bounded on this run, so it says nothing — and the
        path is proved on a measure that does bound states. */
-    const cautionNow = await page.evaluate(() => ({ hidden: (document.querySelector("#mapCaution") as HTMLElement).hidden, text: document.querySelector("#mapCaution")!.textContent }));
+    const cautionNow = await page.evaluate(() => ({ hidden: (document.querySelector("#mapCaution") as HTMLElement).hidden !== false, text: document.querySelector("#mapCaution")!.textContent }));
     check(cautionNow.hidden, "with no hatched or bounded state on the map, the caution line says nothing", cautionNow);
 
     /* Tiles: one per state in the file, the incomplete ones hatched — measured
@@ -1272,7 +1272,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
          screen (§ The page is its picture: nothing that warns hides). */
       await page.selectOption("#arch", "single-2");
       const bounded = STATES.filter((st) => metrics(st, "single-2").cliffCount > 0 && metrics(st, "single-2").safeExit === null && !expectIncompleteFor(st, "single-2"));
-      const cautionThen = await page.evaluate(() => ({ hidden: (document.querySelector("#mapCaution") as HTMLElement).hidden, text: document.querySelector("#mapCaution")!.textContent!.trim() }));
+      const cautionThen = await page.evaluate(() => ({ hidden: (document.querySelector("#mapCaution") as HTMLElement).hidden !== false, text: document.querySelector("#mapCaution")!.textContent!.trim() }));
       check(bounded.length > 0 && !cautionThen.hidden && cautionThen.text === `Past the axis is not a number. ${bounded.length} states' figures run off the top of the earnings scale, so they are bounds and must not be charted as values.`,
         `on safe exit the ${bounded.length} bounded states bring the caution out of the disclosure, in one line`, cautionThen);
       await page.emulateMedia({ colorScheme: "dark", media: "print" });
