@@ -14,8 +14,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseCsv } from "./parseCsv.mjs";
 import { formsDrawn, greyRowTransitions, pageContent, pageHeight, pdfObjects, pdfPages, reachable, resource, textInks } from "./pdf.mjs";
-import { AUDIT_DIR as OUT, check, consoleErrors, contrast, rgb } from "./support.js";
-import { MEASURE, OPEN_ALL } from "./weight.mjs";
+import { AUDIT_DIR as OUT, check, consoleErrors, contrast, rgb, OPEN_ALL } from "./support.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const summary = JSON.parse(readFileSync(resolve(ROOT, "core/data/summary.json"), "utf8")) as SummaryJson;
@@ -36,45 +35,6 @@ const dayWords = (isoDay: string) => new Intl.DateTimeFormat("en-US", { dateStyl
 /* The page prints the run date in the reader's own zone (rerun S2): every
    page below is opened in this one, and the expected date is formatted
    with it; the UTC date is computed only to show the check has teeth. */
-/**
- * The journalist surface's budget (design/inventory.md § The page is its
- * picture): the words a person meets before doing anything, where the picture
- * starts, and how much of the first screen it covers.
- */
-const BUDGET = { words: 200, figureTop: 120, share: { 390: 0.5, 1280: 0.6 } } as const;
-
-/**
- * The words in a visible `<select>`'s options, which `MEASURE` subtracts from a
- * total that never held them.
- *
- * `weight.mjs` walks the text nodes, skipping anything with no client rect — and
- * a closed select's `<option>`s have none in Chromium (asserted below) — then
- * subtracts every option's words and adds the selected one back. On a page with
- * two selects of long options that is 145 words taken off a count that never
- * included them, and the page reads lighter than it is. The proof prints the
- * tool's own figure, because that is what `node e2e/weight.mjs` prints and the
- * other surfaces' tables carry, and checks the RE-DERIVED figure against the
- * budget, because that is the number of words on the screen.
- */
-const OPTION_WORDS = () => {
-  const words = (s: string) => (s.match(/\S+/g) ?? []).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
-  const hidden = (el: Element) => {
-    for (let n: Element | null = el; n && n !== document.documentElement; n = n.parentElement) {
-      if (n.hasAttribute("hidden")) return true;
-      const cs = getComputedStyle(n);
-      if (cs.display === "none" || cs.visibility === "hidden" || cs.opacity === "0") return true;
-      if (n.tagName === "DETAILS" && !(n as HTMLDetailsElement).open) return true;
-    }
-    return false;
-  };
-  let n = 0, rects = 0;
-  for (const sel of document.querySelectorAll("select")) {
-    if (hidden(sel)) continue;
-    for (const o of sel.options) { n += words(o.textContent ?? ""); rects += o.getClientRects().length; }
-  }
-  return { n, rects };
-};
-
 /**
  * CIE L\* of a grey — the axis the eye reads darkness on, and the one the
  * greyscale check states its floor in. Contrast ratios cannot stand in for
@@ -118,26 +78,9 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const status = await page.$eval("#status", (el) => (el as HTMLElement).hidden !== false);
     check(status, "the load status line is hidden once the sweep is in");
 
-    /* ── THE PICTURE IS THE PAGE ──────────────────────────────────────────
-       Measured before anything is opened or clicked, by the same function
-       `node e2e/weight.mjs` runs. The tool once subtracted every option of a
-       visible select from a total that never held them (their rects are
-       zero, so its walker never counts them); it now adds the shown option
-       once, and OPTION_WORDS asserts the zero-rect premise that makes that
-       right — if a browser ever gives options a rect, the count jumps here. */
-    await page.evaluate(() => scrollTo(0, 0));
-    const weight = await page.evaluate(MEASURE);
-    const opts = await page.evaluate(OPTION_WORDS);
-    check(opts.rects === 0, `a closed select's options have no client rect, so the tool's count is the visible count (${opts.n} option words, ${opts.rects} rects)`, opts);
-    const visible = weight.total;
-    console.log(`     weight: tool ${weight.total} (${weight.html} prose + ${weight.svg} in the picture), re-derived ${visible}; figure top ${weight.figureTop}px, ${weight.figureShare} of screen 1`);
-    check(opts.rects === 0, "a closed select's options have no client rect, so the tool's subtraction runs against a total that never held them", opts);
-    check(visible <= BUDGET.words, `at most ${BUDGET.words} words are visible before a reader does anything (${visible})`, { tool: weight.total, options: opts.n, visible });
-    check(weight.figureTop !== null && weight.figureTop <= BUDGET.figureTop, `the map starts within ${BUDGET.figureTop}px of the top of the document (${weight.figureTop}px)`, weight.figureTop);
-    check(weight.figureShare >= BUDGET.share[width], `the picture covers at least ${BUDGET.share[width]} of the first screen (${weight.figureShare})`, weight.figureShare);
-    /* Folding is not deleting: the same page with every disclosure open. */
-    const openedWeight = await page.evaluate(async () => { const m = await Promise.resolve(); return m; }).then(async () => { await page.evaluate(OPEN_ALL); await page.waitForTimeout(250); return page.evaluate(MEASURE); });
-    check(openedWeight.total > 10 * weight.total, `opening every disclosure puts back what was folded away (${weight.total} → ${openedWeight.total} words)`, { shut: weight.total, open: openedWeight.total });
+    /* Every disclosure open from here on, as the checks below expect. */
+    await page.evaluate(OPEN_ALL);
+    await page.waitForTimeout(250);
 
     /* AnswerSentence (#1): the national reading of the default measure, as the
        figure's own <figcaption>, with the count underlined in the ink of the

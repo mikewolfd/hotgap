@@ -23,9 +23,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 
 /* ── One line of masthead ───────────────────────────────────────────────
    The wordmark, the language switch and the one action a reporter came for.
-   One line, because the figure's top is measured from it: at 390 it is 68px
-   and the budget is 120 (design/inventory.md § The page is its picture). The
-   page title is the <title>; the headline is the answer sentence, because a
+   One line, so the map starts high on a phone. The page title is the <title>; the headline is the answer sentence, because a
    headline that repeats the tab is a line of the first screen spent on
    nothing. */
 .masthead { display: flex; align-items: center; gap: var(--s3);

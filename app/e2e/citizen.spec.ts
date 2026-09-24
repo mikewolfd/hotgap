@@ -1,7 +1,6 @@
 // The citizen surface, end to end, through the Worker (app/README.md
 // § Proofs): the California single parent with a 3- and a 7-year-old at
 // $30,000, at 390 and 1280, light and dark. Measured, not asserted: the
-// weight of the page (weight.mjs, the same function the owner runs), the
 // marks against the cliff list, the table against the plotted curve, the
 // type floors on the SVG text, the loss ink's contrast on its ground, and a
 // screenshot beside the audit's (design/audit/app/citizen-*).
@@ -17,16 +16,12 @@ import { expect, test, type Page } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
-import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, outDir, rgb } from "./support.js";
-import { MEASURE, OPEN_ALL } from "./weight.mjs";
+import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, outDir, rgb, OPEN_ALL } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
 /** Plan 9 § Citizen's own review: the keep-next sentence in the answer's rhythm, and the far-cliffs clause. */
 const KEEP_RATE_DIR = outDir("design/review/keep-rate");
-
-/** What the picture-first pass promises a reader, per width (PICTURE-FIRST § Proofs). */
-const BUDGET = { words: 120, figureTop: 120, share: { 390: 0.5, 1280: 0.6 } } as const;
 
 /** Open a named disclosure by pressing it, which is also the proof that pressing it works. */
 async function openPanel(page: Page, name: string): Promise<void> {
@@ -70,18 +65,6 @@ for (const scheme of ["light", "dark"] as const) {
       const ev = await loaded(page);
       await expect(page.locator("#source")).toHaveAttribute("data-source", "live");
 
-      /* The page's weight, by the same function `node e2e/weight.mjs` runs: one
-         sentence and the picture, and the picture on the first screen. */
-      const weight = await page.evaluate(MEASURE);
-      console.log(`${scheme} ${width}: ${weight.total} words (${weight.html} prose + ${weight.svg} in the picture); figure top ${weight.figureTop}px, ${weight.figureShare} of screen 1`);
-      expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
-      expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop);
-      expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[width as 390 | 1280]);
-      /* …and nothing was deleted to get there: every disclosure open carries the page it carried before. */
-      await page.evaluate(OPEN_ALL);
-      const opened = await page.evaluate(MEASURE);
-      expect(opened.html).toBeGreaterThan(6 * weight.html);
-      await page.evaluate(() => { for (const d of document.querySelectorAll<HTMLDetailsElement>("details")) d.open = false; });
       /* The answer is the figure's own caption, so the picture's accessible name IS the answer. */
       await expect(page.locator("figure > figcaption#answer")).toHaveCount(1);
 

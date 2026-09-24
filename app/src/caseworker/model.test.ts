@@ -62,7 +62,7 @@ describe("the answer, one sentence in the caseworker register", () => {
     expect(shape({ verdict: "cliff_behind" })).toBe("The worst is behind this family: from $55,000 up, every raise is more money.");
     expect(shape({ verdict: "cliff_ahead", nextCliff: { startEarnings: 54000 } as never })).toBe("This family is clear up to $55,000; past it a raise costs about $25,449 a year.");
     expect(shape({}, { raiseIsLowerBound: true })).toBe("This family loses money on every raise above $36,000, and no exit turns up below $150,000.");
-    /* Every one of them is one sentence: the budget the page is measured against starts here. */
+    /* Every one of them is one sentence. */
     for (const s of [shape({ verdict: "always_up" }), shape({ verdict: "cliff_behind" }), answerText(co)]) {
       expect(s.split(/\.\s/).length).toBe(1);
     }

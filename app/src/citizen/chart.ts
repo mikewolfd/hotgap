@@ -100,7 +100,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   /* The visible line says the one thing a finger needs; the bracket keys are
      in the hidden copy the chart is described by and in "How to read this
      picture", because eight words of keyboard instruction on every screen is
-     eight words nobody reads (PICTURE-FIRST § The budget). */
+     eight words nobody reads. */
   const readout = h("p", { class: "hg-readout", "aria-live": "polite" }, t("chart.readoutHint"));
   const keys = h("p", { class: "hg-visually-hidden", id: "chartKeys" }, t("chart.readoutHint") + (s.cliffs.length ? t("chart.readoutMarks") : ""));
   const caption = h("p", { class: "caption", id: "curveCaption" });

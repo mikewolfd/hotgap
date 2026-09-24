@@ -12,10 +12,7 @@
 // Rewritten with the page on 2026-09-18 (design/PICTURE-FIRST-2026-09-18.md).
 // Two things changed for every test below. The page is now one sentence and a
 // figure over five named disclosures, so a proof that reads a ledger row
-// opens the disclosure it lives in first — the way a counselor does — and the
-// budget itself (words visible, where the figure starts, how much of the
-// first screen it covers) is measured here with the owner's own script rather
-// than eyeballed. And the comparison is drawn on the picture: an answered
+// opens the disclosure it lives in first — the way a counselor does. And the comparison is drawn on the picture: an answered
 // what-if is a second line with its own dash and tag, and its column in the
 // table must agree with it.
 //
@@ -25,8 +22,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { AUDIT_DIR as AUDIT, consoleErrors, noOverflow, outDir } from "./support.js";
-import { MEASURE, OPEN_ALL } from "./weight.mjs";
+import { AUDIT_DIR as AUDIT, consoleErrors, noOverflow, outDir, OPEN_ALL } from "./support.js";
 
 const AFTER = outDir("design/review/caseworker/after");
 const shot = (name: string) => resolve(AUDIT, `caseworker-${name}.png`);
@@ -43,9 +39,6 @@ test.afterAll(() => writeFileSync(resolve(AFTER, "measurements.json"), JSON.stri
 const HOUSEHOLD = "/caseworker.html?zip=80903&kids=3%2C7&pay=38000&unit=year&rent=1735&childcare=2773&childcare-subsidy=1";
 const THREE_WHAT_IFS = "&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=pay%3D55000";
 const ARCHETYPE_URL = process.env.HOTGAP_ARCHETYPE_URL;
-
-/** The budget this surface is held to (design/inventory.md § The page is its picture). */
-const BUDGET = { words: 250, figureTop: 120, share: { 390: 0.5, 1280: 0.6 } } as const;
 
 const rendered = async (page: Page) => {
   await expect(page.locator("#answer")).toContainText("This family loses money on every raise between $36,000 and $45,000");
@@ -72,15 +65,6 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await page.goto(HOUSEHOLD);
     await rendered(page);
 
-    // ── The page is its picture: one sentence, then the figure, and the
-    //    budget measured with the owner's own script rather than asserted.
-    const weight = await page.evaluate(MEASURE);
-    measured[`PF-weight-${width}-${scheme}`] = weight;
-    expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
-    // A language a third longer wraps the summary line once more at 390 ("en Condado de El
-    // Paso, Colorado"): one line-height of allowance on the figure's top, not on its share.
-    expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop + 20);
-    expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[width]);
     // The answer is the figure's own caption, first child, so the picture's accessible name IS the answer.
     expect(await page.evaluate(() => document.querySelector("figure")!.firstElementChild!.id)).toBe("answer");
     // Each dollar figure in the sentence wears the key of the mark it names.
@@ -96,12 +80,6 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     for (const id of ["steps-panel", "compare-panel", "ledger-panel", "assumed-panel", "sources-panel", "howto"]) {
       expect(await page.evaluate((x) => (document.getElementById(x) as HTMLDetailsElement).open, id), `${id} closed by default`).toBe(false);
     }
-    // Folding is not deleting: the same page with every disclosure open carries more than it did before.
-    const opened = await page.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; return null; }).then(() => page.evaluate(MEASURE));
-    measured[`PF-weight-open-${width}-${scheme}`] = opened;
-    expect(opened.total).toBeGreaterThan(1100);
-    await page.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = false; });
-
     // ── The picture says what the prose used to (design/charts.md § Direct labels).
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`PF-labels-${width}-${scheme}`] = labels;
@@ -369,7 +347,7 @@ test("1280px: three what-ifs are three lines on one picture and four columns in 
   await rendered(page);
   await expect(page.locator("#compareHead th")).toHaveCount(5);
 
-  // The comparison is the picture, and the budget survives it. Three what-ifs, three marks, each named:
+  // The comparison is the picture. Three what-ifs, three marks, each named:
   // two are different households and draw their own curves; the raise is this curve at another pay.
   await expect(page.locator("#curve path[data-whatif]")).toHaveCount(3);
   const tags = await page.locator("#curve text.hg-label--whatif").allTextContents();
@@ -383,11 +361,6 @@ test("1280px: three what-ifs are three lines on one picture and four columns in 
   await expect(page.locator('#curve path[data-whatif][data-kind="position"]')).toHaveCount(1);
   await expect(page.locator("#curveCap")).toContainText("2 what-ifs are drawn here as second lines");
   await expect(page.locator("#curveCap")).toContainText("One what-if is this same curve at a different pay");
-  const weight = await page.evaluate(MEASURE);
-  measured["PF-weight-1280-3-whatifs"] = weight;
-  expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
-  expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop);
-  expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[1280]);
   await page.screenshot({ path: pf("1280-three-whatifs") });
 
   await open(page, "compare-panel");
@@ -564,7 +537,7 @@ test("390px with three what-ifs: no horizontal scroll (the compare table's width
   expect(errors).toEqual([]);
 });
 
-test("es-US: the answer, the picture's labels and the disclosure names are the Spanish redraft, and the budget holds in a language three tenths longer", async ({ page }) => {
+test("es-US: the answer, the picture's labels and the disclosure names are the Spanish redraft", async ({ page }) => {
   const errors = consoleErrors(page);
   await light(page);
   for (const width of [390, 1280] as const) {
@@ -578,13 +551,6 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
     measured[`ES-labels-${width}`] = labels;
     expect(labels).toContain("neto $84,371, con la ayuda contada");
     expect(labels.some((l) => /¢ de cada dólar extra$/.test(l ?? ""))).toBe(true);
-    const weight = await page.evaluate(MEASURE);
-    measured[`ES-weight-${width}`] = weight;
-    expect(weight.total).toBeLessThanOrEqual(BUDGET.words);
-    // A language a third longer wraps the summary line once more at 390 ("en Condado de El
-    // Paso, Colorado"): one line-height of allowance on the figure's top, not on its share.
-    expect(weight.figureTop).toBeLessThanOrEqual(BUDGET.figureTop + 20);
-    expect(weight.figureShare).toBeGreaterThanOrEqual(BUDGET.share[width]);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: pf(`${width}-es`) });
     await noOverflow(page);

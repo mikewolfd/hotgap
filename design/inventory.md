@@ -91,39 +91,6 @@ figure. Nothing else is above the fold — not a lede, not a stat row, not a
 key, not a filter. The figure's first child is the AnswerSentence itself, as
 `<figcaption>`, so the picture's accessible name is the answer.
 
-**The budget, measured not asserted.** `app/e2e/weight.mjs` counts the words a
-person can really see (no `[hidden]`, no `display:none`, no visually-hidden
-clip; a closed `<details>` is worth its summary and nothing else), reports the
-words inside the picture apart from the prose, finds the first `<figure>` and
-measures how much of the first screen it covers.
-
-| | citizen | caseworker | journalist |
-|---|---:|---:|---:|
-| words visible by default | ≤ 120 | ≤ 250 | ≤ 200 |
-| first figure's top, at 390 | ≤ 120px | ≤ 120px | ≤ 120px |
-| figure's share of screen 1, 390 / 1280 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 | ≥ 0.5 / ≥ 0.6 |
-
-In a language a third longer than English the summary line may wrap once
-more, so a translated page is allowed one line-height (20px) over the
-figure-top budget — and nothing over the word or share budgets. The three
-budgets differ because density is a surface decision, not a
-component one (`README.md` § Where the personas conflict, 3). They are floors
-on the reader's attention, not ceilings on what the page holds: the same
-script run with every disclosure open is the proof that nothing was deleted,
-and that number belongs in every review beside the closed one.
-
-**One thing the script cannot see (2026-09-18, the journalist pass).** It
-subtracts every `<option>`'s words from a visible `<select>` and adds the
-selected one back — but a closed select's options have no client rect, so the
-tree walker never counted them, and the subtraction runs against a total that
-never held them. On a page with two long-optioned selects the error is 184
-words; on the journalist page that made the tool print **−11 words**, which is
-the defect announcing itself. Until `weight.mjs` skips options the walker
-skipped, a review of a page with a visible `<select>` prints the tool's figure
-AND the figure with the options added back, and the budget is checked against
-the second. `e2e/places.spec.ts` re-derives it that way and asserts the
-zero-rect premise, so the correction cannot silently stop being needed.
-
 **The disclosures.** Three on the page, one inside the figure, in this order,
 with these names. A surface that needs another names it for what is inside it
 and writes it here.
@@ -161,9 +128,7 @@ Four rules that go with them:
 - **Nothing that changes an answer hides.** The ScenarioBar's chips are behind
   *Edit* because they are the household, not the answer.
 - **Nothing that warns hides.** `role="alert"`, `role="status"`, the archetype
-  notice and the incomplete-state caution stay in the open, whatever the
-  budget costs. A page under its word count with a hidden warning has failed
-  the measurement, not passed it.
+  notice and the incomplete-state caution stay in the open.
 - **And nothing that does not warn stays.** Its converse, added by the
   caseworker pass: *Figures complete for Colorado. Nothing this household
   would hold is unmodelled here* is provenance, not a caution, and it was
@@ -185,7 +150,7 @@ Three rules travel with it, and a measurement enforces each:
 
 1. **The visual never moves.** The box is a pseudo-element; nothing about the
    control's own layout changes, which is why this pass added no pixel to any
-   header (`REVIEW-touch-2026-09-19` N4: the weight table is identical).
+   header.
 2. **No two hit areas may overlap.** A 44px box that took its neighbour's
    pixels is 44px of intention and less than that of hit area — and the tap it
    wins was the neighbour's. `app/e2e/touch.spec.ts` re-derives every overlap

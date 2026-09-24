@@ -236,9 +236,7 @@ drawing area (324–624px with padding).
 Since 2026-09-18 there is a **second floor: what is left of the first screen.**
 The plot fills the space between its own top and the bottom of the first
 viewport, less the room the hint and the readout need. On a phone that is the
-difference between a picture a person looks at and one they scroll past, and
-it is the same rule that makes `weight.mjs`'s *figure share of screen 1*
-reachable. The ceiling is unchanged, so a figure is never taller than a
+difference between a picture a person looks at and one they scroll past. The ceiling is unchanged, so a figure is never taller than a
 screen; the drop floor still wins wherever it asks for more; and where the
 screen asks for more than the data did, the drop gets those pixels too — the
 three households `charts.md` recorded at 22–24px are the ones that gain.

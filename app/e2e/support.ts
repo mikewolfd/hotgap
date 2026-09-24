@@ -48,3 +48,8 @@ export function check(ok: boolean, what: string, measured?: unknown): void {
   console.log(`${ok ? "ok  " : "FAIL"} ${what}${measured !== undefined ? ` — ${typeof measured === "string" ? measured : JSON.stringify(measured)}` : ""}`);
   expect.soft(ok, what).toBe(true);
 }
+
+/** Open every disclosure on the page, for a proof that reads what is inside them. */
+export const OPEN_ALL = (): void => {
+  for (const d of document.querySelectorAll("details")) d.open = true;
+};
