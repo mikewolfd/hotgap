@@ -96,12 +96,12 @@ export const DROP_FLOOR = 24;
 export const PLOT_H = { min: 260, max: 560 } as const;
 
 /**
- * The plot's height from the data, for both charts. The y-range is the whole
- * curve's now, so the biggest drop is a far smaller share of it than it was
- * inside a crop — on the citizen review's eight households it runs 2.7% to
- * 8% — and height is the only thing left that buys those pixels back. So the
- * plot is exactly as tall as the biggest drop needs to clear `DROP_FLOOR`,
- * clamped.
+ * The plot's height from the data, for both charts. It was written when the
+ * y-range was the whole curve's, where the biggest drop was 2.7% to 8% of
+ * it; since the range is fitted to the landing view (`fitY`) the drop is a
+ * far larger share and the floor rarely bites. The page passes the LANDING
+ * view's range, so a refit on scroll never changes the figure's height. The
+ * plot is as tall as the biggest drop needs to clear `DROP_FLOOR`, clamped.
  *
  * The ceiling bites, and `charts.md` records where: four of the eight would
  * need a plot 600–880px tall to reach 24px, which is not a figure any more.
@@ -120,6 +120,50 @@ export const PLOT_H = { min: 260, max: 560 } as const;
 export function plotHeight(yRange: number, maxDrop: number, avail = 0): number {
   const want = maxDrop > 0 ? Math.ceil((DROP_FLOOR * yRange) / maxDrop) : PLOT_H.min;
   return Math.min(PLOT_H.max, Math.max(PLOT_H.min, want, Math.floor(avail)));
+}
+
+/**
+ * The room the fitted curve leaves above and below itself, as shares of the
+ * range: the top holds the leap bracket and the drop labels over the dots,
+ * the foot only has to keep the line off the axis.
+ */
+export const FIT_ROOM = { top: 0.24, foot: 0.1 } as const;
+
+/**
+ * THE Y-RANGE IS FITTED TO THE CURVE IN VIEW (TASKS 2026-09-24). The whole
+ * curve's range ran ~$15k–$100k for a household whose line, where the
+ * reader lands, sits between $40k and $55k: seven tenths of the plot was
+ * empty and a $2,384 drop was a few pixels. So the range is the one the
+ * VISIBLE points need — `values`, the net of every point inside the
+ * viewport's pay, plus the diamond — with room above and below.
+ *
+ * Axis honesty still holds, and against the WHOLE curve's biggest drop, not
+ * the view's: the range is at least 2.5× that drop (S14), so no drop on the
+ * curve is ever drawn taller than the rule allows wherever the reader
+ * scrolls, and the caption's "N× the largest drop" is true of every view.
+ * The extension that meets the rule goes mostly above the line, where the
+ * labels are. A curve that stays positive never gets a floor below $0.
+ *
+ * The rest of the curve is still drawn, clipped by the plot; when the reader
+ * scrolls somewhere it leaves the range, the page refits on rest
+ * (`refits`) — no animated rescale.
+ */
+export function fitY(values: number[], maxDrop: number): [number, number] {
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const span = Math.max(hi - lo, 2.5 * maxDrop, 0.1 * Math.abs(hi), 1000);
+  const extra = span - (hi - lo);
+  const y0 = lo - extra * 0.3 - span * FIT_ROOM.foot, y1 = hi + extra * 0.7 + span * FIT_ROOM.top;
+  return [lo >= 0 ? Math.max(0, y0) : y0, y1];
+}
+
+/**
+ * Whether a view needs a new y-range, with hysteresis so a small scroll never
+ * moves the axis: only when a visible point has left the range, or the range
+ * has become far looser than the view needs (the fit for it is under 60% of
+ * the range drawn). `lo`/`hi` are the visible points' extremes.
+ */
+export function refits(drawn: [number, number], fit: [number, number], lo: number, hi: number): boolean {
+  return lo < drawn[0] || hi > drawn[1] || fit[1] - fit[0] < 0.6 * (drawn[1] - drawn[0]);
 }
 
 /** The context the initial view carries around what it must show: a third before, two thirds after, where the climb back is. */

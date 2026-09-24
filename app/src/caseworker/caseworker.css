@@ -45,7 +45,6 @@
 .hg-answer { margin: 0 0 var(--s4); }
 @media (min-width: 40rem) { .hg-answer { margin-bottom: var(--s5); } }
 #picture { padding-block: var(--s4) 0; }
-#picture .hg-chart__scroll { --scroll-ground: var(--plane); }
 /* The axis's own ends sit at the picture's own ends: this is not prose and
    the dense base's measure would pull "$150,000 →" into the middle of a
    1,200px figure, where it says nothing about where the axis stops. */

@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
 import { clusterCliffs, MAX_SCREENS } from "../lib/chart/geometry.js";
 import { tickMoney } from "../lib/format.js";
-import { layout, xTicks, yRange } from "./geometry.js";
+import { layout, needsRefit, xTicks, yRange } from "./geometry.js";
 import { sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
@@ -102,6 +102,35 @@ describe("axis honesty", () => {
       expect(y0).toBeLessThanOrEqual(Math.min(...s.net));
       expect(y1).toBeGreaterThanOrEqual(Math.max(...s.net));
     }
+  });
+  test("on a screen the y-range is fitted to the curve in view: tighter than the whole curve's, still 2.5× its biggest drop", () => {
+    const s = sceneOf(makeEvaluation(), year);
+    const whole = yRange(s, false);
+    for (const box of [390, 1280]) {
+      const L = layout(s, box);
+      expect(L.y1 - L.y0).toBeLessThanOrEqual(whole.y1 - whole.y0);
+      expect(L.y1 - L.y0).toBeGreaterThanOrEqual(2.5 * L.maxDrop);
+      // Every point in the viewport is inside the range; points elsewhere may be clipped.
+      for (let i = 0; i < s.net.length; i++) {
+        const x = L.px(s.earningsAt(i));
+        if (x >= L.scrollLeft && x <= L.scrollLeft + L.viewport) {
+          expect(s.net[i]).toBeGreaterThanOrEqual(L.y0);
+          expect(s.net[i]).toBeLessThanOrEqual(L.y1);
+        }
+      }
+      // Where the reader lands the range serves the view; scrolled to the top of the axis it does not.
+      expect(needsRefit(s, L, L.scrollLeft)).toBe(false);
+      expect(needsRefit(s, L, L.W - L.viewport)).toBe(true);
+      // Paper fits the whole curve.
+      const paper = layout(s, 640, true);
+      expect(paper.y0).toBeLessThanOrEqual(Math.min(...s.net));
+      expect(paper.y1).toBeGreaterThanOrEqual(Math.max(...s.net));
+    }
+    // Scrolling to the top of the axis and redrawing there fits that view instead, at the same height.
+    const L = layout(s, 390);
+    const far = layout(s, 390, false, 0, s.top);
+    expect(far.H).toBe(L.H);
+    expect(far.y1).toBeGreaterThanOrEqual(s.net[s.net.length - 1]);
   });
   test("the biggest drop clears the 24px floor in the initial view at 390 and at 1280 (charts.md § The scroll rule)", () => {
     const s = sceneOf(makeEvaluation(), year);

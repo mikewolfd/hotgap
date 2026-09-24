@@ -14,6 +14,7 @@ import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money, reachWord } from "../lib/format.js";
 import { languageSwitch } from "../lib/lang.js";
 import { pageHref, siteNav } from "../lib/nav.js";
+import { finePointer, watchScrollEdges } from "../lib/scroll.js";
 import { stateName } from "../lib/names.js";
 import { answerParts } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
@@ -353,6 +354,7 @@ export function renderFigure(s: Scene): void {
      which is the same "there is more this way" a clipped column gives every
      wide table on the site. */
   grid.classList.add("hg-scroll-x", "hg-scroll-x--bar");
+  watchScrollEdges();   /* its edge fades, and the table scroller's, only where they overflow (lib/scroll.ts) */
   mapSwipeHint(grid);
 
   /* The scale draws the classes that exist: five steps with their six bounds
@@ -850,7 +852,7 @@ function mapSwipeHint(grid: HTMLElement): void {
   /* Next frame: the first render happens while `#main` is still hidden, where
      a scroller measures zero and every map would look like it fits. */
   requestAnimationFrame(() => {
-    el.textContent = copy.table.swipe;
+    el.textContent = finePointer() ? copy.table.scroll : copy.table.swipe;
     el.hidden = grid.scrollWidth <= grid.clientWidth + 1;
   });
 }

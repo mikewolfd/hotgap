@@ -847,11 +847,14 @@ a.hg-wordmark { color: var(--ink); text-decoration: none; }
 /* A horizontal scroller for a wide table; the min-width is the table's job.
    The edges say there is more (places context-blind review S10): a shadow
    on whichever side still has content, drawn as a background behind the
-   cells — the covering gradients scroll with the content (`local`), the
-   shadows do not, so each shadow shows only until its edge is reached and
-   never when the table fits. No script, no measurement, every surface. The
-   ground is the surface's page ground; a scroller inside a panel sets
-   --scroll-ground to the panel's. A page may also name the gesture:
+   cells, fixed to the box while the content scrolls over it. Which sides
+   have content is MEASURED (lib/scroll.ts sets `data-overflow-start` and
+   `data-overflow-end`), not inferred from covering gradients: those had to
+   match the ground exactly, and where they did not — the curve on its
+   figure, the map, a table in a disclosure — a grey band stood at both
+   edges of a box that did not scroll (TASKS 2026-09-24). No attribute, no
+   fade: a box that fits, or a page without script, draws nothing at its
+   edges. A page may also name the gesture:
    `data-more="Swipe for more →"` (its own copy) prints under the table in
    the source line's voice, and only while the page finds an overflow.
 
@@ -868,14 +871,15 @@ a.hg-wordmark { color: var(--ink); text-decoration: none; }
   touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  --scroll-ground: var(--plane);
   --scroll-shadow: color-mix(in srgb, var(--ink) 22%, transparent);
+  --fade-start: transparent;
+  --fade-end: transparent;
   background:
-    linear-gradient(to right, var(--scroll-ground) 40%, transparent) left / 48px 100% no-repeat local,
-    linear-gradient(to left, var(--scroll-ground) 40%, transparent) right / 48px 100% no-repeat local,
-    linear-gradient(to right, var(--scroll-shadow), transparent) left / 16px 100% no-repeat scroll,
-    linear-gradient(to left, var(--scroll-shadow), transparent) right / 16px 100% no-repeat scroll;
+    linear-gradient(to right, var(--fade-start), transparent) left / 16px 100% no-repeat scroll,
+    linear-gradient(to left, var(--fade-end), transparent) right / 16px 100% no-repeat scroll;
 }
+.hg-scroll-x[data-overflow-start] { --fade-start: var(--scroll-shadow); }
+.hg-scroll-x[data-overflow-end] { --fade-end: var(--scroll-shadow); }
 /* The words sit at the top of the scroller, where a reader meets the table —
    drawn after it they sat under fifty rows, and a reporter at the top saw
    only the fade (places rerun N6). */

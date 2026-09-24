@@ -17,6 +17,32 @@ export function hatchDefs(id: string): SVGDefsElement {
   return defs;
 }
 
+/**
+ * The plot's clip, and a group drawn through it. The y-range is fitted to the
+ * curve in view (geometry.ts `fitY`), so elsewhere on the axis the line and
+ * its marks can run past it; they are cut at the plot's top and bottom
+ * rather than drawn over the ticks and the road. A few pixels spare at the
+ * top so a dot sitting on the edge keeps its ring. Returns the defs to
+ * append and the group the line and the marks go in.
+ */
+export function plotClip(id: string, W: number, top: number, bottom: number): { defs: SVGDefsElement; g: SVGGElement } {
+  const defs = svg("defs"), clip = svg("clipPath", { id });
+  clip.append(svg("rect", { x: 0, y: top - 8, width: W, height: bottom - top + 8 }));
+  defs.append(clip);
+  return { defs, g: svg("g", { "clip-path": `url(#${id})` }) };
+}
+
+/**
+ * Call `fn` once the scroller has come to rest: 160ms without a scroll event,
+ * which is also after a fling's momentum. This is when a chart asks whether
+ * its fitted y-range still serves the view — never during the scroll, so the
+ * axis does not move under a moving thumb, and never animated.
+ */
+export function onScrollRest(el: HTMLElement, fn: () => void): void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  el.addEventListener("scroll", () => { clearTimeout(timer); timer = setTimeout(fn, 160); }, { passive: true });
+}
+
 /** MarkKey (#5): each entry draws the actual mark, 22×12, never a swatch alone. */
 export const KEY_MARK = {
   line: `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`,
@@ -148,10 +174,13 @@ export function markWidths(xs: number[]): number[] {
 }
 
 /** A cliff mark as a control (M6): a 44px .hg-mark button centred on the dot by percent of the box, narrowed to its band where its neighbour is nearer than 44px, with its count when merged (S8). */
-export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H">, label: string, count: number, later: boolean, attrs: Record<string, string> = {}, width = MARK_HIT): HTMLButtonElement {
+export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H" | "pad">, label: string, count: number, later: boolean, attrs: Record<string, string> = {}, width = MARK_HIT): HTMLButtonElement {
   const b = h("button", { type: "button", class: "hg-mark", tabindex: "-1", "aria-label": label, ...attrs });
   b.style.left = `${(x / L.W) * 100}%`;
-  b.style.top = `${(y / L.H) * 100}%`;
+  /* Held inside the plot: a mark whose dot is past the fitted y-range (somewhere the reader is not
+     looking) must not hang out of the box and give the scroller a vertical overflow. It stays a
+     control, so ] and [ still reach it, and reaching it scrolls there and refits. */
+  b.style.top = `${(Math.min(L.H - L.pad.b, Math.max(L.pad.t, y)) / L.H) * 100}%`;
   /* The height is always the full square: marks are laid along the x axis, so
      only x can collide. Both are set here rather than in the class, which
      keeps the .hg-mark rule to what is true of every mark. */

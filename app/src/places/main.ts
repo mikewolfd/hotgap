@@ -7,6 +7,7 @@ import "../../../design/tokens.css";
 import "./places.css";
 import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
 import { $ } from "../lib/dom.js";
+import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
 import { csvFor, csvName } from "./csv.js";
 import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
@@ -109,7 +110,7 @@ function main(summary: SummaryJson): void {
      language with longer words makes the same thirteen columns wider. */
   const swipeHint = () => {
     const fits = scroller.scrollWidth <= scroller.clientWidth;
-    if (fits) { delete scroller.dataset.more; scroller.dataset.fits = ""; } else { scroller.dataset.more = copy.table.swipe; delete scroller.dataset.fits; }
+    if (fits) { delete scroller.dataset.more; scroller.dataset.fits = ""; } else { scroller.dataset.more = finePointer() ? copy.table.scroll : copy.table.swipe; delete scroller.dataset.fits; }
   };
   // Next frame, not inside the delivery: the hint changes the scroller's own height.
   new ResizeObserver(() => requestAnimationFrame(swipeHint)).observe(scroller);

@@ -184,12 +184,26 @@ for (const scheme of ["light", "dark"] as const) {
       const biggestRow = page.locator(".hg-rows__loss", { hasText: "This is the biggest drop." });
       await expect(biggestRow).toHaveCount(1);
       expect(dollars((await page.locator(`#step-${worst.endEarnings} .hg-rows__loss`).textContent())!)[0]).toBe(Math.round(worst.drop / 100) * 100);
-      const labels = await page.locator("#chart svg text.hg-label--loss").allTextContents();
+      /* Since 2026-09-24 the y-range is fitted to the curve in view, so the
+         promised label is drawn wherever its mark is on the plot: scroll to
+         the biggest drop's mark, let the scroller rest (the page refits), read
+         the strong label there, and scroll back to where the reader landed. */
+      const scroller = page.locator("#chart .hg-chart__scroll");
+      const home = await scroller.evaluate((el) => el.scrollLeft);
+      await scroller.evaluate((el, at) => {
+        const ms = [...el.querySelectorAll<HTMLElement>(".hg-mark")].filter((m) => Number(m.dataset.key) <= at);
+        const m = ms[ms.length - 1];
+        el.scrollLeft = m.offsetLeft + m.offsetWidth / 2 - el.clientWidth / 2;
+      }, worst.endEarnings);
+      await page.waitForTimeout(600);
+      const labels = await page.locator("#chart svg text.hg-label--loss.hg-label--strong").allTextContents();
       const dropLabel = labels.find((x) => x.startsWith("−"));
       expect(dollars(dropLabel!)).toEqual([Math.round(worst.drop)]);
       /* The label the page promises says what ends there as well as what it costs (charts.md § Direct labels, 2). */
       if (worst.programsLost.length) expect(labels.some((x) => x.endsWith(" ends"))).toBe(true);
       await expect(page.locator("#curveCaption")).not.toContainText("outside the picture");
+      await scroller.evaluate((el, x) => { el.scrollLeft = x; }, home);
+      await page.waitForTimeout(600);
 
       /* Type floors (design/inventory.md § Type floors), measured on every SVG text. */
       const texts = await page.locator("#chart svg text").evaluateAll((els) => els.map((el) => ({

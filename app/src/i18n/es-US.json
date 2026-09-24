@@ -251,14 +251,18 @@
           "loses": "pierde {cents}¢ de cada dólar extra"
         },
         "youKeepHelp": "le quedan {kept}, con la ayuda",
-        "youKeepTax": "le quedan {kept} tras los impuestos"
+        "youKeepTax": "le quedan {kept} tras los impuestos",
+        "roadFrom": "línea de pobreza",
+        "roadTo": "2× esa línea",
+        "again": "otro tramo plano"
       },
       "scrolls": "La imagen cubre todos los sueldos de {from} a {to}: deslícela de lado para ver el resto.",
       "wholeOnPaper": "La imagen cubre todos los sueldos de {from} a {to}.",
       "rangeFrom": "← {from}",
       "rangeTo": "{to} →",
       "howTo": "Cómo leer esta imagen",
-      "rangeMid": "deslice para ver más"
+      "rangeMid": "deslice para ver más",
+      "rangeMidPointer": "desplácese para ver más"
     },
     "key": {
       "line": "El dinero que le queda",
@@ -924,12 +928,16 @@
           "keeps": "se queda con {cents}¢ de cada dólar extra",
           "loses": "pierde {cents}¢ de cada dólar extra"
         },
-        "merged": "{n} caídas juntas"
+        "merged": "{n} caídas juntas",
+        "roadFrom": "línea de pobreza",
+        "roadTo": "2× la línea de pobreza",
+        "again": "otra zona de peligro"
       },
       "whatIfLines": "{n, plural, one {Un escenario se dibuja aquí como una segunda línea, que se distingue por su trazo y su etiqueta.} other {{n} escenarios se dibujan aquí como líneas adicionales, que se distinguen por sus trazos y sus etiquetas.}}",
       "whatIfHeld": "{held, plural, one {Queda un escenario más en la comparación que no está en la gráfica.} other {Quedan {held} escenarios más en la comparación que no están en la gráfica.}}",
       "whatIfPositions": "{n, plural, one {Un escenario es esta misma curva con otro sueldo: su rombo hueco marca dónde cae.} other {{n} escenarios son esta misma curva con otro sueldo: sus rombos huecos marcan dónde caen.}}",
-      "rangeMid": "deslice para ver más"
+      "rangeMid": "deslice para ver más",
+      "rangeMidPointer": "desplácese para ver más"
     },
     "compare": {
       "rows": {
@@ -1291,6 +1299,7 @@
       "subsidyAdded": "subsidio de cuidado infantil agregado por HotGap",
       "floorMark": "piso",
       "swipe": "Deslice para ver más →",
+      "scroll": "Desplácese para ver más →",
       "note": "Cada fila conserva el número que devolvió el modelo, incluidas las filas que no puede completar, porque un reportero necesita ver lo que salió. Esas filas están marcadas en la última columna y no se sombrean en el mapa ni entran en la clasificación. Seleccione un estado en el mapa o en esta tabla para leer las correcciones detrás de sus números debajo del mapa; las flechas se mueven entre estados y Enter selecciona.",
       "position": "{n} de cada 100",
       "carePrice": "precio del cuidado de niños: {care}"

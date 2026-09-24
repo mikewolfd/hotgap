@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import type { Cliff } from "@hotgap/core";
 import { makeEvaluation } from "../../citizen/fixture.js";
 import { sceneOf } from "../../citizen/model.js";
-import { clusterCliffs, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow } from "./geometry.js";
+import { clusterCliffs, fitY, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, refits, scaleFor, scrollFor, scrollToShow } from "./geometry.js";
 
 describe("nice values", () => {
   test("a step is range / n snapped to 1, 2, 2.5 or 5 × 10^k", () => {
@@ -76,6 +76,26 @@ describe("the scroll rule", () => {
     expect(plotHeight(110_000, 3_000)).toBe(PLOT_H.max);
     // A curve with no cliff has no drop to size for and takes the floor.
     expect(plotHeight(100_000, 0)).toBe(PLOT_H.min);
+  });
+  test("the y-range fits the curve in view, and stays 2.5× the whole curve's biggest drop (TASKS 2026-09-24)", () => {
+    // The CA household where it lands: the line between $42k and $45k, the curve's biggest drop $7,059 far off to the right.
+    const [y0, y1] = fitY([42_000, 42_800, 44_985, 44_600], 7_059);
+    expect(y0).toBeLessThanOrEqual(42_000);
+    expect(y1).toBeGreaterThanOrEqual(44_985);
+    expect(y1 - y0).toBeGreaterThanOrEqual(2.5 * 7_059);
+    expect(y1 - y0).toBeLessThan(30_000);                 // not the whole curve's ~$85,000
+    // Most of the room the rule adds goes above the line, where the bracket and the labels are.
+    expect(y1 - 44_985).toBeGreaterThan(42_000 - y0);
+    // A positive curve never gets a floor below $0; a flat one still gets a range.
+    expect(fitY([1_000, 1_200], 5_000)[0]).toBe(0);
+    const flat = fitY([50_000, 50_000], 0);
+    expect(flat[1] - flat[0]).toBeGreaterThan(0);
+  });
+  test("a view refits only when its curve has left the range or the range is far too loose for it", () => {
+    expect(refits([35_000, 65_000], [35_000, 65_000], 42_000, 55_000)).toBe(false);
+    expect(refits([35_000, 65_000], [40_000, 66_000], 45_000, 60_000)).toBe(false);   // a small scroll: the axis holds still
+    expect(refits([35_000, 65_000], [60_000, 100_000], 70_000, 90_000)).toBe(true);   // the line has left the top
+    expect(refits([0, 100_000], [40_000, 60_000], 45_000, 55_000)).toBe(true);        // far looser than the view needs
   });
   test("the initial scroll centres the window and then pulls the household's own pay inside the viewport", () => {
     const L = layerFor(1812, 400, pad, 0, 150_000, 0, 100_000);

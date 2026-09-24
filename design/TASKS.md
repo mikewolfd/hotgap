@@ -18,10 +18,10 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 - [x] **One masthead.** The citizen and caseworker mastheads are full-bleed
       with large buttons; `/places` is inset with a small button. Build one
       shared masthead in `src/lib/`.
-- [ ] **Scroll fades only when something scrolls.** The grey fades at the
+- [x] **Scroll fades only when something scrolls.** The grey fades at the
       left and right of the chart and the map show at 1280 when nothing
       overflows. Show them only when the content overflows.
-- [ ] **"Swipe" is a touch word.** "swipe to see more" shows to mouse users;
+- [x] **"Swipe" is a touch word.** "swipe to see more" shows to mouse users;
       say "drag or scroll" (or nothing) on a pointer device.
 - [x] **Answer figures look like links.** The purple underline on the
       headline's dollar figures is also how "Español" says it's a link. Use a
@@ -29,19 +29,19 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 
 ## Chart (citizen and caseworker)
 
-- [ ] **Fit the y-axis to the curve.** It runs ~$15k–$100k while the line
+- [x] **Fit the y-axis to the curve.** It runs ~$15k–$100k while the line
       stays at $40k–$55k, so ~70% of the plot is empty and the $2,384 drop is a
       few pixels. Fit to the visible window (with hysteresis so it doesn't
       jump) or use a shorter, wider plot. The drops should look like drops.
-- [ ] **Label collisions.** Caseworker: the curve strikes through "TANF cash
+- [x] **Label collisions.** Caseworker: the curve strikes through "TANF cash
       assistance ends"; "+$13,000" sits on the "you now" diamond and its "net
       $42,797" label. Citizen: "−$2,384 / cash help ends", the +$13,000 bracket
       and the curve stack up. Put the bracket above the zone and give labels a
       background halo.
-- [ ] **Label the keep-rate bracket.** "you keep 19¢ of each extra dollar"
+- [x] **Label the keep-rate bracket.** "you keep 19¢ of each extra dollar"
       spans ~$27k–$55k with no ends marked; say it's the poverty line to twice
       it.
-- [ ] **Show the later cliff.** The headline says you're fine past $43,000,
+- [x] **Show the later cliff.** The headline says you're fine past $43,000,
       but the biggest drop ($7,100) is at $107,000 ("It happens again between
       $106,000 and $119,000" is only in a closed disclosure). Mark the later
       zone where the axis reaches it, and consider a clause in the answer.
@@ -64,7 +64,7 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 - [x] **One column when disclosures open.** "How to read this picture" is at
       chart width; the sections after it sit in a narrower, indented column
       that reads as nested.
-- [ ] **"Show the numbers" table** shows a scroll fade at 1280 though it fits
+- [x] **"Show the numbers" table** shows a scroll fade at 1280 though it fits
       (same fix as the scroll-fade task above).
 
 ## `/places`
@@ -87,5 +87,5 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 
 ## Caseworker page
 
-- [ ] Chart tasks above apply (y-axis, label collisions); the collisions are
+- [x] Chart tasks above apply (y-axis, label collisions); the collisions are
       worst here.
