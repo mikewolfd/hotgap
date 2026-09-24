@@ -75,6 +75,20 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(errors.length === 0, "no console errors on load", errors);
     const scroll = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
     check(scroll[0] <= scroll[1], "no horizontal scroll", { scrollWidth: scroll[0], innerWidth: scroll[1] });
+    /* The layout of the picture (design critique 2026-09-24): the two controls
+       sit between the sentence they change and the tiles, in one row from
+       40rem; the whole country is on the screen with no swipe, at 390 too;
+       and at 1280 the readout stands beside the map rather than under it. */
+    const layout = await page.evaluate(() => {
+      const r = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+      const grid = document.querySelector("#grid")!;
+      return { answer: r("#answer").bottom, controls: [r(".controls").top, r(".controls").bottom], map: r("#grid"), arch: r("#arch").top, metric: r("#metric").top,
+        fits: grid.scrollWidth <= grid.clientWidth + 1, tile: r(".tile").width, readout: r("#readout") };
+    });
+    check(layout.controls[0] >= layout.answer && layout.controls[1] <= layout.map.top && (width < 640 || layout.arch === layout.metric),
+      `Household and Measure sit between the answer sentence and the tiles${width >= 640 ? ", in one row" : ""}`, layout);
+    check(layout.fits && layout.map.right <= width && layout.tile >= 24, `the whole map fits the screen with no swipe (${layout.tile.toFixed(1)}px tiles)`, { fits: layout.fits, right: layout.map.right, tile: layout.tile });
+    if (width >= 1024) check(layout.readout.left >= layout.map.right && layout.readout.top < layout.map.bottom, "at 1280 the readout stands beside the map", { map: layout.map, readout: layout.readout });
     const status = await page.$eval("#status", (el) => (el as HTMLElement).hidden !== false);
     check(status, "the load status line is hidden once the sweep is in");
 
@@ -143,9 +157,14 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const bare = await page.evaluate(() => [(document.querySelector("#metric") as HTMLSelectElement).value, new URL(location.href).searchParams.get("measure")]);
     check(bare[0] === "keepRate" && bare[1] === null, "a bare URL opens on the keep rate, without having to say so", bare);
     const options = await page.$$eval("#metric option", (els) => els.map((el) => el.textContent!));
-    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o)) && /worst danger zone/.test(options[5]) && /no danger zone remains/.test(options[6])
-      && /from poverty to twice poverty/.test(options[0]) && /between poverty and twice poverty/.test(options[1]),
-      "every measure option stands on its own (S2)", options);
+    /* Short enough to show whole in a closed select at 390 (design critique
+       2026-09-24: "Keep rate — of each extra dollar earned from poverty to
+       twice poverty, the…"); the definitions are the measures' own `describe`,
+       in "How to read this map" and above the table. */
+    const defOf = (key: string) => page.$eval(`#def-col${key[0].toUpperCase()}${key.slice(1)}`, (el) => el.textContent!);
+    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 30)
+      && /worst danger zone/.test(await defOf("leap")) && /no danger zone remains/.test(await defOf("safeExit")),
+      "every measure option stands on its own and is short (S2), and its definition is the measure's own describe", options);
     /* A CLOSED select shows the option without its <optgroup> label, so every
        measure that has a near-twin in the other group must name its own window
        in the option itself. "Largest one-step loss ($)" and "Number of cliffs"
@@ -155,12 +174,12 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        (2026-09-18, B2 and B3). The four are pinned as a set, because the
        defect is the PAIR reading alike, not either option alone. */
     const twins: [number, number][] = [[1, 7], [2, 3]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
-    check(twins.every(([road, axis]) => /povert/i.test(options[road]) && /curve/i.test(options[axis])),
+    check(twins.every(([road, axis]) => /\broad\b/i.test(options[road]) && /\banywhere\b/i.test(options[axis])),
       "each measure with a twin in the other group names its own window in the option a closed select shows (B2, B3)",
       twins.map(([road, axis]) => [options[road], options[axis]]));
     /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */
     const widthTotal = STATES.filter((st) => metrics(st, "single-2").cliffCount > 0 && metrics(st, "single-2").dangerWidth > metrics(st, "single-2").leap).length;
-    check(widthTotal > 0 && /^Total width of the danger zones/.test(options[4]) && !/worst|widest/.test(options[4]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[4], statesWhereTotalExceedsLeap: widthTotal });
+    check(widthTotal > 0 && /^Total\b/.test(options[4]) && !/worst|widest/.test(options[4]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[4], statesWhereTotalExceedsLeap: widthTotal });
     /* The household line says the tenure every household shares (rerun N10). */
     check(/, renting in the state's most populous county\./.test(lede), "the map's household line says the household rents in the most populous county (rerun N10)", lede.slice(-90));
     /* The two controls are independent, said once where the order control is (rerun N3). */
@@ -444,6 +463,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       labels: [...document.querySelectorAll("#scaleLabels span")].map((el) => el.textContent!),
       swatches: [...document.querySelectorAll(".scale .sw")].map((el) => getComputedStyle(el).backgroundColor),
       legend: [...document.querySelectorAll("#legend li")].map((el) => el.textContent!),
+      legendSwatches: [...document.querySelectorAll("#legend li .hg-swatch")].map((el) => el.className),
       tiles: Object.fromEntries([...document.querySelectorAll(".tile")].map((el) => [(el as HTMLElement).dataset.st!, { bg: getComputedStyle(el).backgroundColor, label: el.getAttribute("aria-label")! }])),
       bins: document.querySelector("#binsLine")!.textContent!.match(/Bins: [^.]*\./)![0],
     }));
@@ -462,8 +482,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the scale is plum up to the 0¢ bound and the keep ramp after it", { labels: mapNow.labels, arms: armsOnScale });
     const lowState = STATES.reduce((a, st) => (rate(st) < rate(a) ? st : a));
     const highState = STATES.reduce((a, st) => (rate(st) > rate(a) ? st : a));
-    check(mapNow.legend[0] === phraseOf(lowState) && mapNow.legend[1] === phraseOf(highState),
-      "the scale's two ends say in words which way is which, in core's own phrasing", mapNow.legend.slice(0, 2));
+    /* ONE LEGEND (design critique 2026-09-24): the scale's printed bounds say
+       which way is which ("−105¢" … "+30¢"), so the strip's list no longer
+       repeats the ramp's two ends as swatches; it keeps only the tile states
+       that are not on the ramp. */
+    check(rate(lowState) < 0 && rate(highState) > 0 && /^−\d+¢$/.test(mapNow.labels[0]) && /^\+\d+¢$/.test(mapNow.labels[mapNow.labels.length - 1])
+      && mapNow.legendSwatches.every((c) => /hg-swatch--(none|past|incomplete)/.test(c)),
+      "the scale's printed bounds are its two ends, and the legend list repeats no ramp swatch — only the tile states off the ramp", { labels: mapNow.labels, legend: mapNow.legend });
     /* A tile's name OPENS with its state and its rate, in core's own phrasing.
        New Mexico's then carries the child-care footing (B8), which is why this
        is a prefix and not an equality: the footing is part of the name on the
@@ -761,6 +786,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const nm = metrics("NM", "single-2");
     await page.click('.tile[data-st="NM"]');
     const nmLines = await page.evaluate(() => (document.querySelector("#readout") as HTMLElement).innerText.split("\n").map((l) => l.trim()));
+    /* The readout's last line links to the household tool for this state and
+       this household's shape, in core's flag names (design critique
+       2026-09-24: link to the next step in context); the lines above it are
+       the findings. */
+    const tryIt = await page.$eval("#readout a.tryIt", (a) => ({ text: a.textContent, href: a.getAttribute("href") }));
+    check(nmLines.pop() === "Try this for your own family" && tryIt.href === "/?state=NM&kids=3%2C7",
+      "the readout ends with a link to the household tool for New Mexico and a single parent of two (3 and 7)", tryIt);
     /* New Mexico is the page's most quotable claim — the one state with no
        cliff anywhere — and one of two whose child-care price is a national
        median standing in for a county the source database lacks. Child care
@@ -924,7 +956,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        written that Ohio has eleven cliffs rather than ten (2026-09-18, B5). */
     const deferredItem = (await page.$$eval("#methodList li", (els) => els.map((el) => el.textContent!))).find((t) => /deferred to a future renewal/.test(t));
     check(deferredItem !== undefined && /counted in every figure here like any other cliff/.test(deferredItem) && !/lifted out/.test(deferredItem)
-      && /of the cliffs counted/i.test(options[8]),
+      && /of the cliffs counted/i.test(await page.$eval("#def-colDeferredCliffCount", (el) => el.textContent!)),
       "the method says a deferred cliff is counted like any other and named again in its own column, which is what the measure's own definition says and what core does (B5)",
       deferredItem?.slice(0, 130));
 

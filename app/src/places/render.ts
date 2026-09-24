@@ -20,6 +20,7 @@ import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
 import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
+import { tryItHref } from "./url.js";
 import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
 import { h } from "../lib/dom.js";
 
@@ -324,7 +325,13 @@ export function renderFigure(s: Scene): void {
          the step nearest the ground by construction. Measured floor: 5.16:1
          light / 4.51:1 dark on the last --ink step, 5.37:1 / 5.41:1 on the
          first --surface one. No step's L* may fall in the band where neither
-         ink reaches 4.5:1 — 49–53 light, 47–54 dark (charts.md § 2). */
+         ink reaches 4.5:1 — 49–53 light, 47–54 dark (charts.md § 2).
+         Re-measured 2026-09-24 for every step of both ramps in both modes,
+         after a critique read the white labels on the lightest plum (step 3:
+         WY, VA, DC, HI, FL on the keep rate) as low: white there is 5.37:1
+         light / 5.41:1 dark and dark ink would be 3.24:1 / 2.92:1, so the
+         ink each step takes is already the one that passes; the e2e contrast
+         check holds every bin to 4.5:1. */
       style += `;background:var(--${c.hue}-${c.ramp + 1});color:var(--${c.ramp >= 2 ? "surface" : "ink"})`;
     }
     const title = tileTitle(r, measure, summary.coverage?.[st]);
@@ -364,21 +371,15 @@ export function renderFigure(s: Scene): void {
     ? classes.map((c) => `<span>${c.lo === c.hi ? c.lo : `${c.lo}–${c.hi}`}</span>`).join("")
     : `<span>${tick(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${tick(c.hi, measure)}</span>`).join("");
 
-  /* The legend strip inside the figure: only the marks that are on the map
-     right now, so it is one line and not a lesson. Every tile state, present
-     or not, is drawn again under "How to read this map" (places keep-rate
-     read, S9: three of the four had no visible key at all). */
+  /* The legend strip inside the figure: only the tile states that are on the
+     map right now and NOT on the ramp above it, so it is one line and not a
+     lesson — and usually nothing. The diverging ramp's two ends used to be
+     repeated here as swatches ("loses 105¢ / keeps 30¢"), directly under the
+     bounds that already print them (design critique 2026-09-24: one legend).
+     Every tile state, present or not, is drawn again under "How to read this
+     map" (places keep-rate read, S9: three of the four had no visible key at
+     all). */
   const legend: string[] = [];
-  /* A diverging ramp is a new picture on this surface, so its two ends say in
-     words which way is which — the deepest plum and the deepest keep step,
-     each with the phrase core writes for the rate it stands for. */
-  if (g.bins.kind === "diverging" && g.ranked.length) {
-    const end = (c: typeof classes[number], v: number) =>
-      `<li><i class="hg-swatch" style="background:var(--${c.hue}-${c.ramp + 1})"></i>${esc(keepPhrase(v))}</li>`;
-    if (classes[0].hue === "loss") legend.push(end(classes[0], g.bins.lo));
-    const last = classes[classes.length - 1];
-    if (last.hue === "keep") legend.push(end(last, g.bins.hi));
-  }
   if (g.none.length) legend.push(`<li><i class="hg-swatch hg-swatch--none"></i>${esc(t(road ? "figure.legend.roadNone" : "figure.legend.none", { n: g.none.length }))}</li>`);
   if (g.past.length) legend.push(`<li><i class="hg-swatch hg-swatch--past"></i>${esc(t(road ? "figure.legend.roadPast" : "figure.legend.past", { n: g.past.length }))}</li>`);
   if (g.incomplete.length) legend.push(`<li><i class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete"></i>${esc(t("figure.legend.incomplete", { programs: listOf(g.programs), n: g.incomplete.length }))}</li>`);
@@ -503,7 +504,8 @@ export function renderReadout(s: Scene): void {
   const el = $("readout");
   const r = s.sel ? s.rows.find((x) => x.st === s.sel) : undefined;
   if (!r) { el.textContent = copy.readout.empty; return; }
-  el.innerHTML = stateLines(r, s.measure, s.arch, s.summary.coverage?.[r.st], true).join("<br>");
+  el.innerHTML = stateLines(r, s.measure, s.arch, s.summary.coverage?.[r.st], true).join("<br>") +
+    `<br><a class="tryIt" href="${esc(tryItHref(r.st, s.arch))}">${esc(copy.readout.tryIt)}</a>`;
 }
 
 /**

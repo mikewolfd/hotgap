@@ -6,16 +6,16 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 
 ## Every page
 
-- [ ] **Link the three pages.** Nothing links `/`, `/places` and `/caseworker`
+- [x] **Link the three pages.** Nothing links `/`, `/places` and `/caseworker`
       today, and the wordmark isn't a link. Make "HotGap" link to `/`; add a
       three-item nav beside it (For you · By state · For caseworkers) with
       `aria-current` on the current page; hide it on paper.
-- [ ] **Link to the next step in context.** Result → "See how your state
+- [x] **Link to the next step in context.** Result → "See how your state
       compares" (`/places`, same household shape where one of the 11 map
       households matches). A `/places` state → "Try this for a real family"
       (`/?state=XX` with that shape). Caseworker → the plain-language view of the
       same household, to share with the client.
-- [ ] **One masthead.** The citizen and caseworker mastheads are full-bleed
+- [x] **One masthead.** The citizen and caseworker mastheads are full-bleed
       with large buttons; `/places` is inset with a small button. Build one
       shared masthead in `src/lib/`.
 - [ ] **Scroll fades only when something scrolls.** The grey fades at the
@@ -23,7 +23,7 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
       overflows. Show them only when the content overflows.
 - [ ] **"Swipe" is a touch word.** "swipe to see more" shows to mouse users;
       say "drag or scroll" (or nothing) on a pointer device.
-- [ ] **Answer figures look like links.** The purple underline on the
+- [x] **Answer figures look like links.** The purple underline on the
       headline's dollar figures is also how "Español" says it's a link. Use a
       background highlight or colour instead of an underline.
 
@@ -48,20 +48,20 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 
 ## Citizen page
 
-- [ ] **One edit control.** "Change my answers" (top) and "Edit" (summary
+- [x] **One edit control.** "Change my answers" (top) and "Edit" (summary
       line) do the same thing. Keep one.
-- [ ] **Empty form shows result controls.** Before any answers, the masthead
+- [x] **Empty form shows result controls.** Before any answers, the masthead
       still shows "Change my answers", "Print" and "Edit". Hide them until
       there's a result.
-- [ ] **Drop the duplicate intro.** "Tell us about your home and we'll show
+- [x] **Drop the duplicate intro.** "Tell us about your home and we'll show
       you the answer" repeats the form's own lead.
-- [ ] **Form heading scale.** "If your pay goes up, do you keep more?" is
+- [x] **Form heading scale.** "If your pay goes up, do you keep more?" is
       ~18px against a ~32px answer headline; the first screen is the least
       confident on the site.
-- [ ] **Field widths match their content.** Pay is ~470px wide for a 5–6 digit
+- [x] **Field widths match their content.** Pay is ~470px wide for a 5–6 digit
       number while ZIP and kids are narrow. Tighten the vertical gaps between
       groups too.
-- [ ] **One column when disclosures open.** "How to read this picture" is at
+- [x] **One column when disclosures open.** "How to read this picture" is at
       chart width; the sections after it sit in a narrower, indented column
       that reads as nested.
 - [ ] **"Show the numbers" table** shows a scroll fade at 1280 though it fits
@@ -69,20 +69,20 @@ household at `/?zip=94110&kids=3,7&pay=30000&unit=year`, `/places` and
 
 ## `/places`
 
-- [ ] **Controls above the map.** Household and Measure change the map and
+- [x] **Controls above the map.** Household and Measure change the map and
       the headline ("a single parent of two children…") but sit below the map
       and "Select a state". Move them up, beside the headline or directly
       above the tiles.
-- [ ] **Measure select truncates** ("…twice poverty, the"). Shorten the option
+- [x] **Measure select truncates** ("…twice poverty, the"). Shorten the option
       text or widen the control.
-- [ ] **Whole map on a phone.** At 390 the east coast (NY, NJ, MA…) is cut off
+- [x] **Whole map on a phone.** At 390 the east coast (NY, NJ, MA…) is cut off
       until you swipe. 12 columns × ~28px fits; seeing the country at once
       matters more than tile size.
-- [ ] **Tile label contrast.** White labels on the lightest purple (WY, VA, DC,
+- [x] **Tile label contrast.** White labels on the lightest purple (WY, VA, DC,
       HI, FL) look low; measure and switch to dark ink where it fails.
-- [ ] **Use the width at 1280.** The map is ~60% of the column and the right
+- [x] **Use the width at 1280.** The map is ~60% of the column and the right
       side is empty, while the controls below span the full width.
-- [ ] **One legend.** The two swatches ("loses 105¢ / keeps 30¢") repeat the
+- [x] **One legend.** The two swatches ("loses 105¢ / keeps 30¢") repeat the
       ends of the ramp directly above them. Keep the ramp.
 
 ## Caseworker page

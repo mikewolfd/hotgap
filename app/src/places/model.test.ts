@@ -75,7 +75,7 @@ describe("counts in words (lib/format.ts numberWords)", () => {
 });
 
 describe("the measures, from copy", () => {
-  it("are the nine pipeline keys in the FilterRow's order, the road's three first, the counts without a unit, each option naming its own referent (S2)", () => {
+  it("are the nine pipeline keys in the FilterRow's order, the road's three first, the counts without a unit, each option short and naming its own referent (S2)", () => {
     expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
     expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "", "$", "$", "$", "$", "$", "", ""]);
     // Two groups, two questions: the road out of poverty, and the whole curve.
@@ -86,7 +86,9 @@ describe("the measures, from copy", () => {
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
     expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);
     expect(measureByKey("roadWorst")!.title).toBe("Where the road collapses");
-    expect(measureByKey("leap")!.option).toContain("worst danger zone");
+    // Short enough to show whole in the select at 390 (design critique 2026-09-24): the definition is `describe`.
+    for (const m of MEASURES) expect(m.option.length, m.key).toBeLessThanOrEqual(30);
+    expect(measureByKey("leap")!.describe).toContain("worst danger zone");
     expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
     // dangerWidth is every zone's width added together (pipeline/src/metrics.ts); the widest one's width is the leap.
     // The label must say "total", never "the worst zone", which is the leap's definition.

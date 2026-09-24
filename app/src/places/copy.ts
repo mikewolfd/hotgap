@@ -18,7 +18,9 @@
 //     sentence in its own element. lede.glossary — one glossary sentence, from
 //     core's floor (S3), and PolicyEngine introduced on first use (S6).
 //   measures.* — the six measures pipeline/src/metrics.ts writes, in the
-//     FilterRow's order; each option stands on its own (S2). dangerWidth: the
+//     FilterRow's order; each option stands on its own (S2) and is short
+//     enough to show whole in the select at 390 — the definition is
+//     `describe`, in "How to read this map" and the table's defs. dangerWidth: the
 //     pipeline sums every zone (metrics.ts); the widest one's width is the leap
 //     — the earlier label, "the worst danger zone", described the leap.
 //     deferredCliffCount.describe names the three mechanisms where the map is

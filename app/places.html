@@ -10,7 +10,7 @@
 <body>
 <!-- The skeleton holds ids; every word is in src/places/copy.ts and is written in by render.ts (app/README.md § Languages).
      The order is the contract's (design/PICTURE-FIRST-2026-09-18.md, design/inventory.md § The page is its picture):
-     one line of masthead, one sentence, the map. Nothing else is above the fold — not a lede, not a key, not a filter. -->
+     one line of masthead, one sentence, the two controls that change it, the map. Nothing else is above the fold — not a lede. -->
 <a class="hg-skip" href="#answer" id="skip"></a>
 
 <!-- The same top row as the other two pages (the editor's ScenarioBar): the wordmark home, the site nav, the language, the page's one action. -->
@@ -30,11 +30,24 @@
 
 <div class="hg-page page" id="main" hidden>
   <!-- THE PICTURE. Everything the map needs is inside it, in this order: the sentence as its
-       caption, the tiles, the legend strip, any caution the map itself earns, the readout, the
-       selected state's provenance, the two controls that change it, the estimates line, and
+       caption, the two controls that change it, the tiles, the legend strip, any caution the map
+       itself earns, the readout, the selected state's provenance, the estimates line, and
        "How to read this map". Nothing about the map lives outside it (charts.md § 2). -->
   <figure class="hg-picture picture">
     <figcaption class="hg-answer" id="answer" tabindex="-1"></figcaption>
+
+    <!-- The two scopes the map, the answer, the ranking and the table all follow, directly under
+         the sentence they change and above the tiles: one compact row, never a filter panel. -->
+    <div class="hg-filters hg-no-print controls">
+      <div>
+        <label for="arch" id="archLabel"></label>
+        <select id="arch" class="hg-select"></select>
+      </div>
+      <div>
+        <label for="metric" id="metricLabel"></label>
+        <select id="metric" class="hg-select"></select>
+      </div>
+    </div>
 
     <!-- StateTiles (#13): 51 buttons on the cartogram, full-bleed on a phone.
          The group takes a NAME OF ITS OWN, from the measure, rather than the
@@ -45,7 +58,7 @@
     <p class="hg-visually-hidden" id="figDesc"></p>
 
     <!-- The legend, inside the figure, as one compact strip: the ramp, its printed bounds, and
-         the tile states that are on the map at this moment. The other three are in "How to read
+         the tile states off the ramp that are on the map at this moment. The other three are in "How to read
          this map", drawn with the same classes, so the key cannot drift from the tiles. -->
     <div class="legend">
       <div class="scale" id="scale" aria-hidden="true"></div>
@@ -76,19 +89,6 @@
       <ul class="hg-rows hg-rows--stack boundary" id="liheap" hidden></ul>
       <p class="hg-source" id="stateSrc"></p>
     </details>
-
-    <!-- The two scopes the map, the ranking and the table all follow: a quiet row under the
-         picture, never above it (§ The page is its picture — not a filter above the fold). -->
-    <div class="hg-filters hg-no-print controls">
-      <div>
-        <label for="arch" id="archLabel"></label>
-        <select id="arch" class="hg-select"></select>
-      </div>
-      <div>
-        <label for="metric" id="metricLabel"></label>
-        <select id="metric" class="hg-select"></select>
-      </div>
-    </div>
 
     <p class="hg-source estimates" id="figSrc"></p>
 

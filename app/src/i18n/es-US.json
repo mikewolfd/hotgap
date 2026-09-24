@@ -1063,47 +1063,47 @@
     "measures": {
       "biggestLoss": {
         "title": "Mayor pérdida en un escalón",
-        "option": "Mayor pérdida en un escalón — el peor escalón en cualquier punto de la curva ($)",
+        "option": "Mayor pérdida en la curva ($)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
       },
       "dangerWidth": {
         "title": "Ancho total de las zonas de peligro",
-        "option": "Ancho total de las zonas de peligro — cada tramo en el que más pago no deja al hogar mejor, sumados ($)",
+        "option": "Zonas de peligro, ancho total ($)",
         "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
       },
       "leap": {
         "title": "El salto",
-        "option": "El salto — el aumento necesario para salir de la peor zona de peligro ($)",
+        "option": "El salto ($)",
         "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
       },
       "safeExit": {
         "title": "Salida segura",
-        "option": "Salida segura — ingresos por encima de los cuales no queda ninguna zona de peligro ($)",
+        "option": "Salida segura ($)",
         "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
       },
       "cliffCount": {
         "title": "Número de precipicios",
-        "option": "Número de precipicios — en cualquier punto de la curva, no solo en el camino para salir de la pobreza",
+        "option": "Precipicios en toda la curva",
         "describe": "Escalones hacia abajo de {floor} o más en cualquier punto de la curva."
       },
       "deferredCliffCount": {
         "title": "Precipicios diferidos",
-        "option": "Precipicios diferidos — de los precipicios contados, los que caen en una renovación posterior",
+        "option": "Precipicios diferidos",
         "describe": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre."
       },
       "keepRate": {
         "title": "Lo que se queda de cada dólar en el camino para salir de la pobreza",
-        "option": "Lo que se queda de cada dólar — de cada dólar extra ganado de la pobreza al doble de la pobreza, los centavos que el hogar conserva (¢)",
+        "option": "Lo que se queda por dólar (¢)",
         "describe": "De cada dólar extra ganado entre la línea de pobreza y el doble de esa línea, los centavos que este hogar conserva una vez contados los impuestos y los beneficios perdidos. Por debajo de cero, termina más pobre de lo que empezó."
       },
       "roadCliffCount": {
         "title": "Precipicios en el camino para salir de la pobreza",
-        "option": "Precipicios en el camino para salir de la pobreza — los precipicios que un hogar encuentra entre la pobreza y el doble de la pobreza",
+        "option": "Precipicios en el camino",
         "describe": "Escalones hacia abajo de {floor} o más entre la línea de pobreza y el doble de esa línea."
       },
       "roadWorst": {
         "title": "Dónde se derrumba el camino",
-        "option": "Dónde se derrumba el camino — la mayor pérdida en un solo escalón entre la pobreza y el doble de la pobreza ($)",
+        "option": "Dónde se derrumba el camino ($)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 entre la línea de pobreza y el doble de esa línea."
       }
     },
@@ -1165,6 +1165,7 @@
     },
     "readout": {
       "empty": "Seleccione un estado para leer sus cifras.",
+      "tryIt": "Pruébelo con su propia familia",
       "step": "{n, plural, one {{state} — {loss} perdidos en {step}, cuando termina {programs}.} other {{state} — {loss} perdidos en {step}, cuando terminan {programs}.} =0 {{state} — {loss} perdidos en {step}; ningún programa por sí solo explica la caída.}}",
       "floor": "{n, plural, one {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no están modelados.}}}}",
       "worstStep": "{n, plural, one {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}, cuando termina {programs}.} other {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}, cuando terminan {programs}.} =0 {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}; ningún programa por sí solo explica la caída.}}",
