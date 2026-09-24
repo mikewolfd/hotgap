@@ -14,6 +14,6 @@
     "@hotgap/core": "*"
   },
   "devDependencies": {
-    "wrangler": "^4.132.0"
+    "wrangler": "^4.135.0"
   }
 }
