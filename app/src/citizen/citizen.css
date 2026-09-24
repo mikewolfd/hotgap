@@ -6,7 +6,9 @@
    chrome is in app/src/editor/editor.css. This file loads after tokens.css,
    so anything that could meet an hg-* state class is declared at :where()
    specificity. */
-.page { --page-max: 40rem; }
+/* The column is the figure's width, so the answer, the picture and every
+   disclosure under it share one left edge; prose keeps its own measure. */
+.page { --page-max: var(--figure-max); }
 /* Paper-white ground, not the plane: the picture is the page here, and a
    picture wants paper under it. The sticky bar keeps its hairline, which is
    what divides it now that the ground no longer does. */
@@ -68,3 +70,6 @@ body { background: var(--surface); }
 .result .hg-disclosure > :not(summary) { margin-block: var(--s3); }
 .result .hg-disclosure > :last-child { margin-bottom: var(--s5); }
 .result .hg-disclosure h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
+
+/* The link to the next page to look at, under the figure's own words (design/TASKS.md). */
+.result .next { font-size: var(--t-small); margin: var(--s4) 0 0; }

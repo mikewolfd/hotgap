@@ -35,6 +35,7 @@ import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import zip3State from "@hotgap/core/data/zip3-state.json";
 import { coreText, fill } from "../lib/copy.js";
 import { languageSwitch } from "../lib/lang.js";
+import { siteNav, wordmark, type Page } from "../lib/nav.js";
 import { countyBare, countyWords, stateName } from "../lib/names.js";
 import { h } from "../lib/dom.js";
 import { listOfItems, money, payInUnit, shortList } from "../lib/format.js";
@@ -61,11 +62,17 @@ export interface EditorAction {
 export type CopyOverride = { [K in keyof Copy]?: Copy[K] extends object ? Partial<Copy[K]> : Copy[K] };
 
 export interface EditorOptions {
+  /** Which page this is: the nav marks it current. */
+  page: Page;
   /** The four-facts screen was submitted and core accepted the household. */
   onSubmit(flags: HouseholdFlags): void;
   /** A chip changed one answer. The page decides whether that re-evaluates. */
   onChange(flags: HouseholdFlags): void;
-  /** The top row's actions. Default: "Change my answers" (opens the screen) and "Print" — the citizen surface's. */
+  /**
+   * The top row's actions. Default: "Print" alone — the citizen surface's —
+   * hidden until there is an answer to print; the summary line's button is
+   * the one way to change the answers.
+   */
   actions?: EditorAction[];
   /**
    * A second way to leave the four-facts screen: the same validated household
@@ -245,11 +252,6 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   }
 
   // ── Skeleton ─────────────────────────────────────────────────────────
-  /* The default actions carry a short name too, so the sticky row is ONE line
-     on a phone: three lines of chrome above the answer is what pushed the
-     citizen picture 183px down the page (PICTURE-FIRST). */
-  const changeBtn = h("button", { type: "button", class: "hg-button", "aria-expanded": "false", "aria-controls": "editor", "aria-label": copy.actions.change },
-    h("span", { class: "editor-action__full" }, copy.actions.change), h("span", { class: "editor-action__short" }, copy.actions.changeShort));
   const printBtn = h("button", { type: "button", class: "hg-button" }, copy.actions.print);
   // A surface's own actions replace the two defaults; a short name shows below
   // 720px and the full label stays the accessible name, so a screen reader
@@ -260,11 +262,12 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     b.addEventListener("click", a.onClick);
     return b;
   };
-  const actions = opts.actions ? opts.actions.map(actionBtn) : [changeBtn, printBtn];
+  const actions = opts.actions ? opts.actions.map(actionBtn) : [printBtn];
   /* An action that needs a household is disabled until the flags say enough to evaluate (caseworker review S10). */
   const gated = (opts.actions ?? []).flatMap((a, i) => (a.needsAnswers ? [actions[i]] : []));
   const summaryText = h("span");
   const inputsBtn = h("button", { type: "button", class: "hg-button hg-button--small", "aria-expanded": "false", "aria-controls": "inputs" }, copy.summary.edit);
+  const summaryRow = h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn);
   const inputsRow = h("div", { class: "hg-scenario__inputs", id: "inputs" });
   // The line a press answers with, first in the row so it is read before the
   // chips it explains (caseworker review S2). Placed empty on the first
@@ -325,10 +328,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   // child cannot outlive its parent's box — S1). An empty root sees no difference.
   root.prepend(
     h("div", { class: "hg-scenario hg-scenario--sticky hg-no-print" },
-      h("div", { class: "hg-scenario__top" }, h("p", { class: "hg-wordmark editor-wordmark" }, copy.wordmark), languageSwitch(),
+      h("div", { class: "hg-scenario__top" }, wordmark(copy.wordmark, "hg-wordmark editor-wordmark"), siteNav(opts.page), languageSwitch(),
         h("div", { class: "hg-scenario__actions" }, ...actions))),
-    h("header", { class: "hg-scenario", "data-collapse": opts.collapse },
-      h("div", { class: "hg-scenario__summary hg-no-print" }, summaryText, inputsBtn), inputsRow),
+    h("header", { class: "hg-scenario", "data-collapse": opts.collapse }, summaryRow, inputsRow),
     editorSection,
     dialog,
   );
@@ -422,6 +424,9 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     /* No household, no chips: a row of controls for answers that do not exist yet (caseworker review S10). */
     inputsRow.hidden = !answered;
     for (const b of gated) b.disabled = !answered;
+    /* Before an answer there is nothing to print or change: the empty form is the page (design/TASKS.md). */
+    if (!opts.actions) printBtn.hidden = !answered;
+    summaryRow.hidden = !answered;
     /* The place, once, in words (2026-09-18): the county the ZIP resolved to
        stands for the ZIP (review N9) and the ZIP itself leaves the line —
        it is in the chips, and a phrase that names a place does not also need
@@ -607,7 +612,6 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   }
 
   // ── Bar actions ──────────────────────────────────────────────────────
-  changeBtn.addEventListener("click", () => open(undefined, changeBtn));
   closeBtn.addEventListener("click", () => close());
   printBtn.addEventListener("click", () => window.print());
   const showInputs = (open: boolean) => {
@@ -629,7 +633,6 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     if (altBtn) { altBtn.classList.toggle("hg-button--primary", lead === "alt"); altBtn.type = lead === "alt" ? "submit" : "button"; }
     actionsRow.prepend(lead === "alt" ? altBtn! : submitBtn);   /* the lead button comes first */
     editorSection.hidden = false;
-    changeBtn.setAttribute("aria-expanded", "true");
     renderChips();
     const target = fieldFlag ? form.querySelector<HTMLElement>(`#f-${fieldFlag}`) : null;
     (target ?? zipInput).focus();
@@ -638,7 +641,6 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
   function close(): void {
     editorOpen = false;
     editorSection.hidden = true;
-    changeBtn.setAttribute("aria-expanded", "false");
     opts.onClose?.();
     renderChips();
     // The opener may have been re-rendered as a chip; find it again by id.

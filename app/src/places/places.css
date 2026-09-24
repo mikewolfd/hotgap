@@ -21,15 +21,19 @@ h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
 h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--lh-tight);
      margin: var(--s5) 0 0; }
 
-/* ── One line of masthead ───────────────────────────────────────────────
-   The wordmark, the language switch and the one action a reporter came for.
-   One line, so the map starts high on a phone. The page title is the <title>; the headline is the answer sentence, because a
-   headline that repeats the tab is a line of the first screen spent on
-   nothing. */
-.masthead { display: flex; align-items: center; gap: var(--s3);
-            border-bottom: 1px solid var(--rule); padding-top: var(--s3); padding-bottom: var(--s3); }
-.wordmark { margin: 0; }
-.masthead .csv { margin-inline-start: auto; }
+/* ── The masthead ──────────────────────────────────────────────────────
+   The other pages' top row (.hg-scenario__top, tokens.css): the wordmark,
+   the site nav, the language switch and the one action a reporter came for.
+   The page title is the <title>; the headline is the answer sentence. The
+   wordmark is the page's h1 at the wordmark's size. */
+.masthead { border-bottom: 1px solid var(--rule); }
+.wordmark { margin: 0; font-size: inherit; line-height: inherit; }
+/* On a phone the one action is the small button, so the top row stays one row. */
+@media (max-width: 719.98px) {
+  .masthead .csv { min-height: 32px; padding: 0 var(--s3); font-size: var(--t-micro); position: relative; }
+  .masthead .csv::before { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                           width: max(100%, var(--touch)); height: max(100%, var(--touch)); }
+}
 
 /* The load line: a status while the sweep arrives, an alert if it does not,
    gone once the page is filled. It never hides and never folds. */

@@ -7,13 +7,11 @@
   "editor": {
     "wordmark": "HotGap",
     "actions": {
-      "change": "Change my answers",
-      "print": "Print",
-      "changeShort": "Change"
+      "print": "Print"
     },
     "summary": {
       "none": "Tell us about your home and we'll show you the answer.",
-      "edit": "Edit",
+      "edit": "Change my answers",
       "line": "{household} in {place}, paid {pay}.",
       "place": {
         "withCounty": "{county}, {state}",
@@ -496,7 +494,8 @@
       "cliff": "Of the next {over} you earn, you'd keep about {kept}, because {phrase} ends at {wage}.",
       "plateau": "Of the next {over} you earn, you'd keep about {kept} — that's a flat stretch: more pay, barely more money."
     },
-    "beyondReach": " The ones past {at} are past what {n} in 10 families like yours earn."
+    "beyondReach": " The ones past {at} are past what {n} in 10 families like yours earn.",
+    "toPlaces": "See how {state} compares with other states"
   },
   "caseworker": {
     "editor": {
@@ -1030,7 +1029,8 @@
       "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",
       "cliffBehind": "The worst is behind this family: from {wage} up, every raise is more money.",
       "alwaysUp": "Every raise leaves this family better off; nothing drops anywhere up to {top}."
-    }
+    },
+    "toCitizen": "Open the plain-language page to share with the client"
   },
   "places": {
     "pageTitle": "HotGap — what a raise costs, state by state",
@@ -1631,6 +1631,12 @@
       "basicHealthProgram": "Basic Health Program — expanded-limit states",
       "premiumHelp": "State premium help",
       "coverageGap": "{program} — coverage gap"
+    },
+    "nav": {
+      "label": "Pages",
+      "citizen": "For you",
+      "places": "By state",
+      "caseworker": "For caseworkers"
     }
   }
 }

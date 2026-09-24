@@ -11,7 +11,7 @@
 // Landing on a link with N what-ifs is 1 + N calls, in parallel.
 import "../../../design/tokens.css";
 import "./caseworker.css";
-import { axisSpec, countyName, pickArchetypeId, provideData, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type HouseholdFlags, type SummaryJson } from "@hotgap/core";
+import { axisSpec, countyName, pickArchetypeId, provideData, rawAnswersFromFlags, reachCell, searchParamsFromFlags, validateAnswers, type HouseholdEvaluation, type HouseholdFlags, type SummaryJson } from "@hotgap/core";
 import { evaluate, type EvaluateResult } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
 import { mountChart } from "./chart.js";
@@ -19,6 +19,7 @@ import { coreText } from "../lib/copy.js";
 import { CHIP_ORDER, copy, t } from "./copy.js";
 import { chartLabel, curveTitle, notInSweep, sourceLine, stateName, unclaimedNote, type Provenance } from "./model.js";
 import { $ } from "../lib/dom.js";
+import { pageHref } from "../lib/nav.js";
 import { renderAnswer, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderMasthead, renderStatic, syncDrops, type Column } from "./render.js";
 import { applyDiff, diffFlags, sameDiff, whatIfLabel, whatIfTag, type Diff } from "./scenarios.js";
 import { pageQuery, parsePage } from "./url.js";
@@ -61,6 +62,7 @@ let retriedSource = false;
 
 renderStatic();
 const editor = mountEditor($("app"), {
+  page: "caseworker",
   onSubmit: (flags) => void runBase(flags, { submitted: true, push: true }),
   onChange: (flags) => { if (baseFlags) addWhatIf(flags); },
   /* The screen's other exit: the household it holds becomes a what-if of the base (or the base, when there is none yet). */
@@ -193,6 +195,9 @@ async function renderAll(ev: HouseholdEvaluation, flags: HouseholdFlags, id: num
   $("whose").hidden = !archetype;
   if (archetype) $("whoseText").textContent = t(`page.${retriedSource ? "stillArchetype" : "archetype"}`, { state: stateName(ev.answers.state) });
   renderHandout(ev, summary);
+  const toCitizen = $<HTMLAnchorElement>("toCitizen");
+  toCitizen.href = pageHref("citizen", searchParamsFromFlags(flags));
+  toCitizen.textContent = t("toCitizen");
   if (flags.zip) editor.setCounty(flags.zip, county ?? undefined);
   editor.setNote(unclaimedNote(ev));
   return true;

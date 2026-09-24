@@ -13,6 +13,7 @@ import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { $, fillText } from "../lib/dom.js";
 import { dateWords, esc, listOf, listOfItems, modelLine, money, reachWord } from "../lib/format.js";
 import { languageSwitch } from "../lib/lang.js";
+import { pageHref, siteNav } from "../lib/nav.js";
 import { stateName } from "../lib/names.js";
 import { answerParts } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
@@ -151,6 +152,8 @@ export function renderStatic(): void {
   ];
   $("defs").setAttribute("aria-label", copy.table.defs.label);
   $("lang").replaceWith(languageSwitch());
+  $("nav").replaceWith(siteNav("places"));
+  $("wordmark").setAttribute("href", pageHref("citizen"));
   $("defs").innerHTML = defs.map((d) => `<dt>${esc(d.term)}</dt><dd id="def-${d.id}">${esc(d.def)}</dd>`).join("");
   for (const d of defs) for (const head of d.heads ?? [d.id]) $(head).setAttribute("aria-describedby", `def-${d.id}`);
   for (const head of POSITION_COLS) $(head).setAttribute("aria-describedby", `${$(head).getAttribute("aria-describedby")} def-position`);

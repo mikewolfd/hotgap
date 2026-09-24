@@ -172,3 +172,6 @@
   .handout { page-break-before: always; font-size: 13pt; }
   .handout p { max-width: var(--measure); }
 }
+
+/* The link to the same household on the plain-language page, under the figure (design/TASKS.md). */
+.next { font-size: var(--t-small); margin: var(--s3) 0 0; }

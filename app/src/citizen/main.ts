@@ -19,6 +19,7 @@ const app = document.querySelector<HTMLElement>("#app")!;
 // SkipLink (#22): the first focusable thing on the page, to the answer.
 app.append(h("a", { class: "hg-skip", href: "#answer" }, t("skip")));
 const editor = mountEditor(app, {
+  page: "citizen",
   onSubmit: (flags) => run(flags, { submitted: true }),
   // A chip changed one answer: with a result on the page, that is a new
   // household to evaluate; before one, it is just an answer for later.

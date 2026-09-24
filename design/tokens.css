@@ -351,8 +351,8 @@ button, [role="button"], summary, select, input, .hg-row-btn {
    it grows evenly and cannot reach in one direction only; and no two of these
    boxes may overlap — `app/e2e/touch.spec.ts` re-derives that by geometry,
    because a hit test can only ever report the winner. */
-.hg-hit, .hg-lang a, .hg-button--small, .hg-table .hg-row-btn { position: relative; }
-.hg-hit::before, .hg-lang a::before, .hg-button--small::before, .hg-table .hg-row-btn::before {
+.hg-hit, .hg-lang a, .hg-nav a, .hg-button--small, .hg-table .hg-row-btn { position: relative; }
+.hg-hit::before, .hg-lang a::before, .hg-nav a::before, .hg-button--small::before, .hg-table .hg-row-btn::before {
   content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: max(100%, var(--touch)); height: max(100%, var(--touch));
 }
@@ -543,14 +543,15 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 }
 
 /* AnswerSentence (#1): the verdict as one sentence at display size, each
-   dollar underlined in the colour of the mark it names, so the sentence
+   dollar highlighted in the colour of the mark it names, so the sentence
    doubles as the chart's key. Shared since 2026-09-18, because all three
    surfaces open with an answer; the page keeps only its own margins. */
 .hg-answer { font-size: var(--t-answer); line-height: var(--lh-answer); font-weight: var(--w-med);
              letter-spacing: -0.015em; max-width: var(--measure-answer); text-wrap: balance; }
 .hg-answer:empty { display: none; }
-.hg-amt { font-weight: var(--w-semi); white-space: nowrap;
-          box-shadow: inset 0 -0.14em 0 0 var(--keyed, transparent); }
+/* A highlight, not an underline: an underline is how a link looks. */
+.hg-amt { font-weight: var(--w-semi); white-space: nowrap; border-radius: 0.15em; padding-inline: 0.12em;
+          background: color-mix(in srgb, var(--keyed, transparent) 22%, transparent); }
 .hg-amt--keep  { --keyed: var(--series-1); }   /* the line */
 .hg-amt--gap   { --keyed: var(--loss-3); }     /* the exit rule and the leap bracket */
 .hg-amt--cliff { --keyed: var(--loss-4); }     /* a cliff dot */
@@ -737,6 +738,17 @@ details.hg-disclosure { border-top: 1px solid var(--rule); margin-top: var(--s4)
 .hg-lang { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); font-size: var(--t-small); min-width: 0; }
 .hg-lang a { color: var(--ink-2); white-space: nowrap; }
 .hg-wordmark { white-space: nowrap; }
+a.hg-wordmark { color: var(--ink); text-decoration: none; }
+/* SiteNav (lib/nav.ts): the three pages beside the wordmark, the current one
+   marked by weight and a rule under it. On a phone it takes its own row
+   under the wordmark, so the actions keep theirs. Never on paper. */
+.hg-nav { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); font-size: var(--t-small); }
+.hg-nav a { color: var(--ink-2); text-decoration: none; white-space: nowrap; padding-block: 2px; }
+.hg-nav a:hover { color: var(--ink); text-decoration: underline; }
+.hg-nav a[aria-current="page"] { color: var(--ink); font-weight: var(--w-semi); box-shadow: inset 0 -2px 0 var(--ink); }
+/* The language switch after the nav is set apart from it: it is not a page. */
+.hg-nav + .hg-lang { padding-inline-start: var(--s3); border-inline-start: 1px solid var(--rule); }
+@media (max-width: 719.98px) { .hg-nav { order: 10; flex-basis: 100%; } .hg-nav + .hg-lang { padding: 0; border: 0; } }
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
 /* A full-width line of text inside the inputs row — what a take-up toggle

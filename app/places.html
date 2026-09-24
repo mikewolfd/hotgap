@@ -13,10 +13,14 @@
      one line of masthead, one sentence, the map. Nothing else is above the fold — not a lede, not a key, not a filter. -->
 <a class="hg-skip" href="#answer" id="skip"></a>
 
-<header class="hg-page page masthead">
-  <h1 class="hg-wordmark wordmark" id="wordmark"></h1>
-  <span id="lang"></span>
-  <button type="button" class="hg-button hg-button--small csv" id="csvBtn"></button>
+<!-- The same top row as the other two pages (the editor's ScenarioBar): the wordmark home, the site nav, the language, the page's one action. -->
+<header class="hg-scenario hg-scenario--sticky masthead">
+  <div class="hg-scenario__top">
+    <h1 class="wordmark"><a class="hg-wordmark" id="wordmark" href="/"></a></h1>
+    <span id="nav"></span>
+    <span id="lang"></span>
+    <div class="hg-scenario__actions"><button type="button" class="hg-button csv" id="csvBtn"></button></div>
+  </div>
 </header>
 
 <!-- Loading and failure share one line: a status while the run loads, an alert if it does not.

@@ -10,13 +10,11 @@
   "editor": {
     "wordmark": "HotGap",
     "actions": {
-      "change": "Cambiar mis respuestas",
-      "print": "Imprimir",
-      "changeShort": "Cambiar"
+      "print": "Imprimir"
     },
     "summary": {
       "none": "Cuéntenos sobre su hogar y le mostramos la respuesta.",
-      "edit": "Editar",
+      "edit": "Cambiar mis respuestas",
       "line": "{household} en {place}, gana {pay}.",
       "place": {
         "withCounty": "{county}, {state}",
@@ -499,7 +497,8 @@
       "cliff": "De los próximos {over} que gane, le quedarían unos {kept}, porque {phrase} se termina en {wage}.",
       "plateau": "De los próximos {over} que gane, le quedarían unos {kept}: eso es un tramo plano, más sueldo y apenas más dinero."
     },
-    "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya."
+    "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya.",
+    "toPlaces": "Vea cómo se compara {state} con otros estados"
   },
   "caseworker": {
     "pageTitle": "HotGap — trabajador social",
@@ -1033,7 +1032,8 @@
       "cliffAhead:waits": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año, en la próxima renovación y no ese mismo día.",
       "cliffBehind": "Lo peor ya quedó atrás para esta familia: de {wage} en adelante, cada aumento es más dinero.",
       "alwaysUp": "Cada aumento deja mejor a esta familia; nada cae en ningún punto hasta {top}."
-    }
+    },
+    "toCitizen": "Abrir la página en lenguaje sencillo para compartirla con el cliente"
   },
   "places": {
     "pageTitle": "HotGap — lo que cuesta un aumento, estado por estado",
@@ -1644,6 +1644,12 @@
       "WV": "Virginia Occidental",
       "WI": "Wisconsin",
       "WY": "Wyoming"
+    },
+    "nav": {
+      "label": "Páginas",
+      "citizen": "Para usted",
+      "places": "Por estado",
+      "caseworker": "Para trabajadores sociales"
     }
   }
 }

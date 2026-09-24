@@ -22,9 +22,10 @@
 // window) for the line and O(cliffs) for everything else; a chip toggle
 // re-renders the whole result from the new evaluation, which is the cheap
 // and correct thing at 151–231 points.
-import type { Cliff, HouseholdEvaluation, HouseholdFlags, SummaryJson } from "@hotgap/core";
+import { flagList, pickArchetypeId, type Cliff, type HouseholdEvaluation, type HouseholdFlags, type SummaryJson } from "@hotgap/core";
 import type { EvaluateResult } from "../editor/api.js";
 import { h } from "../lib/dom.js";
+import { pageHref } from "../lib/nav.js";
 import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
 import { assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, whoText, type Sweep } from "./facts.js";
@@ -216,7 +217,12 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       const keepNext = keepNextText(s);
       const againLine = againText(s);
 
-      body.append(figure,
+      /* The next place to look: this state beside the others, on /places, for the nearest of its eleven households. */
+      const household = pickArchetypeId({ married: flags.married === true, childAges: flagList(flags.kids).map(Number), spouseAnnualEarnings: Number(flags["spouse-earnings"] ?? 0) });
+      const toPlaces = h("p", { class: "next hg-no-print" },
+        h("a", { href: pageHref("places", new URLSearchParams({ household, state: s.state })) }, t("toPlaces", { state: s.stateName })));
+
+      body.append(figure, toPlaces,
         panel("steps-panel", t("steps.heading"),
           h("p", {}, t("steps.lead")),
           keepNext ? h("p", { id: "keep-next" }, keepNext) : null,
