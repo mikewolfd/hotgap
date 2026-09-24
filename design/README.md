@@ -57,11 +57,12 @@ measures step size, and nothing is a card.
   rendering the real output of
   `npm run -s hotgap -- curve --state CO --kids 3,7 --earnings 38000 --offline --json`
   and `core/data/summary.json`
+- `TASKS.md` — the open design tasks, one checklist
 - `AUDIT-2026-09-16.md` — the visual audit these rules answer; its screenshots
   are under `audit/`
 - `PICTURE-FIRST-2026-09-18.md` — the pass that made the figure the page: the
-  word budget, the disclosure pattern, the direct-label priority list and the
-  contract all three surfaces build to. `app/e2e/weight.mjs` is its scale
+  disclosure pattern, the direct-label priority list and the
+  contract all three surfaces build to
 
 All three sketches are **frozen to** the sweep stamped
 **2026-09-16T16:13:51.445Z** (`summary.generated`), run on policyengine-us
