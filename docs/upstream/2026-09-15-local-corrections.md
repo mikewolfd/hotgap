@@ -10,8 +10,7 @@ Medicare stand-in), since the defect and the retirement condition are just as
 real there. Each row names what removes it. Which of these apply to a given state
 on the committed sweep — and what that state's map cannot show — is written
 per state into `summary.json`'s `coverage` block by `core/src/coverage.ts`,
-derived from the same tables the corrections run on (see the README, "Data
-files and sources").
+derived from the same tables the corrections run on (see `docs/data.md`).
 
 | Workaround | Code | Retire when |
 |---|---|---|

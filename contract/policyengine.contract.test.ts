@@ -295,7 +295,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(adultMedicaid(newLpr)).toBe(0);
     expect(adultMedicaid(settledLpr)).toBe(adultMedicaid(citizen));
     // The model applies no five-year bar to SNAP (its rule is a status list;
-    // upstream simplification, noted in the README): SNAP is unchanged.
+    // upstream simplification, noted in docs/methodology.md): SNAP is unchanged.
     expect(newLpr.programs.snap).toBe(citizen.programs.snap);
     // The children are modeled as citizens throughout.
     expect(undocumented.childPrograms.medicaid).toBe(citizen.childPrograms.medicaid);
