@@ -351,8 +351,8 @@ button, [role="button"], summary, select, input, .hg-row-btn {
    it grows evenly and cannot reach in one direction only; and no two of these
    boxes may overlap — `app/e2e/touch.spec.ts` re-derives that by geometry,
    because a hit test can only ever report the winner. */
-.hg-hit, .hg-lang a, .hg-nav a, .hg-button--small, .hg-table .hg-row-btn { position: relative; }
-.hg-hit::before, .hg-lang a::before, .hg-nav a::before, .hg-button--small::before, .hg-table .hg-row-btn::before {
+.hg-hit, .hg-lang a, .hg-nav a, a.hg-wordmark, .hg-button--small, .hg-table .hg-row-btn { position: relative; }
+.hg-hit::before, .hg-lang a::before, .hg-nav a::before, a.hg-wordmark::before, .hg-button--small::before, .hg-table .hg-row-btn::before {
   content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: max(100%, var(--touch)); height: max(100%, var(--touch));
 }
@@ -748,7 +748,14 @@ a.hg-wordmark { color: var(--ink); text-decoration: none; }
 .hg-nav a[aria-current="page"] { color: var(--ink); font-weight: var(--w-semi); box-shadow: inset 0 -2px 0 var(--ink); }
 /* The language switch after the nav is set apart from it: it is not a page. */
 .hg-nav + .hg-lang { padding-inline-start: var(--s3); border-inline-start: 1px solid var(--rule); }
-@media (max-width: 719.98px) { .hg-nav { order: 10; flex-basis: 100%; } .hg-nav + .hg-lang { padding: 0; border: 0; } }
+/* On a phone the nav is its own row, and each link is a full touch target in
+   its own box, so no grown hit area reaches the row above (touch.spec.ts). */
+@media (max-width: 719.98px) {
+  .hg-nav { order: 10; flex-basis: 100%; }
+  .hg-nav a { display: inline-flex; align-items: center; min-height: var(--touch); padding-block: 0; }
+  .hg-nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--ink); }
+  .hg-nav + .hg-lang { padding: 0; border: 0; }
+}
 .hg-scenario__inputs { display: flex; flex-wrap: wrap; gap: var(--s2);
   padding: 0 var(--s4) var(--s3); max-width: 76rem; margin: 0 auto; }
 /* A full-width line of text inside the inputs row — what a take-up toggle

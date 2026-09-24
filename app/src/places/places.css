@@ -27,7 +27,7 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    The page title is the <title>; the headline is the answer sentence. The
    wordmark is the page's h1 at the wordmark's size. */
 .masthead { border-bottom: 1px solid var(--rule); }
-.wordmark { margin: 0; font-size: inherit; line-height: inherit; }
+.wordmark { margin: 0 var(--s3) 0 0; font-size: inherit; line-height: inherit; }
 /* On a phone the one action is the small button, so the top row stays one row. */
 @media (max-width: 719.98px) {
   .masthead .csv { min-height: 32px; padding: 0 var(--s3); font-size: var(--t-micro); position: relative; }
