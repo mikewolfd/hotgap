@@ -632,10 +632,14 @@ Estimates only — a caseworker decides real benefits.
 ## History
 
 The first site UI, design system, and Cloudflare Worker were split out of
-this repo and live at git tag `ui-archive`; the deployed site at
-hotgap.hotgap.workers.dev still runs that July core until the new `app/` and
-`worker/` are deployed. `docs/superpowers/` specs and plans predate that
-split and cite paths (`app/`, `worker/`, `shared/`) that have since been
-re-founded on the current core.
+this repo and live at git tag `ui-archive`. The site is now at
+hotgap.mdeeb.workers.dev, running the current `app/` and `worker/`,
+deployed from main by Cloudflare's own Git integration — its build and deploy
+commands live in the Cloudflare dashboard, not in `.github/workflows/`, and it
+deploys on push without waiting for CI. The design reviews in `design/` cite
+the earlier hotgap.hotgap.workers.dev and hotgap-next.hotgap.workers.dev.
+`docs/superpowers/` specs and plans predate that split and cite paths
+(`app/`, `worker/`, `shared/`) that have since been re-founded on the current
+core.
 
 License: AGPL-3.0-only.
