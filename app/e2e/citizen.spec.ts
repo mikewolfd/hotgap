@@ -306,7 +306,7 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   await loaded(page);
   const before = await page.locator("#answer").textContent();
   // The chips are behind Edit at every width on this surface (review S1).
-  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("button", { name: "Change my answers", exact: true }).click();
   // Turning food help off changes the money kept at this pay, so the sentence must change.
   const snap = page.locator('[data-chip="no-snap"]');
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));

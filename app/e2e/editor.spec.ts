@@ -29,7 +29,7 @@ async function fillFourFacts(page: Page): Promise<void> {
 
 /** The chips row sits behind the summary's Edit control where a surface keeps the phone rule (the citizen page, at every width). */
 async function openChips(page: Page): Promise<void> {
-  const edit = page.getByRole("button", { name: "Edit", exact: true });
+  const edit = page.getByRole("button", { name: "Change my answers", exact: true });
   if (await edit.isVisible() && (await edit.getAttribute("aria-expanded")) === "false") await edit.click();
 }
 
@@ -100,7 +100,7 @@ for (const width of [390, 1280]) {
     // The chips hide behind the summary's Edit control — below 720px on every
     // surface, and at every width on the citizen page, which has no controls
     // that change the answer (design/REVIEW-citizen-2026-09-16.md S1).
-    const edit = page.getByRole("button", { name: "Edit", exact: true });
+    const edit = page.getByRole("button", { name: "Change my answers", exact: true });
     if (await edit.isVisible()) {
       await expect(edit).toHaveAttribute("aria-expanded", "false");
       await openChips(page);
