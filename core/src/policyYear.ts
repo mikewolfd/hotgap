@@ -109,7 +109,7 @@ export const ESI_FULL_TIME_HOURS = 30;
 // The standard premium only. Income-related adjustment amounts start above
 // $109,000 of MAGI for a single filer and are not modeled; neither is the $283
 // annual deductible, because HotGap's money line is premiums, never
-// deductibles or copays (see the README's Honesty section).
+// deductibles or copays (see docs/methodology.md, Honesty).
 export const MEDICARE_PART_B_MONTHLY = 202.90;
 export const MEDICARE_PART_B_ANNUAL = MEDICARE_PART_B_MONTHLY * 12; // $2,434.80
 

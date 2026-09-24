@@ -191,7 +191,7 @@ county, `county-names.json` at runtime.
 The one question every surface asks: *of each extra dollar you earn, what do
 you keep, and where does the road collapse?* (Plan 9,
 `docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`; the definition and
-its two caveats are in the root README § Honesty.) Core computes it; a page
+its two caveats are in `docs/methodology.md` § Honesty.) Core computes it; a page
 renders it. What a page gets, and what it means:
 
 **`HouseholdEvaluation.road: RoadSummary | null`** — the road out of poverty,

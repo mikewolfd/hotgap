@@ -21,7 +21,7 @@ There is exactly one curve to draw, and it is the real one. Plot
 `analysis.points` under `analysis.dangerZones` and they agree, because since
 2026-09-17 `analysis` *is* the reading of the real points: a loss a federal
 rule defers to a later renewal counts in the verdict, the zones, the leap and
-the safe exit (README § Honesty; `inventory.md` #10).
+the safe exit (`docs/methodology.md` § Honesty; `inventory.md` #10).
 
 Until then `.dangerZones`, `.verdict`, `.escape` and `.personal` described a
 curve with deferred drops removed, so the UI had to redo that arithmetic
