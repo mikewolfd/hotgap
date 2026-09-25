@@ -159,7 +159,7 @@ the file, the change, and the words. Figures below are the committed sweep of
 
 ## Danger-zone sentences
 
-- [ ] **Citizen: a sentence for the family already inside the zone.**
+- [x] **Citizen: a sentence for the family already inside the zone.**
       citizen/verdict.ts `verdictKey`: split `in_danger_zone` on whether a
       cliff's `endEarnings` ≤ `s.current` lies inside `s.zone`. At the peak
       (no drop behind): keep *"More pay won't leave you better off until…"*.
@@ -194,7 +194,7 @@ the file, the change, and the words. Figures below are the committed sweep of
 
 ## Cliff-first verdicts
 
-- [ ] **Lead with the next-stretch rate; the cliff is the second clause.**
+- [x] **Lead with the next-stretch rate; the cliff is the second clause.**
       Every citizen verdict opens with `keepNextText`'s figure and the cliff
       follows. `cliff_ahead`: *"Of the next {over} you earn you'd keep about
       {kept}. Nothing drops sharply until {wage}; past it you'd lose about
@@ -207,19 +207,19 @@ the file, the change, and the words. Figures below are the committed sweep of
       8 in 10 families like yours earn."* `always_up` and `cliff_behind` get
       the same first clause. Delete the separate keepNext line from the step
       list once it is in the headline.
-- [ ] **A dip is not a permanent cost.** New key `cliff_ahead:dip` when the
+- [x] **A dip is not a permanent cost.** (Citizen done; the caseworker half is still open.) New key `cliff_ahead:dip` when the
       zone that starts at the next cliff closes within three steps
       (`zone.endEarnings − zone.startEarnings ≤ 3 × step`): *"…at {wage} you'd
       dip by about {drop}, and be ahead again by {exit}."* Single adult in CA
       today: *"…at $63,000 you'd dip by about $900, and be ahead again by
       $65,000."* Same rule in `caseworker.answer.cliffAhead`.
-- [ ] **Only drops are cliffs in the step list.** `citizen.steps.lead` →
+- [x] **Only drops are cliffs in the step list.** `citizen.steps.lead` →
       *"The pays where help stops. The ones with a figure are drops — people
       call those benefits cliffs. The rest taper off and cost nothing in one
       step."* Rows without a cliff lose "would end" for a phase-out and take
       the caseworker's wording: *"A tax break for workers phases out here —
       the EITC. No drop."* (steps.ts: `c.cliff ? … : phaseOut`).
-- [ ] **Take-up under the citizen headline, not three disclosures down.**
+- [x] **Take-up under the citizen headline, not three disclosures down.**
       citizen/result.ts: one `hg-source` line under the answer, from
       `modeled` flags: *"Counting the help you get: SNAP, TANF cash, Medicaid
       and WIC. Not getting one of these? [Change my answers]"* — the link
@@ -240,7 +240,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       `childcare-subsidy` flags (`searchParamsFromFlags` already carries them)
       so the citizen page opens on the swept household and the editor shows
       what to change. Label: *"Try this family in the household tool"*.
-- [ ] **"See how {state} compares" says the household changes.**
+- [x] **"See how {state} compares" says the household changes.**
       `citizen.toPlaces` gains a sub-line on the live path (`ev.source ===
       "live"`): *"The map's family rents at the typical price and gets
       child-care help, so its numbers differ from yours."* Omit on the

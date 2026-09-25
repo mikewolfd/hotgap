@@ -15,10 +15,10 @@ describe("stepRows", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(s.ev.escape.programEnds.eitc).toBe(57_000);           // the LAST pay it is received…
     expect(rowsOf(s)).toEqual([
-      { at: 38_000, sentence: "Your own free state health plan ends — it's called Medicaid.", loss: null },
+      { at: 38_000, sentence: "Your own free state health plan phases out here — it's called Medicaid. No drop.", loss: null },
       { at: 42_000, sentence: "Food help ends — it's called SNAP.", loss: "You keep about $2,500 less." },
       { at: 55_000, sentence: "Child care help would end — it's called the CCDF child care subsidy.", loss: "You'd keep about $9,000 less. This is the biggest drop." },
-      { at: 58_000, sentence: "A tax break for workers would end — it's called the Earned Income Tax Credit (EITC).", loss: null },   // …so the row is one step later
+      { at: 58_000, sentence: "A tax break for workers phases out here — it's called the Earned Income Tax Credit (EITC). No drop.", loss: null },   // …so the row is one step later
       // The deferred row counts its loss like any other (2026-09-17); its clause says when it lands.
       { at: 72_000, sentence: "Your kids' free state health plan would end — it's called Medicaid. It doesn't end that day: your kids keep it until their next yearly check, up to 12 months later.", loss: "You'd keep about $1,500 less." },
     ]);
@@ -67,7 +67,7 @@ describe("stepRows", () => {
     const ev = makeEvaluation();
     ev.escape.programEnds.wic = 38_000;
     const s = sceneOf(ev, year);
-    expect(stepSentence(s, stepRows(s).find((r) => r.at === 39_000)!)).toBe("Food help for moms and babies ends — it's called WIC. Then help paying for health insurance starts — it's called the Premium tax credit.");
+    expect(stepSentence(s, stepRows(s).find((r) => r.at === 39_000)!)).toBe("Food help for moms and babies phases out here — it's called WIC. Then help paying for health insurance starts — it's called the Premium tax credit. No drop.");
   });
   test("the badge's clause follows the deferred cliff's own programs, not one that merely ends at the same pay", () => {
     const ev = makeEvaluation();
@@ -83,15 +83,32 @@ describe("stepRows", () => {
     const row = stepRows(s).find((r) => r.at === 38_000)!;
     expect(row.programs).toEqual([{ id: "medicaid", group: "adults", onCliff: false }]);
     expect(row.waits).toBeNull();
-    expect(stepSentence(s, row)).toBe("Your own free state health plan ends — it's called Medicaid.");
+    expect(stepSentence(s, row)).toBe("Your own free state health plan phases out here — it's called Medicaid. No drop.");
   });
   test("a child's coverage ending that is not a cliff still waits for the next renewal (escape.ts childCoverageEndEarnings)", () => {
     const s = sceneOf(makeEvaluation({}, 43_000, { deferredCliff: false, chipEndsAt: 80_000 }), year);
     expect(s.cliffs.some((c) => c.endEarnings === 81_000)).toBe(false);
     const row = stepRows(s).find((r) => r.at === 81_000)!;
     expect(row.waits).toBe("child_continuous_eligibility");
-    expect(stepSentence(s, row)).toBe("A health plan for kids would end — it's called CHIP. It doesn't end that day: your kids keep it until their next yearly check, up to 12 months later.");
+    expect(stepSentence(s, row)).toBe("A health plan for kids phases out here — it's called CHIP. It doesn't end that day: your kids keep it until their next yearly check, up to 12 months later. No drop.");
     expect(stepLoss(s, row)).toBeNull();
+  });
+  test("only drops are cliffs: a row without one phases out and says there is no drop, once", () => {
+    const ev = makeEvaluation();
+    ev.escape.programEnds.wic = 37_000;   // WIC ends at $38k beside the parent's Medicaid, neither with a drop
+    const s = sceneOf(ev, year);
+    expect(stepSentence(s, stepRows(s).find((r) => r.at === 38_000)!)).toBe(
+      "Your own free state health plan phases out here — it's called Medicaid. Food help for moms and babies phases out here — it's called WIC. No drop.");
+  });
+  test("cash help (TANF) on a cliff row says 'if you get it', in both tenses", () => {
+    const now = makeEvaluation();
+    now.analysis.cliffs[0].programsLost = ["tanf"];   // the $42,000 drop, below the household's $43,000
+    const s = sceneOf(now, year);
+    expect(stepSentence(s, stepRows(s).find((r) => r.at === 42_000)!)).toMatch(/^Cash help ends, if you get it — it's called TANF cash assistance\./);
+    const later = makeEvaluation({}, 38_000);
+    later.analysis.cliffs[0].programsLost = ["tanf"];
+    const f = sceneOf(later, year);
+    expect(stepSentence(f, stepRows(f).find((r) => r.at === 42_000)!)).toMatch(/^Cash help would end, if you get it — it's called TANF cash assistance\./);
   });
   test("the tense turns to 'would' above current pay", () => {
     const s = sceneOf(makeEvaluation({}, 80_000), year);

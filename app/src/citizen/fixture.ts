@@ -40,10 +40,16 @@ export interface Shape {
   plateau?: [from: number, to: number];
   /** A cliff's own position, keyed by its `startEarnings` — for the far-cliffs-by-company test (Plan 9 § Citizen); unset cliffs keep the null `analyzeCurve` gives them. */
   positions?: Partial<Record<number, number>>;
+  /**
+   * A $900 drop landing at this pay that the $800-a-step rise has made good
+   * two steps later: a zone from one step below it to two steps above, three
+   * steps wide — the single adult's dip (design/TASKS.md § Cliff-first verdicts).
+   */
+  dipAt?: number;
 }
 
 /** Net income rises $800 a step from $20,000 (or $40 inside `plateau`); the parent's Medicaid ends at $38k with no cliff; the premium credit starts at $39k. */
-function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt, plateau }: Shape = {}): CurvePoint[] {
+function makePoints({ snapCliff = true, snapTail = false, careCliff = true, deferredCliff = true, stuckAt, chipEndsAt, plateau, dipAt }: Shape = {}): CurvePoint[] {
   const points: CurvePoint[] = [];
   let net = 20_000;
   for (let e = 0; e <= TOP; e += STEP) {
@@ -63,6 +69,7 @@ function makePoints({ snapCliff = true, snapTail = false, careCliff = true, defe
     if (careCliff && e === 55_000) net -= 9000 + 800;
     if (deferredCliff && e === 72_000) net -= 1500 + 800;
     if (stuckAt !== undefined && e === stuckAt) net -= 100_000;
+    if (dipAt !== undefined && e === dipAt) net -= 900 + 800;
     points.push({
       earnings: e, netIncome: net, medicalOOP: e >= 39_000 ? 1200 : 0, programs,
       childPrograms: { medicaid: childMedicaid, chip: childChip }, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false,
@@ -72,7 +79,28 @@ function makePoints({ snapCliff = true, snapTail = false, careCliff = true, defe
 }
 
 export function makeEvaluation(overrides: Partial<HouseholdEvaluation> = {}, current = 43_000, shape: Shape = {}): HouseholdEvaluation {
-  const points = makePoints(shape);
+  return evaluationOf(makePoints(shape), overrides, current, shape);
+}
+
+/**
+ * The San Francisco household of design/TASKS.md (`/?zip=94110&kids=3,7&pay=30000&unit=year`)
+ * as its sentence needs it: net peaks at $44,985 at $28,000, food help ends
+ * with a $2,384 drop landing at $29,000, the household at $30,000 keeps
+ * $42,797, and net creeps up $150 a step until $43,000, where it is back
+ * above the peak — so from $30,000 to $43,000 it keeps 20¢ of each extra dollar.
+ */
+export function makeSfEvaluation(overrides: Partial<HouseholdEvaluation> = {}): HouseholdEvaluation {
+  const points: CurvePoint[] = [];
+  for (let e = 0; e <= TOP; e += STEP) {
+    const programs = zero();
+    if (e <= 28_000) programs.snap = 3000;
+    const net = e <= 28_000 ? 30_985 + e / 2 : e === 29_000 ? 42_601 : e <= 42_000 ? 42_797 + 150 * (e - 30_000) / STEP : 45_397 + 500 * (e - 43_000) / STEP;
+    points.push({ earnings: e, netIncome: net, medicalOOP: 0, programs, childPrograms: {}, otherBenefits: 0, stateCredits: 0, totalCtc: 0, coverageGap: false });
+  }
+  return evaluationOf(points, overrides, 30_000, {});
+}
+
+function evaluationOf(points: CurvePoint[], overrides: Partial<HouseholdEvaluation>, current: number, shape: Shape): HouseholdEvaluation {
   // The one reading evaluate.ts makes: every cliff counts, the deferred one labelled (2026-09-17).
   const analysis = analyzeCurve(points, current, { hasChildren: true, isAdultGroupLoss: () => true });
   // evaluateCurve is what fills a cliff's position from the reach ladder (evaluate.ts); this

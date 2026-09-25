@@ -189,11 +189,16 @@
     "stillArchetype": "Todavía no pudimos obtener sus propios números, así que estos son de una familia como la suya en su estado.",
     "verdict": {
       "always_up": "Con cada aumento sale ganando: revisamos cada escalón hasta {top} y no baja en ningún punto.",
-      "cliff_ahead": "Va bien hasta {wage}; pasado ese punto, ganar más le cuesta unos {drop} al año.",
+      "cliff_ahead": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año.",
       "in_danger_zone": "Ganar más no mejora su situación hasta pasar {exit}, o sea {leap} más de lo que gana ahora.",
       "in_danger_zone:stuck": "Ganar más no mejora su situación en ningún punto que revisamos, hasta {top}.",
       "cliff_behind": "Lo peor ya quedó atrás: de {wage} en adelante, más sueldo es más dinero.",
-      "cliff_ahead:waits": "Va bien hasta {wage}; pasado ese punto perdería unos {drop} al año, aunque no de inmediato."
+      "cliff_ahead:waits": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, aunque no de inmediato.",
+      "cliff_ahead:worst": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}, más de lo que ganan {n} de cada 10 familias como la suya.",
+      "cliff_ahead:worstAt": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}.",
+      "cliff_ahead:dip": "En {wage} bajaría unos {drop}, y volvería a salir ganando para {exit}.",
+      "in_danger_zone:inside": "Ya pasó una caída en {wage}. De aquí hasta {exit} le quedan unos {cents} centavos de cada dólar extra; en {exit} vuelve a lo que le quedaba en {peak}.",
+      "in_danger_zone:stuck:inside": "Ya pasó una caída en {wage}, y en ningún punto que revisamos, hasta {top}, vuelve a lo que le quedaba en {peak}."
     },
     "again": "Vuelve a pasar entre {from} y {to}.",
     "againMany": "Pasa {n} veces más, entre {from} y {to}.",
@@ -330,6 +335,14 @@
         "adults": "Se terminaría {noun} para usted: se llama {name}.",
         "children": "Se terminaría {noun} de sus niños: se llama {name}."
       },
+      "phaseOut": "{Phrase} se va reduciendo hasta terminar aquí: se llama {name}.",
+      "phaseOutGroup": {
+        "adults": "Se va reduciendo hasta terminar aquí {noun} para usted: se llama {name}.",
+        "children": "Se va reduciendo hasta terminar aquí {noun} de sus niños: se llama {name}."
+      },
+      "noDrop": " Sin caída.",
+      "endsIfYouGetIt": "{Phrase} se termina, si la recibe: se llama {name}.",
+      "wouldEndIfYouGetIt": "{Phrase} se terminaría, si la recibe: se llama {name}.",
       "starts": " Entonces empieza {phrase}: se llama {name}.",
       "wouldStart": " Entonces empezaría {phrase}: se llama {name}.",
       "remains": " Parte de eso sigue hasta {until}: {list}.",
@@ -357,7 +370,7 @@
         "child_continuous_eligibility": " No se acaba ese día: sus niños lo conservan hasta su próxima revisión anual, hasta 12 meses después.",
         "transitional_medical_assistance": " No se acaba ese día: usted lo conserva de 6 a 12 meses más."
       },
-      "lead": "Cada uno es un punto del sueldo en el que algo se termina. La gente los llama precipicios de beneficios."
+      "lead": "Los puntos del sueldo en los que la ayuda se termina. Los que tienen una cifra son caídas: la gente las llama precipicios de beneficios. Los demás se reducen poco a poco y no cuestan nada en un solo escalón."
     },
     "waits": {
       "thisHelp": "esta ayuda",
@@ -498,11 +511,16 @@
     "phraseAndName": "{phrase} ({name})",
     "keepNext": {
       "base": "De los próximos {over} que gane, le quedarían unos {kept}.",
-      "cliff": "De los próximos {over} que gane, le quedarían unos {kept}, porque {phrase} se termina en {wage}.",
       "plateau": "De los próximos {over} que gane, le quedarían unos {kept}: eso es un tramo plano, más sueldo y apenas más dinero."
     },
     "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya.",
-    "toPlaces": "Vea cómo se compara {state} con otros estados"
+    "toPlaces": "Vea cómo se compara {state} con otros estados",
+    "toPlacesNote": "La familia del mapa paga el alquiler típico y recibe ayuda con el cuidado infantil, así que sus cifras son distintas de las suyas.",
+    "takeUp": {
+      "counting": "Contamos la ayuda que recibe: {list}.",
+      "ask": "¿No recibe alguna de estas?",
+      "change": "Cambiar mis respuestas"
+    }
   },
   "caseworker": {
     "pageTitle": "HotGap — trabajador social",

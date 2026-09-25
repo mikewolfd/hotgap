@@ -107,6 +107,8 @@ export interface Editor {
    */
   open(field?: HouseholdFlagName, opts?: { lead?: "submit" | "alt" }): void;
   close(): void;
+  /** Show the chips row, as the bar's "Change my answers" does, and move focus to a chip when given (its id, e.g. "no-snap"). */
+  showChips(chip?: string): void;
   /** Show a validation detail — core's, from the page or the API — beside the field it names. */
   /** A rejection from core (validateAnswers, the API): its English detail and, where core sent one, its code, said in the page's language. */
   showError(detail: string, message?: Coded): void;
@@ -668,6 +670,12 @@ export function mountEditor(root: HTMLElement, opts: EditorOptions): Editor {
     /* A plain open is a first visit (no Close); one led by the alternate exit was asked for by a control, which gets focus back. */
     open(field, o = {}) { open(field, o.lead === "alt" && document.activeElement instanceof HTMLElement ? document.activeElement : null, o.lead); },
     close,
+    showChips(chip) {
+      showInputs(true);
+      const target = chip ? inputsRow.querySelector<HTMLElement>(`[data-chip="${chip}"]`) : null;
+      (target ?? inputsBtn).focus();
+      (target ?? inputsRow).scrollIntoView({ block: "nearest" });
+    },
     showError,
     setNote(content) {
       noteContent = content;

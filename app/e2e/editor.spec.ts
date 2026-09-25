@@ -3,7 +3,7 @@
 // default — an engine or the public API answers) or "archetype" (run the
 // server with a dead HOTGAP_PE_URL; the committed sweep answers instead).
 import { expect, test, type Page } from "@playwright/test";
-import { consoleErrors, noOverflow } from "./support.js";
+import { ANY_ANSWER, consoleErrors, IN_ZONE, noOverflow } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 
@@ -38,7 +38,7 @@ test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ pag
   await page.goto("/");
   await fillFourFacts(page);
   await page.getByRole("button", { name: "See my answer" }).click();
-  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
+  await expect(page.locator("#answer")).toContainText(IN_ZONE);
   await expect(page.locator("#source")).toHaveAttribute("data-source", EXPECT_SOURCE);
   // The household is in the URL, in the CLI's words.
   const url = new URL(page.url());
@@ -55,7 +55,7 @@ test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ pag
 
 test("landing on a shared link evaluates at once", async ({ page }) => {
   await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
+  await expect(page.locator("#answer")).toContainText("You're past a drop at");
   await expect(page.locator("#editor")).toBeHidden();
 });
 
@@ -95,7 +95,7 @@ for (const width of [390, 1280]) {
     const errors = consoleErrors(page);
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-    await expect(page.locator("#answer")).toContainText("More pay won't");
+    await expect(page.locator("#answer")).toContainText("You're past a drop at");
     await noOverflow(page);
     // The chips hide behind the summary's Edit control — below 720px on every
     // surface, and at every width on the citizen page, which has no controls
@@ -153,9 +153,9 @@ for (const width of [390, 1280]) {
     await expect(housing).toHaveAttribute("aria-pressed", "true");
     expect(new URL(page.url()).searchParams.get("housing")).toBe("1");
     expect((await evaluatedAgain).status()).toBe(200);
-    await expect(page.locator("#result [role=status]")).toContainText("More pay won't");
+    await expect(page.locator("#result [role=status]")).toHaveText(ANY_ANSWER);
     await expect(housing).toBeFocused();
-    await expect(page.locator("#answer")).toContainText("More pay won't");
+    await expect(page.locator("#answer")).toHaveText(ANY_ANSWER);
     expect(errors).toEqual([]);
   });
 }

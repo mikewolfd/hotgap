@@ -30,6 +30,11 @@ export function consoleErrors(page: Page): string[] {
 export const noOverflow = async (page: Page): Promise<void> =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
+/** The citizen answer, whatever its shape (citizen.verdict.* and the next-stretch sentence that opens it outside a zone). */
+export const ANY_ANSWER = /^(Of the next|You're past a drop at|More pay won't leave you better off|Every raise|The worst of it|Nothing drops sharply|At \$)/;
+/** The citizen answer for a household inside its danger zone: at the peak, or past a drop (design/TASKS.md § Danger-zone sentences). */
+export const IN_ZONE = /You're past a drop at|More pay won't leave you better off/;
+
 /* WCAG 2.x relative luminance and contrast, the audit's own method, over the colours the page resolved. */
 export const lum = ([r, g, b]: number[]): number => {
   const f = (c: number) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };

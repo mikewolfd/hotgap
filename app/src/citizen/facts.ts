@@ -7,6 +7,7 @@
 import { childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { careHousehold, incompleteFor, unmodeledName } from "../lib/coverage.js";
+import { programName } from "../lib/names.js";
 import { capitalize, dateWords, listOf, modelLine, numberWords, unitFigure } from "../lib/format.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
@@ -36,7 +37,21 @@ const TAKE_UP: [keyof Scene["modeled"], ProgramId][] = [
 /** The state pays its heating help as a tax credit HotGap already counts (Michigan): nothing to apply for, nothing to turn on. */
 export const creditCounted = (s: Scene): boolean => s.boundary?.upstream?.counted === "state credit";
 
-const kidsWord = (n: number): string => t("assumed.kids", { n });
+/** The take-up flags that count for this household: heating help is neither got nor not got where the state pays it as a credit already in the line (review B1). */
+const takeUpFor = (s: Scene): typeof TAKE_UP => (creditCounted(s) ? TAKE_UP.filter(([, id]) => id !== "liheap") : TAKE_UP);
+
+/**
+ * The line under the answer (design/TASKS.md § Take-up under the citizen
+ * headline): the help the curve counts as received, by the names an office
+ * uses, and the question that sends a family that does not get one of them
+ * to the chips. Null when no take-up flag is on.
+ */
+export function takeUpText(s: Scene): { counting: string; ask: string; change: string } | null {
+  const on = takeUpFor(s).filter(([k]) => s.modeled[k]).map(([, id]) => programName(id));
+  return on.length ? { counting: t("takeUp.counting", { list: listOf(on) }), ask: copy.takeUp.ask, change: copy.takeUp.change } : null;
+}
+
+const kidsWord =(n: number): string => t("assumed.kids", { n });
 
 /** "What we assumed about you": the household the curve was run for, and every correction that touched its numbers. */
 export function assumedRows(s: Scene): Fact[] {
@@ -55,7 +70,7 @@ export function assumedRows(s: Scene): Fact[] {
     : t("assumed.childcare", { amount: m.money(A.monthlyChildcare), kids }) });
 
   // Heating help is neither got nor not got where the state pays it as a credit already in the line (review B1): the toggle adds nothing there.
-  const takeUp = creditCounted(s) ? TAKE_UP.filter(([, id]) => id !== "liheap") : TAKE_UP;
+  const takeUp = takeUpFor(s);
   const on = takeUp.filter(([k]) => A[k]).map(([, id]) => phraseAndName(id));
   const off = takeUp.filter(([k]) => !A[k]).map(([, id]) => phraseAndName(id));
   if (on.length) rows.push({ label: L.help, text: t("assumed.help", { list: capitalize(listOf(on)) }) });

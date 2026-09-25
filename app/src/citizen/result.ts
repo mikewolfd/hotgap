@@ -28,11 +28,11 @@ import { h } from "../lib/dom.js";
 import { pageHref } from "../lib/nav.js";
 import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
-import { assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, whoText, type Sweep } from "./facts.js";
+import { assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, takeUpText, whoText, type Sweep } from "./facts.js";
 import { sceneOf, type Scene } from "./model.js";
 import { stepLoss, stepRows, stepSentence } from "./steps.js";
 import { tableRows } from "./table.js";
-import { againText, keepNextText, verdictParts, verdictText } from "./verdict.js";
+import { againText, verdictParts, verdictText } from "./verdict.js";
 
 export interface Result {
   /** Nothing to show: the page went back to a bare URL. */
@@ -62,7 +62,12 @@ const panel = (id: string, heading: string, ...body: (Node | string | null | und
   h("details", { class: "hg-disclosure", id }, h("summary", {}, h("h2", {}, heading)),
     ...body.filter((n): n is Node | string => n !== null && n !== undefined)) as HTMLDetailsElement;
 
-export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
+/**
+ * `onChangeAnswers` shows the answers the way the bar's own "Change my
+ * answers" does, at the take-up chips: the take-up line under the answer
+ * is its link.
+ */
+export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeAnswers?: () => void): Result {
   const status = h("p", { class: "hg-source", role: "status" });
   /* Paper has no ScenarioBar: the wordmark and who the numbers are for, print only (S2). */
   const masthead = h("p", { class: "hg-print-only masthead" });
@@ -146,7 +151,16 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
         ...verdictParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
 
       /* MoneyCurve (#3) with its readout, key, caption and "How to read this picture" (chart.ts). */
-      const figure = h("figure", { class: "hg-picture" }, answer);
+      /* Take-up under the headline (design/TASKS.md § Cliff-first verdicts): the help the curve counts as received, and the
+         way to the chips for a family that does not get one of them — the answer is only true of the household it names. */
+      const takeUp = takeUpText(s);
+      let takeUpP: HTMLElement | null = null;
+      if (takeUp) {
+        const change = h("a", { href: "#inputs" }, takeUp.change);
+        change.addEventListener("click", (e) => { if (!onChangeAnswers) return; e.preventDefault(); onChangeAnswers(); });
+        takeUpP = h("p", { class: "hg-source", id: "take-up" }, takeUp.counting, h("span", { class: "hg-no-print" }, " ", takeUp.ask, " ", change));
+      }
+      const figure = h("figure", { class: "hg-picture" }, answer, ...(takeUpP ? [takeUpP] : []));
       let open: number | null = null;
       const closeRow = (refocus: boolean) => {
         if (open === null) return;
@@ -214,18 +228,18 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void): Result {
       /* SourceNote (#17), with the archetype state on the line as well as in the notice above the figure. */
       const sourceText = document.createTextNode("");
       const source = h("p", { class: "hg-source", id: "source", "data-source": ev.source }, sourceText);
-      const keepNext = keepNextText(s);
       const againLine = againText(s);
 
       /* The next place to look: this state beside the others, on /places, for the nearest of its eleven households. */
       const household = pickArchetypeId({ married: flags.married === true, childAges: flagList(flags.kids).map(Number), spouseAnnualEarnings: Number(flags["spouse-earnings"] ?? 0) });
       const toPlaces = h("p", { class: "next hg-no-print" },
-        h("a", { href: pageHref("places", new URLSearchParams({ household, state: s.state })) }, t("toPlaces", { state: s.stateName })));
+        h("a", { href: pageHref("places", new URLSearchParams({ household, state: s.state })) }, t("toPlaces", { state: s.stateName })),
+        /* On the live path the map's family is not this one — it rents at the typical price and gets child-care help; on the archetype fallback it is. */
+        ...(ev.source === "live" ? [h("br"), h("span", { class: "hg-source", id: "to-places-note" }, t("toPlacesNote"))] : []));
 
       body.append(figure, toPlaces,
         panel("steps-panel", t("steps.heading"),
           h("p", {}, t("steps.lead")),
-          keepNext ? h("p", { id: "keep-next" }, keepNext) : null,
           steps.length ? stepList : h("p", {}, t("steps.none")),
           againLine ? h("p", { id: "again" }, againLine) : null,
           boundaryP, numbers),
