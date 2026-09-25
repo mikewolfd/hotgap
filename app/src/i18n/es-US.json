@@ -247,8 +247,8 @@
         "drop": "−{drop}",
         "ends": "termina {phrase}",
         "road": {
-          "keeps": "se queda con {cents}¢ de cada dólar extra",
-          "loses": "pierde {cents}¢ de cada dólar extra"
+          "keeps": "de media, se queda con {cents}¢ de cada dólar extra",
+          "loses": "de media, pierde {cents}¢ de cada dólar extra"
         },
         "youKeepHelp": "le quedan {kept}, con la ayuda",
         "youKeepTax": "le quedan {kept} tras los impuestos",
@@ -883,9 +883,9 @@
       },
       "key": {
         "net": "Ingreso neto",
-        "ownZone": "Zona de este hogar",
-        "otherZones": "Otras zonas",
-        "zones": "Zonas de peligro",
+        "ownZone": "Zona de este hogar — pagos en los que el neto sigue por debajo de un pico anterior",
+        "otherZones": "Otras zonas — pagos en los que el neto sigue por debajo de un pico anterior",
+        "zones": "Zonas de peligro — pagos en los que el neto sigue por debajo de un pico anterior",
         "immediate": "Precipicio inmediato",
         "deferred": "Precipicio diferido",
         "current": "Ingresos actuales",
@@ -898,12 +898,12 @@
         "lead": "Ingresos {earnings} → neto {net}.",
         "outside": "Fuera de toda zona de peligro.",
         "own": {
-          "toExit": "Dentro de la zona de peligro del hogar (termina en {end}; pico de {peak} en {start}).",
-          "toTop": "Dentro de la zona de peligro del hogar (termina más allá del eje; pico de {peak} en {start})."
+          "toExit": "Aquí el neto está por debajo de los {peak} que tenía en {start}: la zona de peligro del hogar, que termina en {end}.",
+          "toTop": "Aquí el neto está por debajo de los {peak} que tenía en {start}: la zona de peligro del hogar, que se extiende más allá del eje."
         },
         "other": {
-          "toExit": "Dentro de una zona posterior ({start}–{end}).",
-          "toTop": "Dentro de una zona posterior ({start}–el tope del eje)."
+          "toExit": "Aquí el neto está por debajo de los {peak} que tenía en {start}: una zona de peligro posterior, que termina en {end}.",
+          "toTop": "Aquí el neto está por debajo de los {peak} que tenía en {start}: una zona de peligro posterior, que se extiende más allá del eje."
         }
       },
       "axis": {
@@ -911,6 +911,7 @@
         "aboveZero": "El eje vertical empieza en {floor}, no en $0; el rango visible es {ratio} veces la mayor caída."
       },
       "noneDeferred": "Ningún precipicio de esta curva está diferido.",
+      "glossary": "Una zona de peligro es un tramo de pago en el que el ingreso neto sigue por debajo de un pico anterior.",
       "span": {
         "scrolls": "El eje de x va de {from} a {to}; deslice la curva de lado a lado para verla toda.",
         "whole": "El eje de x va de {from} a {to}, entero en la página."
@@ -925,8 +926,8 @@
         },
         "ends": "{program}: termina aquí",
         "road": {
-          "keeps": "se queda con {cents}¢ de cada dólar extra",
-          "loses": "pierde {cents}¢ de cada dólar extra"
+          "keeps": "se queda con {cents}¢ de cada dólar extra de media",
+          "loses": "pierde {cents}¢ de cada dólar extra de media"
         },
         "merged": "{n} caídas juntas",
         "roadFrom": "línea de pobreza",
@@ -943,7 +944,7 @@
       "rows": {
         "net": "Neto después de primas",
         "change": "Cambio desde ahora",
-        "keep": "Lo que se queda de cada dólar extra",
+        "keep": "De cada dólar extra, ahora → este escenario",
         "inZone": "En una zona de peligro",
         "zoneEnds": "La zona termina en",
         "raise": "Aumento que aún falta",
@@ -958,6 +959,7 @@
       "pastAxis": "más allá del eje",
       "none": "ninguna",
       "dash": "—",
+      "keepNext": "{sign, select, keeps {se queda con {cents}¢ de los próximos {over}} other {pierde {cents}¢ de los próximos {over}}}",
       "sub": "{adults}, {earnings}",
       "adults": {
         "one": "1 adulto",
@@ -1034,9 +1036,10 @@
       "payAndKeep": "A usted le pagan {pay} al año y, contando la ayuda, le quedan {kept}."
     },
     "answer": {
-      "inZone": "Esta familia pierde dinero con cada aumento entre {start} y {exit}; con {raise} más al año ya sale de la zona.",
-      "inZone:stuck": "Esta familia pierde dinero con cada aumento por encima de {start}, y no aparece salida por debajo de {top}.",
+      "inZone": "El neto se queda por debajo de su pico de {peak} (en {start}) hasta {exit}: {nLose, plural, one {{nLose} de los {nSteps} pasos entre ambos pierde dinero} other {{nLose} de los {nSteps} pasos entre ambos pierden dinero}}; con {raise} más al año sale del tramo.",
+      "inZone:stuck": "El neto se queda por debajo de su pico de {peak} (en {start}) más allá del tope del eje, {top}: {nLose, plural, one {{nLose} de los {nSteps} pasos entre ambos pierde dinero} other {{nLose} de los {nSteps} pasos entre ambos pierden dinero}}.",
       "cliffAhead": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año.",
+      "cliffAhead:dip": "Esta familia está a salvo hasta {at}; ahí baja unos {drop} y vuelve a ir por delante en {exit}.",
       "cliffAhead:waits": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año, en la próxima renovación y no ese mismo día.",
       "cliffBehind": "Lo peor ya quedó atrás para esta familia: de {wage} en adelante, cada aumento es más dinero.",
       "alwaysUp": "Cada aumento deja mejor a esta familia; nada cae en ningún punto hasta {top}."

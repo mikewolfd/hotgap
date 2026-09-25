@@ -40,8 +40,15 @@ const pct = (share: number): number => Math.round(share * 100);
 
 /** "42 in 100 families like this earn less" — core's road.position message (Plan 9); "" where the ladder has no cell, never read as 0. */
 export const positionWords = (n: number | null): string => (n === null ? "" : fill(catalog.core.road.position, { n: Math.round(n) }));
-/** "keeps 12¢ of each extra dollar" / "loses 40¢ of each extra dollar" — core's keepRateWords and road.rate own the sign word and the rounding (Plan 9), so the compare row and the tiles cannot round or word a rate differently. */
+/** "keeps 12¢ of each extra dollar on average" / "loses 40¢ of each extra dollar on average" — core's keepRateWords and road.rate own the sign word and the rounding (Plan 9), so the compare row and the tiles cannot round or word a rate differently. */
 const keepRateSentence = (rate: number): string => { const { sign, cents } = keepRateWords(rate); return fill(catalog.core.road.rate, { sign, cents }); };
+/** "keeps 12¢ of the next $10,000" — the household's own next-stretch rate (core's keepNext) with the same sign word and rounding as keepRateSentence; the table's dash with no step of axis left. */
+const keepNextSentence = (ev: HouseholdEvaluation): string => {
+  const k = ev.personal.keepNext;
+  if (!k) return copy.compare.dash;
+  const { sign, cents } = keepRateWords(k.kept);
+  return t("compare.keepNext", { sign, cents, over: usd(k.over) });
+};
 /** A tile's qualifying line with the cliff's position parenthesised onto it, the way the reach tile already parenthesises its n (§ StatTiles); "" position adds nothing. */
 const withPosition = (sub: string, position: number | null): string => (position === null ? sub : `${sub} (${positionWords(position)})`);
 
@@ -96,16 +103,47 @@ type AnswerKey = keyof typeof copy.answer;
 function answerKey(ev: HouseholdEvaluation): AnswerKey {
   const v = ev.analysis.verdict, p = ev.personal;
   if (v === "in_danger_zone") return p.raiseIsLowerBound || p.escapeEarnings === null ? "inZone:stuck" : "inZone";
-  if (v === "cliff_ahead") return cliffAt(ev, ev.analysis.nextCliff)?.deferral ? "cliffAhead:waits" : "cliffAhead";
+  if (v === "cliff_ahead") {
+    if (cliffAt(ev, ev.analysis.nextCliff)?.deferral) return "cliffAhead:waits";
+    return dipAhead(ev) ? "cliffAhead:dip" : "cliffAhead";
+  }
   return v === "cliff_behind" ? "cliffBehind" : "alwaysUp";
 }
 
+/**
+ * The zone that opens at the next cliff, when it closes again within three
+ * steps (design/TASKS.md § A dip is not a permanent cost): a drop the family
+ * climbs back out of in a few raises is a dip, not a lasting cost, and the
+ * sentence says where it is ahead again. Null for any other next cliff.
+ */
+function dipAhead(ev: HouseholdEvaluation): { cliff: Cliff; exit: number } | null {
+  const c = cliffAt(ev, ev.analysis.nextCliff);
+  if (!c) return null;
+  const z = ev.analysis.dangerZones.find((x) => x.startEarnings === c.startEarnings);
+  return z && z.endEarnings !== null && z.endEarnings - z.startEarnings <= 3 * stepOf(ev) ? { cliff: c, exit: z.endEarnings } : null;
+}
+
+/** The steps from the zone's peak to `hi`, and how many of them start a cliff — "3 of the 15 steps between them lose money", rather than a claim that every raise does. */
+function zoneSteps(ev: HouseholdEvaluation, start: number, hi: number): { nLose: number; nSteps: number } {
+  return { nLose: cliffsBetween(ev.analysis.cliffs, start, hi).length, nSteps: Math.round((hi - start) / stepOf(ev)) };
+}
+
 /** The slots for this shape; `fill` throws on an argument nothing asked for, which is what keeps one sentence to one set of facts. */
-function answerSlots(ev: HouseholdEvaluation, key: AnswerKey): Record<string, string> {
+function answerSlots(ev: HouseholdEvaluation, key: AnswerKey): Record<string, string | number> {
   const a = ev.analysis, p = ev.personal;
   switch (key) {
-    case "inZone": return { start: usd(p.zone?.startEarnings ?? 0), exit: usd(p.escapeEarnings ?? 0), raise: usd(p.raiseToClear ?? 0) };
-    case "inZone:stuck": return { start: usd(p.zone?.startEarnings ?? a.currentEarnings), top: usd(top(ev)) };
+    case "inZone": {
+      const start = p.zone?.startEarnings ?? a.currentEarnings, exit = p.escapeEarnings ?? top(ev);
+      return { peak: usd(p.zone?.peakNet ?? a.currentNet), start: usd(start), exit: usd(exit), ...zoneSteps(ev, start, exit), raise: usd(p.raiseToClear ?? 0) };
+    }
+    case "inZone:stuck": {
+      const start = p.zone?.startEarnings ?? a.currentEarnings;
+      return { peak: usd(p.zone?.peakNet ?? a.currentNet), start: usd(start), top: usd(top(ev)), ...zoneSteps(ev, start, top(ev)) };
+    }
+    case "cliffAhead:dip": {
+      const d = dipAhead(ev)!;
+      return { at: usd(d.cliff.endEarnings), drop: usd(d.cliff.drop), exit: usd(d.exit) };
+    }
     case "cliffAhead":
     case "cliffAhead:waits": {
       // The threshold is the step's landing point (§ Where a program ends).
@@ -337,8 +375,9 @@ export function compareRows(base: HouseholdEvaluation): CompareRow[] {
   return [
     { label: R.net, cell: (ev) => usd(ev.analysis.currentNet), money: true },
     { label: R.change, cell: (ev) => (ev === base ? C.dash : signedMoney(ev.analysis.currentNet - base.analysis.currentNet)) },
-    // Keep rate (Plan 9): keepRateWords' rounding of Δnet ÷ Δpay against the base, through road.rate — the base column and a take-up toggle (no change in pay) show the table's own dash, never a rate over $0.
-    { label: R.keep, wrap: true, cell: (ev) => { if (ev === base) return C.dash; const dPay = ev.analysis.currentEarnings - base.analysis.currentEarnings; return dPay === 0 ? C.dash : keepRateSentence((ev.analysis.currentNet - base.analysis.currentNet) / dPay); } },
+    // Keep rate (Plan 9): keepRateWords' rounding of Δnet ÷ Δpay against the base, through road.rate — a take-up toggle (no change in pay) shows the table's own dash, never a rate over $0.
+    // The base column says the base's own next-stretch rate (keepNext, "keeps 12¢ of the next $10,000"), so the row reads "now → this what-if"; a dash only with no step of axis left.
+    { label: R.keep, wrap: true, cell: (ev) => { if (ev === base) return keepNextSentence(ev); const dPay = ev.analysis.currentEarnings - base.analysis.currentEarnings; return dPay === 0 ? C.dash : keepRateSentence((ev.analysis.currentNet - base.analysis.currentNet) / dPay); } },
     { label: R.inZone, cell: (ev) => (ev.analysis.verdict === "in_danger_zone" ? C.yes : C.no) },
     { label: R.zoneEnds, cell: (ev) => (ev.personal.raiseIsLowerBound ? C.pastAxis : ev.personal.escapeEarnings === null ? C.dash : usd(ev.personal.escapeEarnings)) },
     { label: R.raise, cell: (ev) => (ev.analysis.verdict !== "in_danger_zone" ? C.dash : ev.personal.raiseIsLowerBound ? t("tiles.atLeast", { n: usd(ev.personal.raiseToClear ?? 0) }) : usd(ev.personal.raiseToClear ?? 0)) },

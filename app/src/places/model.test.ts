@@ -324,9 +324,9 @@ describe("the sentences, from copy through words.ts", () => {
        named the household and the climb, so the readout says the state and the
        rate and stops (design/REVIEW-picture-first-places-2026-09-18.md). The
        sign word and the rounding are still core's. */
-    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar climbing out of poverty.");
-    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar climbing out of poverty.");
-    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar</b> climbing out of poverty.");
+    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar on average climbing out of poverty.");
+    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar on average climbing out of poverty.");
+    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar on average</b> climbing out of poverty.");
     expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
       .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
     expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");
@@ -487,11 +487,11 @@ describe("the committed sweep", () => {
   it("says a rate the way core words it, in the room each place has", () => {
     const mo = summary.states.MO[single2.id].keepRate!;
     expect(keepShort(mo)).toBe("loses 56¢");
-    expect(keepPhrase(mo)).toBe("loses 56¢ of each extra dollar");
+    expect(keepPhrase(mo)).toBe("loses 56¢ of each extra dollar on average");
     expect(keepTick(mo)).toBe("−56¢");
     const nm = summary.states.NM[single2.id].keepRate!;
     expect(keepShort(nm)).toBe("keeps 30¢");
-    expect(keepPhrase(nm)).toBe("keeps 30¢ of each extra dollar");
+    expect(keepPhrase(nm)).toBe("keeps 30¢ of each extra dollar on average");
     expect(keepTick(nm)).toBe("+30¢");
     // Zero keeps nothing and loses nothing, and says so.
     expect(keepShort(0)).toBe("keeps 0¢");

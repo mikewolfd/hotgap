@@ -173,7 +173,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       at $43,000 you're back to what you'd have kept at $28,000."*
       Stuck variant: *"…and nowhere we looked, up to {top}, gets you back to
       what you'd have kept at {peak}."*
-- [ ] **Caseworker: count the steps instead of "every raise".**
+- [x] **Caseworker: count the steps instead of "every raise".**
       `caseworker.answer.inZone` → *"Net stays below its {peak} peak (at
       {start}) until {exit}: {nLose} of the {nSteps} steps between them lose
       money; {raise} clears the stretch."* `nLose` =
@@ -181,13 +181,13 @@ the file, the change, and the words. Figures below are the committed sweep of
       start)/step. Today: *"Net stays below its $44,985 peak (at $28,000)
       until $43,000: 3 of the 15 steps between them lose money; $13,000
       clears the stretch."* `inZone:stuck` likewise with "past the axis".
-- [ ] **Captions say what shading is.** `places.curves.lead/cap`,
+- [x] **Captions say what shading is.** `places.curves.lead/cap`,
       `citizen.key.band/other`, `caseworker.howTo` key: *"Shaded: where the
       family has less than it had at a lower pay"* (never "where a raise
       leaves the family worse off"). Define *danger zone* once, in both
       glossaries: *"a stretch of pay where net income stays below an earlier
       peak."*
-- [ ] **"On average" on the road label.** `citizen.chart.labels.road.*` and
+- [x] **"On average" on the road label.** `citizen.chart.labels.road.*` and
       core `road.rate`: *"on average you keep {cents}¢ of each extra dollar"* /
       *"keeps {cents}¢ of each extra dollar on average"*. The rate is a slope
       across a cliff and a recovery, not a rate at every dollar.
@@ -207,7 +207,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       8 in 10 families like yours earn."* `always_up` and `cliff_behind` get
       the same first clause. Delete the separate keepNext line from the step
       list once it is in the headline.
-- [ ] **A dip is not a permanent cost.** New key `cliff_ahead:dip` when the
+- [x] **A dip is not a permanent cost.** New key `cliff_ahead:dip` when the
       zone that starts at the next cliff closes within three steps
       (`zone.endEarnings − zone.startEarnings ≤ 3 × step`): *"…at {wage} you'd
       dip by about {drop}, and be ahead again by {exit}."* Single adult in CA
@@ -229,7 +229,7 @@ the file, the change, and the words. Figures below are the committed sweep of
 
 ## One name per rate; the household travels with the link
 
-- [ ] **Three rates, three labels.** Road rate stays *"on the road out of
+- [x] **Three rates, three labels.** Road rate stays *"on the road out of
       poverty"* everywhere it appears. Citizen next-stretch rate: *"of your
       next {over}"*. Caseworker compare row `R.keep` → *"Of each extra dollar,
       now → this what-if"*, and the base cell shows the base's own next-stretch

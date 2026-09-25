@@ -243,8 +243,8 @@
         "drop": "−{drop}",
         "ends": "{phrase} ends",
         "road": {
-          "keeps": "you keep {cents}¢ of each extra dollar",
-          "loses": "you lose {cents}¢ of each extra dollar"
+          "keeps": "on average you keep {cents}¢ of each extra dollar",
+          "loses": "on average you lose {cents}¢ of each extra dollar"
         },
         "youKeepHelp": "you keep {kept}, help counted",
         "youKeepTax": "you keep {kept} after tax",
@@ -879,9 +879,9 @@
       },
       "key": {
         "net": "Net income",
-        "ownZone": "This household's zone",
-        "otherZones": "Other zones",
-        "zones": "Danger zones",
+        "ownZone": "This household's zone — pay where net stays below an earlier peak",
+        "otherZones": "Other zones — pay where net stays below an earlier peak",
+        "zones": "Danger zones — pay where net stays below an earlier peak",
         "immediate": "Immediate cliff",
         "deferred": "Deferred cliff",
         "current": "Current earnings",
@@ -894,12 +894,12 @@
         "lead": "Earnings {earnings} → net {net}.",
         "outside": "Outside any danger zone.",
         "own": {
-          "toExit": "Inside the household's danger zone (ends {end}; peak {peak} at {start}).",
-          "toTop": "Inside the household's danger zone (ends past the axis; peak {peak} at {start})."
+          "toExit": "Net here is below the {peak} it had at {start}: the household's danger zone, which ends at {end}.",
+          "toTop": "Net here is below the {peak} it had at {start}: the household's danger zone, which runs past the axis."
         },
         "other": {
-          "toExit": "Inside a later zone ({start}–{end}).",
-          "toTop": "Inside a later zone ({start}–the top of the axis)."
+          "toExit": "Net here is below the {peak} it had at {start}: a later danger zone, which ends at {end}.",
+          "toTop": "Net here is below the {peak} it had at {start}: a later danger zone, which runs past the axis."
         }
       },
       "axis": {
@@ -907,6 +907,7 @@
         "aboveZero": "The y-axis starts at {floor}, not $0; the visible range is {ratio}× the largest drop."
       },
       "noneDeferred": "No cliff on this curve is deferred.",
+      "glossary": "A danger zone is a stretch of pay where net income stays below an earlier peak.",
       "span": {
         "scrolls": "The x-axis runs {from} to {to}; scroll the curve sideways to reach all of it.",
         "whole": "The x-axis runs {from} to {to}, shown whole."
@@ -921,8 +922,8 @@
         },
         "ends": "{program} ends",
         "road": {
-          "keeps": "keeps {cents}¢ of each extra dollar",
-          "loses": "loses {cents}¢ of each extra dollar"
+          "keeps": "keeps {cents}¢ of each extra dollar on average",
+          "loses": "loses {cents}¢ of each extra dollar on average"
         },
         "merged": "{n} drops together",
         "roadFrom": "poverty line",
@@ -939,7 +940,7 @@
       "rows": {
         "net": "Net after premiums",
         "change": "Change from now",
-        "keep": "Keeps of each extra dollar",
+        "keep": "Of each extra dollar, now → this what-if",
         "inZone": "In a danger zone",
         "zoneEnds": "Zone ends at",
         "raise": "Raise still needed",
@@ -954,6 +955,7 @@
       "pastAxis": "past the axis",
       "none": "none",
       "dash": "—",
+      "keepNext": "{sign, select, keeps {keeps {cents}¢ of the next {over}} other {loses {cents}¢ of the next {over}}}",
       "sub": "{adults}, {earnings}",
       "adults": {
         "one": "1 adult",
@@ -1031,9 +1033,10 @@
     },
     "pageTitle": "HotGap — caseworker",
     "answer": {
-      "inZone": "This family loses money on every raise between {start} and {exit}; {raise} clears the stretch.",
-      "inZone:stuck": "This family loses money on every raise above {start}, and no exit turns up below {top}.",
+      "inZone": "Net stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}; {raise} clears the stretch.",
+      "inZone:stuck": "Net stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}.",
       "cliffAhead": "This family is clear up to {at}; past it a raise costs about {drop} a year.",
+      "cliffAhead:dip": "This family is clear up to {at}; there it dips by about {drop} and is ahead again by {exit}.",
       "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",
       "cliffBehind": "The worst is behind this family: from {wage} up, every raise is more money.",
       "alwaysUp": "Every raise leaves this family better off; nothing drops anywhere up to {top}."
