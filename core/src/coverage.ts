@@ -36,9 +36,11 @@ export interface CoverageContext {
 }
 
 /** The overrides `buildCurvePayload` attaches in this state, one record per parameter with the value sent per archetype. */
-function policyOverrideRecords(state: string): PolicyOverrideRecord[] {
+function policyOverrideRecords(state: string, swept: ReadonlySet<string>): PolicyOverrideRecord[] {
   const byParameter = new Map<string, PolicyOverrideRecord>();
-  for (const a of ARCHETYPES) {
+  /* Only the archetypes this sweep has curves for: a row added to ARCHETYPES
+     before the sweep that fills it has sent nothing yet. */
+  for (const a of ARCHETYPES.filter((x) => swept.has(x.id))) {
     for (const [parameter, byPeriod] of Object.entries(policyOverridesFor(answersFor(state, a)))) {
       const [period, value] = Object.entries(byPeriod)[0];
       const source = POLICY_OVERRIDE_SOURCES[state as keyof typeof POLICY_OVERRIDE_SOURCES].source;
@@ -195,7 +197,7 @@ export function stateCoverage(state: string, curves: Record<string, CurvePoint[]
   const fips = stateDefaults(state).countyFips;
   return {
     corrections: {
-      policyOverrides: policyOverrideRecords(state),
+      policyOverrides: policyOverrideRecords(state, new Set(Object.keys(curves))),
       maTafdc: maTafdcNote(state),
       premiumAssistance: premium,
       childcareSubsidy: childcareSubsidy(state, ctx.model),

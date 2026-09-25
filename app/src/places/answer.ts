@@ -25,12 +25,12 @@
 // The slot a sentence keys to the loss ramp is the one whose figure is drawn
 // on it, so the sentence doubles as the map's key — the citizen rule, on a
 // map (design/charts.md § The map is the picture).
-import { CLIFF_MIN } from "@hotgap/core";
+import { answersFor, ARCHETYPES, CLIFF_MIN } from "@hotgap/core";
 import type { Part } from "../lib/copy.js";
-import { money } from "../lib/format.js";
+import { listOf, money, numberWords } from "../lib/format.js";
 import { stateName } from "../lib/names.js";
 import { copy, parts, t } from "./copy.js";
-import type { Archetype, Grouped, Measure, StateRow } from "./model.js";
+import { paysForCare, type Archetype, type Grouped, type Measure, type StateRow } from "./model.js";
 import { householdPhrase, keepPhrase } from "./words.js";
 
 /** What one sentence needs — a subset of render.ts's Scene, so a render pass hands over what it already has. */
@@ -81,12 +81,18 @@ function sentenceFor(s: AnswerScene): Sentence {
   const floor = money(CLIFF_MIN);
   const top = g.ranked[0];
   const name = (r: StateRow) => stateName(r.st);
-  const household = householdPhrase(s.arch.married, s.arch.id.includes("dual"), s.arch.childAges);
+  const household = householdPhrase(s.arch.married, s.arch.id.includes("dual"), s.arch.childAges, s.arch.id.endsWith("-nosub"));
 
   switch (measure.key) {
     case "keepRate": {
       const rated = rows.filter((r) => r.m.keepRate !== null);
       const bad = rated.filter((r) => (r.m.keepRate as number) < 0).length;
+      /* The boundary sensitivity (road.ts `keepRateToLine`): of those, the
+         states still negative measured to exactly twice poverty, without the
+         road's one-step allowance — the ones whose loss is not one exit sitting
+         on the line. Counted within `bad`, so the clause is "of them". */
+      const strict = rated.filter((r) => (r.m.keepRate as number) < 0 && (r.m.keepRateToLine ?? 0) < 0).length;
+      const edgeArgs = { strict, strictCount: String(strict) };
       /* The extreme is the ranking's own first row: lowest rate first, because
          `worst` is "low" on this measure. With none rated there is no map. */
       const edge = g.ranked[0] ?? rated[0];
@@ -94,9 +100,9 @@ function sentenceFor(s: AnswerScene): Sentence {
         return { text: A.keepRate.none, args: { places, household, state: name(edge), value: keepPhrase(edge.m.keepRate as number) } };
       }
       if (bad === rated.length) {
-        return { text: A.keepRate.all, args: { places, household, state: name(edge), value: keepPhrase(edge.m.keepRate as number) }, keyed: ["value"] };
+        return { text: A.keepRate.all, args: { places, household, state: name(edge), value: keepPhrase(edge.m.keepRate as number), ...edgeArgs }, keyed: ["value"] };
       }
-      return { text: A.keepRate.some, args: { places, household, bad }, keyed: ["bad"] };
+      return { text: A.keepRate.some, args: { places, household, bad, ...edgeArgs }, keyed: ["bad"] };
     }
     case "roadCliffCount": {
       /* THE COMPLEMENT, not the share. "{some} of {places}" printed "50 of the
@@ -150,3 +156,35 @@ export function answerParts(s: AnswerScene): AnswerPart[] {
 
 /** The same sentence as text — for the figure's accessible name and for a proof that reads it once. */
 export const answerText = (s: AnswerScene): string => answerParts(s).map((p) => p.text).join("");
+
+/** The programs the holds line can name, in the order it names them: the subsidy first, because it is the one a reader cannot assume. */
+const HOLDS: readonly ["childcare" | "snap" | "tanf" | "medicaid" | "wic", "getsChildcareSubsidy" | "getsSnap" | "getsTanf" | "getsMedicaid" | "getsWic"][] = [
+  ["childcare", "getsChildcareSubsidy"], ["snap", "getsSnap"], ["tanf", "getsTanf"], ["medicaid", "getsMedicaid"], ["wic", "getsWic"],
+];
+
+/**
+ * THE HOLDS LINE under the answer (TASKS: say what the family holds): the
+ * household the number is true of, from core's own `answersFor` — the rent it
+ * pays, the care it buys and the programs it is counted as getting — so "a
+ * single parent of two children" arrives with the facts that make it the
+ * swept household rather than any one. The flags do not vary by state, so
+ * any state the run carries answers for all of them. Null for an archetype
+ * core no longer sweeps (an old file), which has no answers to read.
+ */
+export function holdsText(arch: Archetype, states: readonly string[]): string | null {
+  const shape = ARCHETYPES.find((a) => a.id === arch.id);
+  const [state] = states;
+  if (!shape || !state) return null;
+  const answers = answersFor(state, shape);
+  const pays = paysForCare(arch);
+  /* The subsidy is named only beside the bill it pays: the sweep sends the flag for a childless adult too, where it does nothing. */
+  const programs = HOLDS.filter(([id, flag]) => answers[flag] && (id !== "childcare" || pays)).map(([id]) => copy.answer.holdsProgram[id]);
+  const n = arch.childAges.length;
+  /* The care bill is the archetype's (model.ts `paysForCare`, the rule core's
+     `monthlyChildcare > 0` follows): every parent works and a child is of
+     child-care age. */
+  const care = pays
+    ? t("answer.holdsCare", { kids: t("answer.holdsKids", { n, words: numberWords(n) }) })
+    : copy.answer.holdsNoCare;
+  return t("answer.holds", { care, programs: listOf(programs) });
+}

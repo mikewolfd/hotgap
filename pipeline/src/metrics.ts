@@ -32,6 +32,9 @@ export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
     // dollar, and where that road collapses. A cent is the display unit, so
     // four decimals is a hundredth of one and the cell stays readable.
     keepRate: road?.keepRate == null ? null : Math.round(road.keepRate * 10_000) / 10_000,
+    // The same slope to exactly twice poverty, without the road's one-step
+    // allowance (road.ts): the boundary sensitivity of the figure above.
+    keepRateToLine: road?.keepRateToLine == null ? null : Math.round(road.keepRateToLine * 10_000) / 10_000,
     roadLo: road?.lo ?? null,
     roadHi: road?.hi ?? null,
     roadCliffCount: road?.cliffs.length ?? 0,

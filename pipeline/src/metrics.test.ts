@@ -95,7 +95,7 @@ describe("stateMetrics on synthetic curves", () => {
     // runs $0 → $100,000, keeping eleven cents of each dollar.
     expect(stateMetrics(evaluated(pts))).toEqual({
       biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
-      keepRate: 0.11, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+      keepRate: 0.11, keepRateToLine: 0.1, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
     });
   });
 

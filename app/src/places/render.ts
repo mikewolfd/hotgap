@@ -6,7 +6,7 @@
 // disclosures, the RankStrip, the DataTable, the method and the sources.
 // Every word is copy.ts's; every number is read from the summary; nothing is
 // typed.
-import { CLIFF_MIN, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { CLIFF_MIN, keepRateWords, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { coreText, limitWords } from "../lib/copy.js";
 import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
@@ -16,13 +16,13 @@ import { languageSwitch } from "../lib/lang.js";
 import { pageHref, siteNav } from "../lib/nav.js";
 import { finePointer, watchScrollEdges } from "../lib/scroll.js";
 import { stateName } from "../lib/names.js";
-import { answerParts } from "./answer.js";
+import { answerParts, holdsText } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankNumbers, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { archLabel, bites, describeFor, MEASURES, measureByKey, measuresIn, positionAt, rankNumbers, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
 import { tryItHref } from "./url.js";
-import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
 import { h } from "../lib/dom.js";
 
 /** Everything one render pass reads. */
@@ -119,7 +119,7 @@ export function renderStatic(): void {
     tableHeading: copy.panels.everything, sourcesHeading: copy.panels.sources,
     howToHeading: copy.howTo.heading, figKeyboard: copy.howTo.keyboard,
     sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state,
-    colKeepRate: C.keepRate, colRoadCliffCount: C.roadCliffCount, colRoadWorst: C.roadWorst, colRoadWorstAt: C.roadWorstAt,
+    colKeepRate: C.keepRate, colKeepRateToLine: C.keepRateToLine, colRoadCliffCount: C.roadCliffCount, colRoadWorst: C.roadWorst, colRoadWorstAt: C.roadWorstAt,
     colBiggestLoss: C.biggestLoss, colBiggestLossAt: C.biggestLossAt,
     colDangerWidth: C.dangerWidth, colLeap: C.leap, colSafeExit: C.safeExit,
     colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
@@ -136,7 +136,8 @@ export function renderStatic(): void {
   type Def = { id: string; term: string; def: string; heads?: string[] };
   const measureDef = (key: MeasureKey): Def => { const m = measureByKey(key)!; return { id: colId(key), term: m.title, def: m.describe }; };
   const defs: Def[] = [
-    measureDef("keepRate"), measureDef("roadCliffCount"), measureDef("roadWorst"),
+    measureDef("keepRate"), { id: "colKeepRateToLine", term: C.keepRateToLine, def: copy.table.defs.keepRateToLine },
+    measureDef("roadCliffCount"), measureDef("roadWorst"),
     { id: "colRoadWorstAt", term: C.roadWorstAt, def: copy.table.defs.roadWorstAt },
     measureDef("biggestLoss"), { id: "colBiggestLossAt", term: C.biggestLossAt, def: copy.table.defs.biggestLossAt },
     measureDef("dangerWidth"), measureDef("leap"), measureDef("safeExit"), measureDef("cliffCount"), measureDef("deferredCliffCount"),
@@ -173,7 +174,9 @@ export function renderStatic(): void {
 /** Everything that is the same for every view, once the data is in: the counted lede, the household list, the method panel. */
 export function renderOnce(summary: SummaryJson): void {
   const states = Object.keys(summary.states);
-  $<HTMLSelectElement>("arch").innerHTML = summary.archetypes.map((a) => `<option value="${a.id}">${esc(householdLabel(a.married, a.id.includes("dual"), a.childAges))}</option>`).join("");
+  /* The file's own list, so a household core has added but no sweep has
+     filled yet (single-2-nosub, until the sweep that adds it) is not offered. */
+  $<HTMLSelectElement>("arch").innerHTML = summary.archetypes.map((a) => `<option value="${a.id}">${esc(archLabel(a))}</option>`).join("");
   $("table").textContent = t("table.heading", { n: states.length });
   /* The axis in dollars for the selected household (rerun N9) follows the axis bullet; renderMethod fills it per view. */
   const M = copy.method.items;
@@ -191,8 +194,12 @@ export function renderOnce(summary: SummaryJson): void {
     t("method.items.engine", { year: summary.year }),
     t("method.items.road", { year: summary.year }), M.keepRate,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
-    M.money, t("method.items.household", { year: summary.year }), M.modeledFamily, M.takeUp, M.deferred, M.corrections,
-  ].map((text) => `<li>${rich(text)}</li>`);
+    M.money, t("method.items.household", { year: summary.year }), M.modeledFamily,
+    /* The twin is named only once a run carries it (core's single-2-nosub fills on the next sweep). */
+    summary.archetypes.some((a) => a.id.endsWith("-nosub")) ? `${M.takeUp} ${M.takeUpTwin}` : M.takeUp,
+    M.deferred, M.corrections,
+  ].map((text, i) => `<li>${rich(text)}${i === 1 ? ` <span id="roadToLine"></span>` : ""}</li>`);
+  /* The road item (the second) closes with its boundary sensitivity, counted per household in renderMethod. */
   /* The download's columns are provenance, so they sit with the sources and
      the citation rather than in the method list, where they were the one item
      about a file and not about a rule. */
@@ -263,7 +270,11 @@ function tileTitle(r: StateRow, measure: Measure, cov: StateCoverage | undefined
  * O(states), in `answerParts`.
  */
 export function renderAnswer(s: Scene): void {
-  $("answer").replaceChildren(...answerParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)));
+  /* The sentence, then — its second line — the family it is true of: the rent,
+     the care and the programs every state's rules were applied to. */
+  const holds = holdsText(s.arch, s.rows.map((r) => r.st));
+  $("answer").replaceChildren(...answerParts(s).map((p) => ("slot" in p && p.key ? h("span", { class: p.key }, p.text) : p.text)),
+    ...(holds === null ? [] : [h("p", { class: "hg-source", id: "answerHolds" }, holds)]));
 }
 
 /**
@@ -296,7 +307,9 @@ export function renderFigure(s: Scene): void {
      from" for the rest — because they answer a question nobody asks first. */
   $("figSrc").textContent = t("figure.source", { year: summary.year, date: dateWords(summary.generated) });
   $("figScope").textContent = `${countedLede(s.rows.length, summary.archetypes.length, s.rows.some((r) => r.st === "DC"))} ${t("figure.sub", { household: s.archLabel })}`;
-  $("figMeasure").textContent = t("howTo.measure", { measure: measure.title, describe: measure.describe });
+  /* The keep rate names its road in this household's dollars, here and in the table's definition of its column. */
+  $("figMeasure").textContent = t("howTo.measure", { measure: measure.title, describe: describeFor(measure, s.rows) });
+  $("def-colKeepRate").textContent = describeFor(measureByKey("keepRate")!, s.rows);
   $("grid").setAttribute("aria-label", t("figure.title", { measure: measure.title }));
   $("binsLine").textContent = [
     binsLine(bins, g.ranked.length, g.none.length, g.past.length),
@@ -557,18 +570,25 @@ export function renderRank(s: Scene): void {
       : measure.key === "roadWorst" ? m.roadWorst?.at ?? null
         : measure.key === "safeExit" ? m.safeExit : null;
   const withAt = measure.key === "biggestLoss" || measure.key === "roadWorst" || measure.key === "safeExit";
+  /* The keep rate's second, lighter figure: the same slope to exactly twice
+     poverty (`keepRateToLine`), so a reporter sees which top-ranked states are
+     one boundary step — an exit sitting on the line — rather than the road.
+     The ranking stays on the keep rate itself. */
+  const toLine = measure.key === "keepRate";
   const rankRow = (r: StateRow, inner: string, v: string, n?: string) => {
     const point = withAt ? pointOf(r.m) : null;
     /* The safe exit's own value IS the earnings, so its row says the position alone. */
     const where = point === null || measure.key === "safeExit" ? null : t("rank.at", { value: money(point) });
     const share = point === null ? null
       : measure.key === "biggestLoss" ? r.m.biggestLossPosition : positionAt(r.st, s.arch, point);
-    const at = [where, share === null ? null : t("rank.position", { n: Math.round(share) })].filter((x): x is string => x !== null).join(" · ");
+    const line = toLine && r.m.keepRateToLine != null ? t("rank.toLine", keepRateWords(r.m.keepRateToLine)) : null;
+    const at = [where, share === null ? null : t("rank.position", { n: Math.round(share) }), line].filter((x): x is string => x !== null).join(" · ");
     return `<li><button type="button" class="hg-row-btn" data-st="${r.st}" aria-label="${esc(rowLabel(n ?? "", name(r.st), v, at || undefined))}"` +
       `${control(r.st, s.sel, tabbable)}>${n === undefined ? "" : `<span class="n">${esc(n)}</span>`}<span class="st">${r.st}</span>` +
       `<span class="track">${inner}</span><span class="v">${esc(v)}${at ? ` <small class="at">${esc(at)}</small>` : ""}</span></button></li>`;
   };
-  $("rank").classList.toggle("with-at", withAt);
+  $("rank").classList.toggle("with-at", withAt || toLine);
+  $("rank").classList.toggle("to-line", toLine);
 
   /* Lower-bound rows lead, under a heading that says what they are and that
      they share ranks 1–n (B1): the leap's floor is a figure, a safe exit
@@ -613,7 +633,7 @@ export function renderRank(s: Scene): void {
   /* The bounds stand over the track they bound, on the rows' own grid, and on
      a diverging scale zero stands over the hinge the bars hang off. */
   const axis = $("rankAxis"), diverging = g.bins.kind === "diverging";
-  axis.style.setProperty("--v", withAt ? "10.2rem" : "5.4rem");
+  axis.style.setProperty("--v", withAt || toLine ? "10.2rem" : "5.4rem");
   axis.style.setProperty("--zero", `${zero * 100}%`);
   axis.classList.toggle("rank-axis--diverging", diverging);
   axis.innerHTML = `<span class="ends"><span>${tick(g.bins.lo, measure)}</span>` +
@@ -680,6 +700,7 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
       `<th scope="row"><button class="hg-row-btn" type="button" data-st="${r.st}" aria-label="${esc(name(r.st))}"` +
       `${control(r.st, s.sel, tabbable)}>${r.st}${missing.length ? `<span class="flag-mark" aria-hidden="true">${esc(T.floorMark)}</span>` : ""}</button></th>` +
       `<td class="num">${m.keepRate === null ? esc(copy.roadOffAxis) : floor(keepShort(m.keepRate))}</td>` +
+      `<td class="num">${m.keepRateToLine == null ? T.none : floor(keepShort(m.keepRateToLine))}</td>` +
       `<td class="num">${m.keepRate === null ? T.none : floor(String(m.roadCliffCount))}</td>` +
       `<td class="num">${noRoadCliff || !m.roadWorst ? T.none : floor(money(m.roadWorst.drop))}</td>` +
       `<td class="num">${m.roadWorst ? esc(stepWords(m.roadWorst.at)) + positionUnder(positionAt(r.st, s.arch, m.roadWorst.at)) : T.none}</td>` +
@@ -715,6 +736,13 @@ export function renderMethod(s: Scene): void {
      sweep the same count is 39 for a single parent of two and 3 for a
      two-earner couple with two. Counted here, per household, off the same
      positions the table prints. */
+  /* The road's boundary sensitivity, counted for this household (TASKS): how
+     many of the states negative on the road stay negative measured to exactly
+     twice poverty. */
+  const rated = s.rows.filter((r) => r.m.keepRate !== null);
+  const bad = rated.filter((r) => (r.m.keepRate as number) < 0).length;
+  const strict = rated.filter((r) => (r.m.keepRate as number) < 0 && (r.m.keepRateToLine ?? 0) < 0).length;
+  $("roadToLine").textContent = bad === 0 ? "" : t(strict === bad ? "method.items.roadToLine.same" : "method.items.roadToLine.differs", { strict, bad });
   const placed = s.rows.filter((r) => r.m.biggestLossPosition !== null);
   $("groupsLine").innerHTML = rich(t("method.items.groups", { n: placed.filter((r) => (r.m.biggestLossPosition as number) > 50).length, total: placed.length }));
 }

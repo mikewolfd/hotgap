@@ -18,7 +18,11 @@ import { t } from "./copy.js";
 import { rankNumbers, type Grouped, type Measure, type StateRow } from "./model.js";
 import { householdPhrase, rankOrdinal, rankRange } from "./words.js";
 
-export interface Curves { from: number; step: number; states: Record<string, number[]> }
+export interface Curves {
+  from: number; step: number; states: Record<string, number[]>;
+  /** Per state, whether the child-care subsidy starts at the first sampled pay (app/vite.config.ts); absent on a file written before it. */
+  subsidyAtFirstDollar?: Record<string, boolean>;
+}
 
 const cache = new Map<string, Promise<Curves | null>>();
 
@@ -214,5 +218,6 @@ export function renderStateCurve(c: Curves | null, arch: Arch, sel: string | nul
   fig.hidden = curve === null;
   if (!curve || !sel) return;
   $("stateCurveSvg").replaceChildren(curveSvg(curve, { w: 320, h: 170, top: sharedTop(c!), axes: true }));
-  $("stateCurveCap").textContent = t("curves.cap", { state: stateName(sel), household: who(arch) });
+  $("stateCurveCap").textContent = t("curves.cap", { state: stateName(sel), household: who(arch) }) +
+    (c!.subsidyAtFirstDollar?.[sel] ? ` ${t("curves.firstDollar", {})}` : "");
 }

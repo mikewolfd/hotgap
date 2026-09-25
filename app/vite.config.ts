@@ -14,18 +14,23 @@ const STATES_DIR = resolve(import.meta.dirname, "../core/data/states");
 /**
  * Every state's money line for one household, derived at build time from the
  * committed state files (so it can never drift from them): `/data/curves/{id}.json`
- * is `{ from, step, states: { ST: net[] } }`, whole dollars. About 45 KB an
+ * is `{ from, step, states: { ST: net[] }, subsidyAtFirstDollar: { ST: boolean } }`, whole dollars. About 45 KB an
  * archetype against 30 MB of state files — what /places needs to draw one
  * small curve per state without fetching fifty-one of those.
  */
 function curves(): Record<string, string> {
-  const out: Record<string, { from: number; step: number; states: Record<string, number[]> }> = {};
+  const out: Record<string, { from: number; step: number; states: Record<string, number[]>; subsidyAtFirstDollar: Record<string, boolean> }> = {};
   for (const file of readdirSync(STATES_DIR).filter((f) => f.endsWith(".json")).sort()) {
-    const json = JSON.parse(readFileSync(resolve(STATES_DIR, file), "utf8")) as { state: string; archetypes: Record<string, { points: { earnings: number; netIncome: number }[] }> };
+    const json = JSON.parse(readFileSync(resolve(STATES_DIR, file), "utf8")) as { state: string; archetypes: Record<string, { points: { earnings: number; netIncome: number; programs?: { childcare?: number } }[] }> };
     for (const [id, { points }] of Object.entries(json.archetypes)) {
       if (points.length < 2) continue;
-      const c = (out[id] ??= { from: points[0].earnings, step: points[1].earnings - points[0].earnings, states: {} });
+      const c = (out[id] ??= { from: points[0].earnings, step: points[1].earnings - points[0].earnings, states: {}, subsidyAtFirstDollar: {} });
       c.states[json.state] = points.map((p) => Math.round(p.netIncome));
+      /* The child-care subsidy switching on with the first sampled pay, which
+         is the sweep's fixed hours passing the activity test at $1,000 a year
+         (design/TASKS.md, until the re-sweep derives hours from pay): the
+         caption says what the step at the first dollar is. */
+      c.subsidyAtFirstDollar[json.state] = (points[1].programs?.childcare ?? 0) > 0 && (points[0].programs?.childcare ?? 0) === 0;
     }
   }
   return Object.fromEntries(Object.entries(out).map(([id, c]) => [id, JSON.stringify(c)]));

@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import { ARCHETYPES, YEAR, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, YEAR, type Archetype, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -26,10 +26,10 @@ function pointsAreFinite(points: CurvePoint[]): boolean {
   );
 }
 
-export function validateResults(states: string[], results: ResultsByStateArchetype): ValidationResult {
+export function validateResults(states: string[], results: ResultsByStateArchetype, archetypes: readonly Archetype[] = ARCHETYPES): ValidationResult {
   const gaps: ValidationGap[] = [];
   for (const state of states) {
-    for (const a of ARCHETYPES) {
+    for (const a of archetypes) {
       const points = results[state]?.[a.id];
       if (!points) {
         gaps.push({ state, archetypeId: a.id, reason: "missing" });
@@ -48,12 +48,26 @@ export function validateResults(states: string[], results: ResultsByStateArchety
   return { ok: gaps.length === 0, gaps };
 }
 
-export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, models: ModelsByState = {}): SummaryJson {
+/**
+ * The archetypes a set of stored results carries: every row of ARCHETYPES that
+ * at least one state has a curve for. A `--from-data` rebuild reads the files
+ * a past sweep wrote, and a row added to ARCHETYPES since (single-2-nosub, until
+ * the sweep that fills it) is simply not in them — so the rebuild describes the
+ * rows the files hold instead of failing on the one they cannot. A row SOME
+ * states carry and others lack is still a gap, and validateResults reports it.
+ */
+export function sweptArchetypes(states: string[], results: ResultsByStateArchetype): Archetype[] {
+  const found = ARCHETYPES.filter((a) => states.some((st) => results[st]?.[a.id] !== undefined));
+  // Nothing read at all is every row missing, which validateResults reports as such.
+  return found.length ? found : ARCHETYPES;
+}
+
+export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, models: ModelsByState = {}, archetypes: readonly Archetype[] = ARCHETYPES): SummaryJson {
   const model = sharedModel(states, models);
   const summaryStates: Record<string, Record<string, StateMetrics>> = {};
   for (const state of states) {
     summaryStates[state] = {};
-    for (const a of ARCHETYPES) {
+    for (const a of archetypes) {
       const evaluation = evaluateCurve(answersFor(state, a), {
         year: YEAR, currentEarnings: 0, points: results[state][a.id],
       }, "archetype");
@@ -76,8 +90,10 @@ export function buildSummary(generated: string, states: string[], results: Resul
   // added. Partial coverage across household shapes still counts: Massachusetts
   // pays a household with an infant and nothing to one whose only child is a
   // preschooler, because the provider type defaults to a school-age rate.
+  // A `-nosub` twin pays for care and claims no subsidy BY DESIGN, so its $0
+  // is the question it asks, not a gap: it is left out of the test.
   const unmodeled = states.filter((state) => {
-    const buysCare = ARCHETYPES.filter((a) => (answersFor(state, a).monthlyChildcare ?? 0) > 0);
+    const buysCare = archetypes.filter((a) => a.subsidy !== false && (answersFor(state, a).monthlyChildcare ?? 0) > 0);
     return buysCare.some((a) => (results[state][a.id] ?? []).every((p) => (p.programs.childcare ?? 0) <= 0));
   });
 
@@ -91,7 +107,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
     year: YEAR,
     ...(model ? { model } : {}),
     ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
-    archetypes: ARCHETYPES.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
+    archetypes: archetypes.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
     states: summaryStates,
     coverage,
   };

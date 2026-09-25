@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, archetypeById } from "./archetypes.js";
+import { ARCHETYPES, archetypeById, isNoSubsidyTwin } from "./archetypes.js";
 import { REACH_PERCENTILES } from "./reach.js";
 import { reachCell, reachForArchetype, reachForHousehold } from "./reachLookup.js";
 import { STATE_CODES } from "./states.js";
@@ -10,7 +10,9 @@ import { STATE_CODES } from "./states.js";
 // values are DERIVED from the file (a cell's own p50 must look itself back up
 // to 50) instead of pinned in dollars, which would only re-pin the artifact to
 // itself and would have to be rewritten on every vintage bump.
-const CELLS = STATE_CODES.flatMap((state) => ARCHETYPES.map((a) => ({ state, id: a.id, cell: reachCell(state, a.id) })));
+// The ladders are per household SHAPE: a `-nosub` twin is the same families
+// as the shape it twins (fallback.ts never picks it), so it has no cell of its own.
+const CELLS = STATE_CODES.flatMap((state) => ARCHETYPES.filter((a) => !isNoSubsidyTwin(a)).map((a) => ({ state, id: a.id, cell: reachCell(state, a.id) })));
 const PUBLISHED = CELLS.flatMap(({ state, id, cell }) => (cell ? [{ state, id, cell }] : []));
 const SUPPRESSED = CELLS.filter(({ cell }) => cell === null);
 const P50 = REACH_PERCENTILES.indexOf(50);
@@ -59,7 +61,7 @@ describe("reachForArchetype", () => {
 
 describe("the committed reach ladders", () => {
   it("cover every state × archetype, published or explicitly suppressed", () => {
-    expect(CELLS).toHaveLength(STATE_CODES.length * ARCHETYPES.length);
+    expect(CELLS).toHaveLength(STATE_CODES.length * ARCHETYPES.filter((a) => !isNoSubsidyTwin(a)).length);
     expect(PUBLISHED.length).toBeGreaterThan(0);
   });
 

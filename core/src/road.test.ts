@@ -86,6 +86,16 @@ describe("cliffsBetween", () => {
     // $14,000 earned, $9,000 of it lost at the last step.
     expect(keepRate(points, road.lo, road.hi)).toBeCloseTo((14_000 - 9000) / 28_000, 10);
   });
+
+  it("measures keepRateToLine to hiStart, so an exit sitting on the line falls outside it", () => {
+    const points = sloped(0.5, 60_000);
+    for (let i = 55; i < points.length; i++) points[i].netIncome -= 9000;
+    const answers = answersWith({ childAges: [3, 7], childDisabled: [false, false] });
+    const road = roadSummary(analyzeCurve(points, 0), answers)!;
+    expect(road.keepRate).toBeCloseTo((14_000 - 9000) / 28_000, 10);
+    // $13,500 earned over the 27 steps to the line, and nothing lost before it.
+    expect(road.keepRateToLine).toBeCloseTo(0.5, 10);
+  });
 });
 
 describe("keepNext", () => {
@@ -122,6 +132,8 @@ describe("the road on the committed sweep, single parent of two", () => {
     expect(road!.worst!.drop).toBe(16_428);
     expect(road!.worst!.startEarnings).toBe(40_000);
     expect(road!.worst!.programsLost).toEqual(["childcare"]);
+    // Its collapse is inside the road, not on the line: still negative measured to exactly twice poverty.
+    expect(road!.keepRateToLine!).toBeLessThan(0);
     // Where the family stands on the road, from the reach ladder.
     expect(road!.familiesBelowHi).toBeGreaterThan(50);
     expect(road!.familiesBelowHi).toBeLessThan(75);

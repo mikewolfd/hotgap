@@ -170,6 +170,9 @@ describe("buildSummary", () => {
       // which is why the road loses 70 cents of every extra dollar — and a
       // third of families like this earn less than the $30,000 it happens at.
       keepRate: -0.6963,
+      // …and 75 cents measured to exactly twice poverty ($43,000), without the
+      // road's one-step allowance: this curve has no exit on the line.
+      keepRateToLine: -0.7499,
       roadLo: 21000,
       roadHi: 44000,
       roadCliffCount: 3,

@@ -102,6 +102,8 @@ const SOURCE = {
 
 // Must stay in step with ARCHETYPES in core/src/archetypes.ts; the reach lookup
 // test checks every state x archetype has a cell here, published or suppressed.
+// A `-nosub` twin (single-2-nosub) is left out on purpose: it is the same
+// families as the shape it twins, and the lookup never picks it (fallback.ts).
 const ARCHETYPE_IDS = [
   "single-0", "single-1", "single-2", "single-3",
   "married-0", "married-1", "married-2", "married-3",

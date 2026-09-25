@@ -92,6 +92,16 @@ export interface RoadSummary extends Road {
    * sampled point of this curve.
    */
   keepRate: number | null;
+  /**
+   * The same slope measured to `hiStart` — exactly the first sampled point at
+   * or above twice poverty — instead of one step past it. It is the road
+   * WITHOUT its one-step allowance, so an exit sitting on the 200% line (a
+   * child-care subsidy or SNAP limit at twice poverty) falls outside it. The
+   * pair is the boundary sensitivity a reader needs: a state negative on
+   * `keepRate` and positive here is negative by one step at the line, not
+   * across the road. Null in the same case `keepRate` is.
+   */
+  keepRateToLine: number | null;
   /** Every cliff whose step STARTS on the road — `[lo, hiStart]` inclusive — in earnings order. */
   cliffs: Cliff[];
   /** The largest of them — where the road collapses — or null when it holds. */
@@ -183,6 +193,7 @@ export function roadSummary(analysis: CurveAnalysis, answers: HouseholdAnswers):
   return {
     ...road,
     keepRate: keepRate(analysis.points, road.lo, road.hi),
+    keepRateToLine: keepRate(analysis.points, road.lo, road.hiStart),
     cliffs,
     worst: cliffs.reduce<Cliff | null>((worst, c) => (worst === null || c.drop > worst.drop ? c : worst), null),
     familiesBelowHi: reachAtEarnings(answers, road.hi),

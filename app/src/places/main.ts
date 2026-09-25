@@ -6,6 +6,7 @@
 import "../../../design/tokens.css";
 import "./places.css";
 import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
+import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { $ } from "../lib/dom.js";
 import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
@@ -15,6 +16,11 @@ import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } 
 import { applySelection, GROUPS, renderAnswer, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
 import { tileNeighbor } from "./tiles.js";
 import { parseView, viewQuery, type View } from "./url.js";
+
+/* The swept household's rent and care bill (core `answersFor`), which the
+   holds line under the answer and the link to the household tool both read:
+   24 KB, bundled the way the citizen page bundles it (citizen/facts.ts). */
+provideData({ "state-defaults.json": stateDefaultsJson });
 
 async function load(): Promise<SummaryJson> {
   const res = await fetch("/data/summary.json");

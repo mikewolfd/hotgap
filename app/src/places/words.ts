@@ -91,11 +91,13 @@ const agesList = (ages: number[]): string => (ages.length === 2 ? listOf(ages.ma
 const shapeOf = (married: boolean, bothWork: boolean): "single" | "bothWork" | "oneWorks" => (!married ? "single" : bothWork ? "bothWork" : "oneWorks");
 
 /** The household as the reader knows it (S10 of the first review): "1 adult, 2 children (3 and 7)". */
-export function householdLabel(married: boolean, bothWork: boolean, ages: number[]): string {
-  const H = copy.household, n = ages.length;
+export function householdLabel(married: boolean, bothWork: boolean, ages: number[], noSubsidy = false): string {
+  const H = copy.household;
   const adults = H.adults[shapeOf(married, bothWork)];
-  const children = t("household.children", { n, ages: agesList(ages) });
-  return t("household.line", { adults, children });
+  const children = t("household.children", { n: ages.length, ages: agesList(ages) });
+  const line = t("household.line", { adults, children });
+  /* The `-nosub` twin: "1 adult, 2 children (3 and 7), no child-care help". */
+  return noSubsidy ? t("household.nosub", { line }) : line;
 }
 
 /**
@@ -104,8 +106,10 @@ export function householdLabel(married: boolean, bothWork: boolean, ages: number
  * label form ("1 adult, 2 children (3 and 7)") does not read there. Same
  * facts, different grammar; the ages are the label's job, not this one's.
  */
-export const householdPhrase = (married: boolean, bothWork: boolean, ages: number[]): string =>
-  t(`household.phrase.${shapeOf(married, bothWork)}`, { n: ages.length, words: numberWords(ages.length) });
+export function householdPhrase(married: boolean, bothWork: boolean, ages: number[], noSubsidy = false): string {
+  const phrase = t(`household.phrase.${shapeOf(married, bothWork)}`, { n: ages.length, words: numberWords(ages.length) });
+  return noSubsidy ? t("household.phraseNosub", { phrase }) : phrase;
+}
 
 /** The counted lede sentence, the states counted as a reader counts them (rerun N11). */
 export const countedLede = (states: number, households: number, withDc: boolean): string =>

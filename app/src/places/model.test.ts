@@ -10,7 +10,7 @@ import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, c
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
   biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, axisTop: 150000,
-  keepRate: -0.1, roadLo: 27000, roadHi: 55000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
+  keepRate: -0.1, keepRateToLine: -0.05, roadLo: 27000, roadHi: 55000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
 });
 const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({
@@ -65,12 +65,13 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
 
 describe("counts in words (lib/format.ts numberWords)", () => {
   it("spells the counts the lede uses and falls back to digits beyond ninety-nine", () => {
-    expect(numberWords(ARCHETYPES.length)).toBe("eleven");
+    // Eleven shapes on the committed run: the lede counts the run's own list (summary.archetypes), which a row core has added but no sweep has filled (single-2-nosub) is not on yet.
+    expect(numberWords(11)).toBe("eleven");
     expect(capitalize(numberWords(STATE_CODES.length))).toBe("Fifty-one");
     expect([0, 20, 40, 99, 100, 1.5].map(numberWords)).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
     // The states counted as a reader counts them (rerun N11): fifty and DC when DC is in the file, a plain count otherwise.
-    expect(countedLede(STATE_CODES.length, ARCHETYPES.length, true)).toMatch(/^Fifty states and the District of Columbia, eleven household shapes, one earnings scale/);
-    expect(countedLede(50, ARCHETYPES.length, false)).toMatch(/^Fifty states, eleven household shapes/);
+    expect(countedLede(STATE_CODES.length, 11, true)).toMatch(/^Fifty states and the District of Columbia, eleven household shapes, one earnings scale/);
+    expect(countedLede(50, 11, false)).toMatch(/^Fifty states, eleven household shapes/);
   });
 });
 
