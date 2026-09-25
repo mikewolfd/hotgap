@@ -11,7 +11,7 @@
 // per layout; a layout is computed once per draw (a new evaluation or a
 // resize), never per pointer event or per scroll.
 import { fromAnnual, toAnnual, type Cliff } from "@hotgap/core";
-import { clusterCliffs, fitY, layerFor, niceStep, niceTicks, plotHeight, plotWidth, PLOT_LEAD, refits, scaleFor, scrollFor, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
+import { clusterCliffs, fitY, layerFor, niceStep, niceTicks, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, stableSpan, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
 import type { Scene } from "./model.js";
 
 /** The gutter the y axis lives in, outside the scroller: wide enough for "$100k" at the tick size. */
@@ -35,7 +35,7 @@ export const ROAD_FOOT = 40;
  * or the whole axis on paper and by default — and is at least 2.5× the
  * largest drop on the WHOLE curve, so no view makes any drop look bigger
  * than the rule allows. Snapped outward to a quarter of the gridline step.
- * `lo`/`hi` are the fitted points' own extremes, for the refit test.
+ * `lo`/`hi` are the fitted points' own extremes.
  */
 export function yRange(s: Scene, narrow: boolean, e0 = 0, e1 = s.top): { y0: number; y1: number; stepY: number; maxDrop: number; lo: number; hi: number } {
   const maxDrop = Math.max(0, ...s.cliffs.map((c) => c.drop));
@@ -121,14 +121,12 @@ export function layout(s: Scene, width: number, print = false, screen = 0, at: n
   const xOnly = layerFor(W, 1, pad, 0, s.top, 0, 1);
   const landing = print ? 0 : scrollFor(xOnly, viewport, s.window, s.current);
   const scrollLeft = print ? 0 : at === null ? landing : Math.round(Math.max(0, Math.min(W - viewport, xOnly.px(at))));
-  const payAt = (x: number) => (x - pad.l) / scale;
-  const inView = (left: number) => yRange(s, narrow, print ? 0 : payAt(left), print ? s.top : payAt(left + viewport));
-  const { y0, y1, stepY, maxDrop, lo, hi } = inView(scrollLeft);
-  /* The height is the LANDING view's (charts.md § Height, and the second floor: what is left of the
-     first screen, handed in by the page), so a refit on scroll never moves the page under the reader.
-     Paper has no screen and passes none. */
-  const fit = at === null || print ? { y0, y1 } : inView(landing);
-  const H = plotHeight(fit.y1 - fit.y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
+  /* One y-range for the whole draw, never refitted on scroll (a rescale mid-read was jarring): the
+     stretch that matters, from $0 through the last danger zone (lib/chart/geometry.ts `stableSpan`).
+     Paper fits the whole axis; past the span on screen the line is clipped at the plot's edge. */
+  const [e0, e1] = print ? [0, s.top] : stableSpan(s.window, s.safeExit ?? s.exit, s.top);
+  const { y0, y1, stepY, maxDrop, lo, hi } = yRange(s, narrow, e0, e1);
+  const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
   const layer = layerFor(W, H, pad, 0, s.top, y0, y1);
   return {
     ...layer, narrow, i0: 0, i1: s.net.length - 1, y0, y1, stepY, maxDrop, lo, hi, gutter, viewport, print, scale,
@@ -140,14 +138,3 @@ export function layout(s: Scene, width: number, print = false, screen = 0, at: n
   };
 }
 
-/**
- * Whether the reader, scrolled to `left`, is looking at a curve the drawn
- * y-range no longer serves (lib/chart/geometry.ts `refits`): the page asks
- * once the scroller comes to rest, and redraws only when it does.
- */
-export function needsRefit(s: Scene, L: Layout, left: number): boolean {
-  if (L.print) return false;
-  const payAt = (x: number) => (x - L.pad.l) / L.scale;
-  const v = yRange(s, L.narrow, payAt(left), payAt(left + L.viewport));
-  return refits([L.y0, L.y1], [v.y0, v.y1], v.lo, v.hi);
-}

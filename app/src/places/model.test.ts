@@ -86,8 +86,8 @@ describe("the measures, from copy", () => {
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
     expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);
     expect(measureByKey("roadWorst")!.title).toBe("Where the road collapses");
-    // Short enough to show whole in the select at 390 (design critique 2026-09-24): the definition is `describe`.
-    for (const m of MEASURES) expect(m.option.length, m.key).toBeLessThanOrEqual(30);
+    // A plain question a reader would ask, short enough to show whole in the select at 390; the definition is `describe`.
+    for (const m of MEASURES) expect(m.option.length, m.key).toBeLessThanOrEqual(40);
     expect(measureByKey("leap")!.describe).toContain("worst danger zone");
     expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
     // dangerWidth is every zone's width added together (pipeline/src/metrics.ts); the widest one's width is the leap.

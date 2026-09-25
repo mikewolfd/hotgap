@@ -9,7 +9,7 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import { keepRateWords, type Cliff } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, onScrollRest, pathD, plotClip, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { scrollToShow } from "../lib/chart/geometry.js";
 import { placer, type Spot } from "../lib/chart/labels.js";
 import { h, svg } from "../lib/dom.js";
@@ -18,7 +18,7 @@ import { finePointer, watchScrollEdges } from "../lib/scroll.js";
 import { copy, parts, t } from "./copy.js";
 import { subText, worstPhrase } from "./facts.js";
 import { phrase } from "./programs.js";
-import { layout, MAX_DROP_LABELS, needsRefit, type Cluster, type Layout } from "./geometry.js";
+import { layout, MAX_DROP_LABELS, type Cluster, type Layout } from "./geometry.js";
 import type { Scene } from "./model.js";
 
 export interface ChartHooks {
@@ -289,7 +289,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     if (bracket) P.blockLine([[cx, by], [bx, by]]);
     /* …and the x ticks and the road's bar under the plot: a label nudged down must not land on them. */
     P.block({ x: 0, y: bottom + 1, w: W, h: (s.road ? roadY + 5 : bottom + 28) - bottom });
-    /* A mark past the fitted range is somewhere the reader is not looking: its label waits for the refit. */
+    /* A mark past the fitted range is somewhere the reader is not looking: it keeps its button but no label (past the stable span, lib/chart/geometry.ts `stableSpan`). */
     const onPlot = (mk: { y: number }) => mk.y >= top && mk.y <= bottom;
 
     /* 1. What the reader keeps now, at their own diamond: the fact that left
@@ -437,9 +437,6 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     if (!L || L.print) return;
     anchor = (scroll.scrollLeft - L.pad.l) / (L.W - L.pad.l - L.pad.r) * s.top;
   }, { passive: true });
-  /* Once the scroller rests, the y-range is refitted if the curve in view has left it or it has grown
-     far too loose for it (geometry.ts `needsRefit`) — one redraw, no animation, and never mid-scroll. */
-  onScrollRest(scroll, () => { if (L && needsRefit(s, L, scroll.scrollLeft)) draw(); });
 
   /** Bring a plot-space x into view (the keyboard's job: a focused mark or the caret must be visible — proof (b)). */
   function reveal(x: number): void {

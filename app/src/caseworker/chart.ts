@@ -21,8 +21,8 @@
 // A draw is O(points × (1 + what-ifs) + cliffs + zones); a width change
 // redraws once; print redraws synchronously at a fixed width (review N6).
 import { keepRateWords, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, onScrollRest, pathD, plotClip, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
-import { clusterCliffs, fitY, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, refits, scaleFor, scrollFor, scrollToShow, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
+import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
+import { clusterCliffs, fitY, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
 import { MAX_DROP_LABELS, placer, type Spot } from "../lib/chart/labels.js";
 import { finePointer, watchScrollEdges } from "../lib/scroll.js";
 
@@ -79,8 +79,6 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
   let whatIfs: WhatIfLine[] = [];
   /* The pay at the scroller's left edge once the reader has moved it; whether this draw is for paper; the viewport it drew into. */
   let anchor: number | null = null, printing = false, viewportW = 0;
-  /* The y-range the last draw fitted, which a refit on scroll is measured against. */
-  let drawnY: [number, number] = [0, 0];
   /* The edge fades are measured (lib/scroll.ts): this scroller, the ledger's and the table's. */
   watchScrollEdges();
 
@@ -134,23 +132,22 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const landing = print ? 0 : scrollFor(xOnly, viewport, view, A.currentEarnings);
     const left = print ? 0 : anchor === null ? landing : Math.max(0, Math.min(W - viewport, xOnly.px(anchor)));
     /* Axis honesty (charts.md): the floor is computed, never typed, and the visible range is at least
-       2.5× the largest drop on the WHOLE curve (S14). Since 2026-09-24 the range is fitted to the curve
-       in view (lib/chart/geometry.ts `fitY`) — every line drawn there, what-ifs included, is inside it —
-       and the rest of the axis is clipped until the reader scrolls there and it refits. */
+       2.5× the largest drop on the WHOLE curve (S14). The range is fitted once per draw to the stretch
+       that matters (lib/chart/geometry.ts `stableSpan`) — every line drawn there, what-ifs included, is
+       inside it — and never refitted on scroll; past it the line is clipped. */
     const n = narrow ? 3 : 5;
     const maxDrop = Math.max(0, ...cliffs().map((c) => c.drop));
-    const range = (sl: number) => yFit(print ? x0 : payAt(sl), print ? x1 : payAt(sl + viewport), lines, maxDrop, n);
-    const { y0, y1, step } = range(left);
+    const [e0, e1] = print ? [x0, x1] : stableSpan(view, safe ?? P.escapeEarnings, x1);
+    const { y0, y1, step } = yFit(e0, e1, lines, maxDrop, n);
     /* The plot is as tall as the biggest drop needs to clear 24px, clamped, and — since the figure is the
        page — at least what is left of the reader's first screen (charts.md § Height). The same rule and the
        same numbers as the citizen's, so one figure is not read at a different scale from the other. It is
-       the LANDING view's range that sets it, so a refit on scroll never moves the page. */
-    const home = anchor === null || print ? { y0, y1 } : range(landing);
-    const H = plotHeight(home.y1 - home.y0, maxDrop, print ? 0 : screenLeft() - pad.t - pad.b) + pad.t + pad.b;
+       one range for the whole draw, so scrolling never moves the page. */
+    const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screenLeft() - pad.t - pad.b) + pad.t + pad.b;
     const L = layerFor(W, H, pad, x0, x1, y0, y1), { px, py } = L;
     const plotTop = pad.t, plotBot = H - pad.b;
     /* The placer reads where the reader is looking, so the scroll and the viewport have to be current before any label is drawn. */
-    layer = L; printing = print; viewportW = viewport; drawnY = [y0, y1];
+    layer = L; printing = print; viewportW = viewport;
     host.scroll.scrollLeft = left;
 
     sizeSvg(svg, W, H);
@@ -277,7 +274,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     if (P.zone) { label.blockLine([[px(P.zone.startEarnings), yPeak], [bx1, yPeak]]); label.blockLine([[lx0, by], [lx1, by]]); }
     /* …and the x ticks and the road's bar under the plot: a label nudged down must not land on them. */
     label.block({ x: 0, y: plotBot + 1, w: W, h: (road ? roadY + 5 : plotBot + 26) - plotBot });
-    /* A mark past the fitted range is somewhere the reader is not looking: its label waits for the refit. */
+    /* A mark past the fitted range is somewhere the reader is not looking: it keeps its button but no label (past the stable span, lib/chart/geometry.ts `stableSpan`). */
     const onPlot = (m: Mark) => m.y >= plotTop && m.y <= plotBot;
 
     /* 1. What the household keeps now, at its own diamond: the one place the y axis is named in dollars —
@@ -449,19 +446,6 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     while ((y1 - y0) / step > n + 1) { step = niceUp(step); y0 = Math.floor(lo / step) * step; y1 = Math.ceil(hi / step) * step; }
     return { y0, y1, step, lo: Math.min(...values), hi: Math.max(...values) };
   }
-
-  /* Once the scroller rests, the y-range is refitted if the curve in view has left it or it has grown far too
-     loose for it (lib/chart/geometry.ts `refits`) — one redraw, no animation, and never mid-scroll. A mark
-     that had focus keeps it across the redraw. */
-  onScrollRest(host.scroll, () => {
-    if (!layer || printing || !ev) return;
-    const pay = (x: number) => earn[0] + ((x - layer!.pad.l) / (layer!.W - layer!.pad.l - layer!.pad.r)) * (earn[earn.length - 1] - earn[0]);
-    const v = yFit(pay(host.scroll.scrollLeft), pay(host.scroll.scrollLeft + viewportW), drawnWhatIfs(), Math.max(0, ...cliffs().map((c) => c.drop)), wrap.clientWidth < 520 ? 3 : 5);
-    if (!refits(drawnY, [v.y0, v.y1], v.lo, v.hi)) return;
-    const focused = marks.findIndex((m) => m.btn === document.activeElement);
-    draw();
-    if (focused >= 0) marks[focused]?.btn.focus();
-  });
 
   /** Bring a plot-space x into view — a focused mark or the keyboard caret has to be visible. */
   function reveal(x: number): void {

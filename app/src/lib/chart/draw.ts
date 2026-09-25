@@ -32,17 +32,6 @@ export function plotClip(id: string, W: number, top: number, bottom: number): { 
   return { defs, g: svg("g", { "clip-path": `url(#${id})` }) };
 }
 
-/**
- * Call `fn` once the scroller has come to rest: 160ms without a scroll event,
- * which is also after a fling's momentum. This is when a chart asks whether
- * its fitted y-range still serves the view — never during the scroll, so the
- * axis does not move under a moving thumb, and never animated.
- */
-export function onScrollRest(el: HTMLElement, fn: () => void): void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  el.addEventListener("scroll", () => { clearTimeout(timer); timer = setTimeout(fn, 160); }, { passive: true });
-}
-
 /** MarkKey (#5): each entry draws the actual mark, 22×12, never a swatch alone. */
 export const KEY_MARK = {
   line: `<line x1="1" y1="6" x2="21" y2="6" stroke="var(--series-1)" stroke-width="2.5" stroke-linecap="round"/>`,
@@ -179,7 +168,7 @@ export function markButton(x: number, y: number, L: Pick<Layer, "W" | "H" | "pad
   b.style.left = `${(x / L.W) * 100}%`;
   /* Held inside the plot: a mark whose dot is past the fitted y-range (somewhere the reader is not
      looking) must not hang out of the box and give the scroller a vertical overflow. It stays a
-     control, so ] and [ still reach it, and reaching it scrolls there and refits. */
+     control, so ] and [ still reach it. */
   b.style.top = `${(Math.min(L.H - L.pad.b, Math.max(L.pad.t, y)) / L.H) * 100}%`;
   /* The height is always the full square: marks are laid along the x axis, so
      only x can collide. Both are set here rather than in the class, which

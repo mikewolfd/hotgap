@@ -98,9 +98,8 @@ export const PLOT_H = { min: 260, max: 560 } as const;
 /**
  * The plot's height from the data, for both charts. It was written when the
  * y-range was the whole curve's, where the biggest drop was 2.7% to 8% of
- * it; since the range is fitted to the landing view (`fitY`) the drop is a
- * far larger share and the floor rarely bites. The page passes the LANDING
- * view's range, so a refit on scroll never changes the figure's height. The
+ * it; since the range is fitted to the stretch that matters (`stableSpan`,
+ * `fitY`) the drop is a far larger share and the floor rarely bites. The
  * plot is as tall as the biggest drop needs to clear `DROP_FLOOR`, clamped.
  *
  * The ceiling bites, and `charts.md` records where: four of the eight would
@@ -144,9 +143,8 @@ export const FIT_ROOM = { top: 0.24, foot: 0.1 } as const;
  * The extension that meets the rule goes mostly above the line, where the
  * labels are. A curve that stays positive never gets a floor below $0.
  *
- * The rest of the curve is still drawn, clipped by the plot; when the reader
- * scrolls somewhere it leaves the range, the page refits on rest
- * (`refits`) — no animated rescale.
+ * The pay it is fitted over is `stableSpan`'s, chosen once per draw and
+ * never refitted on scroll; past it the line is clipped by the plot.
  */
 export function fitY(values: number[], maxDrop: number): [number, number] {
   const lo = Math.min(...values), hi = Math.max(...values);
@@ -157,13 +155,14 @@ export function fitY(values: number[], maxDrop: number): [number, number] {
 }
 
 /**
- * Whether a view needs a new y-range, with hysteresis so a small scroll never
- * moves the axis: only when a visible point has left the range, or the range
- * has become far looser than the view needs (the fit for it is under 60% of
- * the range drawn). `lo`/`hi` are the visible points' extremes.
+ * The pay a chart's y-range is fitted over, once per draw: from $0 through
+ * the landing window and the safe exit — where the last danger zone ends —
+ * plus a third of the margin. Every drop the reader needs is inside it, so
+ * scrolling never rescales the axis (a refit on rest read as the chart
+ * jumping); only the climb past the last zone can run off the top.
  */
-export function refits(drawn: [number, number], fit: [number, number], lo: number, hi: number): boolean {
-  return lo < drawn[0] || hi > drawn[1] || fit[1] - fit[0] < 0.6 * (drawn[1] - drawn[0]);
+export function stableSpan(window: [number, number], exit: number | null, top: number): [number, number] {
+  return [0, Math.min(top, Math.max(window[1], (exit ?? 0) + WINDOW_MARGIN / 3))];
 }
 
 /** The context the initial view carries around what it must show: a third before, two thirds after, where the climb back is. */

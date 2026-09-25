@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import type { Cliff } from "@hotgap/core";
 import { makeEvaluation } from "../../citizen/fixture.js";
 import { sceneOf } from "../../citizen/model.js";
-import { clusterCliffs, fitY, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, refits, scaleFor, scrollFor, scrollToShow } from "./geometry.js";
+import { clusterCliffs, fitY, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, WINDOW_MARGIN } from "./geometry.js";
 
 describe("nice values", () => {
   test("a step is range / n snapped to 1, 2, 2.5 or 5 × 10^k", () => {
@@ -91,11 +91,11 @@ describe("the scroll rule", () => {
     const flat = fitY([50_000, 50_000], 0);
     expect(flat[1] - flat[0]).toBeGreaterThan(0);
   });
-  test("a view refits only when its curve has left the range or the range is far too loose for it", () => {
-    expect(refits([35_000, 65_000], [35_000, 65_000], 42_000, 55_000)).toBe(false);
-    expect(refits([35_000, 65_000], [40_000, 66_000], 45_000, 60_000)).toBe(false);   // a small scroll: the axis holds still
-    expect(refits([35_000, 65_000], [60_000, 100_000], 70_000, 90_000)).toBe(true);   // the line has left the top
-    expect(refits([0, 100_000], [40_000, 60_000], 45_000, 55_000)).toBe(true);        // far looser than the view needs
+  test("the y-range's span runs from $0 through the landing window and the safe exit, capped at the axis", () => {
+    expect(stableSpan([20_000, 60_000], 43_000, 150_000)).toEqual([0, 60_000]);
+    expect(stableSpan([20_000, 60_000], 119_000, 150_000)).toEqual([0, 119_000 + WINDOW_MARGIN / 3]);
+    expect(stableSpan([20_000, 60_000], 149_000, 150_000)).toEqual([0, 150_000]);
+    expect(stableSpan([20_000, 60_000], null, 150_000)).toEqual([0, 60_000]);
   });
   test("the initial scroll centres the window and then pulls the household's own pay inside the viewport", () => {
     const L = layerFor(1812, 400, pad, 0, 150_000, 0, 100_000);

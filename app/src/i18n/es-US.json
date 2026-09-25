@@ -1064,54 +1064,54 @@
       "measure": "Medida",
       "csv": "Descargar los datos (CSV)",
       "groups": {
-        "road": "En el camino para salir de la pobreza",
-        "axis": "En cualquier punto de la curva"
+        "road": "De la línea de pobreza al doble",
+        "axis": "En cualquier sueldo"
       }
     },
     "measures": {
       "biggestLoss": {
         "title": "Mayor pérdida en un escalón",
-        "option": "Mayor pérdida en la curva ($)",
+        "option": "Mayor pérdida (cualquier sueldo)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
       },
       "dangerWidth": {
         "title": "Ancho total de las zonas de peligro",
-        "option": "Zonas de peligro, ancho total ($)",
+        "option": "Rango de sueldo donde se pierde",
         "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
       },
       "leap": {
         "title": "El salto",
-        "option": "El salto ($)",
+        "option": "Aumento necesario para salir",
         "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
       },
       "safeExit": {
         "title": "Salida segura",
-        "option": "Salida segura ($)",
+        "option": "Sueldo donde se deja de perder",
         "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
       },
       "cliffCount": {
         "title": "Número de precipicios",
-        "option": "Precipicios en toda la curva",
+        "option": "Aumentos con pérdida (cualquier sueldo)",
         "describe": "Escalones hacia abajo de {floor} o más en cualquier punto de la curva."
       },
       "deferredCliffCount": {
         "title": "Precipicios diferidos",
-        "option": "Precipicios diferidos",
+        "option": "Pérdidas que llegan después, al renovar",
         "describe": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre."
       },
       "keepRate": {
         "title": "Lo que se queda de cada dólar en el camino para salir de la pobreza",
-        "option": "Lo que se queda por dólar (¢)",
+        "option": "Centavos que conserva por dólar extra",
         "describe": "De cada dólar extra ganado entre la línea de pobreza y el doble de esa línea, los centavos que este hogar conserva una vez contados los impuestos y los beneficios perdidos. Por debajo de cero, termina más pobre de lo que empezó."
       },
       "roadCliffCount": {
         "title": "Precipicios en el camino para salir de la pobreza",
-        "option": "Precipicios en el camino",
+        "option": "Aumentos con pérdida (pobreza–2×)",
         "describe": "Escalones hacia abajo de {floor} o más entre la línea de pobreza y el doble de esa línea."
       },
       "roadWorst": {
         "title": "Dónde se derrumba el camino",
-        "option": "Dónde se derrumba el camino ($)",
+        "option": "Sueldo de la peor pérdida (pobreza–2×)",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 entre la línea de pobreza y el doble de esa línea."
       }
     },

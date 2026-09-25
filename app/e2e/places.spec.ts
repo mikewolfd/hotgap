@@ -151,8 +151,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Two groups, two questions (Plan 9): the road out of poverty leads,
        because that is where the families this tool is for actually are. */
     const groups = await page.$$eval("#metric optgroup", (els) => els.map((g) => [(g as HTMLOptGroupElement).label, [...g.children].map((o) => (o as HTMLOptionElement).value)] as [string, string[]]));
-    check(groups.length === 2 && groups[0][0] === "On the road out of poverty" && groups[0][1].join() === "keepRate,roadCliffCount,roadWorst"
-      && groups[1][0] === "Anywhere on the curve" && groups[1][1].join() === "biggestLoss,dangerWidth,leap,safeExit,cliffCount,deferredCliffCount",
+    check(groups.length === 2 && groups[0][0] === "From the poverty line to twice it" && groups[0][1].join() === "keepRate,roadCliffCount,roadWorst"
+      && groups[1][0] === "At any pay" && groups[1][1].join() === "biggestLoss,dangerWidth,leap,safeExit,cliffCount,deferredCliffCount",
       "the measure menu is two groups: the road's three measures, then the six whole-axis ones (Plan 9)", groups);
     const bare = await page.evaluate(() => [(document.querySelector("#metric") as HTMLSelectElement).value, new URL(location.href).searchParams.get("measure")]);
     check(bare[0] === "keepRate" && bare[1] === null, "a bare URL opens on the keep rate, without having to say so", bare);
@@ -162,7 +162,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        twice poverty, the…"); the definitions are the measures' own `describe`,
        in "How to read this map" and above the table. */
     const defOf = (key: string) => page.$eval(`#def-col${key[0].toUpperCase()}${key.slice(1)}`, (el) => el.textContent!);
-    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 30)
+    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 40)
       && /worst danger zone/.test(await defOf("leap")) && /no danger zone remains/.test(await defOf("safeExit")),
       "every measure option stands on its own and is short (S2), and its definition is the measure's own describe", options);
     /* A CLOSED select shows the option without its <optgroup> label, so every
@@ -174,7 +174,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        (2026-09-18, B2 and B3). The four are pinned as a set, because the
        defect is the PAIR reading alike, not either option alone. */
     const twins: [number, number][] = [[1, 7], [2, 3]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
-    check(twins.every(([road, axis]) => /\broad\b/i.test(options[road]) && /\banywhere\b/i.test(options[axis])),
+    check(twins.every(([road, axis]) => /poverty–2×/.test(options[road]) && /any pay/.test(options[axis])),
       "each measure with a twin in the other group names its own window in the option a closed select shows (B2, B3)",
       twins.map(([road, axis]) => [options[road], options[axis]]));
     /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */

@@ -1061,54 +1061,54 @@
       "measure": "Measure",
       "csv": "Download the numbers (CSV)",
       "groups": {
-        "road": "On the road out of poverty",
-        "axis": "Anywhere on the curve"
+        "road": "From the poverty line to twice it",
+        "axis": "At any pay"
       }
     },
     "measures": {
       "biggestLoss": {
         "title": "Largest one-step loss",
-        "option": "Largest loss anywhere ($)",
+        "option": "Biggest loss from one raise (any pay)",
         "describe": "Net income lost in the worst single $1,000 step of earnings."
       },
       "dangerWidth": {
         "title": "Total width of the danger zones",
-        "option": "Total danger-zone width ($)",
+        "option": "Pay range where raises lose money",
         "describe": "Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together."
       },
       "leap": {
         "title": "The leap",
-        "option": "The leap ($)",
+        "option": "Raise needed to get clear",
         "describe": "The raise a household must clear in one move to get past its worst danger zone."
       },
       "safeExit": {
         "title": "Safe exit",
-        "option": "Safe exit ($)",
+        "option": "Pay where raises stop losing money",
         "describe": "Earnings above which no danger zone remains: where the last one closes."
       },
       "cliffCount": {
         "title": "Number of cliffs",
-        "option": "Cliffs anywhere on the curve",
+        "option": "Raises that lose money (any pay)",
         "describe": "Steps down of {floor} or more anywhere on the curve."
       },
       "deferredCliffCount": {
         "title": "Deferred cliffs",
-        "option": "Deferred cliffs",
+        "option": "Losses that hit later, at renewal",
         "describe": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance."
       },
       "keepRate": {
         "title": "Keep rate on the road out of poverty",
-        "option": "Keep rate (¢)",
+        "option": "Cents kept of each extra dollar",
         "describe": "Of each extra dollar earned between the poverty line and twice the poverty line, the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started."
       },
       "roadCliffCount": {
         "title": "Cliffs on the road out of poverty",
-        "option": "Cliffs on the road",
+        "option": "Raises that lose money (poverty–2×)",
         "describe": "Steps down of {floor} or more between the poverty line and twice the poverty line."
       },
       "roadWorst": {
         "title": "Where the road collapses",
-        "option": "Where the road collapses ($)",
+        "option": "Pay of the worst loss (poverty–2×)",
         "describe": "Net income lost in the worst single $1,000 step between the poverty line and twice the poverty line."
       }
     },

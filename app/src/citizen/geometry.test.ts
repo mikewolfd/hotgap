@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest";
 import { makeEvaluation, TOP } from "./fixture.js";
 import { clusterCliffs, MAX_SCREENS } from "../lib/chart/geometry.js";
 import { tickMoney } from "../lib/format.js";
-import { layout, needsRefit, xTicks, yRange } from "./geometry.js";
+import { layout, xTicks, yRange } from "./geometry.js";
 import { sceneOf, WINDOW_MARGIN, windowFor } from "./model.js";
 
 const year = { unit: "year" };
@@ -103,7 +103,7 @@ describe("axis honesty", () => {
       expect(y1).toBeGreaterThanOrEqual(Math.max(...s.net));
     }
   });
-  test("on a screen the y-range is fitted to the curve in view: tighter than the whole curve's, still 2.5× its biggest drop", () => {
+  test("on a screen the y-range is fitted once to the stretch that matters: tighter than the whole curve's, still 2.5× its biggest drop, the same wherever the reader scrolls", () => {
     const s = sceneOf(makeEvaluation(), year);
     const whole = yRange(s, false);
     for (const box of [390, 1280]) {
@@ -118,19 +118,19 @@ describe("axis honesty", () => {
           expect(s.net[i]).toBeLessThanOrEqual(L.y1);
         }
       }
-      // Where the reader lands the range serves the view; scrolled to the top of the axis it does not.
-      expect(needsRefit(s, L, L.scrollLeft)).toBe(false);
-      expect(needsRefit(s, L, L.W - L.viewport)).toBe(true);
+      // Every danger zone's points are inside it too, so no drop is ever clipped.
+      for (const c of s.cliffs) for (const e of [c.startEarnings, c.endEarnings]) {
+        if (e <= (s.safeExit ?? s.exit ?? 0)) { expect(s.net[s.idx(e)]).toBeGreaterThanOrEqual(L.y0); expect(s.net[s.idx(e)]).toBeLessThanOrEqual(L.y1); }
+      }
       // Paper fits the whole curve.
       const paper = layout(s, 640, true);
       expect(paper.y0).toBeLessThanOrEqual(Math.min(...s.net));
       expect(paper.y1).toBeGreaterThanOrEqual(Math.max(...s.net));
     }
-    // Scrolling to the top of the axis and redrawing there fits that view instead, at the same height.
+    // A redraw scrolled to the top of the axis keeps the same range and height: scrolling never rescales.
     const L = layout(s, 390);
     const far = layout(s, 390, false, 0, s.top);
-    expect(far.H).toBe(L.H);
-    expect(far.y1).toBeGreaterThanOrEqual(s.net[s.net.length - 1]);
+    expect([far.y0, far.y1, far.H]).toEqual([L.y0, L.y1, L.H]);
   });
   test("the biggest drop clears the 24px floor in the initial view at 390 and at 1280 (charts.md § The scroll rule)", () => {
     const s = sceneOf(makeEvaluation(), year);
