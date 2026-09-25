@@ -226,6 +226,21 @@ export function axisGutter(el: SVGSVGElement, width: number, H: number, ticks: n
 }
 
 /**
+ * The break (design/charts.md § The break), marked twice, because the gutter
+ * and the plot are two SVGs and a reader scrolled far right sees only the
+ * second: in the gutter, two short slanted strokes at the plot's edge where
+ * the scale changes (`.hg-break`); across the plot, a dashed hairline at the
+ * same height (`.hg-break-line`). Nothing when the layer has no band. The
+ * band's own ticks go in the gutter and the gridlines like any other tick.
+ */
+export function breakMarks(gutter: SVGSVGElement, gutterWidth: number, plot: SVGSVGElement, L: Layer): void {
+  if (!L.band) return;
+  const y = L.py(L.band.y1), x = gutterWidth - 2;
+  gutter.append(svg("path", { d: `M${x - 9} ${y + 3.5} L${x - 3} ${y - 3.5} M${x - 5} ${y + 3.5} L${x + 1} ${y - 3.5}`, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-linecap": "round", class: "hg-break" }));
+  plot.append(svg("line", { x1: 0, y1: y, x2: L.W, y2: y, stroke: "var(--rule)", "stroke-width": 1, "stroke-dasharray": "5 4", class: "hg-break-line" }));
+}
+
+/**
  * A redraw when the wrapper's width changes (a resize, or the column changing
  * under it — the caseworker's grid moves when a comparison widens), never on
  * a height change alone, and never while the page is laid out for paper:

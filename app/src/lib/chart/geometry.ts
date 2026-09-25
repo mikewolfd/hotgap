@@ -144,7 +144,7 @@ export const FIT_ROOM = { top: 0.24, foot: 0.1 } as const;
  * labels are. A curve that stays positive never gets a floor below $0.
  *
  * The pay it is fitted over is `stableSpan`'s, chosen once per draw and
- * never refitted on scroll; past it the line is clipped by the plot.
+ * never refitted on scroll; past it the curve climbs into the band above the break (§ The break).
  */
 export function fitY(values: number[], maxDrop: number): [number, number] {
   const lo = Math.min(...values), hi = Math.max(...values);
@@ -161,7 +161,7 @@ export function fitY(values: number[], maxDrop: number): [number, number] {
  * the whole curve's safe exit (TASKS, The pictures): that put the SF
  * household's $42k–$47k story on a $15k–$100k axis. Every drop the reader
  * lands on is inside it, so scrolling never rescales the axis (a refit on
- * rest read as the chart jumping); a far zone scrolls in on a clipped line,
+ * rest read as the chart jumping); a far zone scrolls in inside the band above the break,
  * and the 2.5× rule (`fitY`) still holds against the whole curve's drop.
  */
 export function stableSpan(window: [number, number], exit: number | null, top: number): [number, number] {
@@ -222,19 +222,80 @@ export function scrollToShow(x: number, left: number, viewport: number, W: numbe
   return Math.round(Math.min(max, Math.max(0, want)));
 }
 
+/**
+ * THE BREAK (design/charts.md § The break). The y-range is fitted to the
+ * stretch that matters (`stableSpan`, `fitY`), and past it the curve keeps
+ * climbing — for the SF household to ~$95k against a fitted top of $60k — so
+ * the far view was empty: no line, no dot for the biggest drop. The owner's
+ * rule is that the curve is never cropped, so when any of it is above the
+ * fitted top a COMPRESSED BAND is added at the top of the plot, `bandPx` tall,
+ * mapping [y1, yMax] linearly. Below y1 nothing changes shape: the fitted
+ * range gets the drawing height less the band. The break is marked in the
+ * gutter and across the plot, and the caption says so.
+ */
+export interface Band {
+  /** The fitted top, where the scale changes. */
+  y1: number;
+  /** The top of the band: the curve's highest point plus a little room. */
+  yMax: number;
+  /** The band's height in pixels, at the top of the drawing area. */
+  bandPx: number;
+}
+
+/** The band's share of the drawing height: small enough that a fitted drop keeps ~80% of its height, big enough to read the climb. */
+export const BAND_SHARE = { wide: 0.2, narrow: 0.24 } as const;
+/** The room above the curve's highest point inside the band, as a share of what the band spans. */
+const BAND_ROOM = 0.08;
+
+/**
+ * The drawing height and the band, for a fitted range [y0, y1] and a curve
+ * whose highest point is `maxNet`. With no band this is `plotHeight`. With
+ * one, the band comes out of the same height — the figure is never taller
+ * than the screen asked for — unless the drop floor then needs more, in which
+ * case the plot grows by the band, under the same ceiling.
+ */
+export function drawingFor(y0: number, y1: number, maxNet: number, maxDrop: number, narrow: boolean, avail = 0): { drawing: number; band?: Band } {
+  const base = plotHeight(y1 - y0, maxDrop, avail);
+  if (!(maxNet > y1)) return { drawing: base };
+  const share = narrow ? BAND_SHARE.narrow : BAND_SHARE.wide;
+  const drawing = Math.max(base, Math.min(PLOT_H.max, Math.round(plotHeight(y1 - y0, maxDrop) / (1 - share))));
+  return { drawing, band: { y1, yMax: maxNet + (maxNet - y1) * BAND_ROOM, bandPx: Math.round(drawing * share) } };
+}
+
+/** How many times fewer pixels a dollar gets inside the band than below it; 1 when there is no band. */
+export function bandFactor(L: Pick<Layer, "H" | "pad" | "band">, y0: number): number {
+  const b = L.band;
+  if (!b) return 1;
+  const below = (L.H - L.pad.t - L.pad.b - b.bandPx) / (b.y1 - y0), above = b.bandPx / (b.yMax - b.y1);
+  return below / above;
+}
+
+/** A tick or two inside the band, on nice values from the band's own scale, clear of the break by `gap` px and of the top by 6. */
+export function bandTicks(L: Pick<Layer, "band" | "py">, gap = 14): number[] {
+  const b = L.band;
+  if (!b) return [];
+  return niceTicks(b.y1, b.yMax, niceStep(b.yMax - b.y1, 2)).filter((v) => L.py(b.y1) - L.py(v) >= gap && L.py(v) - L.py(b.yMax) >= 6);
+}
+
 /** The drawing layer: the box, its padding, and money → pixels. */
 export interface Layer {
   W: number; H: number; pad: Pad;
   px(earnings: number): number;
+  /** One function, piecewise linear when there is a band: the fitted scale up to `band.y1`, the band's above it. */
   py(net: number): number;
+  /** The compressed band at the top of the plot, when the curve climbs past the fitted range. */
+  band?: Band;
 }
 
-/** The linear maps of an x-range and a y-range onto the box inside its padding. */
-export function layerFor(W: number, H: number, pad: Pad, x0: number, x1: number, y0: number, y1: number): Layer {
+/** The linear maps of an x-range and a y-range onto the box inside its padding, with the band on top when there is one. */
+export function layerFor(W: number, H: number, pad: Pad, x0: number, x1: number, y0: number, y1: number, band?: Band): Layer {
+  const top = pad.t + (band?.bandPx ?? 0), h = H - pad.b - top;
   return {
-    W, H, pad,
+    W, H, pad, band,
     px: (e) => pad.l + ((e - x0) / (x1 - x0)) * (W - pad.l - pad.r),
-    py: (v) => pad.t + ((y1 - v) / (y1 - y0)) * (H - pad.t - pad.b),
+    py: band
+      ? (v) => (v > band.y1 ? pad.t + ((band.yMax - v) / (band.yMax - band.y1)) * band.bandPx : top + ((band.y1 - v) / (band.y1 - y0)) * h)
+      : (v) => pad.t + ((y1 - v) / (y1 - y0)) * (H - pad.t - pad.b),
   };
 }
 

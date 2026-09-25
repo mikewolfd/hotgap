@@ -132,6 +132,25 @@ describe("axis honesty", () => {
     const far = layout(s, 390, false, 0, s.top);
     expect([far.y0, far.y1, far.H]).toEqual([L.y0, L.y1, L.H]);
   });
+  test("the curve is never cropped: past the fitted top a band carries the climb, every point is inside the plot, and paper has no band (charts.md § The break)", () => {
+    const s = sceneOf(makeEvaluation(), year);
+    for (const box of [390, 1280]) {
+      const L = layout(s, box);
+      expect(L.band !== undefined).toBe(Math.max(...s.net) > L.y1);
+      for (const v of s.net) {
+        expect(L.py(v)).toBeGreaterThanOrEqual(L.pad.t);
+        expect(L.py(v)).toBeLessThanOrEqual(L.H - L.pad.b);
+      }
+      if (L.band) {
+        expect(L.band.y1).toBe(L.y1);
+        expect(L.py(L.band.yMax)).toBeCloseTo(L.pad.t, 6);
+        for (const v of L.bandTicks) { expect(v).toBeGreaterThan(L.y1); expect(v).toBeLessThan(L.band.yMax); }
+      } else expect(L.bandTicks).toEqual([]);
+    }
+    const paper = layout(s, 640, true);
+    expect(paper.band).toBeUndefined();
+    expect(paper.bandTicks).toEqual([]);
+  });
   test("the biggest drop clears the 24px floor in the initial view at 390 and at 1280 (charts.md § The scroll rule)", () => {
     const s = sceneOf(makeEvaluation(), year);
     for (const box of [390, 1280]) {

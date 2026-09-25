@@ -234,6 +234,7 @@
       "markMergedWaits": "{n} caídas entre {from} y {to}, unos {sum} al año en total. Parte de eso espera a otro día.",
       "axisNote": "Los números del lado empiezan en {floor}, no en $0, para que las caídas se vean bien.",
       "axisNoteBare": "Los números del lado empiezan en {floor}, no en $0.",
+      "axisBreak": " Por encima de {top} el lado se aprieta para que quepa toda la línea; allí arriba las caídas se dibujan más pequeñas de lo que son.",
       "safeBeyond": " Desde {safe} en adelante, más sueldo siempre suma a lo que le queda.",
       "safeNever": " Revisamos hasta {top} y nunca encontramos un punto más allá de todos los tramos planos.",
       "estimates": " Son estimaciones, con las reglas de {year} en {state}.",
@@ -928,6 +929,7 @@
         "fromZero": "El eje vertical empieza en {floor}; el rango visible es {ratio} veces la mayor caída.",
         "aboveZero": "El eje vertical empieza en {floor}, no en $0; el rango visible es {ratio} veces la mayor caída."
       },
+      "axisBreak": "El eje vertical está cortado en {top}: por encima, la escala se comprime {factor} veces para que quepa toda la curva.",
       "noneDeferred": "Ningún precipicio de esta curva está diferido.",
       "glossary": "Una zona de peligro es un tramo de pago en el que el ingreso neto sigue por debajo de un pico anterior.",
       "span": {

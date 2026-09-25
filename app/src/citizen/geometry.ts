@@ -11,7 +11,7 @@
 // per layout; a layout is computed once per draw (a new evaluation or a
 // resize), never per pointer event or per scroll.
 import { fromAnnual, toAnnual, type Cliff } from "@hotgap/core";
-import { clusterCliffs, fitY, layerFor, niceStep, niceTicks, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, stableSpan, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
+import { bandTicks, clusterCliffs, drawingFor, fitY, layerFor, niceStep, niceTicks, plotWidth, PLOT_LEAD, scaleFor, scrollFor, stableSpan, type Cluster, type Layer, type Pad } from "../lib/chart/geometry.js";
 import type { Scene } from "./model.js";
 
 /** The gutter the y axis lives in, outside the scroller: wide enough for "$100k" at the tick size. */
@@ -74,6 +74,8 @@ export interface Layout extends Layer {
   /** The extremes of the points in view, which the y-range was fitted to. */
   lo: number; hi: number;
   yTicks: number[];
+  /** Nice values inside the compressed band (lib/chart/geometry.ts § The break), drawn from the band's own scale; empty with no band. */
+  bandTicks: number[];
   xTicks: { value: number; annual: number }[];
   clusters: Cluster[];
   /** The y-axis gutter's width, outside the scroller. */
@@ -124,14 +126,17 @@ export function layout(s: Scene, width: number, print = false, screen = 0, at: n
   /* One y-range for the whole draw, never refitted on scroll (a rescale mid-read was jarring): the
      household's own stretch, from $0 through its own exit and next cliff — not the whole curve's safe
      exit, which put a $42k–$47k story on a $15k–$100k axis (lib/chart/geometry.ts `stableSpan`).
-     Paper fits the whole axis; past the span on screen the line is clipped at the plot's edge. */
+     Paper fits the whole axis. On screen, where the line climbs past the fitted top, a compressed band on top
+     of the plot carries the rest of it, so the curve is never cropped (lib/chart/geometry.ts § The break). */
   const [e0, e1] = print ? [0, s.top] : stableSpan(s.window, Math.max(s.exit ?? 0, s.next?.endEarnings ?? 0) || null, s.top);
   const { y0, y1, stepY, maxDrop, lo, hi } = yRange(s, narrow, e0, e1);
-  const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
-  const layer = layerFor(W, H, pad, 0, s.top, y0, y1);
+  const { drawing, band } = drawingFor(y0, y1, print ? y1 : Math.max(...s.net), maxDrop, narrow, print ? 0 : screen - pad.t - pad.b);
+  const H = drawing + pad.t + pad.b;
+  const layer = layerFor(W, H, pad, 0, s.top, y0, y1, band);
   return {
     ...layer, narrow, i0: 0, i1: s.net.length - 1, y0, y1, stepY, maxDrop, lo, hi, gutter, viewport, print, scale,
     yTicks: niceTicks(y0, y1, stepY),
+    bandTicks: bandTicks(layer),
     xTicks: xTicks(s, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110)))),
     clusters: clusterCliffs(s.cliffs, layer.px),
     scrollLeft,

@@ -9,7 +9,7 @@
 // A draw is O(points in the window + cliffs); a pointer move or a key is
 // O(1) — an index and one readout sentence — and never redraws the curve.
 import { keepRateWords, type Cliff } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
+import { attachCursor, axisGutter, breakMarks, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, scrollerParts, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, zoneRects } from "../lib/chart/draw.js";
 import { scrollToShow } from "../lib/chart/geometry.js";
 import { placer, type Spot } from "../lib/chart/labels.js";
 import { h, svg } from "../lib/dom.js";
@@ -184,7 +184,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const { defs: clipDefs, g: curve } = plotClip("plotClip", W, top, bottom);
     picture.append(clipDefs);
     /* The y axis in its own gutter, at the same py the gridlines below use, so the two halves read as one figure. */
-    axisGutter(gutterSvg, L.gutter, H, L.yTicks, py, (v) => tickMoney(v, "year"));
+    /* A tick label on the break itself would sit on its glyph: the glyph marks that value, and the caption names it. */
+    axisGutter(gutterSvg, L.gutter, H, [...L.yTicks.filter((v) => !L!.band || Math.abs(py(v) - py(L!.band.y1)) >= 10), ...L.bandTicks], py, (v) => tickMoney(v, "year"));
 
     /* ── The ground ──────────────────────────────────────────────────── */
     /* Zones: the household's gets the wash, every other one hatch alone (rule 1). */
@@ -201,6 +202,9 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     for (const v of L.yTicks) {
       if (v > y0 && v < y1) picture.append(svg("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
     }
+    /* The break (lib/chart/geometry.ts § The break): the band's own gridlines, and the scale change marked in the gutter and across the plot. */
+    for (const v of L.bandTicks) picture.append(svg("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    breakMarks(gutterSvg, L.gutter, picture, L);
     for (const tick of L.xTicks) picture.append(svg("text", { x: px(tick.annual), y: bottom + 24, "text-anchor": "middle", class: "hg-tick" }, tickMoney(tick.value, s.pay.unit)));
     picture.append(svg("line", { x1: 0, y1: bottom, x2: W, y2: bottom, stroke: "var(--axis)", "stroke-width": 1 }));
 
@@ -285,6 +289,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     P.block({ x: cx - 7, y: cy - 7, w: 14, h: 14 });
     /* The line is an obstacle too, and so are the peak rule and the bracket: a label never sits on a stroke. */
     P.blockLine(line);
+    /* …and the break's hairline, so no label is struck through where the scale changes. */
+    if (L.band) P.blockLine([[0, py(L.band.y1)], [W, py(L.band.y1)]]);
     if (s.zone) P.blockLine([[bx0, yPeak], [bx1, yPeak]]);
     if (bracket) P.blockLine([[cx, by], [bx, by]]);
     /* …and the x ticks and the road's bar under the plot: a label nudged down must not land on them. */
@@ -309,7 +315,11 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
           number in the gutter (S1). */
     const dropSpots = (mk: { cl: Cluster; y: number; landY: number }): Spot[] => {
       const tall = mk.landY - mk.y >= 24;
+      /* A dot high in the plot — inside the band, where the whole climb is squeezed — has no room above it for two lines: below the landing first. */
+      const high = mk.y - top < 34 || (L!.band !== undefined && mk.y < py(L!.band.y1));
       return [
+        /* …and where the band squeezes the drop, the clear room just under the break, beside its own connector's x. */
+        ...(high ? [mk.landY + 14, ...(L!.band ? [Math.max(mk.landY + 14, py(L!.band.y1) + 16)] : [])].flatMap((y) => [{ x: mk.cl.x + 12, y, anchor: "start" } as Spot, { x: mk.cl.x - 12, y, anchor: "end" } as Spot]) : []),
         ...(tall ? [{ x: mk.cl.x + 12, y: (mk.y + mk.landY) / 2 + 4, anchor: "start" } as Spot] : []),
         { x: mk.cl.x + 12, y: mk.y - 9, anchor: "start" },
         { x: mk.cl.x + 12, y: mk.landY + 14, anchor: "start" },
@@ -402,6 +412,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
        once, because on paper there is nothing to scroll (§ The scroll rule). */
     let text = t(print ? "chart.wholeOnPaper" : "chart.scrolls", { from: m.pay(0), to: m.pay(s.top) });
     if (y0 > 0) text += " " + t(L.maxDrop >= 0.1 * (y1 - y0) ? "chart.axisNote" : "chart.axisNoteBare", { floor: m.money(y0) });
+    if (L.band) text += t("chart.axisBreak", { top: m.money(L.band.y1) });
     if (s.safeExit === null) text += t("chart.safeNever", { top: m.pay(s.top) });
     else if (s.safeExit > 0 && !safeSaid) text += t("chart.safeBeyond", { safe: m.pay(s.safeExit) });
     caption.textContent = (text + t("chart.estimates", { year: s.ev.curve.year, state: s.stateName })).trim();
@@ -418,7 +429,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const mid = slides && slides.scrollWidth > slides.clientWidth + 1 ? [h("span", {}, t(finePointer() ? "chart.rangeMidPointer" : "chart.rangeMid"))] : [];
     hint.replaceChildren(h("span", {}, t("chart.rangeFrom", { from: m.pay(0) })), ...mid, h("span", {}, t("chart.rangeTo", { to: m.pay(s.top) })));
 
-    wrapper.dataset.yratio = L.maxDrop ? ((y1 - y0) / L.maxDrop).toFixed(2) : "";
+    /* The visible range, band included: every tick in the gutter lies inside it. The 2.5× rule itself is the fitted range's. */
+    wrapper.dataset.yratio = L.maxDrop ? (((L.band?.yMax ?? y1) - y0) / L.maxDrop).toFixed(2) : "";
     firstDraw = false;
     paintMarks();
     restoreScroll();

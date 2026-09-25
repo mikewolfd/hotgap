@@ -21,8 +21,8 @@
 // A draw is O(points × (1 + what-ifs) + cliffs + zones); a width change
 // redraws once; print redraws synchronously at a fixed width (review N6).
 import { keepRateWords, type Cliff, type HouseholdEvaluation } from "@hotgap/core";
-import { attachCursor, axisGutter, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
-import { clusterCliffs, fitY, layerFor, niceStep, niceUp, plotHeight, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
+import { attachCursor, axisGutter, breakMarks, cursorNodes as cursorMarks, dropMark, hatchDefs, household, KEY_MARK, keyEntry, markButton, markWidths, pathD, plotClip, redrawForPrint, seriesPath, sizeSvg, waitDot, waitStub, watchWidth, whatIfDot, whatIfKeyMark, whatIfPath, zoneRects } from "../lib/chart/draw.js";
+import { bandFactor, bandTicks, clusterCliffs, drawingFor, fitY, layerFor, niceStep, niceUp, plotWidth, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, windowFor, type Cluster, type Layer } from "../lib/chart/geometry.js";
 import { MAX_DROP_LABELS, placer, type Spot } from "../lib/chart/labels.js";
 import { finePointer, watchScrollEdges } from "../lib/scroll.js";
 
@@ -135,7 +135,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
        2.5× the largest drop on the WHOLE curve (S14). The range is fitted once per draw to the household's
        own stretch — through its own exit and next cliff, not the whole curve's safe exit (lib/chart/geometry.ts
        `stableSpan`) — every line drawn there, what-ifs included, is inside it — and never refitted on
-       scroll; past it the line is clipped. */
+       scroll; past it a climbing line goes into the band above the break. */
     const n = narrow ? 3 : 5;
     const maxDrop = Math.max(0, ...cliffs().map((c) => c.drop));
     const [e0, e1] = print ? [x0, x1] : stableSpan(view, Math.max(P.escapeEarnings ?? 0, A.nextCliff?.endEarnings ?? 0) || null, x1);
@@ -144,8 +144,14 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
        page — at least what is left of the reader's first screen (charts.md § Height). The same rule and the
        same numbers as the citizen's, so one figure is not read at a different scale from the other. It is
        one range for the whole draw, so scrolling never moves the page. */
-    const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screenLeft() - pad.t - pad.b) + pad.t + pad.b;
-    const L = layerFor(W, H, pad, x0, x1, y0, y1), { px, py } = L;
+    /* Past the fitted top the line (or a what-if's) may keep climbing: a compressed band on top of the plot
+       carries the rest of it, so no curve is cropped (lib/chart/geometry.ts § The break). Paper fits the whole
+       range and has no band. */
+    const top = print ? y1 : Math.max(...net, ...lines.flatMap((l) => l.net));
+    const { drawing, band } = drawingFor(y0, y1, top, maxDrop, narrow, print ? 0 : screenLeft() - pad.t - pad.b);
+    const H = drawing + pad.t + pad.b;
+    const L = layerFor(W, H, pad, x0, x1, y0, y1, band), { px, py } = L;
+    const bTicks = bandTicks(L);
     const plotTop = pad.t, plotBot = H - pad.b;
     /* The placer reads where the reader is looking, so the scroll and the viewport have to be current before any label is drawn. */
     layer = L; printing = print; viewportW = viewport;
@@ -161,12 +167,15 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     /* The y axis holds still in its gutter while the curve scrolls under it. */
     const yTicks: number[] = [];
     for (let v = y0; v <= y1 + 1; v += step) yTicks.push(v);
-    axisGutter(host.gutter, gutter, H, yTicks, py, (v) => tickMoney(v, "year"));
+    /* A tick label on the break itself would sit on its glyph: the glyph marks that value, and the caption names it. */
+    axisGutter(host.gutter, gutter, H, [...yTicks.filter((v) => !band || Math.abs(py(v) - py(band.y1)) >= 10), ...bTicks], py, (v) => tickMoney(v, "year"));
 
     /* Zones: the household's own gets the wash, the peak rule, the exit and the
        bracket; every other zone is hatch alone (S7). */
     for (const z of A.dangerZones) svg.append(...zoneRects(px(z.startEarnings), px(z.endEarnings ?? x1), plotTop, plotBot, isPersonal(z), "cw-hatch"));
-    for (const v of yTicks) svg.append(mk("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    for (const v of [...yTicks, ...bTicks]) svg.append(mk("line", { x1: 0, y1: py(v), x2: W, y2: py(v), stroke: "var(--grid)", "stroke-width": 1 }));
+    /* The break: where the scale changes, in the gutter and across the plot. */
+    breakMarks(host.gutter, gutter, svg, L);
     /* The x ticks scroll with the curve, one about every 110px — or half as many on paper, where the axis is squeezed and the type floor still holds. */
     const xs = niceStep(x1 - x0, Math.max(2, Math.round((W - pad.l - pad.r) / (print ? 150 : 110))));
     for (let e = x0; e <= x1; e += xs) svg.append(mk("text", { class: "hg-tick", x: px(e), y: plotBot + 22, "text-anchor": "middle" }, tickMoney(e, "year")));
@@ -272,6 +281,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     /* The line, the peak rule and the bracket are obstacles too: "TANF cash assistance ends" was struck
        through by the very curve it labels (TASKS 2026-09-24). */
     label.blockLine(line);
+    /* …and the break's hairline, so no label is struck through where the scale changes. */
+    if (band) label.blockLine([[0, py(band.y1)], [W, py(band.y1)]]);
     if (P.zone) { label.blockLine([[px(P.zone.startEarnings), yPeak], [bx1, yPeak]]); label.blockLine([[lx0, by], [lx1, by]]); }
     /* …and the x ticks and the road's bar under the plot: a label nudged down must not land on them. */
     label.block({ x: 0, y: plotBot + 1, w: W, h: (road ? roadY + 5 : plotBot + 26) - plotBot });
@@ -291,7 +302,11 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     /* 2. The largest drop: its money and what ends there, two lines, the heaviest ink on the picture. Always drawn. */
     const dropSpots = (m: Mark): Spot[] => {
       const tall = m.landY - m.y >= 24;
+      /* A dot high in the plot — inside the band, where the climb is squeezed — has no room above it for two lines: below the landing first. */
+      const high = m.y - plotTop < 34 || (band !== undefined && m.y < py(band.y1));
       return [
+        /* …and where the band squeezes the drop, the clear room just under the break, beside its own connector's x. */
+        ...(high ? [m.landY + 14, ...(band ? [Math.max(m.landY + 14, py(band.y1) + 16)] : [])].flatMap((y) => [{ x: m.x + 12, y, anchor: "start" } as Spot, { x: m.x - 12, y, anchor: "end" } as Spot]) : []),
         ...(tall ? [{ x: m.x + 12, y: (m.y + m.landY) / 2 + 4, anchor: "start" } as Spot] : []),
         { x: m.x + 12, y: m.y - 9, anchor: "start" },
         { x: m.x + 12, y: m.landY + 14, anchor: "start" },
@@ -392,6 +407,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
        says whether the whole axis is on screen or in a scroller (§ The scroll rule). */
     host.cap.textContent = [
       t(`chart.axis.${y0 > 0 ? "aboveZero" : "fromZero"}`, { floor: usd(y0), ratio: (yRange / Math.max(1, maxDrop)).toFixed(1) }),
+      band ? t("chart.axisBreak", { top: usd(band.y1), factor: bandFactor(L, y0).toFixed(1) }) : "",
       t(`chart.span.${print ? "whole" : "scrolls"}`, { from: usd(x0), to: usd(x1) }),
       DEFERRED.length ? t("chart.deferred", { n: DEFERRED.length }) : K.noneDeferred,
       curves.length ? t("chart.whatIfLines", { n: curves.length }) : "",

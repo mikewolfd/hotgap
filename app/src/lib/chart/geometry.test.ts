@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import type { Cliff } from "@hotgap/core";
 import { makeEvaluation } from "../../citizen/fixture.js";
 import { sceneOf } from "../../citizen/model.js";
-import { clusterCliffs, fitY, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, WINDOW_MARGIN } from "./geometry.js";
+import { BAND_SHARE, bandFactor, bandTicks, clusterCliffs, drawingFor, fitY, indexAtX, layerFor, MAX_SCREENS, niceStep, niceTicks, niceUp, plotHeight, plotWidth, PLOT_H, PLOT_LEAD, scaleFor, scrollFor, scrollToShow, stableSpan, WINDOW_MARGIN } from "./geometry.js";
 
 describe("nice values", () => {
   test("a step is range / n snapped to 1, 2, 2.5 or 5 × 10^k", () => {
@@ -135,5 +135,51 @@ describe("the layer", () => {
     expect(indexAtX(L, 107.5, 0, 200, 0, 100)).toBe(50);
     expect(indexAtX(L, -50, 0, 400, 10, 100)).toBe(10);
     expect(indexAtX(L, 900, 0, 400, 10, 100)).toBe(100);
+  });
+});
+
+describe("the break (design/charts.md § The break)", () => {
+  const pad = { t: 20, r: 20, b: 30, l: 12 };
+  test("no band when the whole curve fits the fitted range: the plot is exactly plotHeight's", () => {
+    const d = drawingFor(20_000, 60_000, 58_000, 2_400, false, 400);
+    expect(d.band).toBeUndefined();
+    expect(d.drawing).toBe(plotHeight(40_000, 2_400, 400));
+  });
+  test("a curve above the fitted top gets a band of the set share, and a fitted drop keeps at least ~80% of its height", () => {
+    for (const narrow of [false, true]) {
+      const { drawing, band } = drawingFor(20_000, 60_000, 95_000, 2_400, narrow, 400);
+      expect(band).toBeDefined();
+      expect(band!.y1).toBe(60_000);
+      expect(band!.yMax).toBeGreaterThan(95_000);
+      expect(band!.bandPx).toBe(Math.round(drawing * (narrow ? BAND_SHARE.narrow : BAND_SHARE.wide)));
+      expect(drawing).toBeGreaterThanOrEqual(plotHeight(40_000, 2_400, 400));
+      expect(drawing).toBeLessThanOrEqual(PLOT_H.max);
+      const before = layerFor(1000, plotHeight(40_000, 2_400, 400) + 50, pad, 0, 1, 20_000, 60_000);
+      const after = layerFor(1000, drawing + 50, pad, 0, 1, 20_000, 60_000, band);
+      const h = (L: typeof before) => L.py(40_000) - L.py(42_400);
+      expect(h(after) / h(before)).toBeGreaterThanOrEqual(narrow ? 0.75 : 0.8);
+    }
+  });
+  test("py is one piecewise-linear map: monotone, continuous at y1, the band exactly bandPx tall at the top", () => {
+    const band = { y1: 60_000, yMax: 100_000, bandPx: 80 };
+    const L = layerFor(1000, 450, pad, 0, 150_000, 20_000, 60_000, band);
+    expect(L.band).toBe(band);
+    expect(L.py(100_000)).toBe(pad.t);                        // the band's top is the plot's top
+    expect(L.py(60_000)).toBe(pad.t + 80);                    // the break, bandPx below it
+    expect(L.py(20_000)).toBe(450 - pad.b);                   // the floor is where it always was
+    expect(L.py(60_000 + 1e-6)).toBeCloseTo(L.py(60_000), 4); // continuous at y1
+    let last = Infinity;
+    for (let v = 15_000; v <= 105_000; v += 250) { const y = L.py(v); expect(y).toBeLessThan(last); last = y; }
+    // A dollar above the break gets fewer pixels than one below it, by the factor the caption states.
+    const below = L.py(40_000) - L.py(41_000), above = L.py(80_000) - L.py(81_000);
+    expect(below / above).toBeCloseTo(bandFactor(L, 20_000), 6);
+    expect(bandFactor(layerFor(1000, 450, pad, 0, 1, 20_000, 60_000), 20_000)).toBe(1);
+  });
+  test("the band's ticks are nice values from its own scale, inside it and clear of the break", () => {
+    const L = layerFor(1000, 450, pad, 0, 150_000, 20_000, 60_000, { y1: 60_000, yMax: 100_000, bandPx: 80 });
+    const ticks = bandTicks(L);
+    expect(ticks).toEqual([80_000]);
+    for (const v of ticks) expect(L.py(60_000) - L.py(v)).toBeGreaterThanOrEqual(14);
+    expect(bandTicks(layerFor(1000, 450, pad, 0, 1, 20_000, 60_000))).toEqual([]);
   });
 });

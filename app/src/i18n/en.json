@@ -230,6 +230,7 @@
       "markMergedWaits": "{n} drops between {from} and {to}, about {sum} a year together. Some of it waits for a later day.",
       "axisNote": "The numbers up the side start at {floor}, not $0, so the drops are easy to see.",
       "axisNoteBare": "The numbers up the side start at {floor}, not $0.",
+      "axisBreak": " Above {top} the side is squeezed so the whole line fits; the drops up there are drawn smaller than they are.",
       "safeBeyond": " From {safe} up, more pay always adds to what you keep.",
       "safeNever": " We checked as far as {top} and never found a point past all the flat stretches.",
       "estimates": " These are estimates, on the {year} rules in {state}.",
@@ -924,6 +925,7 @@
         "fromZero": "The y-axis starts at {floor}; the visible range is {ratio}× the largest drop.",
         "aboveZero": "The y-axis starts at {floor}, not $0; the visible range is {ratio}× the largest drop."
       },
+      "axisBreak": "The y-axis is broken at {top}: above it the scale is compressed {factor}×, so the whole curve fits.",
       "noneDeferred": "No cliff on this curve is deferred.",
       "glossary": "A danger zone is a stretch of pay where net income stays below an earlier peak.",
       "span": {

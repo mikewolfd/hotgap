@@ -110,13 +110,46 @@ do this; a bar chart may not. Two obligations follow:
    stretch (`stableSpan`): from $0 through the landing window, its own exit
    and its next cliff — not the whole curve's safe exit, which put the SF
    household's $42k–$47k story on a $15k–$100k axis. The 2.5× floor is still
-   measured against the whole curve's biggest drop, so a far zone scrolls in
-   on a clipped line rather than flattening the near one. The padding came down
+   measured against the whole curve's biggest drop, and is evaluated on the
+   fitted range alone; where the curve climbs past that range it is drawn in
+   the compressed band above the break (§ The break), never clipped. The padding came down
    from 14% to 6% with the crop: the ends of a crop were arbitrary, and a line
    running into an arbitrary edge looks cut off, but the ends of the whole
    curve are real points at real pay. Every dollar of slack here is a dollar
    of range that makes every drop shorter in pixels, which is now the scarce
    thing (§ The scroll rule's 24px floor).
+
+### The break (2026-09-25)
+
+A range fitted to the household's own stretch ends where the curve does not:
+the SF household's axis runs $20k–$62.5k, and its line climbs on to ~$95k,
+past the biggest drop on its curve (−$7,059 at $107k). Clipped, the far view
+was empty — no line, no dot, only the hatch. The curve is never cropped, so
+the y-axis is **broken** instead:
+
+- **When.** Only when some point of the curve (on the caseworker, of any drawn
+  what-if too) is above the fitted top `y1`. Otherwise nothing changes. Paper
+  fits the whole range and never has a break.
+- **What.** A band at the top of the plot, 20% of the drawing height on a wide
+  plot and 24% on a narrow one, maps `[y1, yMax]` linearly, where `yMax` is the
+  curve's highest point plus 8% of the band's span. Below `y1` the fitted
+  scale is unchanged in shape; it gets the drawing height less the band, so a
+  fitted drop keeps 80% of its height (76% on a phone), and more where the
+  24px drop floor makes the plot grow by the band, under the same ceiling.
+  `py` stays one function on the layer (`layerFor`'s `band`, piecewise
+  linear), so every dot, connector, label and 44px mark stands where its
+  money is.
+- **Marked.** Two slanted strokes in the gutter at the break (`.hg-break`), a
+  dashed `--rule` hairline across the whole plot (`.hg-break-line`) for a
+  reader scrolled far from the gutter, and one or two gridlines inside the
+  band on nice values from the band's own scale. No label sits on the
+  hairline.
+- **Said.** The caption says it: the citizen's "Above {top} the side is
+  squeezed…", the caseworker's "The y-axis is broken at {top}: above it the
+  scale is compressed {factor}×". A drop in the band is drawn smaller than it
+  is, which is why the promised label (the biggest drop's money and what
+  ends) is still always drawn there — below the landing, under the break
+  where the band has no room.
 
 ### Gridlines on nice values (N1)
 
@@ -243,6 +276,7 @@ difference between a picture a person looks at and one they scroll past. The cei
 screen; the drop floor still wins wherever it asks for more; and where the
 screen asks for more than the data did, the drop gets those pixels too — the
 three households `charts.md` recorded at 22–24px are the ones that gain.
+When the axis is broken (§ The break), the band comes out of this height.
 
 The ceiling bites, and it is honest about where. Measured on the citizen
 review's eight households at 390 and 1280 (`app/e2e/scroll-curve-review.mjs`,
