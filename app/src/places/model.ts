@@ -2,7 +2,7 @@
 // household and a measure, the four tile states, the five bins, and the
 // order the ranking shows them in. Pure — no DOM, no fetch — so it is the
 // part vitest covers directly (model.test.ts).
-import { CHILDCARE_MAX_AGE, CLIFF_MIN, FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL, reachAtEarnings, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
+import { CHILDCARE_MAX_AGE, CLIFF_MIN, FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL, isNoSubsidyTwin, reachAtEarnings, type StateCoverage, type StateMetrics, type SummaryJson, type UnmodeledProgram } from "@hotgap/core";
 import { fill } from "../lib/copy.js";
 import { bites as bitesHousehold, incompleteFor as incompleteForHousehold, unmodeledName, type CareHousehold } from "../lib/coverage.js";
 import { money } from "../lib/format.js";
@@ -56,10 +56,53 @@ const SPEC: readonly (Pick<Measure, "key" | "group" | "unit"> & Partial<Pick<Mea
   { key: "cliffCount", group: "axis", unit: "" },
   { key: "deferredCliffCount", group: "axis", unit: "" },
 ];
+/* A measure's definition with its slots filled: the cliff floor (core's), and
+   on the keep rate the road's span — the generic words where no household is
+   named yet, its dollars once one is (`describeFor`). */
+const describeWith = (key: MeasureKey, span: string): string => {
+  const describe = copy.measures[key].describe;
+  if (describe.includes("{span}")) return fill(describe, { span });
+  return describe.includes("{floor}") ? fill(describe, { floor: money(CLIFF_MIN) }) : describe;
+};
 export const MEASURES: readonly Measure[] = SPEC.map(({ key, group, unit, worst }) => {
-  const { title, option, describe } = copy.measures[key];
-  return { key, group, unit, worst: worst ?? "high", title, option, describe: describe.includes("{floor}") ? fill(describe, { floor: money(CLIFF_MIN) }) : describe };
+  const { title, option } = copy.measures[key];
+  return { key, group, unit, worst: worst ?? "high", title, option, describe: describeWith(key, copy.measures.keepRate.span.plain) };
 });
+
+/** The value most of the rows share — the modal figure, ties to the one met first. */
+function modal(values: number[]): number | null {
+  const counts = new Map<number, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best: number | null = null, n = 0;
+  for (const [v, c] of counts) if (c > n) { best = v; n = c; }
+  return best;
+}
+
+/**
+ * The road's span for the household these rows are, in dollars (TASKS: name
+ * the road's span in the measure): `roadLo` and `roadHi` read off the rows,
+ * the modal pair, because Alaska and Hawaii are on their own higher poverty
+ * guidelines and every other state shares one. Null where no row has a road.
+ */
+export function roadSpan(rows: readonly StateRow[]): { lo: number; hi: number; differs: boolean } | null {
+  const withRoad = rows.filter((r) => r.m.roadLo !== null && r.m.roadHi !== null);
+  const lo = modal(withRoad.map((r) => r.m.roadLo as number)), hi = modal(withRoad.map((r) => r.m.roadHi as number));
+  if (lo === null || hi === null) return null;
+  return { lo, hi, differs: withRoad.some((r) => r.m.roadLo !== lo || r.m.roadHi !== hi) };
+}
+
+/**
+ * A measure's definition for the household the rows are: the keep rate names
+ * its road in dollars — "from the poverty line ($27,000) to just past twice it
+ * ($55,000)" — and says where the road is longer; every other measure's words
+ * do not depend on the household and come back as they are.
+ */
+export function describeFor(measure: Measure, rows: readonly StateRow[]): string {
+  if (measure.key !== "keepRate") return measure.describe;
+  const span = roadSpan(rows);
+  const S = copy.measures.keepRate.span;
+  return describeWith("keepRate", span === null ? S.plain : fill(span.differs ? S.akHi : S.same, { lo: money(span.lo), hi: money(span.hi) }));
+}
 
 export const measureByKey = (key: string): Measure | undefined => MEASURES.find((m) => m.key === key);
 
@@ -94,8 +137,10 @@ export function valueOf(m: StateMetrics, key: MeasureKey): number | null {
    and the id — `-dual-` is the two-earner couple (core/src/archetypes.ts
    `spouseWorks`), and the earner count decides whether the household buys care. */
 const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
+/* The `-nosub` twin (core's `isNoSubsidyTwin`): the same household with the child-care subsidy off, labelled as such. */
+const noSubsidy = (a: Archetype): boolean => isNoSubsidyTwin(a);
 
-export const archLabel = (a: Archetype): string => householdLabel(a.married, worksBoth(a), a.childAges);
+export const archLabel = (a: Archetype): string => householdLabel(a.married, worksBoth(a), a.childAges, noSubsidy(a));
 
 /* A missing child-care subsidy can only move a household that pays for care:
    a child of child-care age (through core's CHILDCARE_MAX_AGE — the sweep

@@ -3,7 +3,7 @@
 // or a measure key>&state=<postal code>. Every key is written once anything changes,
 // never only the ones that differ from a default — a default can move with
 // the sweep, and a link to "the default household" would then move with it.
-import { searchParamsFromFlags } from "@hotgap/core";
+import { answersFor, ARCHETYPES, searchParamsFromFlags, type HouseholdFlags } from "@hotgap/core";
 import { withLang } from "../lib/copy.js";
 import { DEFAULT_MEASURE, measureByKey, type MeasureKey, type SortKey } from "./model.js";
 
@@ -50,11 +50,28 @@ export function viewQuery(v: View): string {
 }
 
 /**
- * The household tool for a state and a household's shape: the state, the
- * children's ages and, for a couple, `married` — core's own flag vocabulary
- * (`searchParamsFromFlags`), so the tool opens with those answers filled in
- * and asks for the rest. The language travels with it.
+ * The household tool for a state and the household this map swept there
+ * (TASKS: "Try this for your own family" opens the same family): the state,
+ * the children's ages and, for a couple, `married` — and, from core's own
+ * `answersFor`, the rent, the care bill, whether the child-care subsidy is
+ * claimed and a second earner's pay, so the citizen page opens on the swept
+ * household and its editor shows what to change. core's flag vocabulary
+ * (`searchParamsFromFlags`) throughout; the language travels with it. A
+ * household core no longer sweeps (an old file) carries its shape alone.
  */
-export function tryItHref(state: string, household: { married: boolean; childAges: readonly number[] }): string {
-  return `/?${withLang(searchParamsFromFlags({ state, kids: household.childAges.join(","), married: household.married }))}`;
+export function tryItHref(state: string, household: { id: string; married: boolean; childAges: readonly number[] }): string {
+  const flags: HouseholdFlags = { state, kids: household.childAges.join(","), married: household.married };
+  const shape = ARCHETYPES.find((a) => a.id === household.id);
+  if (shape) {
+    const a = answersFor(state, shape);
+    if (a.monthlyRent !== null) flags.rent = String(a.monthlyRent);
+    /* The subsidy travels with the bill it pays: a household that buys no care
+       has nothing for it to do, and the editor should not show it switched on. */
+    if ((a.monthlyChildcare ?? 0) > 0) {
+      flags.childcare = String(a.monthlyChildcare);
+      flags["childcare-subsidy"] = a.getsChildcareSubsidy;
+    }
+    if (a.spouseAnnualEarnings > 0) flags["spouse-earnings"] = String(a.spouseAnnualEarnings);
+  }
+  return `/?${withLang(searchParamsFromFlags(flags))}`;
 }

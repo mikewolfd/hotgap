@@ -60,6 +60,14 @@ export interface StateMetrics {
    * `keepRate` is the field that says so.
    */
   keepRate: number | null;
+  /**
+   * The keep rate from `roadLo` to exactly twice poverty (road.ts
+   * `keepRateToLine`: the road without its one-step allowance), to the same
+   * four decimals. Where it and `keepRate` differ in sign, the state's loss on
+   * the road is the one step out of twice poverty — an exit sitting on that
+   * line — rather than the road as a whole. Null where `keepRate` is.
+   */
+  keepRateToLine: number | null;
   roadLo: number | null;
   roadHi: number | null;
   /** Cliffs whose step starts on the road. Every cliff counts, deferred ones included (2026-09-17). */

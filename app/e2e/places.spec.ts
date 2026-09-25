@@ -100,17 +100,22 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        figure's own <figcaption>, with the count underlined in the ink of the
        tiles it counts. Every figure is read from the committed run. */
     const badKeep = STATES.filter((st) => (metrics(st, "single-2").keepRate ?? 0) < 0).length;
+    /* …and how many of them are negative measured to exactly twice poverty (road.ts keepRateToLine). */
+    const strictKeep = STATES.filter((st) => (metrics(st, "single-2").keepRate ?? 0) < 0 && (metrics(st, "single-2").keepRateToLine ?? 0) < 0).length;
     const answer = await page.evaluate(() => ({
-      text: document.querySelector("#answer")!.textContent!.replace(/\s+/g, " ").trim(),
+      text: [...document.querySelector("#answer")!.childNodes].filter((n) => (n as Element).id !== "answerHolds").map((n) => n.textContent).join("").replace(/\s+/g, " ").trim(),
+      holds: document.querySelector("#answerHolds")?.textContent ?? null,
       tag: document.querySelector("#answer")!.tagName, first: document.querySelector("figure")!.firstElementChild!.id,
       keyed: [...document.querySelectorAll("#answer .hg-amt")].map((el) => [el.textContent!, el.className]),
     }));
     check(answer.tag === "FIGCAPTION" && answer.first === "answer",
       "the answer sentence is the figure's own caption and its first child, so nothing stands between the masthead and the picture", answer);
-    check(answer.text === `In ${badKeep} of the ${STATES.length - (dc ? 1 : 0)} states${dc ? " and the District of Columbia" : ""}, a single parent of two children climbing from the poverty line to twice it ends up poorer than they started.`,
+    check(answer.text === `In ${badKeep} of the ${STATES.length - (dc ? 1 : 0)} states${dc ? " and the District of Columbia" : ""}, a single parent of two children climbing from the poverty line to twice it ends up poorer than they started — ${strictKeep} of them before the step out of twice poverty.`,
       `the answer counts the ${badKeep} states where this household ends the climb poorer, from the file, with the denominator named once and in full`, answer.text);
     check(answer.keyed.length === 1 && answer.keyed[0][0] === String(badKeep) && /hg-amt--cliff/.test(answer.keyed[0][1]),
       "the one figure the sentence underlines is the count, in the ink of the tiles it counts", answer.keyed);
+    check(answer.holds === "Every state's rules applied to the same family: renting at the county's typical rent, paying center-based care for both children, and getting the child-care subsidy, SNAP, TANF, Medicaid, and WIC.",
+      "under the sentence, the family it is true of: its rent, its care and the programs it is counted as getting", answer.holds);
 
     /* The disclosure names in the contract's order — one inside the figure, then on the page every
        state's curve (open: it is a picture, design critique 2026-09-25) and the three reference panels. */
@@ -139,13 +144,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* What the measure IS is the measure's own describe, said per view rather
        than in a standfirst that could only ever name one of the nine. */
     const measureLine0 = await page.$eval("#figMeasure", (el) => el.textContent!);
-    check(measureLine0 === "The map shades Keep rate on the road out of poverty: Of each extra dollar earned between the poverty line and twice the poverty line, the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started.",
+    check(measureLine0 === "The map shades Keep rate on the road out of poverty: Of each extra dollar earned from the poverty line ($27,000) to just past twice it ($55,000) — higher in Alaska and Hawaii — the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started.",
       "the disclosure says what the map shades and what the measure means, from the measure's own words", measureLine0);
     /* The glossary sentence (S3) from core's floor, PolicyEngine introduced on
        first use (S6), and Plan 9's one sentence of why a cliff's size alone is
        not the story. */
     const glossary = await page.$eval("#glossary", (el) => el.textContent!.replace(/\s+/g, " ").trim());
-    check(glossary.startsWith(`A cliff is a $1,000 raise that cuts net income by ${money(CLIFF_MIN)} or more; a danger zone is a run of earnings`) && /PolicyEngine, an open-source tax-and-benefit calculator/.test(glossary)
+    check(glossary.startsWith(`A cliff is a $1,000 raise that cuts net income by ${money(CLIFF_MIN)} or more; a danger zone is a stretch of pay where net income stays below an earlier peak`) && /PolicyEngine, an open-source tax-and-benefit calculator/.test(glossary)
       && /A cliff matters in proportion to how many families stand near it: the largest cliff in a state is usually one few families reach, and the one that hurts is the modest one at the income most families have\./.test(glossary),
       "the glossary defines cliff and danger zone from core's floor (S3), introduces PolicyEngine (S6) and says why a cliff's size alone is not the story (Plan 9)", glossary.slice(0, 80));
     /* Two groups, two questions (Plan 9): the road out of poverty leads,
@@ -194,10 +199,10 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         (th.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean).map((id) => document.getElementById(id)?.textContent ?? null)] as [string, (string | null)[]]),
     }));
     const headText = defs.heads.map(([t]) => t).join("|");
-    check(defs.terms.length === 15 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
-      && headText === "Keep rate|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
-      && /worst danger zone/.test(defs.heads[7][1][0]!) && /no danger zone remains/.test(defs.heads[8][1][0]!) && /added together/.test(defs.heads[6][1][0]!) && /floors/.test(defs.heads[11][1][0]!)
-      && /poorer than it started/.test(defs.heads[0][1][0]!),
+    check(defs.terms.length === 16 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
+      && headText === "Keep rate|Keep rate to the line|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
+      && /worst danger zone/.test(defs.heads[8][1][0]!) && /no danger zone remains/.test(defs.heads[9][1][0]!) && /added together/.test(defs.heads[7][1][0]!) && /floors/.test(defs.heads[12][1][0]!)
+      && /poorer than it started/.test(defs.heads[0][1][0]!) && /\(\$27,000\)/.test(defs.heads[0][1][0]!) && /exactly twice the poverty line/.test(defs.heads[1][1][0]!),
       "thirteen column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
     /* The three columns whose figure is a point on the axis point at one shared
        definition of what position is — and what it is not (Plan 9). */
@@ -517,7 +522,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         const btn = document.querySelector(`#rank .hg-row-btn[data-st="${st}"]`)!;
         const track = btn.querySelector(".track")!.getBoundingClientRect(), bar = btn.querySelector(".bar")!.getBoundingClientRect();
         const hinge = track.left + (parseFloat(zero) / 100) * track.width;
-        return { value: btn.querySelector(".v")!.textContent!, left: bar.left - hinge, right: bar.right - hinge, dot: btn.querySelector(".dot") !== null };
+        return { value: btn.querySelector(".v")!.firstChild!.textContent!.trim(), toLine: btn.querySelector(".v .at")?.textContent ?? null, left: bar.left - hinge, right: bar.right - hinge, dot: btn.querySelector(".dot") !== null };
       };
       return { zero, diverging: rank.classList.contains("diverging"), hinge: getComputedStyle(document.querySelector("#rank .track")!, "::after").content, MO: row("MO"), NM: row("NM"), WI: row("WI") };
     });
@@ -525,12 +530,15 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the strip's bars hang off one hinge: a losing state's runs left of zero, a keeping state's right, and no row carries the sequential dot", strip0);
     check(strip0.MO.value === shortOf("MO") && strip0.NM.value === shortOf("NM") && strip0.WI.value === shortOf("WI"),
       "each ranked row's value is its own rate, in core's words", { MO: strip0.MO.value, NM: strip0.NM.value, WI: strip0.WI.value });
+    const toLineOf = (st: string) => { const w = keepRateWords(metrics(st, "single-2").keepRateToLine!); return `to the line: ${w.sign} ${w.cents}¢`; };
+    check(strip0.WI.toLine === toLineOf("WI") && strip0.MO.toLine === toLineOf("MO"),
+      "each ranked row carries, lighter, the same rate measured to exactly twice poverty", { WI: strip0.WI.toLine, MO: strip0.MO.toLine });
     /* Rank 1 is the LOWEST rate: the worst state here is the most regressive
        one. The order is on the figure the page PRINTS — whole cents — so two
        states a reader sees as equal sit together in postal order, and the rank
        they share is the same rank (the cold read's B2). */
     const centsOf = (st: string) => Math.round(metrics(st, "single-2").keepRate! * 100);
-    const keepRows = await page.$$eval("#rank .hg-row-btn", (els) => els.map((el) => [(el as HTMLElement).dataset.st!, el.querySelector(".n")!.textContent!, el.querySelector(".v")!.textContent!] as [string, string, string]));
+    const keepRows = await page.$$eval("#rank .hg-row-btn", (els) => els.map((el) => [(el as HTMLElement).dataset.st!, el.querySelector(".n")!.textContent!, el.querySelector(".v")!.firstChild!.textContent!.trim()] as [string, string, string]));
     const keepOrder = keepRows.map(([st]) => st);
     const keepable = STATES.filter((st) => !expectIncompleteFor(st, "single-2"));
     const expectKeepOrder = keepable.slice().sort((a, b) => centsOf(a) - centsOf(b) || a.localeCompare(b));
@@ -791,8 +799,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        2026-09-24: link to the next step in context); the lines above it are
        the findings. */
     const tryIt = await page.$eval("#readout a.tryIt", (a) => ({ text: a.textContent, href: a.getAttribute("href") }));
-    check(nmLines.pop() === "Try this for your own family" && tryIt.href === "/?state=NM&kids=3%2C7",
-      "the readout ends with a link to the household tool for New Mexico and a single parent of two (3 and 7)", tryIt);
+    check(nmLines.pop() === "Try this family in the household tool" && tryIt.href === "/?state=NM&kids=3%2C7&rent=1464&childcare=1350&childcare-subsidy=1",
+      "the readout ends with a link that opens the household tool on the swept family: New Mexico, a single parent of two (3 and 7), its rent, its care bill and the subsidy", tryIt);
     /* New Mexico is the page's most quotable claim — the one state with no
        cliff anywhere — and one of two whose child-care price is a national
        median standing in for a county the source database lacks. Child care
@@ -963,8 +971,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Nebraska's case (S9): an exact leap beside an unknown safe exit, and the past-the-axis cell points at the box that explains it. */
     const single = (st: string) => metrics(st, "single-2");
     const split = STATES.filter((st) => single(st).cliffCount > 0 && single(st).safeExit === null && !single(st).leapIsLowerBound && !expectIncompleteFor(st, "single-2"));
-    /* Column order since Plan 9: state, the road's four, the whole axis's six, the two counts, Figures. */
-    const COL = { keepRate: 1, roadCliffCount: 2, roadWorst: 3, roadWorstAt: 4, biggestLoss: 5, biggestLossAt: 6, dangerWidth: 7, leap: 8, safeExit: 9, cliffCount: 10, deferred: 11, figures: 12 };
+    /* Column order: state, the keep rate and the keep rate to the line, the road's other three, the whole axis's six, the two counts, Figures. */
+    const COL = { keepRate: 1, keepRateToLine: 2, roadCliffCount: 3, roadWorst: 4, roadWorstAt: 5, biggestLoss: 6, biggestLossAt: 7, dangerWidth: 8, leap: 9, safeExit: 10, cliffCount: 11, deferred: 12, figures: 13 };
     const splitCells = await page.evaluate(([sts, c]) => (sts as string[]).map((st) => {
       const tr = document.querySelector(`#tbody .hg-row-btn[data-st="${st}"]`)!.closest("tr")!;
       const cols = c as Record<string, number>;
@@ -1038,8 +1046,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* The road's columns and the positions are APPENDED: not one index of the
        header a reporter's script already holds has moved (Plan 9). */
     check(head.slice(0, 32).join() === "state,state_name,archetype_id,archetype,biggest_one_step_loss,biggest_loss_at,biggest_loss_programs,danger_zone_width,leap,safe_exit,cliff_count,deferred_cliff_count,leap_is_lower_bound,no_cliff_found,comparable,figures,unmodeled_programs,corrections_applied,childcare_subsidy_footing,liheap_limit,liheap_served_share,county_name,county_fips,rent_vintage,county_vintage,childcare_price_vintage,policy_year,sweep_generated,model_label,model_endpoint,model_version,source"
-      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top",
-      "the CSV's eleven new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
+      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top,keep_rate_to_line_cents",
+      "the CSV's twelve new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
     const roadCols = body.every((c) => {
       const m = dual(c[col("state")]);
       return c[col("keep_rate_cents")] === (m.keepRate === null ? "" : String(Math.round(m.keepRate * 100)))

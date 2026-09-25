@@ -19,6 +19,7 @@ import {
   buildStateFile,
   buildSummary,
   roundPoint,
+  sweptArchetypes,
   validateResults,
   type ModelsByState,
   type ResultsByStateArchetype,
@@ -149,7 +150,11 @@ export async function runFromData(states: string[], readStateFile: ReadStateFile
     }
   }
 
-  const validation = validateResults(states, results);
+  // The rows the files hold (build.ts sweptArchetypes): a row added to
+  // ARCHETYPES since the last sweep has no curve on disk yet, and the rebuild
+  // describes the rows it has rather than failing on that one.
+  const archetypes = sweptArchetypes(states, results);
+  const validation = validateResults(states, results, archetypes);
   if (!validation.ok) return { ok: false, dryRun: false, gaps: validation.gaps };
 
   // Each state's numbers are read with the model that swept them (a partial
@@ -159,7 +164,7 @@ export async function runFromData(states: string[], readStateFile: ReadStateFile
   // last changed these numbers", and a rebuild that adds a derived field is
   // not a sweep. (The Plan 8 rebuild stamped 01:16 UTC on a page read at
   // 9 pm Eastern the day before — the "run of tomorrow" a reporter bounced.)
-  const summary = buildSummary(generated, states, results, models);
+  const summary = buildSummary(generated, states, results, models, archetypes);
   return { ok: true, dryRun: false, gaps: [], summary };
 }
 

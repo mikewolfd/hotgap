@@ -25,6 +25,8 @@ import { modelLabel } from "./words.js";
  * page says "loses 56¢" and core's `keepRateWords` owns that wording.
  * A position is 0-100 to one decimal, and EMPTY where the survey cell cannot
  * support it — never 0, which would read as "nobody earns less".
+ * `keep_rate_to_line_cents` came after them, appended by the same rule: the
+ * keep rate measured to exactly twice poverty, without the road's last step.
  */
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
@@ -34,6 +36,7 @@ export const CSV_HEADER = [
   "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
   "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
   "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
+  "keep_rate_to_line_cents",
 ] as const;
 
 /** One field, quoted only when it has to be (a comma, a quote, a line break). */
@@ -91,6 +94,8 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       m.roadCliffCount, m.roadWorst?.drop ?? "", m.roadWorst?.at ?? "", m.roadWorst?.programs.map(programName).join("; ") ?? "",
       position(positionAt(r.st, a, m.roadWorst?.at ?? null)), position(m.biggestLossPosition),
       position(none ? null : positionAt(r.st, a, m.safeExit)), position(positionAt(r.st, a, m.roadHi)),
+      /* The keep rate to exactly twice poverty (road.ts `keepRateToLine`), signed whole cents like `keep_rate_cents`; empty where the road runs off the axis or the file predates it. */
+      m.keepRateToLine == null ? "" : Math.round(m.keepRateToLine * 100),
     ].map(csvField).join(","));
   }
   return "﻿" + lines.join("\r\n") + "\r\n";

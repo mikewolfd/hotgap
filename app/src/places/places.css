@@ -283,6 +283,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
                     align-items: center; }
 .rank.with-at .hg-row-btn { grid-template-columns: 2.4rem 2.1rem 1fr 10.2rem; }
 .rank .at { color: var(--ink-3); font-size: var(--t-micro); white-space: nowrap; }
+/* The keep rate's second, lighter figure — the slope to exactly twice poverty — on its own line under the rate. */
+.rank.to-line .at { display: block; }
 @media (min-width: 62rem) { .rank .hg-row-btn { min-height: 26px; } }
 .rank .n { color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: end; grid-column: 1; }
 .rank .st { font-weight: var(--w-semi); grid-column: 2; }

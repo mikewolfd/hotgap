@@ -16,6 +16,15 @@ export interface Archetype {
    * claims no subsidy, while one with both parents at work is charged both.
    */
   spouseWorks: boolean;
+  /**
+   * `false` switches the child-care subsidy OFF for a household that still
+   * pays the full care bill: the family that pays and is not served, which is
+   * most eligible families (CCDF is rationed). Absent means the sweep's own
+   * rule — the subsidy is claimed wherever every parent works. It exists for
+   * the `-nosub` twin, so a reader can subtract the subsidy's exit from the
+   * state's rules; no live household is ever matched to it (fallback.ts).
+   */
+  subsidy?: false;
 }
 
 export const ARCHETYPES: Archetype[] = [
@@ -35,7 +44,15 @@ export const ARCHETYPES: Archetype[] = [
   { id: "married-dual-1", married: true, childAges: [3], spouseWorks: true },
   { id: "married-dual-2", married: true, childAges: [3, 7], spouseWorks: true },
   { id: "married-dual-3", married: true, childAges: [1, 4, 9], spouseWorks: true },
+  // The default household's twin without child-care help: same children, same
+  // care bill, subsidy off (`subsidy: false`). Swept, never picked for a live
+  // household (pickArchetypeId skips it); a summary written before the sweep
+  // that adds it simply does not list it, and every surface reads the list.
+  { id: "single-2-nosub", married: false, childAges: [3, 7], spouseWorks: false, subsidy: false },
 ];
+
+/** Whether this archetype is a twin with the child-care subsidy forced off — a sweep-only row no live household matches. */
+export const isNoSubsidyTwin = (a: Pick<Archetype, "id">): boolean => a.id.endsWith("-nosub");
 
 export const DEFAULT_ARCHETYPE = "single-2";
 
@@ -129,7 +146,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
     // question — how rough are this state's rules — and its exit is the
     // largest cliff most parents of young children face, so a map that omits
     // it understates every state. The personal default stays off.
-    getsChildcareSubsidy: everyParentWorks,
+    getsChildcareSubsidy: everyParentWorks && a.subsidy !== false,
     // Energy assistance stays off for the sweep, like housing and Head Start:
     // the map shows where it stops (liheap.ts), not a benefit most eligible
     // households never receive.

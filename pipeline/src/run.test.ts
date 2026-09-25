@@ -157,6 +157,8 @@ describe("runPipeline", () => {
         // 38 cents poorer for every extra dollar it earns across it, and the
         // whole-axis worst step is one a third of families like this have passed.
         keepRate: -0.3807,
+        // To exactly twice poverty ($54,000), without the one-step allowance.
+        keepRateToLine: -0.4179,
         roadLo: 27000,
         roadHi: 55000,
         roadCliffCount: 2,
@@ -247,6 +249,17 @@ describe("runFromData", () => {
     // rebuilt from disk equals one built in memory, stamped by the newest file.
     const expected = buildSummary(stamps.VT, states, results);
     expect(result.summary).toEqual(expected);
+  });
+
+  it("rebuilds from files that predate a row added to ARCHETYPES, describing the rows the files hold", async () => {
+    // Files written before single-2-nosub existed: every other row is there.
+    const results = syntheticResults(["WY"]);
+    delete results.WY["single-2-nosub"];
+    const file = (state: string): StateFileJson => ({ generated: "2026-09-16T00:00:00.000Z", year: "2026", state, archetypes: Object.fromEntries(Object.entries(results[state]).map(([id, points]) => [id, { points }])) });
+    const result = await runFromData(["WY"], async (state) => JSON.stringify(file(state)));
+    expect(result.ok).toBe(true);
+    expect(result.summary!.archetypes.map((a) => a.id)).not.toContain("single-2-nosub");
+    expect(Object.keys(result.summary!.states.WY)).toHaveLength(ARCHETYPES.length - 1);
   });
 
   it("reports gaps (not a throw) when a requested state's file can't be read, and returns no summary", async () => {

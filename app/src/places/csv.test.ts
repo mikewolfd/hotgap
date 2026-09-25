@@ -130,6 +130,7 @@ describe("csvFor on the committed sweep", () => {
     expect(head.slice(32)).toEqual([
       "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
       "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
+      "keep_rate_to_line_cents",
     ]);
     for (const [i, r] of body.entries()) {
       const m = rows[i].m;
@@ -147,7 +148,15 @@ describe("csvFor on the committed sweep", () => {
       expect(r[col("road_worst_position")]).toBe(round(positionAt(rows[i].st, arch, m.roadWorst?.at ?? null)));
       expect(r[col("biggest_loss_position")]).toBe(round(m.biggestLossPosition));
       expect(r[col("families_below_road_top")]).toBe(round(positionAt(rows[i].st, arch, m.roadHi)));
+      expect(r[col("keep_rate_to_line_cents")]).toBe(m.keepRateToLine == null ? "" : String(Math.round(m.keepRateToLine * 100)));
     }
+    // The boundary sensitivity (road.ts keepRateToLine): 26 states negative on
+    // the road, 20 of them still negative to exactly twice poverty. Counted on
+    // the stored figure — New Jersey's −0.12¢ is negative and prints as 0.
+    const bad = rows.filter((r) => (r.m.keepRate ?? 0) < 0);
+    expect(bad).toHaveLength(26);
+    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) < 0)).toHaveLength(20);
+    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) >= 0).map((r) => r.st).sort()).toEqual(["DC", "DE", "MA", "OR", "PA", "VA"]);
     // Missouri, the plan's worked example, cell by cell.
     const mo = body.find((r) => r[col("state")] === "MO")!;
     expect([mo[col("keep_rate_cents")], mo[col("road_lo")], mo[col("road_hi")], mo[col("road_cliff_count")], mo[col("road_worst_drop")], mo[col("road_worst_at")], mo[col("road_worst_programs")]])

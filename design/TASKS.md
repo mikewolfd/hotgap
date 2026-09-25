@@ -98,7 +98,7 @@ the file, the change, and the words. Figures below are the committed sweep of
 
 ## The `/places` headline
 
-- [ ] **Say what the family holds, under the sentence.** Add a second line to
+- [x] **Say what the family holds, under the sentence.** Add a second line to
       `figcaption#answer` (places/render.ts, new key `places.answer.holds`),
       rendered from `answersFor(state, archetype)`'s `gets*` flags and
       `monthlyChildcare > 0`: *"Every state's rules applied to the same
@@ -106,14 +106,17 @@ the file, the change, and the words. Figures below are the committed sweep of
       for both children, and getting the child-care subsidy, SNAP, TANF,
       Medicaid and WIC."* Drop the care clause for households that pay no
       care. This is the line that turns "a single parent of two" into the
-      household the number is true of.
+      household the number is true of. *Done: `#answerHolds`, answer.ts
+      `holdsText`; the subsidy is named only beside a care bill.*
 - [ ] **Name the road's span in the measure.** `places.measures.keepRate.describe`
       and the `howTo.measure` line: *"Of each extra dollar earned from the
       poverty line ({lo}) to just past twice it ({hi})…"*, `lo`/`hi` from the
       selected household's `roadLo`/`roadHi` (they differ for AK/HI and by
       household size). Same slots in `citizen.chart.labels.roadFrom/roadTo`
       → *"poverty line $27,000"* / *"2× poverty $55,000"* where there is room.
-- [ ] **Report the boundary sensitivity, and rank on the robust figure.**
+      *Places half done (model.ts `describeFor`/`roadSpan`, the modal span
+      with "higher in Alaska and Hawaii"); the citizen labels remain.*
+- [x] **Report the boundary sensitivity, and rank on the robust figure.**
       pipeline/src/metrics.ts: add `keepRateToLine` = the slope from `roadLo`
       to `hiStart` (the road without its one-step allowance). Measured today
       it keeps 20 of the 26 negative states negative and flips DE, DC, MA, OR,
@@ -131,6 +134,10 @@ the file, the change, and the words. Figures below are the committed sweep of
       (road.ts) so an exit at 200% is interior, rename the group *"From the
       poverty line to 2½ times it"*, and re-sweep. Prefer the first: it keeps
       every saved link's definition and shows the fragility instead of hiding it.
+      *Done the first way: `keepRateToLine` in core road.ts `roadSummary` and
+      StateMetrics, summary.json rebuilt offline (`npm run pipeline --
+      --from-data`; 26 negative, 20 strict), the rank strip's lighter "to the
+      line" figure, a table column and `keep_rate_to_line_cents` in the CSV.*
 - [ ] **Make the subsidy start when the parent actually works.** The sweep
       sends `hoursPerWeek: 40` at every pay, so PolicyEngine's activity test
       passes at $1,000 a year and the subsidy switches on with the first
@@ -142,20 +149,27 @@ the file, the change, and the words. Figures below are the committed sweep of
       `places.curves.cap` gains *"The step at the first dollar is the
       child-care subsidy starting when the parent works."* when
       `points[1].programs.childcare > 0 && points[0].programs.childcare === 0`.
-- [ ] **A "no child-care help" twin for the default household.** Add
+      *Caption interim done (`places.curves.firstDollar`, flagged per state by
+      the vite curves plugin: CA, DC, IL, IN, WA for a single parent of two);
+      the hours change needs a re-sweep.*
+- [x] **A "no child-care help" twin for the default household.** Add
       `single-2-nosub` (subsidy off, same care bill — the family that pays and
       is not served, which is most of them) to ARCHETYPES for the sweep only:
       51 more cells, a tenth of the run. Household menu label *"1 adult, 2
       children (3 and 7), no child-care help"*. The pair lets a reporter
       subtract the subsidy's exit from the state's rules, which is the
-      question the headline raises.
-- [ ] **State the rationing rule consistently.** `places.method.items.takeUp`
+      question the headline raises. *Done in code (`single-2-nosub`,
+      `subsidy: false`, never picked for a live household); its cells fill on
+      the next sweep — until then summary.json does not list it and the menu
+      does not offer it.*
+- [x] **State the rationing rule consistently.** `places.method.items.takeUp`
       says Head Start and housing are off because they are rationed; CCDF is
       rationed too. Rewrite: *"The child-care subsidy is on for this run
       although, like Head Start and housing vouchers, it reaches a minority of
       eligible families: its exit is the largest cliff most working parents
       of young children face, and a map without it understates every state.
-      The twin household above shows the family without it."*
+      The twin household above shows the family without it."* *Done; the
+      twin sentence is shown only once a run carries the twin.*
 
 ## Danger-zone sentences
 
@@ -186,7 +200,8 @@ the file, the change, and the words. Figures below are the committed sweep of
       family has less than it had at a lower pay"* (never "where a raise
       leaves the family worse off"). Define *danger zone* once, in both
       glossaries: *"a stretch of pay where net income stays below an earlier
-      peak."*
+      peak."* *Places half done (`places.curves.lead/cap`, `places.lede.glossary`);
+      citizen and caseworker remain.*
 - [ ] **"On average" on the road label.** `citizen.chart.labels.road.*` and
       core `road.rate`: *"on average you keep {cents}¢ of each extra dollar"* /
       *"keeps {cents}¢ of each extra dollar on average"*. The rate is a slope
@@ -235,7 +250,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       now → this what-if"*, and the base cell shows the base's own next-stretch
       rate (`keepNext`, *"keeps 12¢ of the next $10,000"*) instead of a dash
       (caseworker/model.ts `compareRows`, line 341).
-- [ ] **"Try this for your own family" opens the same family.**
+- [x] **"Try this for your own family" opens the same family.**
       places/url.ts `tryItHref`: pass the archetype's `rent`, `childcare` and
       `childcare-subsidy` flags (`searchParamsFromFlags` already carries them)
       so the citizen page opens on the swept household and the editor shows

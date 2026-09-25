@@ -1,17 +1,35 @@
 import { describe, it, expect } from "vitest";
-import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor, archetypeById } from "./archetypes.js";
+import { ARCHETYPES, DEFAULT_ARCHETYPE, answersFor, archetypeById, isNoSubsidyTwin } from "./archetypes.js";
+import { pickArchetypeId } from "./fallback.js";
 import { FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL } from "./policyYear.js";
 import { childcareMonthlyFor, stateDefaults } from "./stateDefaults.js";
 import { STATE_CODES } from "./states.js";
 
 describe("ARCHETYPES", () => {
-  it("defines exactly 11 archetypes: single/married crossed with 0-3 kids, plus a dual-earner couple at 1-3 kids", () => {
-    expect(ARCHETYPES).toHaveLength(11);
+  it("defines exactly 12 archetypes: single/married crossed with 0-3 kids, a dual-earner couple at 1-3 kids, and the default's no-subsidy twin", () => {
+    expect(ARCHETYPES).toHaveLength(12);
     expect(ARCHETYPES.map((a) => a.id)).toEqual([
       "single-0", "single-1", "single-2", "single-3",
       "married-0", "married-1", "married-2", "married-3",
       "married-dual-1", "married-dual-2", "married-dual-3",
+      "single-2-nosub",
     ]);
+  });
+
+  it("gives single-2-nosub the default's household and care bill with the child-care subsidy off, and no live household ever lands on it", () => {
+    const twin = archetypeById("single-2-nosub");
+    expect(isNoSubsidyTwin(twin)).toBe(true);
+    expect(ARCHETYPES.filter(isNoSubsidyTwin).map((a) => a.id)).toEqual(["single-2-nosub"]);
+    for (const state of STATE_CODES) {
+      const on = answersFor(state, archetypeById("single-2")), off = answersFor(state, twin);
+      expect(off, state).toEqual({ ...on, getsChildcareSubsidy: false });
+      expect(on.getsChildcareSubsidy).toBe(true);
+    }
+    // The fallback picker skips the twin by name, whatever shape asks.
+    expect(pickArchetypeId({ married: false, childAges: [3, 7], spouseAnnualEarnings: 0 })).toBe("single-2");
+    for (const married of [false, true]) for (const kids of [0, 1, 2, 3, 5]) for (const spouse of [0, 15080]) {
+      expect(pickArchetypeId({ married, childAges: Array.from({ length: kids }, () => 4), spouseAnnualEarnings: spouse })).not.toMatch(/-nosub$/);
+    }
   });
 
   it("has no childless dual-earner couple: no children, no childcare bill, nothing for the row to add", () => {

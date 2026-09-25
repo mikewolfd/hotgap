@@ -1,4 +1,4 @@
-import { ARCHETYPES, DEFAULT_ARCHETYPE } from "./archetypes.js";
+import { ARCHETYPES, DEFAULT_ARCHETYPE, isNoSubsidyTwin } from "./archetypes.js";
 import type { StateFileJson } from "./data.js";
 import type { CurvePoint, HouseholdAnswers } from "./types.js";
 
@@ -36,7 +36,10 @@ export type ArchetypeMatch = Pick<HouseholdAnswers, "married" | "childAges" | "s
 export function pickArchetypeId(h: ArchetypeMatch): string {
   const kids = Math.min(h.childAges.length, MAX_ARCHETYPE_KIDS);
   const dual = h.married && h.spouseAnnualEarnings > 0;
-  const shaped = ARCHETYPES.filter((a) => a.married === h.married && a.childAges.length === kids);
+  // A `-nosub` twin is a sweep-only row (the subsidy forced off): it shares its
+  // shape with the household it twins, so it is excluded here by name, and a
+  // live household always lands on the curve that claims the subsidy.
+  const shaped = ARCHETYPES.filter((a) => !isNoSubsidyTwin(a) && a.married === h.married && a.childAges.length === kids);
   // A dual-earner couple with NO children falls to the single-earner row on
   // purpose: married-dual-0 does not exist, because what the dual rows add is
   // the childcare dimension and a childless couple has none. DEFAULT_ARCHETYPE

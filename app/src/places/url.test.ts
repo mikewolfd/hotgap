@@ -34,9 +34,18 @@ describe("the view in the query string", () => {
 });
 
 describe("the link to the household tool from a state", () => {
-  it("carries the state, the children's ages and marriage in core's flag names, and nothing for a childless single adult", () => {
-    expect(tryItHref("TX", { married: false, childAges: [3, 7] })).toBe("/?state=TX&kids=3%2C7");
-    expect(tryItHref("NJ", { married: true, childAges: [1, 4, 9] })).toBe("/?state=NJ&married=1&kids=1%2C4%2C9");
-    expect(tryItHref("CO", { married: false, childAges: [] })).toBe("/?state=CO");
+  it("opens the swept household: state, children, marriage, and core's rent, care bill, subsidy and second pay, in core's flag names", () => {
+    // Texas, single parent of two: the state's typical rent and center-based care, the subsidy claimed.
+    expect(tryItHref("TX", { id: "single-2", married: false, childAges: [3, 7] })).toBe("/?state=TX&kids=3%2C7&rent=1573&childcare=1674&childcare-subsidy=1");
+    // A one-earner couple buys no care, so neither the bill nor the subsidy travels.
+    expect(tryItHref("NJ", { id: "married-3", married: true, childAges: [1, 4, 9] })).toBe("/?state=NJ&married=1&kids=1%2C4%2C9&rent=2324");
+    // A two-earner couple carries the second pay the sweep holds fixed.
+    expect(tryItHref("TX", { id: "married-dual-2", married: true, childAges: [3, 7] })).toBe("/?state=TX&married=1&kids=3%2C7&rent=1573&childcare=1674&spouse-earnings=15080&childcare-subsidy=1");
+    // The no-subsidy twin: the same bill, the subsidy off.
+    expect(tryItHref("TX", { id: "single-2-nosub", married: false, childAges: [3, 7] })).toBe("/?state=TX&kids=3%2C7&rent=1573&childcare=1674");
+    expect(tryItHref("CO", { id: "single-0", married: false, childAges: [] })).toBe("/?state=CO&rent=1735");
+  });
+  it("carries the shape alone for a household core no longer sweeps", () => {
+    expect(tryItHref("TX", { id: "gone-2", married: false, childAges: [3, 7] })).toBe("/?state=TX&kids=3%2C7");
   });
 });
