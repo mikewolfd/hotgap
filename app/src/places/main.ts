@@ -9,6 +9,7 @@ import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
 import { $ } from "../lib/dom.js";
 import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
+import { loadCurves, renderCurves, renderStateCurve, type Curves } from "./curves.js";
 import { csvFor, csvName } from "./csv.js";
 import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
 import { applySelection, GROUPS, renderAnswer, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
@@ -49,6 +50,19 @@ function main(summary: SummaryJson): void {
   let scene: Scene;
   /** The table's rows in the order shown — what the CSV and the row keys walk. */
   let tableOrder: StateRow[] = [];
+  /** The current household's curves, once they arrive; a later household's load overtakes an earlier one's. */
+  let curves: Curves | null = null;
+  const drawCurves = () => {
+    const arch = scene.arch;
+    curves = null;
+    renderStateCurve(null, arch, null);
+    void loadCurves(arch.id).then((c) => {
+      if (scene.arch !== arch) return;
+      curves = c;
+      renderCurves(c, arch, view.state);
+      renderStateCurve(c, arch, view.state);
+    });
+  };
 
   renderOnce(summary);
 
@@ -82,6 +96,7 @@ function main(summary: SummaryJson): void {
     renderMethod(scene);
     renderDetail(scene);
     swipeHint();
+    drawCurves();
   };
 
   /* Selecting a state rebuilds nothing but the readout under the map and the
@@ -96,6 +111,7 @@ function main(summary: SummaryJson): void {
     applySelection(st);
     renderReadout(scene);
     renderDetail(scene);
+    renderStateCurve(curves, scene.arch, st);
     writeUrl(true);
   };
 

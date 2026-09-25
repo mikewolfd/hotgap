@@ -1073,7 +1073,7 @@
       },
       "dangerWidth": {
         "title": "Total width of the danger zones",
-        "option": "Pay range where raises lose money",
+        "option": "Total pay range where raises lose money",
         "describe": "Earnings spanned by every stretch where more pay leaves the household no better off, all such stretches added together."
       },
       "leap": {
@@ -1491,6 +1491,12 @@
     "panels": {
       "everything": "Every state, every measure",
       "sources": "Where these numbers come from"
+    },
+    "curves": {
+      "heading": "Every state’s curve",
+      "lead": "What {household} keeps at each pay from $0 to {top}, state by state, on one scale. Shaded: where a raise leaves the family worse off. The bar under each line: from the poverty line to twice it. Select one to read its numbers.",
+      "cap": "{state}: what {household} keeps at each pay. Shaded: where a raise leaves the family worse off; the bar underneath runs from the poverty line to twice it.",
+      "loading": "Loading the curves…"
     }
   },
   "shared": {

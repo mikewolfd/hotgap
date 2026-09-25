@@ -112,15 +112,15 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(answer.keyed.length === 1 && answer.keyed[0][0] === String(badKeep) && /hg-amt--cliff/.test(answer.keyed[0][1]),
       "the one figure the sentence underlines is the count, in the ink of the tiles it counts", answer.keyed);
 
-    /* The four disclosure names, closed by default, in the contract's order —
-       two inside the figure, three on the page (§ The page is its picture). */
+    /* The disclosure names in the contract's order — one inside the figure, then on the page every
+       state's curve (open: it is a picture, design critique 2026-09-25) and the three reference panels. */
     const panels = await page.evaluate(() => [...document.querySelectorAll("details.hg-disclosure")].filter((d) => !(d as HTMLElement).hidden).map((d) => ({
       id: d.id, open: (d as HTMLDetailsElement).open, inFigure: d.closest("figure") !== null,
       name: d.querySelector("summary")!.textContent!.trim(),
     })));
     check(panels.map((p) => `${p.inFigure ? "figure" : "page"}:${p.name}`).join("|")
-      === "figure:How to read this map|page:Every state, every measure|page:How these numbers were made|page:Where these numbers come from",
-      "the figure's disclosure and the page's three carry the contract's names, in its order, with nothing selected", panels);
+      === "figure:How to read this map|page:Every state’s curve|page:Every state, every measure|page:How these numbers were made|page:Where these numbers come from",
+      "the figure's disclosure and the page's four carry the contract's names, in its order, with nothing selected", panels);
 
     /* Everything below is read with the page opened up, so a check can reach
        the ranked strip and the table without asking whether they are folded —

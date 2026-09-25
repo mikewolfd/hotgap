@@ -1076,7 +1076,7 @@
       },
       "dangerWidth": {
         "title": "Ancho total de las zonas de peligro",
-        "option": "Rango de sueldo donde se pierde",
+        "option": "Rango total de sueldo donde se pierde",
         "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
       },
       "leap": {
@@ -1494,6 +1494,12 @@
     "panels": {
       "everything": "Cada estado, cada medida",
       "sources": "De dónde vienen estas cifras"
+    },
+    "curves": {
+      "heading": "La curva de cada estado",
+      "lead": "Lo que conserva {household} en cada sueldo de $0 a {top}, estado por estado, en la misma escala. Sombreado: donde un aumento deja a la familia peor. La barra bajo cada línea: de la línea de pobreza al doble. Elija uno para leer sus cifras.",
+      "cap": "{state}: lo que conserva {household} en cada sueldo. Sombreado: donde un aumento deja a la familia peor; la barra de abajo va de la línea de pobreza al doble.",
+      "loading": "Cargando las curvas…"
     }
   },
   "shared": {

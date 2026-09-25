@@ -72,7 +72,12 @@
 
     <!-- CurveReadout (#4) as the map's caption: the selected state's sentences, directly under
          the tiles, never a block a screen away (rerun S1). -->
-    <p class="hg-readout" id="readout" aria-live="polite"></p>
+    <!-- …with the selected state's own curve under it (design critique 2026-09-25): the same line the
+         household page draws, for this household in this state, zones shaded, the road marked. -->
+    <div class="aside">
+      <p class="hg-readout" id="readout" aria-live="polite"></p>
+      <figure class="stateCurve" id="stateCurve" hidden><div id="stateCurveSvg"></div><figcaption class="hg-source" id="stateCurveCap"></figcaption></figure>
+    </div>
 
     <!-- CorrectionsApplied (#18), IncompleteMarker (#16), otherBenefits, EligibilityBoundary (#23)
          and the state's SourceNote (#17), scoped to the selected state and under its own readout. -->
@@ -105,6 +110,13 @@
       <p class="glossary" id="glossary"></p>
     </details>
   </figure>
+
+  <!-- Every state's curve, side by side on one scale: each a button that selects its state, like a tile. -->
+  <details class="hg-disclosure" id="curvesPanel" open>
+    <summary><h2 id="curvesHeading"></h2></summary>
+    <p id="curvesLead"></p>
+    <div class="multiples" id="multiples" role="group"></div>
+  </details>
 
   <!-- RankStrip (#14) and DataTable (#15): the two readings of every state, one press away. -->
   <details class="hg-disclosure" id="everything">

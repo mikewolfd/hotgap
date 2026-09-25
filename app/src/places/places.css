@@ -110,7 +110,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   .picture { display: grid; grid-template-columns: minmax(0, 48rem) minmax(0, 1fr); column-gap: var(--s6); }
   .picture > * { grid-column: 1 / -1; }
   .picture > :is(.map, .legend, .mapCaution, .mapSwipe) { grid-column: 1; }
-  .hg-picture.picture > .hg-readout { grid-column: 2; grid-row: 3 / span 3; align-self: start; margin-top: 0; }
+  .hg-picture.picture > .aside { grid-column: 2; grid-row: 3 / span 3; align-self: start; }
+  .hg-picture.picture > .aside > .hg-readout { margin-top: 0; }
 }
 
 /* StateTiles (#13). Equal squares on a twelve-column grid, as large as the
@@ -484,3 +485,27 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   .hg-answer { break-after: avoid; }
   h2, h3 { break-after: avoid; }
 }
+
+/* ── The curves (curves.ts) ────────────────────────────────────────────
+   The money line in the series ink over the danger zones' loss wash, with
+   the road out of poverty as a bar under the axis. The selected state's is
+   larger and has its axes; the fifty-one share one scale and none. */
+.curve { display: block; overflow: visible; }
+.curve .line { fill: none; stroke: var(--series-1); stroke-width: 1.75; stroke-linejoin: round; }
+.curve .zone { fill: var(--loss-wash); }
+.curve .road { fill: var(--ink-3); }
+.curve .grid { stroke: var(--rule); stroke-width: 1; }
+.curve .tick { fill: var(--ink-3); font-size: var(--t-tick); font-variant-numeric: tabular-nums; }
+.stateCurve { margin: var(--s4) 0 0; }
+.stateCurve .curve { width: 100%; max-width: 26rem; height: auto; }
+.stateCurve figcaption { margin-top: var(--s2); max-width: 26rem; }
+
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--s2); margin: var(--s3) 0 var(--s5); }
+.mult { display: flex; flex-direction: column; gap: 2px; padding: var(--s2); min-height: var(--touch);
+        background: none; border: 1px solid var(--rule); border-radius: var(--r-control); color: var(--ink);
+        font: inherit; font-size: var(--t-small); text-align: start; cursor: pointer; }
+.mult .curve { width: 100%; height: auto; }
+.mult:hover { border-color: var(--rule-strong); }
+.mult[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.mult:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media print { .multiples { grid-template-columns: repeat(6, 1fr); } .mult { break-inside: avoid; } }

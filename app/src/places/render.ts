@@ -113,7 +113,7 @@ export function renderStatic(): void {
   fillText({
     skip: copy.skip, wordmark: copy.wordmark, status: copy.status.loading,
     archLabel: copy.filters.household, metricLabel: copy.filters.measure, csvBtn: copy.filters.csv,
-    figDesc: copy.figure.description, readout: copy.readout.empty, rankBins: copy.rank.bins,
+    figDesc: copy.figure.description, readout: copy.readout.empty, rankBins: copy.rank.bins, curvesHeading: copy.curves.heading,
     /* The three page disclosures carry the contract's names; the figure's two
        are named for what is inside them (§ The page is its picture). */
     tableHeading: copy.panels.everything, sourcesHeading: copy.panels.sources,
@@ -804,8 +804,8 @@ export function renderDetail(s: Scene): void {
   }) + reach;
 }
 
-/** The three groups of state controls — map, ranking, table — each one tab stop. */
-export const GROUPS = ["grid", "rankList", "tbody"] as const;
+/** The four groups of state controls — map, curves, ranking, table — each one tab stop. */
+export const GROUPS = ["grid", "multiples", "rankList", "tbody"] as const;
 
 /**
  * Selection: every control carrying the state takes aria-current, and each
