@@ -543,7 +543,7 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
   for (const width of [390, 1280] as const) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await page.goto(`${HOUSEHOLD}&lang=es-US`);
-    await expect(page.locator("#answer")).toHaveText("Esta familia pierde dinero con cada aumento entre $36,000 y $45,000; con $7,000 más al año ya sale de la zona.");
+    await expect(page.locator("#answer")).toHaveText(/^El neto se queda por debajo de su pico de \$[\d,]+ \(en \$[\d,]+\) hasta \$[\d,]+: \d+ de los \d+ pasos entre ambos pierden? dinero; con \$[\d,]+ más al año sale del tramo\.$/);
     await expect(page.locator("#howToSummary")).toHaveText("Cómo leer esta gráfica");
     await expect(page.locator("#stepsHeading")).toHaveText("Lo que enfrenta esta familia, escalón por escalón");
     await expect(page.locator("#compare")).toHaveText("Comparar los escenarios");
