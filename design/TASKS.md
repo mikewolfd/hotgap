@@ -248,7 +248,7 @@ the file, the change, and the words. Figures below are the committed sweep of
 
 ## The pictures
 
-- [ ] **Fit the y-axis to the household's own stretch.** lib/chart/geometry.ts
+- [x] **Fit the y-axis to the household's own stretch.** lib/chart/geometry.ts
       `stableSpan` is called with the whole-curve safe exit (`s.safeExit ??
       s.exit`), so the SF axis runs $15k–$100k for a $42k–$47k story. Call it
       with the household's own exit and next cliff:
@@ -258,7 +258,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       scrolls in on a clipped line rather than flattening the near one.
       Expected: SF range ≈ $38k–$50k, the $2,384 drop ≈ 60px; caseworker
       caption goes from "17.0×" to about 3×.
-- [ ] **Small multiples show the road, ordered by the measure.**
+- [x] **Small multiples show the road, ordered by the measure.**
       places/curves.ts: a `road` mode for `renderCurves` — x from $0 to
       `roadHi + 10k`, y = `net − net(roadLo)` on one shared range, a zero rule
       at the poverty-line level, the road bar, the zones. Order the buttons by
@@ -269,7 +269,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       poverty line, from $0 to {hi}; a line below the rule is a family poorer
       than it was at the poverty line. In the map's order."* The large
       selected-state curve keeps the full axis.
-- [ ] **Step widths on the scale itself.** places/render.ts scale labels:
+- [x] **Step widths on the scale itself.** places/render.ts scale labels:
       under each arm one tick caption, *"steps of 26¢"* / *"steps of 15¢"*,
       so the unequal widths are read where the colours are, not in the
       How-to disclosure.

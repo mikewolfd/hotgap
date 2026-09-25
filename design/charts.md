@@ -106,9 +106,12 @@ do this; a bar chart may not. Two obligations follow:
    spans $48,806 against a $25,449 drop (1.92×), so even an uncropped axis
    needs the extension.
 
-   Since the curve stopped being cropped (§ The scroll rule) the range is the
-   **whole curve's** and the rule almost never bites — the climb from $0 to
-   $150,000 is a far wider range than 2.5× any one step. The padding came down
+   Since 2026-09-25 the range is **fitted** (`fitY`) over the household's own
+   stretch (`stableSpan`): from $0 through the landing window, its own exit
+   and its next cliff — not the whole curve's safe exit, which put the SF
+   household's $42k–$47k story on a $15k–$100k axis. The 2.5× floor is still
+   measured against the whole curve's biggest drop, so a far zone scrolls in
+   on a clipped line rather than flattening the near one. The padding came down
    from 14% to 6% with the crop: the ends of a crop were arbitrary, and a line
    running into an arbitrary edge looks cut off, but the ends of the whole
    curve are real points at real pay. Every dollar of slack here is a dollar

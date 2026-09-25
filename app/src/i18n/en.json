@@ -1166,7 +1166,10 @@
         "countRange": "{n} of the {total} comparable states have {lo} to {hi}.",
         "dollars": "{n} of the {total} comparable states fall between {lo} and {hi}."
       },
-      "title": "{measure}, state by state"
+      "title": "{measure}, state by state",
+      "scale": {
+        "stepsOf": "steps of {width}"
+      }
     },
     "readout": {
       "empty": "Select a state to read its numbers.",
@@ -1494,7 +1497,7 @@
     },
     "curves": {
       "heading": "Every state’s curve",
-      "lead": "What {household} keeps at each pay from $0 to {top}, state by state, on one scale. Shaded: where a raise leaves the family worse off. The bar under each line: from the poverty line to twice it. Select one to read its numbers.",
+      "lead": "Each line is what {household} keeps, relative to what it keeps at the poverty line, from $0 to {hi}; a line below the rule is a family poorer than it was at the poverty line. In the map's order. Select one to read its numbers.",
       "cap": "{state}: what {household} keeps at each pay. Shaded: where a raise leaves the family worse off; the bar underneath runs from the poverty line to twice it.",
       "loading": "Loading the curves…"
     }

@@ -132,12 +132,13 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const landing = print ? 0 : scrollFor(xOnly, viewport, view, A.currentEarnings);
     const left = print ? 0 : anchor === null ? landing : Math.max(0, Math.min(W - viewport, xOnly.px(anchor)));
     /* Axis honesty (charts.md): the floor is computed, never typed, and the visible range is at least
-       2.5× the largest drop on the WHOLE curve (S14). The range is fitted once per draw to the stretch
-       that matters (lib/chart/geometry.ts `stableSpan`) — every line drawn there, what-ifs included, is
-       inside it — and never refitted on scroll; past it the line is clipped. */
+       2.5× the largest drop on the WHOLE curve (S14). The range is fitted once per draw to the household's
+       own stretch — through its own exit and next cliff, not the whole curve's safe exit (lib/chart/geometry.ts
+       `stableSpan`) — every line drawn there, what-ifs included, is inside it — and never refitted on
+       scroll; past it the line is clipped. */
     const n = narrow ? 3 : 5;
     const maxDrop = Math.max(0, ...cliffs().map((c) => c.drop));
-    const [e0, e1] = print ? [x0, x1] : stableSpan(view, safe ?? P.escapeEarnings, x1);
+    const [e0, e1] = print ? [x0, x1] : stableSpan(view, Math.max(P.escapeEarnings ?? 0, A.nextCliff?.endEarnings ?? 0) || null, x1);
     const { y0, y1, step } = yFit(e0, e1, lines, maxDrop, n);
     /* The plot is as tall as the biggest drop needs to clear 24px, clamped, and — since the figure is the
        page — at least what is left of the reader's first screen (charts.md § Height). The same rule and the

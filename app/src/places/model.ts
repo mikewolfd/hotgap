@@ -391,6 +391,21 @@ export function group(rows: StateRow[], measure: Measure): Grouped {
   };
 }
 
+/**
+ * Each ranked row's rank, by competition ranking (N3): equal values share a
+ * rank and the next one skips — twelve states at 1 are all first, and the
+ * first 0 is thirteenth. The count starts after the lower-bound group, which
+ * holds ranks 1–n. A tie is a tie at the precision the page prints
+ * (`rankValue`). The rank strip and the curves both read it. O(states).
+ */
+export function rankNumbers(g: Pick<Grouped, "ranked" | "past">, measure: Measure): number[] {
+  let rank = 0;
+  return g.ranked.map((r, i) => {
+    if (i === 0 || rankValue(r.value as number, measure) !== rankValue(g.ranked[i - 1].value as number, measure)) rank = g.past.length + i + 1;
+    return rank;
+  });
+}
+
 /** The table's order: postal code, or one measure's ranking. Carried in the URL as `sort=`. */
 export type SortKey = "state" | MeasureKey;
 

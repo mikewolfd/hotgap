@@ -19,7 +19,7 @@ import { stateName } from "../lib/names.js";
 import { answerParts } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { bites, MEASURES, measureByKey, measuresIn, positionAt, rankNumbers, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
 import { tryItHref } from "./url.js";
 import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, householdLabel, householdPhrase, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
@@ -372,6 +372,19 @@ export function renderFigure(s: Scene): void {
   labels.innerHTML = g.bins.kind === "classes"
     ? classes.map((c) => `<span>${c.lo === c.hi ? c.lo : `${c.lo}–${c.hi}`}</span>`).join("")
     : `<span>${tick(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${tick(c.hi, measure)}</span>`).join("");
+  /* A diverging scale's two arms step at different widths (26¢ losing, 15¢
+     keeping), and a reader compares colours across the hinge; so each arm
+     says its own width under its own swatches, where the colours are, not
+     only in the bins line under "How to read this map". Each caption spans
+     exactly its arm's swatches. */
+  const arms = g.bins.kind === "diverging" && g.bins.width
+    ? ([["loss", g.bins.width.down], ["keep", g.bins.width.up]] as const)
+      .map(([hue, w]) => ({ n: classes.filter((c) => c.hue === hue).length, w }))
+      .filter((a): a is { n: number; w: number } => a.n > 0 && a.w !== null)
+    : [];
+  const steps = $("scaleSteps");
+  steps.hidden = arms.length === 0;
+  steps.innerHTML = arms.map((a, i) => `<span style="flex:${a.n} 1 0"${i ? ` class="hinge"` : ""}>${esc(t("figure.scale.stepsOf", { width: keepSpan(a.w) }))}</span>`).join("");
 
   /* The legend strip inside the figure: only the tile states that are on the
      map right now and NOT on the ramp above it, so it is one line and not a
@@ -588,16 +601,14 @@ export function renderRank(s: Scene): void {
   const pos = (v: number) => ((v - g.bins.lo) / span) * 100;
   $("rank").classList.toggle("diverging", g.bins.kind === "diverging");
   $("rank").style.setProperty("--zero", `${zero * 100}%`);
-  let rank = 0;
+  const ranks = rankNumbers(g, measure);
   $("rank").innerHTML = g.ranked.map((r, i) => {
-    /* A tie is a tie at the precision the page prints (model.ts `rankValue`). */
-    if (i === 0 || rankValue(r.value as number, measure) !== rankValue(g.ranked[i - 1].value as number, measure)) rank = n + i + 1;
     const v = r.value as number, c = g.bins.classes[g.bins.index(v)];
     const fill = `background:var(--${c.hue}-${c.ramp + 1})`;
     const mark = g.bins.kind === "diverging"
       ? `<span class="bar" style="inset-inline-start:${Math.min(pos(v), zero * 100)}%;width:${Math.abs(pos(v) - zero * 100)}%;${fill}"></span>`
       : `<span class="dot" style="inset-inline-start:${pos(v)}%;${fill}"></span>`;
-    return rankRow(r, mark, value(r.value, measure), rankOrdinal(rank));
+    return rankRow(r, mark, value(r.value, measure), rankOrdinal(ranks[i]));
   }).join("");
   /* The bounds stand over the track they bound, on the rows' own grid, and on
      a diverging scale zero stands over the hinge the bars hang off. */

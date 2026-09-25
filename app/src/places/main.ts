@@ -9,7 +9,7 @@ import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
 import { $ } from "../lib/dom.js";
 import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
-import { loadCurves, renderCurves, renderStateCurve, type Curves } from "./curves.js";
+import { curveOrder, loadCurves, renderCurves, renderStateCurve, type Curves } from "./curves.js";
 import { csvFor, csvName } from "./csv.js";
 import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
 import { applySelection, GROUPS, renderAnswer, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
@@ -59,7 +59,7 @@ function main(summary: SummaryJson): void {
     void loadCurves(arch.id).then((c) => {
       if (scene.arch !== arch) return;
       curves = c;
-      renderCurves(c, arch, view.state);
+      renderCurves(c, arch, view.state, curveOrder(scene.g, scene.measure));
       renderStateCurve(c, arch, view.state);
     });
   };

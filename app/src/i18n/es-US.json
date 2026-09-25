@@ -1169,7 +1169,10 @@
         "countRange": "{n} de los {total} estados comparables tienen de {lo} a {hi}.",
         "dollars": "{n} de los {total} estados comparables quedan entre {lo} y {hi}."
       },
-      "title": "{measure}, estado por estado"
+      "title": "{measure}, estado por estado",
+      "scale": {
+        "stepsOf": "pasos de {width}"
+      }
     },
     "readout": {
       "empty": "Seleccione un estado para leer sus cifras.",
@@ -1497,7 +1500,7 @@
     },
     "curves": {
       "heading": "La curva de cada estado",
-      "lead": "Lo que conserva {household} en cada sueldo de $0 a {top}, estado por estado, en la misma escala. Sombreado: donde un aumento deja a la familia peor. La barra bajo cada línea: de la línea de pobreza al doble. Elija uno para leer sus cifras.",
+      "lead": "Cada línea es lo que conserva {household}, comparado con lo que conserva en la línea de pobreza, de $0 a {hi}; una línea bajo la raya es una familia más pobre que en la línea de pobreza. En el orden del mapa. Elija uno para leer sus cifras.",
       "cap": "{state}: lo que conserva {household} en cada sueldo. Sombreado: donde un aumento deja a la familia peor; la barra de abajo va de la línea de pobreza al doble.",
       "loading": "Cargando las curvas…"
     }

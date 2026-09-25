@@ -122,9 +122,10 @@ export function layout(s: Scene, width: number, print = false, screen = 0, at: n
   const landing = print ? 0 : scrollFor(xOnly, viewport, s.window, s.current);
   const scrollLeft = print ? 0 : at === null ? landing : Math.round(Math.max(0, Math.min(W - viewport, xOnly.px(at))));
   /* One y-range for the whole draw, never refitted on scroll (a rescale mid-read was jarring): the
-     stretch that matters, from $0 through the last danger zone (lib/chart/geometry.ts `stableSpan`).
+     household's own stretch, from $0 through its own exit and next cliff — not the whole curve's safe
+     exit, which put a $42k–$47k story on a $15k–$100k axis (lib/chart/geometry.ts `stableSpan`).
      Paper fits the whole axis; past the span on screen the line is clipped at the plot's edge. */
-  const [e0, e1] = print ? [0, s.top] : stableSpan(s.window, s.safeExit ?? s.exit, s.top);
+  const [e0, e1] = print ? [0, s.top] : stableSpan(s.window, Math.max(s.exit ?? 0, s.next?.endEarnings ?? 0) || null, s.top);
   const { y0, y1, stepY, maxDrop, lo, hi } = yRange(s, narrow, e0, e1);
   const H = plotHeight(y1 - y0, maxDrop, print ? 0 : screen - pad.t - pad.b) + pad.t + pad.b;
   const layer = layerFor(W, H, pad, 0, s.top, y0, y1);

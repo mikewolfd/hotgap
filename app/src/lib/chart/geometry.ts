@@ -156,10 +156,13 @@ export function fitY(values: number[], maxDrop: number): [number, number] {
 
 /**
  * The pay a chart's y-range is fitted over, once per draw: from $0 through
- * the landing window and the safe exit — where the last danger zone ends —
- * plus a third of the margin. Every drop the reader needs is inside it, so
- * scrolling never rescales the axis (a refit on rest read as the chart
- * jumping); only the climb past the last zone can run off the top.
+ * the landing window and the household's OWN exit — the end of its own zone
+ * or its next cliff, whichever is further — plus a third of the margin. Not
+ * the whole curve's safe exit (TASKS, The pictures): that put the SF
+ * household's $42k–$47k story on a $15k–$100k axis. Every drop the reader
+ * lands on is inside it, so scrolling never rescales the axis (a refit on
+ * rest read as the chart jumping); a far zone scrolls in on a clipped line,
+ * and the 2.5× rule (`fitY`) still holds against the whole curve's drop.
  */
 export function stableSpan(window: [number, number], exit: number | null, top: number): [number, number] {
   return [0, Math.min(top, Math.max(window[1], (exit ?? 0) + WINDOW_MARGIN / 3))];

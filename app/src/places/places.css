@@ -203,6 +203,14 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
                 font-size: var(--t-micro); font-variant-numeric: tabular-nums;
                 margin-top: var(--s1); }
 .scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
+/* Under a diverging scale, each arm's step width, spanning that arm's
+   swatches (render.ts sets each caption's flex to its swatch count). The
+   hinge gap is the scale's own. */
+.scale-steps { display: flex; gap: 2px; margin-top: 2px; color: var(--ink-3);
+               font-size: var(--t-micro); font-variant-numeric: tabular-nums; }
+.scale-steps[hidden] { display: none; }
+.scale-steps span { text-align: center; border-top: 1px solid var(--rule); padding-top: 1px; }
+.scale-steps .hinge { margin-inline-start: 4px; }
 /* The ramp is the key to the shading; the strip's own list carries only the
    tile states that are not on the ramp (no cliff, past the axis, incomplete),
    and none of them on most views. */
@@ -489,12 +497,15 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
 /* ── The curves (curves.ts) ────────────────────────────────────────────
    The money line in the series ink over the danger zones' loss wash, with
    the road out of poverty as a bar under the axis. The selected state's is
-   larger and has its axes; the fifty-one share one scale and none. */
+   larger and has its axes; the fifty-one show the road, relative to the
+   poverty line's level (the dashed rule), on one scale and no axes, each
+   name led by its tile's mark so the multiples read in the map's ink. */
 .curve { display: block; overflow: visible; }
 .curve .line { fill: none; stroke: var(--series-1); stroke-width: 1.75; stroke-linejoin: round; }
 .curve .zone { fill: var(--loss-wash); }
 .curve .road { fill: var(--ink-3); }
 .curve .grid { stroke: var(--rule); stroke-width: 1; }
+.curve .zero { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 2; }
 .curve .tick { fill: var(--ink-3); font-size: var(--t-tick); font-variant-numeric: tabular-nums; }
 .stateCurve { margin: var(--s4) 0 0; }
 .stateCurve .curve { width: 100%; max-width: 26rem; height: auto; }
@@ -505,6 +516,8 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
         background: none; border: 1px solid var(--rule); border-radius: var(--r-control); color: var(--ink);
         font: inherit; font-size: var(--t-small); text-align: start; cursor: pointer; }
 .mult .curve { width: 100%; height: auto; }
+.mult .name { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.mult .hg-swatch { width: 10px; height: 10px; }
 .mult:hover { border-color: var(--rule-strong); }
 .mult[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .mult:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
