@@ -742,7 +742,8 @@ export function renderMethod(s: Scene): void {
   const rated = s.rows.filter((r) => r.m.keepRate !== null);
   const bad = rated.filter((r) => (r.m.keepRate as number) < 0).length;
   const strict = rated.filter((r) => (r.m.keepRate as number) < 0 && (r.m.keepRateToLine ?? 0) < 0).length;
-  $("roadToLine").textContent = bad === 0 ? "" : t(strict === bad ? "method.items.roadToLine.same" : "method.items.roadToLine.differs", { strict, bad });
+  /* The "same" sentence names only {bad}; `fill` throws on an argument nothing asked for, and a thrown fill here hid the whole page (2026-09-25). */
+  $("roadToLine").textContent = bad === 0 ? "" : strict === bad ? t("method.items.roadToLine.same", { bad }) : t("method.items.roadToLine.differs", { strict, bad });
   const placed = s.rows.filter((r) => r.m.biggestLossPosition !== null);
   $("groupsLine").innerHTML = rich(t("method.items.groups", { n: placed.filter((r) => (r.m.biggestLossPosition as number) > 50).length, total: placed.length }));
 }
