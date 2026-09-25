@@ -746,8 +746,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const ohRow = await page.$eval('#tbody .hg-row-btn[data-st="OH"]', (el) => [...el.closest("tr")!.children].map((td) => (td as HTMLElement).innerText.trim().replace(/\s*\n\s*/g, " · ")));
     const ohShare = `${Math.round(oh.biggestLossPosition!)} in 100`;
     check(ohRank.at === `at ${money(oh.biggestLossAt!)} · ${ohShare} earn less` && ohRank.label === `${ohRank.n} Ohio: ${money(oh.biggestLoss)}, at ${money(oh.biggestLossAt!)} · ${ohShare} earn less`
-      && ohRow[6] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
-      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[6], expect: ohShare });
+      && ohRow[7] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
+      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[7], expect: ohShare });
     /* The whole-axis worst is the LAST line now, labelled for what it is, with
        its own position; the selected measure's sentence sits between (Plan 9). */
     const axisWorst = (st: string) => {
