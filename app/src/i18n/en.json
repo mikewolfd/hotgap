@@ -185,11 +185,16 @@
     "stillArchetype": "We still couldn't get your own numbers, so these are for a family like yours in your state.",
     "verdict": {
       "always_up": "Every raise leaves you better off — we checked every step up to {top} and nothing drops.",
-      "cliff_ahead": "You're fine up to {wage}; past that, earning more costs you about {drop} a year.",
+      "cliff_ahead": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year.",
       "in_danger_zone": "More pay won't leave you better off until you're past {exit} — {leap} more than you make now.",
       "in_danger_zone:stuck": "More pay won't leave you better off anywhere we looked, right up to {top}.",
       "cliff_behind": "The worst of it is behind you — from {wage} up, more pay means more money.",
-      "cliff_ahead:waits": "You're fine up to {wage}; past that you'd lose about {drop} a year, though not right away."
+      "cliff_ahead:waits": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year, though not right away.",
+      "cliff_ahead:worst": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year, and the biggest drop is at {worstAt}, past what {n} in 10 families like yours earn.",
+      "cliff_ahead:worstAt": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year, and the biggest drop is at {worstAt}.",
+      "cliff_ahead:dip": "At {wage} you'd dip by about {drop}, and be ahead again by {exit}.",
+      "in_danger_zone:inside": "You're past a drop at {wage}. From here to {exit} you keep about {cents}¢ of each extra dollar; at {exit} you're back to what you'd have kept at {peak}.",
+      "in_danger_zone:stuck:inside": "You're past a drop at {wage}, and nowhere we looked, up to {top}, gets you back to what you'd have kept at {peak}."
     },
     "again": "It happens again between {from} and {to}.",
     "againMany": "It happens {n} more times, between {from} and {to}.",
@@ -326,6 +331,14 @@
         "adults": "Your own {noun} would end — it's called {name}.",
         "children": "Your kids' {noun} would end — it's called {name}."
       },
+      "phaseOut": "{Phrase} phases out here — it's called {name}.",
+      "phaseOutGroup": {
+        "adults": "Your own {noun} phases out here — it's called {name}.",
+        "children": "Your kids' {noun} phases out here — it's called {name}."
+      },
+      "noDrop": " No drop.",
+      "endsIfYouGetIt": "{Phrase} ends, if you get it — it's called {name}.",
+      "wouldEndIfYouGetIt": "{Phrase} would end, if you get it — it's called {name}.",
       "starts": " Then {phrase} starts — it's called {name}.",
       "wouldStart": " Then {phrase} would start — it's called {name}.",
       "remains": " Some of it carries on to {until}: {list}.",
@@ -353,7 +366,7 @@
         "child_continuous_eligibility": " It doesn't end that day: your kids keep it until their next yearly check, up to 12 months later.",
         "transitional_medical_assistance": " It doesn't end that day: you keep it for another 6 to 12 months."
       },
-      "lead": "Each of these is a pay where something stops. People call them benefits cliffs."
+      "lead": "The pays where help stops. The ones with a figure are drops — people call those benefits cliffs. The rest taper off and cost nothing in one step."
     },
     "waits": {
       "thisHelp": "this help",
@@ -494,12 +507,17 @@
     "phraseAndName": "{phrase} ({name})",
     "pageTitle": "HotGap — will I lose money if I earn more?",
     "keepNext": {
-      "base": "Of the next {over} you earn, you'd keep about {kept}.",
-      "cliff": "Of the next {over} you earn, you'd keep about {kept}, because {phrase} ends at {wage}.",
-      "plateau": "Of the next {over} you earn, you'd keep about {kept} — that's a flat stretch: more pay, barely more money."
+      "base": "Of the next {over} you earn you'd keep about {kept}.",
+      "plateau": "Of the next {over} you earn you'd keep about {kept} — that's a flat stretch: more pay, barely more money."
     },
     "beyondReach": " The ones past {at} are past what {n} in 10 families like yours earn.",
-    "toPlaces": "See how {state} compares with other states"
+    "toPlaces": "See how {state} compares with other states",
+    "toPlacesNote": "The map's family rents at the typical price and gets child-care help, so its numbers differ from yours.",
+    "takeUp": {
+      "counting": "Counting the help you get: {list}.",
+      "ask": "Not getting one of these?",
+      "change": "Change my answers"
+    }
   },
   "caseworker": {
     "editor": {

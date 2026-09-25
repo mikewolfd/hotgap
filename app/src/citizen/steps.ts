@@ -60,10 +60,17 @@ export function stepRows(s: Scene): StepRow[] {
 export function stepSentence(s: Scene, r: StepRow): string {
   const byAge = s.ev.escape.programEndsByAge;
   const split = (id: ProgramId) => byAge.adults[id] !== undefined && byAge.children[id] !== undefined;
-  // A phrase that already names who holds it takes the plain template, not "Your kids' … for kids".
+  // Only drops are cliffs (design/TASKS.md § Cliff-first verdicts): on a row
+  // with no drop, help phases out — a taper that costs nothing in one step —
+  // and the row says so once, at its end. Cash help (TANF) reaches about one
+  // in five poor families, and the household's take-up of it is the page's
+  // default rather than something the person said, so its ending carries
+  // "if you get it". A phrase that already names who holds it takes the
+  // plain template, not "Your kids' … for kids".
   const ends = ({ id, group }: StepRow["programs"][number]) => group && !NAMES_ITS_GROUP.has(id)
-    ? fill(copy.steps[r.future ? "wouldEndGroup" : "endsGroup"][group], { noun: noun(id), name: called(id) })
-    : t(r.future ? "steps.wouldEnd" : "steps.ends", { Phrase: capitalize(phrase(id)), name: called(id) });
+    ? fill(copy.steps[!r.cliff ? "phaseOutGroup" : r.future ? "wouldEndGroup" : "endsGroup"][group], { noun: noun(id), name: called(id) })
+    : t(!r.cliff ? "steps.phaseOut" : id === "tanf" ? (r.future ? "steps.wouldEndIfYouGetIt" : "steps.endsIfYouGetIt") : r.future ? "steps.wouldEnd" : "steps.ends",
+      { Phrase: capitalize(phrase(id)), name: called(id) });
   // The cliff's own programs, then — for a deferred cliff — when the loss
   // lands (the badge's clause, from Cliff.deferral), which belongs to them
   // and not to a program that merely ends at the same pay; those follow,
@@ -81,6 +88,7 @@ export function stepSentence(s: Scene, r: StepRow): string {
   if (rem.length) {
     out += t("steps.remains", { until: s.m.pay(rem[0].until), list: listOf(rem.map((x) => t("steps.remainsItem", { amount: s.m.money(x.amount), phrase: phrase(x.id) }))) });
   }
+  if (!r.cliff && r.programs.length) out += copy.steps.noDrop;
   return out.trim();
 }
 

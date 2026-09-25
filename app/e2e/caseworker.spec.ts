@@ -640,7 +640,7 @@ test("print from OS-dark: the controls and the bar leave, the client sheet opens
   /* The sheet's first line is the two facts the citizen answer gave up on 2026-09-18: the pay is in the
      ScenarioBar and the money kept is the label on the diamond, and paper carries neither. */
   await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $84,371.");
-  await expect(page.locator("#handout")).toContainText("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now.");
+  await expect(page.locator("#handout")).toContainText("You're past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000.");
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.screenshot({ path: pf("1280-print"), fullPage: true });
   await page.evaluate(() => document.getElementById("handout")!.scrollIntoView());

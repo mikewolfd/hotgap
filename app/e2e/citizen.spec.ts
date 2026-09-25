@@ -16,7 +16,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pageContent, pdfObjects, pdfPages, textInks } from "./pdf.mjs";
-import { AUDIT_DIR as OUT, consoleErrors, contrast, noOverflow, outDir, rgb, OPEN_ALL } from "./support.js";
+import { ANY_ANSWER, AUDIT_DIR as OUT, consoleErrors, IN_ZONE, contrast, noOverflow, outDir, rgb, OPEN_ALL } from "./support.js";
 
 const EXPECT_SOURCE = process.env.HOTGAP_EXPECT_SOURCE ?? "live";
 const HOUSEHOLD = "/?zip=94110&kids=3%2C7&pay=30000&unit=year";
@@ -50,7 +50,7 @@ async function loaded(page: Page): Promise<Ev> {
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
   await page.goto(HOUSEHOLD);
   const ev = (await (await evaluated).json()) as Ev;
-  await expect(page.locator("#answer")).toContainText("More pay won't leave you better off");
+  await expect(page.locator("#answer")).toContainText(IN_ZONE);
   await page.locator("#chart svg path").first().waitFor();
   return ev;
 }
@@ -68,12 +68,26 @@ for (const scheme of ["light", "dark"] as const) {
       /* The answer is the figure's own caption, so the picture's accessible name IS the answer. */
       await expect(page.locator("figure > figcaption#answer")).toHaveCount(1);
 
-      /* The verdict is the danger-zone shape, keyed to the marks, and its figures are the evaluation's. */
+      /* The verdict is the danger-zone shape past a drop (design/TASKS.md § Danger-zone sentences), keyed to the
+         marks, and its figures are the evaluation's: the drop's landing pay, the exit twice, the zone's start. */
       const answer = page.locator("#answer");
-      await expect(answer).toContainText("More pay won't leave you better off until you're past");
+      await expect(answer).toContainText("You're past a drop at");
       await expect(answer.locator(".hg-amt--gap")).toHaveCount(2);
+      await expect(answer.locator(".hg-amt--cliff")).toHaveCount(1);
       await expect(answer.locator(".hg-amt--keep")).toHaveCount(0);
-      expect(dollars((await answer.textContent())!)).toEqual([ev.personal.escapeEarnings, ev.personal.escapeEarnings! - ev.analysis.currentEarnings]);
+      const zone = ev.personal.zone!;
+      const behind = ev.analysis.cliffs.filter((c) => c.endEarnings > zone.startEarnings && c.endEarnings <= ev.analysis.currentEarnings).pop()!;
+      const exit = ev.personal.escapeEarnings!;
+      expect(dollars((await answer.textContent())!)).toEqual([behind.endEarnings, exit, exit, zone.startEarnings]);
+      const from = ev.curve.points.filter((p) => p.earnings <= ev.analysis.currentEarnings).pop()!;
+      const netAt = plotted(ev);
+      await expect(answer).toContainText(`about ${Math.round((100 * (netAt.get(exit)! - from.netIncome)) / (exit - from.earnings))}¢ of each extra dollar`);
+      /* The in-zone shape carries its own rate: it does not open with the next-stretch sentence. */
+      await expect(answer).not.toContainText("Of the next");
+      /* Take-up under the headline, and the note that the map's family is not this one (live path). */
+      await expect(page.locator("#take-up")).toContainText("Counting the help you get:");
+      await expect(page.locator("#take-up a")).toHaveText("Change my answers");
+      await expect(page.locator("#to-places-note")).toHaveText("The map's family rents at the typical price and gets child-care help, so its numbers differ from yours.");
       /* What the answer stopped saying is on the picture instead: what this household keeps now, at its own diamond. */
       const youKeep = await page.locator("#chart svg text.hg-label--ink").allTextContents();
       expect(youKeep.join(" ")).toContain(`$${Math.round(ev.analysis.currentNet).toLocaleString("en-US")}`);
@@ -99,30 +113,11 @@ for (const scheme of ["light", "dark"] as const) {
         expect(again).toContain(`${Math.round((farCliff.position ?? 0) / 10)} in 10`);
       } else expect(again ?? "").not.toContain("are past what");
 
-      /* Your keep rate on the next stretch (Plan 9 § Citizen): the two money figures are keepNext.over and
-         keepNext.kept × keepNext.over from the response — the first at the pay-unit step ($500 a year), the second at the change step ($100 a year: lib/format.ts payChangeRounded, so a kept $400 is never "$0");
-         a cliff inside the stretch is named at its landing point, a sub-10¢ stretch with none reads as a flat stretch. */
-      const keepNextP = page.locator("#keep-next");
-      if (ev.personal.keepNext === null) {
-        await expect(keepNextP).toBeEmpty();
-      } else {
-        const { over, kept } = ev.personal.keepNext;
-        const text = (await keepNextP.textContent())!;
-        expect(text).toMatch(/^Of the next \$/);
-        const keptFigure = Math.round((kept * over) / 100) * 100;
-        const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
-        if (next && next.startEarnings < ev.analysis.currentEarnings + over) {
-          expect(text).toContain("because");
-          expect(dollars(text)).toEqual([over, keptFigure, next.endEarnings]);
-        } else if (kept < 0.10) {
-          expect(text).toContain("flat stretch");
-          expect(dollars(text)).toEqual([over, keptFigure]);
-        } else {
-          expect(text).not.toContain("because");
-          expect(text).not.toContain("flat stretch");
-          expect(dollars(text)).toEqual([over, keptFigure]);
-        }
-      }
+      /* The next-stretch rate moved into the answer's first sentence (design/TASKS.md § Cliff-first verdicts):
+         the step list no longer carries a line of its own. */
+      await expect(page.locator("#keep-next")).toHaveCount(0);
+      /* Only drops are cliffs: the lead says which rows are drops. */
+      await expect(page.locator("#steps-panel")).toContainText("The ones with a figure are drops — people call those benefits cliffs.");
 
       expect(ev.analysis.cliffs.length).toBeGreaterThan(0);
 
@@ -326,7 +321,7 @@ test("a chip toggle re-renders the whole result in place, and the sweep's proven
   const evaluated = page.waitForResponse((r) => r.url().endsWith("/api/evaluate"));
   await snap.click();
   expect((await evaluated).status()).toBe(200);
-  await expect(page.locator("#result [role=status]")).toContainText("More pay won't");
+  await expect(page.locator("#result [role=status]")).toHaveText(ANY_ANSWER);
   await expect(page.locator("#answer")).not.toHaveText(before!);
   // A fresh line was drawn for the new household, once.
   await expect(page.locator("#chart svg path.hg-draw")).toHaveCount(1);
@@ -404,11 +399,15 @@ test(`a plateau household shows the flat-stretch wording (source ${EXPECT_SOURCE
   expect(kept).toBeLessThan(0.10);
   const next = ev.analysis.cliffs.find((c) => c.startEarnings >= ev.analysis.currentEarnings) ?? null;
   expect(next === null || next.startEarnings >= ev.analysis.currentEarnings + over).toBe(true);
-  await openPanel(page, "What happens at each step");
-  await expect(page.locator("#keep-next")).toContainText("that's a flat stretch: more pay, barely more money");
-  /* The kept figure is a CHANGE in pay, so it takes the $100 step the main block measures against
-     (lib/format.ts payChangeRounded) — a stretch that keeps $100 must not print "$0". */
-  expect(dollars((await page.locator("#keep-next").textContent())!)).toEqual([over, Math.round((kept * over) / 100) * 100]);
+  /* Cliff-first (design/TASKS.md): the next-stretch sentence opens the answer, so the flat stretch is said there. */
+  const answer = page.locator("#answer");
+  await expect(answer).toContainText("that's a flat stretch: more pay, barely more money");
+  /* The two money figures are keepNext.over and keepNext.kept × keepNext.over from the response — the first at the
+     pay-unit step ($500 a year), the second a CHANGE in pay, so it takes the $100 step (lib/format.ts
+     payChangeRounded) — a stretch that keeps $100 must not print "$0". */
+  const lead = (await answer.textContent())!.split(" money.")[0];
+  expect(lead).toMatch(/^Of the next \$/);
+  expect(dollars(lead)).toEqual([over, Math.round((kept * over) / 100) * 100]);
   await page.screenshot({ path: resolve(OUT, "citizen-390-light-plateau.png"), fullPage: true });
   expect(errors).toEqual([]);
 });

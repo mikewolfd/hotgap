@@ -31,7 +31,7 @@ const editor = mountEditor(app, {
 });
 const resultRoot = h("div", { class: "result", id: "result" });
 app.append(h("h1", { class: "hg-visually-hidden" }, t("heading")), resultRoot);
-const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false, retry: true }));
+const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false, retry: true }), () => editor.showChips("no-snap"));
 
 // Evaluations are answered out of order (a fresh curve takes seconds, a
 // cached one milliseconds); only the latest request may render.

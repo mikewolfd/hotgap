@@ -2,12 +2,27 @@
 // states and the reach and hours sentences.
 import { describe, expect, test } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
-import { assumedRows, boundaryText, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, whoText } from "./facts.js";
+import { assumedRows, boundaryText, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, takeUpText, whoText } from "./facts.js";
 import { makeEvaluation } from "./fixture.js";
 import { sceneOf } from "./model.js";
 import { tableRows } from "./table.js";
 
 const year = { unit: "year" };
+
+describe("takeUpText (under the answer)", () => {
+  test("the help the curve counts as received, by the names an office uses, and the way to change it", () => {
+    expect(takeUpText(sceneOf(makeEvaluation(), year))).toEqual({
+      counting: "Counting the help you get: SNAP, TANF cash assistance, Medicaid, and WIC.",
+      ask: "Not getting one of these?",
+      change: "Change my answers",
+    });
+  });
+  test("no take-up flag on, no line", () => {
+    const ev = makeEvaluation();
+    ev.answers = { ...ev.answers, getsSnap: false, getsTanf: false, getsMedicaid: false, getsWic: false };
+    expect(takeUpText(sceneOf(ev, year))).toBeNull();
+  });
+});
 
 describe("tableRows", () => {
   test("the peak, the household, the exit, every cliff in the window and safe-from-here, each keep read off the plotted curve", () => {

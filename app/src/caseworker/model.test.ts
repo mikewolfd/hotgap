@@ -320,9 +320,9 @@ describe("the client sheet", () => {
     // its chips show — an evaluation's, not a re-derivation.
     expect(h.paragraphs[0]).toBe("You're paid $38,000 a year, and with help counted you keep $84,371.");
     expect(h.paragraphs[0]).toContain(`$${co.analysis.currentEarnings.toLocaleString("en-US")}`);
-    // Then the citizen page's own answer for this household (audit D4): one sentence, the exit and the leap,
+    // Then the citizen page's own answer for this household (audit D4): the in-zone shape (the drop behind it, the rate to the exit),
     // then "again" from the next zone's start. One catalog, one sentence, on both surfaces.
-    expect(h.paragraphs[1]).toBe("More pay won't leave you better off until you're past $45,000 — $7,000 more than you make now. It happens again between $46,000 and $119,000.");
+    expect(h.paragraphs[1]).toBe("You're past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000. It happens again between $46,000 and $119,000.");
     expect(h.paragraphs[2]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
     expect(h.paragraphs[3]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");
     expect(h.paragraphs[4]).toBe("Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.");

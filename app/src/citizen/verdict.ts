@@ -12,12 +12,11 @@
 // the desk, then cut to what helps. The old shape opened by repeating the
 // question ("You are paid $30,000 a year. You keep $45,283.") and a reader
 // stopped at sentence two.
-import type { Cliff } from "@hotgap/core";
-import { copy, fill, parts } from "./copy.js";
+import { keepRate, pointAtOrBelow, type Cliff, type DangerZone } from "@hotgap/core";
+import { copy, fill, parts, type Part } from "./copy.js";
 import type { Scene } from "./model.js";
-import { phrase } from "./programs.js";
 
-/** One shape per curve shape; the two suffixed keys are the shapes a timing or a missing exit changes. */
+/** One shape per curve shape; the suffixed keys are the shapes a timing, a missing exit, a drop already passed, a short dip or a bigger drop further on changes. */
 export type VerdictKey = keyof typeof copy.verdict;
 
 /**
@@ -28,13 +27,62 @@ export type VerdictKey = keyof typeof copy.verdict;
  */
 const nextCliff = (s: Scene): Cliff | null => s.next ?? s.cliffs.find((c) => c.endEarnings > s.current) ?? null;
 
+/**
+ * The drop the household has already come down inside its own zone — the
+ * last cliff landing on (zone start, current pay] — or null at the peak,
+ * where nothing has dropped yet and "more pay won't leave you better off
+ * until…" is the whole story (design/TASKS.md § Danger-zone sentences).
+ */
+export function dropBehind(s: Scene): Cliff | null {
+  const z = s.zone;
+  if (z === null) return null;
+  return s.cliffs.filter((c) => c.endEarnings > z.startEarnings && c.endEarnings <= s.current).pop() ?? null;
+}
+
+/**
+ * What the household keeps of each extra dollar from where it stands (the
+ * sampled point at or below its pay, the one every "at your own pay"
+ * reading uses) to its exit: core's keepRate over the curve's own points.
+ * Null with no exit, or when either end is not a sampled point.
+ */
+function insideRate(s: Scene): number | null {
+  if (s.exit === null) return null;
+  const points = s.ev.curve.points;
+  return keepRate(points, pointAtOrBelow(points, s.current).earnings, s.exit);
+}
+
+/**
+ * The zone that opens at this cliff, when it closes again within three
+ * steps: a dip the household is ahead of again a little further on, not a
+ * permanent cost (design/TASKS.md § Cliff-first verdicts).
+ */
+function dipZone(s: Scene, c: Cliff): (DangerZone & { endEarnings: number }) | null {
+  const z = s.ev.analysis.dangerZones.find((d) => d.startEarnings === c.startEarnings);
+  return z && z.endEarnings !== null && z.endEarnings - z.startEarnings <= 3 * s.step ? (z as DangerZone & { endEarnings: number }) : null;
+}
+
+/** The bigger drop further up than the one the sentence is about, if any: the second clause names it. */
+const worstBeyond = (s: Scene, c: Cliff): Cliff | null =>
+  s.worst !== null && s.worst !== c && s.worst.startEarnings > c.startEarnings ? s.worst : null;
+
 export function verdictKey(s: Scene): VerdictKey {
   const v = s.ev.analysis.verdict;
-  /* No exit reads as stuck: the sentence would otherwise name a pay that does not exist. */
-  if (v === "in_danger_zone") return s.stuck || s.exit === null ? "in_danger_zone:stuck" : "in_danger_zone";
-  /* A cliff the rules defer says so in four words, because the sentence names that cliff
-     and would otherwise be wrong about when it lands (inventory.md § Verdict catalog). */
-  if (v === "cliff_ahead") return nextCliff(s)?.deferral ? "cliff_ahead:waits" : "cliff_ahead";
+  if (v === "in_danger_zone") {
+    const behind = dropBehind(s) !== null;
+    /* No exit reads as stuck: the sentence would otherwise name a pay that does not exist. */
+    if (s.stuck || s.exit === null) return behind ? "in_danger_zone:stuck:inside" : "in_danger_zone:stuck";
+    return behind && insideRate(s) !== null ? "in_danger_zone:inside" : "in_danger_zone";
+  }
+  if (v === "cliff_ahead") {
+    const c = nextCliff(s);
+    /* A cliff the rules defer says so in four words, because the sentence names that cliff
+       and would otherwise be wrong about when it lands (inventory.md § Verdict catalog). */
+    if (c?.deferral) return "cliff_ahead:waits";
+    if (c && dipZone(s, c)) return "cliff_ahead:dip";
+    const worst = c ? worstBeyond(s, c) : null;
+    if (worst) return worst.position !== null ? "cliff_ahead:worst" : "cliff_ahead:worstAt";
+    return "cliff_ahead";
+  }
   return v;
 }
 
@@ -48,17 +96,31 @@ export function verdictKey(s: Scene): VerdictKey {
  * it, and what they keep is the direct label at their own diamond
  * (`charts.md` § Direct labels, 1).
  */
-function verdictSlots(s: Scene): Record<string, string> {
+function verdictSlots(s: Scene, key: VerdictKey): Record<string, string | number> {
   const { m } = s;
-  switch (verdictKey(s)) {
+  switch (key) {
     case "always_up":
     case "in_danger_zone:stuck":
       return { top: m.pay(s.top) };
+    case "in_danger_zone:inside":
+      return { wage: m.pay(dropBehind(s)!.endEarnings), exit: m.pay(s.exit!), cents: Math.round(100 * insideRate(s)!), peak: m.pay(s.zone!.startEarnings) };
+    case "in_danger_zone:stuck:inside":
+      return { wage: m.pay(dropBehind(s)!.endEarnings), top: m.pay(s.top), peak: m.pay(s.zone!.startEarnings) };
     case "cliff_ahead":
-    case "cliff_ahead:waits": {
+    case "cliff_ahead:waits":
+    case "cliff_ahead:dip":
+    case "cliff_ahead:worst":
+    case "cliff_ahead:worstAt": {
       // The threshold is the step's landing point (§ Where a program ends).
       const c = nextCliff(s)!;
-      return { wage: m.pay(c.endEarnings), drop: m.about(c.drop) };
+      const out: Record<string, string | number> = { wage: m.pay(c.endEarnings), drop: m.about(c.drop) };
+      if (key === "cliff_ahead:dip") out.exit = m.pay(dipZone(s, c)!.endEarnings);
+      if (key === "cliff_ahead:worst" || key === "cliff_ahead:worstAt") {
+        const w = worstBeyond(s, c)!;
+        out.worstAt = m.pay(w.endEarnings);
+        if (key === "cliff_ahead:worst") out.n = Math.round((w.position ?? 0) / 10);
+      }
+      return out;
     }
     case "cliff_behind":
       return { wage: m.pay((s.worst ?? s.cliffs[s.cliffs.length - 1]).endEarnings) };
@@ -69,22 +131,32 @@ function verdictSlots(s: Scene): Record<string, string> {
   }
 }
 
-/** The mark each slot is keyed to (a class on the span), or none. */
+/** The mark each slot is keyed to (a class on the span), or none: a drop's landing pay → the cliff dot, the exit and the leap → the exit rule. */
 const SLOT_KEY: Record<string, string> = {
-  wage: "hg-amt hg-amt--cliff", exit: "hg-amt hg-amt--gap", leap: "hg-amt hg-amt--gap",
+  wage: "hg-amt hg-amt--cliff", worstAt: "hg-amt hg-amt--cliff", exit: "hg-amt hg-amt--gap", leap: "hg-amt hg-amt--gap",
 };
 
 export type VerdictPart = { text: string } | { slot: string; text: string; key: string | null };
 
+/** The shapes that open with the next-stretch rate; the in-zone shapes carry a rate of their own, or say nothing gets the household back. */
+const LED: ReadonlySet<VerdictKey> = new Set<VerdictKey>(["always_up", "cliff_ahead", "cliff_ahead:waits", "cliff_ahead:dip", "cliff_ahead:worst", "cliff_ahead:worstAt", "cliff_behind"]);
+
 /**
- * The sentence as parts, so a renderer can wrap each slot in its key. One
- * sentence, up to two clauses, and nothing appended: a deferred loss is
- * marked on the picture — the hollow dot, the dashed stub, the word *later*
- * and its money — and carries its rule on the step row (citizen review B1,
- * answered in the place B1 asked for).
+ * The sentence as parts, so a renderer can wrap each slot in its key.
+ * Cliff-first (design/TASKS.md § Cliff-first verdicts): outside a zone the
+ * answer opens with what the household keeps of its next stretch of pay,
+ * and the cliff is the second sentence — two whole messages joined by a
+ * space, the one composition lib/copy.ts allows. With no next stretch (less
+ * than a step of axis left) the shape's own sentence stands alone. Nothing
+ * else is appended: a deferred loss is marked on the picture — the hollow
+ * dot, the dashed stub, the word *later* and its money — and carries its
+ * rule on the step row (citizen review B1, answered in the place B1 asked for).
  */
 export function verdictParts(s: Scene): VerdictPart[] {
-  return parts(copy.verdict[verdictKey(s)], verdictSlots(s)).map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
+  const key = verdictKey(s);
+  const lead = LED.has(key) ? keepNextParts(s) : null;
+  const body = parts(copy.verdict[key], verdictSlots(s, key));
+  return [...(lead ? [...lead, { text: " " }] : []), ...body].map((p) => ("slot" in p ? { ...p, key: SLOT_KEY[p.slot] ?? null } : p));
 }
 
 export const verdictText = (s: Scene): string => verdictParts(s).map((p) => p.text).join("");
@@ -121,22 +193,22 @@ export function againText(s: Scene): string | null {
 /**
  * Your keep rate on the next stretch (Plan 9 § Citizen), from
  * `personal.keepNext`: `over` and `kept` are both money in the person's own
- * pay unit (app/README.md § Keep rate). A cliff inside the stretch — the
- * citizen's own next cliff, `s.next`, which can sit past the $10,000 window
- * — is named in the existing program phrase, at the pay it ends (the one
- * convention, design/inventory.md § Where a program ends); short of that, a
- * stretch keeping under 10¢ on the dollar is a flat stretch, not a cliff.
- * Null `keepNext` (less than one step of axis left) says nothing.
+ * pay unit (app/README.md § Keep rate). Since the cliff-first verdicts it is
+ * the answer's first sentence, and the cliff the stretch may cross is named
+ * by the sentence after it — so this one says only the figure, and, with no
+ * cliff inside the stretch (the citizen's own next cliff, `s.next`, can sit
+ * past the $10,000 window), that a stretch keeping under 10¢ on the dollar is
+ * a flat stretch. Null `keepNext` (less than one step of axis left) says nothing.
  */
-export function keepNextText(s: Scene): string | null {
+function keepNextParts(s: Scene): Part[] | null {
   const next = s.ev.personal.keepNext;
   if (next === null) return null;
   const { over, kept: rate } = next;
   // `over` is a pay level; what is kept out of it is a change and takes the finer step, so $400 kept is not "$0".
   const slots = { over: s.m.pay(over), kept: s.m.change(rate * over) };
-  if (s.next && s.next.startEarnings < s.current + over) {
-    const id = s.next.programsLost[0];
-    return fill(copy.keepNext.cliff, { ...slots, phrase: id ? phrase(id) : copy.chart.someHelp, wage: s.m.pay(s.next.endEarnings) });
-  }
-  return fill(rate < 0.10 ? copy.keepNext.plateau : copy.keepNext.base, slots);
+  const cliffInside = s.next !== null && s.next.startEarnings < s.current + over;
+  return parts(rate < 0.10 && !cliffInside ? copy.keepNext.plateau : copy.keepNext.base, slots);
 }
+
+/** The next-stretch sentence on its own, as the answer opens with it. */
+export const keepNextText = (s: Scene): string | null => keepNextParts(s)?.map((p) => p.text).join("") ?? null;
