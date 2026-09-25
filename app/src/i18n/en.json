@@ -253,8 +253,8 @@
         },
         "youKeepHelp": "you keep {kept}, help counted",
         "youKeepTax": "you keep {kept} after tax",
-        "roadFrom": "poverty line",
-        "roadTo": "2× poverty",
+        "roadFrom": "poverty line {lo}",
+        "roadTo": "2× poverty {hi}",
         "again": "flat again"
       },
       "scrolls": "The picture covers every pay from {from} to {to} — slide it sideways to see the rest.",
@@ -1051,8 +1051,8 @@
     },
     "pageTitle": "HotGap — caseworker",
     "answer": {
-      "inZone": "Net stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}; {raise} clears the stretch.",
-      "inZone:stuck": "Net stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}.",
+      "inZone": "Net stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, =0 {no single step between them drops {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}; {raise} clears the stretch.",
+      "inZone:stuck": "Net stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, =0 {no single step between them drops {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}.",
       "cliffAhead": "This family is clear up to {at}; past it a raise costs about {drop} a year.",
       "cliffAhead:dip": "This family is clear up to {at}; there it dips by about {drop} and is ahead again by {exit}.",
       "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",

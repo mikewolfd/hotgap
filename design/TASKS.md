@@ -108,7 +108,7 @@ the file, the change, and the words. Figures below are the committed sweep of
       care. This is the line that turns "a single parent of two" into the
       household the number is true of. *Done: `#answerHolds`, answer.ts
       `holdsText`; the subsidy is named only beside a care bill.*
-- [ ] **Name the road's span in the measure.** `places.measures.keepRate.describe`
+- [x] **Name the road's span in the measure.** `places.measures.keepRate.describe`
       and the `howTo.measure` line: *"Of each extra dollar earned from the
       poverty line ({lo}) to just past twice it ({hi})…"*, `lo`/`hi` from the
       selected household's `roadLo`/`roadHi` (they differ for AK/HI and by

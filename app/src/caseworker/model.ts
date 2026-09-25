@@ -123,9 +123,9 @@ function dipAhead(ev: HouseholdEvaluation): { cliff: Cliff; exit: number } | nul
   return z && z.endEarnings !== null && z.endEarnings - z.startEarnings <= 3 * stepOf(ev) ? { cliff: c, exit: z.endEarnings } : null;
 }
 
-/** The steps from the zone's peak to `hi`, and how many of them start a cliff — "3 of the 15 steps between them lose money", rather than a claim that every raise does. */
-function zoneSteps(ev: HouseholdEvaluation, start: number, hi: number): { nLose: number; nSteps: number } {
-  return { nLose: cliffsBetween(ev.analysis.cliffs, start, hi).length, nSteps: Math.round((hi - start) / stepOf(ev)) };
+/** The steps from the zone's peak to `hi`, and how many of them start a cliff — "3 of the 15 steps between them lose money", rather than a claim that every raise does. A zone opened by declines under the cliff floor has none to count, and says so (the `=0` branch) rather than printing "0 of 9 lose money". */
+function zoneSteps(ev: HouseholdEvaluation, start: number, hi: number): { nLose: number; nSteps: number; floor: string } {
+  return { nLose: cliffsBetween(ev.analysis.cliffs, start, hi).length, nSteps: Math.round((hi - start) / stepOf(ev)), floor: usd(CLIFF_MIN) };
 }
 
 /** The slots for this shape; `fill` throws on an argument nothing asked for, which is what keeps one sentence to one set of facts. */

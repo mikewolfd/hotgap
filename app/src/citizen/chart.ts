@@ -372,8 +372,8 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     }
     if (s.road) {
       const [ra, rb] = [px(s.road.lo), px(s.road.hi)];
-      label([copy.chart.labels.roadFrom], [{ x: ra, y: roadY + 18, anchor: "start" }, { x: ra, y: roadY + 33, anchor: "start" }], "hg-label hg-label--end");
-      label([copy.chart.labels.roadTo], [{ x: rb, y: roadY + 18, anchor: "end" }, { x: rb, y: roadY + 33, anchor: "end" }], "hg-label hg-label--end");
+      label([t("chart.labels.roadFrom", { lo: m.pay(s.road.lo) })], [{ x: ra, y: roadY + 18, anchor: "start" }, { x: ra, y: roadY + 33, anchor: "start" }], "hg-label hg-label--end");
+      label([t("chart.labels.roadTo", { hi: m.pay(s.road.hi) })], [{ x: rb, y: roadY + 18, anchor: "end" }, { x: rb, y: roadY + 33, anchor: "end" }], "hg-label hg-label--end");
     }
 
     /* 7. Every other drop's money, biggest first, while there is room. Biggest
