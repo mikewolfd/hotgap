@@ -2,7 +2,7 @@
 // design/caseworker.html froze (single parent, kids 3 and 7, $38,000),
 // evaluated offline through core, so every expected figure below is one the
 // mockup's audit screenshots carry and a reader can check against the file.
-import { cliffsBetween, evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
+import { analyzeCurve, cliffsBetween, evaluateOffline, loadSummary, rawAnswersFromFlags, reachCell, validateAnswers, type HouseholdEvaluation, type UnmodeledProgram } from "@hotgap/core";
 import { describe, expect, it } from "vitest";
 import { dateWords, listOf, lossFigure, ordinal, signedMoney } from "../lib/format.js";
 import {
@@ -43,11 +43,14 @@ describe("figures, through Intl in the locale (lib/format.ts)", () => {
    same figures, off the same sweep; what moved is how many sentences carry them. */
 describe("the answer, one sentence in the caseworker register", () => {
   it("names the household's own zone, its exit and the raise that clears it — and nothing else", () => {
-    expect(answerText(co)).toBe("This family loses money on every raise between $36,000 and $45,000; $7,000 clears the stretch.");
+    /* It counts the steps that lose money rather than saying every raise does (design/TASKS.md § Danger-zone sentences). */
+    expect(answerText(co)).toBe("Net stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money; $7,000 clears the stretch.");
     /* Each dollar figure wears the key of the mark it names, so the sentence doubles as the chart's key. */
     expect(answerParts(co).flatMap((p) => ("slot" in p ? [[p.slot, p.text, p.key]] : []))).toEqual([
+      ["peak", "$84,732", null],
       ["start", "$36,000", "hg-amt hg-amt--gap"],
       ["exit", "$45,000", "hg-amt hg-amt--gap"],
+      ["nSteps", "9", null],
       ["raise", "$7,000", "hg-amt hg-amt--gap"],
     ]);
   });
@@ -61,11 +64,46 @@ describe("the answer, one sentence in the caseworker register", () => {
     expect(shape({ verdict: "always_up" })).toBe("Every raise leaves this family better off; nothing drops anywhere up to $150,000.");
     expect(shape({ verdict: "cliff_behind" })).toBe("The worst is behind this family: from $55,000 up, every raise is more money.");
     expect(shape({ verdict: "cliff_ahead", nextCliff: { startEarnings: 54000 } as never })).toBe("This family is clear up to $55,000; past it a raise costs about $25,449 a year.");
-    expect(shape({}, { raiseIsLowerBound: true })).toBe("This family loses money on every raise above $36,000, and no exit turns up below $150,000.");
+    expect(shape({}, { raiseIsLowerBound: true })).toBe("Net stays below its $84,732 peak (at $36,000) past the top of the axis, $150,000: 8 of the 114 steps between them lose money.");
     /* Every one of them is one sentence. */
     for (const s of [shape({ verdict: "always_up" }), shape({ verdict: "cliff_behind" }), answerText(co)]) {
       expect(s.split(/\.\s/).length).toBe(1);
     }
+  });
+});
+
+/* The SF household of design/TASKS.md (94110, kids 3 and 7, $30,000), as a curve of its shape: net peaks at $44,985 at $28,000,
+   drops three times inside the zone and first passes the peak again at $43,000. Built through core's analyzeCurve on the CO axis. */
+const shaped = (netAt: (e: number) => number, current: number): HouseholdEvaluation => {
+  const points = co.curve.points.map((p) => ({ ...p, netIncome: netAt(p.earnings) }));
+  const analysis = analyzeCurve(points, current, { hasChildren: true });
+  const zone = analysis.dangerZones.find((z) => current > z.startEarnings && (z.endEarnings === null || current < z.endEarnings)) ?? null;
+  return {
+    ...co, curve: { ...co.curve, currentEarnings: current, points }, analysis,
+    personal: { ...co.personal, zone, escapeEarnings: zone?.endEarnings ?? null, raiseToClear: zone ? (zone.endEarnings ?? 150_000) - current : null, raiseIsLowerBound: zone !== null && zone.endEarnings === null },
+  };
+};
+const sfNet = (e: number): number => {
+  const k = e / 1000;
+  if (k <= 28) return 44_985 - (28 - k) * 700;
+  if (k <= 33) return 43_000 + (k - 29) * 300;   /* the first drop, $28k → $29k */
+  if (k <= 38) return 43_200 + (k - 34) * 300;   /* the second, $33k → $34k */
+  if (k <= 43) return 43_400 + (k - 39) * 400;   /* the third, $38k → $39k; $45,000 at $43k clears the $44,985 peak */
+  return 45_000 + (k - 43) * 700;
+};
+
+describe("the answer counts the steps (design/TASKS.md § Danger-zone sentences)", () => {
+  it("says how many of the zone's steps lose money for the SF household, not that every raise does", () => {
+    const sf = shaped(sfNet, 30_000);
+    expect(sf.personal.zone).toEqual({ startEarnings: 28_000, endEarnings: 43_000, peakNet: 44_985 });
+    expect(answerText(sf)).toBe("Net stays below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 steps between them lose money; $13,000 clears the stretch.");
+  });
+  it("calls a next cliff the family climbs back out of within three steps a dip, and says where it is ahead again", () => {
+    const dip = shaped((e) => (e <= 28_000 ? sfNet(e) : e === 29_000 ? 43_000 : e === 30_000 ? 44_500 : 45_100 + (e - 31_000) * 0.7), 25_000);
+    expect(dip.analysis.verdict).toBe("cliff_ahead");
+    expect(answerText(dip)).toBe("This family is clear up to $29,000; there it dips by about $1,985 and is ahead again by $31,000.");
+    /* The SF curve's first cliff opens a fifteen-step zone: no dip, the plain sentence. */
+    expect(answerText(shaped(sfNet, 25_000))).toBe("This family is clear up to $29,000; past it a raise costs about $1,985 a year.");
   });
 });
 
@@ -183,7 +221,7 @@ describe("CompareTable", () => {
     expect(rows.map((r) => [r.label, r.cell(co), r.cell(raise)])).toEqual([
       ["Net after premiums", "$84,371", "$55,924"],
       ["Change from now", "—", "−$28,447"],
-      ["Keeps of each extra dollar", "—", "loses 167¢ of each extra dollar"],
+      ["Of each extra dollar, now → this what-if", "keeps 1¢ of the next $10,000", "loses 167¢ of each extra dollar on average"],
       ["In a danger zone", "Yes", "Yes"],
       ["Zone ends at", "$45,000", "$119,000"],
       ["Raise still needed", "$7,000", "$64,000"],
@@ -195,13 +233,15 @@ describe("CompareTable", () => {
     ]);
   });
   it("keeps rate is Δnet ÷ Δpay against the base, through keepRateWords and road.rate — never a rate for a column whose pay did not change (a take-up toggle)", () => {
-    const keep = compareRows(co).find((r) => r.label === "Keeps of each extra dollar")!;
+    const keep = compareRows(co).find((r) => r.label === "Of each extra dollar, now → this what-if")!;
     // $17,000 more pay, $28,447 less net (the $54k→$55k childcare cliff sits in the stretch): loses $1.673 of every extra dollar.
-    expect(keep.cell(raise)).toBe("loses 167¢ of each extra dollar");
+    expect(keep.cell(raise)).toBe("loses 167¢ of each extra dollar on average");
     const toggle = evaluateOffline(answers({ state: "CO", kids: "3,7", earnings: "38000", married: true }))!;
     expect(toggle.analysis.currentEarnings).toBe(co.analysis.currentEarnings);   /* same pay as the base: a toggle, not a raise */
     expect(keep.cell(toggle)).toBe("—");
-    expect(keep.cell(co)).toBe("—");   /* the base column is never measured against itself */
+    /* The base column is never measured against itself: it says its own next stretch (keepNext), and a dash only with none left. */
+    expect(keep.cell(co)).toBe("keeps 1¢ of the next $10,000");
+    expect(keep.cell({ ...co, personal: { ...co.personal, keepNext: null } })).toBe("—");
   });
 });
 

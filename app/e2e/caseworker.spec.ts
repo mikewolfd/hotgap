@@ -41,7 +41,7 @@ const THREE_WHAT_IFS = "&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=p
 const ARCHETYPE_URL = process.env.HOTGAP_ARCHETYPE_URL;
 
 const rendered = async (page: Page) => {
-  await expect(page.locator("#answer")).toContainText("This family loses money on every raise between $36,000 and $45,000");
+  await expect(page.locator("#answer")).toContainText("Net stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money");
   await expect(page.locator("#sourceNote")).toHaveAttribute("data-source", "live");
 };
 const light = async (page: Page) => page.emulateMedia({ colorScheme: "light" });
@@ -85,7 +85,7 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     measured[`PF-labels-${width}-${scheme}`] = labels;
     expect(labels).toContain("net $84,371, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
     expect(labels.some((l) => /^−\$\d/.test(l ?? ""))).toBe(true); /* 2: the largest drop always draws */
-    expect(labels.some((l) => /¢ of each extra dollar$/.test(l ?? ""))).toBe(true);   /* 6: the keep rate on the road out of poverty */
+    expect(labels.some((l) => /¢ of each extra dollar on average$/.test(l ?? ""))).toBe(true);   /* 6: the keep rate on the road out of poverty */
     // The peak's own dollar went with this pass: it printed a number within a rounding of "net" two inches away.
     expect(labels.filter((l) => l === "$84,732")).toEqual([]);
 
@@ -469,7 +469,7 @@ test("Plan 9: the keep-rate row and the on-the-way list measure against the page
   const baseNet = baseAnalysis.currentNet as number, baseEarn = baseAnalysis.currentEarnings as number;
   const payNet = payAnalysis.currentNet as number, payEarn = payAnalysis.currentEarnings as number;
   const rate = (payNet - baseNet) / (payEarn - baseEarn);
-  const expectedKeep = `${rate < 0 ? "loses" : "keeps"} ${Math.round(Math.abs(rate) * 100)}¢ of each extra dollar`;
+  const expectedKeep = `${rate < 0 ? "loses" : "keeps"} ${Math.round(Math.abs(rate) * 100)}¢ of each extra dollar on average`;
 
   const payTitle = "Pay $55,000 a year", toggleTitle = "CCDF subsidy off";
   const indexOfHeader = (title: string) => page.evaluate((t) => [...document.querySelectorAll("#compareHead th")].findIndex((th) => th.textContent?.includes(t)), title);
@@ -477,7 +477,7 @@ test("Plan 9: the keep-rate row and the on-the-way list measure against the page
   expect(payIndex).toBeGreaterThan(0);
   expect(toggleIndex).toBeGreaterThan(0);
   const keepRow = page.locator("#compareRows tr").nth(2);   /* net, change, keep — the row directly under Change from now */
-  await expect(keepRow.locator("th")).toHaveText("Keeps of each extra dollar");
+  await expect(keepRow.locator("th")).toHaveText("Of each extra dollar, now → this what-if");
   await expect(keepRow.locator("td, th").nth(payIndex)).toHaveText(expectedKeep);
   // The toggle changed no pay: its keep cell is the table's own dash, never a rate over $0.
   await expect(keepRow.locator("td, th").nth(toggleIndex)).toHaveText("—");
@@ -527,7 +527,7 @@ test("390px with three what-ifs: no horizontal scroll (the compare table's width
   const closed = await page.evaluate(() => [...document.querySelectorAll("details.hg-disclosure")].filter((d) => !(d as HTMLDetailsElement).open).length);
   expect(closed).toBe(0);
   const keepRow = page.locator("#compareRows tr").nth(2);
-  await expect(keepRow.locator("th")).toHaveText("Keeps of each extra dollar");
+  await expect(keepRow.locator("th")).toHaveText("Of each extra dollar, now → this what-if");
   await expect(keepRow).toBeVisible();   /* nothing hides the keep row on paper */
   await page.screenshot({ path: keepShot("390-print") });
   await page.evaluate(() => dispatchEvent(new Event("afterprint")));
@@ -550,7 +550,7 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`ES-labels-${width}`] = labels;
     expect(labels).toContain("neto $84,371, con la ayuda contada");
-    expect(labels.some((l) => /¢ de cada dólar extra$/.test(l ?? ""))).toBe(true);
+    expect(labels.some((l) => /¢ de cada dólar extra de media$/.test(l ?? ""))).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: pf(`${width}-es`) });
     await noOverflow(page);

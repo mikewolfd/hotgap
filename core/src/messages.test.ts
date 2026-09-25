@@ -113,8 +113,8 @@ describe("the road out of poverty says the same thing the plan says (Plan 9)", (
   });
 
   it("says a keep rate either way round: kept on the map's legend, poorer in the sentence", () => {
-    expect(message("road.rate", { sign, cents })).toBe("loses 56¢ of each extra dollar");
-    expect(message("road.rate", keepRateWords(0.3))).toBe("keeps 30¢ of each extra dollar");
+    expect(message("road.rate", { sign, cents })).toBe("loses 56¢ of each extra dollar on average");
+    expect(message("road.rate", keepRateWords(0.3))).toBe("keeps 30¢ of each extra dollar on average");
     expect(message("road.sentence", { state: "New Mexico", household: "a single parent of two", ...keepRateWords(0.3) }))
       .toBe("New Mexico — a single parent of two who earns their way from poverty to twice poverty keeps 30¢ of every extra dollar.");
   });

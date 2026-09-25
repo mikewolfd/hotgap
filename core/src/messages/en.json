@@ -58,7 +58,7 @@
   },
   "road": {
     "sentence": "{state} — {household} who earns their way from poverty to twice poverty {sign, select, keeps {keeps {cents}¢ of every extra dollar} other {ends up {cents}¢ poorer for every extra dollar}}.",
-    "rate": "{sign, select, keeps {keeps {cents}¢ of each extra dollar} other {loses {cents}¢ of each extra dollar}}",
+    "rate": "{sign, select, keeps {keeps {cents}¢ of each extra dollar on average} other {loses {cents}¢ of each extra dollar on average}}",
     "collapse": "The road collapses at {at}, where {program} ends and the family loses {drop} in one step.",
     "position": "{n} in 100 families like this earn less",
     "keepNext": "Of the next {over} you earn, you keep about {kept}.",

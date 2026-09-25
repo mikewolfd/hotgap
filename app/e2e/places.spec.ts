@@ -444,7 +444,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const rate = (st: string) => metrics(st, "single-2").keepRate!;
     const say = (st: string) => keepRateWords(rate(st));
     const shortOf = (st: string) => `${say(st).sign} ${say(st).cents}¢`;
-    const phraseOf = (st: string) => `${say(st).sign} ${say(st).cents}¢ of each extra dollar`;
+    const phraseOf = (st: string) => `${say(st).sign} ${say(st).cents}¢ of each extra dollar on average`;
     const ramps = await page.evaluate(() => {
       /* The two ramps as the stylesheet resolves them in this theme, read off
          a probe rather than from a token's declared text, which is a

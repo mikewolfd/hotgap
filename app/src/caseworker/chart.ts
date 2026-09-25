@@ -397,6 +397,8 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
       positions.length ? t("chart.whatIfPositions", { n: positions.length }) : "",
       whatIfs.length > lines.length ? t("chart.whatIfHeld", { held: whatIfs.length - lines.length }) : "",
       source,
+      /* The one definition the shading needs (design/TASKS.md § Captions say what shading is), under the key that draws it. */
+      A.dangerZones.length ? K.glossary : "",
     ].filter(Boolean).join(" ");
     /* The axis's own ends under the figure, and between them the words that
        say it slides, only while it does (the citizen chart's rule; a thumb
@@ -488,7 +490,7 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
     const R = copy.chart.readout, lead = t("chart.readout.lead", { earnings: usd(e), net: usd(v) });
     const zone = !z ? R.outside
       : isPersonal(z) ? (z.endEarnings === null ? t("chart.readout.own.toTop", { peak: usd(z.peakNet), start: usd(z.startEarnings) }) : t("chart.readout.own.toExit", { end: usd(z.endEarnings), peak: usd(z.peakNet), start: usd(z.startEarnings) }))
-      : z.endEarnings === null ? t("chart.readout.other.toTop", { start: usd(z.startEarnings) }) : t("chart.readout.other.toExit", { start: usd(z.startEarnings), end: usd(z.endEarnings) });
+      : z.endEarnings === null ? t("chart.readout.other.toTop", { peak: usd(z.peakNet), start: usd(z.startEarnings) }) : t("chart.readout.other.toExit", { end: usd(z.endEarnings), peak: usd(z.peakNet), start: usd(z.startEarnings) });
     readout.textContent = `${lead} ${zone}`;
   }
 
