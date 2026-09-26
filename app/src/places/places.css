@@ -111,6 +111,10 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
   .picture > * { grid-column: 1 / -1; }
   .picture > :is(.map, .legend, .mapCaution, .mapSwipe) { grid-column: 1; }
   .hg-picture.picture > .aside { grid-column: 2; grid-row: 3 / span 3; align-self: start; }
+  /* A long readout beside the map (the level, the restated rate) is taller than the three rows it spans,
+     and a stretched map re-spaces its tiles by a few pixels when a state is chosen: the map and the
+     legend keep their own height at the top of their rows, and the extra room is empty below the legend. */
+  .hg-picture.picture > :is(.map, .legend) { align-self: start; }
   .hg-picture.picture > .aside > .hg-readout { margin-top: 0; }
 }
 

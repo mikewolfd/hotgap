@@ -459,7 +459,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
    * step, at most n + 1 gridlines. `lo`/`hi` are what it was fitted to.
    */
   function yFit(e0: number, e1: number, lines: WhatIfLine[], maxDrop: number, n: number): { y0: number; y1: number; step: number; lo: number; hi: number } {
-    const within = (xs: number[], vs: number[]) => vs.filter((_, i) => xs[i] >= e0 - (xs[1] - xs[0]) && xs[i] <= e1 + (xs[1] - xs[0]));
+    /* The $0-pay point can sit below $0 — a parent with no job charged the care bill (evaluate.ts
+       normalizePoint) — and is not part of the pay story: a negative one stays out of the fit and is
+       clipped under the floor rather than dragging the axis below zero (blind review R1). */
+    const within = (xs: number[], vs: number[]) => vs.filter((v, i) => xs[i] >= e0 - (xs[1] - xs[0]) && xs[i] <= e1 + (xs[1] - xs[0]) && !(xs[i] === 0 && v < 0));
     const values = [...within(earn, net), ...lines.flatMap((l) => within(l.earnings, l.net))];
     if (ev && ev.analysis.currentEarnings >= e0 && ev.analysis.currentEarnings <= e1) values.push(netAt(ev.analysis.currentEarnings));
     if (!values.length) values.push(...net);

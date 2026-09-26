@@ -167,8 +167,8 @@ describe("stateCoverage — vintages", () => {
     // Connecticut's planning regions post-date the NDCP, so its price is the state-median rule.
     expect(vintages.childcare).toEqual({ infant: "stateMedianCounty 2018", toddler: "stateMedianCounty 2018", preschool: "stateMedianCounty 2018", schoolAge: "stateMedianCounty 2018" });
     expect(vintages.reach).toEqual({ basis: expect.stringContaining("PUMS"), cellDefinition: REACH_CELL_DEFINITION, vintages: ["2024-1yr"], growthFactor: 1.067533 });
-    // The basis a page prints says who "families like this" are — and that the children's ages are not matched (R15).
-    expect(vintages.reach.basis).toContain("the children's ages are not matched");
+    // Who "families like this" are is `cellDefinition` (R15), never an English sentence inside the basis the Spanish page prints.
+    expect(vintages.reach.basis).not.toContain("children's ages");
     // A small state's cells lean on the 5-Year file; the block says so.
     expect(stateCoverage("WY", curves()).vintages.reach.vintages).toEqual(["2020-2024-5yr", "2024-1yr"]);
     expect(stateCoverage("WY", curves()).vintages.model).toBeNull();

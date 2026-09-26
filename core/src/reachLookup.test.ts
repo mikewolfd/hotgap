@@ -155,7 +155,8 @@ describe("what a reach cell matches on (R15)", () => {
     for (const part of ["married couple or not", "own children under 18", "one earner or two", "householder aged 18-64", "children's ages not matched"]) {
       expect(cellDefinition).toContain(part);
     }
-    expect(basis).toContain("the children's ages are not matched");
+    // The basis is provenance only; the cell definition is its own field, said on the pages in their own language.
+    expect(basis).not.toContain("children's ages");
   });
 
   it("is the same cell for a 3- and 7-year-old as for two teenagers: the ages are not matched", () => {

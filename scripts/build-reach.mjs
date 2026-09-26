@@ -487,8 +487,11 @@ const body = {
   year: "2026",
   basis:
     `ACS ${PUMS_YEAR} 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), ` +
-    "householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI." +
-    " Families like this are the same state, married couple or not, the same number of own children under 18 (3 or more pooled), for couples with children one earner or two, and a householder aged 18-64; the children's ages are not matched.",
+    "householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI.",
+  // The cell definition is its own field, below, not a sentence inside the
+  // basis: the pages say it in their own language (citizen.reach.cell,
+  // caseworker.compare.reachCell), and an English sentence printed on the
+  // Spanish page failed the locale proof.
   // What a cell matches a family on, short, for a page to print beside
   // "families like yours" — kept identical to core/src/reachLookup.ts
   // REACH_CELL_DEFINITION, its fallback for a file written before this field.

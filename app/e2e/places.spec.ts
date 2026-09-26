@@ -960,7 +960,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       && ohText.src.endsWith(`Families earning less: ${reachVintages.join(" and ")}, grown to ${summary.year} dollars.`),
       "the state's source line names the county (B4) and the survey behind its positions (Plan 9)", ohText.src.slice(-120));
     check(!ohText.unmod.includes("LIHEAP") && (await page.$eval("#unmodTitle", (el) => (el as HTMLElement).hidden)) === (ohText.unmod.length === 0), "Ohio's block lists no universal gap under the state (S8)", ohText.unmod);
-    check(await page.$eval("#readout", (el) => el.closest(".picture") !== null && el.previousElementSibling!.classList.contains("mapCaution") && getComputedStyle(el).minHeight !== "0px"),
+    check(await page.$eval("#readout", (el) => el.closest(".picture") !== null && (el.parentElement!.classList.contains("aside") ? el.parentElement! : el).previousElementSibling!.classList.contains("mapCaution") && getComputedStyle(el).minHeight !== "0px"),
       "the readout is the figure's own .hg-readout, under the map and its legend");
     /* The suggested citation, from the run's facts and the page's own address (N13). */
     const cite = await page.$eval("#cite", (el) => el.textContent!);
@@ -1321,7 +1321,7 @@ test("the Household menu offers the family with no child-care help beside its tw
   const bad = STATES.filter((st) => (metrics(st, "single-2-nosub").keepRate ?? 0) < 0).length;
   check(answer === `In ${bad} of the ${STATES.length - 1} states and the District of Columbia, a single parent of two children without child-care help climbs from the poverty line to twice it and ends up poorer than they started.`,
     "on the twin the headline says the family is without child-care help, counted from the file (R2)", answer);
-  const method = await page.$$eval("#methodList li", (els) => els.map((el) => el.textContent!).find((t) => /no child-care help/.test(t)));
+  const method = await page.$$eval("#methodList li", (els) => els.map((el) => el.textContent!).find((t) => /derived from the same run/.test(t)));
   check(method !== undefined && /derived from the same run/.test(method) && /will be swept directly/.test(method),
     "the method says the twin is derived from the same run and will be swept directly (R2)", method?.slice(-200));
   check(errors.length === 0, "no console errors on the twin", errors);

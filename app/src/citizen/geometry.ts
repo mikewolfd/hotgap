@@ -42,7 +42,10 @@ export function yRange(s: Scene, narrow: boolean, e0 = 0, e1 = s.top): { y0: num
   /* The points either side of the view's edges too, so the line where it leaves the viewport is inside the range. */
   const last = s.net.length - 1, at = (e: number) => (e - s.earningsAt(0)) / s.step;
   const i0 = Math.min(last, Math.max(0, Math.floor(at(e0)))), i1 = Math.max(i0, Math.min(last, Math.ceil(at(e1))));
-  const values = s.net.slice(i0, i1 + 1);
+  /* The $0-pay point is a parent with no job charged the household's care bill (evaluate.ts normalizePoint),
+     and can sit below $0; it is not part of the pay story the picture tells, so a negative one stays out of
+     the fit and is clipped below the floor rather than dragging the axis under zero (blind review R1). */
+  const values = s.net.slice(i0, i1 + 1).filter((v, k) => !(i0 + k === 0 && v < 0));
   if (s.current >= e0 && s.current <= e1) values.push(s.currentNet);
   const [lo, hi] = [Math.min(...values), Math.max(...values)];
   const [f0, f1] = fitY(values, maxDrop);
