@@ -153,10 +153,11 @@ describe("csvFor on the committed sweep", () => {
       expect(r[col("net_at_road_lo")]).toBe(m.netAtRoadLo == null ? "" : String(m.netAtRoadLo));
       expect(r[col("net_at_road_hi")]).toBe(m.netAtRoadHi == null ? "" : String(m.netAtRoadHi));
     }
-    // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it.
+    // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it
+    // (after taxes, premiums and the child care the family pays itself, R1).
     const level = (st: string) => { const r = body.find((x) => x[col("state")] === st)!; return [r[col("net_at_road_lo")], r[col("net_at_road_hi")]]; };
-    expect(level("WI")).toEqual(["80163", "50801"]);
-    expect(level("NM")).toEqual(["61905", "70423"]);
+    expect(level("WI")).toEqual(["46179", "16817"]);
+    expect(level("NM")).toEqual(["45705", "54223"]);
     // The boundary sensitivity (road.ts keepRateToLine): 26 states negative on
     // the road, 20 of them still negative to exactly twice poverty. Counted on
     // the stored figure — New Jersey's −0.12¢ is negative and prints as 0.

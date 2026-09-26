@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { ARCHETYPES, answersFor, archetypeById, axisSpec, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
+import { ARCHETYPES, answersFor, archetypeById, axisSpec, loadStateFile, parsePEResponse, evaluateCurve, stateCoverage, type CurvePoint } from "@hotgap/core";
 import { NO_PROGRAMS, point } from "../../core/src/testing.js";
 import { buildSummary, buildStateFile, validateResults, type ResultsByStateArchetype, roundPoint } from "./build.js";
 import { stateMetrics } from "./metrics.js";
@@ -211,5 +211,19 @@ describe("buildStateFile", () => {
     // The state's modeled premium assistance survives rounding when served, and is absent, not 0, otherwise.
     expect(roundPoint({ ...p, statePremiumAssistance: 907.4 }).statePremiumAssistance).toBe(907);
     expect("statePremiumAssistance" in roundPoint(p)).toBe(false);
+    // The child-care bill charged in netIncome is kept, rounded, as the mark that it was (R1)…
+    expect(roundPoint({ ...p, childcareBill: 30935.6 }).childcareBill).toBe(30936);
+    // …and a point never charged stays unmarked, so evaluate.ts charges it on read.
+    expect("childcareBill" in roundPoint(p)).toBe(false);
+  });
+
+  it("the committed sweep is charged: every stored point carries the bill of the archetype it models", () => {
+    for (const state of ["CA", "WI", "WY"]) {
+      const file = loadStateFile(state)!;
+      for (const [id, { points }] of Object.entries(file.archetypes)) {
+        const bill = 12 * (answersFor(state, archetypeById(id)).monthlyChildcare ?? 0);
+        expect(points.every((pt) => pt.childcareBill === bill)).toBe(true);
+      }
+    }
   });
 });

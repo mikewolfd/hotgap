@@ -303,7 +303,7 @@
       "sweepBare": "Fuente: HotGap, con PolicyEngine. Reglas de {year}.",
       "rent": " Renta: rentas justas de mercado de HUD, {rent}.",
       "childcare": " Precio del cuidado de niños: {childcare}, llevado a dólares de {year}.",
-      "money": " El dinero que le queda es lo que sobra después de los impuestos y de las primas del plan de salud.",
+      "money": " El dinero que le queda es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo.",
       "heading": "De dónde salen estos números"
     },
     "table": {
@@ -741,7 +741,7 @@
       "neverSafe": "El barrido nunca encontró un pago pasado el cual no quede ninguna zona."
     },
     "tiles": {
-      "net": "Neto, después de primas",
+      "net": "Neto, después de primas y cuidado infantil",
       "netSub": "con {earned} de ingresos",
       "raise": "Aumento para salir de la zona",
       "raiseTo": "hasta {exit} de ingresos",
@@ -869,9 +869,9 @@
       }
     },
     "chart": {
-      "title": "Ingreso neto después de primas, de {from} a {to} de ingresos",
+      "title": "Ingreso neto después de primas y cuidado infantil, de {from} a {to} de ingresos",
       "label": {
-        "lead": "Ingreso neto después de primas frente a ingresos, de {from} a {to}.",
+        "lead": "Ingreso neto después de primas y cuidado infantil frente a ingresos, de {from} a {to}.",
         "zones": "{n, plural, =0 {Sin zona de peligro.} one {{n} zona de peligro.} other {{n} zonas de peligro.}}",
         "own": {
           "toExit": "La de este hogar va de {start} a {exit}.",
@@ -962,7 +962,7 @@
     },
     "compare": {
       "rows": {
-        "net": "Neto después de primas",
+        "net": "Neto después de primas y cuidado infantil",
         "change": "Cambio desde ahora",
         "keep": "De cada dólar extra, ahora → este escenario",
         "inZone": "En una zona de peligro",
@@ -996,7 +996,7 @@
       }
     },
     "assumed": {
-      "health": "El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
+      "health": "El neto es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo; el alquiler no se descuenta. El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
       "facts": "Supuesto para esta curva: {facts}; {age} años.",
       "citizen": "ciudadano",
       "status": "estatus: {status}",
@@ -1044,7 +1044,7 @@
         "two": "dos padres"
       },
       "children": "{n, plural, =0 {sin niños} one {un niño} other {{words} niños}}",
-      "careShare": "{amount} de lo que le queda es {phrase} que se paga directo a su guardería.",
+      "careShare": "De la factura de su guardería, {amount} lo paga {phrase}, directo a la guardería; lo que le queda es lo que sobra después de la parte que paga usted.",
       "biggestDrop": "{n, plural, =0 {La caída más grande está en {at} de sueldo: su descuento en los impuestos se achica y le quedan {drop} menos.} one {La caída más grande está en {at} de sueldo: se termina {phrases} y le quedan {drop} menos.} other {La caída más grande está en {at} de sueldo: se terminan {phrases} y le quedan {drop} menos.}}",
       "snapEnds": "La ayuda para la comida se termina en {at}.",
       "kidsCoverage": "El plan de salud de sus niños se termina en {at} de sueldo, pero no ese mismo año. Se termina en su próxima revisión anual, hasta 12 meses después.",
@@ -1145,12 +1145,12 @@
       "netAtRoadLo": {
         "title": "Ingreso neto en la línea de pobreza",
         "option": "Lo que conserva en la línea de pobreza",
-        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos y las primas de salud— con un sueldo en la línea de pobreza ({lo})."
+        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos, las primas de salud y el cuidado infantil que la familia paga de su bolsillo— con un sueldo en la línea de pobreza ({lo})."
       },
       "netAtRoadHi": {
         "title": "Ingreso neto al doble de la línea de pobreza",
         "option": "Lo que conserva al doble de la pobreza",
-        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos y las primas de salud— con un sueldo del doble de la línea de pobreza ({hi})."
+        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos, las primas de salud y el cuidado infantil que la familia paga de su bolsillo— con un sueldo del doble de la línea de pobreza ({hi})."
       }
     },
     "household": {
@@ -1437,13 +1437,13 @@
       "heading": "Cómo se hicieron estos números",
       "items": {
         "engine": "Cada celda es un tipo de hogar procesado con [PolicyEngine](https://policyengine.org), una calculadora de impuestos y beneficios de código abierto, con las reglas de {year}, variando los ingresos en escalones de $1,000 desde $0 hasta más allá del 400% de la guía de pobreza para ese tamaño de hogar, más $40,000 de margen para recuperarse.",
-        "money": "La línea de dinero está **ajustada por salud**: el ingreso neto del hogar menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado. No se incluyen deducibles ni copagos.",
+        "money": "La línea de dinero es lo que tiene el hogar **después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo**: el ingreso neto del hogar, contando la ayuda y los créditos fiscales —entre ellos el subsidio de cuidado infantil—, menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado, y menos su factura de cuidado infantil. El alquiler no se descuenta: ninguna ayuda se retira en función de él, y un aumento no lo cambia. No se incluyen deducibles ni copagos.",
         "household": "Cada hogar es un inquilino típico del condado más poblado del estado (nombrado debajo del mapa para el estado seleccionado), con la renta justa de mercado de HUD, las estimaciones de condado del Censo y el precio de preescolar de la Base de Datos Nacional de Precios de Cuidado Infantil del DOL para ese condado, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. El año del estudio detrás del precio, y si una mediana estatal o nacional reemplazó a un condado que la base de datos no tiene, varían por estado y se imprimen en la línea de fuente debajo del mapa.",
         "takeUp": "El subsidio de cuidado infantil está activado en esta corrida aunque, como Head Start y los vales de vivienda, llega a una minoría de las familias elegibles: su salida es el mayor precipicio que enfrentan la mayoría de los padres que trabajan con hijos pequeños, y un mapa sin él subestima a todos los estados.",
         "deferred": "Los precipicios diferidos a una renovación posterior — la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre — se cuentan en todas las cifras de aquí como cualquier otro precipicio, y se nombran otra vez en la columna *diferidos*. Son pérdidas reales; lo que dice la columna es cuáles de ellas esperan a una renovación en vez de caer con el aumento.",
         "corrections": "Cuando la cifra de un estado necesitó una corrección sobre PolicyEngine (una escala de primas aplicada localmente, el subsidio de cuidado infantil devuelto al ingreso neto, un límite de Medicaid para padres tomado del manual del estado, una prima por brecha de cobertura), aparece debajo del mapa para el estado seleccionado, a partir del propio registro de cobertura de la corrida, no de un texto guardado aquí.",
         "download": "La descarga son las filas de la tabla en el orden de la tabla, una por estado, con estas columnas: {columns}. Las celdas de dólares vacías son un estado sin precipicio o una salida segura más allá del eje; las banderas dicen qué cifras son pisos o cotas inferiores.",
-        "road": "**El camino para salir de la pobreza** son los ingresos que van desde la guía federal de pobreza para el tamaño de este hogar hasta el doble de esa guía: de $26,650 a $53,300 para una familia de tres con las reglas de {year}, y Alaska y Hawái con sus propias guías más altas. Es federal a propósito, para que el camino sea el mismo en todos los estados y lo que cambie sea cómo tratan sus reglas a una familia que lo recorre. Su tope lleva un escalón de $1,000 de holgura, porque un límite de programa situado justo en la línea del doble de la pobreza cae en el escalón que empieza en el primer punto muestreado igual o superior a ella.",
+        "road": "**El camino para salir de la pobreza** son los ingresos que van desde la guía federal de pobreza para el tamaño de este hogar hasta el doble de esa guía: de {lo} a {hi} para una familia de tres según la guía federal de pobreza de {fplYear}, la que usan las reglas de {year}, y Alaska y Hawái con sus propias guías más altas. Es federal a propósito, para que el camino sea el mismo en todos los estados y lo que cambie sea cómo tratan sus reglas a una familia que lo recorre. Su tope lleva un escalón de $1,000 de holgura, porque un límite de programa situado justo en la línea del doble de la pobreza cae en el escalón que empieza en el primer punto muestreado igual o superior a ella.",
         "keepRate": "**Lo que se queda de cada dólar** es lo que el hogar conserva de cada dólar extra ganado a lo largo de ese camino: el cambio en el ingreso neto dividido entre el cambio en el pago. Es uno menos la tasa impositiva marginal efectiva, la medida que reporta la literatura sobre precipicios de beneficios, dicha en centavos porque así es como la escucha una persona. Por debajo de cero, la familia termina el ascenso más pobre de lo que empezó.",
         "level": "**Que se quede mucho de cada dólar no hace generoso a un estado.** Dice que los aumentos pueden sumarse, no cuánto tiene la familia: de un estado a otro, las dos cosas guardan poca relación. Las dos medidas de *lo que conserva* muestran el nivel —lo que la familia conserva en la línea de pobreza y al doble de ella— y la lectura de lo que se queda de cada dólar nombra los dos extremos.",
         "position": "**Familias que ganan menos** sitúa una cifra en dólares donde están las familias: de los hogares como este en ese estado, la proporción que gana menos que esa cifra, según datos de encuesta del Censo ({vintages}) llevados a dólares de {year}. Es de corte transversal —cuántas familias ya ganan menos— y nunca la probabilidad de que una familia llegue a ese pago. Una celda que la encuesta no puede sostener se deja vacía en lugar de llenarse con un cero.",

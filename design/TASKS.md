@@ -341,21 +341,38 @@ review's own words unless a task says otherwise. Tick them off here.
 
 ## Policy-data review
 
-- [ ] **R1 (blocker)** "Net income" counts the child-care subsidy as money and never charges the care bill
+- [x] **R1 (blocker)** "Net income" counts the child-care subsidy as money and never charges the care bill
+  — the line is cash after taxes, premiums and the child care the family pays itself: parse.ts charges the
+  engine's own pre-subsidy bill (`CurvePoint.childcareBill`, the version mark), evaluate.ts `normalizePoint`
+  charges any unmarked point (a cached curve) the modeled household's bill, and the committed sweep is marked.
+  Keep rates, cliffs and every ranking are unchanged to the ten-thousandth (the bill is constant on the axis);
+  the levels fall by the bill (single-2 at the line: $52,157–$88,959 → $31,490–$59,235). Rent stays in: nothing
+  is means-tested away against it. Still open for the page owners: the level note's "only weakly related"
+  (corr(keep rate, net at twice poverty) is now 0.91 for single-2), and the $0-pay point, where a parent with
+  no job is charged the whole bill with no subsidy (CA single-2: −$4,252).
 - [ ] **R2 (blocker)** The headline count is a maximal-take-up construct and the headline does not say so
 - [ ] **R3 (major)** The keep rate is a two-point slope whose top end sits on the most common program limit, so the ranking is a knife-edge
-- [ ] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
+- [x] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
+  — road.ts sets it on FAMILY earnings (guideline less the spouse's pay; married-dual-2: $17,000 → $51,000 of
+  the moving earner's pay). Still open for places copy: "the poverty line ({lo})" prints the one earner's share
+  for those rows; say "of this earner's pay, the second earner's $15,080 on top".
 - [ ] **R5 (major)** "Number of cliffs" and "Cliffs on the road" are grid artefacts and reward small notches
 - [ ] **R6 (major)** "Losses that hit later, at renewal" is ranked and shaded as if more deferral were worse
 - [ ] **R7 (major)** Reach uncertainty is quoted in the wrong unit
 - [ ] **R8 (major)** The caseworker provenance line cites sources the curve did not use
 - [ ] **R9 (minor→major, depends on audience)** Option labels do not match the definitions
-- [ ] **R10 (minor)** FPL vintage is quoted as the 2026 poverty line
+- [x] **R10 (minor)** FPL vintage is quoted as the 2026 poverty line — `places.method.items.road` renders
+  `{fplYear}` (summary.json `fplYear`, core `FPL_GUIDELINE_YEAR`) and the family-of-three figures from `fpl2025`.
 - [ ] **R11 (minor)** Three different "keep rates" on one household, one word
 - [ ] **R12 (minor)** "It happens again between $106,000 and $119,000. The ones past $106,000 are past what 8 in 10 families like yours earn."
 - [ ] **R13 (minor)** Bins on the diverging keep-rate scale have unequal widths on the two sides
 - [ ] **R14 (minor)** Colour direction on the two "level" maps
 - [ ] **R15 (minor)** Reach cell definition vs "families like this"
+  - [x] core half: reachLookup.ts documents the cell; `reachProvenance(state).cellDefinition` (and reach.json's
+    `cellDefinition`, with the sentence appended to the `basis` the caseworker source line already prints) says
+    it matches on marital status, number of own children under 18, one or two earners and a working-age
+    householder — not the children's ages.
+  - [ ] page half: "parents like you" / "families like this" on `/` and `/caseworker` carry the clause; `seZero` rendered.
 - [ ] **R16 (minor)** The Household menu omits the shape most exposed to the subsidy cliff without the subsidy
 
 ## Marketing and comms review

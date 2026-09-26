@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import { ARCHETYPES, YEAR, type Archetype, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
+import { ARCHETYPES, FPL_GUIDELINE_YEAR, YEAR, type Archetype, answersFor, axisSpec, evaluateCurve, stateCoverage, type CurvePoint, type ModelRecord, type ProgramId, type StateCoverage, type SummaryJson, type StateFileJson, type StateMetrics } from "@hotgap/core";
 import { stateMetrics } from "./metrics.js";
 
 // state -> archetype id -> curve points, as accumulated by the run loop.
@@ -105,6 +105,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
   return {
     generated,
     year: YEAR,
+    fplYear: FPL_GUIDELINE_YEAR,
     ...(model ? { model } : {}),
     ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
     archetypes: archetypes.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
@@ -122,6 +123,9 @@ export function roundPoint(p: CurvePoint): CurvePoint {
     earnings: p.earnings,
     netIncome: Math.round(p.netIncome),
     medicalOOP: Math.round(p.medicalOOP),
+    // The child-care bill already charged in netIncome (types.ts): stored so a
+    // reader of the file, and evaluate.ts on read, know the line is after care.
+    ...(p.childcareBill !== undefined ? { childcareBill: Math.round(p.childcareBill) } : {}),
     // The state's modeled premium assistance, only where the endpoint served it (statePremiumAssistance.ts).
     ...(p.statePremiumAssistance !== undefined ? { statePremiumAssistance: Math.round(p.statePremiumAssistance) } : {}),
     programs: Object.fromEntries(

@@ -130,7 +130,7 @@ function report(ev: HouseholdEvaluation): string {
     `source: ${ev.source === "live" ? "live PolicyEngine" : "archetype curve (offline)"}`,
     ...(clamped ? [`pay is above the modeled range — evaluated at ${money(analysis.currentEarnings)}, the top of the sweep`] : []),
     `verdict: ${analysis.verdict.replace(/_/g, " ")}`,
-    `money after health costs at ${money(analysis.currentEarnings)}: ${money(analysis.currentNet)}`,
+    `money after taxes, premiums and care at ${money(analysis.currentEarnings)}: ${money(analysis.currentNet)}`,
     "",
   ];
 

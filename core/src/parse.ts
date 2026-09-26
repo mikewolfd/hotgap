@@ -134,8 +134,9 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   };
   for (const [variable, id] of Object.entries(SPM_PROGRAMS)) add(programSeries, id, series(spm, variable, expectedCount));
   // The state child-care subsidy, asked for only when the household claims it
-  // (translate.ts), so absent on every other curve — including every committed
-  // archetype — where it is simply 0.
+  // (translate.ts) — every household that says it gets one, and every swept
+  // archetype whose parents all work (archetypes.ts) — so absent on every
+  // other curve, where it is simply 0.
   if ("child_care_subsidies" in spm) add(programSeries, "childcare", series(spm, "child_care_subsidies", expectedCount));
   // The state's modeled LIHEAP schedule, asked for only when the household
   // says it gets energy assistance and the endpoint has the variable
@@ -207,6 +208,36 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // The programs the model computed and dropped on the floor, per point:
   // added to net income here, once, and held out of the remainder.
   const dropped = (i: number) => (subsidyIsCounted ? 0 : (programSeries.get("childcare")?.[i] ?? 0)) + (liheapIsCounted ? 0 : (programSeries.get("liheap")?.[i] ?? 0));
+  // The child-care bill, charged here, once, against the same net income the
+  // subsidy was just placed in (R1, policy-data review 2026-09-26).
+  //
+  // household_net_income never deducts child care: the bill is an input
+  // PolicyEngine reads for SNAP's dependent-care deduction and the CDCC, not
+  // an expense it takes out. So a household charged $29,880 of care and paid
+  // $29,880 of subsidy came out $29,880 RICHER — the help counted, the bill it
+  // pays never charged — and a caseworker what-if that added a care bill made
+  // the client better off. The line HotGap draws is cash after taxes, premiums
+  // and care: what the family can spend on everything else.
+  //
+  // The GROSS bill is charged, not the engine's net-of-subsidy
+  // `childcare_expenses`, because the subsidy is already inside net income
+  // (counted by the model or added by `dropped` above): subsidy in, whole
+  // bill out is the family's out-of-pocket care, and charging the net figure
+  // as well would count the subsidy twice. Rent stays in the line: it is
+  // spending the family chooses and no benefit is means-tested away against
+  // it, while the care bill is the one the subsidy exists to pay.
+  //
+  // The bill is read off the response, where the engine echoes what it was
+  // sent: `spm_unit_pre_subsidy_childcare_expenses` when the household claims
+  // the subsidy, `childcare_expenses` (then the whole bill) when it does not
+  // (translate.ts). A body that carries neither — a synthetic fixture — says
+  // nothing about care, and the point is left unmarked for evaluate.ts to
+  // charge from the household's own answers (types.ts `childcareBill`).
+  const careBill = "spm_unit_pre_subsidy_childcare_expenses" in spm
+    ? series(spm, "spm_unit_pre_subsidy_childcare_expenses", expectedCount)
+    : "childcare_expenses" in spm
+      ? series(spm, "childcare_expenses", expectedCount).map((net, i) => net + (programSeries.get("childcare")?.[i] ?? 0))
+      : null;
   const trackedCash = (i: number) =>
     CASH_PROGRAMS.reduce(
       (sum, id) => ((id === "childcare" && !subsidyIsCounted) || (id === "liheap" && !liheapIsCounted) ? sum : sum + (programSeries.get(id)?.[i] ?? 0)),
@@ -288,8 +319,9 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   return net.map((n, i) => ({
     ...(maTafdc ? { maTafdc: maTafdc[i] } : {}),
     earnings: axis.min + step * i,
-    netIncome: n + dropped(i),
+    netIncome: n + dropped(i) - (careBill?.[i] ?? 0),
     medicalOOP: moop[i],
+    ...(careBill ? { childcareBill: careBill[i] } : {}),
     ...(stateAssistance ? { statePremiumAssistance: stateAssistance[i] } : {}),
     programs: at(programSeries, i) as Record<ProgramId, number>,
     childPrograms: at(childSeries, i) as Partial<Record<ProgramId, number>>,

@@ -487,7 +487,13 @@ const body = {
   year: "2026",
   basis:
     `ACS ${PUMS_YEAR} 1-Year PUMS (and the 2020-2024 5-Year PUMS for small-state cells the 1-Year cannot support), ` +
-    "householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI.",
+    "householder + spouse earnings, adjusted to 2024 dollars by each record's ADJINC and to 2026 dollars by the BLS ECI." +
+    " Families like this are the same state, married couple or not, the same number of own children under 18 (3 or more pooled), for couples with children one earner or two, and a householder aged 18-64; the children's ages are not matched.",
+  // What a cell matches a family on, short, for a page to print beside
+  // "families like yours" — kept identical to core/src/reachLookup.ts
+  // REACH_CELL_DEFINITION, its fallback for a file written before this field.
+  cellDefinition:
+    `state; married couple or not; own children under 18: 0, 1, 2, ${MAX_KIDS} or more; couples with children: one earner or two; householder aged 18-64; children's ages not matched`,
   source: SOURCE,
   adjinc: {
     note: "ADJINC as published on the PUMS record: 6 implied decimals, applied per record before anything else.",

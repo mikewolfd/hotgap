@@ -6,7 +6,7 @@
 // disclosures, the RankStrip, the DataTable, the method and the sources.
 // Every word is copy.ts's; every number is read from the summary; nothing is
 // typed.
-import { CLIFF_MIN, keepRateWords, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { CLIFF_MIN, FPL_GUIDELINE_YEAR, fpl2025, keepRateWords, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import { coreText, limitWords } from "../lib/copy.js";
 import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
@@ -195,7 +195,8 @@ export function renderOnce(summary: SummaryJson): void {
      money line, the household and the caveat that it is a modelled one. */
   const items = [
     t("method.items.engine", { year: summary.year }),
-    t("method.items.road", { year: summary.year }), M.keepRate, M.level,
+    /* The guideline's own vintage and figures (a family of three, the 48 states), never the rules' year: the 2026 rules run on the 2025 guideline (policy-data review R10). */
+    t("method.items.road", { year: summary.year, fplYear: summary.fplYear ?? FPL_GUIDELINE_YEAR, lo: money(fpl2025("US", 3)), hi: money(2 * fpl2025("US", 3)) }), M.keepRate, M.level,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
     M.money, t("method.items.household", { year: summary.year }), M.modeledFamily,
     /* The twin is named only once a run carries it (core's single-2-nosub fills on the next sweep). */

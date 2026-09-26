@@ -87,7 +87,7 @@ describe("the measures, from copy", () => {
     expect(measureByKey("netAtRoadLo")).toMatchObject({ option: "Money kept at the poverty line", title: "Net income at the poverty line" });
     expect(measureByKey("netAtRoadHi")).toMatchObject({ option: "Money kept at twice poverty", title: "Net income at twice the poverty line" });
     // With no household named yet, the level's definition drops the dollar slot rather than print "{lo}".
-    expect(measureByKey("netAtRoadLo")!.describe).toBe("What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at the poverty line.");
+    expect(measureByKey("netAtRoadLo")!.describe).toBe("What the household keeps in a year — help and tax credits counted; taxes, health premiums and the child care the family pays itself out — with pay at the poverty line.");
     expect(DEFAULT_MEASURE).toBe("keepRate");
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
     expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);

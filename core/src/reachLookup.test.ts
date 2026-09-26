@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ARCHETYPES, archetypeById, isNoSubsidyTwin } from "./archetypes.js";
 import { REACH_PERCENTILES } from "./reach.js";
-import { reachCell, reachForArchetype, reachForHousehold } from "./reachLookup.js";
+import { REACH_CELL_DEFINITION, reachCell, reachForArchetype, reachForHousehold, reachProvenance } from "./reachLookup.js";
 import { STATE_CODES } from "./states.js";
 
 // Everything here is checked against the real, committed reach.json rather than
@@ -145,5 +145,23 @@ describe("reachCell", () => {
   it("is null on the same terms as reachForArchetype", () => {
     expect(reachCell("ZZ", "single-1")).toBeNull();
     expect(reachCell("CA", "not-a-real-archetype")).toBeNull();
+  });
+});
+
+describe("what a reach cell matches on (R15)", () => {
+  it("prints the file's own cell definition, the same words core falls back to, and names what it does not match", () => {
+    const { cellDefinition, basis } = reachProvenance("CA");
+    expect(cellDefinition).toBe(REACH_CELL_DEFINITION);
+    for (const part of ["married couple or not", "own children under 18", "one earner or two", "householder aged 18-64", "children's ages not matched"]) {
+      expect(cellDefinition).toContain(part);
+    }
+    expect(basis).toContain("the children's ages are not matched");
+  });
+
+  it("is the same cell for a 3- and 7-year-old as for two teenagers: the ages are not matched", () => {
+    const young = reachForHousehold("CA", { married: false, childAges: [3, 7], spouseAnnualEarnings: 0 }, 30_000);
+    const teens = reachForHousehold("CA", { married: false, childAges: [15, 17], spouseAnnualEarnings: 0 }, 30_000);
+    expect(young).not.toBeNull();
+    expect(teens).toBe(young);
   });
 });

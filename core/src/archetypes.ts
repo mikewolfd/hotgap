@@ -63,6 +63,10 @@ export function archetypeById(id: string): Archetype {
   return found;
 }
 
+/** The second earner's fixed pay beside the axis: the federal minimum full time, or $0 when nobody else earns. */
+export const archetypeSpousePay = (a: Pick<Archetype, "spouseWorks">): number =>
+  a.spouseWorks ? FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL : 0;
+
 // Hours a week the second earner works. It is not a pay input — the pay is
 // FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL — but the CCDF subsidy has an ACTIVITY
 // test as well as an income one, and PolicyEngine reads that off
@@ -121,7 +125,7 @@ export function answersFor(state: string, a: Archetype): HouseholdAnswers {
       ? a.childAges.reduce((sum, age) => sum + childcareMonthlyFor(defaults, age), 0)
       : 0,
     annualEarnings: 0,          // the axis varies earnings; this only sets the axis floor
-    spouseAnnualEarnings: a.spouseWorks ? FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL : 0,
+    spouseAnnualEarnings: archetypeSpousePay(a),
     hoursPerWeek: a.spouseWorks ? SPOUSE_HOURS_PER_WEEK : null,
     age: 30,
     spouseAge: a.married ? 30 : null,

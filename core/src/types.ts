@@ -123,14 +123,34 @@ export interface CurvePoint {
   /** MA-only inputs for the local TAFDC correction; absent in older sweeps. */
   maTafdc?: MaTafdcInputs;
   earnings: number;
-  // Resources after paying real health costs: PolicyEngine's household net
-  // income minus SPM medical out-of-pocket (health-insurance premiums, net of
-  // the ACA subsidy). The whole tool operates on this after-health figure.
+  // The money line: cash the household has after taxes, health-plan premiums
+  // and the child care it pays itself. PolicyEngine's household net income
+  // (help and tax credits in, taxes out), minus SPM medical out-of-pocket
+  // (premiums net of the ACA subsidy), minus the child-care bill
+  // (`childcareBill`), with any child-care subsidy counted in as the help
+  // that pays part of that bill. Rent is NOT taken out: it is spending, not a
+  // means-tested charge, and a raise does not change it; the care bill is
+  // charged because the subsidy that pays it is counted as income, and a
+  // line that counts the help without the bill it pays is not money anyone
+  // has (policy-data review R1, 2026-09-26). The whole tool operates on this.
   netIncome: number;
   // What the household actually pays for health-insurance premiums at this
   // earnings level, net of the ACA subsidy (SPM medical out-of-pocket).
   // Surfaced for transparency; already subtracted from netIncome above.
   medicalOOP: number;
+  /**
+   * The child-care bill charged at this point, BEFORE any subsidy — the
+   * household's `monthlyChildcare × 12` as sent to the engine, read back off
+   * its response — already subtracted from netIncome above. What the family
+   * pays out of pocket is this less `programs.childcare`; the subsidy is in
+   * netIncome as help, so charging the whole bill is what nets the two.
+   *
+   * It is also the version mark: a point that carries it has been charged.
+   * A point without it — one swept or cached before 2026-09-26 — never was,
+   * and evaluate.ts charges it the modeled household's own bill on read, so
+   * every path arrives charged exactly once.
+   */
+  childcareBill?: number;
   /**
    * The state's own marketplace premium assistance as PolicyEngine modeled
    * it, when the endpoint served it (statePremiumAssistance.ts). Not yet
@@ -169,5 +189,5 @@ export interface CurveResponse {
   points: CurvePoint[];
 }
 
-export const householdSize = (a: HouseholdAnswers): number => 1 + (a.married ? 1 : 0) + a.childAges.length;
+export const householdSize = (a: Pick<HouseholdAnswers, "married" | "childAges">): number => 1 + (a.married ? 1 : 0) + a.childAges.length;
 

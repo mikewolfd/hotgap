@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { answersFor, archetypeById } from "./archetypes.js";
 import { analyzeCurve } from "./analyze.js";
 import { evaluateOffline } from "./evaluate.js";
+import { reachForArchetype } from "./reachLookup.js";
 import { cliffsBetween, keepNext, keepRate, povertyRoad, roadSummary, type RoadSummary } from "./road.js";
 import { STATE_CODES } from "./states.js";
 import { answersWith, point } from "./testing.js";
@@ -36,6 +37,36 @@ describe("povertyRoad", () => {
     // are $21,150 (2× = $42,300 → out of $43,000).
     expect(povertyRoad(answersWith({ state: "AK" }), sloped(0.5))).toEqual({ lo: 26_000, hiStart: 53_000, hi: 54_000 });
     expect(povertyRoad(answersWith({ state: "HI" }), sloped(0.5))).toEqual({ lo: 24_000, hiStart: 49_000, hi: 50_000 });
+  });
+
+  it("is set on FAMILY earnings: a two-earner household's road starts at the guideline less the spouse's pay", () => {
+    // Married, two children, the spouse at the federal minimum full time
+    // ($15,080, the married-dual-* rows). Four people: $32,150, so the family
+    // reaches the line when the householder earns $17,070 — the road starts at
+    // $17,000 on the householder's axis, not $32,000 (which was 147% of the
+    // family's line, policy-data review R4) — and twice it ($64,300) is
+    // $49,220 of the householder's pay, so the last step is the one out of
+    // $50,000.
+    const dual = answersFor("CA", archetypeById("married-dual-2"));
+    expect(dual.spouseAnnualEarnings).toBe(15_080);
+    expect(povertyRoad(dual, sloped(0.5))).toEqual({ lo: 17_000, hiStart: 50_000, hi: 51_000 });
+    // The same couple with the spouse at home is on the whole guideline.
+    expect(povertyRoad(answersFor("CA", archetypeById("married-2")), sloped(0.5))).toEqual({ lo: 32_000, hiStart: 65_000, hi: 66_000 });
+    // A spouse's pay alone past the line starts the road at the axis's first point.
+    const rich = { ...dual, spouseAnnualEarnings: 40_000 };
+    expect(povertyRoad(rich, sloped(0.5))).toEqual({ lo: 0, hiStart: 25_000, hi: 26_000 });
+    // …and a single parent's reported "spouse" pay (none can be entered, but a
+    // stray field must not move the road) is ignored.
+    expect(povertyRoad({ ...answersWith(), spouseAnnualEarnings: 15_080 }, sloped(0.5))).toEqual({ lo: 21_000, hiStart: 43_000, hi: 44_000 });
+  });
+
+  it("reads the two-earner rows' committed road off the family's line, and keeps its reach on family earnings", () => {
+    const dual = answersFor("CA", archetypeById("married-dual-2"));
+    const ev = evaluateOffline(dual)!;
+    const road = roadSummary(ev.analysis, dual)!;
+    expect([road.lo, road.hi]).toEqual([17_000, 51_000]);
+    // Where the reach ladder is read at the top, the spouse's pay is added back (reachLookup.ts).
+    expect(road.familiesBelowHi).toBe(reachForArchetype("CA", "married-dual-2", 51_000 + 15_080));
   });
 
   it("is null when the road runs off the end of a short axis", () => {
@@ -158,8 +189,11 @@ describe("the road on the committed sweep, single parent of two", () => {
   it("a keep rate is a slope, not a level: Wisconsin keeps more at the line and less at twice it than New Mexico", () => {
     const wi = roadFor("WI").road!;
     const nm = roadFor("NM").road!;
-    expect([Math.round(wi.netAtLo!), Math.round(wi.netAtHi!)]).toEqual([80_163, 50_801]);
-    expect([Math.round(nm.netAtLo!), Math.round(nm.netAtHi!)]).toEqual([61_905, 70_423]);
+    // After taxes, premiums and the child care the family pays itself (R1):
+    // Wisconsin's $33,984 bill is paid by the subsidy at the line and by the
+    // family at twice it, which is the whole of its collapse.
+    expect([Math.round(wi.netAtLo!), Math.round(wi.netAtHi!)]).toEqual([46_179, 16_817]);
+    expect([Math.round(nm.netAtLo!), Math.round(nm.netAtHi!)]).toEqual([45_705, 54_223]);
   });
 
   it("Massachusetts collapses at the SNAP limit on the line, which a road stopping short could not see", () => {

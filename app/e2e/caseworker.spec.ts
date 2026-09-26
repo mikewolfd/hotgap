@@ -41,7 +41,7 @@ const THREE_WHAT_IFS = "&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=p
 const ARCHETYPE_URL = process.env.HOTGAP_ARCHETYPE_URL;
 
 const rendered = async (page: Page) => {
-  await expect(page.locator("#answer")).toContainText("Net stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money");
+  await expect(page.locator("#answer")).toContainText("Net stays below its $51,456 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money");
   await expect(page.locator("#sourceNote")).toHaveAttribute("data-source", "live");
 };
 const light = async (page: Page) => page.emulateMedia({ colorScheme: "light" });
@@ -83,11 +83,11 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     // ── The picture says what the prose used to (design/charts.md § Direct labels).
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`PF-labels-${width}-${scheme}`] = labels;
-    expect(labels).toContain("net $84,371, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
+    expect(labels).toContain("net $51,095, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
     expect(labels.some((l) => /^−\$\d/.test(l ?? ""))).toBe(true); /* 2: the largest drop always draws */
     expect(labels.some((l) => /¢ of each extra dollar on average$/.test(l ?? ""))).toBe(true);   /* 6: the keep rate on the road out of poverty */
     // The peak's own dollar went with this pass: it printed a number within a rounding of "net" two inches away.
-    expect(labels.filter((l) => l === "$84,732")).toEqual([]);
+    expect(labels.filter((l) => l === "$51,456")).toEqual([]);
 
     // ── The rows behind the disclosures are the rows they always were.
     await open(page, "sources-panel");
@@ -549,7 +549,7 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
     await expect(page.locator("#compare")).toHaveText("Comparar los escenarios");
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`ES-labels-${width}`] = labels;
-    expect(labels).toContain("neto $84,371, con la ayuda contada");
+    expect(labels).toContain("neto $51,095, con la ayuda contada");
     expect(labels.some((l) => /¢ de cada dólar extra de media$/.test(l ?? ""))).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: pf(`${width}-es`) });
@@ -639,7 +639,7 @@ test("print from OS-dark: the controls and the bar leave, the client sheet opens
   await expect(page.locator("#handout h2")).toHaveText("Your pay and your help — Colorado, one parent, two children");
   /* The sheet's first line is the two facts the citizen answer gave up on 2026-09-18: the pay is in the
      ScenarioBar and the money kept is the label on the diamond, and paper carries neither. */
-  await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $84,371.");
+  await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $51,095.");
   await expect(page.locator("#handout")).toContainText("You're past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000.");
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.screenshot({ path: pf("1280-print"), fullPage: true });

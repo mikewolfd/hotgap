@@ -8,7 +8,15 @@ The short version is in the [README](../README.md#what-it-does-and-doesnt-model)
 
 HotGap computes benefits cliffs in plain language: what happens to a real
 household's food help, health coverage, childcare help, and tax credits as
-pay goes up. The money line is **health-adjusted** — it subtracts what the
+pay goes up. The money line is cash **after taxes, health-plan premiums and
+the child care the family pays itself**. It subtracts the household's
+child-care bill, with any child-care subsidy counted as the help that pays
+part of it: PolicyEngine's net income does not deduct child care, so a line
+that counted the subsidy without charging the bill showed a family richer by
+the price of its care (policy-data review R1, 2026-09-26). Rent is not
+subtracted: no benefit is taken away against it, and a raise does not change
+it. The bill is the same at every pay, so it moves every level and no cliff,
+keep rate or ranking. It also subtracts what the
 household actually pays for health coverage: the ACA premium net of its
 subsidy, or the employee's share of an employer plan when one is modeled. An
 adult stuck in a non-expansion state's coverage gap (too much for Medicaid,
@@ -169,12 +177,25 @@ a plan, and the 2026 Medicare Part B standard premium ($202.90/month, CMS,
   where twice the guideline is $53,300), so the road's last step is that one
   and the rate spans it, rather than the measure excluding by construction
   the most common cliff at the top of the road. Plan 9,
-  `docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`.
+  `docs/superpowers/plans/2026-09-18-hotgap-keep-rate.md`. The guideline is
+  the 2025 one, which the 2026 marketplace and road run on, and it is a
+  FAMILY-earnings line: for a two-earner household, whose axis is one
+  earner's pay with the other's held at $15,080, the road starts at the
+  guideline less that $15,080 (a couple with two children: $17,000 to the
+  step out of $50,000 of the moving earner's pay), so it is the family that
+  climbs from 100% to 200% (policy-data review R4, 2026-09-26; before it the
+  two-earner rows' road ran from 147% to 253% of their poverty line).
 - Minimum-wage framing (`minWageContext`, the "~hrs/wk" column) is context,
   not eligibility — nothing in the calculation depends on it.
 - Reach is cross-sectional only: "N% of similar households earn at or below
   $X" describes today's income distribution, never the odds of a household
-  getting there.
+  getting there. "Similar" is the reach cell, and it matches on four things
+  only: the state, married couple or not, the number of own children under
+  18 (three or more pooled), and — for a couple with children — one earner
+  or two, among householders aged 18–64. It does NOT match the children's
+  ages: a single parent of a 3- and a 7-year-old is compared with every
+  single parent of two children under 18 (`reachProvenance(state).cellDefinition`,
+  policy-data review R15).
 - HotGap does not ask about immigration status, assets, or a household
   member aged 65+. None of those are inputs, and the reach ladders
   themselves only cover householders 18–64.
