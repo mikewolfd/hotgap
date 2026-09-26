@@ -193,11 +193,11 @@
       "cliff_ahead:worst": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year, and the biggest drop is at {worstAt}, past what {n} in 10 families like yours earn.",
       "cliff_ahead:worstAt": "Nothing drops sharply until {wage}; past it you'd lose about {drop} a year, and the biggest drop is at {worstAt}.",
       "cliff_ahead:dip": "At {wage} you'd dip by about {drop}, and be ahead again by {exit}.",
-      "in_danger_zone:inside": "You're past a drop at {wage}. From here to {exit} you keep about {cents}¢ of each extra dollar; at {exit} you're back to what you'd have kept at {peak}.",
-      "in_danger_zone:stuck:inside": "You're past a drop at {wage}, and nowhere we looked, up to {top}, gets you back to what you'd have kept at {peak}."
+      "in_danger_zone:inside": "Your pay is past a drop at {wage}. From here to {exit} you keep about {cents}¢ of each extra dollar; at {exit} you're back to what you'd have kept at {peak}.",
+      "in_danger_zone:stuck:inside": "Your pay is past a drop at {wage}, and nowhere we looked, up to {top}, gets you back to what you'd have kept at {peak}."
     },
-    "again": "It happens again between {from} and {to}.",
-    "againMany": "It happens {n} more times, between {from} and {to}.",
+    "again": "Further up, from {from} to {to}, a raise again doesn't leave you better off than you were at {from}.",
+    "againMany": "Further up, between {from} and {to}, there are {n} more stretches where a raise doesn't leave you better off.",
     "sub": {
       "more": "The line is more than your pay because help and tax credits count towards it.",
       "less": "The line is less than your pay because taxes and health costs come out of it."
@@ -242,21 +242,26 @@
       "labels": {
         "later": "later",
         "backToEven": "back to even",
-        "backToEvenSafe": "back to even, and safe from here",
-        "safe": "safe from here",
+        "backToEvenSafe": "back to even, and no more drops",
+        "safe": "no more drops from here",
         "leap": "+{leap}",
         "leapMore": "more than +{leap}",
         "drop": "−{drop}",
         "ends": "{phrase} ends",
         "road": {
-          "keeps": "on average you keep {cents}¢ of each extra dollar",
-          "loses": "on average you lose {cents}¢ of each extra dollar"
+          "keeps": "on the road out of poverty you keep {cents}¢ of each extra dollar, on average",
+          "loses": "on the road out of poverty you lose {cents}¢ of each extra dollar, on average"
         },
         "youKeepHelp": "you keep {kept}, help counted",
         "youKeepTax": "you keep {kept} after tax",
         "roadFrom": "poverty line {lo}",
         "roadTo": "2× poverty {hi}",
-        "again": "flat again"
+        "again": "another flat stretch",
+        "backToPeak": "back to what you had at {peak}",
+        "roadShort": {
+          "keeps": "out of poverty: you keep {cents}¢ a dollar",
+          "loses": "out of poverty: you lose {cents}¢ a dollar"
+        }
       },
       "scrolls": "The picture covers every pay from {from} to {to} — slide it sideways to see the rest.",
       "wholeOnPaper": "The picture covers every pay from {from} to {to}.",
@@ -268,13 +273,16 @@
     },
     "key": {
       "line": "Money you keep",
-      "band": "Your flat stretch",
-      "other": "Other flat stretches",
-      "drop": "A drop this year",
-      "later": "A drop that waits",
+      "band": "Your flat stretch: pay where a raise doesn't leave you better off than you were before the drop",
+      "other": "Another flat stretch, further up: the same thing again",
+      "drop": "A drop: past this pay you keep less, starting this year",
+      "later": "A drop that comes later: it lands at your next yearly check, not the day your pay goes up",
       "you": "You now",
       "boundary": "Where heating help stops",
-      "road": "The road out of poverty"
+      "road": "The road out of poverty: pay from the poverty line to twice it",
+      "leap": "The raise it takes to get out of your flat stretch",
+      "exit": "Back to even: the pay where you're back to what you had before the drop",
+      "safe": "No more drops from here: past this pay, every raise adds to what you keep"
     },
     "boundary": {
       "line": "Above {pay} you can't apply for help with heating bills in {state} any more. It's called LIHEAP.",
@@ -315,8 +323,8 @@
         "you": "You now",
         "exit": "Back to even",
         "drop": "A drop",
-        "later": "A drop that waits",
-        "safe": "Safe from here"
+        "later": "A drop that comes later",
+        "safe": "No more drops from here"
       }
     },
     "steps": {
@@ -360,7 +368,7 @@
       "wouldLoss": "You'd keep about {drop} less.",
       "laterLoss": "Later, you would keep about {drop} less a year.",
       "biggest": " This is the biggest drop.",
-      "waitsBadge": "Waits",
+      "waitsBadge": "Comes later",
       "close": "Close",
       "waits": {
         "head_start_program_year": " It doesn't end that day: a child already in it stays to the end of the next program year.",
@@ -396,7 +404,7 @@
       "savings": "Savings: {savings}.",
       "noOtherMoney": " No child support, SSDI or unemployment pay.",
       "hours": "{hours} hours a week.",
-      "hoursNone": "You didn't say, so we assumed full time.",
+      "hoursNone": "You didn't say, so we assumed full time: 40 hours a week.",
       "selfEmployed": "You work for yourself, not for a boss.",
       "employerPlan": "{amount} a year comes out of your pay for it.",
       "employerPlanFree": "At your pay we counted no cost for it.",
@@ -446,18 +454,22 @@
         "couples": "couples like you",
         "people": "people like you"
       },
-      "margin": " The count could be off by a few thousand dollars either way.",
+      "margin": " It could be a few places higher or lower.",
       "note": "This says how common the pay is. It doesn't say what you'll earn.",
       "source": "From U.S. Census Bureau survey data ({vintages}). Grown to {year} dollars.",
       "sourceBare": "From U.S. Census Bureau survey data.",
       "survey": {
         "one": "ACS {year}, {n}-year",
         "range": "ACS {from}–{to}, {n}-year"
-      }
+      },
+      "marginRange": " Allowing for survey error, it's somewhere between {lo} and {hi} in 10.",
+      "cell": "“Like you” means {state} households with the same number of adults, the same number of them working (one or two), and the same number of kids under 18 (three or more count together), headed by someone aged 18 to 64. Kids' ages aren't matched."
     },
     "hours": {
       "heading": "The lowest legal pay",
-      "body": "The lowest legal pay in {state} is {wage} an hour, and full-time work at that pay is about {fullTime} a year."
+      "body": "The lowest legal pay in {state} is {wage} an hour. At 40 hours a week, that's about {fullTime} a year.",
+      "under": "At {hours} hours a week, {pay} is under {state}'s lowest legal pay of {wage} an hour. If you work fewer hours, tell us and the picture changes.",
+      "underAssumed": "You didn't tell us your hours, so we assumed 40 a week. At that, {pay} is under {state}'s lowest legal pay of {wage} an hour. If you work fewer hours, tell us and the picture changes."
     },
     "footer": {
       "estimates": "These are estimates.",
@@ -511,13 +523,19 @@
       "base": "Of the next {over} you earn you'd keep about {kept}.",
       "plateau": "Of the next {over} you earn you'd keep about {kept} — that's a flat stretch: more pay, barely more money."
     },
-    "beyondReach": " The ones past {at} are past what {n} in 10 families like yours earn.",
+    "beyondReach": " Those far drops start at {at}, and {n} in 10 families like yours earn less than that.",
     "toPlaces": "See how {state} compares with other states",
     "toPlacesNote": "The map's family rents at the typical price and gets child-care help, so its numbers differ from yours.",
     "takeUp": {
-      "counting": "Counting the help you get: {list}.",
+      "counting": "Counting the help you could get: {list}.",
       "ask": "Not getting one of these?",
       "change": "Change my answers"
+    },
+    "beyondReachMost": " Those far drops start at {at}, and almost all families like yours earn less than that.",
+    "next": {
+      "heading": "What you can do with this",
+      "ask": "Ask a case worker about {program} before your pay reaches {wage}. That's where it ends.",
+      "print": "Print this page for a case worker or a benefits helper. The Print button is at the top."
     }
   },
   "caseworker": {
@@ -747,7 +765,7 @@
       "drop": "Largest drop anywhere on the curve",
       "dropAt": "at {from} → {to}",
       "reach": "Reach at current earnings",
-      "reachSub": "percentile, ±{moe} (n = {n})"
+      "reachSub": "percentile ({lo}–{hi} allowing for survey error): {position}. Survey sample: {n} households."
     },
     "coverage": {
       "unknown": "Coverage unknown for {state}.",
@@ -942,13 +960,17 @@
         },
         "ends": "{program} ends",
         "road": {
-          "keeps": "keeps {cents}¢ of each extra dollar on average",
-          "loses": "loses {cents}¢ of each extra dollar on average"
+          "keeps": "on the road out of poverty, keeps {cents}¢ of each extra dollar on average",
+          "loses": "on the road out of poverty, loses {cents}¢ of each extra dollar on average"
         },
         "merged": "{n} drops together",
         "roadFrom": "poverty line",
         "roadTo": "2× poverty line",
-        "again": "another danger zone"
+        "again": "another danger zone",
+        "roadShort": {
+          "keeps": "keeps {cents}¢ of each extra dollar on average",
+          "loses": "loses {cents}¢ of each extra dollar on average"
+        }
       },
       "whatIfLines": "{n, plural, one {One what-if is drawn here as a second line, told apart by its dash and its tag.} other {{n} what-ifs are drawn here as second lines, told apart by their dashes and their tags.}}",
       "whatIfHeld": "{held, plural, one {One more what-if is in the comparison and not on the picture.} other {{held} more what-ifs are in the comparison and not on the picture.}}",
@@ -989,7 +1011,8 @@
         "heading": "On the way — {title}",
         "empty": "No cliff between here and there.",
         "item": "{n, plural, =0 {{at} — a step down ({drop})} one {{at} — {programs} ends ({drop})} other {{at} — {programs} end ({drop})}}"
-      }
+      },
+      "reachCell": "Same shape means the same marital status, the same number of earners (one or two) and the same number of children under 18 (three or more pooled), with a householder aged 18–64; children's ages are not matched."
     },
     "assumed": {
       "health": "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
@@ -1014,7 +1037,6 @@
     },
     "source": {
       "lead": "Estimates only — a caseworker decides real benefits. Rules: {year}. Curve: {curve}",
-      "vintages": "Rent: {rent} Child-care price: {care}, carried to {year} dollars by the BLS Employment Cost Index. Reach: {reach}",
       "other": "Other state benefits in the remainder: {other}.",
       "model": "Model: {model}.",
       "archetype": {
@@ -1031,7 +1053,14 @@
       "reachVintages": "{basis} Vintages used: {vintages}.",
       "otherBenefit": "{label} (up to {max})",
       "unclaimed": "Off for this household: {items} at {earnings}.",
-      "wouldPay": "{program} would pay {annual} a year"
+      "wouldPay": "{program} would pay {annual} a year",
+      "rentUsed": "Rent: {rent}.",
+      "rentNone": "Rent: none entered (no SNAP shelter deduction taken).",
+      "rentEntered": "Rent: as entered.",
+      "careUsed": "Child-care price: {care}, carried to {year} dollars by the BLS Employment Cost Index.",
+      "careNone": "Child-care price: none entered.",
+      "careEntered": "Child-care price: as entered.",
+      "reach": "Reach: {reach}"
     },
     "handout": {
       "title": "Your pay and your help — {state}, {parents}, {children}",
@@ -1053,8 +1082,8 @@
     },
     "pageTitle": "HotGap — caseworker",
     "answer": {
-      "inZone": "Net stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, =0 {no single step between them drops {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}; {raise} clears the stretch.",
-      "inZone:stuck": "Net stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, =0 {no single step between them drops {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} steps between them loses money} other {{nLose} of the {nSteps} steps between them lose money}}.",
+      "inZone": "Net income — pay plus help, after taxes and premiums — stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}; {raise} clears the stretch.",
+      "inZone:stuck": "Net income — pay plus help, after taxes and premiums — stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}.",
       "cliffAhead": "This family is clear up to {at}; past it a raise costs about {drop} a year.",
       "cliffAhead:dip": "This family is clear up to {at}; there it dips by about {drop} and is ahead again by {exit}.",
       "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",
@@ -1728,9 +1757,17 @@
     },
     "nav": {
       "label": "Pages",
-      "citizen": "For you",
+      "citizen": "My household",
       "places": "By state",
-      "caseworker": "For caseworkers"
+      "caseworker": "Caseworkers"
+    },
+    "footer": {
+      "label": "About HotGap",
+      "about": "HotGap is an open-source tool (AGPL-3.0 license) that shows what happens to a family's money when its pay goes up.",
+      "code": "See the code",
+      "issues": "Report a problem or ask a question",
+      "run": "Data updated {date}, with {model}.",
+      "privacy": "We don't save what you type. No sign up, no tracking."
     }
   }
 }

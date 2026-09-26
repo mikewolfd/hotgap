@@ -70,5 +70,12 @@ body { background: var(--surface); }
 .result .hg-disclosure > :last-child { margin-bottom: var(--s5); }
 .result .hg-disclosure h3 { margin: var(--s5) 0 var(--s2); font-size: var(--t-h3); }
 
-/* The link to the next page to look at, under the figure's own words (design/TASKS.md). */
-.result .next { font-size: var(--t-small); margin: var(--s4) 0 0; }
+/* Why the line is more than the pay (marketing review M4): under the readout, always in view. */
+.result .sub-line { font-size: var(--t-small); color: var(--ink-2); margin: var(--s2) 0 0; max-width: var(--measure); }
+
+/* "What you can do with this" (marketing review M9): after the disclosures, in the open, the page's last words
+   before the site footer. The link to the next page to look at is its last line (design/TASKS.md). */
+.result .next { margin: var(--s6) 0 0; max-width: var(--measure); }
+.result .next h2 { font-size: var(--t-h3); margin: 0 0 var(--s2); }
+.result .next__list { margin: 0; padding-inline-start: var(--s5); font-size: var(--t-small); }
+.result .next__list li + li { margin-top: var(--s2); }

@@ -6,7 +6,10 @@
 // (chart.ts); the StepList, the boundary and the DataTable are behind "What
 // happens at each step"; the assumed rows, reach and the lowest legal pay
 // behind "What we assumed about you"; the SourceNote and the estimates footer
-// behind "Where these numbers come from".
+// behind "Where these numbers come from". Last, in the open, "What you can do
+// with this" (marketing review M9): what to ask about, printing it for a case
+// worker, and this state beside the others; the site footer follows it
+// (lib/footer.ts, mounted by main.ts).
 //
 // What never hides (inventory.md § The page is its picture): the status
 // region, the archetype notice with its Try again, the incomplete-state
@@ -22,13 +25,15 @@
 // window) for the line and O(cliffs) for everything else; a chip toggle
 // re-renders the whole result from the new evaluation, which is the cheap
 // and correct thing at 151–231 points.
-import { flagList, pickArchetypeId, type Cliff, type HouseholdEvaluation, type HouseholdFlags, type SummaryJson } from "@hotgap/core";
+import { flagList, pickArchetypeId, reachCell, type Cliff, type HouseholdEvaluation, type HouseholdFlags, type ReachLadder, type SummaryJson } from "@hotgap/core";
 import type { EvaluateResult } from "../editor/api.js";
 import { h } from "../lib/dom.js";
 import { pageHref } from "../lib/nav.js";
+import { loadReach } from "../lib/reach.js";
+import { loadSummary } from "../lib/summary.js";
 import { mountChart, type Chart } from "./chart.js";
 import { copy, t } from "./copy.js";
-import { assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, takeUpText, whoText, type Sweep } from "./facts.js";
+import { askText, assumedRows, boundaryText, creditCounted, hoursText, incompleteText, provenanceText, reachSourceText, reachText, sweepFor, takeUpText, whoText, type Sweep } from "./facts.js";
 import { sceneOf, type Scene } from "./model.js";
 import { stepLoss, stepRows, stepSentence } from "./steps.js";
 import { tableRows } from "./table.js";
@@ -45,12 +50,6 @@ export interface Result {
    */
   render(ev: HouseholdEvaluation, flags: HouseholdFlags, opts?: { announce?: boolean; retry?: boolean }): void;
   error(result: Extract<EvaluateResult, { ok: false }>): void;
-}
-
-/** The sweep's summary (coverage, vintages, model), fetched once, for the provenance lines; null until it arrives or if it never does. */
-let summaryPromise: Promise<SummaryJson | null> | null = null;
-function loadSummary(): Promise<SummaryJson | null> {
-  return (summaryPromise ??= fetch("/data/summary.json").then((r) => (r.ok ? (r.json() as Promise<SummaryJson>) : null)).catch(() => null));
 }
 
 /**
@@ -90,8 +89,10 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
   let chart: Chart | null = null;
   let scene: Scene | null = null;
   let summary: SummaryJson | null = null;
-  /** The nodes the sweep's summary refines once it arrives. */
-  let provenance: { source: Text; reach: HTMLElement } | null = null;
+  /** The ACS ladders are in (lib/reach.ts loadReach): reach can say its range in tenths. */
+  let reachReady = false;
+  /** The nodes the sweep's summary and the reach ladders refine once they arrive. */
+  let provenance: { source: Text; reach: HTMLElement; reachLine: HTMLElement | null } | null = null;
 
   function renderProvenance(): void {
     if (!scene) return;
@@ -99,11 +100,15 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
     if (provenance) {
       provenance.source.data = provenanceText(scene, sweep);
       provenance.reach.textContent = reachSourceText(scene, sweep);
+      if (provenance.reachLine) provenance.reachLine.textContent = reachText(scene, cellFor(scene.ev)) ?? "";
     }
     const text = incompleteText(scene, sweep);
     incomplete.hidden = text === null;
     if (text !== null) incomplete.replaceChildren(h("strong", {}, t("incomplete.lead")), text);
   }
+
+  /** The household's ACS cell, once the ladders are in: its shape as core reads it (the answers, not the swept archetype). */
+  const cellFor = (ev: HouseholdEvaluation): ReachLadder | null => (reachReady ? reachCell(ev.answers.state, pickArchetypeId(ev.answers)) : null);
 
   function clearBody(): void {
     chart?.destroy();
@@ -221,7 +226,8 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
 
       /* What we assumed (S6), reach, hours. */
       const assumed = h("ul", { class: "hg-rows assumed" }, ...assumedRows(s).map((f) => h("li", {}, h("span", { class: "hg-rows__at" }, f.label), h("p", {}, f.text))));
-      const reach = reachText(s);
+      const reach = reachText(s, cellFor(ev));
+      const reachLine = reach ? h("p", { id: "reach" }, reach) : null;
       const reachSource = h("p", { class: "hg-source" });
       const hours = hoursText(s);
 
@@ -230,14 +236,22 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
       const source = h("p", { class: "hg-source", id: "source", "data-source": ev.source }, sourceText);
       const againLine = againText(s);
 
-      /* The next place to look: this state beside the others, on /places, for the nearest of its eleven households. */
+      /* What you can do with this (marketing review M9): three lines from the data, never advice about a raise. The
+         household's own question to ask; printing it for a case worker (screen only: paper is the print); and the next
+         place to look, this state beside the others on /places, for the nearest of its eleven households. */
       const household = pickArchetypeId({ married: flags.married === true, childAges: flagList(flags.kids).map(Number), spouseAnnualEarnings: Number(flags["spouse-earnings"] ?? 0) });
-      const toPlaces = h("p", { class: "next hg-no-print" },
-        h("a", { href: pageHref("places", new URLSearchParams({ household, state: s.state })) }, t("toPlaces", { state: s.stateName })),
-        /* On the live path the map's family is not this one — it rents at the typical price and gets child-care help; on the archetype fallback it is. */
-        ...(ev.source === "live" ? [h("br"), h("span", { class: "hg-source", id: "to-places-note" }, t("toPlacesNote"))] : []));
+      const ask = askText(s);
+      const next = h("section", { class: "next", id: "next", "aria-labelledby": "next-heading" },
+        h("h2", { id: "next-heading" }, t("next.heading")),
+        h("ul", { class: "next__list" },
+          ask ? h("li", { id: "next-ask" }, ask) : null,
+          h("li", { class: "hg-no-print", id: "next-print" }, t("next.print")),
+          h("li", { class: "hg-no-print" },
+            h("a", { href: pageHref("places", new URLSearchParams({ household, state: s.state })) }, t("toPlaces", { state: s.stateName })),
+            /* On the live path the map's family is not this one — it rents at the typical price and gets child-care help; on the archetype fallback it is. */
+            ...(ev.source === "live" ? [h("br"), h("span", { class: "hg-source", id: "to-places-note" }, t("toPlacesNote"))] : []))));
 
-      body.append(figure, toPlaces,
+      body.append(figure,
         panel("steps-panel", t("steps.heading"),
           h("p", {}, t("steps.lead")),
           steps.length ? stepList : h("p", {}, t("steps.none")),
@@ -246,7 +260,7 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
         panel("assumed-panel", t("assumed.heading"),
           h("p", {}, t("assumed.lead")), assumed,
           reach ? h("h3", {}, t("reach.heading")) : null,
-          reach ? h("p", {}, reach) : null,
+          reachLine,
           reach ? h("p", {}, t("reach.note")) : null,
           reach ? reachSource : null,
           hours ? h("h3", {}, t("hours.heading")) : null,
@@ -254,12 +268,14 @@ export function mountResult(root: HTMLElement, onTryAgain: () => void, onChangeA
         panel("sources-panel", t("source.heading"), source,
           h("p", {}, h("strong", {}, t("footer.estimates")), t("footer.caseworker")),
           h("p", {}, t("footer.assumed", { year: ev.curve.year })),
-          h("p", {}, t("footer.noAdvice"))));
+          h("p", {}, t("footer.noAdvice"))),
+        next);
 
-      provenance = { source: sourceText, reach: reachSource };
+      provenance = { source: sourceText, reach: reachSource, reachLine };
       if (retry) retryBtn?.focus();
       renderProvenance();
       if (!summary) void loadSummary().then((json) => { summary = json; renderProvenance(); });
+      if (!reachReady) void loadReach().then((ok) => { reachReady = ok; if (ok) renderProvenance(); });
     },
     error(result) {
       status.textContent = "";

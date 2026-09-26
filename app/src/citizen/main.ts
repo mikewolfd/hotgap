@@ -1,6 +1,6 @@
 // The citizen surface's entry: the editor (app/src/editor) above, the
 // result (result.ts and the pure modules beside it) below, the household in
-// the URL between them.
+// the URL between them, and the site footer (lib/footer.ts) under all of it.
 //
 // URL contract: the query is a HouseholdFlags (core/src/flags.ts), the same
 // words as the CLI — `/?zip=94110&kids=3,7&pay=30000&unit=year`. Landing
@@ -12,6 +12,8 @@ import { evaluate } from "../editor/api.js";
 import { hasAnswers, mountEditor } from "../editor/index.js";
 import { withLang } from "../lib/copy.js";
 import { h } from "../lib/dom.js";
+import { mountFooter } from "../lib/footer.js";
+import { loadSummary } from "../lib/summary.js";
 import { t } from "./copy.js";
 import { mountResult } from "./result.js";
 
@@ -32,6 +34,8 @@ const editor = mountEditor(app, {
 const resultRoot = h("div", { class: "result", id: "result" });
 app.append(h("h1", { class: "hg-visually-hidden" }, t("heading")), resultRoot);
 const result = mountResult(resultRoot, () => run(editor.flags, { submitted: false, retry: true }), () => editor.showChips("no-snap"));
+/* The footer's run line waits for the sweep's summary, which this page fetches with its first answer (result.ts), not on an empty form. */
+const footer = mountFooter();
 
 // Evaluations are answered out of order (a fresh curve takes seconds, a
 // cached one milliseconds); only the latest request may render.
@@ -55,6 +59,7 @@ async function run(flags: HouseholdFlags, { submitted, landing = false, retry = 
   if (id !== latest) return;
   if (r.ok) {
     result.render(r.evaluation, flags, { announce: !submitted, retry });
+    void loadSummary().then(footer.setSummary);
     // The chips assert answers an archetype curve did not use (S5): the row's
     // note says so where the chips are, with the same Try again.
     if (r.evaluation.source === "archetype") {

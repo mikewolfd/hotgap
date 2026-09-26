@@ -169,15 +169,19 @@ const FAR_POSITION = 80;
 
 /**
  * When further zones lie beyond the household's (charts.md § 1 rule 2):
- * "It happens again from {start of the next zone} to {safe exit}", or, with
- * several, how many times between the first's start and the safe exit. The
- * zones are read off analysis.dangerZones, never assumed to abut the exit.
+ * "Further up, from {start of the next zone} to {safe exit}, a raise again
+ * doesn't leave you better off than you were at {start}", or, with several,
+ * how many more stretches lie between the first's start and the safe exit.
+ * The zones are read off analysis.dangerZones, never assumed to abut the
+ * exit. It says what happens again — a stretch below an earlier level — not
+ * "it happens again", which read as the same drop twice (policy review R12).
  *
  * Framed by company (Plan 9 § Citizen): among the cliffs from that first
  * further zone on, the first whose `position` is at or past `FAR_POSITION`
- * adds a clause naming it and how many families like this one, in tenths,
- * already stand past it — omitted where none qualifies, or every position
- * on the stretch is null (never read null as "not far").
+ * adds a clause naming where those far drops start and how many families
+ * like this one, in tenths, earn LESS than that — about the far drops, never
+ * the near zone (R12); omitted where none qualifies, or every position on the
+ * stretch is null (never read null as "not far").
  */
 export function againText(s: Scene): string | null {
   if (s.zone === null || s.stuck || s.exit === null || s.safeExit === null || s.safeExit === s.exit) return null;
@@ -186,7 +190,10 @@ export function againText(s: Scene): string | null {
   const slots = { from: s.m.pay(beyond[0].startEarnings), to: s.m.pay(s.safeExit) };
   let out = beyond.length === 1 ? fill(copy.again, slots) : fill(copy.againMany, { n: beyond.length, ...slots });
   const far = s.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= FAR_POSITION);
-  if (far) out += fill(copy.beyondReach, { at: s.m.pay(far.startEarnings), n: Math.round((far.position ?? 0) / 10) });
+  if (far) {
+    const n = Math.round((far.position ?? 0) / 10), at = s.m.pay(far.startEarnings);
+    out += n >= 10 ? fill(copy.beyondReachMost, { at }) : fill(copy.beyondReach, { at, n });
+  }
   return out;
 }
 

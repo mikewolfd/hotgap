@@ -4,11 +4,13 @@
 // archetype state M4), the IncompleteMarker (#16), reach and hours. The
 // provenance parts take the sweep's summary when the page has fetched it and
 // say less, never something wrong, when it has not.
-import { childcareMonthlyFor, provideData, stateDefaults, type ProgramId, type StateCoverage, type SummaryJson } from "@hotgap/core";
+import { childcareMonthlyFor, DEFAULT_HOURS, provideData, stateDefaults, type ProgramId, type ReachLadder, type StateCoverage, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { careHousehold, incompleteFor, unmodeledName } from "../lib/coverage.js";
 import { programName } from "../lib/names.js";
 import { capitalize, dateWords, listOf, modelLine, numberWords, unitFigure } from "../lib/format.js";
+import { reachRange } from "../lib/reach.js";
+import { takeUpApplies } from "../lib/takeUp.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, fill, t } from "./copy.js";
 import type { Scene } from "./model.js";
@@ -37,14 +39,22 @@ const TAKE_UP: [keyof Scene["modeled"], ProgramId][] = [
 /** The state pays its heating help as a tax credit HotGap already counts (Michigan): nothing to apply for, nothing to turn on. */
 export const creditCounted = (s: Scene): boolean => s.boundary?.upstream?.counted === "state credit";
 
-/** The take-up flags that count for this household: heating help is neither got nor not got where the state pays it as a credit already in the line (review B1). */
-const takeUpFor = (s: Scene): typeof TAKE_UP => (creditCounted(s) ? TAKE_UP.filter(([, id]) => id !== "liheap") : TAKE_UP);
+/**
+ * The take-up flags that count for this household: heating help is neither
+ * got nor not got where the state pays it as a credit already in the line
+ * (review B1), and WIC is not a line for a household with no child under five
+ * (marketing review M5; lib/takeUp.ts).
+ */
+const takeUpFor = (s: Scene): typeof TAKE_UP =>
+  TAKE_UP.filter(([, id]) => takeUpApplies(s.modeled, id) && !(id === "liheap" && creditCounted(s)));
 
 /**
  * The line under the answer (design/TASKS.md § Take-up under the citizen
- * headline): the help the curve counts as received, by the names an office
- * uses, and the question that sends a family that does not get one of them
- * to the chips. Null when no take-up flag is on.
+ * headline): the help the curve counts, by the names an office uses — "help
+ * you could get", because the curve counts it as if received and the family
+ * may not be getting it (marketing review M5) — and the question that sends a
+ * family that does not get one of them to the chips. Null when no take-up
+ * flag is on.
  */
 export function takeUpText(s: Scene): { counting: string; ask: string; change: string } | null {
   const on = takeUpFor(s).filter(([k]) => s.modeled[k]).map(([, id]) => programName(id));
@@ -134,15 +144,25 @@ export function incompleteText(s: Scene, sweep: Sweep | null): string | null {
   return t("incomplete.body", { state: s.stateName, program: listOf(unmodeled.map(unmodeledName)) });
 }
 
-export function reachText(s: Scene): string | null {
+/**
+ * "About 4 in 10 parents like you in Colorado are paid $43,000 a year or
+ * less", and how sure that is, in tenths of families, the unit the sentence
+ * speaks, never in dollars (policy review R7): with the ladder's cell, the
+ * margin read back through it ("somewhere between 3 and 4 in 10"); without
+ * it, or when the range rounds to one figure, only that it could be off.
+ */
+export function reachText(s: Scene, cell: ReachLadder | null = null): string | null {
   const pct = s.ev.reach.current;
   if (pct === null) return null;
   const n = Math.round(pct / 10);
   const A = s.modeled;
   const who = A.childAges.length ? copy.reach.who.parents : A.married ? copy.reach.who.couples : copy.reach.who.people;
   const params = { who, state: s.stateName, pay: s.m.payUnit(s.current) };
-  // The margin travels with the number (design/README.md conflict 5); the cell's own figure is not in the evaluation yet.
-  return (n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params })) + t("reach.margin");
+  const lead = n <= 0 ? t("reach.few", params) : n >= 10 ? t("reach.most", params) : t("reach.some", { n, ...params });
+  // The ladder's yardstick is householder plus spouse earnings (core reachAtEarnings), read for the answers core read.
+  const range = cell ? reachRange(cell, s.current + s.ev.answers.spouseAnnualEarnings) : null;
+  const [lo, hi] = range ? [Math.round(range.lo / 10), Math.round(range.hi / 10)] : [0, 0];
+  return lead + (range && lo >= 1 && hi <= 9 && lo < hi ? t("reach.marginRange", { lo, hi }) : copy.reach.margin);
 }
 
 /** A reach.json vintage token ("2024-1yr", "2020-2024-5yr") as words a reader can place (`reach.survey.*`); anything else as-is. */
@@ -151,9 +171,11 @@ const surveyWord = (v: string): string => {
   return !m ? v : m[2] ? t("reach.survey.range", { from: m[1], to: m[2], n: m[3] }) : t("reach.survey.one", { year: m[1], n: m[3] });
 };
 
+/** Where reach comes from, and what "like you" matches on (policy review R15): the household's shape, not the children's ages. */
 export function reachSourceText(s: Scene, sweep: Sweep | null): string {
   const v = sweep?.coverage?.vintages.reach.vintages;
-  return v?.length ? t("reach.source", { vintages: listOf(v.map(surveyWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
+  const from = v?.length ? t("reach.source", { vintages: listOf(v.map(surveyWord)), year: s.ev.curve.year }) : t("reach.sourceBare");
+  return `${from} ${t("reach.cell", { state: s.stateName })}`;
 }
 
 /** The masthead sentence for paper: who the numbers are for, from the household the curve was run for. */
@@ -166,10 +188,37 @@ export function whoText(s: Scene): string {
   return t("who", { adults: A.married ? copy.adults.two : copy.adults.one, kids, place });
 }
 
+/**
+ * The lowest legal pay, said with the hours it assumes (marketing review
+ * M12): a pay under it at the household's hours says so, and says the hours
+ * were our guess when they were. The form's "we assumed full time" and this
+ * line are the same 40 hours, and a pay under the minimum at 40 is the
+ * likeliest sign the guess is wrong. Otherwise the wage and what 40 hours at
+ * it make in a year.
+ */
 export function hoursText(s: Scene): string | null {
   const w = s.ev.minWage;
   if (!w) return null;
-  return t("hours.body", { state: s.stateName, wage: unitFigure(w.wage, "hour"), fullTime: s.m.money(Math.round(w.fullTimeEarnings / 500) * 500) });
+  const wage = unitFigure(w.wage, "hour");
+  const hours = s.modeled.hoursPerWeek ?? DEFAULT_HOURS;
+  // Under the minimum by more than half a cent an hour, at the hours the curve used; the pay is annual.
+  if (s.current / (hours * 52) < w.wage - 0.005) {
+    const slots = { pay: s.m.payUnit(s.current), state: s.stateName, wage };
+    return s.modeled.hoursPerWeek === null ? t("hours.underAssumed", slots) : t("hours.under", { hours, ...slots });
+  }
+  return t("hours.body", { state: s.stateName, wage, fullTime: s.m.money(Math.round(w.fullTimeEarnings / 500) * 500) });
+}
+
+/**
+ * "What you can do with this" (marketing review M9): the one line that is
+ * this household's own, the next named help that ends above its pay, to ask
+ * about before the pay gets there; null when nothing named ends ahead. The
+ * other two lines (print it; see the state beside the others) are the page's.
+ * Never advice about taking a raise: the page does not tell anyone what to do.
+ */
+export function askText(s: Scene): string | null {
+  const c = s.cliffs.find((x) => x.endEarnings > s.current && x.programsLost.length > 0);
+  return c ? t("next.ask", { program: phraseAndName(c.programsLost[0]), wage: s.m.payUnit(c.endEarnings) }) : null;
 }
 
 /**

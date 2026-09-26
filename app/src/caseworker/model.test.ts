@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { dateWords, listOf, lossFigure, ordinal, signedMoney } from "../lib/format.js";
 import {
   againLine, answerParts, answerText, assumed, chartLabel, cite, cliffSentence, compareNote, compareRows, handout, incompleteHere, incompleteStates, ledgerNote, ledgerRows,
-  modeled, notInSweep, onTheWay, sourceLine, tiles, unclaimedNote,
+  modeled, notInSweep, onTheWay, reachSentence, sourceLine, tiles, unclaimedNote,
 } from "./model.js";
 
 const answers = (flags: Record<string, string | boolean>) => {
@@ -44,13 +44,14 @@ describe("figures, through Intl in the locale (lib/format.ts)", () => {
 describe("the answer, one sentence in the caseworker register", () => {
   it("names the household's own zone, its exit and the raise that clears it — and nothing else", () => {
     /* It counts the steps that lose money rather than saying every raise does (design/TASKS.md § Danger-zone sentences). */
-    expect(answerText(co)).toBe("Net stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money; $7,000 clears the stretch.");
+    expect(answerText(co)).toBe("Net income — pay plus help, after taxes and premiums — stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 $1,000 raises between them lose money; $7,000 clears the stretch.");
     /* Each dollar figure wears the key of the mark it names, so the sentence doubles as the chart's key. */
     expect(answerParts(co).flatMap((p) => ("slot" in p ? [[p.slot, p.text, p.key]] : []))).toEqual([
       ["peak", "$84,732", null],
       ["start", "$36,000", "hg-amt hg-amt--gap"],
       ["exit", "$45,000", "hg-amt hg-amt--gap"],
       ["nSteps", "9", null],
+      ["step", "$1,000", null],
       ["raise", "$7,000", "hg-amt hg-amt--gap"],
     ]);
   });
@@ -64,7 +65,7 @@ describe("the answer, one sentence in the caseworker register", () => {
     expect(shape({ verdict: "always_up" })).toBe("Every raise leaves this family better off; nothing drops anywhere up to $150,000.");
     expect(shape({ verdict: "cliff_behind" })).toBe("The worst is behind this family: from $55,000 up, every raise is more money.");
     expect(shape({ verdict: "cliff_ahead", nextCliff: { startEarnings: 54000 } as never })).toBe("This family is clear up to $55,000; past it a raise costs about $25,449 a year.");
-    expect(shape({}, { raiseIsLowerBound: true })).toBe("Net stays below its $84,732 peak (at $36,000) past the top of the axis, $150,000: 8 of the 114 steps between them lose money.");
+    expect(shape({}, { raiseIsLowerBound: true })).toBe("Net income — pay plus help, after taxes and premiums — stays below its $84,732 peak (at $36,000) past the top of the axis, $150,000: 8 of the 114 $1,000 raises between them lose money.");
     /* Every one of them is one sentence. */
     for (const s of [shape({ verdict: "always_up" }), shape({ verdict: "cliff_behind" }), answerText(co)]) {
       expect(s.split(/\.\s/).length).toBe(1);
@@ -96,7 +97,7 @@ describe("the answer counts the steps (design/TASKS.md § Danger-zone sentences)
   it("says how many of the zone's steps lose money for the SF household, not that every raise does", () => {
     const sf = shaped(sfNet, 30_000);
     expect(sf.personal.zone).toEqual({ startEarnings: 28_000, endEarnings: 43_000, peakNet: 44_985 });
-    expect(answerText(sf)).toBe("Net stays below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 steps between them lose money; $13,000 clears the stretch.");
+    expect(answerText(sf)).toBe("Net income — pay plus help, after taxes and premiums — stays below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 $1,000 raises between them lose money; $13,000 clears the stretch.");
   });
   it("calls a next cliff the family climbs back out of within three steps a dip, and says where it is ahead again", () => {
     const dip = shaped((e) => (e <= 28_000 ? sfNet(e) : e === 29_000 ? 43_000 : e === 30_000 ? 44_500 : 45_100 + (e - 31_000) * 0.7), 25_000);
@@ -115,7 +116,8 @@ describe("the tiles", () => {
       ["Raise to clear the zone", "$7,000", "to $45,000 earned"],
       ["Next cliff", "$305", "at $41,000 → $42,000 (42 in 100 families like this earn less)"],
       ["Largest drop anywhere on the curve", "$25,449", "at $54,000 → $55,000 (50 in 100 families like this earn less)"],
-      ["Reach at current earnings", "40th", "percentile, ±$8,000 (n = 393)"],
+      /* R7: the range in percentiles, read back through the ladder; M13: the reading in words and the sample in words. */
+      ["Reach at current earnings", "40th", "percentile (34th–44th allowing for survey error): 40 in 100 families like this earn less. Survey sample: 393 households."],
     ]);
   });
   it("drops the reach tile without a cell, and says when the raise is a floor", () => {
@@ -304,6 +306,24 @@ describe("what the model does not include, and where the numbers came from", () 
     const clamped = sourceLine({ ...co, answers: { ...co.answers, annualEarnings: 200000 } }, prov);
     expect(clamped).toContain("Pay is above the modeled range — evaluated at $38,000, the top of the sweep.");
   });
+  it("cites the rent and child-care sources only when the curve used them (policy review R8)", () => {
+    const live = (a: Partial<typeof co.answers>) => sourceLine({ ...co, source: "live", answers: { ...co.answers, ...a } }, prov);
+    const none = live({ monthlyRent: null, monthlyChildcare: null });
+    expect(none).toContain("Rent: none entered (no SNAP shelter deduction taken). Child-care price: none entered.");
+    expect(none).not.toContain("HUD");
+    expect(none).not.toContain("county 2015");
+    expect(live({ monthlyRent: 900, monthlyChildcare: 400 })).toContain("Rent: as entered. Child-care price: as entered.");
+    // No children, no child-care line at all.
+    expect(live({ childAges: [], childDisabled: [], monthlyRent: null, monthlyChildcare: null })).not.toContain("Child-care price");
+  });
+  it("says what \"the same shape\" matches on, and that it is not the children's ages (policy review R15)", () => {
+    expect(reachSentence(co)).toContain("Same shape means the same marital status, the same number of earners (one or two) and the same number of children under 18 (three or more pooled), with a householder aged 18–64; children's ages are not matched.");
+  });
+  it("never lists WIC as taken up or not for a household with no child under five (marketing review M5)", () => {
+    const older = assumed({ ...co, source: "live", answers: { ...co.answers, childAges: [7, 9] } }, cov);
+    expect(older[2]).not.toContain("WIC");
+    expect(assumed(co, cov)[2]).toContain("WIC");
+  });
   it("names the programs turned off that would pay", () => {
     expect(unclaimedNote(co)).toBe("");
     expect(unclaimedNote({ ...co, unclaimed: [{ program: "snap", annual: 4853 }] })).toBe("Off for this household: SNAP would pay $4,853 a year at $38,000.");
@@ -322,7 +342,7 @@ describe("the client sheet", () => {
     expect(h.paragraphs[0]).toContain(`$${co.analysis.currentEarnings.toLocaleString("en-US")}`);
     // Then the citizen page's own answer for this household (audit D4): the in-zone shape (the drop behind it, the rate to the exit),
     // then "again" from the next zone's start. One catalog, one sentence, on both surfaces.
-    expect(h.paragraphs[1]).toBe("You're past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000. It happens again between $46,000 and $119,000.");
+    expect(h.paragraphs[1]).toBe("Your pay is past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000. Further up, from $46,000 to $119,000, a raise again doesn't leave you better off than you were at $46,000.");
     expect(h.paragraphs[2]).toBe("$29,379 of what you keep is child care help paid straight to your day care.");
     expect(h.paragraphs[3]).toBe("The biggest drop is at $55,000 of pay: child care help ends and you keep $25,449 less. Food help ends at $54,000.");
     expect(h.paragraphs[4]).toBe("Your kids' health plan ends at $73,000 of pay — but not that year. It ends at their next yearly check, up to 12 months later.");

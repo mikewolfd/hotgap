@@ -33,6 +33,13 @@
 //   incomplete.* — IncompleteMarker (#16) in the citizen register: one caution,
 //     from coverage[state].unmodeled[], only when it could move this household.
 //   program.* — M3: the plain phrase for each program (design/inventory.md § Program phrases).
+//   key.* — every word the picture writes on itself, defined in one line
+//     (marketing review M10, 2026-09-26).
+//   reach.* — how common the pay is; its margin in tenths of families, never
+//     dollars (policy review R7), and what "like you" matches on (R15).
+//   hours.* — the lowest legal pay, with the hours it assumes (M12).
+//   next.* — "What you can do with this" (M9): from the data, never advice
+//     about taking a raise.
 import { bind, catalog, fill, parts, type Part } from "../lib/copy.js";
 
 export { fill, parts, type Part };

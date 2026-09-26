@@ -129,7 +129,7 @@ for (const width of [390, 1280]) {
   check(/One more thing: at \$31,000, free early learning stops, but not that day\. Later, you would keep about \$16,[56]00 less a year\./.test(m.answer), `headstart ${width}: the answer carries the deferred clause`, m.answer);
   check(m.stubs >= 1 && m.later >= 1, `headstart ${width}: the waiting mark draws its dashed stub and "later" though it shares a dot`, { stubs: m.stubs, later: m.later });
   check(m.nearestMarkToDiamond >= 12, `headstart ${width}: the diamond is clear of the mark`, m.nearestMarkToDiamond);
-  check(m.keys.includes("A drop that waits"), `headstart ${width}: the key lists the mark that is there`, m.keys);
+  check(m.keys.some((k) => k.startsWith("A drop that comes later")), `headstart ${width}: the key lists the mark that is there`, m.keys);
 }
 /* S4: a safe-from-here rule inside the picture on a phone is named by the caption. */
 for (const key of ["hourly", "past"]) {

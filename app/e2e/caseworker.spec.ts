@@ -41,7 +41,7 @@ const THREE_WHAT_IFS = "&whatif=childcare-subsidy%3D&whatif=housing%3D1&whatif=p
 const ARCHETYPE_URL = process.env.HOTGAP_ARCHETYPE_URL;
 
 const rendered = async (page: Page) => {
-  await expect(page.locator("#answer")).toContainText("Net stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 steps between them lose money");
+  await expect(page.locator("#answer")).toContainText("Net income — pay plus help, after taxes and premiums — stays below its $84,732 peak (at $36,000) until $45,000: 2 of the 9 $1,000 raises between them lose money");
   await expect(page.locator("#sourceNote")).toHaveAttribute("data-source", "live");
 };
 const light = async (page: Page) => page.emulateMedia({ colorScheme: "light" });
@@ -99,6 +99,12 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(page.locator("#correctionsRest")).toContainText("Checked and not applying here — TAFDC:");
     await expect(page.locator("#sourceNote")).toContainText("Curve: live PolicyEngine call for this household in El Paso County, Colorado.");
     await expect(page.locator("#sourceNote")).toContainText(/Model: policyengine-us \d/);
+    /* The household entered the state's typical rent and care bill, so both sources are cited (policy review R8). */
+    await expect(page.locator("#sourceNote")).toContainText("Rent: HUD");
+    await expect(page.locator("#sourceNote")).toContainText("Child-care price: ");
+    /* The site footer (marketing review M8): who, the code and the issues, the run, the privacy line; never on paper. */
+    await expect(page.locator("footer.hg-footer")).toContainText("HotGap is an open-source tool");
+    await expect(page.locator("footer.hg-footer")).toContainText(/Data updated [A-Z][a-z]{2} \d{1,2}, \d{4}, with policyengine-us \d/);
 
     await open(page, "ledger-panel");
     const ledger = page.locator("#ledgerRows tr");
@@ -120,7 +126,8 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(page.locator("#tiles .tile").nth(2)).toContainText("$41,000 → $42,000");
     await expect(page.locator("#tiles .tile").nth(3)).toContainText("Largest drop anywhere on the curve");
     await expect(page.locator("#tiles .tile").nth(3)).toContainText("in 100 families like this earn less");
-    await expect(page.locator("#tiles")).toContainText("percentile, ±$8,000 (n = 393)");
+    /* Reach in percentiles, the ladder's dollar margin read back through it (policy review R7), and in words (M13). */
+    await expect(page.locator("#tiles")).toContainText("percentile (34th–44th allowing for survey error): 40 in 100 families like this earn less. Survey sample: 393 households.");
     // Every drop row carries its own position now, so the fourth cliff is as defensible as the two on the tiles.
     await expect(page.locator('#dropRows [aria-current="true"]')).toHaveText(/^\$54,000 → \$55,000/);
     // The position stays on the two tiles a counselor reads out and off every row: three of four fresh
@@ -131,6 +138,8 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
 
     await open(page, "assumed-panel");
     await expect(page.locator("#reachNote")).toContainText("it says how common the pay is, never the odds of getting there");
+    /* What "the same shape" matches on (policy review R15). */
+    await expect(page.locator("#reachNote")).toContainText("children's ages are not matched");
 
     expect(await page.locator("#marks .hg-mark").count()).toBeGreaterThan(0);
     await expect(page.locator("#chartWrap")).toHaveAttribute("aria-label", /The largest step down is \$25,449 at \$54,000 where CCDF child care subsidy ends/);
@@ -640,7 +649,7 @@ test("print from OS-dark: the controls and the bar leave, the client sheet opens
   /* The sheet's first line is the two facts the citizen answer gave up on 2026-09-18: the pay is in the
      ScenarioBar and the money kept is the label on the diamond, and paper carries neither. */
   await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $84,371.");
-  await expect(page.locator("#handout")).toContainText("You're past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000.");
+  await expect(page.locator("#handout")).toContainText("Your pay is past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000.");
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.screenshot({ path: pf("1280-print"), fullPage: true });
   await page.evaluate(() => document.getElementById("handout")!.scrollIntoView());

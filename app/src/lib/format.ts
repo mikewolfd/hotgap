@@ -18,8 +18,12 @@ const S = catalog.shared;
 const usd = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdCents = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
+const whole = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+
 /** Whole dollars, "$1,234". */
 export const money = (n: number): string => usd.format(Math.round(n));
+/** A count of things, grouped the locale's way: "2,887". */
+export const count = (n: number): string => whole.format(n);
 
 /** The step each unit is spoken in: $0.25 an hour, $10 a week, $50 a month, $500 a year. */
 const STEP: Record<PayUnit, number> = { hour: 0.25, week: 10, month: 50, year: 500 };

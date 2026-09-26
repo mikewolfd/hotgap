@@ -4,7 +4,7 @@ import { copy, fill, parts, t } from "./copy.js";
 
 describe("t()", () => {
   test("fills a dotted key", () => {
-    expect(t("again", { from: "$54,000", to: "$67,000" })).toBe("It happens again between $54,000 and $67,000.");
+    expect(t("again", { from: "$54,000", to: "$67,000" })).toBe("Further up, from $54,000 to $67,000, a raise again doesn't leave you better off than you were at $54,000.");
   });
   test("throws on a missing key, a missing param, an unknown param", () => {
     expect(() => t("no.such.key")).toThrow(/missing string/);

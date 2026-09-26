@@ -20,14 +20,14 @@ describe("verdict shapes", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(verdictKey(s)).toBe("in_danger_zone:inside");
     // $43,000 → $46,000 gains $2,400: 80¢ a dollar; the peak it gets back to is the zone's start.
-    expect(verdictText(s)).toBe("You're past a drop at $42,000. From here to $46,000 you keep about 80¢ of each extra dollar; at $46,000 you're back to what you'd have kept at $41,000.");
+    expect(verdictText(s)).toBe("Your pay is past a drop at $42,000. From here to $46,000 you keep about 80¢ of each extra dollar; at $46,000 you're back to what you'd have kept at $41,000.");
     expect(s.exit).toBe(46_000);
     // The whole curve's safe exit is $74,000 (the deferred $72k step counts since 2026-09-17 and opens the last zone;
     // it was $67,000 with that step lifted out); the sentence names the household's own $46,000 and says where it
     // happens again — from the NEXT zone's start ($54,000), read off dangerZones, never assumed to abut the exit.
     expect(s.safeExit).toBe(74_000);
     expect(s.otherZones.map((z) => z.startEarnings)).toEqual([54_000, 71_000]);
-    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off.");
   });
   test("the San Francisco household, past its food-help drop: 20¢ a dollar from $30,000 to $43,000", () => {
     const s = sceneOf(makeSfEvaluation(), year);
@@ -36,7 +36,7 @@ describe("verdict shapes", () => {
     expect(s.currentNet).toBe(42_797);
     expect(s.exit).toBe(43_000);
     expect(verdictKey(s)).toBe("in_danger_zone:inside");
-    expect(verdictText(s)).toBe("You're past a drop at $29,000. From here to $43,000 you keep about 20¢ of each extra dollar; at $43,000 you're back to what you'd have kept at $28,000.");
+    expect(verdictText(s)).toBe("Your pay is past a drop at $29,000. From here to $43,000 you keep about 20¢ of each extra dollar; at $43,000 you're back to what you'd have kept at $28,000.");
   });
   test("cliff ahead: the next-stretch rate first, then the cliff at the step's landing point, the drop about-rounded", () => {
     const s = sceneOf(makeEvaluation({}, 38_000, { careCliff: false, deferredCliff: false }), year);
@@ -86,7 +86,7 @@ describe("verdict shapes", () => {
   test("stuck past a drop: the drop, and that nothing on the axis gets back to the peak", () => {
     const s = sceneOf(makeEvaluation({}, 60_000, { stuckAt: 61_000 }), year);
     expect(verdictKey(s)).toBe("in_danger_zone:stuck:inside");
-    expect(verdictText(s)).toBe("You're past a drop at $55,000, and nowhere we looked, up to $150,000, gets you back to what you'd have kept at $54,000.");
+    expect(verdictText(s)).toBe("Your pay is past a drop at $55,000, and nowhere we looked, up to $150,000, gets you back to what you'd have kept at $54,000.");
     expect(againText(s)).toBeNull();
   });
 });
@@ -99,7 +99,7 @@ describe("the person's unit (M5)", () => {
     expect(verdictText(s)).toBe("More pay won't leave you better off until you're past $25.25 an hour — $2.50 an hour more than you make now.");
     // Past the drop, every pay figure in the unit too; the rate is cents on the dollar in any unit.
     const inside = sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, hoursPerWeek: 35 } }), { unit: "hour", hours: "35" });
-    expect(verdictText(inside)).toBe("You're past a drop at $23.00 an hour. From here to $25.25 an hour you keep about 80¢ of each extra dollar; at $25.25 an hour you're back to what you'd have kept at $22.50 an hour.");
+    expect(verdictText(inside)).toBe("Your pay is past a drop at $23.00 an hour. From here to $25.25 an hour you keep about 80¢ of each extra dollar; at $25.25 an hour you're back to what you'd have kept at $22.50 an hour.");
   });
   test("monthly: to $50 a month, the unit said on every figure", () => {
     const s = sceneOf(makeEvaluation({}, 41_500), { unit: "month" });
@@ -132,7 +132,7 @@ describe("a deferred cliff the sentence itself names (B1, M2)", () => {
     // word "later" and its money on the chart, and a badged row under "What happens at each step".
     const s = sceneOf(makeEvaluation(), year);
     expect(s.deferred.some((c) => c.startEarnings >= s.current)).toBe(true);
-    expect(verdictText(s)).toBe("You're past a drop at $42,000. From here to $46,000 you keep about 80¢ of each extra dollar; at $46,000 you're back to what you'd have kept at $41,000.");
+    expect(verdictText(s)).toBe("Your pay is past a drop at $42,000. From here to $46,000 you keep about 80¢ of each extra dollar; at $46,000 you're back to what you'd have kept at $41,000.");
   });
   test("no deferred cliff at all, no hedge", () => {
     expect(verdictText(sceneOf(makeEvaluation({}, 80_000), year))).not.toMatch(/not right away/);
@@ -176,18 +176,22 @@ describe("far cliffs framed by company (Plan 9 § Citizen)", () => {
   test("the existing line is unchanged when no cliff beyond the household's own zone has a position (the fixture leaves every position null)", () => {
     const s = sceneOf(makeEvaluation(), year);
     expect(s.cliffs.every((c) => c.position === null)).toBe(true);
-    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off.");
   });
   test("the first cliff at or past FAR_POSITION, from the first further zone on, adds the company clause", () => {
     const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 71_000: 82 } }), year);
-    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000. The ones past $71,000 are past what 8 in 10 families like yours earn.");
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off. Those far drops start at $71,000, and 8 in 10 families like yours earn less than that.");
+  });
+  test("the clause says how many earn LESS than where the far drops start — never \"10 in 10\" (policy review R12)", () => {
+    const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 71_000: 96 } }), year);
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off. Those far drops start at $71,000, and almost all families like yours earn less than that.");
   });
   test("a position short of 80 does not qualify: the clause stays off", () => {
     const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 71_000: 50 } }), year);
-    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off.");
   });
   test("a cliff before the further zones does not count, even past FAR_POSITION", () => {
     const s = sceneOf(makeEvaluation({}, 43_000, { positions: { 41_000: 95 } }), year);   // the SNAP cliff, behind the household's own zone
-    expect(againText(s)).toBe("It happens 2 more times, between $54,000 and $74,000.");
+    expect(againText(s)).toBe("Further up, between $54,000 and $74,000, there are 2 more stretches where a raise doesn't leave you better off.");
   });
 });

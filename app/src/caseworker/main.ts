@@ -19,6 +19,7 @@ import { coreText } from "../lib/copy.js";
 import { CHIP_ORDER, copy, t } from "./copy.js";
 import { chartLabel, curveTitle, notInSweep, sourceLine, stateName, unclaimedNote, type Provenance } from "./model.js";
 import { $ } from "../lib/dom.js";
+import { mountFooter } from "../lib/footer.js";
 import { pageHref } from "../lib/nav.js";
 import { renderAnswer, renderAssumed, renderBreakdown, renderCompare, renderCorrections, renderCoverage, renderDrops, renderHandout, renderLedger, renderMasthead, renderStatic, syncDrops, type Column } from "./render.js";
 import { applyDiff, diffFlags, sameDiff, whatIfLabel, whatIfTag, type Diff } from "./scenarios.js";
@@ -38,6 +39,8 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
   try { const res = await fetch(url); return res.ok ? (await res.json()) as T : null; } catch { return null; }
 };
 const summaryP = fetchJson<SummaryJson>("/data/summary.json");
+/* The site footer (lib/footer.ts), its run line filled when the summary lands. */
+mountFooter(summaryP);
 const reachP = fetchJson<unknown>("/data/reach.json").then((j) => { if (j) provideData({ "reach.json": j }); });
 let countyNamesP: Promise<void> | null = null;
 /** The county's name for a FIPS code, the 80 KB table fetched on the first ask. */

@@ -1,8 +1,8 @@
 // The table twin, the assumed list with its corrections, the SourceNote's
 // states and the reach and hours sentences.
 import { describe, expect, test } from "vitest";
-import type { SummaryJson } from "@hotgap/core";
-import { assumedRows, boundaryText, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, takeUpText, whoText } from "./facts.js";
+import { REACH_PERCENTILES, type ReachLadder, type SummaryJson } from "@hotgap/core";
+import { askText, assumedRows, boundaryText, hoursText, incompleteText, provenanceText, reachSourceText, reachText, subText, sweepFor, takeUpText, whoText } from "./facts.js";
 import { makeEvaluation } from "./fixture.js";
 import { sceneOf } from "./model.js";
 import { tableRows } from "./table.js";
@@ -10,12 +10,20 @@ import { tableRows } from "./table.js";
 const year = { unit: "year" };
 
 describe("takeUpText (under the answer)", () => {
-  test("the help the curve counts as received, by the names an office uses, and the way to change it", () => {
+  test("the help the curve counts, as help the family could get (it may not be getting it), by the names an office uses, and the way to change it", () => {
     expect(takeUpText(sceneOf(makeEvaluation(), year))).toEqual({
-      counting: "Counting the help you get: SNAP, TANF cash assistance, Medicaid, and WIC.",
+      counting: "Counting the help you could get: SNAP, TANF cash assistance, Medicaid, and WIC.",
       ask: "Not getting one of these?",
       change: "Change my answers",
     });
+  });
+  test("never WIC for a household with no child under five: WIC's own rule, and the children's ages are known (marketing review M5)", () => {
+    const ages = (childAges: number[]) => makeEvaluation({ answers: { ...makeEvaluation().answers, childAges, childDisabled: childAges.map(() => false) } });
+    expect(takeUpText(sceneOf(ages([7, 9]), year))!.counting).toBe("Counting the help you could get: SNAP, TANF cash assistance, and Medicaid.");
+    expect(takeUpText(sceneOf(ages([]), year))!.counting).not.toContain("WIC");
+    expect(takeUpText(sceneOf(ages([4]), year))!.counting).toContain("WIC");
+    // …nor in either take-up row of what we assumed, on or off.
+    expect(assumedRows(sceneOf(ages([7, 9]), year)).map((r) => r.text).join(" ")).not.toContain("WIC");
   });
   test("no take-up flag on, no line", () => {
     const ev = makeEvaluation();
@@ -31,7 +39,7 @@ describe("tableRows", () => {
     // The deferred $72k step counts (2026-09-17), so it opens the last zone and safe-from-here moves from $67k to $74k.
     expect(rows.map((r) => [r.at, r.mark])).toEqual([
       [41_000, "The top of your flat stretch"], [42_000, "A drop"], [43_000, "You now"], [46_000, "Back to even"],
-      [55_000, "A drop"], [72_000, "A drop that waits"], [74_000, "Safe from here"],
+      [55_000, "A drop"], [72_000, "A drop that comes later"], [74_000, "No more drops from here"],
     ]);
     for (const r of rows) if (r.mark !== "You now") expect(r.keep).toBe(s.net[s.idx(r.at)]);
     expect(rows.filter((r) => r.drop).map((r) => r.drop)).toEqual([2500, 9000, 1500]);
@@ -59,7 +67,7 @@ describe("what we assumed", () => {
       "Not counted: Child care help (CCDF child care subsidy), housing help (Housing voucher), free early learning (Head Start), and help with heating bills (LIHEAP energy assistance). We counted these as if you don't get them.",
       "You: Age 30, a U.S. citizen. Nobody in the home has a disability.",
       "Other money: Savings: None. No child support, SSDI or unemployment pay.",
-      "Hours: You didn't say, so we assumed full time.",
+      "Hours: You didn't say, so we assumed full time: 40 hours a week.",
     ]);
   });
   test("a rent and a child-care bill the person gave are said as theirs", () => {
@@ -140,17 +148,41 @@ describe("SourceNote", () => {
 
 describe("reach and hours", () => {
   test("reach is how common the pay is, never odds; the count rounds to tenths", () => {
-    expect(reachText(sceneOf(makeEvaluation(), year))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less. The count could be off by a few thousand dollars either way.");
+    expect(reachText(sceneOf(makeEvaluation(), year))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less. It could be a few places higher or lower.");
     expect(whoText(sceneOf(makeEvaluation(), year))).toBe("A parent with 2 kids, ages 3 and 7, in Colorado.");
     expect(whoText(sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, childAges: [], childDisabled: [], married: true } }), year))).toBe("A couple with no kids, in Colorado.");
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 3, safeExit: null } }), year))).toMatch(/^Fewer than 1 in 10/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: 97, safeExit: null } }), year))).toMatch(/^Almost all/);
     expect(reachText(sceneOf(makeEvaluation({ reach: { current: null, safeExit: null } }), year))).toBeNull();
-    expect(reachSourceText(sceneOf(makeEvaluation(), year), sweepFor(summary, "CO"))).toBe("From U.S. Census Bureau survey data (ACS 2024, 1-year). Grown to 2026 dollars.");
+    // What "like you" matches on travels with the source (policy review R15): shape, not the children's ages.
+    expect(reachSourceText(sceneOf(makeEvaluation(), year), sweepFor(summary, "CO"))).toBe("From U.S. Census Bureau survey data (ACS 2024, 1-year). Grown to 2026 dollars. \u201cLike you\u201d means Colorado households with the same number of adults, the same number of them working (one or two), and the same number of kids under 18 (three or more count together), headed by someone aged 18 to 64. Kids' ages aren't matched.");
   });
-  test("hours: the state's minimum wage and full-time pay at it, to $500", () => {
-    expect(hoursText(sceneOf(makeEvaluation(), year))).toBe("The lowest legal pay in Colorado is $15.16 an hour, and full-time work at that pay is about $31,500 a year.");
+  test("reach's margin in the sentence's own unit, tenths of families, read back through the ladder (policy review R7)", () => {
+    /* $43,000 sits at p40 on a ladder rising $5,375 a step; ±$8,000 spans $35,000 (p33) to $51,000 (p47). */
+    const cell = (moe: number): ReachLadder => ({ ladder: REACH_PERCENTILES.map((_, i) => i * 5375), moe: REACH_PERCENTILES.map(() => moe), households: 1, n: 300, vintage: "2024-1yr" });
+    const s = sceneOf(makeEvaluation(), year);
+    expect(reachText(s, cell(8000))).toBe("About 4 in 10 parents like you in Colorado are paid $43,000 a year or less. Allowing for survey error, it's somewhere between 3 and 5 in 10.");
+    // A range that rounds to one figure says only that it could be off.
+    expect(reachText(s, cell(2000))).toMatch(/It could be a few places higher or lower\.$/);
+  });
+  test("hours: the state's minimum wage and what 40 hours a week at it make, to $500", () => {
+    expect(hoursText(sceneOf(makeEvaluation(), year))).toBe("The lowest legal pay in Colorado is $15.16 an hour. At 40 hours a week, that's about $31,500 a year.");
     expect(hoursText(sceneOf(makeEvaluation({ minWage: null }), year))).toBeNull();
+  });
+  test("a pay under the minimum at the hours we assumed says the hours were our guess (marketing review M12)", () => {
+    expect(hoursText(sceneOf(makeEvaluation({}, 30_000), year))).toBe("You didn't tell us your hours, so we assumed 40 a week. At that, $30,000 a year is under Colorado's lowest legal pay of $15.16 an hour. If you work fewer hours, tell us and the picture changes.");
+    const given = (hoursPerWeek: number) => makeEvaluation({ answers: { ...makeEvaluation({}, 30_000).answers, hoursPerWeek } }, 30_000);
+    expect(hoursText(sceneOf(given(45), year))).toBe("At 45 hours a week, $30,000 a year is under Colorado's lowest legal pay of $15.16 an hour. If you work fewer hours, tell us and the picture changes.");
+    expect(hoursText(sceneOf(given(30), year))).toMatch(/^The lowest legal pay in Colorado/);
+  });
+});
+
+describe("what you can do with this (marketing review M9)", () => {
+  test("names the next help that ends above the household's pay, and where, from the data", () => {
+    expect(askText(sceneOf(makeEvaluation(), year))).toMatch(/^Ask a case worker about .+ \(.+\) before your pay reaches \$\d[\d,]* a year\. That's where it ends\.$/);
+  });
+  test("says nothing when no named help ends ahead", () => {
+    expect(askText(sceneOf(makeEvaluation({}, 30_000, { snapCliff: false, careCliff: false, deferredCliff: false }), year))).toBeNull();
   });
 });
 

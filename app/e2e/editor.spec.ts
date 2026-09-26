@@ -55,7 +55,7 @@ test(`the four facts reach a verdict with source ${EXPECT_SOURCE}`, async ({ pag
 
 test("landing on a shared link evaluates at once", async ({ page }) => {
   await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-  await expect(page.locator("#answer")).toContainText("You're past a drop at");
+  await expect(page.locator("#answer")).toContainText("Your pay is past a drop at");
   await expect(page.locator("#editor")).toBeHidden();
 });
 
@@ -95,7 +95,7 @@ for (const width of [390, 1280]) {
     const errors = consoleErrors(page);
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/?zip=94110&kids=3%2C7&pay=30000&unit=year");
-    await expect(page.locator("#answer")).toContainText("You're past a drop at");
+    await expect(page.locator("#answer")).toContainText("Your pay is past a drop at");
     await noOverflow(page);
     // The chips hide behind the summary's Edit control — below 720px on every
     // surface, and at every width on the citizen page, which has no controls

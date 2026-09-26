@@ -15,7 +15,8 @@ import {
   keepRateWords,
   modeledAnswers,
   pickArchetypeId,
-  REACH_PERCENTILES,
+  stateDefaults,
+  childcareMonthlyFor,
   type Cliff,
   type HouseholdAnswers,
   type HouseholdEvaluation,
@@ -29,8 +30,10 @@ import { phrase } from "../citizen/programs.js";
 import { againText, verdictText } from "../citizen/verdict.js";
 import { catalog, coreText, deferralUntil, fill, limitWords, parts } from "../lib/copy.js";
 import { careHousehold, incompleteFor, unmodeledName, unmodeledNote } from "../lib/coverage.js";
-import { dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
+import { count, dateWords, listOf, lossFigure, modelLine, money as usd, numberWords, ordinal, reachWord, signedMoney } from "../lib/format.js";
 import { programName, stateName } from "../lib/names.js";
+import { reachRange } from "../lib/reach.js";
+import { takeUpApplies } from "../lib/takeUp.js";
 import { stepOf, thresholds, type Holder } from "../lib/thresholds.js";
 import { copy, SERVED_VINTAGE, t } from "./copy.js";
 
@@ -123,9 +126,9 @@ function dipAhead(ev: HouseholdEvaluation): { cliff: Cliff; exit: number } | nul
   return z && z.endEarnings !== null && z.endEarnings - z.startEarnings <= 3 * stepOf(ev) ? { cliff: c, exit: z.endEarnings } : null;
 }
 
-/** The steps from the zone's peak to `hi`, and how many of them start a cliff — "3 of the 15 steps between them lose money", rather than a claim that every raise does. A zone opened by declines under the cliff floor has none to count, and says so (the `=0` branch) rather than printing "0 of 9 lose money". */
-function zoneSteps(ev: HouseholdEvaluation, start: number, hi: number): { nLose: number; nSteps: number; floor: string } {
-  return { nLose: cliffsBetween(ev.analysis.cliffs, start, hi).length, nSteps: Math.round((hi - start) / stepOf(ev)), floor: usd(CLIFF_MIN) };
+/** The steps from the zone's peak to `hi`, and how many of them start a cliff — "3 of the 15 $1,000 raises between them lose money", rather than a claim that every raise does; the step's size is said, because "steps" alone is the engine's word (marketing review M13). A zone opened by declines under the cliff floor has none to count, and says so (the `=0` branch) rather than printing "0 of 9 lose money". */
+function zoneSteps(ev: HouseholdEvaluation, start: number, hi: number): { nLose: number; nSteps: number; step: string; floor: string } {
+  return { nLose: cliffsBetween(ev.analysis.cliffs, start, hi).length, nSteps: Math.round((hi - start) / stepOf(ev)), step: usd(stepOf(ev)), floor: usd(CLIFF_MIN) };
 }
 
 /** The slots for this shape; `fill` throws on an argument nothing asked for, which is what keeps one sentence to one set of facts. */
@@ -187,7 +190,12 @@ export function againLine(ev: HouseholdEvaluation): string {
 // ── StatTiles (#2) ──────────────────────────────────────────────────────
 export interface Tile { label: string; value: string; sub: string }
 
-/** Reach's margin is the 90% MoE of the ladder point the percentile sits on (reach.json), never a probability. */
+/**
+ * Reach is a percentile with its range in percentiles (policy review R7): the
+ * 90% MoE of the ladder point it sits on, read back through the ladder
+ * (lib/reach.ts), and the words for it — "38 in 100 families like this earn
+ * less" — with the survey's sample size (M13). Never a probability.
+ */
 export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[] {
   const a = ev.analysis, p = ev.personal, T = copy.tiles;
   const out: Tile[] = [{ label: T.net, value: usd(a.currentNet), sub: t("tiles.netSub", { earned: usd(a.currentEarnings) }) }];
@@ -206,10 +214,10 @@ export function tiles(ev: HouseholdEvaluation, cell: ReachLadder | null): Tile[]
   });
   const reach = ev.reach.current;
   if (reach !== null && cell) {
-    /* The ladder point at or below the percentile: the ladder is sampled at REACH_PERCENTILES. */
-    const above = REACH_PERCENTILES.findIndex((q) => q > reach);
-    const i = above < 0 ? REACH_PERCENTILES.length - 1 : Math.max(0, above - 1);
-    out.push({ label: T.reach, value: ordinal(Math.round(reach)), sub: t("tiles.reachSub", { moe: usd(cell.moe[i]), n: cell.n }) });
+    /* On the ladder's yardstick, householder plus spouse earnings (core reachAtEarnings), as core read it. */
+    const r = reachRange(cell, a.currentEarnings + ev.answers.spouseAnnualEarnings);
+    out.push({ label: T.reach, value: ordinal(Math.round(reach)),
+      sub: t("tiles.reachSub", { lo: ordinal(Math.round(r.lo)), hi: ordinal(Math.round(r.hi)), position: positionWords(reach), n: count(cell.n) }) });
   }
   return out;
 }
@@ -422,7 +430,7 @@ export const columnSub = (ev: HouseholdEvaluation): string =>
  * stay on the tile, and the margin travels with the number in every register
  * (design/README.md § Where the personas conflict, 5).
  */
-export const reachSentence = (ev: HouseholdEvaluation): string => t("compare.reachNote", { state: stateName(ev.answers.state) });
+export const reachSentence = (ev: HouseholdEvaluation): string => `${t("compare.reachNote", { state: stateName(ev.answers.state) })} ${copy.compare.reachCell}`;
 
 export function compareNote(base: HouseholdEvaluation, others: HouseholdEvaluation[], unanswered = 0): string {
   const C = copy.compare, s: string[] = [];
@@ -439,7 +447,8 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
   // Heating help is neither assumed nor not where the state pays it as a credit already in net income (liheap review B1): the toggle adds nothing there.
   const takeUp: [boolean, ProgramId][] = [[h.getsSnap, "snap"], [h.getsTanf, "tanf"], [h.getsMedicaid, "medicaid"], [h.getsWic, "wic"],
     [h.getsChildcareSubsidy, "childcare"], [h.getsHeadStart, "headstart"], [h.getsHousing, "housing"], ...(liheapCredit(ev, cov) ? [] : [[h.getsEnergyAssistance, "liheap"] as [boolean, ProgramId]])];
-  for (const [gets, id] of takeUp) (gets ? on : off).push(programName(id));
+  // WIC is no line for a household with no child under five (lib/takeUp.ts, marketing review M5).
+  for (const [gets, id] of takeUp) if (takeUpApplies(h, id)) (gets ? on : off).push(programName(id));
   const facts = [h.youStatus === "citizen" ? A.citizen : t("assumed.status", { status: h.youStatus }), h.savings ? t("assumed.savings", { amount: usd(h.savings) }) : A.noSavings,
     h.selfEmployed ? A.selfEmployed : A.wages, h.hasEmployerCoverage ? A.esi : A.noEsi,
     h.ssdiMonthly || h.childSupportMonthly || h.unemploymentMonthly ? A.otherIncome : A.noOtherIncome];
@@ -455,6 +464,28 @@ export function assumed(ev: HouseholdEvaluation, cov: StateCoverage | undefined)
 }
 
 // ── SourceNote (#17, M4, N9): every fact from the data ──────────────────
+/**
+ * The rent and child-care sources, each cited only when the curve used it
+ * (policy review R8): HUD's Fair Market Rent when the modeled rent is the
+ * state's default, the county care price when the modeled bill is the
+ * typical one for these children — the same test the citizen's source line
+ * makes (citizen/facts.ts provenanceText). Otherwise the line says the figure
+ * was the household's own, or that there was none, and for rent what that
+ * means for SNAP. A household with no children has no child-care line.
+ */
+function inputSources(ev: HouseholdEvaluation, v: StateCoverage["vintages"], year: string | number): string[] {
+  const h = modeled(ev), d = stateDefaults(ev.answers.state);
+  const typicalCare = h.childAges.reduce((sum, age) => sum + childcareMonthlyFor(d, age), 0);
+  const rent = !h.monthlyRent ? copy.source.rentNone
+    : h.monthlyRent === d.monthlyRent ? t("source.rentUsed", { rent: t("source.rent", { publisher: v.rent.publisher, vintage: v.rent.vintage }) })
+    : copy.source.rentEntered;
+  const care = !h.childAges.length ? null
+    : !h.monthlyChildcare ? copy.source.careNone
+    : typicalCare > 0 && h.monthlyChildcare === typicalCare ? t("source.careUsed", { care: v.childcare.preschool, year })
+    : copy.source.careEntered;
+  return care === null ? [rent] : [rent, care];
+}
+
 export interface Provenance { cov: StateCoverage | undefined; summary: SummaryJson | null; /** The county's name, live only; the archetype has none (M4). */ county: string | null }
 
 export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
@@ -467,8 +498,8 @@ export function sourceLine(ev: HouseholdEvaluation, prov: Provenance): string {
   const v = cov?.vintages;
   return [
     t("source.lead", { year, curve }),
-    v ? t("source.vintages", { rent: t("source.rent", { publisher: v.rent.publisher, vintage: v.rent.vintage }), care: v.childcare.preschool, year,
-      reach: t("source.reachVintages", { basis: v.reach.basis, vintages: listOf(v.reach.vintages.map(reachWord)) }) }) : null,
+    ...(v ? [...inputSources(ev, v, year),
+      t("source.reach", { reach: t("source.reachVintages", { basis: v.reach.basis, vintages: listOf(v.reach.vintages.map(reachWord)) }) })] : []),
     cov?.otherBenefits.length ? t("source.other", { other: cov.otherBenefits.map((o) => t("source.otherBenefit", { label: coreText(o.message, o.label), max: usd(o.maxAnnualInSweep) })).join("; ") }) : null,
     t("source.model", { model: modelLine(cov?.vintages.model ?? summary?.model) }),
   ].filter((x): x is string => x !== null).join(" ");

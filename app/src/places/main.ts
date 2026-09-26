@@ -8,6 +8,7 @@ import "./places.css";
 import { DEFAULT_ARCHETYPE, provideData, type SummaryJson } from "@hotgap/core";
 import stateDefaultsJson from "@hotgap/core/data/state-defaults.json";
 import { $ } from "../lib/dom.js";
+import { mountFooter } from "../lib/footer.js";
 import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
 import { curveOrder, loadCurves, renderCurves, renderStateCurve, type Curves } from "./curves.js";
@@ -71,6 +72,7 @@ function main(summary: SummaryJson): void {
   };
 
   renderOnce(summary);
+  mountFooter(summary);
 
   const syncControls = () => {
     $<HTMLSelectElement>("arch").value = view.household;

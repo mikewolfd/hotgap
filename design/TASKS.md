@@ -347,15 +347,42 @@ review's own words unless a task says otherwise. Tick them off here.
 - [ ] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
 - [ ] **R5 (major)** "Number of cliffs" and "Cliffs on the road" are grid artefacts and reward small notches
 - [ ] **R6 (major)** "Losses that hit later, at renewal" is ranked and shaded as if more deferral were worse
-- [ ] **R7 (major)** Reach uncertainty is quoted in the wrong unit
-- [ ] **R8 (major)** The caseworker provenance line cites sources the curve did not use
+- [x] **R7 (major)** Reach uncertainty is quoted in the wrong unit
+      *Done.* `app/src/lib/reach.ts reachRange` reads the ladder again at
+      income ± the MoE of the point at or below it. Caseworker tile: *"40th ·
+      percentile (34th–44th allowing for survey error): 40 in 100 families like
+      this earn less. Survey sample: 393 households."* Citizen: *"… It could be a
+      few places higher or lower."*, or with the ladders in (fetched lazily)
+      e.g. *"Allowing for survey error, it's somewhere between 3 and 4 in 10."*
+- [x] **R8 (major)** The caseworker provenance line cites sources the curve did not use
+      *Done.* `caseworker/model.ts inputSources`: *Rent: HUD …* only when the
+      modeled rent is the state default, else *"Rent: as entered."* / *"Rent:
+      none entered (no SNAP shelter deduction taken)."*; the care price the same
+      way, and no care line for a household with no children.
 - [ ] **R9 (minor→major, depends on audience)** Option labels do not match the definitions
 - [ ] **R10 (minor)** FPL vintage is quoted as the 2026 poverty line
-- [ ] **R11 (minor)** Three different "keep rates" on one household, one word
-- [ ] **R12 (minor)** "It happens again between $106,000 and $119,000. The ones past $106,000 are past what 8 in 10 families like yours earn."
+- [x] **R11 (minor)** Three different "keep rates" on one household, one word
+      *Done.* The road's rate says its span on both charts — *"on the road out
+      of poverty you keep 19¢ of each extra dollar, on average"* (a shorter
+      form where the long one has no room); the headline's rate says *"From
+      here to $43,000"*, the next-stretch rate *"Of the next $10,000"*, the
+      compare row *"now → this what-if"*. The caseworker has no keep-rate tile.
+- [x] **R12 (minor)** "It happens again between $106,000 and $119,000. The ones past $106,000 are past what 8 in 10 families like yours earn."
+      *Done.* `citizen.again*`: *"Further up, from $106,000 to $119,000, a
+      raise again doesn't leave you better off than you were at $106,000."*
+      and *"Those far drops start at $107,000, and 8 in 10 families like yours
+      earn less than that."* (*"almost all"* at ten in ten).
 - [ ] **R13 (minor)** Bins on the diverging keep-rate scale have unequal widths on the two sides
 - [ ] **R14 (minor)** Colour direction on the two "level" maps
 - [ ] **R15 (minor)** Reach cell definition vs "families like this"
+      - [x] *Page half.* `citizen.reach.cell` after the reach source line
+        (*"“Like you” means California households with the same number of
+        adults, the same number of them working (one or two), and the same
+        number of kids under 18 (three or more count together), headed by
+        someone aged 18 to 64. Kids' ages aren't matched."*) and
+        `caseworker.compare.reachCell` after the reach note. Written with the
+        concrete words; core's `cellDefinition` (reachProvenance) can replace
+        them when it lands. The `seZero` flag is still rendered nowhere.
 - [ ] **R16 (minor)** The Household menu omits the shape most exposed to the subsidy cliff without the subsidy
 
 ## Marketing and comms review
@@ -363,18 +390,57 @@ review's own words unless a task says otherwise. Tick them off here.
 - [ ] **M1 (blocker)** `/places` — the headline number is the one the method says is the softer count.
 - [ ] **M2 (blocker)** `/places` — the assumption that makes the headline true is not in the headline.
 - [ ] **M3 (major)** `/places` — "keeps $80,163 at the poverty line" will be quoted as absurd.
-- [ ] **M4 (major)** `/` — "you keep $42,797" on $30,000 pay, with the explanation hidden.
-- [ ] **M5 (major)** `/` — "Counting the help you get" lists help the household doesn't get, and lists WIC for an adult with no kids.
+- [x] **M4 (major)** `/` — "you keep $42,797" on $30,000 pay, with the explanation hidden.
+      *Done.* `#sub-line` under the readout in the figure, always visible,
+      once (it left "How to read this picture", so paper prints it once).
+- [x] **M5 (major)** `/` — "Counting the help you get" lists help the household doesn't get, and lists WIC for an adult with no kids.
+      *Done.* *"Counting the help you could get: SNAP, TANF cash assistance,
+      Medicaid, and WIC. Not getting one of these? Change my answers."*; WIC is
+      left out of that line, the assumed rows and the caseworker's take-up line
+      for a household with no child under five (`lib/takeUp.ts`; the model has
+      no pregnancy answer).
 - [ ] **M6 (major)** `/places` — three names for the same measure, and none defined where first met.
 - [ ] **M7 (major)** `/places` — "How to read this map" is written to the developer, not the reader.
-- [ ] **M8 (major)** All three pages — nobody says who HotGap is.
-- [ ] **M9 (major)** `/` — what does a parent do next?
-- [ ] **M10 (major)** `/` — "flat stretch", "flat again", "Waits", "back to even", "safe from here" are met before they are explained.
-- [ ] **M11 (minor)** `/` headline — "You're past a drop at $29,000" is ambiguous.
-- [ ] **M12 (minor)** `/` — "The lowest legal pay" quietly contradicts "we assumed full time".
-- [ ] **M13 (minor)** `/caseworker` — headline reads like a debugger, and "Net" is never defined.
+- [x] **M8 (major)** All three pages — nobody says who HotGap is.
+      *Done.* `app/src/lib/footer.ts`, mounted by all three `main.ts`, hidden on
+      paper: *"HotGap is an open-source tool (AGPL-3.0 license) that shows what
+      happens to a family's money when its pay goes up. See the code · Report a
+      problem or ask a question"* / *"Data updated Sep 24, 2026, with
+      policyengine-us 2.6.10."* / *"We don't save what you type. No sign up, no
+      tracking."* Links are package.json `repository` and `bugs` (added).
+- [x] **M9 (major)** `/` — what does a parent do next?
+      *Done.* *What you can do with this*, after the disclosures: *"Ask a case
+      worker about {help} before your pay reaches {pay}. That's where it
+      ends."* (the next named help ending above the pay), *"Print
+      this page for a case worker or a benefits helper. The Print button is at
+      the top."*, and the link to the state on /places (moved here).
+- [x] **M10 (major)** `/` — "flat stretch", "flat again", "Waits", "back to even", "safe from here" are met before they are explained.
+      *Done.* Each chart word has a key line (`citizen.key.*`: flat stretch,
+      another flat stretch, a drop, a drop that comes later, the leap, back to
+      even, no more drops from here, the road); labels *"back to what you had at
+      $28,000"* (short *back to even* without room), *"no more drops from here"*,
+      *"another flat stretch"*; the chip *"Comes later"*.
+- [x] **M11 (minor)** `/` headline — "You're past a drop at $29,000" is ambiguous.
+      *Done.* *"Your pay is past a drop at $29,000. From here to $43,000 you
+      keep about 20¢ …"*; the road label names its own span (R11).
+- [x] **M12 (minor)** `/` — "The lowest legal pay" quietly contradicts "we assumed full time".
+      *Done.* `hoursText`: under the minimum at the assumed 40 hours, *"You
+      didn't tell us your hours, so we assumed 40 a week. At that, $30,000 a
+      year is under California's lowest legal pay of $16.90 an hour. If you
+      work fewer hours, tell us and the picture changes."*; the hours row says
+      *"full time: 40 hours a week"*.
+- [x] **M13 (minor)** `/caseworker` — headline reads like a debugger, and "Net" is never defined.
+      *Done.* *"Net income — pay plus help, after taxes and premiums — stays
+      below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 $1,000
+      raises between them lose money; $13,000 clears the stretch."* The reach
+      tile's caption is in words (R7).
 - [ ] **M14 (minor)** Español — good, with a handful of register slips.
-- [ ] **M15 (minor)** Page names — "For you" doesn't say which page is mine.
+- [x] **M15 (minor)** Page names — "For you" doesn't say which page is mine.
+      *Done.* *My household / By state / Caseworkers* (*Mi hogar / Por estado /
+      Trabajadores sociales*); the nav's hit areas are unchanged (≥ 44px).
 - [ ] **M16 (minor)** `/places` legend — "steps of 26¢" and no good/bad cue.
 - [ ] **M17 (minor)** `/places` readout — "The road collapses" / "loses 105¢ of each extra dollar".
-- [ ] **M18 (minor)** Housekeeping.
+- [x] **M18 (minor)** Housekeeping.
+      *Done:* an inline SVG favicon on all three pages. *Kept:* "Four
+      questions" — the form is four fieldsets, one question each. *Not mine:*
+      the Cite-as URL is built in app/src/places (the places owner's).

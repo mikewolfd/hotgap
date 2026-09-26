@@ -576,6 +576,16 @@ table, .hg-tabular { font-variant-numeric: tabular-nums; }
 }
 .hg-source .hg-button { margin-inline-start: var(--s2); }   /* M4: "Try again" sits in the line */
 
+/* The site footer (lib/footer.ts, marketing review M8): who HotGap is, the
+   run, the privacy line — one hairline above, the page column's width, the
+   source line's size and ink. Its two links sit inside the sentence, so they
+   are inline targets (WCAG 2.5.5 Inline), like every link in prose. */
+.hg-footer { border-top: 1px solid var(--rule); margin-top: var(--s6); }
+.hg-footer__inner { max-width: var(--page-max, 76rem); margin-inline: auto; padding: var(--s4) var(--s4) var(--s6);
+  font-size: var(--t-micro); line-height: 1.45; color: var(--ink-3); }
+.hg-footer__inner p { margin: 0 0 var(--s2); max-width: var(--measure-wide); }
+.hg-footer a { color: var(--ink-2); }
+
 /* The cite line under a ledger or list entry (ThresholdLedger, CorrectionsApplied — B3). */
 .hg-cite { display: block; color: var(--ink-3); font-size: var(--t-micro);
            font-weight: var(--w-reg); line-height: 1.45;

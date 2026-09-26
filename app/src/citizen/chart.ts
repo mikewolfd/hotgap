@@ -44,8 +44,18 @@ const DOT = 4.5, DOT_MERGED = 6;
 /** Paper is the column's width, whatever the screen was: a 358px drawing stretched to Letter prints its 12px ticks at 1.7× (S2). */
 const PRINT_WIDTH = 640;
 
-/** The key entries: each draws the actual mark (never a swatch alone); an entry for a mark not in this picture keeps its place, hidden. */
+/**
+ * The key entries: each draws the actual mark (never a swatch alone); an
+ * entry for a mark not in this picture keeps its place, hidden. Every word
+ * the picture writes on itself — "flat stretch", "another flat stretch",
+ * "later" (and the step list's "Comes later"), "back to even", "no more drops
+ * from here", the leap's "+$13,000", the road — is defined here in one line
+ * (marketing review M10), because a label is two or three words and the key
+ * is where those words are met with their meaning.
+ */
 function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolean, hasRoad: boolean, hasBoundary: boolean): HTMLUListElement {
+  const hasExit = s.zone !== null && !s.stuck && s.exit !== null;
+  const hasSafe = s.safeExit !== null && s.safeExit > 0 && (s.zone !== null || hasOther);
   return h("ul", { class: "hg-key" },
     keyEntry(copy.key.line, KEY_MARK.line),
     keyEntry(copy.key.band, KEY_MARK.band, !s.zone),
@@ -53,6 +63,9 @@ function keyList(s: Scene, hasOther: boolean, hasLater: boolean, hasDrop: boolea
     keyEntry(copy.key.drop, KEY_MARK.drop, !hasDrop),
     keyEntry(copy.key.later, KEY_MARK.later, !hasLater),
     keyEntry(copy.key.you, KEY_MARK.you),
+    keyEntry(copy.key.leap, KEY_MARK.leap, !s.zone),
+    keyEntry(copy.key.exit, KEY_MARK.safe, !hasExit),
+    keyEntry(copy.key.safe, KEY_MARK.safe, !hasSafe),
     keyEntry(copy.key.road, KEY_MARK.road, !hasRoad),
     keyEntry(copy.key.boundary, KEY_MARK.boundary, !hasBoundary),
   );
@@ -110,6 +123,12 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const caption = h("p", { class: "caption", id: "curveCaption" });
   /* The readout paints the caret only once a person has moved it; before that it holds the hint. */
   let touched = false;
+  /* Why the line is not the person's pay, and the largest part of it that
+     never arrives as cash (S6): directly under the readout, always in view
+     (marketing review M4). "You keep $42,797" beside a $30,000 pay is the
+     moment a reader distrusts the picture, and the sentence that answers it
+     sat inside the closed panel below. Once, so paper prints it once. */
+  const sub = h("p", { class: "sub-line", id: "sub-line" }, subText(s));
   /* How to read this picture (inventory.md § The page is its picture): the
      plot's own title and unit, the MarkKey and the caption — inside the
      figure, because they explain the thing they sit in, and closed by
@@ -119,13 +138,10 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
      aria-describedby therefore names only the operating sentence, which is
      visually hidden and always exposed; the caption is reached the way every
      other disclosed fact on this page is reached. */
-  figure.append(wrapper, hint, readout, keys,
+  figure.append(wrapper, hint, readout, keys, sub,
     h("details", { class: "hg-disclosure", id: "howto" }, h("summary", {}, t("chart.howTo")),
       h("p", { class: "chart-title" }, t("chart.title"), " ",
         h("span", { class: "chart-unit" }, t(`chart.unit.${s.pay.unit}`, s.pay.unit === "hour" ? { hours: s.pay.hours } : {}))),
-      /* Why the line is not the person's pay, and the largest part of it that never arrives as cash (S6) — beside
-         the picture it describes, rather than as a second paragraph under the answer. */
-      h("p", {}, subText(s)),
       keyList(s, hasOther, hasLater, hasDrop, s.road !== null, s.boundaryOnAxis), caption));
 
   let L: Layout | null = null;
@@ -151,9 +167,10 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
   const label = (lines: string[], spots: Spot[], cls: string, force = false, nudge = true): boolean => P.place(lines, spots, cls, force, nudge);
 
   /* The room the figure's own words need under the plot — the axis hint, the
-     readout and the disclosure's summary — so the height rule below leaves
+     readout, the line on why the figure is more than the pay (two lines on a
+     phone) and the disclosure's summary — so the height rule below leaves
      them on the first screen too. */
-  const RESERVED = 152;
+  const RESERVED = 196;
   /**
    * The second height floor (charts.md § Height is chosen by the biggest drop,
    * and by the screen): how much of the reader's FIRST screen is still free
@@ -238,7 +255,7 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     const safeInWindow = s.safeExit !== null && s.safeExit > 0 && s.safeExit !== s.exit && s.safeExit >= x0 && s.safeExit <= x1;
     const sx = safeInWindow ? px(s.safeExit!) : NaN;
     if (safeInWindow) picture.append(svg("line", { x1: sx, y1: top, x2: sx, y2: bottom, stroke: "var(--loss-3)", "stroke-width": 1 }));
-    /* Whether the words "safe from here" are on the picture: on a phone they are not, and the caption says it instead (S4). */
+    /* Whether the words "no more drops from here" are on the picture: on a phone they are not, and the caption says it instead (S4). */
     const safeSaid = !narrow && ((exitInWindow && s.safeExit === s.exit) || safeInWindow);
 
     /* The line: one series, 2px, round caps, no fill; .hg-draw on the first draw only. */
@@ -352,10 +369,14 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
     let drawn = 0;
     if (worstMark && onPlot(worstMark)) { dropLabel(worstMark, `${LOSS_LABEL} hg-label--strong`, true); drawn++; }
 
-    /* 3. The way back, on its rule — dropped on a phone, where the caption says it instead (S4). */
+    /* 3. The way back, on its rule — dropped on a phone, where the caption says it instead (S4). Where there is
+          room it says what "even" is, the pay it gets you back to (marketing review M10); else the short label, which
+          the key defines. */
     if (exitInWindow && !narrow) {
-      label([s.safeExit === s.exit ? copy.chart.labels.backToEvenSafe : copy.chart.labels.backToEven],
-        [{ x: ex + 6, y: top + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
+      const at: Spot[] = [{ x: ex + 6, y: top + 12, anchor: "start" }];
+      const cls = `${LOSS_LABEL} hg-label--med`;
+      if (s.safeExit === s.exit) label([copy.chart.labels.backToEvenSafe], at, cls);
+      else if (!label([t("chart.labels.backToPeak", { peak: m.pay(s.zone!.startEarnings) })], at, cls)) label([copy.chart.labels.backToEven], at, cls);
     }
     if (safeInWindow && !narrow) label([copy.chart.labels.safe], [{ x: sx + 6, y: top + 12, anchor: "start" }], `${LOSS_LABEL} hg-label--med`);
 
@@ -375,10 +396,13 @@ export function mountChart(figure: HTMLElement, s: Scene, hooks: ChartHooks): Ch
           invents its own rounding. Then the road's two ends, which it did not
           say: the poverty line and twice it — on the keep rate's own line
           where there is room, else the line under it. */
+    /* It names its span (policy review R11): three keep rates are on this page — this road, the next $10,000
+       and, in the zone, here to the exit — and each says which stretch it measures. The short form where the long
+       does not fit still says "out of poverty". */
     if (s.road && s.road.keepRate !== null) {
       const { sign, cents } = keepRateWords(s.road.keepRate);
-      label([t(`chart.labels.road.${sign}`, { cents })],
-        [{ x: (px(s.road.lo) + px(s.road.hi)) / 2, y: roadY + 18, anchor: "middle" }], "hg-label");
+      const at: Spot[] = [{ x: (px(s.road.lo) + px(s.road.hi)) / 2, y: roadY + 18, anchor: "middle" }];
+      if (!label([t(`chart.labels.road.${sign}`, { cents })], at, "hg-label")) label([t(`chart.labels.roadShort.${sign}`, { cents })], at, "hg-label");
     }
     if (s.road) {
       const [ra, rb] = [px(s.road.lo), px(s.road.hi)];

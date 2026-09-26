@@ -197,11 +197,11 @@
       "cliff_ahead:worst": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}, más de lo que ganan {n} de cada 10 familias como la suya.",
       "cliff_ahead:worstAt": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}.",
       "cliff_ahead:dip": "En {wage} bajaría unos {drop}, y volvería a salir ganando para {exit}.",
-      "in_danger_zone:inside": "Ya pasó una caída en {wage}. De aquí hasta {exit} le quedan unos {cents} centavos de cada dólar extra; en {exit} vuelve a lo que le quedaba en {peak}.",
-      "in_danger_zone:stuck:inside": "Ya pasó una caída en {wage}, y en ningún punto que revisamos, hasta {top}, vuelve a lo que le quedaba en {peak}."
+      "in_danger_zone:inside": "Su sueldo ya pasó una caída en {wage}. De aquí hasta {exit} le quedan unos {cents} centavos de cada dólar extra; en {exit} vuelve a lo que le quedaba en {peak}.",
+      "in_danger_zone:stuck:inside": "Su sueldo ya pasó una caída en {wage}, y en ningún punto que revisamos, hasta {top}, vuelve a lo que le quedaba en {peak}."
     },
-    "again": "Vuelve a pasar entre {from} y {to}.",
-    "againMany": "Pasa {n} veces más, entre {from} y {to}.",
+    "again": "Más arriba, de {from} a {to}, un aumento otra vez no lo deja mejor que en {from}.",
+    "againMany": "Más arriba, entre {from} y {to}, hay {n} tramos más en los que un aumento no lo deja mejor.",
     "sub": {
       "more": "La línea es más que su sueldo porque la ayuda y los descuentos en los impuestos cuentan dentro de ella.",
       "less": "La línea es menos que su sueldo porque de ahí salen los impuestos y los costos de salud."
@@ -246,21 +246,26 @@
       "labels": {
         "later": "más adelante",
         "backToEven": "de vuelta a la par",
-        "backToEvenSafe": "de vuelta a la par, y seguro de aquí en adelante",
-        "safe": "seguro de aquí en adelante",
+        "backToEvenSafe": "de vuelta a la par, y sin más caídas",
+        "safe": "sin más caídas de aquí en adelante",
         "leap": "+{leap}",
         "leapMore": "más de +{leap}",
         "drop": "−{drop}",
         "ends": "termina {phrase}",
         "road": {
-          "keeps": "de media, se queda con {cents}¢ de cada dólar extra",
-          "loses": "de media, pierde {cents}¢ de cada dólar extra"
+          "keeps": "en el camino para salir de la pobreza, se queda con {cents}¢ de cada dólar extra, en promedio",
+          "loses": "en el camino para salir de la pobreza, pierde {cents}¢ de cada dólar extra, en promedio"
         },
         "youKeepHelp": "le quedan {kept}, con la ayuda",
         "youKeepTax": "le quedan {kept} tras los impuestos",
         "roadFrom": "línea de pobreza {lo}",
         "roadTo": "2× esa línea {hi}",
-        "again": "otro tramo plano"
+        "again": "otro tramo plano",
+        "backToPeak": "de vuelta a lo que tenía en {peak}",
+        "roadShort": {
+          "keeps": "para salir de la pobreza: {cents}¢ por dólar",
+          "loses": "para salir de la pobreza: pierde {cents}¢ por dólar"
+        }
       },
       "scrolls": "La imagen cubre todos los sueldos de {from} a {to}: deslícela de lado para ver el resto.",
       "wholeOnPaper": "La imagen cubre todos los sueldos de {from} a {to}.",
@@ -272,13 +277,16 @@
     },
     "key": {
       "line": "El dinero que le queda",
-      "band": "Su tramo plano",
-      "other": "Otros tramos planos",
-      "drop": "Una caída este año",
-      "later": "Una caída que espera",
+      "band": "Su tramo plano: sueldos en los que un aumento no lo deja mejor que antes de la caída",
+      "other": "Otro tramo plano, más arriba: lo mismo otra vez",
+      "drop": "Una caída: pasado este sueldo le queda menos, desde este año",
+      "later": "Una caída que llega después: llega en su próxima revisión anual, no el día que sube su sueldo",
       "you": "Usted ahora",
       "boundary": "Dónde termina la ayuda con la calefacción",
-      "road": "El camino para salir de la pobreza"
+      "road": "El camino para salir de la pobreza: el sueldo desde la línea de pobreza hasta el doble",
+      "leap": "El aumento que hace falta para salir de su tramo plano",
+      "exit": "De vuelta a la par: el sueldo en el que vuelve a tener lo que tenía antes de la caída",
+      "safe": "Sin más caídas de aquí en adelante: pasado este sueldo, cada aumento suma a lo que le queda"
     },
     "boundary": {
       "line": "Por encima de {pay} ya no puede pedir ayuda con la factura de la calefacción en {state}. Se llama LIHEAP.",
@@ -319,8 +327,8 @@
         "you": "Usted ahora",
         "exit": "De vuelta a la par",
         "drop": "Una caída",
-        "later": "Una caída que espera",
-        "safe": "Seguro de aquí en adelante"
+        "later": "Una caída que llega después",
+        "safe": "Sin más caídas de aquí en adelante"
       }
     },
     "steps": {
@@ -364,7 +372,7 @@
       "wouldLoss": "Le quedarían unos {drop} menos.",
       "laterLoss": "Más adelante, le quedarían unos {drop} menos al año.",
       "biggest": " Esta es la caída más grande.",
-      "waitsBadge": "Espera",
+      "waitsBadge": "Llega después",
       "close": "Cerrar",
       "waits": {
         "head_start_program_year": " No se acaba ese día: un niño o una niña que ya está en el programa se queda hasta el fin del próximo año escolar.",
@@ -400,7 +408,7 @@
       "savings": "Ahorros: {savings}.",
       "noOtherMoney": " Sin manutención de hijos, SSDI ni pago por desempleo.",
       "hours": "{hours} horas a la semana.",
-      "hoursNone": "No nos lo dijo, así que supusimos tiempo completo.",
+      "hoursNone": "No nos lo dijo, así que supusimos tiempo completo: 40 horas por semana.",
       "selfEmployed": "Usted trabaja por cuenta propia, no para un jefe.",
       "employerPlan": "{amount} al año salen de su pago para pagarlo.",
       "employerPlanFree": "Con su sueldo no contamos ningún costo por él.",
@@ -450,18 +458,22 @@
         "couples": "parejas como la suya",
         "people": "personas como usted"
       },
-      "margin": " La cuenta puede variar unos miles de dólares hacia arriba o hacia abajo.",
+      "margin": " Puede ser un poco más o un poco menos.",
       "note": "Esto dice qué tan común es ese sueldo. No dice cuánto va a ganar usted.",
       "source": "De datos de encuestas de la Oficina del Censo de EE. UU. ({vintages}). Llevados a dólares de {year}.",
       "sourceBare": "De datos de encuestas de la Oficina del Censo de EE. UU.",
       "survey": {
         "one": "ACS {year}, {n} año",
         "range": "ACS {from}–{to}, {n} años"
-      }
+      },
+      "marginRange": " Contando el margen de error de la encuesta, está entre {lo} y {hi} de cada 10.",
+      "cell": "“Como usted” quiere decir hogares de {state} con el mismo número de adultos, el mismo número de ellos que trabajan (uno o dos) y el mismo número de niños menores de 18 (tres o más cuentan juntos), con un jefe de hogar de 18 a 64 años. No se comparan las edades de los niños."
     },
     "hours": {
       "heading": "El salario mínimo legal",
-      "body": "El salario mínimo en {state} es {wage} por hora, y trabajar tiempo completo con ese salario son unos {fullTime} al año."
+      "body": "El salario mínimo en {state} es {wage} por hora. A 40 horas por semana, eso son unos {fullTime} al año.",
+      "under": "A {hours} horas por semana, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y el dibujo cambia.",
+      "underAssumed": "No nos dijo sus horas, así que supusimos 40 por semana. Con eso, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y el dibujo cambia."
     },
     "footer": {
       "estimates": "Son estimaciones.",
@@ -514,13 +526,19 @@
       "base": "De los próximos {over} que gane, le quedarían unos {kept}.",
       "plateau": "De los próximos {over} que gane, le quedarían unos {kept}: eso es un tramo plano, más sueldo y apenas más dinero."
     },
-    "beyondReach": " Los que están más allá de {at} superan lo que ganan {n} de cada 10 familias como la suya.",
+    "beyondReach": " Esas caídas lejanas empiezan en {at}, y {n} de cada 10 familias como la suya ganan menos que eso.",
     "toPlaces": "Vea cómo se compara {state} con otros estados",
     "toPlacesNote": "La familia del mapa paga el alquiler típico y recibe ayuda con el cuidado infantil, así que sus cifras son distintas de las suyas.",
     "takeUp": {
-      "counting": "Contamos la ayuda que recibe: {list}.",
+      "counting": "Contamos la ayuda que podría recibir: {list}.",
       "ask": "¿No recibe alguna de estas?",
       "change": "Cambiar mis respuestas"
+    },
+    "beyondReachMost": " Esas caídas lejanas empiezan en {at}, y casi todas las familias como la suya ganan menos que eso.",
+    "next": {
+      "heading": "Qué puede hacer con esto",
+      "ask": "Pregunte a un trabajador social por {program} antes de que su sueldo llegue a {wage}. Ahí es donde termina.",
+      "print": "Imprima esta página para un trabajador social o alguien que ayude con beneficios. El botón Imprimir está arriba."
     }
   },
   "caseworker": {
@@ -751,7 +769,7 @@
       "drop": "Mayor caída en cualquier punto de la curva",
       "dropAt": "en {from} → {to}",
       "reach": "Alcance con los ingresos actuales",
-      "reachSub": "percentil, ±{moe} (n = {n})"
+      "reachSub": "percentil ({lo}–{hi} con el margen de error de la encuesta): {position}. Muestra de la encuesta: {n} hogares."
     },
     "coverage": {
       "unknown": "Cobertura desconocida para {state}.",
@@ -946,13 +964,17 @@
         },
         "ends": "{program}: termina aquí",
         "road": {
-          "keeps": "se queda con {cents}¢ de cada dólar extra de media",
-          "loses": "pierde {cents}¢ de cada dólar extra de media"
+          "keeps": "en el camino para salir de la pobreza, se queda con {cents}¢ de cada dólar extra en promedio",
+          "loses": "en el camino para salir de la pobreza, pierde {cents}¢ de cada dólar extra en promedio"
         },
         "merged": "{n} caídas juntas",
         "roadFrom": "línea de pobreza",
         "roadTo": "2× la línea de pobreza",
-        "again": "otra zona de peligro"
+        "again": "otra zona de peligro",
+        "roadShort": {
+          "keeps": "se queda con {cents}¢ de cada dólar extra en promedio",
+          "loses": "pierde {cents}¢ de cada dólar extra en promedio"
+        }
       },
       "whatIfLines": "{n, plural, one {Un escenario se dibuja aquí como una segunda línea, que se distingue por su trazo y su etiqueta.} other {{n} escenarios se dibujan aquí como líneas adicionales, que se distinguen por sus trazos y sus etiquetas.}}",
       "whatIfHeld": "{held, plural, one {Queda un escenario más en la comparación que no está en la gráfica.} other {Quedan {held} escenarios más en la comparación que no están en la gráfica.}}",
@@ -993,7 +1015,8 @@
         "heading": "En el camino — {title}",
         "empty": "Ninguna caída entre aquí y allá.",
         "item": "{n, plural, =0 {{at} — un paso hacia abajo ({drop})} one {{at} — {programs} se termina ({drop})} other {{at} — {programs} se terminan ({drop})}}"
-      }
+      },
+      "reachCell": "La misma forma quiere decir el mismo estado civil, el mismo número de personas que ganan (una o dos) y el mismo número de niños menores de 18 (tres o más juntos), con un jefe de hogar de 18 a 64 años; no se comparan las edades de los niños."
     },
     "assumed": {
       "health": "El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
@@ -1018,7 +1041,6 @@
     },
     "source": {
       "lead": "Solo estimaciones: un trabajador social decide los beneficios reales. Reglas: {year}. Curva: {curve}",
-      "vintages": "Renta: {rent} Precio del cuidado de niños: {care}, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. Alcance: {reach}",
       "other": "Otros beneficios estatales en el resto: {other}.",
       "model": "Modelo: {model}.",
       "archetype": {
@@ -1035,7 +1057,14 @@
       "reachVintages": "{basis} Ediciones usadas: {vintages}.",
       "otherBenefit": "{label} (hasta {max})",
       "unclaimed": "Desactivado para este hogar: {items} con {earnings}.",
-      "wouldPay": "{program} pagaría {annual} al año"
+      "wouldPay": "{program} pagaría {annual} al año",
+      "rentUsed": "Renta: {rent}.",
+      "rentNone": "Renta: ninguna ingresada (no se tomó la deducción de vivienda de SNAP).",
+      "rentEntered": "Renta: la ingresada.",
+      "careUsed": "Precio del cuidado de niños: {care}, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS.",
+      "careNone": "Precio del cuidado de niños: ninguno ingresado.",
+      "careEntered": "Precio del cuidado de niños: el ingresado.",
+      "reach": "Alcance: {reach}"
     },
     "handout": {
       "title": "Su sueldo y su ayuda — {state}, {parents}, {children}",
@@ -1056,8 +1085,8 @@
       "payAndKeep": "A usted le pagan {pay} al año y, contando la ayuda, le quedan {kept}."
     },
     "answer": {
-      "inZone": "El neto se queda por debajo de su pico de {peak} (en {start}) hasta {exit}: {nLose, plural, =0 {ningún paso entre ambos baja {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} pasos entre ambos pierde dinero} other {{nLose} de los {nSteps} pasos entre ambos pierden dinero}}; con {raise} más al año sale del tramo.",
-      "inZone:stuck": "El neto se queda por debajo de su pico de {peak} (en {start}) más allá del tope del eje, {top}: {nLose, plural, =0 {ningún paso entre ambos baja {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} pasos entre ambos pierde dinero} other {{nLose} de los {nSteps} pasos entre ambos pierden dinero}}.",
+      "inZone": "El ingreso neto — sueldo más ayuda, después de impuestos y primas — se queda por debajo de su pico de {peak} (en {start}) hasta {exit}: {nLose, plural, =0 {ningún aumento de {step} entre ambos pierde {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} aumentos de {step} entre ambos pierde dinero} other {{nLose} de los {nSteps} aumentos de {step} entre ambos pierden dinero}}; con {raise} más al año sale del tramo.",
+      "inZone:stuck": "El ingreso neto — sueldo más ayuda, después de impuestos y primas — se queda por debajo de su pico de {peak} (en {start}) más allá del tope del eje, {top}: {nLose, plural, =0 {ningún aumento de {step} entre ambos pierde {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} aumentos de {step} entre ambos pierde dinero} other {{nLose} de los {nSteps} aumentos de {step} entre ambos pierden dinero}}.",
       "cliffAhead": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año.",
       "cliffAhead:dip": "Esta familia está a salvo hasta {at}; ahí baja unos {drop} y vuelve a ir por delante en {exit}.",
       "cliffAhead:waits": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año, en la próxima renovación y no ese mismo día.",
@@ -1741,9 +1770,17 @@
     },
     "nav": {
       "label": "Páginas",
-      "citizen": "Para usted",
+      "citizen": "Mi hogar",
       "places": "Por estado",
-      "caseworker": "Para trabajadores sociales"
+      "caseworker": "Trabajadores sociales"
+    },
+    "footer": {
+      "label": "Sobre HotGap",
+      "about": "HotGap es una herramienta de código abierto (licencia AGPL-3.0) que muestra qué pasa con el dinero de una familia cuando sube su sueldo.",
+      "code": "Ver el código",
+      "issues": "Reportar un problema o hacer una pregunta",
+      "run": "Datos actualizados el {date}, con {model}.",
+      "privacy": "No guardamos lo que escribe. Sin registro y sin rastreo."
     }
   }
 }

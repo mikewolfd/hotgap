@@ -71,7 +71,7 @@ for (const scheme of ["light", "dark"] as const) {
       /* The verdict is the danger-zone shape past a drop (design/TASKS.md § Danger-zone sentences), keyed to the
          marks, and its figures are the evaluation's: the drop's landing pay, the exit twice, the zone's start. */
       const answer = page.locator("#answer");
-      await expect(answer).toContainText("You're past a drop at");
+      await expect(answer).toContainText("Your pay is past a drop at");
       await expect(answer.locator(".hg-amt--gap")).toHaveCount(2);
       await expect(answer.locator(".hg-amt--cliff")).toHaveCount(1);
       await expect(answer.locator(".hg-amt--keep")).toHaveCount(0);
@@ -85,21 +85,27 @@ for (const scheme of ["light", "dark"] as const) {
       /* The in-zone shape carries its own rate: it does not open with the next-stretch sentence. */
       await expect(answer).not.toContainText("Of the next");
       /* Take-up under the headline, and the note that the map's family is not this one (live path). */
-      await expect(page.locator("#take-up")).toContainText("Counting the help you get:");
+      await expect(page.locator("#take-up")).toContainText("Counting the help you could get:");
+      /* Kids 3 and 7: a child under five, so WIC is a line (marketing review M5). */
+      await expect(page.locator("#take-up")).toContainText("WIC");
+      /* Why "you keep" is more than the pay, under the readout and in view — not inside the closed panel (marketing review M4). */
+      await expect(page.locator("figure #sub-line")).toBeVisible();
+      await expect(page.locator("#sub-line")).toContainText("The line is more than your pay because help and tax credits count towards it.");
+      await expect(page.locator("#howto #sub-line")).toHaveCount(0);
       await expect(page.locator("#take-up a")).toHaveText("Change my answers");
       await expect(page.locator("#to-places-note")).toHaveText("The map's family rents at the typical price and gets child-care help, so its numbers differ from yours.");
       /* What the answer stopped saying is on the picture instead: what this household keeps now, at its own diamond. */
       const youKeep = await page.locator("#chart svg text.hg-label--ink").allTextContents();
       expect(youKeep.join(" ")).toContain(`$${Math.round(ev.analysis.currentNet).toLocaleString("en-US")}`);
 
-      /* "It happens again between A and B": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
+      /* "Further up, from A to B, …": A is a real zone's start beyond the exit and B the safe exit — never assumed to abut the exit. */
       await openPanel(page, "What happens at each step");
       /* The sentence exists only when there is one to say: no further zone, no paragraph. */
       const againEl = page.locator("#again");
       const again = (await againEl.count()) ? await againEl.textContent() : null;
       const beyond = ev.analysis.dangerZones.filter((z) => z.startEarnings >= ev.personal.escapeEarnings!);
       if (beyond.length) {
-        expect(again).toMatch(/^It happens/);
+        expect(again).toMatch(/^Further up/);
         expect(dollars(again!).slice(0, 2)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings]);
       } else expect(again).toBeNull();
       /* Far cliffs framed by company (Plan 9 § Citizen): the clause names the first cliff at or past FAR_POSITION
@@ -108,10 +114,21 @@ for (const scheme of ["light", "dark"] as const) {
         ? ev.analysis.cliffs.find((c) => c.startEarnings >= beyond[0].startEarnings && c.position !== null && c.position >= 80) ?? null
         : null;
       if (farCliff) {
-        expect(again).toContain("are past what");
-        expect(dollars(again!)).toEqual([beyond[0].startEarnings, ev.escape.safeExitEarnings, farCliff.startEarnings]);
-        expect(again).toContain(`${Math.round((farCliff.position ?? 0) / 10)} in 10`);
-      } else expect(again ?? "").not.toContain("are past what");
+        /* R12: the clause is about the far drops, and says how many earn LESS than where they start. */
+        expect(again).toContain("Those far drops start at");
+        expect(dollars(again!).slice(-1)).toEqual([farCliff.startEarnings]);
+        const n = Math.round((farCliff.position ?? 0) / 10);
+        expect(again).toContain(n >= 10 ? "almost all families like yours earn less than that" : `${n} in 10 families like yours earn less than that`);
+      } else expect(again ?? "").not.toContain("Those far drops");
+
+      /* $30,000 at the 40 hours we assumed is under California's minimum: the line says the hours were our guess (M12). */
+      await expect(page.locator("#assumed-panel")).toContainText("You didn't tell us your hours, so we assumed 40 a week. At that, $30,000 a year is under California's lowest legal pay");
+      /* What you can do with this (marketing review M9), in the open after the disclosures, then the site footer (M8). */
+      await expect(page.getByRole("heading", { name: "What you can do with this", exact: true })).toBeVisible();
+      await expect(page.locator("#next-print")).toHaveText("Print this page for a case worker or a benefits helper. The Print button is at the top.");
+      await expect(page.locator("#next a")).toContainText("compares with other states");
+      await expect(page.locator("footer.hg-footer")).toContainText("We don't save what you type. No sign up, no tracking.");
+      await expect(page.locator("footer.hg-footer a").first()).toHaveAttribute("href", /github\.com/);
 
       /* The next-stretch rate moved into the answer's first sentence (design/TASKS.md § Cliff-first verdicts):
          the step list no longer carries a line of its own. */

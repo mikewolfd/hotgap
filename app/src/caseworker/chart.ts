@@ -370,7 +370,10 @@ export function mountChart(host: ChartHost, on: { select(i: number, announce?: s
           surface invents its own (app/README.md § Keep rate). */
     if (road && road.keepRate !== null) {
       const { sign, cents } = keepRateWords(road.keepRate);
-      label.place([t(`chart.labels.road.${sign}`, { cents })], [{ x: (px(road.lo) + px(road.hi)) / 2, y: roadY + 18, anchor: "middle" }], "hg-label");
+      /* The rate names its span (policy review R11) — "on the road out of poverty", beside the next-$10,000 rate
+         and the what-if's "now → this what-if" — and falls back to the bare rate where the long label has no room. */
+      const at = [{ x: (px(road.lo) + px(road.hi)) / 2, y: roadY + 18, anchor: "middle" as const }];
+      if (!label.place([t(`chart.labels.road.${sign}`, { cents })], at, "hg-label")) label.place([t(`chart.labels.roadShort.${sign}`, { cents })], at, "hg-label");
     }
     /* …and the road's two ends, which it did not say: the poverty line and twice it — on the keep rate's
        own line where there is room, else the line under it. */

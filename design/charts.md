@@ -78,8 +78,9 @@ the widest begins one step after it ends. The rules:
    zone exists on the curve. When it equals `personal.escapeEarnings` (the
    household's zone is the last), the one rule carries both labels, *back to
    even, and safe from here*. When it lies beyond, it is a second rule, and
-   the answer-sub says so from the data: "It happens again between $45,000
-   and $119,000." When it is null (`leapIsLowerBound`), no rule is drawn and
+   the answer-sub says so from the data: "Further up, from $45,000 to
+   $119,000, a raise again doesn't leave you better off than you were at
+   $45,000." (policy review R12, 2026-09-26; it was "It happens again…"). When it is null (`leapIsLowerBound`), no rule is drawn and
    the caption says the sweep never found it.
 3. **A stuck zone** (`personal.raiseIsLowerBound`): the band runs to the
    right edge of the plot with no exit rule, the bracket is open-ended (no end
@@ -386,9 +387,12 @@ Drawn in this order, each only if it fits:
    thing the page exists to show. The second line is the plain phrase for
    `programsLost[0]` (`inventory.md` § Program phrases), or nothing when the
    cliff names no program.
-3. **`back to even`**, and **`safe from here`** when that is a different pay —
-   on their rules, `--loss-3`, `--w-med`. Both drop below 520px and the
-   caption says them instead.
+3. **`back to what you had at $28,000`** (the zone's start; *back to even*
+   where the longer label has no room), and **`no more drops from here`** when
+   that is a different pay — on their rules, `--loss-3`, `--w-med`. Both drop
+   below 520px and the caption says them instead. Every word the picture
+   writes on itself is defined in one line in the key (marketing review M10,
+   2026-09-26: "flat stretch", "later", "back to even", "no more drops").
 4. **`later`** over a deferred mark's dashed stub, with that drop's money
    beside it when there is room. Solid means this year, dashed means a later
    renewal, here as everywhere.
