@@ -11,7 +11,7 @@ import { householdLabel } from "./words.js";
 
 export type Archetype = SummaryJson["archetypes"][number];
 
-export type MeasureKey = "keepRate" | "roadCliffCount" | "roadWorst"
+export type MeasureKey = "keepRate" | "roadCliffCount" | "roadWorst" | "netAtRoadLo" | "netAtRoadHi"
   | "biggestLoss" | "dangerWidth" | "leap" | "safeExit" | "cliffCount" | "deferredCliffCount";
 
 /**
@@ -34,21 +34,26 @@ export interface Measure {
   unit: "$" | "" | "¢";
   describe: string;
   /**
-   * Which end of the scale the ranking leads with. Every measure but the keep
-   * rate counts a loss, so the largest figure is the worst; the keep rate is
-   * what a family holds on to, so the SMALLEST — the most negative — is.
+   * Which end of the scale the ranking leads with. Every measure but three
+   * counts a loss, so the largest figure is the worst; the keep rate and the
+   * two money-kept levels are what a family holds on to, so the SMALLEST is.
    */
   worst: "high" | "low";
 }
 
-/* The nine measures pipeline/src/metrics.ts writes, in the FilterRow's order:
-   the road's three first, because the road is where the families are, then
-   the six whole-axis measures unchanged. Their words are copy's, the cliff
-   floor core's. A count has no unit; the keep rate is cents. */
+/* The eleven measures pipeline/src/metrics.ts writes, in the FilterRow's order:
+   the road's five first, because the road is where the families are — the
+   keep rate, its cliffs and collapse, then the two LEVELS beside that slope
+   (net income at each end of the road: a keep rate says raises add up, not
+   how much the family has) — then the six whole-axis measures unchanged.
+   Their words are copy's, the cliff floor core's. A count has no unit; the
+   keep rate is cents. */
 const SPEC: readonly (Pick<Measure, "key" | "group" | "unit"> & Partial<Pick<Measure, "worst">>)[] = [
   { key: "keepRate", group: "road", unit: "¢", worst: "low" },
   { key: "roadCliffCount", group: "road", unit: "" },
   { key: "roadWorst", group: "road", unit: "$" },
+  { key: "netAtRoadLo", group: "road", unit: "$", worst: "low" },
+  { key: "netAtRoadHi", group: "road", unit: "$", worst: "low" },
   { key: "biggestLoss", group: "axis", unit: "$" },
   { key: "dangerWidth", group: "axis", unit: "$" },
   { key: "leap", group: "axis", unit: "$" },
@@ -56,11 +61,16 @@ const SPEC: readonly (Pick<Measure, "key" | "group" | "unit"> & Partial<Pick<Mea
   { key: "cliffCount", group: "axis", unit: "" },
   { key: "deferredCliffCount", group: "axis", unit: "" },
 ];
-/* A measure's definition with its slots filled: the cliff floor (core's), and
-   on the keep rate the road's span — the generic words where no household is
-   named yet, its dollars once one is (`describeFor`). */
-const describeWith = (key: MeasureKey, span: string): string => {
+/** The two levels: net income at each end of the road, the money the family has beside the rate it keeps at. */
+export const isLevel = (key: MeasureKey): key is "netAtRoadLo" | "netAtRoadHi" => key === "netAtRoadLo" || key === "netAtRoadHi";
+
+/* A measure's definition with its slots filled: the cliff floor (core's), on
+   the keep rate the road's span, and on the two levels the end of the road
+   they are read at — the generic words where no household is named yet (the
+   level's "({lo})" dropped), its dollars once one is (`describeFor`). */
+const describeWith = (key: MeasureKey, span: string, ends?: { lo: number; hi: number }): string => {
   const describe = copy.measures[key].describe;
+  if (isLevel(key)) return ends ? fill(describe, key === "netAtRoadLo" ? { lo: money(ends.lo) } : { hi: money(ends.hi) }) : describe.replace(/\s*\(\{(lo|hi)\}\)/g, "");
   if (describe.includes("{span}")) return fill(describe, { span });
   return describe.includes("{floor}") ? fill(describe, { floor: money(CLIFF_MIN) }) : describe;
 };
@@ -98,6 +108,10 @@ export function roadSpan(rows: readonly StateRow[]): { lo: number; hi: number; d
  * do not depend on the household and come back as they are.
  */
 export function describeFor(measure: Measure, rows: readonly StateRow[]): string {
+  if (isLevel(measure.key)) {
+    const ends = roadSpan(rows);
+    return ends === null ? measure.describe : describeWith(measure.key, "", ends);
+  }
   if (measure.key !== "keepRate") return measure.describe;
   const span = roadSpan(rows);
   const S = copy.measures.keepRate.span;
@@ -129,6 +143,9 @@ export function valueOf(m: StateMetrics, key: MeasureKey): number | null {
     case "keepRate": return m.keepRate;
     case "roadCliffCount": return m.roadCliffCount;
     case "roadWorst": return m.roadWorst?.drop ?? 0;
+    /* A summary written before the levels existed has no field: null, a road with no figure, never a zero. */
+    case "netAtRoadLo": return m.netAtRoadLo ?? null;
+    case "netAtRoadHi": return m.netAtRoadHi ?? null;
     default: return m[key] as number | null;
   }
 }
@@ -204,6 +221,8 @@ export interface StateRow {
  * The keep rate is the exception, and deliberately: it is a measurement for
  * every state whether or not a cliff falls on the road, so New Mexico's 30¢ is
  * a shaded, ranked, binned figure rather than a state lifted out of the scale.
+ * The two levels are the same kind of figure — what the family has, cliff or
+ * no cliff — and are never lifted out as "none" either.
  */
 export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): StateRow[] {
   const coverage = summary.coverage ?? {};
@@ -217,7 +236,7 @@ export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): S
     const incomplete = incompleteFor(coverage[st], a);
     const zeroCliffs = road ? m.roadCliffCount === 0 : m.cliffCount === 0;
     const past = road ? m.keepRate === null : !zeroCliffs && (value === null || (bounded && m.leapIsLowerBound));
-    const none = !past && measure.key !== "keepRate" && zeroCliffs;
+    const none = !past && measure.key !== "keepRate" && !isLevel(measure.key) && zeroCliffs;
     const kind: TileKind = incomplete.length ? "incomplete" : past ? "past" : none ? "none" : "shaded";
     rows.push({ st, m, value, kind, incomplete });
   }
@@ -267,8 +286,15 @@ export interface Bins {
    two ends of any scale are the ramp's two ends (charts.md § 2).
 
    A measure with a MEANINGFUL ZERO diverges (charts.md § 2): see
-   `divergingBins`. */
-export function bins(values: number[], unit: Measure["unit"]): Bins {
+   `divergingBins`.
+
+   A dollar measure whose LOW end is the worst — the two money-kept levels —
+   runs the same ramp the other way: the lowest figure takes the darkest step,
+   so the deepest tile is always the worst state, as on every loss measure.
+   The classes stay in value order (the scale reads low to high, left to
+   right); only the ramp step each one is drawn with is reversed, and the bins
+   caption says which end is dark (`figure.bins.stepsLow`). */
+export function bins(values: number[], unit: Measure["unit"], worst: Measure["worst"] = "high"): Bins {
   let lo = Infinity, hi = -Infinity;
   for (const v of values) { if (v < lo) lo = v; if (v > hi) hi = v; }
   if (!values.length) lo = hi = 0;
@@ -277,7 +303,7 @@ export function bins(values: number[], unit: Measure["unit"]): Bins {
     const step = (hi - lo) / 5;
     return {
       lo, hi, kind: "steps",
-      classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, hue: "loss", lo: Math.round(lo + step * i), hi: Math.round(lo + step * (i + 1)) })),
+      classes: Array.from({ length: 5 }, (_, i) => ({ ramp: worst === "low" ? 4 - i : i, hue: "loss", lo: Math.round(lo + step * i), hi: Math.round(lo + step * (i + 1)) })),
       index: (v) => (step ? Math.min(4, Math.max(0, Math.floor((v - lo) / step))) : 0),
     };
   }
@@ -431,7 +457,7 @@ export function group(rows: StateRow[], measure: Measure): Grouped {
   const past = measure.key === "leap" ? by("past").sort((a, z) => (z.value as number) - (a.value as number)) : by("past");
   return {
     ranked, past, none, incomplete,
-    bins: bins(shaded.map((r) => r.value as number), measure.unit),
+    bins: bins(shaded.map((r) => r.value as number), measure.unit, measure.worst),
     programs: [...new Set(incomplete.flatMap((r) => r.incomplete.map(unmodeledName)))],
   };
 }

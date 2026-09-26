@@ -102,6 +102,14 @@ export interface RoadSummary extends Road {
    * across the road. Null in the same case `keepRate` is.
    */
   keepRateToLine: number | null;
+  /**
+   * The level beside the slope: net income (help and tax credits counted,
+   * taxes and premiums out) at `lo` and at `hi`, read off the points as
+   * `keepRate` is. A keep rate says raises add up, not how much the family
+   * has; these say how much. Null when that end is not a sampled point.
+   */
+  netAtLo: number | null;
+  netAtHi: number | null;
   /** Every cliff whose step STARTS on the road — `[lo, hiStart]` inclusive — in earnings order. */
   cliffs: Cliff[];
   /** The largest of them — where the road collapses — or null when it holds. */
@@ -194,6 +202,8 @@ export function roadSummary(analysis: CurveAnalysis, answers: HouseholdAnswers):
     ...road,
     keepRate: keepRate(analysis.points, road.lo, road.hi),
     keepRateToLine: keepRate(analysis.points, road.lo, road.hiStart),
+    netAtLo: netAt(analysis.points, road.lo),
+    netAtHi: netAt(analysis.points, road.hi),
     cliffs,
     worst: cliffs.reduce<Cliff | null>((worst, c) => (worst === null || c.drop > worst.drop ? c : worst), null),
     familiesBelowHi: reachAtEarnings(answers, road.hi),

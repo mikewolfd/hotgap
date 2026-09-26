@@ -68,6 +68,14 @@ export interface StateMetrics {
    * line — rather than the road as a whole. Null where `keepRate` is.
    */
   keepRateToLine: number | null;
+  /**
+   * The level beside the slope (road.ts `netAtLo`/`netAtHi`): net income in
+   * whole dollars — help and tax credits counted, taxes and health premiums
+   * out — with pay at `roadLo` and at `roadHi`. A high keep rate is not a
+   * generous state; these say what the family has. Null where `keepRate` is.
+   */
+  netAtRoadLo: number | null;
+  netAtRoadHi: number | null;
   roadLo: number | null;
   roadHi: number | null;
   /** Cliffs whose step starts on the road. Every cliff counts, deferred ones included (2026-09-17). */

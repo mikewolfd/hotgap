@@ -98,7 +98,7 @@ describe("CLI correction notices", () => {
     vi.mocked(loadSummary).mockReturnValue({
       generated: "g", year: "2026", archetypes: [], states: { MA: { "married-3": {
         biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 150000,
-        keepRate: null, keepRateToLine: null, roadLo: null, roadHi: null, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+        keepRate: null, keepRateToLine: null, netAtRoadLo: null, netAtRoadHi: null, roadLo: null, roadHi: null, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
         maTafdc: ev.maTafdc!,
       } } },
     });

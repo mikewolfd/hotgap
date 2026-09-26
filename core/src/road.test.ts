@@ -96,6 +96,15 @@ describe("cliffsBetween", () => {
     // $13,500 earned over the 27 steps to the line, and nothing lost before it.
     expect(road.keepRateToLine).toBeCloseTo(0.5, 10);
   });
+
+  it("reads the level at both ends of the road off the points, as keepRate reads its slope", () => {
+    const points = sloped(0.5, 60_000);
+    for (let i = 55; i < points.length; i++) points[i].netIncome -= 9000;
+    const road = roadSummary(analyzeCurve(points, 0), answersWith({ childAges: [3, 7], childDisabled: [false, false] }))!;
+    expect(road.netAtLo).toBe(10_000 + 0.5 * 27_000);
+    expect(road.netAtHi).toBe(10_000 + 0.5 * 55_000 - 9000);
+    expect(road.keepRate).toBeCloseTo((road.netAtHi! - road.netAtLo!) / (road.hi - road.lo), 10);
+  });
 });
 
 describe("keepNext", () => {
@@ -144,6 +153,13 @@ describe("the road on the committed sweep, single parent of two", () => {
     expect(road!.keepRate!.toFixed(2)).toBe("0.30");
     expect(road!.cliffs).toEqual([]);
     expect(road!.worst).toBeNull();
+  });
+
+  it("a keep rate is a slope, not a level: Wisconsin keeps more at the line and less at twice it than New Mexico", () => {
+    const wi = roadFor("WI").road!;
+    const nm = roadFor("NM").road!;
+    expect([Math.round(wi.netAtLo!), Math.round(wi.netAtHi!)]).toEqual([80_163, 50_801]);
+    expect([Math.round(nm.netAtLo!), Math.round(nm.netAtHi!)]).toEqual([61_905, 70_423]);
   });
 
   it("Massachusetts collapses at the SNAP limit on the line, which a road stopping short could not see", () => {

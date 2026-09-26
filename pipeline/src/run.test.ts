@@ -159,6 +159,9 @@ describe("runPipeline", () => {
         keepRate: -0.3807,
         // To exactly twice poverty ($54,000), without the one-step allowance.
         keepRateToLine: -0.4179,
+        // The level beside that slope: net income at $27,000 and at $55,000.
+        netAtRoadLo: 55919,
+        netAtRoadHi: 45258,
         roadLo: 27000,
         roadHi: 55000,
         roadCliffCount: 2,

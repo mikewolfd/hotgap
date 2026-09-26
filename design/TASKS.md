@@ -287,3 +287,47 @@ the file, the change, and the words. Figures below are the committed sweep of
       under each arm one tick caption, *"steps of 26¢"* / *"steps of 15¢"*,
       so the unequal widths are read where the colours are, not in the
       How-to disclosure.
+
+## Level beside slope (2026-09-26)
+
+Does a state look gentle only because it gives little? Measured on the
+committed sweep, no — across the states the keep rate and the help at the
+poverty line correlate −0.10 (and the keep rate and a single parent of two's
+net income there −0.24, from the new `netAtRoadLo`) — but a keep rate is a
+slope and hides the level: Wisconsin's family has $80,163 net at the poverty
+line and $50,801 at twice it, New Mexico's $61,905 → $70,423. The level now
+travels with the slope.
+
+- [x] **Level in the metrics.** core/src/road.ts `roadSummary` gains
+      `netAtLo` / `netAtHi` (net income at `lo` and `hi`, read off the points
+      as `keepRate` is); StateMetrics and pipeline/src/metrics.ts carry them as
+      `netAtRoadLo` / `netAtRoadHi`, whole dollars, null when the road is.
+      summary.json rebuilt offline (`npx tsx pipeline/src/run.ts --from-data`;
+      the two fields are the only change). CSV: `net_at_road_lo`,
+      `net_at_road_hi` appended. Table: *"Kept at the line"* / *"Kept at twice
+      it"* right after *"Keep rate to the line"*, so the road group stays
+      together. *Done; the e2e column indices moved two to the right.*
+- [x] **Two level measures in the Measure menu**, in the road group after the
+      three road measures (places/model.ts, `unit: "$"`, `worst: "low"`):
+      *"Money kept at the poverty line"* — *"Net income at the poverty line"*,
+      *"What the household keeps in a year — help and tax credits counted,
+      taxes and health premiums out — with pay at the poverty line ({lo})."*
+      — and its twice-poverty twin. The ranking leads with the state whose
+      family has least; `bins` runs the loss ramp the other way for a
+      low-is-worst dollar measure, so the darkest tile is the lowest net, and
+      the bins line says so (*"…, darkest where the family keeps least"*).
+      Answer: *"At the poverty line, {household} keeps least in {state}
+      ({value} a year) and most in {best} ({bestValue})."* Readout: *"{state}
+      — {value} kept a year with pay at the poverty line."* *Done, es-US too;
+      the table order reads "…, smallest first".*
+- [x] **Level beside the slope in the keep-rate readout.**
+      `places.readout.road.rate` → *"{state} — {rate} climbing out of
+      poverty: from {netLo} at the poverty line to {netHi} at twice it."*
+      (render.ts from the metrics; the old sentence is `road.rateOnly`, for a
+      file without the levels). *Done.*
+- [x] **Say it in the method.** `places.method.items.level`, after the keep
+      rate: *"**A high keep rate is not a generous state.** It says raises are
+      allowed to add up, not how much the family has: across the states the
+      two are nearly unrelated. The two *money kept* measures show the level
+      — what the family keeps at the poverty line and at twice it — and the
+      keep-rate readout names both ends."* *Done, es-US too.*

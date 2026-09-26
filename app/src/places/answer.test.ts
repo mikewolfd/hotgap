@@ -23,6 +23,31 @@ describe("the keep-rate headline on the committed sweep", () => {
   });
 });
 
+describe("the two money-kept headlines on the committed sweep", () => {
+  const levelScene = (key: "netAtRoadLo" | "netAtRoadHi") => {
+    const measure = measureByKey(key)!, rows = rowsFor(summary, arch("single-2"), measure);
+    return { arch: arch("single-2"), measure, rows, g: group(rows, measure) };
+  };
+  it("names the state that keeps least and the one that keeps most, at the line and at twice it", () => {
+    const lo = levelScene("netAtRoadLo"), hi = levelScene("netAtRoadHi");
+    const [loTop, loBest] = [lo.g.ranked[0], lo.g.ranked[lo.g.ranked.length - 1]];
+    // The ranking leads with the LOWEST figure.
+    expect(lo.g.ranked.every((r, i) => i === 0 || (r.value as number) >= (lo.g.ranked[i - 1].value as number))).toBe(true);
+    expect(answerText(lo)).toMatch(/^At the poverty line, a single parent of two children keeps least in [A-Z][a-zA-Z ]+ \(\$[\d,]+ a year\) and most in [A-Z][a-zA-Z ]+ \(\$[\d,]+\)\.$/);
+    expect(answerText(lo)).toContain(`(${"$" + (loTop.value as number).toLocaleString("en-US")} a year)`);
+    expect(answerText(lo)).toContain(`(${"$" + (loBest.value as number).toLocaleString("en-US")})`);
+    expect(answerText(hi)).toMatch(/^At twice the poverty line, a single parent of two children keeps least in /);
+    // The keyed figure is the worst state's, drawn on the darkest step.
+    expect(answerParts(lo).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual(["$" + (loTop.value as number).toLocaleString("en-US")]);
+    expect(lo.g.bins.classes[lo.g.bins.index(loTop.value as number)].ramp).toBe(4);
+  });
+  it("names the pay each level is read at, in the household's dollars", () => {
+    const rows = scene("single-2").rows;
+    expect(describeFor(measureByKey("netAtRoadLo")!, rows)).toMatch(/with pay at the poverty line \(\$27,000\)\.$/);
+    expect(describeFor(measureByKey("netAtRoadHi")!, rows)).toMatch(/with pay at twice the poverty line \(\$55,000\)\.$/);
+  });
+});
+
 describe("the holds line under the answer", () => {
   it("names the rent, the care and the programs the sweep counts, from core's answersFor", () => {
     expect(holdsText(arch("single-2"), states)).toBe(

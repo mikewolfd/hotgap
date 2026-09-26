@@ -173,6 +173,9 @@ describe("buildSummary", () => {
       // …and 75 cents measured to exactly twice poverty ($43,000), without the
       // road's one-step allowance: this curve has no exit on the line.
       keepRateToLine: -0.7499,
+      // The level beside that slope: net income at $21,000 and at $44,000.
+      netAtRoadLo: 55568,
+      netAtRoadHi: 39552,
       roadLo: 21000,
       roadHi: 44000,
       roadCliffCount: 3,

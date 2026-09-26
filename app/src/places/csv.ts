@@ -27,6 +27,8 @@ import { modelLabel } from "./words.js";
  * support it — never 0, which would read as "nobody earns less".
  * `keep_rate_to_line_cents` came after them, appended by the same rule: the
  * keep rate measured to exactly twice poverty, without the road's last step.
+ * `net_at_road_lo` and `net_at_road_hi` came last, by the same rule: the
+ * level beside the slope, net income in whole dollars at each end of the road.
  */
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
@@ -36,7 +38,7 @@ export const CSV_HEADER = [
   "policy_year", "sweep_generated", "model_label", "model_endpoint", "model_version", "source",
   "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
   "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
-  "keep_rate_to_line_cents",
+  "keep_rate_to_line_cents", "net_at_road_lo", "net_at_road_hi",
 ] as const;
 
 /** One field, quoted only when it has to be (a comma, a quote, a line break). */
@@ -96,6 +98,8 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       position(none ? null : positionAt(r.st, a, m.safeExit)), position(positionAt(r.st, a, m.roadHi)),
       /* The keep rate to exactly twice poverty (road.ts `keepRateToLine`), signed whole cents like `keep_rate_cents`; empty where the road runs off the axis or the file predates it. */
       m.keepRateToLine == null ? "" : Math.round(m.keepRateToLine * 100),
+      /* The level beside the slope (road.ts `netAtLo`/`netAtHi`): net income in whole dollars at `road_lo` and `road_hi`; empty where the road runs off the axis or the file predates it. */
+      m.netAtRoadLo ?? "", m.netAtRoadHi ?? "",
     ].map(csvField).join(","));
   }
   return "﻿" + lines.join("\r\n") + "\r\n";

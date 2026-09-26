@@ -1138,6 +1138,16 @@
         "title": "Where the road collapses",
         "option": "Pay of the worst loss (poverty–2×)",
         "describe": "Net income lost in the worst single $1,000 step between the poverty line and twice the poverty line."
+      },
+      "netAtRoadLo": {
+        "title": "Net income at the poverty line",
+        "option": "Money kept at the poverty line",
+        "describe": "What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at the poverty line ({lo})."
+      },
+      "netAtRoadHi": {
+        "title": "Net income at twice the poverty line",
+        "option": "Money kept at twice poverty",
+        "describe": "What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at twice the poverty line ({hi})."
       }
     },
     "household": {
@@ -1178,6 +1188,7 @@
       },
       "bins": {
         "steps": "five equal-width steps from {lo} to {hi}",
+        "stepsLow": "five equal-width steps from {lo} to {hi}, darkest where the family keeps least",
         "classes": "{n, plural, one {{words} class from {lo} to {hi}} other {{words} classes from {lo} to {hi}}}",
         "diverging": "{down} steps of {downWidth} below zero and {up} of {upWidth} above it, from {lo} to {hi}",
         "divergingOneSide": "{n} steps of {width} from zero, from {lo} to {hi}"
@@ -1218,7 +1229,9 @@
         "cliffCount": "{n, plural, one {{deferred, plural, =0 {{state} — 1 cliff on this household's curve, none deferred.} other {{state} — 1 cliff on this household's curve, and {deferred} more deferred to a later renewal.}}} other {{deferred, plural, =0 {{state} — {n} cliffs on this household's curve, none deferred.} other {{state} — {n} cliffs on this household's curve, and {deferred} more deferred to a later renewal.}}}}",
         "deferred": "{deferred, plural, =0 {{n, plural, one {{state} — no cliff deferred to a later renewal; its one cliff lands with the raise.} other {{state} — no cliff deferred to a later renewal; all {n} land with the raise.}}} one {{n, plural, one {{state} — 1 cliff deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — 1 cliff deferred to a later renewal, on top of {n} that land with the raise.}}} other {{n, plural, one {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that lands with the raise.} other {{state} — {deferred} cliffs deferred to a later renewal, on top of {n} that land with the raise.}}}}",
         "floorTail": "{n, plural, one {Incomplete: {missing} is not modelled, so the figure is a floor.} other {Incomplete: {missing} are not modelled, so the figure is a floor.}}",
-        "roadCliffCount": "{n, plural, one {{state} — 1 cliff on the road out of poverty.} other {{state} — {n} cliffs on the road out of poverty.}}"
+        "roadCliffCount": "{n, plural, one {{state} — 1 cliff on the road out of poverty.} other {{state} — {n} cliffs on the road out of poverty.}}",
+        "netAtRoadLo": "{state} — {value} kept a year with pay at the poverty line.",
+        "netAtRoadHi": "{state} — {value} kept a year with pay at twice the poverty line."
       },
       "none": "{state} — no cliff found: no {step} step of earnings on this household's curve cut net income by {floor} or more, up to {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; 1 cliff is deferred to a later renewal.} other {{state} — no cliff lands with the raise: no {step} step of earnings on this household's curve cut net income by {floor} or more in the year of the raise, up to {top}; {deferred} cliffs are deferred to a later renewal.}}",
@@ -1228,7 +1241,8 @@
         "position": "{n} in 100 families like this earn less than that.",
         "offAxis": "{state} — this household's road out of poverty, from the poverty line to twice it, falls outside the earnings this state was swept over, so it has no keep rate.",
         "collapsePlural": "The road collapses at {at}, where {programs} end and the family loses {drop} in one step.",
-        "rate": "{state} — {rate} climbing out of poverty."
+        "rate": "{state} — {rate} climbing out of poverty: from {netLo} at the poverty line to {netHi} at twice it.",
+        "rateOnly": "{state} — {rate} climbing out of poverty."
       },
       "axisPosition": "{n} in 100 families like this earn less than that.",
       "axisSameAsRoad": "That collapse is also the largest single loss anywhere on the curve.",
@@ -1285,6 +1299,7 @@
         "state": "State, A to Z",
         "measure": {
           "dollars": "{title}, largest first",
+          "dollarsLow": "{title}, smallest first",
           "count": "{title}, most first",
           "cents": "{title}, most regressive first"
         },
@@ -1294,6 +1309,7 @@
       "byState": "by state",
       "byMeasure": {
         "dollars": "by {title}, largest first",
+        "dollarsLow": "by {title}, smallest first",
         "count": "by {title}, most first",
         "cents": "by {title}, most regressive first"
       },
@@ -1311,7 +1327,9 @@
         "roadCliffCount": "Cliffs on the road",
         "roadWorst": "Road's worst loss",
         "roadWorstAt": "Road's worst step",
-        "keepRateToLine": "Keep rate to the line"
+        "keepRateToLine": "Keep rate to the line",
+        "netAtRoadLo": "Kept at the line",
+        "netAtRoadHi": "Kept at twice it"
       },
       "defs": {
         "label": "What the columns mean",
@@ -1424,6 +1442,7 @@
         "download": "The download is the table's rows in the table's order, one per state, with these columns: {columns}. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds.",
         "road": "**The road out of poverty** is the earnings from the federal poverty guideline for this household's size to twice it — $26,650 to $53,300 for a family of three at {year} rules, and Alaska and Hawaii on their own higher guidelines. It is federal on purpose, so every state's road is the same road and what differs is how the state's rules treat a family walking it. Its top carries one $1,000 step of allowance, because a program limit sitting on the twice-poverty line lands in the step that starts at the first sampled point at or above it.",
         "keepRate": "**The keep rate** is what the household keeps of each extra dollar earned across that road: the change in net income divided by the change in pay. It is one minus the effective marginal tax rate, the measure the benefits-cliff literature reports, said in cents because that is how a person hears it. Below zero the family ends the climb poorer than it began.",
+        "level": "**A high keep rate is not a generous state.** It says raises are allowed to add up, not how much the family has: across the states the two are nearly unrelated. The two *money kept* measures show the level — what the family keeps at the poverty line and at twice it — and the keep-rate readout names both ends.",
         "position": "**Families earning less** puts a dollar figure where families are: of households like this one in that state, the share earning less than it, from Census survey data ({vintages}) grown to {year} dollars. It is cross-sectional — how many families already earn less — and never one family's chance of reaching that pay. A cell the survey cannot support is left empty rather than filled with a zero.",
         "modeledFamily": "**Every figure is the modelled family**, not an average of real ones: a renter in the state's most populous county, with children in paid care where every parent works, claiming what the rules entitle them to. A real household with a different rent, a different care arrangement or a benefit it never applied for has a different curve.",
         "groups": "**The measures are two questions.** *On the road out of poverty* asks what happens to a family climbing from the poverty line to twice it — where the families this tool is for actually are. *Anywhere on the curve* asks where the tallest wall in the state stands, whatever pay it stands at; for this household that wall sits above the median family's earnings in {n} states of {total}, which is why it is no longer the page's first answer.",
@@ -1484,6 +1503,12 @@
       "roadWorst": {
         "some": "The road out of poverty collapses hardest in {state}: {drop} of income gone between {at} and {to} of pay.",
         "none": "The road out of poverty holds across {places}: nothing on it costs this household {floor} in a single step."
+      },
+      "netAtRoadLo": {
+        "some": "At the poverty line, {household} keeps least in {state} ({value} a year) and most in {best} ({bestValue})."
+      },
+      "netAtRoadHi": {
+        "some": "At twice the poverty line, {household} keeps least in {state} ({value} a year) and most in {best} ({bestValue})."
       },
       "biggestLoss": {
         "some": "The largest one-step loss on the map is {state}'s {drop}, between {at} and {to} of pay; of {places}, {miss, plural, =0 {every one has a cliff somewhere on this household's curve} one {just one has no cliff at all} other {{miss} have no cliff at all}}.",

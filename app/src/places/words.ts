@@ -56,9 +56,19 @@ export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
  * through `keepPhrase`), so the map, the citizen answer and the caseworker
  * sheet cannot word or round one rate three ways; only the frame is this
  * page's, because only this page has already supplied it.
+ *
+ * THE LEVEL RIDES BESIDE THE SLOPE (Level beside slope, 2026-09-26): a keep
+ * rate says raises add up, not how much the family has, and across the states
+ * the two are nearly unrelated — Wisconsin's family has $80,163 at the poverty
+ * line and loses on the road, New Mexico's has $61,905 and keeps 30¢. So the
+ * sentence names what the household has at both ends, `netLo` and `netHi`
+ * already in dollars; without them (a file written before the levels) it is
+ * the rate alone (`readout.road.rateOnly`).
  */
-export const roadRateLine = (state: string, rate: number, mark: (text: string) => string = (x) => x): string =>
-  t("readout.road.rate", { state, rate: mark(keepPhrase(rate)) });
+export const roadRateLine = (state: string, rate: number, mark: (text: string) => string = (x) => x, level: { netLo: string; netHi: string } | null = null): string =>
+  level === null
+    ? t("readout.road.rateOnly", { state, rate: mark(keepPhrase(rate)) })
+    : t("readout.road.rate", { state, rate: mark(keepPhrase(rate)), ...level });
 /**
  * "The road collapses at $40,000, where CCDF child care subsidy ends and the
  * family loses $16,428 in one step."

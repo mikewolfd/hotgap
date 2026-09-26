@@ -120,6 +120,15 @@ function sentenceFor(s: AnswerScene): Sentence {
       const w = top.m.roadWorst;
       return { text: A.roadWorst.some, args: { state: name(top), drop: money(w.drop), at: money(w.at), to: money(w.at + STEP) }, keyed: ["drop"] };
     }
+    /* The two levels: what the household has at an end of the road. The
+       ranking leads with the LOWEST figure (`worst: "low"`), so the state that
+       keeps least is `g.ranked[0]` and the one that keeps most the last row.
+       Every rated state has a figure; a road off the axis is "past". */
+    case "netAtRoadLo":
+    case "netAtRoadHi": {
+      const best = g.ranked[g.ranked.length - 1]; /* never empty where a road is on the axis, which it is in every swept cell */
+      return { text: A[measure.key].some, args: { household, state: name(top), value: money(top.value as number), best: name(best), bestValue: money(best.value as number) }, keyed: ["value"] };
+    }
     case "biggestLoss": {
       const miss = rows.filter((r) => r.m.cliffCount === 0).length;
       if (!top || top.m.biggestLossAt === null) return { text: A.biggestLoss.none, args: { places, floor } };

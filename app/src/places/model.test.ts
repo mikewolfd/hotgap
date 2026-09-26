@@ -10,7 +10,7 @@ import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, c
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
   biggestLoss: 1000, biggestLossAt: 30000, biggestLossPrograms: ["medicaid"], dangerWidth: 5000, cliffCount: 3, deferredCliffCount: 1, safeExit: 60000, leap: 20000, leapIsLowerBound: false, axisTop: 150000,
-  keepRate: -0.1, keepRateToLine: -0.05, roadLo: 27000, roadHi: 55000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
+  keepRate: -0.1, keepRateToLine: -0.05, netAtRoadLo: 40000, netAtRoadHi: 45000, roadLo: 27000, roadHi: 55000, roadCliffCount: 1, roadWorst: { drop: 1000, at: 30000, programs: ["medicaid"] }, biggestLossPosition: 60, ...over,
 });
 const liheap: UnmodeledProgram = { program: "LIHEAP", note: "never reaches net income", scope: "all" };
 const coverage = (unmodeled: StateCoverage["unmodeled"] = [liheap]): StateCoverage => ({
@@ -76,13 +76,18 @@ describe("counts in words (lib/format.ts numberWords)", () => {
 });
 
 describe("the measures, from copy", () => {
-  it("are the nine pipeline keys in the FilterRow's order, the road's three first, the counts without a unit, each option short and naming its own referent (S2)", () => {
-    expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
-    expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "", "$", "$", "$", "$", "$", "", ""]);
+  it("are the eleven pipeline keys in the FilterRow's order, the road's five first, the counts without a unit, each option short and naming its own referent (S2)", () => {
+    expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "netAtRoadLo", "netAtRoadHi", "biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "", "$", "$", "$", "$", "$", "$", "$", "", ""]);
     // Two groups, two questions: the road out of poverty, and the whole curve.
-    expect(measuresIn("road").map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst"]);
+    expect(measuresIn("road").map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "netAtRoadLo", "netAtRoadHi"]);
     expect(measuresIn("axis").map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
-    expect(MEASURES.every((m) => (m.worst === "low") === (m.key === "keepRate"))).toBe(true);
+    // The keep rate and the two levels are what a family holds on to: the lowest figure is the worst.
+    expect(MEASURES.filter((m) => m.worst === "low").map((m) => m.key)).toEqual(["keepRate", "netAtRoadLo", "netAtRoadHi"]);
+    expect(measureByKey("netAtRoadLo")).toMatchObject({ option: "Money kept at the poverty line", title: "Net income at the poverty line" });
+    expect(measureByKey("netAtRoadHi")).toMatchObject({ option: "Money kept at twice poverty", title: "Net income at twice the poverty line" });
+    // With no household named yet, the level's definition drops the dollar slot rather than print "{lo}".
+    expect(measureByKey("netAtRoadLo")!.describe).toBe("What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at the poverty line.");
     expect(DEFAULT_MEASURE).toBe("keepRate");
     for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
     expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);
@@ -185,6 +190,17 @@ describe("bins and group", () => {
     expect([10, 18, 26, 34, 50].map(b.index)).toEqual([0, 1, 2, 3, 4]);
     expect(bins([7], "$").index(7)).toBe(0);
     expect(bins([], "$")).toMatchObject({ lo: 0, hi: 0, classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, hue: "loss", lo: 0, hi: 0 })) });
+  });
+  it("a level, whose LOW end is the worst, runs the ramp the other way: the lowest figure is the darkest step", () => {
+    const b = bins([10, 20, 30, 40, 50], "$", "low");
+    // The classes stay in value order, so the scale still reads low to high…
+    expect(b.classes.map((c) => c.hi)).toEqual([18, 26, 34, 42, 50]);
+    expect([10, 18, 26, 34, 50].map(b.index)).toEqual([0, 1, 2, 3, 4]);
+    // …and only the step each is drawn with is reversed.
+    expect(b.classes.map((c) => c.ramp)).toEqual([4, 3, 2, 1, 0]);
+    expect(b.classes[b.index(10)].ramp).toBe(4);
+    // A loss measure is unchanged.
+    expect(bins([10, 50], "$", "high").classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
   });
   it("a count takes classes of whole numbers, never a repeated bound, spread over the ramp (S5)", () => {
     // Deferred cliffs on the 2026-09-16 sweep: every state has 0 or 1.
@@ -328,6 +344,9 @@ describe("the sentences, from copy through words.ts", () => {
     expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar on average climbing out of poverty.");
     expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar on average climbing out of poverty.");
     expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar on average</b> climbing out of poverty.");
+    // The level beside the slope, where the file carries it: what the family has at both ends of the road.
+    expect(roadRateLine("Wisconsin", -1.0486, undefined, { netLo: "$80,163", netHi: "$50,801" }))
+      .toBe("Wisconsin — loses 105¢ of each extra dollar on average climbing out of poverty: from $80,163 at the poverty line to $50,801 at twice it.");
     expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
       .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
     expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");

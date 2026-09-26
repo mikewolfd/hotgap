@@ -85,6 +85,11 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
     expect(m.roadCliffCount).toBe(0);
     expect(m.roadWorst).toBeNull();
   });
+
+  it("carries the level beside the slope: Wisconsin has more at the line and less at twice it than New Mexico", () => {
+    expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([80163, 50801]);
+    expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([61905, 70423]);
+  });
 });
 
 describe("stateMetrics on synthetic curves", () => {
@@ -95,7 +100,7 @@ describe("stateMetrics on synthetic curves", () => {
     // runs $0 → $100,000, keeping eleven cents of each dollar.
     expect(stateMetrics(evaluated(pts))).toEqual({
       biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
-      keepRate: 0.11, keepRateToLine: 0.1, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+      keepRate: 0.11, keepRateToLine: 0.1, netAtRoadLo: 10000, netAtRoadHi: 21000, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
     });
   });
 

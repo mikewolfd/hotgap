@@ -130,7 +130,7 @@ describe("csvFor on the committed sweep", () => {
     expect(head.slice(32)).toEqual([
       "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
       "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
-      "keep_rate_to_line_cents",
+      "keep_rate_to_line_cents", "net_at_road_lo", "net_at_road_hi",
     ]);
     for (const [i, r] of body.entries()) {
       const m = rows[i].m;
@@ -149,7 +149,14 @@ describe("csvFor on the committed sweep", () => {
       expect(r[col("biggest_loss_position")]).toBe(round(m.biggestLossPosition));
       expect(r[col("families_below_road_top")]).toBe(round(positionAt(rows[i].st, arch, m.roadHi)));
       expect(r[col("keep_rate_to_line_cents")]).toBe(m.keepRateToLine == null ? "" : String(Math.round(m.keepRateToLine * 100)));
+      // The level beside the slope: whole dollars at each end of the road.
+      expect(r[col("net_at_road_lo")]).toBe(m.netAtRoadLo == null ? "" : String(m.netAtRoadLo));
+      expect(r[col("net_at_road_hi")]).toBe(m.netAtRoadHi == null ? "" : String(m.netAtRoadHi));
     }
+    // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it.
+    const level = (st: string) => { const r = body.find((x) => x[col("state")] === st)!; return [r[col("net_at_road_lo")], r[col("net_at_road_hi")]]; };
+    expect(level("WI")).toEqual(["80163", "50801"]);
+    expect(level("NM")).toEqual(["61905", "70423"]);
     // The boundary sensitivity (road.ts keepRateToLine): 26 states negative on
     // the road, 20 of them still negative to exactly twice poverty. Counted on
     // the stored figure — New Jersey's −0.12¢ is negative and prints as 0.

@@ -35,6 +35,10 @@ export function stateMetrics(ev: HouseholdEvaluation): StateMetrics {
     // The same slope to exactly twice poverty, without the road's one-step
     // allowance (road.ts): the boundary sensitivity of the figure above.
     keepRateToLine: road?.keepRateToLine == null ? null : Math.round(road.keepRateToLine * 10_000) / 10_000,
+    // The level beside that slope (road.ts): what the family has, in whole
+    // dollars, at each end of the road. A keep rate alone cannot say it.
+    netAtRoadLo: road?.netAtLo == null ? null : Math.round(road.netAtLo),
+    netAtRoadHi: road?.netAtHi == null ? null : Math.round(road.netAtHi),
     roadLo: road?.lo ?? null,
     roadHi: road?.hi ?? null,
     roadCliffCount: road?.cliffs.length ?? 0,

@@ -156,9 +156,9 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Two groups, two questions (Plan 9): the road out of poverty leads,
        because that is where the families this tool is for actually are. */
     const groups = await page.$$eval("#metric optgroup", (els) => els.map((g) => [(g as HTMLOptGroupElement).label, [...g.children].map((o) => (o as HTMLOptionElement).value)] as [string, string[]]));
-    check(groups.length === 2 && groups[0][0] === "From the poverty line to twice it" && groups[0][1].join() === "keepRate,roadCliffCount,roadWorst"
+    check(groups.length === 2 && groups[0][0] === "From the poverty line to twice it" && groups[0][1].join() === "keepRate,roadCliffCount,roadWorst,netAtRoadLo,netAtRoadHi"
       && groups[1][0] === "At any pay" && groups[1][1].join() === "biggestLoss,dangerWidth,leap,safeExit,cliffCount,deferredCliffCount",
-      "the measure menu is two groups: the road's three measures, then the six whole-axis ones (Plan 9)", groups);
+      "the measure menu is two groups: the road's five measures (the two money-kept levels after the three road measures), then the six whole-axis ones (Plan 9, level beside slope)", groups);
     const bare = await page.evaluate(() => [(document.querySelector("#metric") as HTMLSelectElement).value, new URL(location.href).searchParams.get("measure")]);
     check(bare[0] === "keepRate" && bare[1] === null, "a bare URL opens on the keep rate, without having to say so", bare);
     const options = await page.$$eval("#metric option", (els) => els.map((el) => el.textContent!));
@@ -167,7 +167,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        twice poverty, the…"); the definitions are the measures' own `describe`,
        in "How to read this map" and above the table. */
     const defOf = (key: string) => page.$eval(`#def-col${key[0].toUpperCase()}${key.slice(1)}`, (el) => el.textContent!);
-    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 40)
+    check(options.length === 11 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 40)
       && /worst danger zone/.test(await defOf("leap")) && /no danger zone remains/.test(await defOf("safeExit")),
       "every measure option stands on its own and is short (S2), and its definition is the measure's own describe", options);
     /* A CLOSED select shows the option without its <optgroup> label, so every
@@ -178,13 +178,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        poverty" — a cold reader filed two of them as the same measure
        (2026-09-18, B2 and B3). The four are pinned as a set, because the
        defect is the PAIR reading alike, not either option alone. */
-    const twins: [number, number][] = [[1, 7], [2, 3]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
+    const twins: [number, number][] = [[1, 9], [2, 5]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
     check(twins.every(([road, axis]) => /poverty–2×/.test(options[road]) && /any pay/.test(options[axis])),
       "each measure with a twin in the other group names its own window in the option a closed select shows (B2, B3)",
       twins.map(([road, axis]) => [options[road], options[axis]]));
     /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */
     const widthTotal = STATES.filter((st) => metrics(st, "single-2").cliffCount > 0 && metrics(st, "single-2").dangerWidth > metrics(st, "single-2").leap).length;
-    check(widthTotal > 0 && /^Total\b/.test(options[4]) && !/worst|widest/.test(options[4]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[4], statesWhereTotalExceedsLeap: widthTotal });
+    check(widthTotal > 0 && /^Total\b/.test(options[6]) && !/worst|widest/.test(options[6]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[6], statesWhereTotalExceedsLeap: widthTotal });
     /* The household line says the tenure every household shares (rerun N10). */
     check(/, renting in the state's most populous county\./.test(lede), "the map's household line says the household rents in the most populous county (rerun N10)", lede.slice(-90));
     /* The two controls are independent, said once where the order control is (rerun N3). */
@@ -199,11 +199,12 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         (th.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean).map((id) => document.getElementById(id)?.textContent ?? null)] as [string, (string | null)[]]),
     }));
     const headText = defs.heads.map(([t]) => t).join("|");
-    check(defs.terms.length === 16 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
-      && headText === "Keep rate|Keep rate to the line|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
-      && /worst danger zone/.test(defs.heads[8][1][0]!) && /no danger zone remains/.test(defs.heads[9][1][0]!) && /added together/.test(defs.heads[7][1][0]!) && /floors/.test(defs.heads[12][1][0]!)
-      && /poorer than it started/.test(defs.heads[0][1][0]!) && /\(\$27,000\)/.test(defs.heads[0][1][0]!) && /exactly twice the poverty line/.test(defs.heads[1][1][0]!),
-      "thirteen column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
+    check(defs.terms.length === 18 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
+      && headText === "Keep rate|Keep rate to the line|Kept at the line|Kept at twice it|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
+      && /worst danger zone/.test(defs.heads[10][1][0]!) && /no danger zone remains/.test(defs.heads[11][1][0]!) && /added together/.test(defs.heads[9][1][0]!) && /floors/.test(defs.heads[14][1][0]!)
+      && /poorer than it started/.test(defs.heads[0][1][0]!) && /\(\$27,000\)/.test(defs.heads[0][1][0]!) && /exactly twice the poverty line/.test(defs.heads[1][1][0]!)
+      && /at the poverty line \(\$27,000\)\.$/.test(defs.heads[2][1][0]!) && /at twice the poverty line \(\$55,000\)\.$/.test(defs.heads[3][1][0]!),
+      "fifteen column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3; the two levels name their pay)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
     /* The three columns whose figure is a point on the axis point at one shared
        definition of what position is — and what it is not (Plan 9). */
     const positionDefs = await page.evaluate(() => ["colRoadWorstAt", "colBiggestLossAt", "colSafeExit"].map((id) => (document.getElementById(id)!.getAttribute("aria-describedby") ?? "").split(/\s+/)));
@@ -705,7 +706,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        sheet cannot word or round it three ways. */
     const roadLead = (st: string) => {
       const m = metrics(st, "single-2");
-      const first = `${STATE_NAMES[st]} — ${phraseOf(st)} climbing out of poverty.`;
+      const first = `${STATE_NAMES[st]} — ${phraseOf(st)} climbing out of poverty: from ${money(m.netAtRoadLo!)} at the poverty line to ${money(m.netAtRoadHi!)} at twice it.`;
       if (!m.roadWorst) return m.cliffCount === 0 ? first : `${first} The road does not collapse: no ${money(STEP)} step of earnings between ${money(m.roadLo!)} and ${money(m.roadHi!)} cut net income by ${money(CLIFF_MIN)} or more.`;
       const ids = m.roadWorst.programs;
       const where = ids.length === 0 ? `The road collapses at ${money(m.roadWorst.at)}, where the family loses ${money(m.roadWorst.drop)} in one step; no single program explains the drop.`
@@ -730,8 +731,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        the cold read met twice on the way down the page. */
     check(!ohText.block.includes(roadLead("OH")) && ohText.block.startsWith("Where Ohio's numbers come from"),
       "the state's block no longer repeats the readout above it; it is named for what is inside it", ohText.block.slice(0, 90));
-    check(ohText.bold.join("|") === `Ohio|${phraseOf("OH")}|${money(oh.roadWorst!.at)}|${money(oh.roadWorst!.drop)}`,
-      "the readout marks the state, its rate and the road's two figures, as the CurveReadout marks its figure", ohText.bold);
+    check(ohText.bold.join("|") === `Ohio|${phraseOf("OH")}|${money(oh.netAtRoadLo!)}|${money(oh.netAtRoadHi!)}|${money(oh.roadWorst!.at)}|${money(oh.roadWorst!.drop)}`,
+      "the readout marks the state, its rate, the level at both ends of the road and the road's two figures, as the CurveReadout marks its figure", ohText.bold);
     /* POSITION: the share of families like this earning less than the figure
        just named, from the reach ladder, said as a sentence of its own. */
     /* The state is the line's own subject, named at its head, so the position
@@ -746,8 +747,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const ohRow = await page.$eval('#tbody .hg-row-btn[data-st="OH"]', (el) => [...el.closest("tr")!.children].map((td) => (td as HTMLElement).innerText.trim().replace(/\s*\n\s*/g, " · ")));
     const ohShare = `${Math.round(oh.biggestLossPosition!)} in 100`;
     check(ohRank.at === `at ${money(oh.biggestLossAt!)} · ${ohShare} earn less` && ohRank.label === `${ohRank.n} Ohio: ${money(oh.biggestLoss)}, at ${money(oh.biggestLossAt!)} · ${ohShare} earn less`
-      && ohRow[7] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
-      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[7], expect: ohShare });
+      && ohRow[9] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
+      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[9], expect: ohShare });
     /* The whole-axis worst is the LAST line now, labelled for what it is, with
        its own position; the selected measure's sentence sits between (Plan 9). */
     const axisWorst = (st: string) => {
@@ -971,8 +972,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Nebraska's case (S9): an exact leap beside an unknown safe exit, and the past-the-axis cell points at the box that explains it. */
     const single = (st: string) => metrics(st, "single-2");
     const split = STATES.filter((st) => single(st).cliffCount > 0 && single(st).safeExit === null && !single(st).leapIsLowerBound && !expectIncompleteFor(st, "single-2"));
-    /* Column order: state, the keep rate and the keep rate to the line, the road's other three, the whole axis's six, the two counts, Figures. */
-    const COL = { keepRate: 1, keepRateToLine: 2, roadCliffCount: 3, roadWorst: 4, roadWorstAt: 5, biggestLoss: 6, biggestLossAt: 7, dangerWidth: 8, leap: 9, safeExit: 10, cliffCount: 11, deferred: 12, figures: 13 };
+    /* Column order: state, the keep rate and the keep rate to the line, the two levels, the road's other three, the whole axis's six, the two counts, Figures. */
+    const COL = { keepRate: 1, keepRateToLine: 2, netAtRoadLo: 3, netAtRoadHi: 4, roadCliffCount: 5, roadWorst: 6, roadWorstAt: 7, biggestLoss: 8, biggestLossAt: 9, dangerWidth: 10, leap: 11, safeExit: 12, cliffCount: 13, deferred: 14, figures: 15 };
     const splitCells = await page.evaluate(([sts, c]) => (sts as string[]).map((st) => {
       const tr = document.querySelector(`#tbody .hg-row-btn[data-st="${st}"]`)!.closest("tr")!;
       const cols = c as Record<string, number>;
@@ -1038,6 +1039,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         /* The road's four columns and the three positions round-trip too. */
         && (c[col("keep_rate_cents")] === "" ? r[COL.keepRate][0] === "road runs off the axis" : r[COL.keepRate][0] === `${Number(c[col("keep_rate_cents")]) < 0 ? "loses" : "keeps"} ${Math.abs(Number(c[col("keep_rate_cents")]))}¢`)
         && num(r[COL.roadCliffCount][0]) === c[col("road_cliff_count")] && num(r[COL.roadWorst][0]) === c[col("road_worst_drop")]
+        && num(r[COL.netAtRoadLo][0]) === c[col("net_at_road_lo")] && num(r[COL.netAtRoadHi][0]) === c[col("net_at_road_hi")]
         && (c[col("road_worst_at")] === "" ? r[COL.roadWorstAt][0] === "none" : r[COL.roadWorstAt][0].startsWith(`${money(Number(c[col("road_worst_at")]))} → `))
         && agrees(r[COL.roadWorstAt], c[col("road_worst_position")]) && agrees(r[COL.biggestLossAt], c[col("biggest_loss_position")]) && agrees(r[COL.safeExit], c[col("safe_exit_position")]);
       if (!same) console.log("     mismatch at row", i, r, c);
@@ -1046,8 +1048,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* The road's columns and the positions are APPENDED: not one index of the
        header a reporter's script already holds has moved (Plan 9). */
     check(head.slice(0, 32).join() === "state,state_name,archetype_id,archetype,biggest_one_step_loss,biggest_loss_at,biggest_loss_programs,danger_zone_width,leap,safe_exit,cliff_count,deferred_cliff_count,leap_is_lower_bound,no_cliff_found,comparable,figures,unmodeled_programs,corrections_applied,childcare_subsidy_footing,liheap_limit,liheap_served_share,county_name,county_fips,rent_vintage,county_vintage,childcare_price_vintage,policy_year,sweep_generated,model_label,model_endpoint,model_version,source"
-      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top,keep_rate_to_line_cents",
-      "the CSV's twelve new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
+      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top,keep_rate_to_line_cents,net_at_road_lo,net_at_road_hi",
+      "the CSV's fourteen new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
     const roadCols = body.every((c) => {
       const m = dual(c[col("state")]);
       return c[col("keep_rate_cents")] === (m.keepRate === null ? "" : String(Math.round(m.keepRate * 100)))
@@ -1157,10 +1159,11 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const rankedByCliffs = byCliffs.filter((st) => dualComparable.includes(st));
     const nonIncreasing = rankedByCliffs.every((st, i) => i === 0 || dual(rankedByCliffs[i - 1]).cliffCount >= dual(st).cliffCount);
     const sortGroups = await page.$$eval("#sort optgroup", (els) => els.map((g) => (g as HTMLOptGroupElement).label));
-    check(sortOptions.length === 10 && sortOptions[0][0] === "state" && sortOptions[8][1] === "Number of cliffs, most first"
+    check(sortOptions.length === 12 && sortOptions[0][0] === "state" && sortOptions[10][1] === "Number of cliffs, most first"
+      && sortOptions[4][1] === "Net income at the poverty line, smallest first"
       && sortOptions[1][1] === "Keep rate on the road out of poverty, most regressive first" && sortGroups.join("|") === "On the road out of poverty|Anywhere on the curve"
       && nonIncreasing && rankedByCliffs.length === expectByCliffs.length && (await page.$eval("#tabCap", (el) => el.textContent!)).includes("by number of cliffs, most first"),
-      "the table order control offers every measure in the menu's two groups — the road's three included — and sorts the table by it without changing the map (N2, Plan 9)", { options: sortOptions.map(([v]) => v), first: byCliffs.slice(0, 3) });
+      "the table order control offers every measure in the menu's two groups — the road's five included — and sorts the table by it without changing the map (N2, Plan 9)", { options: sortOptions.map(([v]) => v), first: byCliffs.slice(0, 3) });
     await page.selectOption("#sort", "state");
     await page.selectOption("#metric", "biggestLoss");
     const ranked = dualComparable.filter((st) => dual(st).biggestLoss > 0).sort((a, b) => dual(b).biggestLoss - dual(a).biggestLoss);
