@@ -434,8 +434,14 @@ describe("the one caution the map on the screen has earned (§ The page is its p
       expect(t("caution.past", { n })).not.toMatch(/sweep/i);
       expect(t("caution.hatched", { n, programs: "x" })).not.toMatch(/sweep/i);
     }
-    expect(copy.table.defs.pastAxis).not.toMatch(/sweep/i);
-    expect(copy.table.defs.lowerBound).not.toMatch(/sweep/i);
+    /* Every definition above the table, and every word a stacked cell prints (the page's own N7 check, here where it is cheap). */
+    for (const text of [...Object.values(copy.table.defs), ...Object.values(copy.table.cols), ...Object.values(copy.table.stack)]) expect(text).not.toMatch(/\bsweep\b/i);
+  });
+  it("names a stacked cell's figures in the reader's words: the counts, the keep rate's two readings, the money-kept pair", () => {
+    expect([t("table.stack.roadCount", { n: 4 }), t("table.stack.anyCount", { n: 8 }), t("table.stack.laterCount", { n: 1 })].join(" · ")).toBe("4 on the road · 8 anywhere · 1 later");
+    expect(t("table.stack.toLine", { value: "keeps 11¢" })).toBe("to the line: keeps 11¢");
+    expect(t("table.stack.wide", { value: "loses 15¢" })).toBe("to 220%: loses 15¢");
+    expect(t("table.stack.kept", { lo: "$46,666", hi: "$49,317" })).toBe("$46,666 → $49,317");
   });
 });
 

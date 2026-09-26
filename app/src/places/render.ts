@@ -7,7 +7,7 @@
 // Every word is copy.ts's; every number is read from the summary; nothing is
 // typed.
 import { CLIFF_MIN, FPL_GUIDELINE_YEAR, fpl2025, keepRateWords, type StateCoverage, type SummaryJson } from "@hotgap/core";
-import { coreText, limitWords } from "../lib/copy.js";
+import { coreText, limitWords, parts } from "../lib/copy.js";
 import { correctionRows, sourceWord } from "../lib/corrections.js";
 import { unmodeledName, unmodeledNote } from "../lib/coverage.js";
 import { $, fillText } from "../lib/dom.js";
@@ -77,17 +77,43 @@ function carePriceFooting(cov: StateCoverage | undefined): string | null {
 /** How wide a group heading row spans: counted off the table's own head, so adding a column cannot leave a heading short. */
 const colspan = (): number => $("colState").parentElement!.children.length;
 /**
- * The three columns whose figure is a POINT on the earnings axis, and so
- * carries how many families stand below it (Plan 9). They share one
- * definition, because position means one thing in all three.
+ * The three columns whose cell carries a POINT on the earnings axis, and so
+ * how many families stand below it (Plan 9). They share one definition,
+ * because position means one thing in all three.
  *
  * It rides UNDER the figure rather than in three columns of its own: measured
  * at 1280, three more columns took the table past the page's own column and
  * the whole page scrolled sideways, which the system does not allow. Under
  * the figure is also where it belongs — the same rule that keeps a loss and
- * the programs that cause it in one cell (B3).
+ * the programs that cause it in one cell (B3). The two worst steps ride there
+ * too, under their loss, for the same measured reason (below, `STACKED`).
  */
-const POSITION_COLS = ["colRoadWorstAt", "colBiggestLossAt", "colSafeExit"];
+const POSITION_COLS = ["colRoadWorst", "colBiggestLoss", "colSafeExit"];
+/**
+ * The figures that share a cell with a figure they qualify, by the column
+ * they ride in: the keep rate's two boundary readings under it, the two
+ * money-kept levels as one "line → twice" pair, the three counts in one
+ * cell, and each worst step (with its position) under its loss.
+ *
+ * Measured at 1280 on 2026-09-26: eighteen columns, one figure each, made a
+ * 1,449px table in a 1,056px column, so it scrolled where the system says it
+ * fits (S10); and on Letter the same eighteen made 1,040px of table in a
+ * 784px column, so Chromium shrank the whole PDF to fit. Stacking related
+ * figures drops no figure, no definition and no header's pointer at one:
+ * each stacked figure keeps its own definition line (`def-col…`), the
+ * column it rides in points at every one of them, and a screen reader hears
+ * each figure's name in the cell. The CSV keeps one column per figure.
+ */
+const STACKED: Record<string, string> = {
+  colKeepRateToLine: "colKeepRate", colKeepRateWide: "colKeepRate",
+  colNetAtRoadLo: "colNetAtRoad", colNetAtRoadHi: "colNetAtRoad",
+  colRoadCliffCount: "colCounts", colCliffCount: "colCounts", colDeferredCliffCount: "colCounts",
+  colRoadWorstAt: "colRoadWorst", colBiggestLossAt: "colBiggestLoss",
+};
+/** A message whose arguments are markup already: its own words escaped, each argument as given (lib/copy.ts `parts`). */
+const markup = (text: string, html: Record<string, string>): string => parts(text, html).map((p) => ("slot" in p ? p.text : esc(p.text))).join("");
+/** A figure's name, said to a screen reader where the cell shows the figure without it (a stacked cell). */
+const named = (label: string): string => `<span class="sr-name">${esc(label)}:\u00a0</span>`; /* the no-break space survives the inline box's end, so the name and the figure read apart */
 /**
  * POSITION under a figure: "47 in 100". Null — a survey cell the ACS cannot
  * support, or no figure to place — prints nothing at all rather than a zero,
@@ -124,9 +150,9 @@ export function renderStatic(): void {
     sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state,
     /* A measure's column is headed with the measure's one name (R9/M6); the
        columns that are not measures carry their own. */
-    ...Object.fromEntries(MEASURES.map((m) => [colId(m.key), m.name])),
-    colKeepRateToLine: C.keepRateToLine, colKeepRateWide: C.keepRateWide, colRoadCliffCount: C.roadCliffCount, colRoadWorstAt: C.roadWorstAt,
-    colBiggestLossAt: C.biggestLossAt, colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
+    ...Object.fromEntries(MEASURES.filter((m) => !STACKED[colId(m.key)]).map((m) => [colId(m.key), m.name])),
+    /* The two cells that stack figures of equal weight carry a header of their own; each figure keeps its name in the definitions. */
+    colNetAtRoad: C.netAtRoad, colCounts: C.counts, colFigures: C.figures,
     tableNote: copy.table.note, methodHeading: copy.method.heading, excludesHeading: copy.method.excludes.heading,
   });
   /* The glossary sentence carries its emphases, so it goes through rich(). It
@@ -134,9 +160,10 @@ export function renderStatic(): void {
      inside "How to read this map"; since that panel defines its own terms for
      a reader (M7), it opens the method, where the rest of the rules are. */
   $("glossary").innerHTML = rich(t("lede.glossary", { floor: money(CLIFF_MIN) }));
-  /* One sentence per column where the headers are (rerun S3): the measures'
-     own `describe`, the two step columns' and the flag's; each header points
-     at its line. The road's three lead, as they do in the menu and the table. */
+  /* One sentence per figure where the headers are (rerun S3): the measures'
+     own `describe`, the two steps', the counts' and the flag's, in the order
+     the table shows them; each header points at the lines of every figure in
+     its column (STACKED). The road's lead, as they do in the menu. */
   type Def = { id: string; term: string; def: string; heads?: string[] };
   const measureDef = (key: MeasureKey): Def => { const m = measureByKey(key)!; return { id: colId(key), term: m.name, def: m.describe }; };
   /* The three counts are columns, not measures (R5, R6): each says what it counts and why it is not ranked. */
@@ -147,11 +174,13 @@ export function renderStatic(): void {
     { id: "colKeepRateWide", term: C.keepRateWide, def: "" },
     /* The level beside the slope: what the family has at each end of the road. */
     measureDef("netAtRoadLo"), measureDef("netAtRoadHi"),
-    countDef("roadCliffCount"), measureDef("roadWorst"),
+    /* The three counts share a cell, so their lines stand together, in that cell's order. */
+    countDef("roadCliffCount"), countDef("cliffCount"), countDef("deferredCliffCount"),
+    measureDef("roadWorst"),
     { id: "colRoadWorstAt", term: C.roadWorstAt, def: copy.table.defs.roadWorstAt },
     measureDef("deepestFall"),
     measureDef("biggestLoss"), { id: "colBiggestLossAt", term: C.biggestLossAt, def: copy.table.defs.biggestLossAt },
-    measureDef("dangerWidth"), measureDef("leap"), measureDef("safeExit"), countDef("cliffCount"), countDef("deferredCliffCount"),
+    measureDef("dangerWidth"), measureDef("leap"), measureDef("safeExit"),
     /* Position says one thing under three figures and shares one definition,
        so a reader meets what it is (and is not) once rather than three times;
        each of the three columns points at it as a SECOND description, after
@@ -169,8 +198,11 @@ export function renderStatic(): void {
   $("nav").replaceWith(siteNav("places"));
   $("wordmark").setAttribute("href", pageHref("citizen"));
   $("defs").innerHTML = defs.map((d) => `<dt>${esc(d.term)}</dt><dd id="def-${d.id}">${esc(d.def)}</dd>`).join("");
-  for (const d of defs) for (const head of d.heads ?? [d.id]) $(head).setAttribute("aria-describedby", `def-${d.id}`);
-  for (const head of POSITION_COLS) $(head).setAttribute("aria-describedby", `${$(head).getAttribute("aria-describedby")} def-position`);
+  /* A stacked figure's definition is pointed at by the column it rides in, after that column's own (STACKED). */
+  const describedBy = new Map<string, string[]>();
+  for (const d of defs) for (const head of d.heads ?? [STACKED[d.id] ?? d.id]) describedBy.set(head, [...(describedBy.get(head) ?? []), `def-${d.id}`]);
+  for (const head of POSITION_COLS) describedBy.get(head)!.push("def-position");
+  for (const [head, ids] of describedBy) $(head).setAttribute("aria-describedby", ids.join(" "));
   $("pastAxisNote").innerHTML = rich(copy.method.pastAxisCaution);
   /* Two groups, two questions (Plan 9): the road out of poverty, where the
      families the tool is for actually are, and the whole curve, which names
@@ -743,24 +775,32 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
     return headingFor(r, rows[i - 1]) + `<tr>` +
       `<th scope="row"><button class="hg-row-btn" type="button" data-st="${r.st}" aria-label="${esc(name(r.st))}"` +
       `${control(r.st, s.sel, tabbable)}>${r.st}${missing.length ? `<span class="flag-mark" aria-hidden="true">${esc(T.floorMark)}</span>` : ""}</button></th>` +
-      `<td class="num">${m.keepRate === null ? esc(copy.roadOffAxis) : floor(keepShort(m.keepRate))}</td>` +
-      `<td class="num">${m.keepRateToLine == null ? T.none : floor(keepShort(m.keepRateToLine))}</td>` +
-      `<td class="num">${m.keepRateWide == null ? T.none : floor(keepShort(m.keepRateWide))}</td>` +
-      `<td class="num">${m.netAtRoadLo == null ? T.none : floor(money(m.netAtRoadLo))}</td>` +
-      `<td class="num">${m.netAtRoadHi == null ? T.none : floor(money(m.netAtRoadHi))}</td>` +
-      `<td class="num">${m.keepRate === null ? T.none : floor(String(m.roadCliffCount))}</td>` +
-      `<td class="num">${noRoadCliff || !m.roadWorst ? T.none : floor(money(m.roadWorst.drop))}</td>` +
-      `<td class="num">${m.roadWorst ? esc(stepWords(m.roadWorst.at)) + positionUnder(positionAt(r.st, s.arch, m.roadWorst.at)) : T.none}</td>` +
+      /* The keep rate, and under it, lighter, the same rate to the line and on to 220% of it (STACKED). */
+      `<td class="num">${m.keepRate === null ? esc(copy.roadOffAxis) : floor(keepShort(m.keepRate))}` +
+      `<small>${esc(t("table.stack.toLine", { value: m.keepRateToLine == null ? T.none : floor(keepShort(m.keepRateToLine)) }))}</small>` +
+      `<small>${esc(t("table.stack.wide", { value: m.keepRateWide == null ? T.none : floor(keepShort(m.keepRateWide)) }))}</small></td>` +
+      /* Money kept at the line → at twice it: one pair, each figure named for a screen reader. */
+      /* Where the pair wraps (places.css td.pair) it wraps after its arrow, never before it: the space before the arrow is a no-break one. */
+      `<td class="num pair">${markup(T.stack.kept.replace(/ (\S+) /, "\u00a0$1 "), {
+        lo: `<span>${named(measureByKey("netAtRoadLo")!.name)}${esc(m.netAtRoadLo == null ? T.none : floor(money(m.netAtRoadLo)))}</span>`,
+        hi: `<span>${named(measureByKey("netAtRoadHi")!.name)}${esc(m.netAtRoadHi == null ? T.none : floor(money(m.netAtRoadHi)))}</span>` })}</td>` +
+      /* The three counts, each in its own words; the road's is left out where the road runs off the axis, which the keep-rate cell says. */
+      `<td class="num counts">${[
+        m.keepRate === null ? null : t("table.stack.roadCount", { n: floor(String(m.roadCliffCount)) }),
+        t("table.stack.anyCount", { n: floor(String(m.cliffCount)) }),
+        t("table.stack.laterCount", { n: floor(String(m.deferredCliffCount)) }),
+      ].filter((x): x is string => x !== null).map((x, i, all) => `<span>${esc(x)}${i < all.length - 1 ? " ·" : ""}</span>`).join(" ")}</td>` +
+      `<td class="num">${noRoadCliff || !m.roadWorst ? T.none : floor(money(m.roadWorst.drop))}` +
+      `${m.roadWorst ? `<small>${named(T.cols.roadWorstAt)}${esc(stepWords(m.roadWorst.at))}</small>` + positionUnder(positionAt(r.st, s.arch, m.roadWorst.at)) : ""}</td>` +
       /* The deepest fall is a figure with or without a cliff: $0 is a measured "never dipped", not "none". */
       `<td class="num">${m.deepestFall == null ? T.none : floor(money(m.deepestFall))}</td>` +
-      `<td class="num">${cell(m.biggestLoss)}</td>` +
       /* The whole-axis worst's position is the pipeline's own field, not a
          second derivation of it: one number, one place it is computed. */
-      `<td class="num">${none || m.biggestLossAt === null ? T.none : esc(stepWords(m.biggestLossAt)) + positionUnder(m.biggestLossPosition)}</td>` +
+      `<td class="num">${cell(m.biggestLoss)}` +
+      `${none || m.biggestLossAt === null ? "" : `<small>${named(T.cols.biggestLossAt)}${esc(stepWords(m.biggestLossAt))}</small>` + positionUnder(m.biggestLossPosition)}</td>` +
       `<td class="num">${cell(m.dangerWidth)}</td>` +
       `<td class="num">${none ? T.none : floor(m.leapIsLowerBound ? t("rank.atLeast", { value: money(m.leap) }) : money(m.leap))}</td>` +
-      `<td class="num">${none ? T.none : m.safeExit === null ? `<span aria-describedby="pastAxisNote">${esc(beyond(m.axisTop))}</span>` : floor(money(m.safeExit)) + positionUnder(positionAt(r.st, s.arch, m.safeExit))}</td>` +
-      `<td class="num">${floor(String(m.cliffCount))}</td><td class="num">${floor(String(m.deferredCliffCount))}</td>` +
+      `<td class="num">${none ? T.none : m.safeExit === null ? `<span class="beyond" aria-describedby="pastAxisNote">${esc(beyond(m.axisTop))}</span>` : floor(money(m.safeExit)) + positionUnder(positionAt(r.st, s.arch, m.safeExit))}</td>` +
       `<td class="flag${missing.length ? " no" : ""}">${figures}</td></tr>`;
   }).join("");
   return rows;

@@ -377,6 +377,23 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    column's subsidy note is the same shape. */
 .hg-table .num small { display: block; color: var(--ink-3); font-size: var(--t-micro);
                        font-weight: var(--w-reg); }
+/* A stacked cell names, for a screen reader, a figure it shows without its
+   name (render.ts `named`). Hidden like .hg-visually-hidden, but INLINE: the
+   system's class is absolutely positioned, which escaped the table's scroller
+   (the page went 700px sideways at 390, measured) and read as a line of its
+   own; inline, the cell says "Worst step: $38,000 → $39,000" as one line. */
+.sr-name { display: inline-block; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+           clip-path: inset(50%); white-space: nowrap; vertical-align: top; }
+/* Where the table is the page's width it may wrap between the three counts
+   (render.ts STACKED), never inside one ("4 on the road ·"); after the arrow
+   of the money-kept pair ("$46,666 →" over "$49,317"); and between "beyond"
+   and the figure it names — never inside a figure. Measured at 1280: with
+   each on one line the table was 1,105px in a 1,056px column, and a pair on
+   one line still left the three-child households 18px over. */
+@media screen and (min-width: 62rem) {
+  .hg-table td.counts, .hg-table td.pair, .hg-table td.num .beyond { white-space: normal; }
+  .hg-table td.counts > span, .hg-table td.pair > span { white-space: nowrap; }
+}
 
 .hg-scroll-x table { min-width: 48rem; }
 /* The table scrolls sideways in its own box; where it FITS the page column,

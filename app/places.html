@@ -168,31 +168,27 @@
         <caption id="tabCap"></caption>
         <thead>
           <tr><th scope="col" id="colState"></th>
-              <!-- The road out of poverty leads, as it does in the measure menu. Every measure's column is headed with its one name. -->
+              <!-- The road out of poverty leads, as it does in the measure menu. Every measure's column is headed with its one name.
+                   Related figures share a cell rather than a column each (render.ts STACKED): eighteen
+                   columns, one figure each, scrolled at 1280 and shrank the PDF (measured 2026-09-26).
+                   Every figure keeps its definition line, and its column's header points at it. -->
+              <!-- The keep rate, and under it the same rate to exactly twice poverty (the road's boundary
+                   sensitivity) and on to 220% of it (R3): the two sides of the same boundary. -->
               <th scope="col" class="num" id="colKeepRate"></th>
-              <!-- The same keep rate to exactly twice poverty, without the road's one-step allowance: the boundary sensitivity beside the figure it qualifies. -->
-              <th scope="col" class="num" id="colKeepRateToLine"></th>
-              <!-- …and on to 220% of it (R3): the other side of the same boundary. -->
-              <th scope="col" class="num" id="colKeepRateWide"></th>
-              <!-- The level beside the slope: net income at the poverty line and at twice it. A keep rate says raises add up, not how much the family has. -->
-              <th scope="col" class="num" id="colNetAtRoadLo"></th>
-              <th scope="col" class="num" id="colNetAtRoadHi"></th>
-              <th scope="col" class="num" id="colRoadCliffCount"></th>
+              <!-- The level beside the slope: net income at the poverty line → at twice it. A keep rate says raises add up, not how much the family has. -->
+              <th scope="col" class="num" id="colNetAtRoad"></th>
+              <!-- The three counts — on the road, anywhere, later — which describe a state and are not ranked (R5, R6). -->
+              <th scope="col" class="num" id="colCounts"></th>
+              <!-- Each worst step, and its position, rides UNDER its loss: a figure is not a finding
+                   until a reader knows where it lands and how many families stand below it, and a
+                   column each pushed the page itself sideways at 1280 (measured). -->
               <th scope="col" class="num" id="colRoadWorst"></th>
-              <!-- Position rides UNDER each earnings figure, in its own cell:
-                   a figure is not a finding until a reader knows how many
-                   families stand below it, and three more columns pushed the
-                   page itself sideways at 1280 (measured). -->
-              <th scope="col" class="num" id="colRoadWorstAt"></th>
               <!-- The deepest fall on the road (R3): a figure with no top to sit on. -->
               <th scope="col" class="num" id="colDeepestFall"></th>
               <th scope="col" class="num" id="colBiggestLoss"></th>
-              <th scope="col" class="num" id="colBiggestLossAt"></th>
               <th scope="col" class="num" id="colDangerWidth"></th>
               <th scope="col" class="num" id="colLeap"></th>
               <th scope="col" class="num" id="colSafeExit"></th>
-              <th scope="col" class="num" id="colCliffCount"></th>
-              <th scope="col" class="num" id="colDeferredCliffCount"></th>
               <th scope="col" id="colFigures"></th></tr>
         </thead>
         <tbody id="tbody"></tbody>

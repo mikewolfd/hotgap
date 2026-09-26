@@ -1338,7 +1338,9 @@
         "biggestLossAt": "Worst step",
         "cliffCount": "Raises that lose money (any pay)",
         "deferredCliffCount": "Losses that hit later, at renewal",
-        "figures": "Figures"
+        "figures": "Figures",
+        "netAtRoad": "Kept, line → twice",
+        "counts": "Cliffs"
       },
       "defs": {
         "label": "What the columns mean",
@@ -1353,8 +1355,8 @@
         "lowerBound": "A figure the scale bounds from below: the real one is this or larger, and the earnings scale ended before it could be measured.",
         "keepRateToLine": "The same cents kept, measured to exactly twice the poverty line, without the road's last $1,000 step. Where the cents kept are below zero and this is not, the loss is one exit sitting on that line.",
         "keepRateWide": "The same cents kept, measured on to 220% of the poverty line ({wide} here). A state that is gentle to twice the line and harsh to 220% has a wall just past the road's top.",
-        "roadCliffCount": "Raises of $1,000 between the poverty line and twice it that cut net income by {floor} or more. A count at the sweep's $1,000 step — a finer step counts small notches a coarser one misses — so it describes a state and is not ranked.",
-        "cliffCount": "Raises of $1,000 anywhere on the curve that cut net income by {floor} or more. A count at the sweep's $1,000 step, so it describes a state and is not ranked.",
+        "roadCliffCount": "Raises of $1,000 between the poverty line and twice it that cut net income by {floor} or more. A count at the run's $1,000 step — a finer step counts small notches a coarser one misses — so it describes a state and is not ranked.",
+        "cliffCount": "Raises of $1,000 anywhere on the curve that cut net income by {floor} or more. A count at the run's $1,000 step, so it describes a state and is not ranked.",
         "deferredCliffCount": "Of the cliffs counted, those that land at a later renewal rather than with the raise: Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP, a parent's Transitional Medical Assistance. A label on a loss, not a harm scale: a loss that waits is cushioned, so the count is not ranked."
       },
       "none": "none",
@@ -1366,7 +1368,15 @@
       "scroll": "Scroll for more →",
       "note": "Every row keeps the number the model returned, including the rows it cannot complete, because a reporter needs to see what came back. Those rows are flagged in the last column and are not shaded on the map or placed in the ranking. Select a state on the map or in this table to read the corrections behind its numbers under the map; the arrow keys move between states and Enter selects.",
       "position": "{n} in 100",
-      "carePrice": "child-care price: {care}"
+      "carePrice": "child-care price: {care}",
+      "stack": {
+        "toLine": "to the line: {value}",
+        "wide": "to 220%: {value}",
+        "kept": "{lo} → {hi}",
+        "roadCount": "{n} on the road",
+        "anyCount": "{n} anywhere",
+        "laterCount": "{n} later"
+      }
     },
     "detail": {
       "heading": "Corrections applied in {state} ({n})",

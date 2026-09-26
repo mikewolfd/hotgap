@@ -1341,7 +1341,9 @@
         "biggestLossAt": "Peor escalón",
         "cliffCount": "Aumentos con pérdida (cualquier sueldo)",
         "deferredCliffCount": "Pérdidas que llegan después, al renovar",
-        "figures": "Cifras"
+        "figures": "Cifras",
+        "netAtRoad": "Conserva, línea → doble",
+        "counts": "Precipicios"
       },
       "defs": {
         "label": "Qué significan las columnas",
@@ -1369,7 +1371,15 @@
       "scroll": "Desplácese para ver más →",
       "note": "Cada fila conserva el número que devolvió el modelo, incluidas las filas que no puede completar, porque un reportero necesita ver lo que salió. Esas filas están marcadas en la última columna y no se sombrean en el mapa ni entran en la clasificación. Seleccione un estado en el mapa o en esta tabla para leer las correcciones detrás de sus números debajo del mapa; las flechas se mueven entre estados y Enter selecciona.",
       "position": "{n} de cada 100",
-      "carePrice": "precio del cuidado de niños: {care}"
+      "carePrice": "precio del cuidado de niños: {care}",
+      "stack": {
+        "toLine": "hasta la línea: {value}",
+        "wide": "hasta el 220%: {value}",
+        "kept": "{lo} → {hi}",
+        "roadCount": "{n} en el camino",
+        "anyCount": "{n} en cualquier sueldo",
+        "laterCount": "{n} después"
+      }
     },
     "detail": {
       "heading": "Correcciones aplicadas en {state} ({n})",

@@ -61,8 +61,12 @@
 //     with a measured figure to name.
 //   table.order.* — one order per measure (N2); the hint said once, where the
 //     control is: the two controls are independent (rerun N3). table.defs.* —
-//     one sentence per column, where the headers are (rerun S3); the six
-//     measures reuse their own `describe`. table.floor — the row's own caveat,
+//     one sentence per figure, where the headers are (rerun S3); the nine
+//     measures reuse their own `describe`. table.stack.* — the words of a cell
+//     that stacks related figures (render.ts STACKED, 2026-09-26): the keep
+//     rate's two readings under it, the money-kept pair, the three counts;
+//     table.cols.netAtRoad and table.cols.counts head the two stacked columns
+//     that no one measure names. table.floor — the row's own caveat,
 //     in its cell (S5). table.subsidyAdded — the child-care subsidy's footing,
 //     in the Figures cell where HotGap added it (rerun S4). table.floorMark —
 //     the short amber word in the state cell, so the caveat is on screen at
