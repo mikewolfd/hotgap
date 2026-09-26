@@ -13,7 +13,7 @@ import { finePointer } from "../lib/scroll.js";
 import { copy, t } from "./copy.js";
 import { curveOrder, loadCurves, renderCurves, renderStateCurve, type Curves } from "./curves.js";
 import { csvFor, csvName } from "./csv.js";
-import { archLabel, group, measureByKey, rowsFor, type SortKey, type StateRow } from "./model.js";
+import { archLabel, group, measureByKey, rowsFor, twinOf, type SortKey, type StateRow } from "./model.js";
 import { applySelection, GROUPS, renderAnswer, renderCite, renderDetail, renderFigure, renderMethod, renderOnce, renderRank, renderReadout, renderStatic, renderTable, type Scene } from "./render.js";
 import { tileNeighbor } from "./tiles.js";
 import { parseView, viewQuery, type View } from "./url.js";
@@ -95,7 +95,9 @@ function main(summary: SummaryJson): void {
     const arch = arches.find((a) => a.id === view.household)!;
     const measure = measureByKey(view.measure)!;
     const rows = rowsFor(summary, arch, measure);
-    scene = { summary, arch, archLabel: archLabel(arch), measure, rows, g: group(rows, measure), sel: view.state };
+    /* The household's no-subsidy twin, on the same measure, for the answer's pair (R2). */
+    const twin = twinOf(arches, arch);
+    scene = { summary, arch, archLabel: archLabel(arch), measure, rows, g: group(rows, measure), sel: view.state, twinRows: twin ? rowsFor(summary, twin, measure) : null };
     renderAnswer(scene);
     renderFigure(scene);
     renderReadout(scene);

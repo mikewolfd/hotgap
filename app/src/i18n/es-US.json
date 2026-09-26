@@ -1121,39 +1121,9 @@
       }
     },
     "measures": {
-      "biggestLoss": {
-        "title": "Mayor pérdida en un escalón",
-        "option": "Mayor pérdida (cualquier sueldo)",
-        "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
-      },
-      "dangerWidth": {
-        "title": "Ancho total de las zonas de peligro",
-        "option": "Rango total de sueldo donde se pierde",
-        "describe": "Ingresos que abarca cada tramo en el que más pago no deja al hogar mejor, todos esos tramos sumados."
-      },
-      "leap": {
-        "title": "El salto",
-        "option": "Aumento necesario para salir",
-        "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
-      },
-      "safeExit": {
-        "title": "Salida segura",
-        "option": "Sueldo donde se deja de perder",
-        "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
-      },
-      "cliffCount": {
-        "title": "Número de precipicios",
-        "option": "Aumentos con pérdida (cualquier sueldo)",
-        "describe": "Escalones hacia abajo de {floor} o más en cualquier punto de la curva."
-      },
-      "deferredCliffCount": {
-        "title": "Precipicios diferidos",
-        "option": "Pérdidas que llegan después, al renovar",
-        "describe": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre."
-      },
       "keepRate": {
-        "title": "Lo que se queda de cada dólar en el camino para salir de la pobreza",
-        "option": "Centavos que conserva por dólar extra",
+        "name": "Centavos que conserva por dólar extra",
+        "cue": "más oscuro = pierde más, más claro = conserva más",
         "describe": "De cada dólar extra ganado {span} los centavos que este hogar conserva una vez contados los impuestos y los beneficios perdidos. Por debajo de cero, termina más pobre de lo que empezó.",
         "span": {
           "plain": "entre la línea de pobreza y el doble de esa línea,",
@@ -1161,25 +1131,45 @@
           "akHi": "desde la línea de pobreza ({lo}) hasta justo pasado el doble ({hi}) —más alto en Alaska y Hawái—"
         }
       },
-      "roadCliffCount": {
-        "title": "Precipicios en el camino para salir de la pobreza",
-        "option": "Aumentos con pérdida (pobreza–2×)",
-        "describe": "Escalones hacia abajo de {floor} o más entre la línea de pobreza y el doble de esa línea."
-      },
       "roadWorst": {
-        "title": "Dónde se derrumba el camino",
-        "option": "Sueldo de la peor pérdida (pobreza–2×)",
+        "name": "Mayor pérdida en el camino",
+        "cue": "más oscuro = pierde más",
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 entre la línea de pobreza y el doble de esa línea."
       },
+      "deepestFall": {
+        "name": "Caída más honda en el camino",
+        "cue": "más oscuro = cae más",
+        "describe": "Cuánto por debajo de lo que tenía en la línea de pobreza cae el hogar en algún punto del ascenso desde la línea de pobreza hasta justo pasado el doble, vuelva a subir o no. A diferencia de lo que conserva de cada dólar, no depende de dónde termina el camino."
+      },
       "netAtRoadLo": {
-        "title": "Ingreso neto en la línea de pobreza",
-        "option": "Lo que conserva en la línea de pobreza",
-        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos, las primas de salud y el cuidado infantil que la familia paga de su bolsillo— con un sueldo en la línea de pobreza ({lo})."
+        "name": "Lo que conserva en la línea de pobreza",
+        "cue": "más oscuro = conserva más",
+        "describe": "Lo que el hogar conserva en un año con un sueldo en la línea de pobreza ({lo}): después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta, contando la ayuda y los créditos fiscales."
       },
       "netAtRoadHi": {
-        "title": "Ingreso neto al doble de la línea de pobreza",
-        "option": "Lo que conserva al doble de la pobreza",
-        "describe": "Lo que el hogar conserva en un año —contando la ayuda y los créditos fiscales, y descontando los impuestos, las primas de salud y el cuidado infantil que la familia paga de su bolsillo— con un sueldo del doble de la línea de pobreza ({hi})."
+        "name": "Lo que conserva al doble de la pobreza",
+        "cue": "más oscuro = conserva más",
+        "describe": "Lo que el hogar conserva en un año con un sueldo del doble de la línea de pobreza ({hi}): después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta, contando la ayuda y los créditos fiscales."
+      },
+      "biggestLoss": {
+        "name": "Mayor pérdida (cualquier sueldo)",
+        "cue": "más oscuro = pierde más",
+        "describe": "Ingreso neto perdido en el peor escalón de $1,000 de ingresos."
+      },
+      "dangerWidth": {
+        "name": "Sueldo por debajo de un máximo anterior",
+        "cue": "más oscuro = más sueldo bajo un máximo",
+        "describe": "Ingresos que abarca cada tramo de sueldo en el que el hogar tiene menos de lo que tenía con un sueldo más bajo, todos esos tramos sumados."
+      },
+      "leap": {
+        "name": "Aumento necesario para salir",
+        "cue": "más oscuro = aumento mayor",
+        "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
+      },
+      "safeExit": {
+        "name": "Sueldo sobre todo máximo anterior",
+        "cue": "más oscuro = sueldo más alto",
+        "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
       }
     },
     "household": {
@@ -1198,14 +1188,14 @@
       "nosub": "{line}, sin ayuda para el cuidado infantil",
       "phraseNosub": "{phrase} sin ayuda para el cuidado infantil"
     },
-    "pastAxis": "más allá del eje",
+    "pastAxis": "más allá de {top}",
     "figure": {
       "sub": "Cada cifra del mapa es {household}, que renta en el condado más poblado del estado.",
       "description": "Una cuadrícula de los cincuenta estados y el Distrito de Columbia, cada uno un cuadro en aproximadamente su posición geográfica, sombreado según la medida seleccionada. Cada cuadro es un botón que abre las cifras de ese estado debajo del mapa. Cada valor aparece escrito en «Cada estado, cada medida», más abajo.",
       "tile": {
         "value": "{state}: {value}",
         "none": "{state}: no se encontró precipicio",
-        "past": "{state}: más allá del eje",
+        "past": "{state}: más allá de {top}",
         "incomplete": "{state}: {programs} no modelado — cifras incompletas",
         "roadNone": "{state}: sin precipicios en el camino para salir de la pobreza",
         "roadPast": "{state}: el camino queda fuera del eje",
@@ -1220,8 +1210,7 @@
       },
       "bins": {
         "steps": "cinco escalones de igual ancho de {lo} a {hi}",
-        "stepsLow": "cinco escalones de igual ancho de {lo} a {hi}, más oscuro donde la familia conserva menos",
-        "classes": "{n, plural, one {{words} clase de {lo} a {hi}} other {{words} clases de {lo} a {hi}}}",
+        "stepsLow": "cinco escalones de igual ancho de {lo} a {hi}, más oscuro donde la familia conserva más",
         "diverging": "{down} pasos de {downWidth} por debajo de cero y {up} de {upWidth} por encima, de {lo} a {hi}",
         "divergingOneSide": "{n} pasos de {width} desde cero, de {lo} a {hi}"
       },
@@ -1234,14 +1223,12 @@
       },
       "hatched": "{n, plural, one {{m, plural, one {Un estado está rayado: {programs} no está modelado ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.} other {Un estado está rayado: {programs} no están modelados ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.}}} other {{m, plural, one {{n} estados están rayados: {programs} no está modelado ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.} other {{n} estados están rayados: {programs} no están modelados ahí, así que sus cifras son incompletas y no se sombrean ni se clasifican.}}}}",
       "oneClass": {
-        "countNone": "{n} de los {total} estados comparables no tienen ninguno.",
-        "countValue": "{n} de los {total} estados comparables tienen {value}.",
-        "countRange": "{n} de los {total} estados comparables tienen de {lo} a {hi}.",
         "dollars": "{n} de los {total} estados comparables quedan entre {lo} y {hi}."
       },
       "title": "{measure}, estado por estado",
       "scale": {
-        "stepsOf": "pasos de {width}"
+        "stepsOf": "pasos de {width}",
+        "unequal": "los dos lados avanzan con pasos distintos"
       }
     },
     "readout": {
@@ -1249,35 +1236,35 @@
       "tryIt": "Pruebe esta familia en la herramienta del hogar",
       "step": "{n, plural, one {{state} — {loss} perdidos en {step}, cuando termina {programs}.} other {{state} — {loss} perdidos en {step}, cuando terminan {programs}.} =0 {{state} — {loss} perdidos en {step}; ningún programa por sí solo explica la caída.}}",
       "floor": "{n, plural, one {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no está modelado.} other {{state} — al menos {loss} perdidos en {step}; un piso, porque {missing} no están modelados.}}}}",
-      "worstStep": "{n, plural, one {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}, cuando termina {programs}.} other {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}, cuando terminan {programs}.} =0 {Mayor pérdida en un solo escalón de toda la curva: {loss} en {step}; ningún programa por sí solo explica la caída.}}",
-      "worstStepFloor": "{n, plural, one {{m, plural, one {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}; un piso, porque {missing} no está modelado.} other {Mayor pérdida en un solo escalón de toda la curva: al menos {loss} en {step}; un piso, porque {missing} no están modelados.}}}}",
+      "worstStep": "{n, plural, one {Mayor pérdida de un aumento con cualquier sueldo: {loss} en {step}, cuando termina {programs}.} other {Mayor pérdida de un aumento con cualquier sueldo: {loss} en {step}, cuando terminan {programs}.} =0 {Mayor pérdida de un aumento con cualquier sueldo: {loss} en {step}; ningún programa por sí solo explica la caída.}}",
+      "worstStepFloor": "{n, plural, one {{m, plural, one {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}, cuando termina {programs}; un piso, porque {missing} no está modelado.} other {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}, cuando termina {programs}; un piso, porque {missing} no están modelados.}}} other {{m, plural, one {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}, cuando terminan {programs}; un piso, porque {missing} no está modelado.} other {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}, cuando terminan {programs}; un piso, porque {missing} no están modelados.}}} =0 {{m, plural, one {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}; un piso, porque {missing} no está modelado.} other {Mayor pérdida de un aumento con cualquier sueldo: al menos {loss} en {step}; un piso, porque {missing} no están modelados.}}}}",
       "measure": {
-        "dangerWidth": "{state} — {width} de ingresos quedan dentro de zonas de peligro.",
-        "dangerWidthOpen": "{state} — al menos {width} de ingresos quedan dentro de zonas de peligro; la última no se había cerrado en {top}, el tope del eje.",
+        "dangerWidth": "{state} — {width} de sueldo por debajo de un máximo anterior.",
+        "dangerWidthOpen": "{state} — al menos {width} de sueldo por debajo de un máximo anterior; el último de esos tramos no se había cerrado en {top}, el tope del eje.",
         "leap": "{state} — un aumento de {leap} sale de la peor zona de peligro.",
         "leapAtLeast": "{state} — un aumento de al menos {leap} para salir de la peor zona de peligro, que se extiende más allá de {top}, el tope del eje.",
-        "safeExit": "{state} — no queda ninguna zona de peligro por encima de {exit}.",
-        "safeExitPast": "{state} — no se encontró salida segura: la última zona de peligro no se había cerrado en {top}, el tope del eje.",
-        "cliffCount": "{n, plural, one {{deferred, plural, =0 {{state} — 1 precipicio en la curva de este hogar, ninguno diferido.} other {{state} — 1 precipicio en la curva de este hogar, y {deferred} más diferidos a una renovación posterior.}}} other {{deferred, plural, =0 {{state} — {n} precipicios en la curva de este hogar, ninguno diferido.} other {{state} — {n} precipicios en la curva de este hogar, y {deferred} más diferidos a una renovación posterior.}}}}",
-        "deferred": "{deferred, plural, =0 {{n, plural, one {{state} — ningún precipicio diferido a una renovación posterior; su único precipicio cae con el aumento.} other {{state} — ningún precipicio diferido a una renovación posterior; los {n} caen con el aumento.}}} one {{n, plural, one {{state} — 1 precipicio diferido a una renovación posterior, además de {n} que cae con el aumento.} other {{state} — 1 precipicio diferido a una renovación posterior, además de {n} que caen con el aumento.}}} other {{n, plural, one {{state} — {deferred} precipicios diferidos a una renovación posterior, además de {n} que cae con el aumento.} other {{state} — {deferred} precipicios diferidos a una renovación posterior, además de {n} que caen con el aumento.}}}}",
+        "safeExit": "{state} — por encima de {exit}, ningún máximo anterior es más alto.",
+        "safeExitPast": "{state} — no hay tal sueldo en la escala: el último tramo por debajo de un máximo anterior no se había cerrado en {top}, el tope del eje.",
         "floorTail": "{n, plural, one {Incompleto: {missing} no está modelado, así que la cifra es un piso.} other {Incompleto: {missing} no están modelados, así que la cifra es un piso.}}",
-        "roadCliffCount": "{n, plural, one {{state} — 1 precipicio en el camino para salir de la pobreza.} other {{state} — {n} precipicios en el camino para salir de la pobreza.}}",
+        "deepestFall": "{fell, select, no {{state} — la familia nunca tiene menos de lo que tenía en la línea de pobreza, en ningún punto del camino.} other {{state} — en su punto más bajo del camino, la familia tiene {fall} menos de lo que tenía en la línea de pobreza.}}",
         "netAtRoadLo": "{state} — {value} que conserva al año con un sueldo en la línea de pobreza.",
         "netAtRoadHi": "{state} — {value} que conserva al año con un sueldo del doble de la línea de pobreza."
       },
       "none": "{state} — no se encontró precipicio: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más, hasta {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; 1 precipicio está diferido a una renovación posterior.} other {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; {deferred} precipicios están diferidos a una renovación posterior.}}",
       "road": {
-        "holds": "El camino no se derrumba: ningún escalón de {step} de ingresos entre {lo} y {hi} recortó el ingreso neto en {floor} o más.",
-        "collapseNoProgram": "El camino se derrumba en {at}, donde la familia pierde {drop} de un solo paso; ningún programa por sí solo explica la caída.",
-        "collapsePlural": "El camino se derrumba en {at}, donde terminan {programs} y la familia pierde {drop} de un solo paso.",
+        "rate": "{state} — {rate} desde la línea de pobreza hasta el doble: un aumento de {raise} deja a la familia {change, select, poorer {con {diff} menos} same {sin mejorar} other {con {diff} más}}, de {netLo} a {netHi}.",
+        "rateOnly": "{state} — {rate} desde la línea de pobreza hasta el doble.",
+        "counted": "Lo que conserva es después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta.",
+        "countedSubsidy": "Lo que conserva es después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta; {subsidy} de eso, en la línea de pobreza, es ayuda para el cuidado infantil pagada al proveedor.",
+        "worst": "{n, plural, =0 {La mayor pérdida del camino está en {at}: {drop} de un solo paso; ningún programa por sí solo la explica.} one {La mayor pérdida del camino está en {at}: {drop} de un solo paso, cuando termina {programs}.} other {La mayor pérdida del camino está en {at}: {drop} de un solo paso, cuando terminan {programs}.}}",
+        "holds": "Ningún aumento de {step} entre {lo} y {hi} recorta el ingreso neto en {floor} o más.",
+        "pastTop": "{holds, select, yes {Pero justo después del camino hay una caída mayor, en {at}: {drop} de un solo paso.} other {Y justo después del camino hay una caída mayor, en {at}: {drop} de un solo paso.}}",
         "position": "{n} de cada 100 familias como esta ganan menos que eso.",
-        "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar.",
-        "rate": "{state} — {rate} al salir de la pobreza: de {netLo} en la línea de pobreza a {netHi} al doble de esa línea.",
-        "rateOnly": "{state} — {rate} al salir de la pobreza."
+        "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar."
       },
       "axisPosition": "{n} de cada 100 familias como esta ganan menos que eso.",
-      "axisSameAsRoad": "Ese derrumbe es también la mayor pérdida en un solo escalón de toda la curva.",
+      "axisSameAsRoad": "Esa es también la mayor pérdida de un aumento con cualquier sueldo.",
       "carePrice": "No hay un precio de cuidado infantil por condado para {state} en la base de datos de origen, así que se usa {care} en su lugar, y el cuidado infantil es lo que termina en la mayoría de estos precipicios."
     },
     "rank": {
@@ -1319,10 +1306,11 @@
         "value": "no comparable",
         "note": "{n, plural, one {{m, plural, one {{programs} no está modelado aquí, así que a esta curva podría faltarle un precipicio real. No es un estado bajo; es un estado sin medir.} other {{programs} no están modelados aquí, así que a esta curva podría faltarle un precipicio real. No es un estado bajo; es un estado sin medir.}}} other {{m, plural, one {{programs} no está modelado aquí, así que a estas curvas podría faltarles un precipicio real. No son estados bajos; son estados sin medir.} other {{programs} no están modelados aquí, así que a estas curvas podría faltarles un precipicio real. No son estados bajos; son estados sin medir.}}}}"
       },
-      "bins": "Los rangos se recalculan para cada medida (escalones de igual ancho para una medida en dólares, clases de números enteros para un conteo), así que un tono no significa nada entre dos medidas distintas. Lea los límites del rango, no el color.",
+      "bins": "Los rangos se recalculan para cada medida, así que un tono no significa nada entre dos medidas distintas. Lea los límites del rango, no el color.",
       "position": "{n} de cada 100 ganan menos",
       "headingBy": "Clasificación: {order}",
-      "toLine": "hasta la línea: {sign, select, loses {pierde {cents}¢} other {se queda con {cents}¢}}"
+      "toLine": "hasta la línea: {sign, select, loses {pierde {cents}¢} other {se queda con {cents}¢}}",
+      "toWide": "hasta el 220%: {sign, select, loses {pierde {cents}¢} other {se queda con {cents}¢}}"
     },
     "table": {
       "heading": "Los {n}, todas las medidas",
@@ -1332,8 +1320,7 @@
         "measure": {
           "dollars": "{title}, de mayor a menor",
           "dollarsLow": "{title}, de menor a mayor",
-          "count": "{title}, de más a menos",
-          "cents": "{title}, de más regresivo a menos"
+          "cents": "{title}, del peor al mejor"
         },
         "hint": "Ordena solo esta tabla; el mapa y la clasificación siguen la medida de arriba."
       },
@@ -1342,26 +1329,18 @@
       "byMeasure": {
         "dollars": "por {title}, de mayor a menor",
         "dollarsLow": "por {title}, de menor a mayor",
-        "count": "por {title}, de más a menos",
-        "cents": "por {title}, de más regresivo a menos"
+        "cents": "por {title}, del peor al mejor"
       },
       "cols": {
         "state": "Estado",
-        "biggestLoss": "Mayor pérdida en un escalón",
-        "biggestLossAt": "Peor escalón",
-        "dangerWidth": "Zonas de peligro, ancho total",
-        "leap": "El salto",
-        "safeExit": "Salida segura",
-        "cliffCount": "Precipicios en toda la curva",
-        "deferredCliffCount": "Diferidos",
-        "figures": "Cifras",
-        "keepRate": "Lo que se queda de cada dólar",
-        "roadCliffCount": "Precipicios en el camino",
-        "roadWorst": "Mayor pérdida del camino",
+        "keepRateToLine": "Centavos, hasta la línea",
+        "keepRateWide": "Centavos, hasta el 220%",
+        "roadCliffCount": "Aumentos con pérdida (pobreza–2×)",
         "roadWorstAt": "Peor escalón del camino",
-        "keepRateToLine": "Lo que se queda hasta la línea",
-        "netAtRoadLo": "Conserva en la línea",
-        "netAtRoadHi": "Conserva al doble"
+        "biggestLossAt": "Peor escalón",
+        "cliffCount": "Aumentos con pérdida (cualquier sueldo)",
+        "deferredCliffCount": "Pérdidas que llegan después, al renovar",
+        "figures": "Cifras"
       },
       "defs": {
         "label": "Qué significan las columnas",
@@ -1370,11 +1349,15 @@
         "roadWorstAt": "El escalón de $1,000 de ingresos en el que cae la mayor pérdida del camino.",
         "position": "De las familias como esta en ese estado, cuántas de cada 100 ganan menos que la cifra de al lado. De datos de encuesta del Censo, y de corte transversal: cuántas familias ya ganan menos, nunca la probabilidad de que una familia llegue ahí.",
         "positionTerm": "Familias que ganan menos",
-        "pastAxisTerm": "más allá del eje",
+        "pastAxisTerm": "más allá del tope de la escala",
         "pastAxis": "La cifra se sale del tope de la escala de ingresos, así que el estado tiene un límite y no un valor. Nunca la grafique como un valor.",
         "lowerBoundTerm": "≥ una cifra",
         "lowerBound": "Una cifra que la escala acota por debajo: la real es esa o mayor, y la escala de ingresos terminó antes de poder medirla.",
-        "keepRateToLine": "Lo mismo que se queda de cada dólar, medido exactamente hasta el doble de la línea de pobreza, sin el último escalón de $1,000 del camino. Donde lo que se queda está por debajo de cero y esto no, la pérdida es una salida que cae justo en esa línea."
+        "keepRateToLine": "Los mismos centavos que conserva, medidos exactamente hasta el doble de la línea de pobreza, sin el último escalón de $1,000 del camino. Donde los centavos están por debajo de cero y esto no, la pérdida es una salida que cae justo en esa línea.",
+        "keepRateWide": "Los mismos centavos que conserva, medidos hasta el 220% de la línea de pobreza ({wide} aquí). Un estado suave hasta el doble de la línea y duro hasta el 220% tiene un muro justo después del tope del camino.",
+        "roadCliffCount": "Aumentos de $1,000 entre la línea de pobreza y el doble que recortan el ingreso neto en {floor} o más. Un conteo con el escalón de $1,000 de la corrida (un escalón más fino cuenta muescas pequeñas que uno más grueso no ve), así que describe un estado y no se clasifica.",
+        "cliffCount": "Aumentos de $1,000 en cualquier punto de la curva que recortan el ingreso neto en {floor} o más. Un conteo con el escalón de $1,000 de la corrida, así que describe un estado y no se clasifica.",
+        "deferredCliffCount": "De los precipicios contados, los que caen en una renovación posterior y no con el aumento: la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre. Una etiqueta sobre una pérdida, no una escala de daño: una pérdida que espera está amortiguada, así que el conteo no se clasifica."
       },
       "none": "ninguno",
       "complete": "completas",
@@ -1469,7 +1452,7 @@
         "money": "La línea de dinero es lo que tiene el hogar **después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo**: el ingreso neto del hogar, contando la ayuda y los créditos fiscales —entre ellos el subsidio de cuidado infantil—, menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado, y menos su factura de cuidado infantil. El alquiler no se descuenta: ninguna ayuda se retira en función de él, y un aumento no lo cambia. No se incluyen deducibles ni copagos.",
         "household": "Cada hogar es un inquilino típico del condado más poblado del estado (nombrado debajo del mapa para el estado seleccionado), con la renta justa de mercado de HUD, las estimaciones de condado del Censo y el precio de preescolar de la Base de Datos Nacional de Precios de Cuidado Infantil del DOL para ese condado, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. El año del estudio detrás del precio, y si una mediana estatal o nacional reemplazó a un condado que la base de datos no tiene, varían por estado y se imprimen en la línea de fuente debajo del mapa.",
         "takeUp": "El subsidio de cuidado infantil está activado en esta corrida aunque, como Head Start y los vales de vivienda, llega a una minoría de las familias elegibles: su salida es el mayor precipicio que enfrentan la mayoría de los padres que trabajan con hijos pequeños, y un mapa sin él subestima a todos los estados.",
-        "deferred": "Los precipicios diferidos a una renovación posterior — la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre — se cuentan en todas las cifras de aquí como cualquier otro precipicio, y se nombran otra vez en la columna *diferidos*. Son pérdidas reales; lo que dice la columna es cuáles de ellas esperan a una renovación en vez de caer con el aumento.",
+        "deferred": "Los precipicios diferidos a una renovación posterior — la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre — se cuentan en todas las cifras de aquí como cualquier otro precipicio, y se nombran otra vez en la columna *pérdidas que llegan después, al renovar*. Son pérdidas reales; lo que dice la columna es cuáles de ellas esperan a una renovación en vez de caer con el aumento.",
         "corrections": "Cuando la cifra de un estado necesitó una corrección sobre PolicyEngine (una escala de primas aplicada localmente, el subsidio de cuidado infantil devuelto al ingreso neto, un límite de Medicaid para padres tomado del manual del estado, una prima por brecha de cobertura), aparece debajo del mapa para el estado seleccionado, a partir del propio registro de cobertura de la corrida, no de un texto guardado aquí.",
         "download": "La descarga son las filas de la tabla en el orden de la tabla, una por estado, con estas columnas: {columns}. Las celdas de dólares vacías son un estado sin precipicio o una salida segura más allá del eje; las banderas dicen qué cifras son pisos o cotas inferiores.",
         "road": "**El camino para salir de la pobreza** son los ingresos que van desde la guía federal de pobreza para el tamaño de este hogar hasta el doble de esa guía: de {lo} a {hi} para una familia de tres según la guía federal de pobreza de {fplYear}, la que usan las reglas de {year}, y Alaska y Hawái con sus propias guías más altas. Es federal a propósito, para que el camino sea el mismo en todos los estados y lo que cambie sea cómo tratan sus reglas a una familia que lo recorre. Su tope lleva un escalón de $1,000 de holgura, porque un límite de programa situado justo en la línea del doble de la pobreza cae en el escalón que empieza en el primer punto muestreado igual o superior a ella.",
@@ -1477,12 +1460,14 @@
         "level": "**Que se quede mucho de cada dólar no hace generoso a un estado.** Dice que los aumentos pueden sumarse, no cuánto tiene la familia: de un estado a otro, las dos cosas guardan poca relación. Las dos medidas de *lo que conserva* muestran el nivel —lo que la familia conserva en la línea de pobreza y al doble de ella— y la lectura de lo que se queda de cada dólar nombra los dos extremos.",
         "position": "**Familias que ganan menos** sitúa una cifra en dólares donde están las familias: de los hogares como este en ese estado, la proporción que gana menos que esa cifra, según datos de encuesta del Censo ({vintages}) llevados a dólares de {year}. Es de corte transversal —cuántas familias ya ganan menos— y nunca la probabilidad de que una familia llegue a ese pago. Una celda que la encuesta no puede sostener se deja vacía en lugar de llenarse con un cero.",
         "modeledFamily": "**Cada cifra es la familia modelada**, no un promedio de familias reales: un inquilino del condado más poblado del estado, con los hijos en cuidado pagado cuando ambos padres trabajan, que reclama aquello a lo que las reglas le dan derecho. Un hogar real con otra renta, otro arreglo de cuidado o un beneficio que nunca solicitó tiene otra curva.",
-        "groups": "**Las medidas son dos preguntas.** *En el camino para salir de la pobreza* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están las familias para las que existe esta herramienta. *En cualquier punto de la curva* pregunta dónde está el muro más alto del estado, sea cual sea el pago en el que esté; para este hogar ese muro queda por encima de los ingresos de la familia mediana en {n} estados de {total}, y por eso ya no es la primera respuesta de la página.",
+        "groups": "**Las medidas son dos preguntas.** *De la línea de pobreza al doble* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están las familias para las que existe esta herramienta. *En cualquier sueldo* pregunta dónde está el muro más alto del estado, sea cual sea el pago en el que esté; para este hogar ese muro queda por encima de los ingresos de la familia mediana en {n} estados de {total}, y por eso ya no es la primera respuesta de la página.",
         "roadToLine": {
           "differs": "Medido exactamente hasta el doble de la pobreza, {strict} estados quedan por debajo de cero en lugar de {bad}; la diferencia son los estados cuya salida del subsidio de cuidado infantil o de SNAP cae justo en esa línea.",
           "same": "Medido exactamente hasta el doble de la pobreza, los mismos {bad} estados quedan por debajo de cero: ninguno lo está solo por una salida que cae en esa línea."
         },
-        "takeUpTwin": "El gemelo «sin ayuda para el cuidado infantil» del menú de hogares muestra a la familia sin él."
+        "takeUpTwin": "El gemelo «sin ayuda para el cuidado infantil» del menú de hogares muestra a la familia sin él.",
+        "takeUpTwinDerived": "El gemelo «sin ayuda para el cuidado infantil» del menú de hogares muestra a la familia sin él. Se deriva de la misma corrida (en cada sueldo, el ingreso neto menos el subsidio que la familia habría tenido) y se recorrerá directamente; los programas que leen lo que la familia paga por su cuenta por el cuidado (la deducción por cuidado de dependientes de SNAP, el crédito por cuidado de dependientes) no se recalculan para él.",
+        "band": "**Dos topes y una caída.** El límite de programa más común cae justo en el doble de la línea de pobreza, así que un camino que termina un escalón antes o después se lee muy distinto. La tabla y la clasificación dan también lo que se queda de cada dólar medido hasta el 220% de la línea, y *caída más honda en el camino* mide cuánto por debajo de su ingreso en la línea de pobreza baja la familia durante el ascenso: una cifra sin tope en el que apoyarse."
       },
       "axis": {
         "plain": "Para {household} el eje va de $0 a {top}; una cifra que se sale del eje se sale de eso.",
@@ -1524,17 +1509,14 @@
         "plain": "los {n} estados"
       },
       "keepRate": {
-        "some": "En {bad} de {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar: {strict, plural, =0 {ninguno de ellos antes del escalón que sale del doble de la pobreza} other {{strictCount} de ellos antes del escalón que sale del doble de la pobreza}}.",
-        "none": "En ninguno de {places} {household} termina ese ascenso más pobre de lo que empezó; el estado que más se acerca es {state}, que {value}.",
-        "all": "En todos {places}, {household} que sube de la línea de pobreza al doble de esa línea termina con menos de lo que tenía al empezar: {strict, plural, =0 {ninguno de ellos antes del escalón que sale del doble de la pobreza} other {{strictCount} de ellos antes del escalón que sale del doble de la pobreza}}; el peor de todos es {state}, que {value}."
-      },
-      "roadCliffCount": {
-        "some": "{state} pone {n, plural, one {{count} precipicio} other {{count} precipicios}} en el camino para salir de la pobreza, más que ningún otro estado; de {places}, {miss, plural, =0 {todos tienen al menos uno} one {solo uno no tiene ninguno} other {{miss} no tienen ninguno}}.",
-        "none": "Nada en el camino para salir de la pobreza le cuesta a este hogar {floor} de un solo paso, en ninguno de {places}."
+        "some": "En {bad} de {places}, {who} sube de la línea de pobreza al doble de esa línea y termina con menos de lo que tenía al empezar{twin, select, yes {; pagando el cuidado sin subsidio, {noSubN, plural, =0 {en ninguno} other {en {noSub}}}} other {}}.",
+        "all": "En todos {places}, {who} sube de la línea de pobreza al doble de esa línea y termina con menos de lo que tenía al empezar{twin, select, yes {; pagando el cuidado sin subsidio, {noSubN, plural, =0 {en ninguno} other {en {noSub}}}} other {}}; el peor de todos es {state}, que {value}.",
+        "none": "En ninguno de {places} {who} termina ese ascenso más pobre de lo que empezó; el estado que más se acerca es {state}, que {value}.",
+        "withSubsidy": "{household} que recibe el subsidio de cuidado infantil"
       },
       "roadWorst": {
-        "some": "El camino para salir de la pobreza se derrumba con más fuerza en {state}: {drop} de ingreso que desaparecen entre {at} y {to} de pago.",
-        "none": "El camino para salir de la pobreza aguanta en {places}: nada en él le cuesta a este hogar {floor} de un solo paso."
+        "some": "La mayor pérdida de un aumento en el camino es la de {state}: {drop} de ingreso que desaparecen entre {at} y {to} de pago.",
+        "none": "Nada en el camino le cuesta a este hogar {floor} en un solo aumento, en ninguno de {places}."
       },
       "netAtRoadLo": {
         "some": "En la línea de pobreza, {household} conserva menos en {state} ({value} al año) y más en {best} ({bestValue})."
@@ -1543,29 +1525,21 @@
         "some": "Al doble de la línea de pobreza, {household} conserva menos en {state} ({value} al año) y más en {best} ({bestValue})."
       },
       "biggestLoss": {
-        "some": "La mayor pérdida en un escalón del mapa es la de {state}, {drop}, entre {at} y {to} de pago; de {places}, {miss, plural, =0 {todos tienen algún precipicio en la curva de este hogar} one {solo uno no tiene ningún precipicio} other {{miss} no tienen ningún precipicio}}.",
+        "some": "La mayor pérdida de un aumento del mapa es la de {state}, {drop}, entre {at} y {to} de pago; de {places}, {miss, plural, =0 {todos tienen algún precipicio en la curva de este hogar} one {solo uno no tiene ningún precipicio} other {{miss} no tienen ningún precipicio}}.",
         "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
       },
       "dangerWidth": {
-        "some": "{state} tiene las zonas de peligro más anchas: {width} de ingresos a lo largo de los cuales más pago no deja mejor a este hogar.",
-        "none": "En ninguno de {places} hay un tramo en el que más pago no deje mejor a este hogar."
+        "some": "{state} es donde más sueldo queda por debajo de un máximo anterior: {width} de ingresos con los que este hogar tiene menos de lo que tenía con un sueldo más bajo.",
+        "none": "En ninguno de {places} este hogar tiene menos de lo que tenía con un sueldo más bajo."
       },
       "leap": {
         "some": "Hace falta un aumento de {leap} de una sola vez para salir de la peor zona de peligro en {state}: el mayor salto del mapa.",
         "none": "Ningún hogar de {places} tiene una zona de peligro que salvar."
       },
       "safeExit": {
-        "some": "Este hogar solo queda libre de toda zona de peligro por encima de {exit} en {state}, la salida segura más alta del mapa.",
+        "some": "Solo por encima de {exit} en {state} ningún máximo anterior es más alto para este hogar: el sueldo más alto de ese tipo en el mapa.",
         "open": "{n, plural, one {En un estado la última zona de peligro no se había cerrado al final del eje; la salida más alta medida en los demás es la de {state}, {exit}.} other {En {n} estados la última zona de peligro no se había cerrado al final del eje; la salida más alta medida en los demás es la de {state}, {exit}.}}",
         "none": "No queda ninguna zona de peligro en {places} para este hogar."
-      },
-      "cliffCount": {
-        "some": "La curva de {state} lleva {n, plural, one {{count} precipicio} other {{count} precipicios}} para este hogar, más que la de ningún otro estado.",
-        "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
-      },
-      "deferredCliffCount": {
-        "some": "{state} es donde más precipicios esperan: {n, plural, one {{count} cae} other {{count} caen}} en una renovación posterior y no con el aumento.",
-        "none": "Ningún precipicio de {places} espera a una renovación posterior; todos caen con el aumento."
       },
       "holds": "Las reglas de cada estado aplicadas a la misma familia: alquila al precio típico del condado, {care}recibe {programs}.",
       "holdsCare": "paga cuidado infantil en un centro para {kids} y ",
@@ -1577,10 +1551,16 @@
         "tanf": "TANF",
         "medicaid": "Medicaid",
         "wic": "WIC"
+      },
+      "deepestFall": {
+        "some": "En el camino, {household} cae más en {state}: {fall} por debajo de lo que tenía en la línea de pobreza, en su punto más bajo.",
+        "none": "En ninguno de {places} {household} cae por debajo de lo que tenía en la línea de pobreza al subir hasta el doble."
       }
     },
     "howTo": {
       "heading": "Cómo leer este mapa",
+      "read": "Un **precipicio** es un aumento de $1,000 que deja a la familia con {floor} o más de menos. Una **zona de peligro** es un sueldo con el que la familia tiene menos de lo que tenía con un sueldo más bajo. **El camino** es el ascenso desde la línea de pobreza hasta el doble{span}, que es donde están las familias para las que existe esta herramienta. **Lo que se queda de cada dólar** es lo que la familia conserva de cada dólar extra en ese ascenso; por debajo de cero, termina más pobre de lo que empezó. **El sombreado** es la medida elegida arriba: cada estado toma su escalón en la escala debajo del mapa, y los cuadros sin sombrear se explican abajo.",
+      "span": " ({lo} a {hi} para esta familia)",
       "measure": "El mapa sombrea {measure}: {describe}",
       "keyboard": "Cada cuadro es un botón: las flechas se mueven entre ellos y Enter abre uno. Su equivalente de tamaño completo es la fila del mismo estado en «Cada estado, cada medida», que es también donde está escrita cada cifra.",
       "key": {

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { answersFor, archetypeById, evaluateCurve, loadStateFile, parsePEResponse, type CurvePoint } from "@hotgap/core";
 import { point as flat } from "../../core/src/testing.js";
-import { stateMetrics } from "./metrics.js";
+import { deepestFall, stateMetrics, wideTop } from "./metrics.js";
 
 const fixture = JSON.parse(
   readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8"),
@@ -92,6 +92,45 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
     // Levels after the child care the family pays itself (R1).
     expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([46179, 16817]);
     expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([45705, 54223]);
+    // …and how much of the poverty-line level is child-care help paid to a provider (M3).
+    expect(forState("WI").childcareAtRoadLo).toBe(31341);
+  });
+
+  // R3, the knife edge: Minnesota's child-care exit is the step out of
+  // $56,000, one step past a road that ends at $55,000, so it keeps 9¢ on the
+  // road and loses 75¢ measured on to 220% of the line — where New Jersey,
+  // whose exit is inside the road, loses on both. The band's second top, the
+  // deepest fall and the cliff just past the top are what say so.
+  it("de-knife-edges the road: the keep rate to 220%, the deepest fall, and the larger drop just past the top", () => {
+    const mn = forState("MN"), nj = forState("NJ");
+    expect(mn.roadWideHi).toBe(59000);   // 220% of $26,650 is $58,630: the first point at or above it
+    expect(Math.round(mn.keepRate! * 100)).toBe(9);
+    expect(Math.round(mn.keepRateWide! * 100)).toBe(-75);
+    expect(Math.round(nj.keepRate! * 100)).toBe(-94);
+    expect(Math.round(nj.keepRateWide! * 100)).toBe(-77);
+    // Minnesota's family never falls below its poverty-line income on the road; New Jersey's falls $26,238.
+    expect(mn.deepestFall).toBe(0);
+    expect(nj.deepestFall).toBe(26238);
+    // The $27,483 exit is just past Minnesota's top, and larger than anything on the road.
+    expect(mn.pastRoadWorst).toEqual({ drop: 27483, at: 56000, programs: ["childcare"] });
+    expect(mn.pastRoadWorst!.drop).toBeGreaterThan(mn.roadWorst!.drop);
+    expect(nj.pastRoadWorst).toBeNull();
+  });
+});
+
+describe("the road's band helpers (R3)", () => {
+  const pts = [flat(0, 10), flat(1000, 20), flat(2000, 5), flat(3000, 15), flat(4000, 30)];
+  it("wideTop counts the steps from 200% to 220% of the line on from the road's last step, and is null past the axis", () => {
+    // A $1,000 step and a $10,000 guideline: 200% is $20,000 and 220% $22,000, two steps on.
+    expect(wideTop(pts, { hiStart: 1000 }, 10_000)).toBe(3000);
+    expect(wideTop(pts, { hiStart: 3000 }, 10_000)).toBeNull();
+    // 220% of a whole-dollar guideline is exact: $25,000 is $50,000 and $55,000, five steps apart, not six.
+    expect(wideTop([flat(0, 1), flat(1000, 1), flat(100000, 1)], { hiStart: 50000 }, 25_000)).toBe(55000);
+  });
+  it("deepestFall is the start less the lowest point on the span, 0 where it never falls, null off the axis", () => {
+    expect(deepestFall(pts, 1000, 4000)).toBe(15);
+    expect(deepestFall(pts, 3000, 4000)).toBe(0);
+    expect(deepestFall(pts, 500, 4000)).toBeNull();
   });
 });
 
@@ -136,6 +175,8 @@ describe("stateMetrics on synthetic curves", () => {
     expect(stateMetrics(evaluated(pts))).toEqual({
       biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
       keepRate: 0.11, keepRateToLine: 0.1, netAtRoadLo: 10000 - SINGLE_1_BILL, netAtRoadHi: 21000 - SINGLE_1_BILL, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+      // On a $50,000 step 220% of the line is the same point as 200% of it, so the wide keep rate is the one to the line.
+      keepRateWide: 0.1, roadWideHi: 50000, deepestFall: 0, pastRoadWorst: null, childcareAtRoadLo: 0,
     });
   });
 

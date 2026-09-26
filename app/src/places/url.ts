@@ -5,7 +5,7 @@
 // the sweep, and a link to "the default household" would then move with it.
 import { answersFor, ARCHETYPES, searchParamsFromFlags, type HouseholdFlags } from "@hotgap/core";
 import { withLang } from "../lib/copy.js";
-import { DEFAULT_MEASURE, measureByKey, type MeasureKey, type SortKey } from "./model.js";
+import { DEFAULT_MEASURE, resolveMeasure, type MeasureKey, type SortKey } from "./model.js";
 
 export interface View {
   household: string;
@@ -28,16 +28,19 @@ export function parseView(search: string, d: ViewDomain): View {
   const measureKey = q.get("measure");
   const sort = q.get("sort");
   const state = q.get("state");
-  /* Every `?measure=` ever written still resolves: the six whole-axis keys are
-     unchanged and the three road keys are new, so an old link lands on exactly
-     the measure it named, and only a bare URL takes the new default. */
-  const measure = measureKey && measureByKey(measureKey) ? (measureKey as MeasureKey) : DEFAULT_MEASURE;
+  /* Every `?measure=` ever written still resolves: a menu key lands on exactly
+     the measure it named, and one of the three counts that left the menu
+     (R5, R6) on the nearest question it still asks (model.ts
+     RETIRED_MEASURES); only a bare URL, or a key nobody ever wrote, takes the
+     default. */
+  const measure = resolveMeasure(measureKey) ?? DEFAULT_MEASURE;
   return {
     household: household && d.households.includes(household) ? household : d.defaultHousehold,
     measure,
-    /* `sort=` is a measure key or "state" (N2); links written before the six
-       orders existed said `sort=measure`, "this measure", and still land there. */
-    sort: sort === "measure" ? measure : sort && measureByKey(sort) ? (sort as MeasureKey) : "state",
+    /* `sort=` is a measure key or "state" (N2), resolved the same way; links
+       written before the per-measure orders existed said `sort=measure`,
+       "this measure", and still land there. */
+    sort: sort === "measure" ? measure : resolveMeasure(sort) ?? "state",
     state: state && d.states.includes(state) ? state : null,
   };
 }

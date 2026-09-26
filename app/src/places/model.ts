@@ -11,8 +11,26 @@ import { householdLabel } from "./words.js";
 
 export type Archetype = SummaryJson["archetypes"][number];
 
-export type MeasureKey = "keepRate" | "roadCliffCount" | "roadWorst" | "netAtRoadLo" | "netAtRoadHi"
-  | "biggestLoss" | "dangerWidth" | "leap" | "safeExit" | "cliffCount" | "deferredCliffCount";
+export type MeasureKey = "keepRate" | "roadWorst" | "deepestFall" | "netAtRoadLo" | "netAtRoadHi"
+  | "biggestLoss" | "dangerWidth" | "leap" | "safeExit";
+
+/**
+ * The measures that LEFT the menu (blind reviews R5, R6, 2026-09-26), and the
+ * kept measure each one's old links now open on. The three counts rewarded the
+ * sampling step rather than the state — a $1,000 grid counts $216 notches a
+ * $2,000 one misses — and the deferred count ranked a cushion as a harm, so
+ * none of them is shaded or ranked any more; all three stay as table columns
+ * and in the CSV, where they describe a state. A `?measure=` or `?sort=`
+ * written before that still lands on the nearest question the menu still
+ * asks: the road's count on the road's worst loss, the two whole-curve counts
+ * on the biggest loss at any pay.
+ */
+export type CountKey = "roadCliffCount" | "cliffCount" | "deferredCliffCount";
+export const RETIRED_MEASURES: Readonly<Record<CountKey, MeasureKey>> = {
+  roadCliffCount: "roadWorst",
+  cliffCount: "biggestLoss",
+  deferredCliffCount: "biggestLoss",
+};
 
 /**
  * The two questions the menu asks (Plan 9). `road` measures describe the
@@ -26,12 +44,19 @@ export type MeasureGroup = "road" | "axis";
 export interface Measure {
   key: MeasureKey;
   group: MeasureGroup;
-  /** The figure's title ("…, by state") and the table caption's phrase. */
-  title: string;
-  /** The FilterRow option, which may say more than the title. */
-  option: string;
-  /** "$" dollars, "" a count, "¢" cents kept per extra dollar — the one measure with a meaningful zero. */
-  unit: "$" | "" | "¢";
+  /**
+   * THE measure's name, and its only one (blind reviews R9/M6, 2026-09-26):
+   * the menu option, the legend's title, the ranking's heading, the table's
+   * column header and the phrase the readout and the answer use. The page
+   * used to call one figure "Cents kept of each extra dollar" in the menu,
+   * "Keep rate on the road out of poverty" in the legend and "Keep rate" in
+   * the table, and a reader could not tell they were one thing.
+   */
+  name: string;
+  /** The legend's plain cue — "darker = loses more" — beside the step widths (M16). */
+  cue: string;
+  /** "$" dollars, "¢" cents kept per extra dollar — the one measure with a meaningful zero. */
+  unit: "$" | "¢";
   describe: string;
   /**
    * Which end of the scale the ranking leads with. Every measure but three
@@ -41,46 +66,53 @@ export interface Measure {
   worst: "high" | "low";
 }
 
-/* The eleven measures pipeline/src/metrics.ts writes, in the FilterRow's order:
-   the road's five first, because the road is where the families are — the
-   keep rate, its cliffs and collapse, then the two LEVELS beside that slope
-   (net income at each end of the road: a keep rate says raises add up, not
-   how much the family has) — then the six whole-axis measures unchanged.
-   Their words are copy's, the cliff floor core's. A count has no unit; the
-   keep rate is cents. */
+/* The nine measures the menu offers, in its order: the road's five first,
+   because the road is where the families are — the keep rate, the road's
+   worst single loss, its deepest fall (R3: a figure with no top to sit on,
+   so a wall a step either side of twice poverty reads the same), then the
+   two LEVELS beside that slope (net income at each end of the road: a keep
+   rate says raises add up, not how much the family has) — then the four
+   whole-axis measures. The three counts the pipeline also writes are table
+   columns, not measures (RETIRED_MEASURES). Their words are copy's; the
+   keep rate is cents, everything else dollars. */
 const SPEC: readonly (Pick<Measure, "key" | "group" | "unit"> & Partial<Pick<Measure, "worst">>)[] = [
   { key: "keepRate", group: "road", unit: "¢", worst: "low" },
-  { key: "roadCliffCount", group: "road", unit: "" },
   { key: "roadWorst", group: "road", unit: "$" },
+  { key: "deepestFall", group: "road", unit: "$" },
   { key: "netAtRoadLo", group: "road", unit: "$", worst: "low" },
   { key: "netAtRoadHi", group: "road", unit: "$", worst: "low" },
   { key: "biggestLoss", group: "axis", unit: "$" },
   { key: "dangerWidth", group: "axis", unit: "$" },
   { key: "leap", group: "axis", unit: "$" },
   { key: "safeExit", group: "axis", unit: "$" },
-  { key: "cliffCount", group: "axis", unit: "" },
-  { key: "deferredCliffCount", group: "axis", unit: "" },
 ];
 /** The two levels: net income at each end of the road, the money the family has beside the rate it keeps at. */
 export const isLevel = (key: MeasureKey): key is "netAtRoadLo" | "netAtRoadHi" => key === "netAtRoadLo" || key === "netAtRoadHi";
 
-/* A measure's definition with its slots filled: the cliff floor (core's), on
-   the keep rate the road's span, and on the two levels the end of the road
-   they are read at — the generic words where no household is named yet (the
-   level's "({lo})" dropped), its dollars once one is (`describeFor`). */
+/* A measure's definition with its slots filled: on the keep rate the road's
+   span, and on the two levels the end of the road they are read at — the
+   generic words where no household is named yet (the level's "({lo})"
+   dropped), its dollars once one is (`describeFor`). */
 const describeWith = (key: MeasureKey, span: string, ends?: { lo: number; hi: number }): string => {
   const describe = copy.measures[key].describe;
   if (isLevel(key)) return ends ? fill(describe, key === "netAtRoadLo" ? { lo: money(ends.lo) } : { hi: money(ends.hi) }) : describe.replace(/\s*\(\{(lo|hi)\}\)/g, "");
-  if (describe.includes("{span}")) return fill(describe, { span });
-  return describe.includes("{floor}") ? fill(describe, { floor: money(CLIFF_MIN) }) : describe;
+  return describe.includes("{span}") ? fill(describe, { span }) : describe;
 };
 export const MEASURES: readonly Measure[] = SPEC.map(({ key, group, unit, worst }) => {
-  const { title, option } = copy.measures[key];
-  return { key, group, unit, worst: worst ?? "high", title, option, describe: describeWith(key, copy.measures.keepRate.span.plain) };
+  const { name, cue } = copy.measures[key];
+  return { key, group, unit, worst: worst ?? "high", name, cue, describe: describeWith(key, copy.measures.keepRate.span.plain) };
 });
 
+/**
+ * The three pipeline counts that are table columns and CSV fields but not
+ * measures (RETIRED_MEASURES): each column's one-sentence definition, the
+ * cliff floor (core's) filled in.
+ */
+export const countDefinition = (key: CountKey): string =>
+  fill((copy.table.defs as Record<string, string>)[key], key === "deferredCliffCount" ? {} : { floor: money(CLIFF_MIN) });
+
 /** The value most of the rows share — the modal figure, ties to the one met first. */
-function modal(values: number[]): number | null {
+export function modal(values: readonly number[]): number | null {
   const counts = new Map<number, number>();
   for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
   let best: number | null = null, n = 0;
@@ -120,6 +152,10 @@ export function describeFor(measure: Measure, rows: readonly StateRow[]): string
 
 export const measureByKey = (key: string): Measure | undefined => MEASURES.find((m) => m.key === key);
 
+/** A key from a link: a menu measure as itself, a retired one as the measure its links now open on (RETIRED_MEASURES), anything else undefined. */
+export const resolveMeasure = (key: string | null): MeasureKey | undefined =>
+  key === null ? undefined : measureByKey(key)?.key ?? (RETIRED_MEASURES as Readonly<Record<string, MeasureKey>>)[key];
+
 /**
  * What a bare URL shows. The keep rate, because it is the question the page
  * exists to answer — of each extra dollar, what does a family climbing out of
@@ -141,14 +177,21 @@ export const measuresIn = (group: MeasureGroup): Measure[] => MEASURES.filter((m
 export function valueOf(m: StateMetrics, key: MeasureKey): number | null {
   switch (key) {
     case "keepRate": return m.keepRate;
-    case "roadCliffCount": return m.roadCliffCount;
     case "roadWorst": return m.roadWorst?.drop ?? 0;
-    /* A summary written before the levels existed has no field: null, a road with no figure, never a zero. */
+    /* A summary written before these fields existed has none: null, a road with no figure, never a zero. */
+    case "deepestFall": return m.deepestFall ?? null;
     case "netAtRoadLo": return m.netAtRoadLo ?? null;
     case "netAtRoadHi": return m.netAtRoadHi ?? null;
-    default: return m[key] as number | null;
+    default: return m[key];
   }
 }
+
+/**
+ * The measures that are a figure for every state, cliff or no cliff: the keep
+ * rate, the deepest fall (0 is a measured "never dipped") and the two levels.
+ * They are never lifted out of the scale as "no cliff".
+ */
+const alwaysMeasured = (key: MeasureKey): boolean => key === "keepRate" || key === "deepestFall" || isLevel(key);
 
 /* S10: the household list is the file's, labelled from `married`, `childAges`
    and the id — `-dual-` is the two-earner couple (core/src/archetypes.ts
@@ -158,6 +201,22 @@ const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
 const noSubsidy = (a: Archetype): boolean => isNoSubsidyTwin(a);
 
 export const archLabel = (a: Archetype): string => householdLabel(a.married, worksBoth(a), a.childAges, noSubsidy(a));
+
+/**
+ * The Household menu's order: the file's, with each `-nosub` twin moved to
+ * sit right after the household it is the twin of (R16), so "1 adult, 2
+ * children (3 and 7), no child-care help" is read beside the family it
+ * differs from in exactly one thing. O(households²), eleven of them.
+ */
+export function menuOrder(archetypes: readonly Archetype[]): Archetype[] {
+  const twins = archetypes.filter(noSubsidy);
+  return archetypes.filter((a) => !noSubsidy(a)).flatMap((a) => [a, ...twins.filter((tw) => tw.id === `${a.id}-nosub`)])
+    .concat(twins.filter((tw) => !archetypes.some((a) => `${a.id}-nosub` === tw.id)));
+}
+
+/** A household's no-subsidy twin in this file, or null where the run carries none (every household but single-2 today). */
+export const twinOf = (archetypes: readonly Archetype[], a: Archetype): Archetype | null =>
+  archetypes.find((x) => x.id === `${a.id}-nosub`) ?? null;
 
 /* A missing child-care subsidy can only move a household that pays for care:
    a child of child-care age (through core's CHILDCARE_MAX_AGE — the sweep
@@ -189,8 +248,10 @@ export const positionAt = (st: string, a: Archetype, earnings: number | null): n
 
 /* IncompleteMarker (B1): keyed off coverage[state].unmodeled[], never a list
    kept here, under the one rule every surface reads (lib/coverage.ts) — the
-   swept household's care bill is the archetype reading above. */
-const careOf = (a: Archetype): CareHousehold => ({ childAges: a.childAges, paysForCare: paysForCare(a) });
+   swept household's care bill is the archetype reading above. The child-care
+   gap is a MISSING SUBSIDY, so the twin that claims none cannot be missing
+   it: it is read as a household with nothing for that gap to move. */
+const careOf = (a: Archetype): CareHousehold => ({ childAges: a.childAges, paysForCare: paysForCare(a) && !noSubsidy(a) });
 export const bites = (u: UnmodeledProgram, a: Archetype): boolean => bitesHousehold(u, careOf(a));
 export const incompleteFor = (cov: StateCoverage | undefined, a: Archetype): UnmodeledProgram[] => incompleteForHousehold(cov, careOf(a));
 
@@ -221,8 +282,9 @@ export interface StateRow {
  * The keep rate is the exception, and deliberately: it is a measurement for
  * every state whether or not a cliff falls on the road, so New Mexico's 30¢ is
  * a shaded, ranked, binned figure rather than a state lifted out of the scale.
- * The two levels are the same kind of figure — what the family has, cliff or
- * no cliff — and are never lifted out as "none" either.
+ * The deepest fall and the two levels are the same kind of figure — how far
+ * the family dips, what it has, cliff or no cliff — and are never lifted out
+ * as "none" either (`alwaysMeasured`).
  */
 export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): StateRow[] {
   const coverage = summary.coverage ?? {};
@@ -236,7 +298,7 @@ export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): S
     const incomplete = incompleteFor(coverage[st], a);
     const zeroCliffs = road ? m.roadCliffCount === 0 : m.cliffCount === 0;
     const past = road ? m.keepRate === null : !zeroCliffs && (value === null || (bounded && m.leapIsLowerBound));
-    const none = !past && measure.key !== "keepRate" && !isLevel(measure.key) && zeroCliffs;
+    const none = !past && !alwaysMeasured(measure.key) && zeroCliffs;
     const kind: TileKind = incomplete.length ? "incomplete" : past ? "past" : none ? "none" : "shaded";
     rows.push({ st, m, value, kind, incomplete });
   }
@@ -246,7 +308,7 @@ export function rowsFor(summary: SummaryJson, a: Archetype, measure: Measure): S
 export interface BinClass {
   /** The ramp step this class is drawn with, 0-based: 0–4 on a sequential scale, 0–5 on a diverging one, where the losing arm can reach the loss ramp's sixth step. Step 0 is the one nearest the page's own ground, which is what the tile-label ink keys on. */
   ramp: number;
-  /** Which ramp: the plum loss ramp, or — on a diverging scale, above zero — the keep ramp. */
+  /** Which ramp: the plum loss ramp, or the keep ramp — above zero on a diverging scale, and the whole of a level's scale (R14). */
   hue: "loss" | "keep";
   lo: number;
   hi: number;
@@ -257,10 +319,9 @@ export interface Bins {
   hi: number;
   /**
    * "steps": five equal-width steps of a dollar measure, labelled by their
-   * bounds. "classes": runs of whole numbers, labelled by what each holds.
-   * "diverging": equal-width steps either side of zero, zero a bin edge.
+   * bounds. "diverging": equal-width steps either side of zero, zero a bin edge.
    */
-  kind: "steps" | "classes" | "diverging";
+  kind: "steps" | "diverging";
   /** One entry per swatch on the scale, in scale order — lightest first, or most-losing first when the scale diverges. */
   classes: BinClass[];
   /** Which class (an index into `classes`) a comparable value falls in. */
@@ -278,42 +339,31 @@ export interface Bins {
    put a measurement of zero at the bottom of a scale of losses (B4). Both
    bounds are always printed.
 
-   A dollar measure takes five equal-width steps. A count takes classes of
-   whole numbers (S5): five steps over a range of 0 to 1 printed the scale
-   "0 0 0 1 1 1", which is not a sentence. The class width is the smallest
-   whole number that fits the range in five classes or fewer, the classes
-   that exist are the swatches, and they are spread over the ramp so the
-   two ends of any scale are the ramp's two ends (charts.md § 2).
+   A dollar measure takes five equal-width steps. (The counts that took
+   classes of whole numbers left the menu with R5/R6, and their branch with
+   them.)
 
    A measure with a MEANINGFUL ZERO diverges (charts.md § 2): see
    `divergingBins`.
 
    A dollar measure whose LOW end is the worst — the two money-kept levels —
-   runs the same ramp the other way: the lowest figure takes the darkest step,
-   so the deepest tile is always the worst state, as on every loss measure.
-   The classes stay in value order (the scale reads low to high, left to
-   right); only the ramp step each one is drawn with is reversed, and the bins
-   caption says which end is dark (`figure.bins.stepsLow`). */
+   is money the family HAS, so it is drawn on the KEEP ramp, darkest where the
+   family keeps most (blind review R14, 2026-09-26): a loss ramp colouring a
+   level made its mid-tone read as a loss to a reader who had just left the
+   keep-rate map. The ranking still leads with the lowest figure; the bins
+   caption and the legend's cue say which end is dark (`figure.bins.stepsLow`,
+   `measures.netAtRoadLo.cue`). */
 export function bins(values: number[], unit: Measure["unit"], worst: Measure["worst"] = "high"): Bins {
   let lo = Infinity, hi = -Infinity;
   for (const v of values) { if (v < lo) lo = v; if (v > hi) hi = v; }
   if (!values.length) lo = hi = 0;
   if (unit === "¢") return divergingBins(lo, hi);
-  if (unit === "$") {
-    const step = (hi - lo) / 5;
-    return {
-      lo, hi, kind: "steps",
-      classes: Array.from({ length: 5 }, (_, i) => ({ ramp: worst === "low" ? 4 - i : i, hue: "loss", lo: Math.round(lo + step * i), hi: Math.round(lo + step * (i + 1)) })),
-      index: (v) => (step ? Math.min(4, Math.max(0, Math.floor((v - lo) / step))) : 0),
-    };
-  }
-  const width = Math.max(1, Math.ceil((hi - lo + 1) / 5));
-  const n = Math.ceil((hi - lo + 1) / width);
-  const ramp = (i: number) => (n === 1 ? 0 : Math.round((i * 4) / (n - 1)));
+  const step = (hi - lo) / 5;
+  const hue = worst === "low" ? "keep" : "loss";
   return {
-    lo, hi, kind: "classes",
-    classes: Array.from({ length: n }, (_, i) => ({ ramp: ramp(i), hue: "loss", lo: lo + i * width, hi: Math.min(hi, lo + (i + 1) * width - 1) })),
-    index: (v) => Math.min(n - 1, Math.max(0, Math.floor((v - lo) / width))),
+    lo, hi, kind: "steps",
+    classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, hue, lo: Math.round(lo + step * i), hi: Math.round(lo + step * (i + 1)) })),
+    index: (v) => (step ? Math.min(4, Math.max(0, Math.floor((v - lo) / step))) : 0),
   };
 }
 

@@ -19,10 +19,10 @@ import { stateName } from "../lib/names.js";
 import { answerParts, holdsText } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { archLabel, bites, describeFor, isLevel, MEASURES, measureByKey, measuresIn, positionAt, rankNumbers, rankValue, type Archetype, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { archLabel, bites, countDefinition, describeFor, isLevel, MEASURES, measureByKey, measuresIn, menuOrder, modal, positionAt, rankNumbers, rankValue, roadSpan, type Archetype, type CountKey, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
 import { tryItHref } from "./url.js";
-import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, classesLine, cliffCountLine, countedLede, deferredLine, divergingLine, floorTail, hatchedLine, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankOrdinal, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
+import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, countedLede, countedLine, divergingLine, floorTail, hatchedLine, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, pastTopLine, rankOrdinal, rankRange, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, roadWorstLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
 import { h } from "../lib/dom.js";
 
 /** Everything one render pass reads. */
@@ -34,24 +34,26 @@ export interface Scene {
   rows: StateRow[];
   g: Grouped;
   sel: string | null;
+  /** The household's no-subsidy twin on the same measure, where the run carries one (answer.ts). */
+  twinRows?: StateRow[] | null;
 }
 
 const name = stateName;
-/** A measure's value as the ranking, the table and the caption print it; null is the bound that has no figure — past the axis, or a road that runs off it. */
-const value = (v: number | null, m: Measure): string =>
-  v === null ? (m.group === "road" ? copy.roadOffAxis : copy.pastAxis)
-    : m.unit === "¢" ? keepShort(v) : m.unit === "$" ? money(v) : String(v);
+/** A measure's figure as the ranking, the table and the caption print it. A figure the scale does not bound has none, and says so where it stands (`beyond`, `copy.roadOffAxis`). */
+const value = (v: number, m: Measure): string => (m.unit === "¢" ? keepShort(v) : money(v));
 /** The same figure with the room to say what it is, where a reader meets the measure on the mark itself: the tile and the legend. */
-const longValue = (v: number | null, m: Measure): string => (v !== null && m.unit === "¢" ? keepPhrase(v) : value(v, m));
+const longValue = (v: number, m: Measure): string => (m.unit === "¢" ? keepPhrase(v) : value(v, m));
 /** A bin bound on the scale, where five labels share the figure's width. */
 const tick = (v: number, m: Measure): string => (m.unit === "¢" ? keepTick(v) : value(v, m));
-/** Which shape a measure's words take: a count, a dollar figure (a loss, largest first, or a level the family has, smallest first), or cents kept per extra dollar. */
-const shape = (m: Measure): "count" | "dollars" | "dollarsLow" | "cents" =>
-  (m.unit === "" ? "count" : m.unit === "¢" ? "cents" : m.worst === "low" ? "dollarsLow" : "dollars");
+/** A figure that runs off the top of the earnings scale, said as the dollars it runs past (marketing review M6): "beyond $150,000". */
+const beyond = (top: number): string => t("pastAxis", { top: money(top) });
+/** Which shape a measure's words take: a dollar figure (a loss, largest first, or a level the family has, smallest first), or cents kept per extra dollar. */
+const shape = (m: Measure): "dollars" | "dollarsLow" | "cents" =>
+  (m.unit === "¢" ? "cents" : m.worst === "low" ? "dollarsLow" : "dollars");
 /** The step a figure names: "$38,000 → $39,000". */
 const stepWords = (at: number): string => t("rank.step", { from: money(at), to: money(at + STEP) });
-/** A table order's name: "…, most first" for a count, "…, largest first" for dollars ("…, smallest first" for a level), "…, most regressive first" for the keep rate. */
-const orderName = (m: Measure): string => t(`table.order.measure.${shape(m)}`, { title: m.title });
+/** A table order's name, in the measure's one name: "…, largest first" for dollars ("…, smallest first" for a level), "…, worst first" for the keep rate. */
+const orderName = (m: Measure): string => t(`table.order.measure.${shape(m)}`, { title: m.name });
 /** The id of the table column a measure fills, and of its definition line. */
 const colId = (key: string): string => `col${key[0].toUpperCase()}${key.slice(1)}`;
 /**
@@ -120,30 +122,36 @@ export function renderStatic(): void {
     tableHeading: copy.panels.everything, sourcesHeading: copy.panels.sources,
     howToHeading: copy.howTo.heading, figKeyboard: copy.howTo.keyboard,
     sortLabel: copy.table.order.label, sortHint: copy.table.order.hint, colState: C.state,
-    colKeepRate: C.keepRate, colKeepRateToLine: C.keepRateToLine, colNetAtRoadLo: C.netAtRoadLo, colNetAtRoadHi: C.netAtRoadHi, colRoadCliffCount: C.roadCliffCount, colRoadWorst: C.roadWorst, colRoadWorstAt: C.roadWorstAt,
-    colBiggestLoss: C.biggestLoss, colBiggestLossAt: C.biggestLossAt,
-    colDangerWidth: C.dangerWidth, colLeap: C.leap, colSafeExit: C.safeExit,
-    colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
+    /* A measure's column is headed with the measure's one name (R9/M6); the
+       columns that are not measures carry their own. */
+    ...Object.fromEntries(MEASURES.map((m) => [colId(m.key), m.name])),
+    colKeepRateToLine: C.keepRateToLine, colKeepRateWide: C.keepRateWide, colRoadCliffCount: C.roadCliffCount, colRoadWorstAt: C.roadWorstAt,
+    colBiggestLossAt: C.biggestLossAt, colCliffCount: C.cliffCount, colDeferredCliffCount: C.deferredCliffCount, colFigures: C.figures,
     tableNote: copy.table.note, methodHeading: copy.method.heading, excludesHeading: copy.method.excludes.heading,
   });
   /* The glossary sentence carries its emphases, so it goes through rich(). It
-     used to stand above the map as half of a two-paragraph standfirst; it is
-     the same sentence, one press away inside "How to read this map", where a
-     reader who wants a definition looks for one. */
+     used to stand above the map as half of a two-paragraph standfirst, then
+     inside "How to read this map"; since that panel defines its own terms for
+     a reader (M7), it opens the method, where the rest of the rules are. */
   $("glossary").innerHTML = rich(t("lede.glossary", { floor: money(CLIFF_MIN) }));
   /* One sentence per column where the headers are (rerun S3): the measures'
      own `describe`, the two step columns' and the flag's; each header points
      at its line. The road's three lead, as they do in the menu and the table. */
   type Def = { id: string; term: string; def: string; heads?: string[] };
-  const measureDef = (key: MeasureKey): Def => { const m = measureByKey(key)!; return { id: colId(key), term: m.title, def: m.describe }; };
+  const measureDef = (key: MeasureKey): Def => { const m = measureByKey(key)!; return { id: colId(key), term: m.name, def: m.describe }; };
+  /* The three counts are columns, not measures (R5, R6): each says what it counts and why it is not ranked. */
+  const countDef = (key: CountKey): Def => ({ id: colId(key), term: C[key], def: countDefinition(key) });
   const defs: Def[] = [
     measureDef("keepRate"), { id: "colKeepRateToLine", term: C.keepRateToLine, def: copy.table.defs.keepRateToLine },
+    /* The band's second top (R3); its dollars are the household's, filled per view (renderFigure). */
+    { id: "colKeepRateWide", term: C.keepRateWide, def: "" },
     /* The level beside the slope: what the family has at each end of the road. */
     measureDef("netAtRoadLo"), measureDef("netAtRoadHi"),
-    measureDef("roadCliffCount"), measureDef("roadWorst"),
+    countDef("roadCliffCount"), measureDef("roadWorst"),
     { id: "colRoadWorstAt", term: C.roadWorstAt, def: copy.table.defs.roadWorstAt },
+    measureDef("deepestFall"),
     measureDef("biggestLoss"), { id: "colBiggestLossAt", term: C.biggestLossAt, def: copy.table.defs.biggestLossAt },
-    measureDef("dangerWidth"), measureDef("leap"), measureDef("safeExit"), measureDef("cliffCount"), measureDef("deferredCliffCount"),
+    measureDef("dangerWidth"), measureDef("leap"), measureDef("safeExit"), countDef("cliffCount"), countDef("deferredCliffCount"),
     /* Position says one thing under three figures and shares one definition,
        so a reader meets what it is (and is not) once rather than three times;
        each of the three columns points at it as a SECOND description, after
@@ -170,16 +178,17 @@ export function renderStatic(): void {
   const options = (ms: Measure[], label: (m: Measure) => string) => ms.map((m) => `<option value="${m.key}">${esc(label(m))}</option>`).join("");
   const grouped = (label: (m: Measure) => string) => (["road", "axis"] as const)
     .map((g) => `<optgroup label="${esc(copy.filters.groups[g])}">${options(measuresIn(g), label)}</optgroup>`).join("");
-  $<HTMLSelectElement>("metric").innerHTML = grouped((m) => m.option);
+  $<HTMLSelectElement>("metric").innerHTML = grouped((m) => m.name);
   $<HTMLSelectElement>("sort").innerHTML = `<option value="state">${esc(copy.table.order.state)}</option>` + grouped(orderName);
 }
 
 /** Everything that is the same for every view, once the data is in: the counted lede, the household list, the method panel. */
 export function renderOnce(summary: SummaryJson): void {
   const states = Object.keys(summary.states);
-  /* The file's own list, so a household core has added but no sweep has
-     filled yet (single-2-nosub, until the sweep that adds it) is not offered. */
-  $<HTMLSelectElement>("arch").innerHTML = summary.archetypes.map((a) => `<option value="${a.id}">${esc(archLabel(a))}</option>`).join("");
+  /* The file's own list, so a household core has added but no run carries
+     is not offered — each no-subsidy twin right after the household it is
+     the twin of (R16, model.ts `menuOrder`). */
+  $<HTMLSelectElement>("arch").innerHTML = menuOrder(summary.archetypes).map((a) => `<option value="${a.id}">${esc(archLabel(a))}</option>`).join("");
   $("table").textContent = t("table.heading", { n: states.length });
   /* The axis in dollars for the selected household (rerun N9) follows the axis bullet; renderMethod fills it per view. */
   const M = copy.method.items;
@@ -193,14 +202,18 @@ export function renderOnce(summary: SummaryJson): void {
      then the road and the keep rate the page leads with, then what the two
      groups of measures each ask, then what position is and is not, then the
      money line, the household and the caveat that it is a modelled one. */
+  /* The twin's footing: swept like any other row, or derived from its base
+     row's points by the rebuild (pipeline/src/twin.ts), which the method
+     says in so many words. */
+  const twin = summary.archetypes.find((a) => a.id.endsWith("-nosub"));
   const items = [
     t("method.items.engine", { year: summary.year }),
     /* The guideline's own vintage and figures (a family of three, the 48 states), never the rules' year: the 2026 rules run on the 2025 guideline (policy-data review R10). */
-    t("method.items.road", { year: summary.year, fplYear: summary.fplYear ?? FPL_GUIDELINE_YEAR, lo: money(fpl2025("US", 3)), hi: money(2 * fpl2025("US", 3)) }), M.keepRate, M.level,
+    t("method.items.road", { year: summary.year, fplYear: summary.fplYear ?? FPL_GUIDELINE_YEAR, lo: money(fpl2025("US", 3)), hi: money(2 * fpl2025("US", 3)) }), M.keepRate, M.band, M.level,
     ...(reachVintages.length ? [t("method.items.position", { vintages: listOf(reachVintages.map(reachWord)), year: summary.year })] : []),
     M.money, t("method.items.household", { year: summary.year }), M.modeledFamily,
     /* The twin is named only once a run carries it (core's single-2-nosub fills on the next sweep). */
-    summary.archetypes.some((a) => a.id.endsWith("-nosub")) ? `${M.takeUp} ${M.takeUpTwin}` : M.takeUp,
+    twin ? `${M.takeUp} ${twin.derivedFrom ? M.takeUpTwinDerived : M.takeUpTwin}` : M.takeUp,
     M.deferred, M.corrections,
   ].map((text, i) => `<li>${rich(text)}${i === 1 ? ` <span id="roadToLine"></span>` : ""}</li>`);
   /* The road item (the second) closes with its boundary sensitivity, counted per household in renderMethod. */
@@ -211,7 +224,7 @@ export function renderOnce(summary: SummaryJson): void {
   items.splice(1, 0, `<li id="axisLine"></li>`);
   /* Two per-view items: the axis this household was swept to, and how far up
      the curve the tallest wall stands for it. Both are counted per render. */
-  items.splice(5, 0, `<li id="groupsLine"></li>`);
+  items.splice(6, 0, `<li id="groupsLine"></li>`);
   $("methodList").innerHTML = items.join("");
   /* A gap every state shares is listed once here, never under a state (S8): the `all` entries, one per program. */
   const everywhere = new Map<string, string>();
@@ -261,8 +274,8 @@ function tileTitle(r: StateRow, measure: Measure, cov: StateCoverage | undefined
     case "none": return t(road ? "figure.tile.roadNone" : "figure.tile.none", { state }) + footing;
     case "past": return (measure.key === "leap" && r.value !== null
       ? t("figure.tile.leapAtLeast", { state, value: value(r.value, measure) })
-      : t(road ? "figure.tile.roadPast" : "figure.tile.past", { state })) + footing;
-    default: return t("figure.tile.value", { state, value: longValue(r.value, measure) }) + footing;
+      : road ? t("figure.tile.roadPast", { state }) : t("figure.tile.past", { state, top: money(r.m.axisTop) })) + footing;
+    default: return t("figure.tile.value", { state, value: longValue(r.value as number, measure) }) + footing;
   }
 }
 
@@ -290,34 +303,43 @@ export function renderAnswer(s: Scene): void {
 export function renderFigure(s: Scene): void {
   const { summary, measure, g } = s;
   const road = measure.group === "road";
-  /* A level's steps run the ramp the other way (model.ts `bins`), and the caption says which end is dark. */
+  /* A level is drawn on the keep ramp, darkest where the family keeps most (model.ts `bins`, R14), and the caption says which end is dark. */
   const bins = g.bins.kind === "steps"
     ? t(measure.worst === "low" ? "figure.bins.stepsLow" : "figure.bins.steps", { lo: value(g.bins.lo, measure), hi: value(g.bins.hi, measure) })
-    : g.bins.kind === "diverging"
-      ? divergingLine({ ...g.bins.width!, down: g.bins.width!.down == null ? null : keepSpan(g.bins.width!.down), up: g.bins.width!.up == null ? null : keepSpan(g.bins.width!.up) }, tick(g.bins.lo, measure), tick(g.bins.hi, measure))
-      : classesLine(g.bins.classes.length, g.bins.lo, g.bins.hi);
+    : divergingLine({ ...g.bins.width!, down: g.bins.width!.down == null ? null : keepSpan(g.bins.width!.down), up: g.bins.width!.up == null ? null : keepSpan(g.bins.width!.up) }, tick(g.bins.lo, measure), tick(g.bins.hi, measure));
   /* One class holding nine comparable states in ten explains a near-monochrome map (N11). */
   const share = g.bins.classes.map((_, i) => g.ranked.filter((r) => g.bins.index(r.value as number) === i).length);
   const big = share.findIndex((n) => g.ranked.length && n / g.ranked.length >= 0.9);
-  const oneClass = big < 0 ? null : g.bins.kind === "classes"
-    ? (g.bins.classes[big].lo === g.bins.classes[big].hi
-      ? (g.bins.classes[big].lo === 0 ? t("figure.oneClass.countNone", { n: share[big], total: g.ranked.length }) : t("figure.oneClass.countValue", { n: share[big], total: g.ranked.length, value: g.bins.classes[big].lo }))
-      : t("figure.oneClass.countRange", { n: share[big], total: g.ranked.length, lo: g.bins.classes[big].lo, hi: g.bins.classes[big].hi }))
+  const oneClass = big < 0 ? null
     : t("figure.oneClass.dollars", { n: share[big], total: g.ranked.length, lo: tick(g.bins.classes[big].lo, measure), hi: tick(g.bins.classes[big].hi, measure) });
 
   /* The line that never hides, cut to what a reporter needs at a glance: that
      these are estimates, whose rules they are, and which run. The model
      version, the premium adjustment and the bin bounds are a press away —
-     under "How to read this map" for the bins, under "Where these numbers come
-     from" for the rest — because they answer a question nobody asks first. */
+     under "How these numbers were made" for the bins, under "Where these
+     numbers come from" for the rest — because they answer a question nobody
+     asks first. */
   $("figSrc").textContent = t("figure.source", { year: summary.year, date: dateWords(summary.generated) });
   $("figScope").textContent = `${countedLede(s.rows.length, summary.archetypes.length, s.rows.some((r) => r.st === "DC"))} ${t("figure.sub", { household: s.archLabel })}`;
+  /* HOW TO READ THIS MAP, for a reader (marketing review M7): the five things
+     the map is made of — a cliff, a danger zone, the road, the keep rate, the
+     shading — defined in that order, the road in this household's dollars.
+     The engine's notes (where a flag is read from, what must not be charted,
+     how the bins are cut) are the method panel's now. */
+  const span = roadSpan(s.rows);
+  $("howToRead").innerHTML = rich(t("howTo.read", { floor: money(CLIFF_MIN), span: span === null ? "" : t("howTo.span", { lo: money(span.lo), hi: money(span.hi) }) }));
   /* The keep rate names its road in this household's dollars, here and in the table's definition of its column. */
-  $("figMeasure").textContent = t("howTo.measure", { measure: measure.title, describe: describeFor(measure, s.rows) });
+  $("figMeasure").textContent = t("howTo.measure", { measure: measure.name, describe: describeFor(measure, s.rows) });
   $("def-colKeepRate").textContent = describeFor(measureByKey("keepRate")!, s.rows);
+  /* …the second top names its dollars (R3), the modal one, as the road's span does… */
+  const wide = modal(s.rows.flatMap((r) => (r.m.roadWideHi == null ? [] : [r.m.roadWideHi])));
+  $("def-colKeepRateWide").textContent = t("table.defs.keepRateWide", { wide: wide === null ? "—" : money(wide) });
   /* …and the two levels name the pay they are read at. */
   for (const key of ["netAtRoadLo", "netAtRoadHi"] as const) $(`def-${colId(key)}`).textContent = describeFor(measureByKey(key)!, s.rows);
-  $("grid").setAttribute("aria-label", t("figure.title", { measure: measure.title }));
+  $("grid").setAttribute("aria-label", t("figure.title", { measure: measure.name }));
+  /* The legend's title is the measure's one name (R9/M6), over the scale it keys. */
+  $("legendTitle").textContent = measure.name;
+  /* The bin mechanics are the method's (M7): the full bins sentence sits there, beside the rules behind it. */
   $("binsLine").textContent = [
     binsLine(bins, g.ranked.length, g.none.length, g.past.length),
     oneClass,
@@ -378,25 +400,21 @@ export function renderFigure(s: Scene): void {
   mapSwipeHint(grid);
 
   /* The scale draws the classes that exist: five steps with their six bounds
-     between them, or a count's classes each labelled with what it holds (S5). */
+     between them, or a diverging scale's two arms. */
   const { classes } = g.bins;
   /* The swatch where the two arms meet takes a wider gap before it: the hue
      change says which way is which, the gap says where the turn is. */
   $("scale").innerHTML = classes.map((c, i) => `<span class="sw${i > 0 && classes[i - 1].hue !== c.hue ? " sw--hinge" : ""}" style="background:var(--${c.hue}-${c.ramp + 1})"></span>`).join("");
   const labels = $("scaleLabels");
-  labels.classList.toggle("classes", g.bins.kind === "classes");
-  labels.style.setProperty("--n", String(classes.length));
   /* A diverging scale is labelled by its bounds, like a dollar measure's
      steps — and because zero is one of them, the label that reads "0¢" sits
      exactly where the two ramps meet, which is the whole point of the scale. */
-  labels.innerHTML = g.bins.kind === "classes"
-    ? classes.map((c) => `<span>${c.lo === c.hi ? c.lo : `${c.lo}–${c.hi}`}</span>`).join("")
-    : `<span>${tick(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${tick(c.hi, measure)}</span>`).join("");
+  labels.innerHTML = `<span>${tick(g.bins.lo, measure)}</span>` + classes.map((c) => `<span>${tick(c.hi, measure)}</span>`).join("");
   /* A diverging scale's two arms step at different widths (26¢ losing, 15¢
      keeping), and a reader compares colours across the hinge; so each arm
-     says its own width under its own swatches, where the colours are, not
-     only in the bins line under "How to read this map". Each caption spans
-     exactly its arm's swatches. */
+     says its own width under its own swatches, where the colours are (and
+     the bins line in the method says it again, with the rules). Each caption
+     spans exactly its arm's swatches. */
   const arms = g.bins.kind === "diverging" && g.bins.width
     ? ([["loss", g.bins.width.down], ["keep", g.bins.width.up]] as const)
       .map(([hue, w]) => ({ n: classes.filter((c) => c.hue === hue).length, w }))
@@ -405,6 +423,11 @@ export function renderFigure(s: Scene): void {
   const steps = $("scaleSteps");
   steps.hidden = arms.length === 0;
   steps.innerHTML = arms.map((a, i) => `<span style="flex:${a.n} 1 0"${i ? ` class="hinge"` : ""}>${esc(t("figure.scale.stepsOf", { width: keepSpan(a.w) }))}</span>`).join("");
+  /* THE PLAIN CUE, beside the step widths (M16): which way is worse, in
+     words — "darker = loses more" — and, where the two arms step at
+     different widths, that they do, said once, here at the scale (R13) and
+     nowhere else on the figure. */
+  $("scaleCue").textContent = [measure.cue, arms.length > 1 && arms[0].w !== arms[1].w ? copy.figure.scale.unequal : null].filter((x): x is string => x !== null).join(" · ");
 
   /* The legend strip inside the figure: only the tile states that are on the
      map right now and NOT on the ramp above it, so it is one line and not a
@@ -424,14 +447,14 @@ export function renderFigure(s: Scene): void {
      drift from the map, whether or not this view has one of each. */
   const K = copy.howTo.key;
   $("keyFull").innerHTML = [
-    `<li><i class="hg-swatch" style="background:var(--loss-4)"></i>${esc(K.shaded)}</li>`,
+    `<li><i class="hg-swatch" style="background:var(--${isLevel(measure.key) ? "keep" : "loss"}-4)"></i>${esc(K.shaded)}</li>`,
     `<li><i class="hg-swatch hg-swatch--none"></i>${esc(road ? K.roadNone : K.none)}</li>`,
     `<li><i class="hg-swatch hg-swatch--past"></i>${esc(road ? K.roadPast : K.past)}</li>`,
     `<li><i class="hg-swatch hg-swatch--incomplete hg-hatch-incomplete"></i>${esc(K.incomplete)}</li>`,
   ].join("");
 
   /* Nothing that warns hides (§ The page is its picture). The two boxed
-     warnings live inside "How to read this map" in full; the one that is TRUE
+     warnings live in the method panel in full; the one that is TRUE
      OF THE MAP ON THE SCREEN comes out of it, in one line, because then it is
      not a rule but a caution about the tiles a reader is looking at. A hatched
      state outranks a bounded one: it says a figure is missing, not merely
@@ -485,33 +508,41 @@ function stateLines(r: StateRow, measure: Measure, arch: Archetype, cov: StateCo
      says that rather than a figure nothing stands behind. */
   if (m.keepRate === null) lines.push(esc(roadOffAxisLine(plain)));
   else {
-    /* The level beside the slope: what the household has at each end of the road, where the file carries it. */
-    const level = m.netAtRoadLo == null || m.netAtRoadHi == null ? null : { netLo: b(money(m.netAtRoadLo)), netHi: b(money(m.netAtRoadHi)) };
+    /* The level beside the slope, and the rate said again in dollars (M17):
+       what the household has at each end of the road, where the file carries it. */
+    const level = m.netAtRoadLo == null || m.netAtRoadHi == null || m.roadLo === null || m.roadHi === null ? null
+      : { raise: m.roadHi - m.roadLo, netLo: m.netAtRoadLo, netHi: m.netAtRoadHi };
     const road = [roadRateLine(st, m.keepRate, (text) => b(text), level)];
+    /* What "money kept" counts (M3), with the child-care help inside it where there is some. */
+    if (level !== null) road.push(esc(countedLine(m.childcareAtRoadLo ? money(m.childcareAtRoadLo) : null)));
+    const holds = m.roadWorst === null && m.cliffCount > 0 && m.roadLo !== null && m.roadHi !== null;
     if (m.roadWorst) {
-      road.push(roadCollapse(b(money(m.roadWorst.at)), b(money(m.roadWorst.drop)), m.roadWorst.programs));
+      road.push(roadWorstLine(b(money(m.roadWorst.at)), b(money(m.roadWorst.drop)), m.roadWorst.programs));
       const at = positionAt(r.st, arch, m.roadWorst.at);
       if (at !== null) road.push(esc(roadPosition(Math.round(at))));
-    } else if (m.cliffCount > 0 && m.roadLo !== null && m.roadHi !== null) {
+    } else if (holds) {
       /* Only where the curve has a cliff SOMEWHERE is "the road holds" news.
          With none anywhere, line 3 says the stronger thing and this would
          only repeat it in a shorter range. */
-      road.push(esc(roadHolds(money(STEP), money(m.roadLo), money(m.roadHi), money(CLIFF_MIN))));
+      road.push(esc(roadHolds(money(STEP), money(m.roadLo!), money(m.roadHi!), money(CLIFF_MIN))));
     }
+    /* A LARGER DROP JUST PAST THE TOP (R3 (c)): a cliff within $5,000 past
+       the road's end that is bigger than anything on it. The keep rate cannot
+       see it, and Minnesota's is the reason to say so. */
+    const past = m.pastRoadWorst;
+    if (past && past.drop > (m.roadWorst?.drop ?? 0)) road.push(pastTopLine(b(money(past.at)), b(money(past.drop)), m.roadWorst === null));
     lines.push(road.join(" "));
   }
 
   /* 2. The selected measure, where line 1 or line 3 is not already its sentence. */
   const lead = measure.key === "keepRate" || measure.key === "roadWorst" || measure.key === "biggestLoss" ? null
-    : measure.key === "roadCliffCount" ? roadCliffCountLine(st, m.roadCliffCount)
-      /* A level is a figure with or without a cliff, so it is said before the no-cliff test below. */
+    /* The deepest fall and a level are figures with or without a cliff, so they are said before the no-cliff test below. */
+    : measure.key === "deepestFall" ? (r.value === null ? null : t("readout.measure.deepestFall", { state: st, fell: r.value > 0 ? "yes" : "no", fall: b(money(r.value)) }))
       : isLevel(measure.key) ? (r.value === null ? null : t(`readout.measure.${measure.key}`, { state: st, value: b(money(r.value)) }))
-      : m.cliffCount === 0 ? null
-        : measure.key === "dangerWidth" ? (m.safeExit === null ? t("readout.measure.dangerWidthOpen", { state: st, width: b(money(m.dangerWidth)), top }) : t("readout.measure.dangerWidth", { state: st, width: b(money(m.dangerWidth)) }))
-          : measure.key === "leap" ? (m.leapIsLowerBound ? t("readout.measure.leapAtLeast", { state: st, leap: b(money(m.leap)), top }) : t("readout.measure.leap", { state: st, leap: b(money(m.leap)) }))
-            : measure.key === "safeExit" ? (m.safeExit === null ? t("readout.measure.safeExitPast", { state: st, top }) : t("readout.measure.safeExit", { state: st, exit: b(money(m.safeExit)) }))
-              : measure.key === "cliffCount" ? cliffCountLine(st, m.cliffCount, m.deferredCliffCount)
-                : deferredLine(st, m.deferredCliffCount, m.cliffCount);
+        : m.cliffCount === 0 ? null
+          : measure.key === "dangerWidth" ? (m.safeExit === null ? t("readout.measure.dangerWidthOpen", { state: st, width: b(money(m.dangerWidth)), top }) : t("readout.measure.dangerWidth", { state: st, width: b(money(m.dangerWidth)) }))
+            : measure.key === "leap" ? (m.leapIsLowerBound ? t("readout.measure.leapAtLeast", { state: st, leap: b(money(m.leap)), top }) : t("readout.measure.leap", { state: st, leap: b(money(m.leap)) }))
+              : m.safeExit === null ? t("readout.measure.safeExitPast", { state: st, top }) : t("readout.measure.safeExit", { state: st, exit: b(money(m.safeExit)) });
   if (lead !== null) lines.push(lead + (missing.length ? ` ${esc(floorTail(missing))}` : ""));
 
   /* 3. The whole axis, last, with who is standing below it — or, where the
@@ -581,10 +612,11 @@ export function renderRank(s: Scene): void {
       : measure.key === "roadWorst" ? m.roadWorst?.at ?? null
         : measure.key === "safeExit" ? m.safeExit : null;
   const withAt = measure.key === "biggestLoss" || measure.key === "roadWorst" || measure.key === "safeExit";
-  /* The keep rate's second, lighter figure: the same slope to exactly twice
-     poverty (`keepRateToLine`), so a reporter sees which top-ranked states are
-     one boundary step — an exit sitting on the line — rather than the road.
-     The ranking stays on the keep rate itself. */
+  /* The keep rate's two lighter figures, either side of its top (R3): the
+     same slope to exactly twice poverty (`keepRateToLine`) and on to 220% of
+     it (`keepRateWide`), so a reporter sees which top-ranked states are one
+     boundary step — an exit sitting on the line — and which gentle ones have
+     a wall one step past it. The ranking stays on the keep rate itself. */
   const toLine = measure.key === "keepRate";
   const rankRow = (r: StateRow, inner: string, v: string, n?: string) => {
     const point = withAt ? pointOf(r.m) : null;
@@ -593,7 +625,8 @@ export function renderRank(s: Scene): void {
     const share = point === null ? null
       : measure.key === "biggestLoss" ? r.m.biggestLossPosition : positionAt(r.st, s.arch, point);
     const line = toLine && r.m.keepRateToLine != null ? t("rank.toLine", keepRateWords(r.m.keepRateToLine)) : null;
-    const at = [where, share === null ? null : t("rank.position", { n: Math.round(share) }), line].filter((x): x is string => x !== null).join(" · ");
+    const wide = toLine && r.m.keepRateWide != null ? t("rank.toWide", keepRateWords(r.m.keepRateWide)) : null;
+    const at = [where, share === null ? null : t("rank.position", { n: Math.round(share) }), line, wide].filter((x): x is string => x !== null).join(" · ");
     return `<li><button type="button" class="hg-row-btn" data-st="${r.st}" aria-label="${esc(rowLabel(n ?? "", name(r.st), v, at || undefined))}"` +
       `${control(r.st, s.sel, tabbable)}>${n === undefined ? "" : `<span class="n">${esc(n)}</span>`}<span class="st">${r.st}</span>` +
       `<span class="track">${inner}</span><span class="v">${esc(v)}${at ? ` <small class="at">${esc(at)}</small>` : ""}</span></button></li>`;
@@ -614,10 +647,10 @@ export function renderRank(s: Scene): void {
   const lowerKey: LowerKey = road ? "road" : measure.key === "leap" ? "leap" : "safeExit";
   $("lowerTitle").textContent = lowerTitle(lowerKey, n);
   $("rankLower").innerHTML = g.past.map((r) => rankRow(r, `<span class="past"></span>`,
-    measure.key === "leap" && r.value !== null ? t("rank.atLeast", { value: value(r.value, measure) }) : road ? copy.roadOffAxis : copy.pastAxis, rankRange(n))).join("");
-  const top = g.ranked[0] ? { state: name(g.ranked[0].st), v: value(g.ranked[0].value, measure) } : null;
+    measure.key === "leap" && r.value !== null ? t("rank.atLeast", { value: value(r.value, measure) }) : road ? copy.roadOffAxis : beyond(r.m.axisTop), rankRange(n))).join("");
+  const top = g.ranked[0] ? { state: name(g.ranked[0].st), v: value(g.ranked[0].value as number, measure) } : null;
   $("lowerNote").textContent = n === 0 ? "" : lowerNote(lowerKey, n, top,
-    measure.key === "leap" ? { state: name(g.past[0].st), v: value(g.past[0].value, measure), reaches: (g.past[0].value ?? 0) >= (g.ranked[0]?.value ?? 0) } : undefined);
+    measure.key === "leap" ? { state: name(g.past[0].st), v: value(g.past[0].value as number, measure), reaches: (g.past[0].value ?? 0) >= (g.ranked[0]?.value ?? 0) } : undefined);
 
   /* Competition ranking (N3): equal values share a rank, and the next rank
      skips — twelve states at 1 are all first, and the first 0 is thirteenth.
@@ -639,7 +672,7 @@ export function renderRank(s: Scene): void {
     const mark = g.bins.kind === "diverging"
       ? `<span class="bar" style="inset-inline-start:${Math.min(pos(v), zero * 100)}%;width:${Math.abs(pos(v) - zero * 100)}%;${fill}"></span>`
       : `<span class="dot" style="inset-inline-start:${pos(v)}%;${fill}"></span>`;
-    return rankRow(r, mark, value(r.value, measure), rankOrdinal(ranks[i]));
+    return rankRow(r, mark, value(v, measure), rankOrdinal(ranks[i]));
   }).join("");
   /* The bounds stand over the track they bound, on the rows' own grid, and on
      a diverging scale zero stands over the hinge the bars hang off. */
@@ -676,7 +709,7 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
   const rows = tableRows(s.summary, s.arch, sort);
   const sortMeasure = sort === "state" ? null : MEASURES.find((m) => m.key === sort)!;
   const tabbable = s.sel ?? rows[0]?.st;
-  const order = sortMeasure ? t(`table.byMeasure.${shape(sortMeasure)}`, { title: sortMeasure.title.toLowerCase() }) : T.byState;
+  const order = sortMeasure ? t(`table.byMeasure.${shape(sortMeasure)}`, { title: sortMeasure.name.toLowerCase() }) : T.byState;
   $("tabCap").innerHTML = `<span>${esc(t("table.caption", { household: s.archLabel.toLowerCase(), order, year: s.summary.year, date: dateWords(s.summary.generated) }))}</span>`;
   const heading = (text: string) => `<tr class="group"><th colspan="${colspan()}"><span>${esc(text)}</span></th></tr>`;
   const headingFor = (r: StateRow, prev: StateRow | undefined): string => {
@@ -712,18 +745,21 @@ export function renderTable(s: Scene, sort: SortKey): StateRow[] {
       `${control(r.st, s.sel, tabbable)}>${r.st}${missing.length ? `<span class="flag-mark" aria-hidden="true">${esc(T.floorMark)}</span>` : ""}</button></th>` +
       `<td class="num">${m.keepRate === null ? esc(copy.roadOffAxis) : floor(keepShort(m.keepRate))}</td>` +
       `<td class="num">${m.keepRateToLine == null ? T.none : floor(keepShort(m.keepRateToLine))}</td>` +
+      `<td class="num">${m.keepRateWide == null ? T.none : floor(keepShort(m.keepRateWide))}</td>` +
       `<td class="num">${m.netAtRoadLo == null ? T.none : floor(money(m.netAtRoadLo))}</td>` +
       `<td class="num">${m.netAtRoadHi == null ? T.none : floor(money(m.netAtRoadHi))}</td>` +
       `<td class="num">${m.keepRate === null ? T.none : floor(String(m.roadCliffCount))}</td>` +
       `<td class="num">${noRoadCliff || !m.roadWorst ? T.none : floor(money(m.roadWorst.drop))}</td>` +
       `<td class="num">${m.roadWorst ? esc(stepWords(m.roadWorst.at)) + positionUnder(positionAt(r.st, s.arch, m.roadWorst.at)) : T.none}</td>` +
+      /* The deepest fall is a figure with or without a cliff: $0 is a measured "never dipped", not "none". */
+      `<td class="num">${m.deepestFall == null ? T.none : floor(money(m.deepestFall))}</td>` +
       `<td class="num">${cell(m.biggestLoss)}</td>` +
       /* The whole-axis worst's position is the pipeline's own field, not a
          second derivation of it: one number, one place it is computed. */
       `<td class="num">${none || m.biggestLossAt === null ? T.none : esc(stepWords(m.biggestLossAt)) + positionUnder(m.biggestLossPosition)}</td>` +
       `<td class="num">${cell(m.dangerWidth)}</td>` +
       `<td class="num">${none ? T.none : floor(m.leapIsLowerBound ? t("rank.atLeast", { value: money(m.leap) }) : money(m.leap))}</td>` +
-      `<td class="num">${none ? T.none : m.safeExit === null ? `<span aria-describedby="pastAxisNote">${esc(copy.pastAxis)}</span>` : floor(money(m.safeExit)) + positionUnder(positionAt(r.st, s.arch, m.safeExit))}</td>` +
+      `<td class="num">${none ? T.none : m.safeExit === null ? `<span aria-describedby="pastAxisNote">${esc(beyond(m.axisTop))}</span>` : floor(money(m.safeExit)) + positionUnder(positionAt(r.st, s.arch, m.safeExit))}</td>` +
       `<td class="num">${floor(String(m.cliffCount))}</td><td class="num">${floor(String(m.deferredCliffCount))}</td>` +
       `<td class="flag${missing.length ? " no" : ""}">${figures}</td></tr>`;
   }).join("");

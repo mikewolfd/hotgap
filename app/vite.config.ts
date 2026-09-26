@@ -10,6 +10,7 @@ import { defineConfig, type Plugin } from "vite";
 // which is the only thing that evaluates a household.
 
 const STATES_DIR = resolve(import.meta.dirname, "../core/data/states");
+const SUMMARY = resolve(import.meta.dirname, "../core/data/summary.json");
 
 /**
  * Every state's money line for one household, derived at build time from the
@@ -20,8 +21,18 @@ const STATES_DIR = resolve(import.meta.dirname, "../core/data/states");
  */
 function curves(): Record<string, string> {
   const out: Record<string, { from: number; step: number; states: Record<string, number[]>; subsidyAtFirstDollar: Record<string, boolean> }> = {};
+  /* A row the summary DERIVED rather than swept (pipeline/src/twin.ts: the
+     no-subsidy twin, until a sweep runs it) has no points in the state files;
+     its curve is derived here the same way — each point's net income less
+     the child-care subsidy it carries — so its pictures match its figures. */
+  const derived = (JSON.parse(readFileSync(SUMMARY, "utf8")) as { archetypes: { id: string; derivedFrom?: string }[] }).archetypes
+    .flatMap((a) => (a.derivedFrom ? [[a.id, a.derivedFrom] as const] : []));
   for (const file of readdirSync(STATES_DIR).filter((f) => f.endsWith(".json")).sort()) {
     const json = JSON.parse(readFileSync(resolve(STATES_DIR, file), "utf8")) as { state: string; archetypes: Record<string, { points: { earnings: number; netIncome: number; programs?: { childcare?: number } }[] }> };
+    for (const [id, from] of derived) {
+      const base = json.archetypes[from];
+      if (!json.archetypes[id] && base) json.archetypes[id] = { points: base.points.map((p) => ({ ...p, netIncome: p.netIncome - (p.programs?.childcare ?? 0), programs: { ...p.programs, childcare: 0 } })) };
+    }
     for (const [id, { points }] of Object.entries(json.archetypes)) {
       if (points.length < 2) continue;
       const c = (out[id] ??= { from: points[0].earnings, step: points[1].earnings - points[0].earnings, states: {}, subsidyAtFirstDollar: {} });

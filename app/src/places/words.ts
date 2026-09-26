@@ -6,7 +6,7 @@
 // joined with a space in the order the reader meets them; a list is Intl's.
 import { keepRateWords, LIHEAP_VINTAGE, type LiheapShape, type ModelRecord, type ProgramId } from "@hotgap/core";
 import { bind, catalog } from "../lib/copy.js";
-import { dayWords, listOf, listOfItems, modelLine, numberWords } from "../lib/format.js";
+import { dayWords, listOf, listOfItems, modelLine, money, numberWords } from "../lib/format.js";
 import { programName } from "../lib/names.js";
 import { servedTenths } from "../lib/served.js";
 import { copy, t } from "./copy.js";
@@ -34,14 +34,13 @@ export const keepSpan = (rate: number): string => t("keep.span", { cents: keepRa
 export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
 
 // ── The road, as the readout leads with it ───────────────────────────────
-/* Three sentences, in the order a reader meets them: what the household
-   keeps of each extra dollar walking from the poverty line to twice it,
-   where that road collapses, and how many families like it are standing
-   below the collapse. The first two are core's own codes, so the citizen
-   answer and the caseworker sheet say them the same way; the two this page
-   adds are the two core has no code for — a road that holds, and a collapse
-   no single program explains — and the position sentence, which is a
-   sentence here and a clause in core. */
+/* The sentences in the order a reader meets them: what the household keeps
+   of each extra dollar walking from the poverty line to twice it, said again
+   in dollars; what "money kept" counts; the biggest single loss on the road
+   and how many families like it are standing below it; and a larger drop
+   just past the road's top, where there is one. The RATE is core's own
+   phrase, so the citizen answer and the caseworker sheet say it the same way;
+   the rest is this page's, in this page's one name for each thing. */
 
 /**
  * "**Ohio** — **loses 42¢ of each extra dollar** climbing out of poverty."
@@ -61,28 +60,52 @@ export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
  * rate says raises add up, not how much the family has, and across the states
  * the two are only weakly related — Wisconsin's family has $46,179 at the poverty
  * line and loses on the road, New Mexico's has $45,705 and keeps 30¢. So the
- * sentence names what the household has at both ends, `netLo` and `netHi`
- * already in dollars; without them (a file written before the levels) it is
- * the rate alone (`readout.road.rateOnly`).
- */
-export const roadRateLine = (state: string, rate: number, mark: (text: string) => string = (x) => x, level: { netLo: string; netHi: string } | null = null): string =>
-  level === null
-    ? t("readout.road.rateOnly", { state, rate: mark(keepPhrase(rate)) })
-    : t("readout.road.rate", { state, rate: mark(keepPhrase(rate)), ...level });
-/**
- * "The road collapses at $40,000, where CCDF child care subsidy ends and the
- * family loses $16,428 in one step."
+ * sentence names what the household has at both ends, in dollars; without
+ * them (a file written before the levels) it is the rate alone
+ * (`readout.road.rateOnly`).
  *
- * core's `road.collapse` is the sentence, and it says "{program} ends" — one
- * program, one verb. A step can end two at once (Massachusetts' road collapses
- * on SNAP *and* WIC), and it can end none the model can name, so those two
- * take this page's own wording rather than core's with a verb that does not
- * agree. Same sentence, same figures, in the branch it belongs to.
+ * …AND SAYS THE RATE AGAIN IN DOLLARS (blind review M17, 2026-09-26): "loses
+ * 105¢ of each extra dollar" read as a typo, so the sentence goes on — "a
+ * raise of $28,000 leaves the family $29,362 poorer" — from the road's own two
+ * ends. `raise` is the road's span, `diff` the change in what the family
+ * keeps, unsigned: `change` carries the sign.
  */
-export const roadCollapse = (at: string, drop: string, ids: readonly ProgramId[]): string =>
-  ids.length === 1 ? ct("road.collapse", { at, drop, program: programs(ids) })
-    : ids.length ? t("readout.road.collapsePlural", { at, drop, programs: programs(ids) })
-      : t("readout.road.collapseNoProgram", { at, drop });
+export interface RoadLevel { raise: number; netLo: number; netHi: number }
+export const roadRateLine = (state: string, rate: number, mark: (text: string) => string = (x) => x, level: RoadLevel | null = null): string => {
+  if (level === null) return t("readout.road.rateOnly", { state, rate: mark(keepPhrase(rate)) });
+  const diff = level.netHi - level.netLo;
+  return t("readout.road.rate", {
+    state, rate: mark(keepPhrase(rate)), raise: money(level.raise), diff: mark(money(Math.abs(diff))),
+    change: diff < 0 ? "poorer" : diff === 0 ? "same" : "better", netLo: mark(money(level.netLo)), netHi: mark(money(level.netHi)),
+  });
+};
+/**
+ * WHAT "MONEY KEPT" COUNTS, said beside the figure (marketing review M3): a
+ * poverty-line family "keeping $80,163" reads as absurd until the reader is
+ * told what is in it. The words are written for the definition core is moving
+ * to — net income after the care bill — and the clause about the subsidy is
+ * the data's: it is there only where the level carries child-care help paid
+ * to a provider (`childcareAtRoadLo`), and it names the dollars.
+ */
+export const countedLine = (subsidy: string | null): string =>
+  subsidy === null ? copy.readout.road.counted : t("readout.road.countedSubsidy", { subsidy });
+/**
+ * "The biggest loss on the road is at $54,000: $25,833 in one step, when the
+ * CCDF child care subsidy ends." One sentence, in the measure's own name
+ * (M17: the road no longer "collapses"), with the programs the step ends
+ * counted by the locale's plural — none, one, or several at once
+ * (Massachusetts' ends SNAP *and* WIC).
+ */
+export const roadWorstLine = (at: string, drop: string, ids: readonly ProgramId[]): string =>
+  t("readout.road.worst", { n: ids.length, at, drop, programs: programs(ids) });
+/**
+ * A larger drop just past the road's top (R3 (c)): Minnesota's road ends at
+ * $55,000 and keeps 9¢, and its $27,483 child-care exit is the step out of
+ * $56,000 — one step past the span the keep rate measures. `holds` says the
+ * sentence before it was "nothing on the road", so it turns with "But".
+ */
+export const pastTopLine = (at: string, drop: string, holds: boolean): string =>
+  t("readout.road.pastTop", { holds: holds ? "yes" : "no", at, drop });
 /** What the model found instead, where no cliff falls on the road. */
 export const roadHolds = (step: string, lo: string, hi: string, floor: string): string => t("readout.road.holds", { step, lo, hi, floor });
 /** Who is standing there: the share of families like this earning less than the figure just named. The state is the line's own subject, named at the head of the readout, so the sentence does not say it twice. */
@@ -90,7 +113,6 @@ export const roadPosition = (n: number): string => t("readout.road.position", { 
 export const axisPosition = (n: number): string => t("readout.axisPosition", { n });
 /** A cell whose road runs off its own axis: there is no rate to say. */
 export const roadOffAxisLine = (state: string): string => t("readout.road.offAxis", { state });
-export const roadCliffCountLine = (state: string, n: number): string => t("readout.measure.roadCliffCount", { state, n });
 /** Where a state's child-care price is not its own county's: the input that qualifies most of these cliffs, said beside them. */
 export const carePriceLine = (care: string, state: string): string => t("readout.carePrice", { care, state });
 
@@ -116,6 +138,7 @@ export function householdLabel(married: boolean, bothWork: boolean, ages: number
  * label form ("1 adult, 2 children (3 and 7)") does not read there. Same
  * facts, different grammar; the ages are the label's job, not this one's.
  */
+/* The `-nosub` twin: "a single parent of two children without child-care help". */
 export function householdPhrase(married: boolean, bothWork: boolean, ages: number[], noSubsidy = false): string {
   const phrase = t(`household.phrase.${shapeOf(married, bothWork)}`, { n: ages.length, words: numberWords(ages.length) });
   return noSubsidy ? t("household.phraseNosub", { phrase }) : phrase;
@@ -216,8 +239,6 @@ export function worstStepLine(loss: string, step: string, ids: readonly ProgramI
     ? t("readout.worstStepFloor", { n: ids.length, m: missing.length, loss, step, programs: programs(ids), missing: listOf(missing) })
     : t("readout.worstStep", { n: ids.length, loss, step, programs: programs(ids) });
 }
-export const cliffCountLine = (state: string, n: number, deferred: number): string => t("readout.measure.cliffCount", { state, n, deferred });
-export const deferredLine = (state: string, deferred: number, n: number): string => t("readout.measure.deferred", { state, n, deferred });
 export const floorTail = (missing: string[]): string => t("readout.measure.floorTail", { n: missing.length, missing: listOf(missing) });
 /** What the model found instead of a cliff (rerun S6). */
 export const noneLine = (state: string, step: string, floor: string, top: string, deferred: number): string =>
@@ -228,7 +249,6 @@ export const noneLine = (state: string, step: string, floor: string, top: string
 export const hatchedLine = (n: number, programs: string[]): string => t("figure.hatched", { n, m: programs.length, programs: listOf(programs) });
 export const binsLine = (bins: string, comparable: number, none: number, past: number): string =>
   t(`figure.binsLine.${none && past ? "nonePast" : none ? "none" : past ? "past" : "plain"}`, { bins, comparable, ...(none ? { none } : {}), ...(past ? { past } : {}) });
-export const classesLine = (n: number, lo: number, hi: number): string => t("figure.bins.classes", { n, words: numberWords(n), lo, hi });
 /**
  * The diverging scale's bounds: each arm's own step and the two ends
  * (charts.md § 2). Both widths are printed because they differ — each arm is

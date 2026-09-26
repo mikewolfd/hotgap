@@ -2,24 +2,40 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { SummaryJson } from "@hotgap/core";
 import { answerParts, answerText, holdsText } from "./answer.js";
-import { archLabel, describeFor, group, measureByKey, roadSpan, rowsFor } from "./model.js";
+import { archLabel, describeFor, group, measureByKey, roadSpan, rowsFor, twinOf } from "./model.js";
+import { stateName } from "../lib/names.js";
 import { householdPhrase } from "./words.js";
 
 const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
 const arch = (id: string) => summary.archetypes.find((a) => a.id === id)!;
 const keepRate = measureByKey("keepRate")!;
-const scene = (id: string) => {
-  const rows = rowsFor(summary, arch(id), keepRate);
-  return { arch: arch(id), measure: keepRate, rows, g: group(rows, keepRate) };
+const scene = (id: string, measure = keepRate) => {
+  const rows = rowsFor(summary, arch(id), measure);
+  const twin = twinOf(summary.archetypes, arch(id));
+  return { arch: arch(id), measure, rows, g: group(rows, measure), twinRows: twin ? rowsFor(summary, twin, measure) : null };
 };
 const states = Object.keys(summary.states);
 
 describe("the keep-rate headline on the committed sweep", () => {
-  it("counts the states that end the climb poorer, and how many of them are poorer before the step out of twice poverty", () => {
+  // Blind reviews R2, M1, M2: the headline names the construct — a family
+  // that GETS the child-care subsidy — and shows the pair, the same family
+  // paying for care with no subsidy beside it. The boundary clause ("before
+  // the step out of twice poverty") is the method's, not the headline's.
+  it("names the subsidy the count depends on, and counts the family without it beside it", () => {
     expect(answerText(scene("single-2"))).toBe(
-      "In 26 of the 50 states and the District of Columbia, a single parent of two children climbing from the poverty line to twice it ends up poorer than they started — 20 of them before the step out of twice poverty.");
+      "In 26 of the 50 states and the District of Columbia, a single parent of two children who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, in 2.");
     // The one keyed figure is still the count the map shades.
     expect(answerParts(scene("single-2")).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual(["26"]);
+    expect(answerText(scene("single-2"))).not.toMatch(/step out of twice poverty/);
+  });
+  it("says the subsidy for every household that pays for care, and the pair only where the run carries a twin", () => {
+    expect(answerText(scene("married-dual-2"))).toMatch(/^In \d+ of the 50 states and the District of Columbia, a two-earner couple with two children who gets the child-care subsidy climbs .* poorer than they started\.$/);
+    // A household with a parent at home buys no care and claims no subsidy, so the sentence does not name one.
+    expect(answerText(scene("married-2"))).not.toMatch(/subsidy/);
+  });
+  it("on the twin itself, the household is the one without child-care help, and there is no pair", () => {
+    expect(answerText(scene("single-2-nosub"))).toBe(
+      "In 2 of the 50 states and the District of Columbia, a single parent of two children without child-care help climbs from the poverty line to twice it and ends up poorer than they started.");
   });
 });
 
@@ -37,14 +53,16 @@ describe("the two money-kept headlines on the committed sweep", () => {
     expect(answerText(lo)).toContain(`(${"$" + (loTop.value as number).toLocaleString("en-US")} a year)`);
     expect(answerText(lo)).toContain(`(${"$" + (loBest.value as number).toLocaleString("en-US")})`);
     expect(answerText(hi)).toMatch(/^At twice the poverty line, a single parent of two children keeps least in /);
-    // The keyed figure is the worst state's, drawn on the darkest step.
-    expect(answerParts(lo).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual(["$" + (loTop.value as number).toLocaleString("en-US")]);
-    expect(lo.g.bins.classes[lo.g.bins.index(loTop.value as number)].ramp).toBe(4);
+    // A level is drawn on the KEEP ramp (R14), darkest where the family keeps most: the worst state is the palest
+    // step, and its figure is not underlined in loss ink.
+    expect(answerParts(lo).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual([]);
+    expect(lo.g.bins.classes[lo.g.bins.index(loTop.value as number)]).toMatchObject({ ramp: 0, hue: "keep" });
+    expect(lo.g.bins.classes[lo.g.bins.index(loBest.value as number)]).toMatchObject({ ramp: 4, hue: "keep" });
   });
-  it("names the pay each level is read at, in the household's dollars", () => {
+  it("names the pay each level is read at, in the household's dollars, and what the money is after (M3)", () => {
     const rows = scene("single-2").rows;
-    expect(describeFor(measureByKey("netAtRoadLo")!, rows)).toMatch(/with pay at the poverty line \(\$27,000\)\.$/);
-    expect(describeFor(measureByKey("netAtRoadHi")!, rows)).toMatch(/with pay at twice the poverty line \(\$55,000\)\.$/);
+    expect(describeFor(measureByKey("netAtRoadLo")!, rows)).toBe("What the household keeps in a year with pay at the poverty line ($27,000): after taxes, premiums and the child care the family pays itself, with help and tax credits counted.");
+    expect(describeFor(measureByKey("netAtRoadHi")!, rows)).toMatch(/with pay at twice the poverty line \(\$55,000\): after taxes/);
   });
 });
 
@@ -71,7 +89,7 @@ describe("the no-subsidy twin's words", () => {
   it("labels the menu entry and the sentence's household", () => {
     const twin = { id: "single-2-nosub", married: false, childAges: [3, 7] };
     expect(archLabel(twin)).toBe("1 adult, 2 children (3 and 7), no child-care help");
-    expect(householdPhrase(false, false, [3, 7], true)).toBe("a single parent of two children with no child-care help");
+    expect(householdPhrase(false, false, [3, 7], true)).toBe("a single parent of two children without child-care help");
   });
 });
 
@@ -87,5 +105,19 @@ describe("the keep rate names its road in the household's dollars", () => {
     expect(describeFor(keepRate, rows)).toMatch(/^Of each extra dollar earned from the poverty line \(\$27,000\) to just past twice it \(\$55,000\), the cents/);
     expect(describeFor(keepRate, [])).toMatch(/^Of each extra dollar earned between the poverty line and twice the poverty line, the cents/);
     expect(describeFor(measureByKey("leap")!, rows)).toBe(measureByKey("leap")!.describe);
+  });
+});
+
+describe("the other road headlines, in each measure's one name (R3, M17)", () => {
+  it("the road's biggest loss says where, without the road collapsing", () => {
+    const text = answerText(scene("single-2", measureByKey("roadWorst")!));
+    expect(text).toMatch(/^The biggest one-raise loss on the road is [A-Z][a-zA-Z ]+'s: \$[\d,]+ of income gone between \$[\d,]+ and \$[\d,]+ of pay\.$/);
+    expect(text).not.toMatch(/collapse/);
+  });
+  it("the deepest fall names the state that falls furthest below its poverty-line income, keyed to the loss ramp", () => {
+    const s = scene("single-2", measureByKey("deepestFall")!);
+    const top = s.g.ranked[0];
+    expect(answerText(s)).toBe(`On the road, a single parent of two children falls furthest in ${stateName(top.st)}: $${(top.value as number).toLocaleString("en-US")} below what it had at the poverty line, at its lowest.`);
+    expect(answerParts(s).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual(["$" + (top.value as number).toLocaleString("en-US")]);
   });
 });

@@ -39,6 +39,12 @@ export interface AnswerScene {
   measure: Measure;
   rows: StateRow[];
   g: Grouped;
+  /**
+   * The household's no-subsidy twin, read on the same measure, where the run
+   * carries one (model.ts `twinOf`): the keep-rate headline counts it beside
+   * the household's own, so the sentence a reporter copies holds the pair.
+   */
+  twinRows?: readonly StateRow[] | null;
 }
 
 export type AnswerPart = { text: string } | { slot: string; text: string; key: string | null };
@@ -81,39 +87,41 @@ function sentenceFor(s: AnswerScene): Sentence {
   const floor = money(CLIFF_MIN);
   const top = g.ranked[0];
   const name = (r: StateRow) => stateName(r.st);
-  const household = householdPhrase(s.arch.married, s.arch.id.includes("dual"), s.arch.childAges, s.arch.id.endsWith("-nosub"));
+  const household = householdPhrase(s.arch.married, s.arch.id.includes("dual"), s.arch.childAges, isTwin(s.arch));
 
   switch (measure.key) {
     case "keepRate": {
       const rated = rows.filter((r) => r.m.keepRate !== null);
-      const bad = rated.filter((r) => (r.m.keepRate as number) < 0).length;
-      /* The boundary sensitivity (road.ts `keepRateToLine`): of those, the
-         states still negative measured to exactly twice poverty, without the
-         road's one-step allowance — the ones whose loss is not one exit sitting
-         on the line. Counted within `bad`, so the clause is "of them". */
-      const strict = rated.filter((r) => (r.m.keepRate as number) < 0 && (r.m.keepRateToLine ?? 0) < 0).length;
-      const edgeArgs = { strict, strictCount: String(strict) };
+      const bad = negatives(rows);
+      /* THE CONSTRUCT IS IN THE SENTENCE (blind reviews R2, M1, M2): the count
+         is true of a family that GETS the child-care subsidy, which reaches
+         roughly one eligible child in six, so the sentence a reporter copies
+         says so — "who gets the child-care subsidy" wherever the household
+         pays for care and claims it — and, where the run carries the twin
+         that pays for care with no subsidy, counts that family beside it.
+         The boundary sensitivity (to exactly twice poverty) lives in the
+         method line (render.ts `roadToLine`), not in the headline, where "the
+         step out of twice poverty" was a phrase no first reader could parse. */
+      const who = paysForCare(s.arch) && !isTwin(s.arch) ? t("answer.keepRate.withSubsidy", { household }) : household;
+      const noSub = s.twinRows ? negatives(s.twinRows) : null;
+      /* Every slot is handed over whichever branch prints: the reader throws on a missing one (lib/copy.ts). */
+      const twinArgs = { twin: noSub === null ? "no" : "yes", noSubN: noSub ?? 0, noSub: String(noSub ?? 0) };
       /* The extreme is the ranking's own first row: lowest rate first, because
          `worst` is "low" on this measure. With none rated there is no map. */
       const edge = g.ranked[0] ?? rated[0];
       if (bad === 0) {
-        return { text: A.keepRate.none, args: { places, household, state: name(edge), value: keepPhrase(edge.m.keepRate as number) } };
+        return { text: A.keepRate.none, args: { places, who, state: name(edge), value: keepPhrase(edge.m.keepRate as number) } };
       }
       if (bad === rated.length) {
-        return { text: A.keepRate.all, args: { places, household, state: name(edge), value: keepPhrase(edge.m.keepRate as number), ...edgeArgs }, keyed: ["value"] };
+        return { text: A.keepRate.all, args: { places, who, state: name(edge), value: keepPhrase(edge.m.keepRate as number), ...twinArgs }, keyed: ["value"] };
       }
-      return { text: A.keepRate.some, args: { places, household, bad, ...edgeArgs }, keyed: ["bad"] };
+      return { text: A.keepRate.some, args: { places, who, bad, ...twinArgs }, keyed: ["bad"] };
     }
-    case "roadCliffCount": {
-      /* THE COMPLEMENT, not the share. "{some} of {places}" printed "50 of the
-         50 states and the District of Columbia" on this run — a numerator and
-         a denominator that read as the same number, in the sentence whose
-         whole job is a fraction a reporter can quote. The states with NONE are
-         also the more interesting count, and there is never more than one way
-         to read it. */
-      const miss = rows.filter((r) => r.m.roadCliffCount === 0).length;
-      if (!top || (top.value as number) === 0) return { text: A.roadCliffCount.none, args: { places, floor } };
-      return { text: A.roadCliffCount.some, args: { places, state: name(top), n: top.value as number, count: String(top.value), miss }, keyed: ["count"] };
+    case "deepestFall": {
+      /* The ranking leads with the deepest fall; 0 in every state is a road
+         nobody dips below its start on, and says so. */
+      if (!top || (top.value as number) === 0) return { text: A.deepestFall.none, args: { places, household } };
+      return { text: A.deepestFall.some, args: { household, state: name(top), fall: money(top.value as number) }, keyed: ["fall"] };
     }
     case "roadWorst": {
       if (!top || !top.m.roadWorst) return { text: A.roadWorst.none, args: { places, floor } };
@@ -123,11 +131,13 @@ function sentenceFor(s: AnswerScene): Sentence {
     /* The two levels: what the household has at an end of the road. The
        ranking leads with the LOWEST figure (`worst: "low"`), so the state that
        keeps least is `g.ranked[0]` and the one that keeps most the last row.
-       Every rated state has a figure; a road off the axis is "past". */
+       Every rated state has a figure; a road off the axis is "past". A level
+       is drawn on the keep ramp (R14), so its figure is not underlined in
+       loss ink. */
     case "netAtRoadLo":
     case "netAtRoadHi": {
       const best = g.ranked[g.ranked.length - 1]; /* never empty where a road is on the axis, which it is in every swept cell */
-      return { text: A[measure.key].some, args: { household, state: name(top), value: money(top.value as number), best: name(best), bestValue: money(best.value as number) }, keyed: ["value"] };
+      return { text: A[measure.key].some, args: { household, state: name(top), value: money(top.value as number), best: name(best), bestValue: money(best.value as number) } };
     }
     case "biggestLoss": {
       const miss = rows.filter((r) => r.m.cliffCount === 0).length;
@@ -147,14 +157,14 @@ function sentenceFor(s: AnswerScene): Sentence {
          rather than letting the highest MEASURED exit stand as the highest. */
       if (g.past.length) return { text: A.safeExit.open, args: { n: g.past.length, state: name(top), exit: money(top.value as number) }, keyed: ["exit"] };
       return { text: A.safeExit.some, args: { state: name(top), exit: money(top.value as number) }, keyed: ["exit"] };
-    case "cliffCount":
-      if (!top || (top.value as number) === 0) return { text: A.cliffCount.none, args: { places, floor } };
-      return { text: A.cliffCount.some, args: { state: name(top), n: top.value as number, count: String(top.value) }, keyed: ["count"] };
-    default:
-      if (!top || (top.value as number) === 0) return { text: A.deferredCliffCount.none, args: { places } };
-      return { text: A.deferredCliffCount.some, args: { state: name(top), n: top.value as number, count: String(top.value) }, keyed: ["count"] };
   }
 }
+
+/** The `-nosub` twin (core's `isNoSubsidyTwin`, by the id the file carries). */
+const isTwin = (a: Archetype): boolean => a.id.endsWith("-nosub");
+
+/** The states whose keep rate is below zero — the count the headline says, read the same way for a household and its twin. */
+export const negatives = (rows: readonly StateRow[]): number => rows.filter((r) => r.m.keepRate !== null && r.m.keepRate < 0).length;
 
 /** The sentence as parts, so the renderer can underline each keyed figure in the ink of the tiles it counts. */
 export function answerParts(s: AnswerScene): AnswerPart[] {

@@ -131,6 +131,7 @@ describe("csvFor on the committed sweep", () => {
       "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
       "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
       "keep_rate_to_line_cents", "net_at_road_lo", "net_at_road_hi",
+      "keep_rate_wide_cents", "road_wide_hi", "deepest_fall",
     ]);
     for (const [i, r] of body.entries()) {
       const m = rows[i].m;
@@ -152,8 +153,17 @@ describe("csvFor on the committed sweep", () => {
       // The level beside the slope: whole dollars at each end of the road.
       expect(r[col("net_at_road_lo")]).toBe(m.netAtRoadLo == null ? "" : String(m.netAtRoadLo));
       expect(r[col("net_at_road_hi")]).toBe(m.netAtRoadHi == null ? "" : String(m.netAtRoadHi));
+      // R3: the keep rate on to 220% of the line, the earnings it runs to, and the deepest fall on the road.
+      expect(r[col("keep_rate_wide_cents")]).toBe(m.keepRateWide == null ? "" : String(Math.round(m.keepRateWide * 100)));
+      expect(r[col("road_wide_hi")]).toBe(m.roadWideHi == null ? "" : String(m.roadWideHi));
+      expect(r[col("deepest_fall")]).toBe(m.deepestFall == null ? "" : String(m.deepestFall));
     }
-    // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it
+    // Minnesota, the knife edge: 9¢ kept to the road's top, 75¢ lost to 220% of the line, and no fall below its start on the road.
+    const mn = body.find((r) => r[col("state")] === "MN")!;
+    expect([mn[col("keep_rate_cents")], mn[col("keep_rate_to_line_cents")], mn[col("keep_rate_wide_cents")], mn[col("road_wide_hi")], mn[col("deepest_fall")]]).toEqual(["9", "22", "-75", "59000", "0"]);
+    // The three counts left the Measure menu (R5, R6) and stay in the file, where they describe a state.
+    for (const c of ["cliff_count", "deferred_cliff_count", "road_cliff_count"] as const) expect(body.every((r) => /^\d+$/.test(r[col(c)])), c).toBe(true);
+        // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it
     // (after taxes, premiums and the child care the family pays itself, R1).
     const level = (st: string) => { const r = body.find((x) => x[col("state")] === st)!; return [r[col("net_at_road_lo")], r[col("net_at_road_hi")]]; };
     expect(level("WI")).toEqual(["46179", "16817"]);
