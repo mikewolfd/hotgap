@@ -70,12 +70,19 @@ export interface StateMetrics {
   keepRateToLine: number | null;
   /**
    * The level beside the slope (road.ts `netAtLo`/`netAtHi`): net income in
-   * whole dollars — help and tax credits counted, taxes and health premiums
-   * out — with pay at `roadLo` and at `roadHi`. A high keep rate is not a
-   * generous state; these say what the family has. Null where `keepRate` is.
+   * whole dollars — help and tax credits counted, taxes, health premiums and
+   * the child care the family pays itself out (types.ts `netIncome`) — with
+   * pay at `roadLo` and at `roadHi`. A high keep rate is not a generous
+   * state; these say what the family has. Null where `keepRate` is.
    */
   netAtRoadLo: number | null;
   netAtRoadHi: number | null;
+  /**
+   * The road's ends on this cell's axis — the HOUSEHOLDER's pay. For a
+   * two-earner row that is the family's poverty line (and twice it) less the
+   * spouse's fixed pay (road.ts `povertyRoad`), so a page naming these as
+   * "the poverty line" must say it is the one earner's share of it.
+   */
   roadLo: number | null;
   roadHi: number | null;
   /** Cliffs whose step starts on the road. Every cliff counts, deferred ones included (2026-09-17). */
@@ -112,6 +119,12 @@ export interface SummaryJson {
   // unchanged re-sweep leaves the file, and this stamp, alone).
   generated: string;
   year: string;
+  /**
+   * The year of the HHS poverty guideline every road in this file is set by
+   * (policyYear.ts `FPL_GUIDELINE_YEAR`) — not `year`: the 2026 rules run on
+   * the 2025 guideline. Absent on files written before it was recorded.
+   */
+  fplYear?: string;
   /** The PolicyEngine that produced these numbers; absent on files written before it was recorded. */
   model?: ModelRecord;
   archetypes: { id: string; married: boolean; childAges: number[] }[];
@@ -258,8 +271,9 @@ export interface StateVintages {
   county: SourceVintage & { fips: string; name: string | null };
   /** Rule and NDCP study year behind each child-care price band (state-defaults.json `childcareBasis.byState`). */
   childcare: Record<string, string>;
-  /** reach.json: the earnings basis, the PUMS vintage(s) this state's cells came from, and the ECI growth factor to 2026. */
-  reach: { basis: string; vintages: string[]; growthFactor: number };
+  /** reach.json: the earnings basis, what a cell matches a family on, the PUMS vintage(s) this state's cells came from, and the ECI growth factor to 2026. */
+  /** `cellDefinition` is absent on a summary written before it was recorded. */
+  reach: { basis: string; cellDefinition?: string; vintages: string[]; growthFactor: number };
 }
 
 export interface SourceVintage {

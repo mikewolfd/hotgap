@@ -205,11 +205,23 @@ function minWageSummary(state: string, cliffs: Cliff[]): MinWageSummary | null {
   };
 }
 
-// Committed archetype curves were swept before childPrograms/otherBenefits/
-// coverageGap existed, so a point read off disk can be missing all three.
-// Fill them in once, here, rather than defending against undefined everywhere.
-const normalize = (p: CurvePoint): CurvePoint => ({
+/**
+ * A point read off disk or out of a cache can predate any of the fields
+ * below. Fill them in once, here, rather than defending against undefined
+ * everywhere.
+ *
+ * `childcareBill` is the one that changes the money line. A point without it
+ * was never charged its child-care bill (types.ts; parse.ts charges every
+ * point it builds), so it is charged here — the bill of the household the
+ * curve models, `annualCareBill`, the same `monthlyChildcare × 12` the engine
+ * was sent — and marked, so no point is ever charged twice. That is what
+ * keeps a live curve cached before 2026-09-26, the fallback and the pipeline
+ * rebuild on the same line as a fresh call. The bill is constant across the
+ * axis, so it moves every level by the bill and no step or slope at all.
+ */
+export const normalizePoint = (p: CurvePoint, annualCareBill: number): CurvePoint => ({
   ...p,
+  ...(p.childcareBill === undefined ? { netIncome: p.netIncome - annualCareBill, childcareBill: annualCareBill } : {}),
   childPrograms: p.childPrograms ?? {},
   otherBenefits: p.otherBenefits ?? 0,
   // No `ctc` was requested before 2026-09-15, so the refundable series is the
@@ -728,7 +740,11 @@ export function evaluateCurve(
   // that needs the split is withheld instead of asserted. The next sweep
   // restores it; nothing else on the curve depends on it.
   const knowsWhoHolds = curve.points.every((p) => p.childPrograms !== undefined);
-  const raw = curve.points.map(normalize);
+  // Offline points describe the swept archetype, including its spouse's $0
+  // pay and its care bill. Never apply the caller's personal inputs to that
+  // baseline.
+  const modeled = modeledAnswers({ answers, source });
+  const raw = curve.points.map((p) => normalizePoint(p, 12 * (modeled.monthlyChildcare ?? 0)));
   // Child support and unemployment ride inside PolicyEngine's household_benefits
   // (verified live 2026-09-14). They are the household's own income, constant
   // across the axis, and not means-tested help, so take them out of the
@@ -737,16 +753,14 @@ export function evaluateCurve(
   const steady = 12 * (answers.childSupportMonthly + answers.unemploymentMonthly);
   for (const p of raw) p.otherBenefits = Math.max(0, p.otherBenefits - steady);
   // The employer-coverage and Head Start corrections describe inputs the
-  // archetype sweep never sent (it runs every take-up toggle off and nobody
-  // with ESI), so they apply to a live curve only. The coverage gap is a
+  // archetype sweep never sent (it runs Head Start off and nobody with ESI),
+  // so they apply to a live curve only. The coverage gap is a
   // property of the state and the income, so it applies to both.
-  // Offline points describe the swept archetype, including its spouse's $0
-  // pay. Never apply the caller's personal inputs to that baseline.
-  const modeled = modeledAnswers({ answers, source });
   const tafdc = correctMaTafdc(modeled, raw);
   // The child-care subsidy needs no step here: parse.ts already put it in net
   // income wherever the model dropped it (policyengine-us #9405), so a stored
-  // curve and a live one both arrive with it counted once.
+  // curve and a live one both arrive with it counted once — and with the bill
+  // it pays charged once, by parse.ts or by normalizePoint above.
   const corrected = source === "live" ? applyLiheap(applyHeadStart(applyEmployerCoverage(tafdc.points, answers), answers), answers) : tafdc.points;
   // The archetype path measures the swept household, not the caller's: its
   // spouse pay, SSDI, unemployment and size decide the poverty-line tests.

@@ -195,35 +195,35 @@ describe("parsePEResponse", () => {
 
 });
 
-describe("the state child-care subsidy", () => {
-  // Two points, and only the variables parsePEResponse insists on. The numbers
-  // are the live Colorado and Connecticut probes of 2026-09-15 at $25,000 and
-  // $45,000 (docs/upstream/evidence/childcare-co-full.json, childcare-ct-full.json).
-  const body = (state: string, subsidy: [number, number], benefits: [number, number]) => ({
-    status: "ok",
-    result: {
-      axes: [[{ min: 25000, max: 45000, count: 2 }]],
-      households: {
-        h: {
-          state_name: { "2026": state },
-          household_net_income: { "2026": [45226, 45928] },
-          household_benefits: { "2026": benefits },
-        },
+// Two points, and only the variables parsePEResponse insists on. The numbers
+// are the live Colorado and Connecticut probes of 2026-09-15 at $25,000 and
+// $45,000 (docs/upstream/evidence/childcare-co-full.json, childcare-ct-full.json).
+const body = (state: string, subsidy: [number, number], benefits: [number, number]) => ({
+  status: "ok",
+  result: {
+    axes: [[{ min: 25000, max: 45000, count: 2 }]],
+    households: {
+      h: {
+        state_name: { "2026": state },
+        household_net_income: { "2026": [45226, 45928] },
+        household_benefits: { "2026": benefits },
       },
-      spm_units: {
-        s: {
-          snap: { "2026": [1553, 0] }, tanf: { "2026": [0, 0] },
-          spm_unit_capped_housing_subsidy: { "2026": [0, 0] },
-          free_school_meals: { "2026": [0, 0] }, reduced_price_school_meals: { "2026": [0, 0] },
-          spm_unit_medical_out_of_pocket_expenses: { "2026": [0, 3169] },
-          child_care_subsidies: { "2026": subsidy },
-        },
-      },
-      tax_units: { t: { eitc: { "2026": [0, 0] }, refundable_ctc: { "2026": [0, 0] }, premium_tax_credit: { "2026": [0, 0] } } },
-      people: { you: { age: { "2026": [30, 30] } }, child1: { age: { "2026": [3, 3] } } },
     },
-  });
+    spm_units: {
+      s: {
+        snap: { "2026": [1553, 0] }, tanf: { "2026": [0, 0] },
+        spm_unit_capped_housing_subsidy: { "2026": [0, 0] },
+        free_school_meals: { "2026": [0, 0] }, reduced_price_school_meals: { "2026": [0, 0] },
+        spm_unit_medical_out_of_pocket_expenses: { "2026": [0, 3169] },
+        child_care_subsidies: { "2026": subsidy },
+      },
+    },
+    tax_units: { t: { eitc: { "2026": [0, 0] }, refundable_ctc: { "2026": [0, 0] }, premium_tax_credit: { "2026": [0, 0] } } },
+    people: { you: { age: { "2026": [30, 30] } }, child1: { age: { "2026": [3, 3] } } },
+  },
+});
 
+describe("the state child-care subsidy", () => {
   it("reads the subsidy as programs.childcare in either kind of state", () => {
     // Colorado: household_benefits carries SNAP + the subsidy.
     const co = parsePEResponse(body("CO", [8913, 0], [10466, 0]), 2);
@@ -271,6 +271,62 @@ describe("the state child-care subsidy", () => {
     const b = body("CT", [8850, 0], [2577, 0]);
     delete (b.result.households.h as Record<string, unknown>).state_name;
     expect(() => parsePEResponse(b, 2)).toThrow(PEParseError);
+  });
+});
+
+describe("the child-care bill (policy-data review R1)", () => {
+  // The same Connecticut and Colorado bodies, now carrying the $9,600 bill as
+  // the engine echoes it: the pre-subsidy input, and `childcare_expenses`,
+  // which upstream computes as that less the subsidy.
+  const withBill = (state: string, subsidy: [number, number], benefits: [number, number]) => {
+    const b = body(state, subsidy, benefits);
+    Object.assign(b.result.spm_units.s, {
+      spm_unit_pre_subsidy_childcare_expenses: { "2026": 9600 },
+      childcare_expenses: { "2026": [9600 - subsidy[0], 9600 - subsidy[1]] },
+    });
+    return b;
+  };
+
+  it("charges the whole bill against a net income that holds the subsidy, in either kind of state", () => {
+    // $8,850 of help against a $9,600 bill: the family pays $750 at $25,000
+    // and the whole $9,600 at $45,000, once the subsidy has ended.
+    const ct = parsePEResponse(withBill("CT", [8850, 0], [2577, 0]), 2);
+    expect(ct.map((p) => p.netIncome)).toEqual([45226 + 8850 - 9600, 45928 - 3169 - 9600]);
+    expect(ct.map((p) => p.childcareBill)).toEqual([9600, 9600]);
+    const co = parsePEResponse(withBill("CO", [8913, 0], [10466, 0]), 2);
+    expect(co.map((p) => p.netIncome)).toEqual([45226 - 9600, 45928 - 3169 - 9600]);
+  });
+
+  it("is out of pocket what the engine says the family pays: the line equals net income without the subsidy less the net bill", () => {
+    const [p] = parsePEResponse(withBill("CT", [8850, 0], [2577, 0]), 2);
+    const withoutSubsidy = 45226; // the model's net income: CT's subsidy was dropped from it
+    expect(p.netIncome).toBe(withoutSubsidy - (9600 - 8850));
+  });
+
+  it("moves no step by the bill: the subsidy's end is the whole of the drop, as before", () => {
+    const charged = parsePEResponse(withBill("CT", [8850, 0], [2577, 0]), 2);
+    const uncharged = parsePEResponse(body("CT", [8850, 0], [2577, 0]), 2);
+    expect(charged[1].netIncome - charged[0].netIncome).toBe(uncharged[1].netIncome - uncharged[0].netIncome);
+  });
+
+  it("reads the bill off `childcare_expenses` when the household does not claim the subsidy", () => {
+    const b = body("CT", [0, 0], [2577, 0]);
+    delete (b.result.spm_units.s as Record<string, unknown>).child_care_subsidies;
+    Object.assign(b.result.spm_units.s, { childcare_expenses: { "2026": 9600 } });
+    const points = parsePEResponse(b, 2);
+    expect(points.map((p) => p.childcareBill)).toEqual([9600, 9600]);
+    expect(points[0].netIncome).toBe(45226 - 9600);
+  });
+
+  it("leaves a body that says nothing of care unmarked, for evaluate.ts to charge from the answers", () => {
+    const points = parsePEResponse(body("CT", [8850, 0], [2577, 0]), 2);
+    expect(points[0].childcareBill).toBeUndefined();
+    expect(points[0].netIncome).toBe(45226 + 8850);
+  });
+
+  it("reads the recorded California fixture's own echoed bill", () => {
+    const ca = parsePEResponse(JSON.parse(readFileSync(new URL("../../fixtures/pe-ca-single-1kid-101.json", import.meta.url), "utf8")), 101);
+    expect(ca.every((p) => p.childcareBill !== undefined)).toBe(true);
   });
 });
 

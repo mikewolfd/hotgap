@@ -49,8 +49,9 @@ npm run hotgap -- curve --state CA --kids 3,7 --earnings 30000 --offline
 
 ```
 CA · single · kids aged 3, 7 · $30,000/yr from work
+source: archetype curve (offline)
 verdict: in danger zone
-money after health costs at $30,000: $75,484
+money after taxes, premiums and care at $30,000: $44,548
 
   at        drop      programs lost
   $28,000   $2,378    tanf

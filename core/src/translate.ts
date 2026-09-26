@@ -117,8 +117,9 @@ function applyDisability(person: Vars, disabled: boolean, ssiPathway: boolean): 
  * and most states run a waiting list — so it follows the same rule as Head
  * Start and a housing voucher: off unless the household says it has it. "Off"
  * here is the old payload exactly, so a household that does not claim the
- * subsidy gets byte-identical output to before, and the archetype sweep (which
- * reports no childcare at all) is untouched.
+ * subsidy gets byte-identical output to before. (The sweep claims it for every
+ * archetype whose parents all work, archetypes.ts; either way the bill sent
+ * here is the one parse.ts charges against net income.)
  *
  * Attendance is an ASSUMPTION, stated: full-day, full-week care (8 hours a day,
  * 5 days a week, 20 days a month), matching the full-day preschool price

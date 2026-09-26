@@ -3,6 +3,7 @@ import { ARCHETYPES } from "./archetypes.js";
 import { stateCoverage } from "./coverage.js";
 import type { StateCoverage } from "./data.js";
 import { NON_EXPANSION_STATES } from "./policyYear.js";
+import { REACH_CELL_DEFINITION } from "./reachLookup.js";
 import { CHILDCARE_SUBSIDY_IN_NET_INCOME } from "./stateChildcareSubsidies.js";
 import { STATE_PREMIUM_ASSISTANCE, UNMODELED_STATE_PREMIUM_ASSISTANCE } from "./statePremiumAssistance.js";
 import { PER_MEMBER_PREMIUM_HELP, STATE_PREMIUM_WRAPS } from "./statePremiumWraps.js";
@@ -165,7 +166,9 @@ describe("stateCoverage — vintages", () => {
     expect(vintages.county).toMatchObject({ fips: "09110", name: null });
     // Connecticut's planning regions post-date the NDCP, so its price is the state-median rule.
     expect(vintages.childcare).toEqual({ infant: "stateMedianCounty 2018", toddler: "stateMedianCounty 2018", preschool: "stateMedianCounty 2018", schoolAge: "stateMedianCounty 2018" });
-    expect(vintages.reach).toEqual({ basis: expect.stringContaining("PUMS"), vintages: ["2024-1yr"], growthFactor: 1.067533 });
+    expect(vintages.reach).toEqual({ basis: expect.stringContaining("PUMS"), cellDefinition: REACH_CELL_DEFINITION, vintages: ["2024-1yr"], growthFactor: 1.067533 });
+    // The basis a page prints says who "families like this" are — and that the children's ages are not matched (R15).
+    expect(vintages.reach.basis).toContain("the children's ages are not matched");
     // A small state's cells lean on the 5-Year file; the block says so.
     expect(stateCoverage("WY", curves()).vintages.reach.vintages).toEqual(["2020-2024-5yr", "2024-1yr"]);
     expect(stateCoverage("WY", curves()).vintages.model).toBeNull();

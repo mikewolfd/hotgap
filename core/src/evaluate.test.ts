@@ -378,7 +378,9 @@ describe("Head Start (finding 9)", () => {
     expect(caPreschool).toBeGreaterThan(600);
     expect(ev.curve.points[0].programs.headstart).toBe(12 * caPreschool);
     expect(ev.curve.points[0].childPrograms.headstart).toBe(12 * caPreschool);
-    expect(ev.curve.points[0].netIncome).toBe(40000 - (22285 - 12 * caPreschool));
+    // …and the family's own $600 a month of care is charged, as on every
+    // curve (R1): the slot's value is help, the bill is still the bill.
+    expect(ev.curve.points[0].netIncome).toBe(40000 - (22285 - 12 * caPreschool) - 12 * 600);
     expect(ev.headStart).toEqual({
       stickerValue: 22285, replacementValue: 12 * caPreschool,
       monthlyReplacementCost: caPreschool, usesStateMarketPrice: true, deferred: true,
@@ -405,7 +407,7 @@ describe("Head Start (finding 9)", () => {
   it("never revalues upward past the sticker", () => {
     const ev = evaluateOn(answersWith({ getsHeadStart: true, monthlyChildcare: 8000 }), points());
     expect(ev.curve.points[0].programs.headstart).toBe(22285);
-    expect(ev.curve.points[0].netIncome).toBe(40000);
+    expect(ev.curve.points[0].netIncome).toBe(40000 - 12 * 8000); // the sticker kept whole; the bill charged
     expect(ev.headStart).toMatchObject({ replacementValue: 22285 });
   });
 
@@ -430,7 +432,10 @@ describe("deferred losses count, and carry their label", () => {
   const snapCliff = withCliff({ programs: { snap: 4000 } });
 
   it("gives a Head Start household the leap the same fall gives a SNAP household", () => {
-    const a = answersWith({ getsHeadStart: true, monthlyChildcare: 1200, annualEarnings: 10000 });
+    // No care bill of its own, so the two curves differ only in which program
+    // falls (a bill would lower every level of one of them, R1); Head Start is
+    // still valued at the state's preschool price, which clears its $12,000.
+    const a = answersWith({ getsHeadStart: true, monthlyChildcare: null, annualEarnings: 10000 });
     const hs = { programs: { headstart: 12000 }, childPrograms: { headstart: 12000 } };
     const ev = evaluateOn(a, withCliff(hs), 10000);
     const control = evaluateOn(answersWith({ annualEarnings: 10000 }), snapCliff, 10000);
@@ -489,7 +494,7 @@ describe("deferred losses count, and carry their label", () => {
       pt(40000, 28000, {}),                       // immediate: SNAP ends
       pt(50000, 60000, {}),
     ];
-    const a = answersWith({ getsHeadStart: true, monthlyChildcare: 1200, annualEarnings: 35000 });
+    const a = answersWith({ getsHeadStart: true, monthlyChildcare: null, annualEarnings: 35000 });
     const ev = evaluateOn(a, points, 35000);
     expect(ev.analysis.cliffs.map((c) => c.startEarnings)).toEqual([10000, 30000]);
     expect(ev.deferred.map((c) => c.startEarnings)).toEqual([10000]);
@@ -717,7 +722,9 @@ describe("Head Start and a childcare subsidy together", () => {
     const a = answersWith({ getsHeadStart: true, getsChildcareSubsidy: true, monthlyChildcare: 800, childAges: [3], childDisabled: [false] });
     const alone = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 0), p(30000, 0)] }, "live");
     const both = evaluateCurve(a, { year: "2026", currentEarnings: 20000, points: [p(20000, 9000), p(30000, 9000)] }, "live");
-    const valued = (ev: ReturnType<typeof evaluateCurve>) => ev.curve.points[0].netIncome - 40000 + 20000; // net change vs the $20k sticker
+    // Net change vs the $20k sticker, with the $800 a month bill — charged on
+    // both curves alike (R1) — set aside.
+    const valued = (ev: ReturnType<typeof evaluateCurve>) => ev.curve.points[0].netIncome + 12 * 800 - 40000 + 20000;
     expect(valued(both)).toBe(Math.max(0, valued(alone) - 9000));
   });
 });
@@ -861,9 +868,19 @@ describe("the state child-care subsidy (policyengine-us #9405)", () => {
     evaluateOn(answersWith({ state, childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 }),
       [pt(25000, 34121 + subsidy, { programs: { childcare: subsidy } }), pt(45000, 42953, { programs: { childcare: 0 } })], 25000);
 
-  it("leaves net income as parsed, in a state of either kind", () => {
-    expect(subsidised("CT", 8850).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8850, 42953]);
-    expect(subsidised("CO", 8913).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8913, 42953]);
+  it("leaves the subsidy as parsed and charges the bill it pays once, in a state of either kind", () => {
+    // The synthetic points carry no `childcareBill`, as a curve cached before
+    // R1 does not: evaluate charges the household's own $800 a month — the
+    // same $9,600 at both points, so the step between them is untouched.
+    expect(subsidised("CT", 8850).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8850 - 9600, 42953 - 9600]);
+    expect(subsidised("CO", 8913).curve.points.map((p) => p.netIncome)).toEqual([34121 + 8913 - 9600, 42953 - 9600]);
+    expect(subsidised("CT", 8850).curve.points.map((p) => p.childcareBill)).toEqual([9600, 9600]);
+  });
+
+  it("never charges a point twice: one already charged by parse.ts is left as it is", () => {
+    const a = answersWith({ state: "CT", childAges: [3], childDisabled: [false], monthlyChildcare: 800, getsChildcareSubsidy: true, annualEarnings: 25000 });
+    const charged = evaluateOn(a, [pt(25000, 33371, { childcareBill: 9600, programs: { childcare: 8850 } }), pt(45000, 33353, { childcareBill: 9600 })], 25000);
+    expect(charged.curve.points.map((p) => p.netIncome)).toEqual([33371, 33353]);
   });
 
   it("names the subsidy on the cliff its end causes, and reports where it ends", () => {
@@ -964,7 +981,8 @@ describe("the energy-assistance toggle (Plan 7, Phase 3)", () => {
   it("changes nothing with the toggle off: the points, the cliffs and the ends are today's", () => {
     const points = rising(150_000);
     const off = evaluateOn(tx, points, 30000);
-    expect(off.curve.points).toEqual(points);
+    // Marked as charged, with the $0 bill this household reports (R1).
+    expect(off.curve.points).toEqual(points.map((p) => ({ ...p, childcareBill: 0 })));
     expect(off.analysis.cliffs).toEqual(analyzeCurve(points, 30000, { hasChildren: true, isAdultGroupLoss: () => false }).cliffs);
     expect(off.escape.programEnds.liheap).toBeUndefined();
   });

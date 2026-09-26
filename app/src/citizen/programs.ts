@@ -22,6 +22,9 @@ export const phraseAndName = (id: ProgramId): string => t("phraseAndName", { phr
  * Help that is inside "money you keep" but never passes through the
  * household as cash (S6). Medicaid, CHIP and the premium credit are NOT
  * candidates: they are not in netIncome, so naming them here would
- * double-count.
+ * double-count. Nor is the child-care subsidy since 2026-09-26: the line is
+ * after the child-care bill (core types.ts `netIncome`, review R1), so the
+ * subsidy is netted against the bill it pays and none of "money you keep" is
+ * care money any more.
  */
-export const NONCASH: ("childcare" | "schoolmeals" | "headstart" | "liheap")[] = ["childcare", "schoolmeals", "headstart", "liheap"];
+export const NONCASH: ("schoolmeals" | "headstart" | "liheap")[] = ["schoolmeals", "headstart", "liheap"];

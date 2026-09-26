@@ -10,7 +10,7 @@
 //
 // A draw is O(points) per curve; the fifty-one are O(states × points) once
 // per household, never per selection.
-import { analyzeCurve, archetypeById, povertyRoad, type CurvePoint, type HouseholdAnswers } from "@hotgap/core";
+import { analyzeCurve, archetypeById, archetypeSpousePay, povertyRoad, type CurvePoint } from "@hotgap/core";
 import { $, h, svg } from "../lib/dom.js";
 import { money, tickMoney } from "../lib/format.js";
 import { stateName } from "../lib/names.js";
@@ -52,9 +52,9 @@ export function stateCurve(c: Curves, st: string, archetype: string): StateCurve
   const points = net.map((v, i) => ({ earnings: earnings[i], netIncome: v, medicalOOP: 0, programs: {}, childPrograms: {} })) as unknown as CurvePoint[];
   /* A zone that never closes runs to the end of the axis. */
   const zones = analyzeCurve(points, 0).dangerZones.map((z): [number, number] => [z.startEarnings, z.endEarnings ?? earnings[earnings.length - 1]]);
-  /* The road needs only the state and the household's size (road.ts), so the archetype's shape is enough — no state defaults to load. */
+  /* The road needs only the state, the household's size and the spouse's pay beside the axis (road.ts), so the archetype's shape is enough — no state defaults to load. */
   const shape = archetypeById(archetype);
-  const r = povertyRoad({ state: st, married: shape.married, childAges: shape.childAges } as HouseholdAnswers, points);
+  const r = povertyRoad({ state: st, married: shape.married, childAges: shape.childAges, spouseAnnualEarnings: archetypeSpousePay(shape) }, points);
   return { earnings, net, zones, road: r ? [r.lo, r.hiStart] : null, roadHi: r ? r.hi : null };
 }
 

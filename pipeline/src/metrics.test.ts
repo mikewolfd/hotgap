@@ -11,6 +11,8 @@ const fixturePoints = parsePEResponse(fixture, 101);
 const single1 = archetypeById("single-1");
 const evaluated = (points: CurvePoint[], state = "CA") =>
   evaluateCurve(answersFor(state, single1), { year: "2026", currentEarnings: 0, points }, "archetype");
+/** California's single-1 care bill: one 3-year-old at the county's preschool price, a year. */
+const SINGLE_1_BILL = 12 * (answersFor("CA", single1).monthlyChildcare ?? 0);
 
 describe("stateMetrics on the committed CA fixture", () => {
   // The CA single-parent-one-kid fixture, evaluated as the CA single-1
@@ -87,8 +89,39 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
   });
 
   it("carries the level beside the slope: Wisconsin has more at the line and less at twice it than New Mexico", () => {
-    expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([80163, 50801]);
-    expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([61905, 70423]);
+    // Levels after the child care the family pays itself (R1).
+    expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([46179, 16817]);
+    expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([45705, 54223]);
+  });
+});
+
+describe("stateMetrics on a curve with a care bill and a subsidy (R1)", () => {
+  // California's single-1 archetype: a subsidy that pays the whole bill up to
+  // $40,000 of pay and then ends, on a line rising fifty cents a dollar. The
+  // points are unmarked, as the committed sweep's were before 2026-09-26.
+  const subsidised = Array.from({ length: 101 }, (_, i) => {
+    const e = i * 1000, subsidy = e < 40_000 ? SINGLE_1_BILL : 0;
+    return flat(e, 20_000 + 0.5 * e + subsidy, { programs: { childcare: subsidy } });
+  });
+  const m = stateMetrics(evaluated(subsidised));
+
+  it("reads the levels after the bill: the subsidy nets it to $0 on the road's low end, the family pays all of it at the top", () => {
+    // The road for two: $21,000 → the step out of $43,000.
+    expect([m.roadLo, m.roadHi]).toEqual([21_000, 44_000]);
+    expect(m.netAtRoadLo).toBe(20_000 + 10_500);
+    expect(m.netAtRoadHi).toBe(20_000 + 22_000 - SINGLE_1_BILL);
+  });
+
+  it("moves no slope and no step: the subsidy's end is the cliff, whole, and the keep rate is the one the uncharged line had", () => {
+    expect(m.biggestLoss).toBe(SINGLE_1_BILL - 500);
+    expect(m.biggestLossAt).toBe(39_000);
+    expect(m.biggestLossPrograms).toEqual(["childcare"]);
+    expect(m.keepRate).toBe(Math.round(((20_000 + 22_000) - (20_000 + 10_500 + SINGLE_1_BILL)) / 23_000 * 10_000) / 10_000);
+  });
+
+  it("is the same whether the bill was charged on read or already at parse", () => {
+    const charged = subsidised.map((p) => ({ ...p, netIncome: p.netIncome - SINGLE_1_BILL, childcareBill: SINGLE_1_BILL }));
+    expect(stateMetrics(evaluated(charged))).toEqual(m);
   });
 });
 
@@ -97,10 +130,12 @@ describe("stateMetrics on synthetic curves", () => {
     const pts = [flat(0, 10000), flat(50000, 15000), flat(100000, 21000)];
     // The road snaps to this curve's own $50,000 step — a three-point curve is
     // not a sweep — so its last step is the one out of $50,000 and the span
-    // runs $0 → $100,000, keeping eleven cents of each dollar.
+    // runs $0 → $100,000, keeping eleven cents of each dollar. The points are
+    // unmarked, so the archetype's own care bill is charged at every one (R1):
+    // the levels fall by it, the slope does not move.
     expect(stateMetrics(evaluated(pts))).toEqual({
       biggestLoss: 0, biggestLossAt: null, biggestLossPrograms: [], dangerWidth: 0, cliffCount: 0, deferredCliffCount: 0, safeExit: 0, leap: 0, leapIsLowerBound: false, axisTop: 100000,
-      keepRate: 0.11, keepRateToLine: 0.1, netAtRoadLo: 10000, netAtRoadHi: 21000, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
+      keepRate: 0.11, keepRateToLine: 0.1, netAtRoadLo: 10000 - SINGLE_1_BILL, netAtRoadHi: 21000 - SINGLE_1_BILL, roadLo: 0, roadHi: 100000, roadCliffCount: 0, roadWorst: null, biggestLossPosition: null,
     });
   });
 

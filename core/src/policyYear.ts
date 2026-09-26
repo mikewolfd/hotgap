@@ -23,6 +23,15 @@ export const SGA_ANNUAL = SGA_MONTHLY * 12; // $20,280
 // https://aspe.hhs.gov/sites/default/files/documents/dd73d4f00d8a819d10b2fdb70d254f7b/detailed-guidelines-2025.pdf
 // (48 contiguous 1/2/3 = 15,650 / 21,150 / 26,650; AK 19,550 / 26,430 / 33,310;
 // HI 17,990 / 24,320 / 30,650 — each an arithmetic ladder, hence base+increment.)
+/**
+ * The year of the HHS guideline the road out of poverty (road.ts) and the
+ * marketplace are set by — 2025, although the rules are 2026's (above). Any
+ * page that prints a poverty-line figure names this vintage, never `YEAR`:
+ * "$26,650 for a family of three" is the 2025 guideline, and calling it the
+ * 2026 poverty line is the wrong citation (policy-data review R10).
+ */
+export const FPL_GUIDELINE_YEAR = "2025";
+
 export const FPL_2025 = {
   contiguous: { base: 15_650, perPerson: 5_500 },
   AK: { base: 19_550, perPerson: 6_880 },

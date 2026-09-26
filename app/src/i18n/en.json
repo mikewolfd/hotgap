@@ -307,7 +307,7 @@
       "sweepBare": "Source: HotGap, from PolicyEngine. Rules for {year}.",
       "rent": " Rent: HUD Fair Market Rents, {rent}.",
       "childcare": " Child care price: {childcare}, grown to {year} dollars.",
-      "money": " Money kept is what's left after taxes and health-plan premiums.",
+      "money": " Money kept is what's left after taxes, health-plan premiums and the child care the family pays itself.",
       "heading": "Where these numbers come from"
     },
     "table": {
@@ -755,7 +755,7 @@
       "neverSafe": "The sweep never found a pay past which no zone remains."
     },
     "tiles": {
-      "net": "Net, after premiums",
+      "net": "Net, after premiums and care",
       "netSub": "at {earned} earned",
       "raise": "Raise to clear the zone",
       "raiseTo": "to {exit} earned",
@@ -883,9 +883,9 @@
       }
     },
     "chart": {
-      "title": "Net income after premiums, {from}–{to} of earnings",
+      "title": "Net income after premiums and care, {from}–{to} of earnings",
       "label": {
-        "lead": "Net income after premiums against earnings, {from} to {to}.",
+        "lead": "Net income after premiums and care against earnings, {from} to {to}.",
         "zones": "{n, plural, =0 {No danger zone.} one {{n} danger zone.} other {{n} danger zones.}}",
         "own": {
           "toExit": "This household's runs from {start} to {exit}.",
@@ -980,7 +980,7 @@
     },
     "compare": {
       "rows": {
-        "net": "Net after premiums",
+        "net": "Net after premiums and care",
         "change": "Change from now",
         "keep": "Of each extra dollar, now → this what-if",
         "inZone": "In a danger zone",
@@ -1015,7 +1015,7 @@
       "reachCell": "Same shape means the same marital status, the same number of earners (one or two) and the same number of children under 18 (three or more pooled), with a householder aged 18–64; children's ages are not matched."
     },
     "assumed": {
-      "health": "Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
+      "health": "Net is what's left after taxes, health-plan premiums and the child care the family pays itself; rent is not taken out. Health cost is premiums only — no deductibles, copays or other out-of-pocket spending.",
       "facts": "Assumed for this curve: {facts}; aged {age}.",
       "citizen": "a citizen",
       "status": "status: {status}",
@@ -1069,7 +1069,7 @@
         "two": "two parents"
       },
       "children": "{n, plural, =0 {no children} one {one child} other {{words} children}}",
-      "careShare": "{amount} of what you keep is {phrase} paid straight to your day care.",
+      "careShare": "Of your day care bill, {amount} is paid by {phrase}, straight to the day care; what you keep is what's left after the part you pay.",
       "biggestDrop": "{n, plural, =0 {The biggest drop is at {at} of pay: your tax break shrinks and you keep {drop} less.} one {The biggest drop is at {at} of pay: {phrases} ends and you keep {drop} less.} other {The biggest drop is at {at} of pay: {phrases} end and you keep {drop} less.}}",
       "snapEnds": "Food help ends at {at}.",
       "kidsCoverage": "Your kids' health plan ends at {at} of pay — but not that year. It ends at their next yearly check, up to 12 months later.",
@@ -1082,8 +1082,8 @@
     },
     "pageTitle": "HotGap — caseworker",
     "answer": {
-      "inZone": "Net income — pay plus help, after taxes and premiums — stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}; {raise} clears the stretch.",
-      "inZone:stuck": "Net income — pay plus help, after taxes and premiums — stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}.",
+      "inZone": "Net income — pay plus help, after taxes, premiums and child care — stays below its {peak} peak (at {start}) until {exit}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}; {raise} clears the stretch.",
+      "inZone:stuck": "Net income — pay plus help, after taxes, premiums and child care — stays below its {peak} peak (at {start}) past the top of the axis, {top}: {nLose, plural, =0 {no single {step} raise between them loses {floor} or more, but none climbs back either} one {{nLose} of the {nSteps} {step} raises between them loses money} other {{nLose} of the {nSteps} {step} raises between them lose money}}.",
       "cliffAhead": "This family is clear up to {at}; past it a raise costs about {drop} a year.",
       "cliffAhead:dip": "This family is clear up to {at}; there it dips by about {drop} and is ahead again by {exit}.",
       "cliffAhead:waits": "This family is clear up to {at}; past it a raise costs about {drop} a year, at the next renewal rather than that day.",
@@ -1171,12 +1171,12 @@
       "netAtRoadLo": {
         "title": "Net income at the poverty line",
         "option": "Money kept at the poverty line",
-        "describe": "What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at the poverty line ({lo})."
+        "describe": "What the household keeps in a year — help and tax credits counted; taxes, health premiums and the child care the family pays itself out — with pay at the poverty line ({lo})."
       },
       "netAtRoadHi": {
         "title": "Net income at twice the poverty line",
         "option": "Money kept at twice poverty",
-        "describe": "What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at twice the poverty line ({hi})."
+        "describe": "What the household keeps in a year — help and tax credits counted; taxes, health premiums and the child care the family pays itself out — with pay at twice the poverty line ({hi})."
       }
     },
     "household": {
@@ -1463,13 +1463,13 @@
       "heading": "How these numbers were made",
       "items": {
         "engine": "Every cell is one household shape run through [PolicyEngine](https://policyengine.org), an open-source tax-and-benefit calculator, at {year} rules, earnings varied in $1,000 steps from $0 past 400% of the poverty guideline for that household size, plus $40,000 of room to recover.",
-        "money": "The money line is **health-adjusted**: household net income minus what the household actually pays in health-insurance premiums, net of the marketplace subsidy. Deductibles and copays are not included.",
+        "money": "The money line is what the household has **after taxes, health-plan premiums and the child care the family pays itself**: household net income, help and tax credits counted — the child-care subsidy among them — less what the household actually pays in health-insurance premiums, net of the marketplace subsidy, and less its child-care bill. Rent is not taken out: no benefit is taken away against it, and a raise does not change it. Deductibles and copays are not included.",
         "household": "Each household is a typical renter in the state's most populous county — named under the map for the selected state — with HUD Fair Market Rent, Census county estimates, and the DOL National Database of Childcare Prices preschool price for that county, carried to {year} dollars by the BLS Employment Cost Index. The study year behind the price, and whether a state or national median stood in for a county the database lacks, differ by state and are printed in the source line under the map.",
         "takeUp": "The child-care subsidy is on for this run although, like Head Start and housing vouchers, it reaches a minority of eligible families: its exit is the largest cliff most working parents of young children face, and a map without it understates every state.",
         "deferred": "Cliffs deferred to a future renewal — Head Start's program-year carry-over, a child's 12 months of continuous Medicaid or CHIP eligibility, a parent's Transitional Medical Assistance — are counted in every figure here like any other cliff, and named again in the *deferred* column. They are real losses; what the column says is which of them wait for a renewal rather than landing with the raise.",
         "corrections": "Where a state's figure needed a correction on top of PolicyEngine — a premium ladder applied locally, the child care subsidy added back into net income, a parent Medicaid limit taken from the state's handbook, a coverage-gap premium — it is listed under the map for the selected state, from the run's own coverage record, not from copy kept here.",
         "download": "The download is the table's rows in the table's order, one per state, with these columns: {columns}. Empty dollar cells are a state with no cliff or a safe exit past the axis; the flags say which figures are floors or lower bounds.",
-        "road": "**The road out of poverty** is the earnings from the federal poverty guideline for this household's size to twice it — $26,650 to $53,300 for a family of three at {year} rules, and Alaska and Hawaii on their own higher guidelines. It is federal on purpose, so every state's road is the same road and what differs is how the state's rules treat a family walking it. Its top carries one $1,000 step of allowance, because a program limit sitting on the twice-poverty line lands in the step that starts at the first sampled point at or above it.",
+        "road": "**The road out of poverty** is the earnings from the federal poverty guideline for this household's size to twice it — {lo} to {hi} for a family of three on the {fplYear} federal poverty guideline, which the {year} rules use, and Alaska and Hawaii on their own higher guidelines. It is federal on purpose, so every state's road is the same road and what differs is how the state's rules treat a family walking it. Its top carries one $1,000 step of allowance, because a program limit sitting on the twice-poverty line lands in the step that starts at the first sampled point at or above it.",
         "keepRate": "**The keep rate** is what the household keeps of each extra dollar earned across that road: the change in net income divided by the change in pay. It is one minus the effective marginal tax rate, the measure the benefits-cliff literature reports, said in cents because that is how a person hears it. Below zero the family ends the climb poorer than it began.",
         "level": "**A high keep rate is not a generous state.** It says raises are allowed to add up, not how much the family has: across the states the two are only weakly related. The two *money kept* measures show the level — what the family keeps at the poverty line and at twice it — and the keep-rate readout names both ends.",
         "position": "**Families earning less** puts a dollar figure where families are: of households like this one in that state, the share earning less than it, from Census survey data ({vintages}) grown to {year} dollars. It is cross-sectional — how many families already earn less — and never one family's chance of reaching that pay. A cell the survey cannot support is left empty rather than filled with a zero.",

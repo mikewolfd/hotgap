@@ -11,13 +11,38 @@ import { reachPercentile, type ReachLadder } from "./reach.js";
 // passed in here must be the same householder-plus-spouse earnings figure the
 // tool varies on its axis, or the comparison is apples-to-oranges.
 //
+// WHO "FAMILIES LIKE THIS" ARE — the cell, exactly (policy-data review R15).
+// A cell is one state × one archetype id, and a PUMS household lands in it on
+// four things only:
+//   • marital status — a married-couple household (HHT 1) or not; "not" is
+//     every other household type, single parents and nonfamily households
+//     alike;
+//   • the number of the householder's own children under 18 (NOC), with
+//     three or more pooled in the 3-child cell;
+//   • for a married couple with children, one earner or two (both adults
+//     with positive own earnings);
+//   • a working-age householder, 18–64.
+// NOT on the children's ages: the default household's 3- and 7-year-old are
+// compared with every single parent of two children under 18, teenagers
+// included. Nor on anyone's hours, disability, other income or county.
+// `REACH_CELL_DEFINITION` is that in short, for a page to print.
+//
 // A cell is `null` when the PUMS sample cannot support it: the 90% margin of
 // error of its median exceeded half the median (the reliability test), or fewer
 // than 30 unweighted households fell in it (a floor beneath that test). Callers
 // MUST treat null as "no reach line to show", never as "0%".
+/**
+ * What a reach cell matches on, short and in a fixed order — the fallback when
+ * reach.json predates its own `cellDefinition`. Keep the two identical
+ * (scripts/build-reach.mjs writes the file's).
+ */
+export const REACH_CELL_DEFINITION =
+  "state; married couple or not; own children under 18: 0, 1, 2, 3 or more; couples with children: one earner or two; householder aged 18-64; children's ages not matched";
+
 interface ReachFile {
   year: string;
   basis?: string;
+  cellDefinition?: string;
   source: string | Record<string, string>;
   percentiles: number[];
   earningsConcept?: string;
@@ -40,15 +65,18 @@ export function reachCell(state: string, archetypeId: string): ReachLadder | nul
 
 /**
  * Where this state's ladders come from, read off the file rather than
- * retyped: the earnings basis, the PUMS vintage(s) its published cells were
- * built on (the 5-Year file stands in cell by cell where the 1-Year cannot
- * support a state), and the ECI factor that grew them to 2026 dollars.
+ * retyped: the earnings basis, what a cell matches a family on (see the top
+ * of this file — the words a page needs to say who "families like yours"
+ * are), the PUMS vintage(s) its published cells were built on (the 5-Year
+ * file stands in cell by cell where the 1-Year cannot support a state), and
+ * the ECI factor that grew them to 2026 dollars.
  */
-export function reachProvenance(state: string): { basis: string; vintages: string[]; growthFactor: number } {
+export function reachProvenance(state: string): { basis: string; cellDefinition: string; vintages: string[]; growthFactor: number } {
   const file = reach();
   const cells = Object.values(file.states[state] ?? {}).filter((c): c is ReachLadder => c !== null);
   return {
     basis: file.basis ?? "",
+    cellDefinition: file.cellDefinition ?? REACH_CELL_DEFINITION,
     vintages: [...new Set(cells.map((c) => c.vintage))].sort(),
     growthFactor: file.growth?.factor ?? 1,
   };

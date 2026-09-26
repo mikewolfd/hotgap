@@ -24,7 +24,13 @@
 //
 //   THE ROAD = 100% to 200% of the 2025 federal poverty guideline for this
 //   household's size (policyYear.ts `fpl2025`, the vintage the 2026 policy
-//   year runs on), snapped to the sweep's own step. FEDERAL on purpose, so
+//   year runs on), in FAMILY earnings, snapped to the sweep's own step.
+//   FAMILY, because every program limit on it is tested against the
+//   family's pay: the axis is the householder's own pay with a working
+//   spouse's held fixed (archetypes.ts), so the road on the axis starts at
+//   the guideline LESS the spouse's pay. Until 2026-09-26 it did not, and the
+//   two-earner rows' "poverty line to twice it" was 147% to 253% of their
+//   poverty line (policy-data review R4). FEDERAL on purpose, so
 //   every state's road is the same road. The alternative — each state's
 //   minimum wage to its own median — was measured first and rejected: it
 //   makes the poorest states look kindest, because a $7.25 floor and a
@@ -41,6 +47,9 @@ import { pointAtOrBelow } from "./analyze.js";
 import { fpl2025 } from "./policyYear.js";
 import { reachAtEarnings } from "./reachLookup.js";
 import { householdSize, type CurvePoint, type HouseholdAnswers } from "./types.js";
+
+/** What the road needs to know of a household: its guideline, and the pay beside the axis that counts toward it. */
+export type RoadHousehold = Pick<HouseholdAnswers, "state" | "married" | "childAges" | "spouseAnnualEarnings">;
 
 /** The road runs from this multiple of the poverty guideline… */
 export const ROAD_FROM = 1;
@@ -75,6 +84,10 @@ export const KEEP_NEXT_OVER = 10_000;
  * The low end is the nearest sampled point to the guideline itself: no
  * equivalent allowance is owed there, because the road's first step is inside
  * the span either way.
+ *
+ * All three are points of the AXIS — the householder's own pay. For a
+ * two-earner household that is the family's guideline less the spouse's pay
+ * (`povertyRoad`), so `lo` is where the FAMILY reaches the poverty line.
  */
 export interface Road {
   lo: number;
@@ -104,7 +117,7 @@ export interface RoadSummary extends Road {
   keepRateToLine: number | null;
   /**
    * The level beside the slope: net income (help and tax credits counted,
-   * taxes and premiums out) at `lo` and at `hi`, read off the points as
+   * taxes, premiums and the family's own child-care bill out) at `lo` and at `hi`, read off the points as
    * `keepRate` is. A keep rate says raises add up, not how much the family
    * has; these say how much. Null when that end is not a sampled point.
    */
@@ -149,21 +162,29 @@ function netAt(points: CurvePoint[], earnings: number): number | null {
 /**
  * This household's road out of poverty on this curve's axis, snapped to the
  * sweep's step (see `Road` for what the top's one-step allowance is for) —
- * null when either end runs off the axis, which is what a short axis or a
- * very large household gives. Alaska and Hawaii are on their own guideline
+ * null when the top runs off the axis, which is what a short axis or a very
+ * large household gives. Alaska and Hawaii are on their own guideline
  * ladders (`fpl2025`), so their road is longer, as their poverty line is.
+ *
+ * The guideline is a FAMILY-earnings line and the axis is the householder's
+ * own pay, so a spouse's pay (held fixed along the axis) comes off both ends:
+ * a two-earner couple of four with the spouse at $15,080 is at its poverty
+ * line ($32,150) when the householder earns $17,070, not $32,150. Where the
+ * spouse's pay alone clears the line, the road starts at the axis's first
+ * point — the family is already on it at $0 of the householder's pay.
  */
-export function povertyRoad(answers: HouseholdAnswers, points: CurvePoint[]): Road | null {
+export function povertyRoad(household: RoadHousehold, points: CurvePoint[]): Road | null {
   if (points.length < 2) return null;
   const step = stepOf(points);
   if (!(step > 0)) return null;
-  const line = fpl2025(answers.state, householdSize(answers));
-  const lo = Math.round(ROAD_FROM * line / step) * step;
-  const hiStart = Math.ceil(ROAD_TO * line / step) * step;
-  const hi = hiStart + step;
+  const line = fpl2025(household.state, householdSize(household));
+  const besideAxis = household.married ? household.spouseAnnualEarnings : 0;
   const first = points[0].earnings;
   const last = points[points.length - 1].earnings;
-  return lo >= first && hi <= last && hi > lo ? { lo, hiStart, hi } : null;
+  const lo = Math.max(first, Math.round((ROAD_FROM * line - besideAxis) / step) * step);
+  const hiStart = Math.max(first, Math.ceil((ROAD_TO * line - besideAxis) / step) * step);
+  const hi = hiStart + step;
+  return hi <= last && hi > lo ? { lo, hiStart, hi } : null;
 }
 
 /**

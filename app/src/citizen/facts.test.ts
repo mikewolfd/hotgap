@@ -52,8 +52,14 @@ describe("tableRows", () => {
 
 describe("under the answer", () => {
   test("names the largest non-cash part of 'you keep' and the health cost that comes out", () => {
+    // The $20,000 of child care help is not named: since R1 (2026-09-26) the
+    // line is after the care bill, so the help is netted against the bill it
+    // pays and none of what is kept is care money.
     expect(subText(sceneOf(makeEvaluation(), year))).toBe(
-      "The line is more than your pay because help and tax credits count towards it. $20,000 of it is child care help, which goes to your day care and not to you. And $1,200 a year comes off the top for your health plan.");
+      "The line is more than your pay because help and tax credits count towards it. And $1,200 a year comes off the top for your health plan.");
+    const meals = makeEvaluation();
+    for (const p of meals.curve.points) p.programs.schoolmeals = 900;
+    expect(subText(sceneOf(meals, year))).toContain("$900 of it is free school meals, not cash.");
     expect(subText(sceneOf(makeEvaluation({}, 80_000), year))).toBe("The line is less than your pay because taxes and health costs come out of it. And $1,200 a year comes off the top for your health plan.");
   });
 });
@@ -119,15 +125,15 @@ const summary = {
 describe("SourceNote", () => {
   test("live: the household's own numbers; the rent vintage only when the rent is the state's typical one", () => {
     const s = sceneOf(makeEvaluation(), year);
-    expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Money kept is what's left after taxes and health-plan premiums.");
-    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Money kept is what's left after taxes and health-plan premiums.");
+    expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Money kept is what's left after taxes, health-plan premiums and the child care the family pays itself.");
+    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from PolicyEngine with 2026 rules. These are your own numbers. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Money kept is what's left after taxes, health-plan premiums and the child care the family pays itself.");
     const own = sceneOf(makeEvaluation({ answers: { ...makeEvaluation().answers, monthlyRent: 1200 } }), year);
     expect(provenanceText(own, sweepFor(summary, "CO"))).not.toMatch(/Rent:/);
   });
   test("archetype: the sweep's model and stamp produced the numbers, and the child-care price vintage applies", () => {
     const s = sceneOf(makeEvaluation({ source: "archetype" }), year);
-    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what's left after taxes and health-plan premiums.");
-    expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine. Rules for 2026. Money kept is what's left after taxes and health-plan premiums.");
+    expect(provenanceText(s, sweepFor(summary, "CO"))).toBe("Source: HotGap, from policyengine-us 2.6.2 with 2026 rules. Sweep of Sep 16, 2026. Rent: HUD Fair Market Rents, FY2026 revised schedule (effective 2025-10-01). Child care price: county 2018, grown to 2026 dollars. Money kept is what's left after taxes, health-plan premiums and the child care the family pays itself.");
+    expect(provenanceText(s, null)).toBe("Source: HotGap, from PolicyEngine. Rules for 2026. Money kept is what's left after taxes, health-plan premiums and the child care the family pays itself.");
   });
   test("the child-care gap counts for a child through CHILDCARE_MAX_AGE with paid care, the one rule every surface uses (audit D7)", () => {
     const withCare = { ...summary, coverage: { CO: { ...summary.coverage!.CO, unmodeled: [{ program: "Child-care subsidy (CCDF)", note: "" }] } } } as SummaryJson;
