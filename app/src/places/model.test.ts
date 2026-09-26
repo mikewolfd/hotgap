@@ -4,8 +4,8 @@ import type { StateCoverage, StateMetrics, SummaryJson, UnmodeledProgram } from 
 import { ARCHETYPES, STATE_CODES, answersFor } from "@hotgap/core";
 import { capitalize, numberWords } from "../lib/format.js";
 import { copy, t } from "./copy.js";
-import { archLabel, bins, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, paysForCare, rowsFor, tableRows, valueOf } from "./model.js";
-import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, cliffCountLine, countedLede, deferredLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, rankRange, roadCliffCountLine, roadCollapse, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, rowLabel, servedLine, worstStepLine } from "./words.js";
+import { archLabel, bins, countDefinition, DEFAULT_MEASURE, divergingBins, group, incompleteFor, MEASURES, measureByKey, measuresIn, menuOrder, paysForCare, resolveMeasure, RETIRED_MEASURES, rowsFor, tableRows, twinOf, valueOf } from "./model.js";
+import { axisLine, axisPosition, boundaryCite, boundaryCounted, boundaryFacts, countedLede, countedLine, householdPhrase, keepPhrase, keepShort, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, pastTopLine, rankRange, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, roadWorstLine, rowLabel, servedLine, worstStepLine } from "./words.js";
 
 /* A hand-sized sweep that exercises every tile state at once. */
 const metrics = (over: Partial<StateMetrics> = {}): StateMetrics => ({
@@ -65,8 +65,8 @@ describe("archLabel and paysForCare on core's own archetypes", () => {
 
 describe("counts in words (lib/format.ts numberWords)", () => {
   it("spells the counts the lede uses and falls back to digits beyond ninety-nine", () => {
-    // Eleven shapes on the committed run: the lede counts the run's own list (summary.archetypes), which a row core has added but no sweep has filled (single-2-nosub) is not on yet.
-    expect(numberWords(11)).toBe("eleven");
+    // Twelve shapes on the committed run: the lede counts the run's own list (summary.archetypes), the derived no-subsidy twin included.
+    expect(numberWords(12)).toBe("twelve");
     expect(capitalize(numberWords(STATE_CODES.length))).toBe("Fifty-one");
     expect([0, 20, 40, 99, 100, 1.5].map(numberWords)).toEqual(["zero", "twenty", "forty", "ninety-nine", "100", "1.5"]);
     // The states counted as a reader counts them (rerun N11): fifty and DC when DC is in the file, a plain count otherwise.
@@ -76,31 +76,83 @@ describe("counts in words (lib/format.ts numberWords)", () => {
 });
 
 describe("the measures, from copy", () => {
-  it("are the eleven pipeline keys in the FilterRow's order, the road's five first, the counts without a unit, each option short and naming its own referent (S2)", () => {
-    expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "netAtRoadLo", "netAtRoadHi", "biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
-    expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "", "$", "$", "$", "$", "$", "$", "$", "", ""]);
+  it("are the nine menu keys in the FilterRow's order, the road's five first, the counts gone from the menu (R5, R6)", () => {
+    expect(MEASURES.map((m) => m.key)).toEqual(["keepRate", "roadWorst", "deepestFall", "netAtRoadLo", "netAtRoadHi", "biggestLoss", "dangerWidth", "leap", "safeExit"]);
+    expect(MEASURES.map((m) => m.unit)).toEqual(["¢", "$", "$", "$", "$", "$", "$", "$", "$"]);
     // Two groups, two questions: the road out of poverty, and the whole curve.
-    expect(measuresIn("road").map((m) => m.key)).toEqual(["keepRate", "roadCliffCount", "roadWorst", "netAtRoadLo", "netAtRoadHi"]);
-    expect(measuresIn("axis").map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount"]);
+    expect(measuresIn("road").map((m) => m.key)).toEqual(["keepRate", "roadWorst", "deepestFall", "netAtRoadLo", "netAtRoadHi"]);
+    expect(measuresIn("axis").map((m) => m.key)).toEqual(["biggestLoss", "dangerWidth", "leap", "safeExit"]);
     // The keep rate and the two levels are what a family holds on to: the lowest figure is the worst.
     expect(MEASURES.filter((m) => m.worst === "low").map((m) => m.key)).toEqual(["keepRate", "netAtRoadLo", "netAtRoadHi"]);
-    expect(measureByKey("netAtRoadLo")).toMatchObject({ option: "Money kept at the poverty line", title: "Net income at the poverty line" });
-    expect(measureByKey("netAtRoadHi")).toMatchObject({ option: "Money kept at twice poverty", title: "Net income at twice the poverty line" });
-    // With no household named yet, the level's definition drops the dollar slot rather than print "{lo}".
-    expect(measureByKey("netAtRoadLo")!.describe).toBe("What the household keeps in a year — help and tax credits counted, taxes and health premiums out — with pay at the poverty line.");
     expect(DEFAULT_MEASURE).toBe("keepRate");
-    for (const m of MEASURES) expect(m.option, m.key).not.toMatch(/\b(it|that stretch|of those)\b/i);
+  });
+  it("each has ONE name — the menu's, the legend's, the ranking's and the table's (R9, M6) — short, standing on its own, and a plain cue (M16)", () => {
+    expect(Object.fromEntries(MEASURES.map((m) => [m.key, m.name]))).toEqual({
+      keepRate: "Cents kept of each extra dollar",
+      roadWorst: "Biggest one-raise loss on the road",
+      deepestFall: "Deepest fall on the road",
+      netAtRoadLo: "Money kept at the poverty line",
+      netAtRoadHi: "Money kept at twice poverty",
+      biggestLoss: "Biggest one-raise loss (any pay)",
+      // R9: inside a danger zone most raises GAIN money; what the zone is, is pay spent below an earlier peak.
+      dangerWidth: "Pay spent below an earlier peak",
+      leap: "Raise needed to get clear",
+      safeExit: "Pay past which no earlier peak is higher",
+    });
+    for (const m of MEASURES) {
+      expect(m.name, m.key).not.toMatch(/\b(it|that stretch|of those|collapses?|regressive)\b/i);
+      // Short enough to show whole in the select at 390; the definition is `describe`.
+      expect(m.name.length, m.key).toBeLessThanOrEqual(40);
+      expect(m.cue, m.key).toMatch(/^darker = /);
+    }
+    expect(measureByKey("dangerWidth")!.name.length).toBeLessThanOrEqual(40);
+    expect(measureByKey("keepRate")!.cue).toBe("darker = loses more, lighter = keeps more");
+    // A level is drawn on the keep ramp, darkest where the family keeps most (R14).
+    expect(measureByKey("netAtRoadLo")!.cue).toBe("darker = keeps more");
+    // Every name is distinct: one thing, one name, and no two things one name.
+    expect(new Set(MEASURES.map((m) => m.name)).size).toBe(MEASURES.length);
+  });
+  it("defines each in words a reader can check against the figure", () => {
+    // With no household named yet, the level's definition drops the dollar slot rather than print "{lo}" — and says what the money is after (M3).
+    expect(measureByKey("netAtRoadLo")!.describe).toBe("What the household keeps in a year with pay at the poverty line: after taxes, premiums and the child care the family pays itself, with help and tax credits counted.");
     expect(measureByKey("keepRate")!.describe).toMatch(/poorer than it started/);
-    expect(measureByKey("roadWorst")!.title).toBe("Where the road collapses");
-    // A plain question a reader would ask, short enough to show whole in the select at 390; the definition is `describe`.
-    for (const m of MEASURES) expect(m.option.length, m.key).toBeLessThanOrEqual(40);
     expect(measureByKey("leap")!.describe).toContain("worst danger zone");
-    expect(measureByKey("deferredCliffCount")!.describe).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance/);
+    expect(measureByKey("deepestFall")!.describe).toMatch(/does not depend on where the road stops/);
     // dangerWidth is every zone's width added together (pipeline/src/metrics.ts); the widest one's width is the leap.
-    // The label must say "total", never "the worst zone", which is the leap's definition.
-    expect(measureByKey("dangerWidth")!.title).toBe("Total width of the danger zones");
     expect(measureByKey("dangerWidth")!.describe).toMatch(/added together/);
-    expect(measureByKey("dangerWidth")!.describe).not.toMatch(/widest|worst/);
+    expect(measureByKey("dangerWidth")!.describe).toMatch(/less than it had at a lower pay/);
+    expect(measureByKey("dangerWidth")!.describe).not.toMatch(/widest|worst|no better off/);
+  });
+  it("the three counts are columns, not measures: each says why it is not ranked, and an old link lands on the nearest measure (R5, R6)", () => {
+    for (const key of ["roadCliffCount", "cliffCount", "deferredCliffCount"]) expect(measureByKey(key), key).toBeUndefined();
+    expect(RETIRED_MEASURES).toEqual({ roadCliffCount: "roadWorst", cliffCount: "biggestLoss", deferredCliffCount: "biggestLoss" });
+    expect(resolveMeasure("cliffCount")).toBe("biggestLoss");
+    expect(resolveMeasure("keepRate")).toBe("keepRate");
+    expect(resolveMeasure("nope")).toBeUndefined();
+    expect(resolveMeasure(null)).toBeUndefined();
+    expect(countDefinition("roadCliffCount")).toMatch(/\$200 or more.*\$1,000 step.*not ranked\.$/);
+    expect(countDefinition("cliffCount")).toMatch(/anywhere on the curve.*not ranked\.$/);
+    expect(countDefinition("deferredCliffCount")).toMatch(/Head Start.*Medicaid.*Transitional Medical Assistance.*not a harm scale/);
+  });
+});
+
+describe("the no-subsidy twin in the Household menu (R16)", () => {
+  const twin = { id: "single-2-nosub", married: false, childAges: [3, 7] };
+  const base = { id: "single-2", married: false, childAges: [3, 7] };
+  const others = [{ id: "single-0", married: false, childAges: [] }, { id: "single-1", married: false, childAges: [3] }];
+  it("sits right after the household it is the twin of, whatever order the file lists it in", () => {
+    expect(menuOrder([...others, base, { id: "married-2", married: true, childAges: [3, 7] }, twin]).map((a) => a.id))
+      .toEqual(["single-0", "single-1", "single-2", "single-2-nosub", "married-2"]);
+    // A twin whose base the file lacks is still offered, last.
+    expect(menuOrder([...others, twin]).map((a) => a.id)).toEqual(["single-0", "single-1", "single-2-nosub"]);
+    expect(twinOf([base, twin], base)).toEqual(twin);
+    expect(twinOf([base, twin], others[0])).toBeNull();
+    expect(archLabel(twin)).toBe("1 adult, 2 children (3 and 7), no child-care help");
+  });
+  it("is never hatched for a missing child-care subsidy it does not claim", () => {
+    const gap = coverage([{ program: "Child-care subsidy (CCDF)", note: "the engine paid $0", scope: "state" }]);
+    expect(incompleteFor(gap, base).map((u) => u.program)).toEqual(["Child-care subsidy (CCDF)"]);
+    expect(incompleteFor(gap, twin)).toEqual([]);
   });
 });
 
@@ -191,33 +243,17 @@ describe("bins and group", () => {
     expect(bins([7], "$").index(7)).toBe(0);
     expect(bins([], "$")).toMatchObject({ lo: 0, hi: 0, classes: Array.from({ length: 5 }, (_, i) => ({ ramp: i, hue: "loss", lo: 0, hi: 0 })) });
   });
-  it("a level, whose LOW end is the worst, runs the ramp the other way: the lowest figure is the darkest step", () => {
+  it("a level, whose LOW end is the worst, is money the family HAS: the keep ramp, darkest where it keeps most (R14)", () => {
     const b = bins([10, 20, 30, 40, 50], "$", "low");
     // The classes stay in value order, so the scale still reads low to high…
     expect(b.classes.map((c) => c.hi)).toEqual([18, 26, 34, 42, 50]);
     expect([10, 18, 26, 34, 50].map(b.index)).toEqual([0, 1, 2, 3, 4]);
-    // …and only the step each is drawn with is reversed.
-    expect(b.classes.map((c) => c.ramp)).toEqual([4, 3, 2, 1, 0]);
-    expect(b.classes[b.index(10)].ramp).toBe(4);
-    // A loss measure is unchanged.
-    expect(bins([10, 50], "$", "high").classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
-  });
-  it("a count takes classes of whole numbers, never a repeated bound, spread over the ramp (S5)", () => {
-    // Deferred cliffs on the 2026-09-16 sweep: every state has 0 or 1.
-    const two = bins([0, 1, 0, 1], "");
-    expect(two).toMatchObject({ kind: "classes", lo: 0, hi: 1 });
-    expect(two.classes).toEqual([{ ramp: 0, hue: "loss", lo: 0, hi: 0 }, { ramp: 4, hue: "loss", lo: 1, hi: 1 }]);
-    // `index` names the CLASS, and the class carries its ramp step and its ramp.
-    expect([0, 1].map(two.index)).toEqual([0, 1]);
-    expect([0, 1].map((v) => two.classes[two.index(v)].ramp)).toEqual([0, 4]);
-    // Sixteen distinct counts fit four classes of four, not six of three.
-    const wide = bins([4, 19], "");
-    expect(wide.classes.map((c) => [c.lo, c.hi, c.ramp])).toEqual([[4, 7, 0], [8, 11, 1], [12, 15, 3], [16, 19, 4]]);
-    expect([4, 7, 8, 12, 19].map(wide.index)).toEqual([0, 0, 1, 2, 3]);
-    // Exactly five values are five classes of one; one value is one class.
-    expect(bins([2, 6], "").classes.map((c) => [c.lo, c.hi, c.ramp])).toEqual([[2, 2, 0], [3, 3, 1], [4, 4, 2], [5, 5, 3], [6, 6, 4]]);
-    expect(bins([3, 3], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 3, hi: 3 }]);
-    expect(bins([], "").classes).toEqual([{ ramp: 0, hue: "loss", lo: 0, hi: 0 }]);
+    // …on the keep ramp, never the loss ramp, so a level's mid-tone cannot read as a loss.
+    expect(b.classes.every((c) => c.hue === "keep")).toBe(true);
+    expect(b.classes.map((c) => c.ramp)).toEqual([0, 1, 2, 3, 4]);
+    expect(b.classes[b.index(50)].ramp).toBe(4);
+    // A loss measure is unchanged: the loss ramp, darkest where it loses most.
+    expect(bins([10, 50], "$", "high").classes.map((c) => [c.hue, c.ramp])).toEqual([["loss", 0], ["loss", 1], ["loss", 2], ["loss", 3], ["loss", 4]]);
   });
   it("a measure with a meaningful zero diverges: zero is always a bin edge, each arm cut over its own reach (charts.md § 2)", () => {
     const bounds = (b: ReturnType<typeof divergingBins>) => [b.classes[0].lo, ...b.classes.map((c) => c.hi)];
@@ -311,20 +347,16 @@ describe("the sentences, from copy through words.ts", () => {
     expect(rowLabel("1–12", "Colorado", "≥ $129,000")).toBe("1–12 Colorado: ≥ $129,000");
   });
   it("the readout leads with the selected measure in its own sentence, then the worst step (rerun B2), and a no-cliff state says what was found up to the axis (S6)", () => {
-    expect(t("readout.measure.safeExit", { state: "Ohio", exit: "$110,000" })).toBe("Ohio — no danger zone left above $110,000.");
-    expect(t("readout.measure.safeExitPast", { state: "Nebraska", top: "$150,000" })).toBe("Nebraska — no safe exit found: the last danger zone had not closed by $150,000, the top of the axis.");
+    expect(t("readout.measure.safeExit", { state: "Ohio", exit: "$110,000" })).toBe("Ohio — above $110,000, no earlier peak is higher.");
+    expect(t("readout.measure.safeExitPast", { state: "Nebraska", top: "$150,000" })).toBe("Nebraska — no such pay on the scale: the last stretch below an earlier peak had not closed by $150,000, the top of the axis.");
     expect(t("readout.measure.leap", { state: "Ohio", leap: "$47,000" })).toBe("Ohio — a raise of $47,000 clears the worst danger zone.");
     expect(t("readout.measure.leapAtLeast", { state: "Maryland", leap: "$53,000", top: "$150,000" })).toBe("Maryland — a raise of at least $53,000 to clear the worst danger zone, which runs past $150,000, the top of the axis.");
-    expect(t("readout.measure.dangerWidth", { state: "Ohio", width: "$57,000" })).toBe("Ohio — $57,000 of earnings lie inside danger zones.");
-    expect(t("readout.measure.dangerWidthOpen", { state: "Nebraska", width: "$74,000", top: "$150,000" })).toMatch(/^Nebraska — at least \$74,000 of earnings lie inside danger zones; the last one had not closed by \$150,000/);
-    expect(cliffCountLine("Ohio", 10, 0)).toBe("Ohio — 10 cliffs on this household's curve, none deferred.");
-    expect(cliffCountLine("Colorado", 14, 1)).toBe("Colorado — 14 cliffs on this household's curve, and 1 more deferred to a later renewal.");
-    expect(cliffCountLine("Alabama", 1, 0)).toMatch(/^Alabama — 1 cliff on/);
-    expect(deferredLine("Ohio", 0, 10)).toBe("Ohio — no cliff deferred to a later renewal; all 10 land with the raise.");
-    expect(deferredLine("Colorado", 1, 14)).toBe("Colorado — 1 cliff deferred to a later renewal, on top of 14 that land with the raise.");
-    expect(deferredLine("Alabama", 0, 1)).toBe("Alabama — no cliff deferred to a later renewal; its one cliff lands with the raise.");
-    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["childcare"], [])).toBe("Largest single loss anywhere on the curve: $12,062 at $38,000 → $39,000, when CCDF child care subsidy ends.");
-    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["snap", "wic"], ["X Premium Savings"])).toBe("Largest single loss anywhere on the curve: at least $12,062 at $38,000 → $39,000, when SNAP and WIC end; a floor, because X Premium Savings is not modelled.");
+    expect(t("readout.measure.dangerWidth", { state: "Ohio", width: "$57,000" })).toBe("Ohio — $57,000 of pay spent below an earlier peak.");
+    expect(t("readout.measure.dangerWidthOpen", { state: "Nebraska", width: "$74,000", top: "$150,000" })).toMatch(/^Nebraska — at least \$74,000 of pay spent below an earlier peak; the last such stretch had not closed by \$150,000/);
+    expect(t("readout.measure.deepestFall", { state: "New Jersey", fell: "yes", fall: "$26,238" })).toBe("New Jersey — at its lowest on the road, the family has $26,238 less than it had at the poverty line.");
+    expect(t("readout.measure.deepestFall", { state: "Minnesota", fell: "no", fall: "$0" })).toBe("Minnesota — the family never has less than it had at the poverty line, anywhere on the road.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["childcare"], [])).toBe("Biggest one-raise loss at any pay: $12,062 at $38,000 → $39,000, when CCDF child care subsidy ends.");
+    expect(worstStepLine("$12,062", "$38,000 → $39,000", ["snap", "wic"], ["X Premium Savings"])).toBe("Biggest one-raise loss at any pay: at least $12,062 at $38,000 → $39,000, when SNAP and WIC end; a floor, because X Premium Savings is not modelled.");
     expect(noneLine("New Mexico", "$1,000", "$200", "$150,000", 0)).toBe("New Mexico — no cliff found: no $1,000 step of earnings on this household's curve cut net income by $200 or more, up to $150,000.");
     expect(noneLine("Nowhere", "$1,000", "$200", "$150,000", 1)).toMatch(/no cliff lands with the raise: .* 1 cliff is deferred to a later renewal\.$/);
   });
@@ -341,28 +373,35 @@ describe("the sentences, from copy through words.ts", () => {
        named the household and the climb, so the readout says the state and the
        rate and stops (design/REVIEW-picture-first-places-2026-09-18.md). The
        sign word and the rounding are still core's. */
-    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar on average climbing out of poverty.");
-    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar on average climbing out of poverty.");
-    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar on average</b> climbing out of poverty.");
-    // The level beside the slope, where the file carries it: what the family has at both ends of the road.
-    expect(roadRateLine("Wisconsin", -1.0486, undefined, { netLo: "$80,163", netHi: "$50,801" }))
-      .toBe("Wisconsin — loses 105¢ of each extra dollar on average climbing out of poverty: from $80,163 at the poverty line to $50,801 at twice it.");
-    expect(roadCollapse("$40,000", "$16,428", ["childcare"]))
-      .toBe("The road collapses at $40,000, where CCDF child care subsidy ends and the family loses $16,428 in one step.");
-    expect(roadCollapse("$54,000", "$3,513", ["snap", "wic"])).toBe("The road collapses at $54,000, where SNAP and WIC end and the family loses $3,513 in one step.");
-    expect(roadCollapse("$54,000", "$3,513", [])).toBe("The road collapses at $54,000, where the family loses $3,513 in one step; no single program explains the drop.");
-    expect(roadHolds("$1,000", "$27,000", "$55,000", "$200"))
-      .toBe("The road does not collapse: no $1,000 step of earnings between $27,000 and $55,000 cut net income by $200 or more.");
+    expect(roadRateLine("Missouri", -0.5632)).toBe("Missouri — loses 56¢ of each extra dollar on average from the poverty line to twice it.");
+    expect(roadRateLine("New Mexico", 0.3042)).toBe("New Mexico — keeps 30¢ of each extra dollar on average from the poverty line to twice it.");
+    expect(roadRateLine("Ohio", -0.42, (x) => `<b>${x}</b>`)).toBe("Ohio — <b>loses 42¢ of each extra dollar on average</b> from the poverty line to twice it.");
+    // The level beside the slope, where the file carries it, and the rate said again in dollars (M17): a
+    // raise the width of the road, and what it leaves the family with.
+    expect(roadRateLine("Wisconsin", -1.0486, undefined, { raise: 28000, netLo: 80163, netHi: 50801 }))
+      .toBe("Wisconsin — loses 105¢ of each extra dollar on average from the poverty line to twice it: a raise of $28,000 leaves the family $29,362 poorer, from $80,163 to $50,801.");
+    expect(roadRateLine("New Mexico", 0.3042, undefined, { raise: 28000, netLo: 61905, netHi: 70423 }))
+      .toBe("New Mexico — keeps 30¢ of each extra dollar on average from the poverty line to twice it: a raise of $28,000 leaves the family $8,518 better off, from $61,905 to $70,423.");
+    expect(roadRateLine("Nowhere", 0, undefined, { raise: 28000, netLo: 50000, netHi: 50000 })).toMatch(/leaves the family no better off, from \$50,000 to \$50,000\.$/);
+    // What "money kept" counts (M3), and the child-care help inside it where there is some.
+    expect(countedLine(null)).toBe("Money kept is after taxes, premiums and the child care the family pays itself.");
+    expect(countedLine("$31,341")).toBe("Money kept is after taxes, premiums and the child care the family pays itself; $31,341 of it at the poverty line is child-care help paid to the provider.");
+    // The road's biggest loss in the measure's own words — the road no longer "collapses" (M17).
+    expect(roadWorstLine("$40,000", "$16,428", ["childcare"])).toBe("The biggest loss on the road is at $40,000: $16,428 in one step, when CCDF child care subsidy ends.");
+    expect(roadWorstLine("$54,000", "$3,513", ["snap", "wic"])).toBe("The biggest loss on the road is at $54,000: $3,513 in one step, when SNAP and WIC end.");
+    expect(roadWorstLine("$54,000", "$3,513", [])).toBe("The biggest loss on the road is at $54,000: $3,513 in one step; no single program explains it.");
+    expect(roadHolds("$1,000", "$27,000", "$55,000", "$200")).toBe("No $1,000 raise between $27,000 and $55,000 cuts net income by $200 or more.");
+    // A larger drop just past the road's top (R3): Minnesota's $27,483 exit, one step past a road that ends at $55,000.
+    expect(pastTopLine("$56,000", "$27,483", false)).toBe("And a larger drop sits just past the road, at $56,000: $27,483 in one step.");
+    expect(pastTopLine("$56,000", "$27,483", true)).toBe("But a larger drop sits just past the road, at $56,000: $27,483 in one step.");
     /* The state is the readout line's own subject and is named at its head, so
        the position sentence no longer says it twice. */
     expect(roadPosition(47)).toBe("47 in 100 families like this earn less than that.");
     expect(axisPosition(87)).toBe("87 in 100 families like this earn less than that.");
-    expect(roadCliffCountLine("Missouri", 7)).toBe("Missouri — 7 cliffs on the road out of poverty.");
-    expect(roadCliffCountLine("Alabama", 1)).toBe("Alabama — 1 cliff on the road out of poverty.");
     expect(roadOffAxisLine("Nowhere")).toMatch(/^Nowhere — this household's road out of poverty/);
     // The whole-axis worst is now labelled for what it is, and last.
     expect(worstStepLine("$10,370", "$118,000 → $119,000", ["aca"], []))
-      .toBe("Largest single loss anywhere on the curve: $10,370 at $118,000 → $119,000, when Premium tax credit ends.");
+      .toBe("Biggest one-raise loss at any pay: $10,370 at $118,000 → $119,000, when Premium tax credit ends.");
   });
   it("the axis line names the common top and the exceptions in dollars (rerun N9)", () => {
     expect(axisLine("1 adult, 2 children (3 and 7)", "$150,000", [{ state: "Alaska", top: "$175,000" }, { state: "Hawaii", top: "$165,000" }]))
@@ -372,7 +411,7 @@ describe("the sentences, from copy through words.ts", () => {
 });
 
 describe("the one caution the map on the screen has earned (§ The page is its picture)", () => {
-  /* The two boxed warnings live in full inside "How to read this map"; the one
+  /* The two boxed warnings live in full in the method panel; the one
      that is TRUE OF THE MAP a reader is looking at comes out of it in one line,
      because then it is not a rule but a warning, and nothing that warns hides.
      The bounded branch is exercised end to end on the safe-exit map
@@ -480,21 +519,26 @@ describe("the committed sweep", () => {
     expect(valueOf(summary.states.NM[single2.id], "keepRate")).toBeCloseTo(0.3042, 4);
   });
   it("the road's two lifted-out groups are its own facts: no cliff on the road, and a road that runs off the axis", () => {
-    const count = measureByKey("roadCliffCount")!, worst = measureByKey("roadWorst")!;
-    const g = group(rowsFor(summary, single2, count), count);
-    expect(g.none.map((r) => r.st)).toContain("NM");
-    for (const r of g.none) expect(r.m.roadCliffCount).toBe(0);
-    for (const r of g.ranked) expect(r.m.roadCliffCount).toBeGreaterThan(0);
-    // Where the road collapses plots the worst road cliff's drop.
+    const worst = measureByKey("roadWorst")!, fall = measureByKey("deepestFall")!;
     const gw = group(rowsFor(summary, single2, worst), worst);
+    expect(gw.none.map((r) => r.st)).toContain("NM");
+    for (const r of gw.none) expect(r.m.roadCliffCount).toBe(0);
+    for (const r of gw.ranked) expect(r.m.roadCliffCount).toBeGreaterThan(0);
+    // The road's biggest loss plots the worst road cliff's drop.
     expect(gw.ranked[0].value).toBe(summary.states[gw.ranked[0].st][single2.id].roadWorst!.drop);
+    // The deepest fall is a figure for every state, cliff or none: 0 is a measured "never fell", shaded and ranked last.
+    const gf = group(rowsFor(summary, single2, fall), fall);
+    expect(gf.none).toEqual([]);
+    expect(gf.ranked.length + gf.incomplete.length).toBe(51);
+    expect(valueOf(summary.states.MN[single2.id], "deepestFall")).toBe(0);
+    expect(gf.ranked[gf.ranked.length - 1].value).toBe(0);
     expect(valueOf(summary.states.MO[single2.id], "roadWorst")).toBe(16_428);
     // No cell of the committed sweep has a road off its axis, so the path is
     // pinned on a synthetic one: keepRate null is what says the road is gone.
     const off: SummaryJson = { ...fixture, states: { ...fixture.states,
       JJ: { "single-1": metrics({ keepRate: null, roadLo: null, roadHi: null, roadCliffCount: 0, roadWorst: null }), "married-1": metrics() } },
       coverage: { ...fixture.coverage, JJ: coverage() } };
-    for (const m of [measureByKey("keepRate")!, count, worst]) {
+    for (const m of [measureByKey("keepRate")!, worst, fall]) {
       const rows = rowsFor(off, single1, m);
       expect(rows.find((r) => r.st === "JJ")!.kind, m.key).toBe("past");
       expect(group(rows, m).past.map((r) => r.st), m.key).toEqual(["JJ"]);
@@ -516,5 +560,35 @@ describe("the committed sweep", () => {
     // Zero keeps nothing and loses nothing, and says so.
     expect(keepShort(0)).toBe("keeps 0¢");
     expect(keepTick(0)).toBe("0¢");
+  });
+});
+
+describe("the no-subsidy twin on the committed sweep (R2, R16)", () => {
+  const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
+  it("is carried with the same metrics as any household, marked as derived from single-2", () => {
+    const twin = summary.archetypes.find((a) => a.id === "single-2-nosub")!;
+    expect(twin).toMatchObject({ married: false, childAges: [3, 7], derivedFrom: "single-2" });
+    expect(menuOrder(summary.archetypes).map((a) => a.id).slice(2, 4)).toEqual(["single-2", "single-2-nosub"]);
+    // Two states end the climb poorer paying for care with no subsidy, against 26 with it.
+    const keep = measureByKey("keepRate")!;
+    const neg = (id: string) => rowsFor(summary, summary.archetypes.find((a) => a.id === id)!, keep).filter((r) => (r.m.keepRate ?? 0) < 0).map((r) => r.st);
+    expect(neg("single-2")).toHaveLength(26);
+    expect(neg("single-2-nosub")).toEqual(["DC", "HI"]);
+    // The twin claims no subsidy, so none of its level is child-care help.
+    for (const st of STATE_CODES) expect(summary.states[st]["single-2-nosub"].childcareAtRoadLo, st).toBe(0);
+  });
+});
+
+describe("How to read this map, for a reader (M7)", () => {
+  const read = t("howTo.read", { floor: "$200", span: t("howTo.span", { lo: "$27,000", hi: "$55,000" }) });
+  it("defines a cliff, a danger zone, the road, the keep rate and the shading, in that order, in 120 words or fewer", () => {
+    const at = ["**cliff**", "**danger zone**", "**The road**", "**The keep rate**", "**The shading**"].map((term) => read.indexOf(term));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect(at).toEqual([...at].sort((a, z) => a - z));
+    expect(read).toContain("pay where the family has less than it had at a lower pay");
+    expect(read.replace(/\*/g, "").split(/\s+/).length).toBeLessThanOrEqual(120);
+  });
+  it("leaves the engine's notes to the method: no coverage record, no charting rule, no bin mechanics", () => {
+    expect(read).not.toMatch(/coverage record|must not be charted|equal-width|bins?\b/i);
   });
 });

@@ -17,14 +17,20 @@
 //     counts them (rerun N11). The trailing space joins it to the figure
 //     sentence in its own element. lede.glossary — one glossary sentence, from
 //     core's floor (S3), and PolicyEngine introduced on first use (S6).
-//   measures.* — the six measures pipeline/src/metrics.ts writes, in the
-//     FilterRow's order; each option stands on its own (S2) and is short
-//     enough to show whole in the select at 390 — the definition is
-//     `describe`, in "How to read this map" and the table's defs. dangerWidth: the
-//     pipeline sums every zone (metrics.ts); the widest one's width is the leap
-//     — the earlier label, "the worst danger zone", described the leap.
-//     deferredCliffCount.describe names the three mechanisms where the map is
-//     chosen, not six bullets down (S4).
+//   measures.* — the nine measures the menu offers (model.ts SPEC). Each has
+//     ONE `name` (blind reviews R9/M6): the option, the legend's title, the
+//     ranking's heading, the table's column and the phrase the readout and the
+//     answer use. It stands on its own (S2) and is short enough to show whole
+//     in the select at 390; the definition is `describe`, and `cue` is the
+//     legend's plain "darker = …" (M16). dangerWidth is "pay spent below an
+//     earlier peak" (R9): the pipeline sums every zone, and inside a zone most
+//     raises GAIN money, so "where raises lose money" was wrong. The three
+//     counts are table columns now (R5, R6): their names are table.cols.*,
+//     their definitions table.defs.*, which say why they are not ranked.
+//   howTo.* — "How to read this map" for a reader (M7): `read` defines a
+//     cliff, a danger zone, the road, the keep rate and the shading, in that
+//     order; the engine's notes are the method's (method.hatchCaution,
+//     method.pastAxisCaution, figure.binsLine).
 //   household.* — the household as the reader knows it (S10 of the first
 //     review): "1 adult, 2 children (3 and 7)". figure.sub adds its tenure,
 //     which every household shares (rerun N10).
@@ -37,8 +43,10 @@
 //     where it is not the measure, then the county; a figure the axis bounds
 //     says past what, in dollars (S6, N9); readout.none* is the data's own
 //     reason, never a guessed cause (rerun S6). The two-count sentences
-//     (floor, worstStepFloor, measure.cliffCount, measure.deferred) are nested
-//     plurals: `n` programs or cliffs, `m` missing programs, `deferred`.
+//     (floor, worstStepFloor) are nested plurals: `n` programs, `m` missing
+//     programs. readout.road.* — the rate said again in dollars (M17), what
+//     "money kept" counts (M3), the road's biggest loss in the measure's own
+//     words (no "collapse"), and a larger drop just past the top (R3).
 //   rank.row.* — the row's accessible name: its rank, the state, the value —
 //     and, on the one-step loss, the step's earnings (S5). rank.at — where the
 //     worst step begins, beside the loss (rerun S5). rank.ordinal, rank.range

@@ -60,10 +60,13 @@
     <!-- The legend, inside the figure, as one compact strip: the ramp, its printed bounds, and
          the tile states off the ramp that are on the map at this moment. The other three are in "How to read
          this map", drawn with the same classes, so the key cannot drift from the tiles. -->
+    <!-- …titled with the measure's one name (R9/M6), and closed by a plain cue — "darker = loses more" — beside the step widths (M16). -->
     <div class="legend">
+      <p class="legend-title" id="legendTitle"></p>
       <div class="scale" id="scale" aria-hidden="true"></div>
       <div class="scale-labels" id="scaleLabels"></div>
       <div class="scale-steps" id="scaleSteps" hidden></div>
+      <p class="scale-cue hg-source" id="scaleCue"></p>
       <ul class="hg-key" id="legend"></ul>
     </div>
 
@@ -98,17 +101,17 @@
 
     <p class="hg-source estimates" id="figSrc"></p>
 
+    <!-- Written for a reader (M7): the five things the map is made of, defined in order, then the
+         measure on the screen, the key to the squares, and what the page covers. The engine's notes —
+         the bins, where a flag is read from, what must not be charted — are the method panel's. -->
     <details class="hg-disclosure howto" id="howTo">
       <summary id="howToHeading"></summary>
-      <p id="figScope"></p>
+      <p id="howToRead"></p>
       <p id="figMeasure"></p>
       <!-- Every tile state, always all four, each drawn with the tile's own class (places review S9). -->
       <ul class="hg-key" id="keyFull"></ul>
+      <p id="figScope"></p>
       <p id="figKeyboard"></p>
-      <p class="hg-source" id="binsLine"></p>
-      <p class="hg-callout hg-callout--caution" id="hatchCaution"></p>
-      <p class="hg-callout hg-callout--caution" id="pastAxisNote"></p>
-      <p class="glossary" id="glossary"></p>
     </details>
   </figure>
 
@@ -164,10 +167,12 @@
         <caption id="tabCap"></caption>
         <thead>
           <tr><th scope="col" id="colState"></th>
-              <!-- The road out of poverty leads, as it does in the measure menu: the keep rate, the cliffs on the road, and where it collapses. -->
+              <!-- The road out of poverty leads, as it does in the measure menu. Every measure's column is headed with its one name. -->
               <th scope="col" class="num" id="colKeepRate"></th>
               <!-- The same keep rate to exactly twice poverty, without the road's one-step allowance: the boundary sensitivity beside the figure it qualifies. -->
               <th scope="col" class="num" id="colKeepRateToLine"></th>
+              <!-- …and on to 220% of it (R3): the other side of the same boundary. -->
+              <th scope="col" class="num" id="colKeepRateWide"></th>
               <!-- The level beside the slope: net income at the poverty line and at twice it. A keep rate says raises add up, not how much the family has. -->
               <th scope="col" class="num" id="colNetAtRoadLo"></th>
               <th scope="col" class="num" id="colNetAtRoadHi"></th>
@@ -178,6 +183,8 @@
                    families stand below it, and three more columns pushed the
                    page itself sideways at 1280 (measured). -->
               <th scope="col" class="num" id="colRoadWorstAt"></th>
+              <!-- The deepest fall on the road (R3): a figure with no top to sit on. -->
+              <th scope="col" class="num" id="colDeepestFall"></th>
               <th scope="col" class="num" id="colBiggestLoss"></th>
               <th scope="col" class="num" id="colBiggestLossAt"></th>
               <th scope="col" class="num" id="colDangerWidth"></th>
@@ -195,7 +202,13 @@
 
   <details class="hg-disclosure" id="methodPanel">
     <summary><h2 id="methodHeading"></h2></summary>
+    <p class="glossary" id="glossary"></p>
     <ul id="methodList"></ul>
+    <!-- The engine's notes, moved here from "How to read this map" unchanged (M7): how the bins are
+         cut, and the two rules a chart of these numbers must keep. -->
+    <p class="hg-source" id="binsLine"></p>
+    <p class="hg-callout hg-callout--caution" id="hatchCaution"></p>
+    <p class="hg-callout hg-callout--caution" id="pastAxisNote"></p>
     <h3 id="excludesHeading"></h3>
     <ul id="excludes"></ul>
   </details>

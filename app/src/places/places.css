@@ -190,6 +190,11 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    reading measure — a border there drew a rule that stopped two thirds of the
    way across and made the figure look ragged. */
 .legend { margin-top: var(--s4); padding-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
+/* The measure's one name over the scale it keys (R9/M6), and the plain cue
+   under it (M16) — small, like the bounds, so the ramp stays the picture. */
+.legend-title { margin: 0 0 var(--s1); font-size: var(--t-micro); font-weight: 600; color: var(--ink-2); }
+.scale-cue { margin: var(--s1) 0 0; font-size: var(--t-micro); }
+.scale-cue:empty { display: none; }
 .scale { display: flex; align-items: stretch; gap: 2px; }
 .scale .sw { flex: 1; height: 12px; }
 /* A diverging scale is two scales meeting at zero, so the gap where they meet
@@ -197,12 +202,10 @@ h4 { font-size: var(--t-small); font-weight: var(--w-semi); line-height: var(--l
    which, and this says where the turn is. The bound printed under it reads
    "0¢". */
 .scale .sw--hinge { margin-inline-start: 4px; }
-/* Six bounds between five steps; or, for a count, one label centred under each
-   class that exists (S5; --n is the number of classes). */
+/* The bounds between the steps: six under five, seven under a diverging six. */
 .scale-labels { display: flex; justify-content: space-between; color: var(--ink-3);
                 font-size: var(--t-micro); font-variant-numeric: tabular-nums;
                 margin-top: var(--s1); }
-.scale-labels.classes { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; text-align: center; }
 /* Under a diverging scale, each arm's step width, spanning that arm's
    swatches (render.ts sets each caption's flex to its swatch count). The
    hinge gap is the scale's own. */

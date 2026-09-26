@@ -89,6 +89,41 @@ export interface StateMetrics {
    * where the reach ladder has no trustworthy cell, and never 0.
    */
   biggestLossPosition: number | null;
+  /**
+   * THE ROAD'S BAND TOP (policy-data review R3, 2026-09-26). The keep rate's
+   * top end sits on the most common program limit — 200% of poverty — so a
+   * $2,000 move in where the road stops reranks the tails. `keepRateWide` is
+   * the same slope measured from `roadLo` to `roadWideHi`, the sampled point
+   * as many steps past the road's last step as the first point at or above
+   * 220% of the guideline is past the first at or above 200%; for a household
+   * whose road is on its own pay, that IS the first point at or above 220%.
+   * Four decimals, like `keepRate`. Computed offline from the stored points
+   * (pipeline/src/metrics.ts). Absent on files written before it; null where
+   * the band runs off the axis.
+   */
+  keepRateWide?: number | null;
+  roadWideHi?: number | null;
+  /**
+   * The deepest fall on the road (R3's endpoint-free measure): net income at
+   * `roadLo` less the lowest net income anywhere on `[roadLo, roadHi]`, whole
+   * dollars — how far below where it started the family goes on the climb,
+   * whether or not it climbs back out by the top. 0 where it never dips
+   * below its start. Absent on older files, null where the road is off the axis.
+   */
+  deepestFall?: number | null;
+  /**
+   * The largest cliff whose step starts within $5,000 past the road's top
+   * (`[roadHi, roadHi + 5,000)`), or null where there is none: what sits just
+   * outside the span the keep rate measures, so a page can say so when it is
+   * larger than the road's own worst (R3 (c)). Absent on older files.
+   */
+  pastRoadWorst?: { drop: number; at: number; programs: ProgramId[] } | null;
+  /**
+   * The child-care subsidy inside `netAtRoadLo`, whole dollars — the part of
+   * the level paid to a provider rather than held as cash (marketing review
+   * M3). 0 where the household claims none. Absent on older files.
+   */
+  childcareAtRoadLo?: number | null;
 }
 
 export interface SummaryJson {
@@ -114,7 +149,13 @@ export interface SummaryJson {
   year: string;
   /** The PolicyEngine that produced these numbers; absent on files written before it was recorded. */
   model?: ModelRecord;
-  archetypes: { id: string; married: boolean; childAges: number[] }[];
+  /**
+   * The households this summary describes. `derivedFrom` marks a row the
+   * rebuild computed from another row's stored points rather than one the
+   * sweep ran (pipeline/src/twin.ts: the `-nosub` twin, until a sweep carries
+   * it); absent on every swept row.
+   */
+  archetypes: { id: string; married: boolean; childAges: number[]; derivedFrom?: string }[];
   states: Record<string, Record<string, StateMetrics>>;
   /** Per state, what a reader of its numbers has to know first (coverage.ts). Absent on files written before it was recorded. */
   coverage?: Record<string, StateCoverage>;

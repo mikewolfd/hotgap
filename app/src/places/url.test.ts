@@ -20,11 +20,16 @@ describe("the view in the query string", () => {
     expect(viewQuery({ household: "single-2", measure: "biggestLoss", sort: "state", state: null }))
       .toBe("?household=single-2&measure=biggestLoss&sort=state");
   });
-  it("every measure key ever written still resolves, the six whole-axis ones included (Plan 9)", () => {
-    for (const key of ["biggestLoss", "dangerWidth", "leap", "safeExit", "cliffCount", "deferredCliffCount", "keepRate", "roadCliffCount", "roadWorst"]) {
+  it("every menu measure key resolves to itself, the road's new deepest fall included (Plan 9, R3)", () => {
+    for (const key of ["biggestLoss", "dangerWidth", "leap", "safeExit", "keepRate", "roadWorst", "deepestFall", "netAtRoadLo", "netAtRoadHi"]) {
       expect(parseView(`?measure=${key}`, domain).measure, key).toBe(key);
       expect(parseView(`?sort=${key}`, domain).sort, key).toBe(key);
     }
+  });
+  it("a link to one of the three counts that left the menu (R5, R6) lands on the nearest measure it still has", () => {
+    expect(parseView("?measure=roadCliffCount&sort=roadCliffCount", domain)).toMatchObject({ measure: "roadWorst", sort: "roadWorst" });
+    expect(parseView("?measure=cliffCount&sort=deferredCliffCount", domain)).toMatchObject({ measure: "biggestLoss", sort: "biggestLoss" });
+    expect(parseView("?measure=deferredCliffCount&sort=measure", domain)).toMatchObject({ measure: "biggestLoss", sort: "biggestLoss" });
   });
   it("anything unknown falls back to the default for that key alone", () => {
     expect(parseView("?household=nope&measure=leap&sort=up&state=ZZ", domain))

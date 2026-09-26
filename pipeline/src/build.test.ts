@@ -181,6 +181,16 @@ describe("buildSummary", () => {
       roadCliffCount: 3,
       roadWorst: { drop: 21971, at: 30000, programs: ["headstart"] },
       biggestLossPosition: 33.1,
+      // R3: the same slope on to 220% of the guideline — $46,530, so the
+      // point at $47,000, four steps past the road's last — still loses 56¢;
+      // the family's lowest point on the road is $21,402 under its start;
+      // nothing bigger sits within $5,000 past the top; and no child-care
+      // subsidy is inside the level (this fixture claims none).
+      keepRateWide: -0.5605,
+      roadWideHi: 47000,
+      deepestFall: 21402,
+      pastRoadWorst: null,
+      childcareAtRoadLo: 0,
     });
   });
 

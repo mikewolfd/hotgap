@@ -13,6 +13,11 @@ import { STATE_CODES } from "./states.js";
 // never quietly become "silently dropped".
 const SWEPT = Object.keys(loadSummary().states[STATE_CODES[0]]).sort();
 const AWAITING_SWEEP = ARCHETYPES.map((a) => a.id).filter((id) => !SWEPT.includes(id));
+// Rows the summary DERIVED from another row's stored points rather than swept
+// (pipeline/src/twin.ts: the no-subsidy twin, until a sweep runs it). They
+// have a summary row and no curve of their own in the state files.
+const DERIVED = loadSummary().archetypes.filter((a) => a.derivedFrom !== undefined).map((a) => a.id);
+const IN_FILES = SWEPT.filter((id) => !DERIVED.includes(id));
 
 describe("committed data", () => {
   it("summary.json covers every state, with the same archetypes in each and no stranger among them", () => {
@@ -54,8 +59,8 @@ describe("committed data", () => {
     for (const state of STATE_CODES) {
       const file = loadStateFile(state);
       expect(file?.state, state).toBe(state);
-      expect(Object.keys(file!.archetypes).sort(), state).toEqual(SWEPT);
-      for (const a of ARCHETYPES.filter((x) => SWEPT.includes(x.id))) {
+      expect(Object.keys(file!.archetypes).sort(), state).toEqual(IN_FILES);
+      for (const a of ARCHETYPES.filter((x) => IN_FILES.includes(x.id))) {
         expect(file!.archetypes[a.id].points, `${state} ${a.id}`).toHaveLength(axisSpec(answersFor(state, a)).count);
       }
     }

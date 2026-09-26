@@ -54,9 +54,14 @@ const near = (a: number, b: number, tol = 1.5) => Math.abs(a - b) <= tol;
 const metrics = (st: string, archId: string): StateMetrics => summary.states[st][archId];
 const liheapOf = (st: string): LiheapCoverage => coverage[st].liheap!;
 
+/* The table's column order: state; the keep rate, to the line and to 220%; the two levels; the road's count, biggest loss,
+   its step and its deepest fall; the whole axis's biggest loss and its step, the width, the leap and the safe exit; the
+   two counts; Figures. */
+const COL = { keepRate: 1, keepRateToLine: 2, keepRateWide: 3, netAtRoadLo: 4, netAtRoadHi: 5, roadCliffCount: 6, roadWorst: 7, roadWorstAt: 8, deepestFall: 9, biggestLoss: 10, biggestLossAt: 11, dangerWidth: 12, leap: 13, safeExit: 14, cliffCount: 15, deferred: 16, figures: 17 };
+
 function expectIncompleteFor(st: string, archId: string): boolean {
   const a = summary.archetypes.find((x) => x.id === archId)!;
-  const pays = a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || a.id.includes("dual"));
+  const pays = a.childAges.some((age) => age <= CHILDCARE_MAX_AGE) && (!a.married || a.id.includes("dual")) && !a.id.endsWith("-nosub");
   return (coverage[st]?.unmodeled ?? []).some((u) => u.program !== "LIHEAP" && (!/child.?care/i.test(u.program) || pays));
 }
 
@@ -100,8 +105,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        figure's own <figcaption>, with the count underlined in the ink of the
        tiles it counts. Every figure is read from the committed run. */
     const badKeep = STATES.filter((st) => (metrics(st, "single-2").keepRate ?? 0) < 0).length;
-    /* …and how many of them are negative measured to exactly twice poverty (road.ts keepRateToLine). */
-    const strictKeep = STATES.filter((st) => (metrics(st, "single-2").keepRate ?? 0) < 0 && (metrics(st, "single-2").keepRateToLine ?? 0) < 0).length;
+    /* …and the same count for the family that pays for care with no subsidy, the twin the file carries (R2). */
+    const badNoSub = STATES.filter((st) => (metrics(st, "single-2-nosub").keepRate ?? 0) < 0).length;
     const answer = await page.evaluate(() => ({
       text: [...document.querySelector("#answer")!.childNodes].filter((n) => (n as Element).id !== "answerHolds").map((n) => n.textContent).join("").replace(/\s+/g, " ").trim(),
       holds: document.querySelector("#answerHolds")?.textContent ?? null,
@@ -110,8 +115,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     }));
     check(answer.tag === "FIGCAPTION" && answer.first === "answer",
       "the answer sentence is the figure's own caption and its first child, so nothing stands between the masthead and the picture", answer);
-    check(answer.text === `In ${badKeep} of the ${STATES.length - (dc ? 1 : 0)} states${dc ? " and the District of Columbia" : ""}, a single parent of two children climbing from the poverty line to twice it ends up poorer than they started — ${strictKeep} of them before the step out of twice poverty.`,
-      `the answer counts the ${badKeep} states where this household ends the climb poorer, from the file, with the denominator named once and in full`, answer.text);
+    check(answer.text === `In ${badKeep} of the ${STATES.length - (dc ? 1 : 0)} states${dc ? " and the District of Columbia" : ""}, a single parent of two children who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, ${badNoSub === 0 ? "in none" : `in ${badNoSub}`}.`,
+      `the answer names the subsidy its count depends on and shows the pair — ${badKeep} states with it, ${badNoSub} paying for care without it — from the file, with the denominator named once and in full (R2, M1, M2)`, answer.text);
     check(answer.keyed.length === 1 && answer.keyed[0][0] === String(badKeep) && /hg-amt--cliff/.test(answer.keyed[0][1]),
       "the one figure the sentence underlines is the count, in the ink of the tiles it counts", answer.keyed);
     check(answer.holds === "Every state's rules applied to the same family: renting at the county's typical rent, paying center-based care for both children, and getting the child-care subsidy, SNAP, TANF, Medicaid, and WIC.",
@@ -144,8 +149,21 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* What the measure IS is the measure's own describe, said per view rather
        than in a standfirst that could only ever name one of the nine. */
     const measureLine0 = await page.$eval("#figMeasure", (el) => el.textContent!);
-    check(measureLine0 === "The map shades Keep rate on the road out of poverty: Of each extra dollar earned from the poverty line ($27,000) to just past twice it ($55,000) — higher in Alaska and Hawaii — the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started.",
-      "the disclosure says what the map shades and what the measure means, from the measure's own words", measureLine0);
+    check(measureLine0 === "The map shades Cents kept of each extra dollar: Of each extra dollar earned from the poverty line ($27,000) to just past twice it ($55,000) — higher in Alaska and Hawaii — the cents this household keeps once taxes and lost benefits are counted. Below zero it ends up poorer than it started.",
+      "the disclosure says what the map shades, in the measure's one name, and what the measure means, from its own words", measureLine0);
+    /* "How to read this map" is written for a reader (M7): a cliff, a danger
+       zone, the road, the keep rate and the shading, defined in that order, in
+       120 words or fewer; the engine's notes are the method's now. */
+    const howTo = await page.evaluate(() => ({
+      read: document.querySelector("#howToRead")!.textContent!.replace(/\s+/g, " ").trim(),
+      panel: document.querySelector("#howTo")!.textContent!,
+      notesInMethod: ["#binsLine", "#hatchCaution", "#pastAxisNote", "#glossary"].every((sel) => document.querySelector(sel)!.closest("#methodPanel") !== null),
+    }));
+    const termsAt = ["cliff", "danger zone", "The road", "The keep rate", "The shading"].map((term) => howTo.read.indexOf(term));
+    check(termsAt.every((i, k) => i >= 0 && (k === 0 || i > termsAt[k - 1])) && howTo.read.split(" ").length <= 120
+      && howTo.read.includes("pay where the family has less than it had at a lower pay") && howTo.read.includes("($27,000 to $55,000 for this family)")
+      && !/coverage record|must not be charted|equal-width/.test(howTo.panel) && howTo.notesInMethod,
+      "How to read this map defines cliff, danger zone, the road, the keep rate and the shading, in that order and in 120 words or fewer, and the engine's notes sit in the method (M7)", { words: howTo.read.split(" ").length, read: howTo.read.slice(0, 120) });
     /* The glossary sentence (S3) from core's floor, PolicyEngine introduced on
        first use (S6), and Plan 9's one sentence of why a cliff's size alone is
        not the story. */
@@ -156,9 +174,9 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Two groups, two questions (Plan 9): the road out of poverty leads,
        because that is where the families this tool is for actually are. */
     const groups = await page.$$eval("#metric optgroup", (els) => els.map((g) => [(g as HTMLOptGroupElement).label, [...g.children].map((o) => (o as HTMLOptionElement).value)] as [string, string[]]));
-    check(groups.length === 2 && groups[0][0] === "From the poverty line to twice it" && groups[0][1].join() === "keepRate,roadCliffCount,roadWorst,netAtRoadLo,netAtRoadHi"
-      && groups[1][0] === "At any pay" && groups[1][1].join() === "biggestLoss,dangerWidth,leap,safeExit,cliffCount,deferredCliffCount",
-      "the measure menu is two groups: the road's five measures (the two money-kept levels after the three road measures), then the six whole-axis ones (Plan 9, level beside slope)", groups);
+    check(groups.length === 2 && groups[0][0] === "From the poverty line to twice it" && groups[0][1].join() === "keepRate,roadWorst,deepestFall,netAtRoadLo,netAtRoadHi"
+      && groups[1][0] === "At any pay" && groups[1][1].join() === "biggestLoss,dangerWidth,leap,safeExit",
+      "the measure menu is two groups: the road's five measures (the keep rate, its biggest loss and its deepest fall, then the two money-kept levels), then the four whole-axis ones — the three counts are table columns now (Plan 9, R3, R5, R6)", groups);
     const bare = await page.evaluate(() => [(document.querySelector("#metric") as HTMLSelectElement).value, new URL(location.href).searchParams.get("measure")]);
     check(bare[0] === "keepRate" && bare[1] === null, "a bare URL opens on the keep rate, without having to say so", bare);
     const options = await page.$$eval("#metric option", (els) => els.map((el) => el.textContent!));
@@ -167,24 +185,22 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        twice poverty, the…"); the definitions are the measures' own `describe`,
        in "How to read this map" and above the table. */
     const defOf = (key: string) => page.$eval(`#def-col${key[0].toUpperCase()}${key.slice(1)}`, (el) => el.textContent!);
-    check(options.length === 11 && options.every((o) => !/\b(it|that stretch|of those)\b/i.test(o) && o.length <= 40)
+    check(options.length === 9 && options.every((o) => !/\b(it|that stretch|of those|collapses?)\b/i.test(o) && o.length <= 40)
       && /worst danger zone/.test(await defOf("leap")) && /no danger zone remains/.test(await defOf("safeExit")),
       "every measure option stands on its own and is short (S2), and its definition is the measure's own describe", options);
-    /* A CLOSED select shows the option without its <optgroup> label, so every
+    /* A CLOSED select shows the option without its <optgroup> label, so a
        measure that has a near-twin in the other group must name its own window
-       in the option itself. "Largest one-step loss ($)" and "Number of cliffs"
-       carried none, and sat one line from "Where the road collapses — …
-       between poverty and twice poverty" and "Cliffs on the road out of
-       poverty" — a cold reader filed two of them as the same measure
-       (2026-09-18, B2 and B3). The four are pinned as a set, because the
-       defect is the PAIR reading alike, not either option alone. */
-    const twins: [number, number][] = [[1, 9], [2, 5]]; // road cliffs ↔ all cliffs, road's worst ↔ largest one-step
-    check(twins.every(([road, axis]) => /poverty–2×/.test(options[road]) && /any pay/.test(options[axis])),
+       in the option itself — a cold reader filed two of them as the same
+       measure (2026-09-18, B2 and B3). The pair is pinned as a pair, because
+       the defect is the two reading alike, not either option alone. */
+    const twins: [number, number][] = [[1, 5]]; // the road's biggest loss ↔ the biggest loss at any pay
+    check(twins.every(([road, axis]) => /on the road/.test(options[road]) && /any pay/.test(options[axis])),
       "each measure with a twin in the other group names its own window in the option a closed select shows (B2, B3)",
       twins.map(([road, axis]) => [options[road], options[axis]]));
-    /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest zone's width), so its label says total, never "the worst zone". */
+    /* dangerWidth is every zone's width added together (measured: in 49 of 50 states it exceeds the leap, the widest
+       zone's width), and inside a zone most raises GAIN money (R9): its one name says what the zone is. */
     const widthTotal = STATES.filter((st) => metrics(st, "single-2").cliffCount > 0 && metrics(st, "single-2").dangerWidth > metrics(st, "single-2").leap).length;
-    check(widthTotal > 0 && /^Total\b/.test(options[6]) && !/worst|widest/.test(options[6]), "the danger-width option says the measure is a total, which the file shows it is", { option: options[6], statesWhereTotalExceedsLeap: widthTotal });
+    check(widthTotal > 0 && options[6] === "Pay spent below an earlier peak" && /added together/.test(await defOf("dangerWidth")), "the danger-width option says what the stretch is — pay below an earlier peak — and its definition that it is a total (R9)", { option: options[6], statesWhereTotalExceedsLeap: widthTotal });
     /* The household line says the tenure every household shares (rerun N10). */
     check(/, renting in the state's most populous county\./.test(lede), "the map's household line says the household rents in the most populous county (rerun N10)", lede.slice(-90));
     /* The two controls are independent, said once where the order control is (rerun N3). */
@@ -199,12 +215,16 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         (th.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean).map((id) => document.getElementById(id)?.textContent ?? null)] as [string, (string | null)[]]),
     }));
     const headText = defs.heads.map(([t]) => t).join("|");
-    check(defs.terms.length === 18 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
-      && headText === "Keep rate|Keep rate to the line|Kept at the line|Kept at twice it|Cliffs on the road|Road's worst loss|Road's worst step|Largest one-step loss|Worst step|Danger zones, total width|The leap|Safe exit|Cliffs anywhere|Deferred|Figures"
-      && /worst danger zone/.test(defs.heads[10][1][0]!) && /no danger zone remains/.test(defs.heads[11][1][0]!) && /added together/.test(defs.heads[9][1][0]!) && /floors/.test(defs.heads[14][1][0]!)
+    /* ONE NAME PER MEASURE (R9, M6): a measure's column is headed with the same words as its menu option. */
+    check(defs.terms.length === 20 && defs.heads.every(([, d]) => d.length > 0 && d.every((x) => x))
+      && headText === "Cents kept of each extra dollar|Cents kept, to the line|Cents kept, to 220%|Money kept at the poverty line|Money kept at twice poverty|Raises that lose money (poverty–2×)|Biggest one-raise loss on the road|Road's worst step|Deepest fall on the road|Biggest one-raise loss (any pay)|Worst step|Pay spent below an earlier peak|Raise needed to get clear|Pay past which no earlier peak is higher|Raises that lose money (any pay)|Losses that hit later, at renewal|Figures"
+      && options.every((o) => defs.heads.some(([t]) => t === o))
+      && /worst danger zone/.test(defs.heads[12][1][0]!) && /no danger zone remains/.test(defs.heads[13][1][0]!) && /added together/.test(defs.heads[11][1][0]!) && /floors/.test(defs.heads[16][1][0]!)
       && /poorer than it started/.test(defs.heads[0][1][0]!) && /\(\$27,000\)/.test(defs.heads[0][1][0]!) && /exactly twice the poverty line/.test(defs.heads[1][1][0]!)
-      && /at the poverty line \(\$27,000\)\.$/.test(defs.heads[2][1][0]!) && /at twice the poverty line \(\$55,000\)\.$/.test(defs.heads[3][1][0]!),
-      "fifteen column definitions sit above the table, in column order, and every header's aria-describedby names its own (rerun S3; the two levels name their pay)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
+      && /220% of the poverty line \(\$59,000 here\)/.test(defs.heads[2][1][0]!)
+      && /at the poverty line \(\$27,000\): after taxes, premiums and the child care the family pays itself/.test(defs.heads[3][1][0]!) && /at twice the poverty line \(\$55,000\):/.test(defs.heads[4][1][0]!)
+      && /not ranked\.$/.test(defs.heads[5][1][0]!) && /not ranked\.$/.test(defs.heads[14][1][0]!) && /not ranked\.$/.test(defs.heads[15][1][0]!),
+      "seventeen column definitions sit above the table, in column order, every measure's column headed with its menu name, and every header's aria-describedby names its own (rerun S3, R9, M6; the counts say why they are not ranked)", defs.heads.map(([t, d]) => `${t}: ${d[0]!.slice(0, 36)}`));
     /* The three columns whose figure is a point on the axis point at one shared
        definition of what position is — and what it is not (Plan 9). */
     const positionDefs = await page.evaluate(() => ["colRoadWorstAt", "colBiggestLossAt", "colSafeExit"].map((id) => (document.getElementById(id)!.getAttribute("aria-describedby") ?? "").split(/\s+/)));
@@ -248,7 +268,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       by: document.querySelector("#grid")!.getAttribute("aria-labelledby"),
       describedBy: document.querySelector("#grid")!.getAttribute("aria-describedby"),
     }));
-    check(groupName.label === "Keep rate on the road out of poverty, state by state" && groupName.by === null && groupName.describedBy === "figDesc",
+    check(groupName.label === "Cents kept of each extra dollar, state by state" && groupName.by === null && groupName.describedBy === "figDesc",
       "the tile group is named for the measure it shows and described by how its squares work", groupName);
     check(tiles.every((t) => t.current === null), "with nothing selected, no tile is aria-current (a tab stop is not a selection)");
     const shownArch = await page.$eval("#arch", (el) => (el as HTMLSelectElement).value);
@@ -501,6 +521,12 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        three states it applies to, and absent on the other forty-eight. */
     check(mapNow.tiles.MO.label === `${STATE_NAMES.MO}: ${phraseOf("MO")}` && mapNow.tiles.NM.label.startsWith(`${STATE_NAMES.NM}: ${phraseOf("NM")}`),
       "a tile's name is its state and its rate, said the way core says it", [mapNow.tiles.MO.label, mapNow.tiles.NM.label]);
+    /* The legend is titled with the measure's one name, and says in plain words which way is worse, beside the
+       step widths — and, once, that the two sides step differently (R9, M16, R13). */
+    const legendWords = await page.evaluate(() => ({ title: document.querySelector("#legendTitle")!.textContent, cue: document.querySelector("#scaleCue")!.textContent, steps: [...document.querySelectorAll("#scaleSteps span")].map((el) => el.textContent) }));
+    check(legendWords.title === "Cents kept of each extra dollar" && legendWords.cue === "darker = loses more, lighter = keeps more · the two sides step at different widths"
+      && legendWords.steps.length === 2 && legendWords.steps.every((t) => /^steps of \d+¢$/.test(t ?? "")),
+      "the legend carries the measure's name, each arm's step width, and a plain cue beside them (R9, M16, R13)", legendWords);
     /* Each arm is cut over its own reach, so the two step widths differ and the
        caption prints both — a reader must not take a step on one arm for a
        step on the other. */
@@ -531,9 +557,12 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the strip's bars hang off one hinge: a losing state's runs left of zero, a keeping state's right, and no row carries the sequential dot", strip0);
     check(strip0.MO.value === shortOf("MO") && strip0.NM.value === shortOf("NM") && strip0.WI.value === shortOf("WI"),
       "each ranked row's value is its own rate, in core's words", { MO: strip0.MO.value, NM: strip0.NM.value, WI: strip0.WI.value });
-    const toLineOf = (st: string) => { const w = keepRateWords(metrics(st, "single-2").keepRateToLine!); return `to the line: ${w.sign} ${w.cents}¢`; };
+    const toLineOf = (st: string) => {
+      const w = keepRateWords(metrics(st, "single-2").keepRateToLine!), v = keepRateWords(metrics(st, "single-2").keepRateWide!);
+      return `to the line: ${w.sign} ${w.cents}¢ · to 220%: ${v.sign} ${v.cents}¢`;
+    };
     check(strip0.WI.toLine === toLineOf("WI") && strip0.MO.toLine === toLineOf("MO"),
-      "each ranked row carries, lighter, the same rate measured to exactly twice poverty", { WI: strip0.WI.toLine, MO: strip0.MO.toLine });
+      "each ranked row carries, lighter, the same rate measured to exactly twice poverty and on to 220% of it (R3)", { WI: strip0.WI.toLine, MO: strip0.MO.toLine });
     /* Rank 1 is the LOWEST rate: the worst state here is the most regressive
        one. The order is on the figure the page PRINTS — whole cents — so two
        states a reader sees as equal sit together in postal order, and the rank
@@ -704,13 +733,20 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        answer sentence two inches above has just said both. The rate itself is
        still core's phrase, so the map, the citizen answer and the caseworker
        sheet cannot word or round it three ways. */
+    /* Since the blind reviews (2026-09-26): the rate said again in dollars —
+       "a raise of $28,000 leaves the family $29,362 poorer" (M17) — what
+       "money kept" counts, with the child-care help inside it (M3), and the
+       road's biggest loss in the measure's own words, never "collapses". */
     const roadLead = (st: string) => {
       const m = metrics(st, "single-2");
-      const first = `${STATE_NAMES[st]} — ${phraseOf(st)} climbing out of poverty: from ${money(m.netAtRoadLo!)} at the poverty line to ${money(m.netAtRoadHi!)} at twice it.`;
-      if (!m.roadWorst) return m.cliffCount === 0 ? first : `${first} The road does not collapse: no ${money(STEP)} step of earnings between ${money(m.roadLo!)} and ${money(m.roadHi!)} cut net income by ${money(CLIFF_MIN)} or more.`;
+      const diff = m.netAtRoadHi! - m.netAtRoadLo!;
+      const change = diff < 0 ? `${money(-diff)} poorer` : diff === 0 ? "no better off" : `${money(diff)} better off`;
+      const counted = "Money kept is after taxes, premiums and the child care the family pays itself" + (m.childcareAtRoadLo ? `; ${money(m.childcareAtRoadLo)} of it at the poverty line is child-care help paid to the provider.` : ".");
+      const first = `${STATE_NAMES[st]} — ${phraseOf(st)} from the poverty line to twice it: a raise of ${money(m.roadHi! - m.roadLo!)} leaves the family ${change}, from ${money(m.netAtRoadLo!)} to ${money(m.netAtRoadHi!)}. ${counted}`;
+      if (!m.roadWorst) return m.cliffCount === 0 ? first : `${first} No ${money(STEP)} raise between ${money(m.roadLo!)} and ${money(m.roadHi!)} cuts net income by ${money(CLIFF_MIN)} or more.`;
       const ids = m.roadWorst.programs;
-      const where = ids.length === 0 ? `The road collapses at ${money(m.roadWorst.at)}, where the family loses ${money(m.roadWorst.drop)} in one step; no single program explains the drop.`
-        : `The road collapses at ${money(m.roadWorst.at)}, where ${programsOfStep(ids)} and the family loses ${money(m.roadWorst.drop)} in one step.`;
+      const where = ids.length === 0 ? `The biggest loss on the road is at ${money(m.roadWorst.at)}: ${money(m.roadWorst.drop)} in one step; no single program explains it.`
+        : `The biggest loss on the road is at ${money(m.roadWorst.at)}: ${money(m.roadWorst.drop)} in one step, when ${programsOfStep(ids)}.`;
       return `${first} ${where}`;
     };
     const ohText = await page.evaluate(() => ({
@@ -724,19 +760,20 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Ohio's road collapse IS its tallest wall, so the last line says so once
        rather than printing the same figure twice. */
     const ohSame = oh.roadWorst!.at === oh.biggestLossAt && oh.roadWorst!.drop === oh.biggestLoss;
-    check(ohText.lines[0].startsWith(roadLead("OH")) && ohSame && ohText.lines[1] === "That collapse is also the largest single loss anywhere on the curve.",
-      "Ohio's readout leads with the road — the rate, where it collapses, who is below it — and does not print its one cliff twice (Plan 9)", ohText.lines);
+    check(ohText.lines[0].startsWith(roadLead("OH")) && ohSame && ohText.lines[1] === "That is also the biggest one-raise loss at any pay." && !/collapse/.test(ohText.readout),
+      "Ohio's readout leads with the road — the rate in cents and in dollars, what money kept counts, its biggest loss, who is below it — and does not print its one cliff twice (Plan 9, M3, M17)", ohText.lines);
     /* The block under the readout says where the numbers came from and nothing
        else: it used to repeat the readout's sentences verbatim, which is what
        the cold read met twice on the way down the page. */
     check(!ohText.block.includes(roadLead("OH")) && ohText.block.startsWith("Where Ohio's numbers come from"),
       "the state's block no longer repeats the readout above it; it is named for what is inside it", ohText.block.slice(0, 90));
-    check(ohText.bold.join("|") === `Ohio|${phraseOf("OH")}|${money(oh.netAtRoadLo!)}|${money(oh.netAtRoadHi!)}|${money(oh.roadWorst!.at)}|${money(oh.roadWorst!.drop)}`,
-      "the readout marks the state, its rate, the level at both ends of the road and the road's two figures, as the CurveReadout marks its figure", ohText.bold);
+    check(ohText.bold.join("|") === `Ohio|${phraseOf("OH")}|${money(Math.abs(oh.netAtRoadHi! - oh.netAtRoadLo!))}|${money(oh.netAtRoadLo!)}|${money(oh.netAtRoadHi!)}|${money(oh.roadWorst!.at)}|${money(oh.roadWorst!.drop)}`,
+      "the readout marks the state, its rate, what the raise costs, the level at both ends of the road and the road's two figures, as the CurveReadout marks its figure", ohText.bold);
     /* POSITION: the share of families like this earning less than the figure
        just named, from the reach ladder, said as a sentence of its own. */
     /* The state is the line's own subject, named at its head, so the position
        sentence no longer says it a second time. */
+    /* Ohio's largest cliff just past the road ($378 at $57,000) is smaller than the road's own, so nothing follows the position. */
     const ohPos = ohText.lines[0].match(/(\d+) in 100 families like this earn less than that\.$/);
     check(ohPos !== null && Number(ohPos[1]) > 0 && Number(ohPos[1]) < 100 && !/like this in Ohio/.test(ohText.lines[0]),
       "the road line ends with how many families like this earn less than the collapse, the state named once", ohText.lines[0].slice(-60));
@@ -747,26 +784,25 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const ohRow = await page.$eval('#tbody .hg-row-btn[data-st="OH"]', (el) => [...el.closest("tr")!.children].map((td) => (td as HTMLElement).innerText.trim().replace(/\s*\n\s*/g, " · ")));
     const ohShare = `${Math.round(oh.biggestLossPosition!)} in 100`;
     check(ohRank.at === `at ${money(oh.biggestLossAt!)} · ${ohShare} earn less` && ohRank.label === `${ohRank.n} Ohio: ${money(oh.biggestLoss)}, at ${money(oh.biggestLossAt!)} · ${ohShare} earn less`
-      && ohRow[9] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
-      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[9], expect: ohShare });
+      && ohRow[COL.biggestLossAt] === `${money(oh.biggestLossAt!)} → ${money(oh.biggestLossAt! + STEP)} · ${ohShare}`,
+      "Ohio's ranked row and its Worst step cell say where the step begins and how many families earn less, both from the file (rerun S5, Plan 9)", { rank: ohRank, cell: ohRow[COL.biggestLossAt], expect: ohShare });
     /* The whole-axis worst is the LAST line now, labelled for what it is, with
        its own position; the selected measure's sentence sits between (Plan 9). */
     const axisWorst = (st: string) => {
       const m = metrics(st, "single-2");
-      return `Largest single loss anywhere on the curve: ${money(m.biggestLoss)} at ${money(m.biggestLossAt!)} → ${money(m.biggestLossAt! + STEP)}, when ${programsOfStep(m.biggestLossPrograms)}. ${Math.round(m.biggestLossPosition!)} in 100 families like this earn less than that.`;
+      return `Biggest one-raise loss at any pay: ${money(m.biggestLoss)} at ${money(m.biggestLossAt!)} → ${money(m.biggestLossAt! + STEP)}, when ${programsOfStep(m.biggestLossPrograms)}. ${Math.round(m.biggestLossPosition!)} in 100 families like this earn less than that.`;
     };
     const leads: Record<string, string | null> = {
-      dangerWidth: oh.safeExit === null ? null : `Ohio — ${money(oh.dangerWidth)} of earnings lie inside danger zones.`,
+      dangerWidth: oh.safeExit === null ? null : `Ohio — ${money(oh.dangerWidth)} of pay spent below an earlier peak.`,
       leap: oh.leapIsLowerBound ? null : `Ohio — a raise of ${money(oh.leap)} clears the worst danger zone.`,
-      safeExit: oh.safeExit === null ? null : `Ohio — no danger zone left above ${money(oh.safeExit)}.`,
-      cliffCount: `Ohio — ${oh.cliffCount} cliffs on this household's curve, ${oh.deferredCliffCount === 0 ? "none deferred" : `and ${oh.deferredCliffCount} more deferred to a later renewal`}.`,
-      deferredCliffCount: oh.deferredCliffCount === 0 ? `Ohio — no cliff deferred to a later renewal; all ${oh.cliffCount} land with the raise.` : `Ohio — ${oh.deferredCliffCount} cliff deferred to a later renewal, on top of ${oh.cliffCount} that land with the raise.`,
-      roadCliffCount: `Ohio — ${oh.roadCliffCount} cliffs on the road out of poverty.`,
+      safeExit: oh.safeExit === null ? null : `Ohio — above ${money(oh.safeExit)}, no earlier peak is higher.`,
+      deepestFall: oh.deepestFall! > 0 ? `Ohio — at its lowest on the road, the family has ${money(oh.deepestFall!)} less than it had at the poverty line.` : "Ohio — the family never has less than it had at the poverty line, anywhere on the road.",
+      netAtRoadLo: `Ohio — ${money(oh.netAtRoadLo!)} kept a year with pay at the poverty line.`,
     };
     const readoutFor = async (key: string) => { await page.selectOption("#metric", key); return page.evaluate(() => document.querySelector<HTMLElement>("#readout")!.innerText.split("\n").map((l) => l.trim())); };
     for (const [key, lead] of Object.entries(leads)) {
       const lines = await readoutFor(key);
-      const last = "That collapse is also the largest single loss anywhere on the curve.";
+      const last = "That is also the biggest one-raise loss at any pay.";
       check(lead !== null && lines[0].startsWith(roadLead("OH")) && lines[1] === lead && lines[2] === last,
         `under ${key} Ohio's readout leads with the road, then that measure's sentence, then the whole axis last (Plan 9)`, { lines, lead });
     }
@@ -779,6 +815,13 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const md0 = metrics("MD", "single-2");
     check(md0.roadWorst!.drop !== md0.biggestLoss && mdLines[0].startsWith(roadLead("MD")) && mdLines[1] === axisWorst("MD"),
       "Maryland's readout: a road that collapses on $913 of school meals, and the $33,587 headline last, with the share of families below each", mdLines);
+    /* R3 (c): Minnesota's road keeps 9¢, and its $27,483 child-care exit is the step out of $56,000 — one step past
+       the road's top. The readout says so, because the keep rate cannot. */
+    await page.click('.tile[data-st="MN"]');
+    const mnLine = await page.evaluate(() => (document.querySelector("#readout") as HTMLElement).innerText.split("\n")[0].trim());
+    const mn = metrics("MN", "single-2");
+    check(mn.pastRoadWorst !== null && mn.pastRoadWorst!.drop > mn.roadWorst!.drop && mnLine.endsWith(`And a larger drop sits just past the road, at ${money(mn.pastRoadWorst!.at)}: ${money(mn.pastRoadWorst!.drop)} in one step.`),
+      "Minnesota's readout says a larger drop sits just past the road's top, where the keep rate cannot see it (R3)", mnLine.slice(-120));
     /* A figure the axis bounds says past what, in dollars from the file: Nebraska's safe exit and Maryland's leap (rerun B2, N9). */
     const ne = metrics("NE", "single-2"), md = metrics("MD", "single-2");
     /* The measure's own sentence is the SECOND line now; the road is the first. */
@@ -786,7 +829,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     await page.selectOption("#metric", "safeExit");
     await page.click('.tile[data-st="NE"]');
     const neLine = await measureLine();
-    check(ne.safeExit === null && neLine === `Nebraska — no safe exit found: the last danger zone had not closed by ${money(ne.axisTop)}, the top of the axis.`, "Nebraska under safe exit: no exit found, said with the axis top in dollars (rerun B2)", neLine);
+    check(ne.safeExit === null && neLine === `Nebraska — no such pay on the scale: the last stretch below an earlier peak had not closed by ${money(ne.axisTop)}, the top of the axis.`, "Nebraska under safe exit: no such pay found, said with the axis top in dollars (rerun B2)", neLine);
     await page.selectOption("#metric", "leap");
     await page.click('.tile[data-st="MD"]');
     const mdLine = await measureLine();
@@ -823,7 +866,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       "the county left the readout for the state's source line, where the rest of the provenance is", ohCareLine.slice(-70));
     /* With no cliff anywhere, the road line does not also claim the smaller
        thing — the last line already says the stronger one. */
-    check(nmLines.length === 2 && nmLines[0] === roadLead("NM") && !/road does not collapse/.test(nmLines[0]) && nm.keepRate! > 0,
+    check(nmLines.length === 2 && nmLines[0] === roadLead("NM") && !/raise between/.test(nmLines[0]) && nm.keepRate! > 0,
       "New Mexico's road line says what it keeps and stops there, because the line below says no cliff was found anywhere", nmLines[0]);
     /* The axis in dollars in the method, per household, with the states whose guidelines lengthen it (rerun N9). */
     const tops = new Map<number, string[]>(); for (const st of STATES) { const t = metrics(st, "single-2").axisTop; tops.set(t, [...(tops.get(t) ?? []), st]); }
@@ -972,38 +1015,32 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Nebraska's case (S9): an exact leap beside an unknown safe exit, and the past-the-axis cell points at the box that explains it. */
     const single = (st: string) => metrics(st, "single-2");
     const split = STATES.filter((st) => single(st).cliffCount > 0 && single(st).safeExit === null && !single(st).leapIsLowerBound && !expectIncompleteFor(st, "single-2"));
-    /* Column order: state, the keep rate and the keep rate to the line, the two levels, the road's other three, the whole axis's six, the two counts, Figures. */
-    const COL = { keepRate: 1, keepRateToLine: 2, netAtRoadLo: 3, netAtRoadHi: 4, roadCliffCount: 5, roadWorst: 6, roadWorstAt: 7, biggestLoss: 8, biggestLossAt: 9, dangerWidth: 10, leap: 11, safeExit: 12, cliffCount: 13, deferred: 14, figures: 15 };
     const splitCells = await page.evaluate(([sts, c]) => (sts as string[]).map((st) => {
       const tr = document.querySelector(`#tbody .hg-row-btn[data-st="${st}"]`)!.closest("tr")!;
       const cols = c as Record<string, number>;
       return { st, leap: tr.children[cols.leap].textContent!.trim(), exit: (tr.children[cols.safeExit] as HTMLElement).innerText.trim().split("\n")[0].trim(), describedBy: tr.children[cols.safeExit].querySelector("[aria-describedby]")?.getAttribute("aria-describedby") };
     }), [split, COL] as const);
     const note = await page.$eval("#pastAxisNote", (el) => el.textContent!);
-    check(split.length > 0 && splitCells.every((c) => c.leap === money(single(c.st).leap) && c.exit === "past the axis" && c.describedBy === "pastAxisNote") && /last danger zone/.test(note) && /only when the worst zone/.test(note),
+    check(split.length > 0 && splitCells.every((c) => c.leap === money(single(c.st).leap) && c.exit === `beyond ${money(single(c.st).axisTop)}` && c.describedBy === "pastAxisNote") && /last danger zone/.test(note) && /only when the worst zone/.test(note),
       "a state whose last zone runs off the axis prints an exact leap and a safe exit that points at the box saying why (S9)", { split, splitCells, note: note.slice(0, 120) });
     await page.selectOption("#arch", "married-dual-2");
     await page.selectOption("#metric", "safeExit");
     await page.selectOption("#sort", "safeExit");
 
-    /* A count measure's scale is classes of whole numbers, never a repeated bound (S5). */
-    await page.selectOption("#metric", "deferredCliffCount");
-    const scale = await page.evaluate(() => ({
-      swatches: document.querySelectorAll(".scale .sw").length,
-      labels: [...document.querySelectorAll("#scaleLabels span")].map((el) => el.textContent!),
-      caption: document.querySelector("#binsLine")!.textContent!.match(/Bins: [^.]*/)![0],
-      src: document.querySelector("#binsLine")!.textContent!,
-      sub: document.querySelector("#figMeasure")!.textContent!,
-    }));
-    check(scale.swatches === scale.labels.length && new Set(scale.labels).size === scale.labels.length && /classes? from \d+ to \d+/.test(scale.caption),
-      "deferred cliffs: one swatch per class, no label repeated, the caption counts the classes", scale.caption);
-    /* Nine comparable states in ten in one class: the caption says so (N11), from the same rows. */
+    /* The deferred count is a label, not a harm scale (R6): it left the menu and stays a column, whose definition
+       names the three mechanisms (S4). A level is money the family has, so its map is on the keep ramp (R14). */
     const dualComparable = STATES.filter((st) => dual(st).cliffCount > 0 && !expectIncompleteFor(st, "married-dual-2"));
-    const byCount = new Map<number, number>(); for (const st of dualComparable) byCount.set(dual(st).deferredCliffCount, (byCount.get(dual(st).deferredCliffCount) ?? 0) + 1);
-    const [topValue, topN] = [...byCount].sort((a, b) => b[1] - a[1])[0];
-    const expectOneClass = topN / dualComparable.length >= 0.9 ? `${topN} of the ${dualComparable.length} comparable states have ${topValue === 0 ? "none" : topValue}.` : null;
-    check(expectOneClass === null ? !/comparable states have/.test(scale.src) : scale.src.includes(expectOneClass), "the near-monochrome deferred map explains itself in the caption (N11)", { expectOneClass });
-    check(/Head Start.*Medicaid or CHIP.*Transitional Medical Assistance/.test(scale.sub), "the deferred map's subtitle names the three mechanisms (S4)", scale.sub);
+    check(/Head Start.*Medicaid or CHIP.*Transitional Medical Assistance/.test(await page.$eval("#def-colDeferredCliffCount", (el) => el.textContent!)),
+      "the deferred column's definition names the three mechanisms (S4)");
+    await page.selectOption("#metric", "netAtRoadLo");
+    const levelScale = await page.evaluate(() => {
+      const probe = document.createElement("span"); document.body.append(probe);
+      const keep = Array.from({ length: 5 }, (_, i) => { probe.style.background = `var(--keep-${i + 1})`; return getComputedStyle(probe).backgroundColor; });
+      probe.remove();
+      return { keep, swatches: [...document.querySelectorAll(".scale .sw")].map((el) => getComputedStyle(el).backgroundColor), cue: document.querySelector("#scaleCue")!.textContent };
+    });
+    check(levelScale.swatches.join() === levelScale.keep.join() && levelScale.cue === "darker = keeps more",
+      "a level's scale is the keep ramp, lightest to darkest as the family keeps more, and says so at the scale (R14)", levelScale);
     await page.selectOption("#metric", "safeExit");
 
     /* CSV: the rendered table's rows, in order, with provenance equal to the file's. */
@@ -1016,7 +1053,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const rows = parseCsv(csv);
     const head = rows[0], body = rows.slice(1);
     const col = (n: string) => head.indexOf(n);
-    const num = (s: string) => (s === "none" || s === "past the axis" ? "" : s.replace(/\s*\(floor\)$/, "").replace(/[^\d]/g, ""));
+    const num = (s: string) => (s === "none" || /^beyond /.test(s) ? "" : s.replace(/\s*\(floor\)$/, "").replace(/[^\d]/g, ""));
     /* A position in a cell is "N in 100"; in the file it is a number to one
        decimal. They agree when the cell is the file's figure, rounded. */
     const shareOf = (cell: string[] | undefined) => (cell?.[1] ?? "").replace(/ in 100$/, "");
@@ -1040,6 +1077,9 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
         && (c[col("keep_rate_cents")] === "" ? r[COL.keepRate][0] === "road runs off the axis" : r[COL.keepRate][0] === `${Number(c[col("keep_rate_cents")]) < 0 ? "loses" : "keeps"} ${Math.abs(Number(c[col("keep_rate_cents")]))}¢`)
         && num(r[COL.roadCliffCount][0]) === c[col("road_cliff_count")] && num(r[COL.roadWorst][0]) === c[col("road_worst_drop")]
         && num(r[COL.netAtRoadLo][0]) === c[col("net_at_road_lo")] && num(r[COL.netAtRoadHi][0]) === c[col("net_at_road_hi")]
+        /* R3's two: the keep rate on to 220% of the line, and the deepest fall on the road. */
+        && (c[col("keep_rate_wide_cents")] === "" ? r[COL.keepRateWide][0] === "none" : r[COL.keepRateWide][0] === `${Number(c[col("keep_rate_wide_cents")]) < 0 ? "loses" : "keeps"} ${Math.abs(Number(c[col("keep_rate_wide_cents")]))}¢`)
+        && num(r[COL.deepestFall][0]) === c[col("deepest_fall")]
         && (c[col("road_worst_at")] === "" ? r[COL.roadWorstAt][0] === "none" : r[COL.roadWorstAt][0].startsWith(`${money(Number(c[col("road_worst_at")]))} → `))
         && agrees(r[COL.roadWorstAt], c[col("road_worst_position")]) && agrees(r[COL.biggestLossAt], c[col("biggest_loss_position")]) && agrees(r[COL.safeExit], c[col("safe_exit_position")]);
       if (!same) console.log("     mismatch at row", i, r, c);
@@ -1048,8 +1088,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* The road's columns and the positions are APPENDED: not one index of the
        header a reporter's script already holds has moved (Plan 9). */
     check(head.slice(0, 32).join() === "state,state_name,archetype_id,archetype,biggest_one_step_loss,biggest_loss_at,biggest_loss_programs,danger_zone_width,leap,safe_exit,cliff_count,deferred_cliff_count,leap_is_lower_bound,no_cliff_found,comparable,figures,unmodeled_programs,corrections_applied,childcare_subsidy_footing,liheap_limit,liheap_served_share,county_name,county_fips,rent_vintage,county_vintage,childcare_price_vintage,policy_year,sweep_generated,model_label,model_endpoint,model_version,source"
-      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top,keep_rate_to_line_cents,net_at_road_lo,net_at_road_hi",
-      "the CSV's fourteen new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
+      && head.slice(32).join() === "keep_rate_cents,road_lo,road_hi,road_cliff_count,road_worst_drop,road_worst_at,road_worst_programs,road_worst_position,biggest_loss_position,safe_exit_position,families_below_road_top,keep_rate_to_line_cents,net_at_road_lo,net_at_road_hi,keep_rate_wide_cents,road_wide_hi,deepest_fall",
+      "the CSV's seventeen new columns are appended, every column that existed before Plan 9 still at its own index", head.length);
     const roadCols = body.every((c) => {
       const m = dual(c[col("state")]);
       return c[col("keep_rate_cents")] === (m.keepRate === null ? "" : String(Math.round(m.keepRate * 100)))
@@ -1120,8 +1160,8 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
        dollar and count measures that carry a floor are the road's drop and the
        six whole-axis ones; the keep rate carries one too, and the two step
        columns print an earnings figure, which a floor does not qualify. */
-    const floored = [COL.roadWorst, COL.biggestLoss, COL.dangerWidth, COL.leap, COL.safeExit, COL.cliffCount, COL.deferred].map((i) => i - 1);
-    check(cells.every((c) => floored.every((i) => c.cells[i] === "none" || /\(floor\)$/.test(c.cells[i]) || c.cells[i] === "past the axis") && c.cells[COL.figures - 1].startsWith(`floor: ${programsOf(c.st)} not modelled`)),
+    const floored = [COL.roadWorst, COL.deepestFall, COL.biggestLoss, COL.dangerWidth, COL.leap, COL.safeExit, COL.cliffCount, COL.deferred].map((i) => i - 1);
+    check(cells.every((c) => floored.every((i) => c.cells[i] === "none" || /\(floor\)$/.test(c.cells[i]) || /^beyond /.test(c.cells[i])) && c.cells[COL.figures - 1].startsWith(`floor: ${programsOf(c.st)} not modelled`)),
       "an incomplete row's cells carry the floor caveat and the Figures cell names the program (S5)", cells.map((c) => c.cells[COL.figures - 1]));
     /* A left bar is a positive inset x-offset (the sticky column's right-edge rule is a negative one); the only one allowed is the selection's, in ink, on the selected row. */
     const leftBar = (shadow: string) => shadow.split("),").map((part) => part.match(/^\s*(rgba?\([^)]*\)) (-?\d+)px -?\d+px -?\d+px -?\d+px inset/)).filter((m): m is RegExpMatchArray => !!m && Number(m[2]) > 0).map((m) => m[1]);
@@ -1147,23 +1187,22 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     const rankHeadings = await page.evaluate(() => document.querySelector("#rankTitle")!.textContent!);
     await page.selectOption("#metric", "biggestLoss");
     const rankHeading2 = await page.evaluate(() => document.querySelector("#rankTitle")!.textContent!);
-    check(rankHeadings === "Ranked: Keep rate on the road out of poverty, most regressive first" && rankHeading2 === "Ranked: Largest one-step loss, largest first",
+    check(rankHeadings === "Ranked: Cents kept of each extra dollar, worst first" && rankHeading2 === "Ranked: Biggest one-raise loss (any pay), largest first",
       "the ranked strip says which measure it ranks and which way, in the order control's own words (S4)", [rankHeadings, rankHeading2]);
     await page.selectOption("#metric", "safeExit");
 
     /* The order control names every measure (N2) and the strip counts its rows (N3). */
     const sortOptions = await page.$$eval("#sort option", (els) => els.map((el) => [(el as HTMLOptionElement).value, el.textContent!]));
-    await page.selectOption("#sort", "cliffCount");
-    const byCliffs = await page.$$eval("#tbody tr:not(.group) .hg-row-btn", (els) => els.map((el) => (el as HTMLElement).dataset.st!));
-    const expectByCliffs = dualComparable.slice().sort((a, b) => dual(b).cliffCount - dual(a).cliffCount || a.localeCompare(b));
-    const rankedByCliffs = byCliffs.filter((st) => dualComparable.includes(st));
-    const nonIncreasing = rankedByCliffs.every((st, i) => i === 0 || dual(rankedByCliffs[i - 1]).cliffCount >= dual(st).cliffCount);
+    await page.selectOption("#sort", "dangerWidth");
+    const byWidth = await page.$$eval("#tbody tr:not(.group) .hg-row-btn", (els) => els.map((el) => (el as HTMLElement).dataset.st!));
+    const rankedByWidth = byWidth.filter((st) => dualComparable.includes(st));
+    const nonIncreasing = rankedByWidth.every((st, i) => i === 0 || dual(rankedByWidth[i - 1]).dangerWidth >= dual(st).dangerWidth);
     const sortGroups = await page.$$eval("#sort optgroup", (els) => els.map((g) => (g as HTMLOptGroupElement).label));
-    check(sortOptions.length === 12 && sortOptions[0][0] === "state" && sortOptions[10][1] === "Number of cliffs, most first"
-      && sortOptions[4][1] === "Net income at the poverty line, smallest first"
-      && sortOptions[1][1] === "Keep rate on the road out of poverty, most regressive first" && sortGroups.join("|") === "On the road out of poverty|Anywhere on the curve"
-      && nonIncreasing && rankedByCliffs.length === expectByCliffs.length && (await page.$eval("#tabCap", (el) => el.textContent!)).includes("by number of cliffs, most first"),
-      "the table order control offers every measure in the menu's two groups — the road's five included — and sorts the table by it without changing the map (N2, Plan 9)", { options: sortOptions.map(([v]) => v), first: byCliffs.slice(0, 3) });
+    check(sortOptions.length === 10 && sortOptions[0][0] === "state" && sortOptions[7][1] === "Pay spent below an earlier peak, largest first"
+      && sortOptions[4][1] === "Money kept at the poverty line, smallest first"
+      && sortOptions[1][1] === "Cents kept of each extra dollar, worst first" && sortGroups.join("|") === "From the poverty line to twice it|At any pay"
+      && nonIncreasing && rankedByWidth.length === dualComparable.length && (await page.$eval("#tabCap", (el) => el.textContent!)).includes("by pay spent below an earlier peak, largest first"),
+      "the table order control offers every menu measure in the menu's two groups, in each one's own name, and sorts the table by it without changing the map (N2, Plan 9, R9)", { options: sortOptions.map(([v]) => v), first: byWidth.slice(0, 3) });
     await page.selectOption("#sort", "state");
     await page.selectOption("#metric", "biggestLoss");
     const ranked = dualComparable.filter((st) => dual(st).biggestLoss > 0).sort((a, b) => dual(b).biggestLoss - dual(a).biggestLoss);
@@ -1171,19 +1210,6 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     /* Competition ranking: a state's rank is one more than the number of states with a larger value, so ties share a rank. */
     const rankOf = (st: string) => `${1 + ranked.filter((o) => dual(o).biggestLoss > dual(st).biggestLoss).length}.`;
     check(ordinals.length === ranked.length && ordinals.every(([n, st], i) => n === rankOf(st) && dual(st).biggestLoss === dual(ranked[i]).biggestLoss), "the ranked strip prints each state's rank, ties sharing one (N3)", ordinals.slice(28, 31));
-    await page.selectOption("#metric", "deferredCliffCount");
-    const tied = await page.$$eval("#rank .hg-row-btn", (els) => els.map((el) => [el.querySelector(".n")!.textContent!, el.querySelector(".v")!.textContent!]));
-    /* Competition ranking on a count: every state at the TOP value shares rank
-       1, and the first state at the next distinct value takes the rank after
-       them. This used to be written as "everything above the first zero is
-       rank 1", which held only while the top value was 1 — on this run
-       Wisconsin has two deferred cliffs and eight states have one, so the
-       rows above the first zero are two rank groups, not one. */
-    const topTied = tied[0][1];
-    const atTop = tied.filter(([, v]) => v === topTied).length;
-    const next = tied[atTop];
-    check(tied.slice(0, atTop).every(([n]) => n === "1.") && (next === undefined || next[0] === `${atTop + 1}.`),
-      "on a count measure every state at the top value shares rank 1, and the first at the next value takes the rank after them (N3)", { topTied, atTop, next });
     /* The leap's lower-bound rows lead the strip under their heading (B1). */
     await page.selectOption("#metric", "leap");
     const leapLower = dualComparable.filter((st) => dual(st).leapIsLowerBound);
@@ -1222,7 +1248,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       `1 adult, 3 children on the leap: the ${c3.lower.length} lower-bound states share ranks 1–${c3.lower.length}, ${topFloor}'s floor first, ${c3.measured[0]} takes rank ${c3.lower.length + 1}, and the note says which is at least as large (rerun B1)`,
       { first: c3.got.lower[0], next: c3.got.first, note: c3.got.note });
     const c2 = await rankCase("single-2", "safeExit");
-    check(c2.lower.length > 0 && c2.got.lower.every(([, n]) => n === (c2.lower.length === 1 ? "1." : `1–${c2.lower.length}`)) && c2.got.lower.every(([, , v]) => v === "past the axis")
+    check(c2.lower.length > 0 && c2.got.lower.every(([, n]) => n === (c2.lower.length === 1 ? "1." : `1–${c2.lower.length}`)) && c2.got.lower.every(([st, , v]) => v === `beyond ${money(c2.m(st).axisTop)}`)
       && c2.got.first[0] === c2.measured[0] && c2.got.first[1] === `${c2.lower.length + 1}.` && c2.got.note.includes(`The highest measured safe exit is ${STATE_NAMES[c2.measured[0]]}'s ${money(c2.m(c2.measured[0]).safeExit!)}.`),
       `1 adult, 2 children on safe exit: the ${c2.lower.length} past-the-axis states share ranks 1–${c2.lower.length} and ${c2.measured[0]} takes rank ${c2.lower.length + 1}, the note naming it as the highest measured (rerun B1)`,
       { lower: c2.got.lower, next: c2.got.first, note: c2.got.note });
@@ -1273,6 +1299,33 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
     check(errors.length === 0, "no console errors after the whole run", errors);
   });
 }
+
+/* The no-subsidy twin (R2, R16) and the links written before the counts left the menu (R5, R6). */
+test("the Household menu offers the family with no child-care help beside its twin, and an old count link lands on the nearest measure", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const errors = consoleErrors(page);
+  await page.goto("/places.html?household=single-2-nosub&measure=cliffCount&sort=roadCliffCount", { waitUntil: "networkidle" });
+  await page.waitForSelector(".tile");
+  const got = await page.evaluate(() => ({
+    arch: [...document.querySelectorAll("#arch option")].map((o) => [(o as HTMLOptionElement).value, o.textContent!]),
+    household: (document.querySelector("#arch") as HTMLSelectElement).value, metric: (document.querySelector("#metric") as HTMLSelectElement).value, sort: (document.querySelector("#sort") as HTMLSelectElement).value,
+    url: location.search,
+  }));
+  const at = got.arch.findIndex(([v]) => v === "single-2");
+  check(got.arch[at + 1]?.[0] === "single-2-nosub" && got.arch[at + 1]?.[1] === "1 adult, 2 children (3 and 7), no child-care help",
+    "the Household menu lists the no-subsidy twin right after single-2, as the family with no child-care help (R16)", got.arch.slice(at, at + 2));
+  check(got.household === "single-2-nosub" && got.metric === "biggestLoss" && got.sort === "roadWorst",
+    "a link to a count that left the menu opens on the nearest measure it still has (R5, R6)", got);
+  await page.selectOption("#metric", "keepRate");
+  const answer = await page.evaluate(() => [...document.querySelector("#answer")!.childNodes].filter((n) => (n as Element).id !== "answerHolds").map((n) => n.textContent).join("").replace(/\s+/g, " ").trim());
+  const bad = STATES.filter((st) => (metrics(st, "single-2-nosub").keepRate ?? 0) < 0).length;
+  check(answer === `In ${bad} of the ${STATES.length - 1} states and the District of Columbia, a single parent of two children without child-care help climbs from the poverty line to twice it and ends up poorer than they started.`,
+    "on the twin the headline says the family is without child-care help, counted from the file (R2)", answer);
+  const method = await page.$$eval("#methodList li", (els) => els.map((el) => el.textContent!).find((t) => /no child-care help/.test(t)));
+  check(method !== undefined && /derived from the same run/.test(method) && /will be swept directly/.test(method),
+    "the method says the twin is derived from the same run and will be swept directly (R2)", method?.slice(-200));
+  check(errors.length === 0, "no console errors on the twin", errors);
+});
 
 /* The failed-fetch path: the masthead and one line, nothing of the page's skeleton (S6). */
 test("on a failed fetch the page shows the masthead and one alert line, in the reader's words", async ({ page }) => {

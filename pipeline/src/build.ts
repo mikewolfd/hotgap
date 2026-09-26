@@ -51,9 +51,10 @@ export function validateResults(states: string[], results: ResultsByStateArchety
 /**
  * The archetypes a set of stored results carries: every row of ARCHETYPES that
  * at least one state has a curve for. A `--from-data` rebuild reads the files
- * a past sweep wrote, and a row added to ARCHETYPES since (single-2-nosub, until
- * the sweep that fills it) is simply not in them — so the rebuild describes the
- * rows the files hold instead of failing on the one they cannot. A row SOME
+ * a past sweep wrote, and a row added to ARCHETYPES since is simply not in
+ * them — so the rebuild describes the rows the files hold instead of failing
+ * on the one they cannot. (The `-nosub` twin is the exception with a remedy:
+ * runFromData derives it from its base row first, twin.ts.) A row SOME
  * states carry and others lack is still a gap, and validateResults reports it.
  */
 export function sweptArchetypes(states: string[], results: ResultsByStateArchetype): Archetype[] {
@@ -62,7 +63,13 @@ export function sweptArchetypes(states: string[], results: ResultsByStateArchety
   return found.length ? found : ARCHETYPES;
 }
 
-export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, models: ModelsByState = {}, archetypes: readonly Archetype[] = ARCHETYPES): SummaryJson {
+/**
+ * The summary for a set of curves. `derived` names the rows the caller
+ * computed from another row's points rather than swept (twin.ts: id → the id
+ * it came from); they are evaluated like any other row and marked
+ * `derivedFrom` in the archetype list, so a page can say how the row was made.
+ */
+export function buildSummary(generated: string, states: string[], results: ResultsByStateArchetype, models: ModelsByState = {}, archetypes: readonly Archetype[] = ARCHETYPES, derived: Readonly<Record<string, string>> = {}): SummaryJson {
   const model = sharedModel(states, models);
   const summaryStates: Record<string, Record<string, StateMetrics>> = {};
   for (const state of states) {
@@ -107,7 +114,7 @@ export function buildSummary(generated: string, states: string[], results: Resul
     year: YEAR,
     ...(model ? { model } : {}),
     ...(unmodeled.length ? { childcareSubsidyUnmodeled: unmodeled } : {}),
-    archetypes: archetypes.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges })),
+    archetypes: archetypes.map((a) => ({ id: a.id, married: a.married, childAges: a.childAges, ...(derived[a.id] ? { derivedFrom: derived[a.id] } : {}) })),
     states: summaryStates,
     coverage,
   };

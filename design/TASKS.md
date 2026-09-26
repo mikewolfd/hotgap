@@ -331,3 +331,50 @@ travels with the slope.
       two are nearly unrelated. The two *money kept* measures show the level
       — what the family keeps at the poverty line and at twice it — and the
       keep-rate readout names both ends."* *Done, es-US too.*
+
+# Blind review findings (2026-09-26)
+
+Two blind reviews of the live site — `design/reviews/2026-09-26-policy-data-fellow.md`
+(a policy-data postdoc, findings R1–R16) and `design/reviews/2026-09-26-marketing-comms.md`
+(a marketing/comms lead, findings 1–18). Every finding is a task; the fix is in the
+review's own words unless a task says otherwise. Tick them off here.
+
+## Policy-data review
+
+- [ ] **R1 (blocker)** "Net income" counts the child-care subsidy as money and never charges the care bill
+- [x] **R2 (blocker)** The headline count is a maximal-take-up construct and the headline does not say so *Done (places): the headline names the construct and shows the pair — "…who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, in 2"; the to-the-line clause is the method's. The twin is derived offline from single-2's points (pipeline/src/twin.ts, `derivedFrom` in summary.json) and the method says "derived from the same run; will be swept directly". es-US too.*
+- [x] **R3 (major)** The keep rate is a two-point slope whose top end sits on the most common program limit, so the ranking is a knife-edge *Done (places): `keepRateWide` (to the first point at or above 220% FPL, counted in steps from the road's own top), `deepestFall` as a road measure (loss ramp), `pastRoadWorst` for the readout's "and a larger drop sits just past the road" (Minnesota, South Dakota); keep rate to 220% beside "to the line" in the strip, the table and the CSV.*
+- [ ] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
+- [x] **R5 (major)** "Number of cliffs" and "Cliffs on the road" are grid artefacts and reward small notches *Done (places): both counts left the Measure menu; they stay as table columns and CSV fields, each column's definition saying it counts at the $1,000 step and is not ranked; old `?measure=`/`?sort=` links resolve to the nearest kept measure (model.ts RETIRED_MEASURES).*
+- [x] **R6 (major)** "Losses that hit later, at renewal" is ranked and shaded as if more deferral were worse *Done (places): out of the menu, kept as a column and in the CSV, its definition calling it a label, not a harm scale; old links land on the biggest loss at any pay.*
+- [ ] **R7 (major)** Reach uncertainty is quoted in the wrong unit
+- [ ] **R8 (major)** The caseworker provenance line cites sources the curve did not use
+- [x] **R9 (minor→major, depends on audience)** Option labels do not match the definitions *Done (places): "Pay spent below an earlier peak", "Pay past which no earlier peak is higher" (R9's words cut to 40 characters), and the levels' definitions say what they are after.*
+- [ ] **R10 (minor)** FPL vintage is quoted as the 2026 poverty line
+- [ ] **R11 (minor)** Three different "keep rates" on one household, one word
+- [ ] **R12 (minor)** "It happens again between $106,000 and $119,000. The ones past $106,000 are past what 8 in 10 families like yours earn."
+- [x] **R13 (minor)** Bins on the diverging keep-rate scale have unequal widths on the two sides *Done (places): the unequal widths are said once, at the scale ("the two sides step at different widths" beside the step captions); the bins sentence left How-to for the method.*
+- [x] **R14 (minor)** Colour direction on the two "level" maps *Done (places): the two level maps are on the keep ramp, darkest = keeps most, and the scale says "darker = keeps more".*
+- [ ] **R15 (minor)** Reach cell definition vs "families like this"
+- [x] **R16 (minor)** The Household menu omits the shape most exposed to the subsidy cliff without the subsidy *Done (places): "1 adult, 2 children (3 and 7), no child-care help" sits right after single-2 in the Household menu; its curves are derived the same way (app/vite.config.ts).*
+
+## Marketing and comms review
+
+- [x] **M1 (blocker)** `/places` — the headline number is the one the method says is the softer count. *Done (places) as R2: the construct and the pair in the sentence; the boundary count moved to the method line.*
+- [x] **M2 (blocker)** `/places` — the assumption that makes the headline true is not in the headline. *Done (places) as R2.*
+- [x] **M3 (major)** `/places` — "keeps $80,163 at the poverty line" will be quoted as absurd. *Done (places): the readout says "Money kept is after taxes, premiums and the child care the family pays itself; $X of it at the poverty line is child-care help paid to the provider" (from `childcareAtRoadLo`), and the levels' definitions say the same. The words anticipate core's care-bill change.*
+- [ ] **M4 (major)** `/` — "you keep $42,797" on $30,000 pay, with the explanation hidden.
+- [ ] **M5 (major)** `/` — "Counting the help you get" lists help the household doesn't get, and lists WIC for an adult with no kids.
+- [x] **M6 (major)** `/places` — three names for the same measure, and none defined where first met. *Done (places): one name per measure — the option — in the legend title, the ranking heading, the table header, the readout and the answer; "most regressive first" is "worst first"; a bound says "beyond $150,000".*
+- [x] **M7 (major)** `/places` — "How to read this map" is written to the developer, not the reader. *Done (places): How to read this map defines a cliff, a danger zone, the road, the keep rate and the shading, in that order (105 words); the coverage-record, must-not-be-charted and bins notes moved to the method panel unchanged.*
+- [ ] **M8 (major)** All three pages — nobody says who HotGap is.
+- [ ] **M9 (major)** `/` — what does a parent do next?
+- [ ] **M10 (major)** `/` — "flat stretch", "flat again", "Waits", "back to even", "safe from here" are met before they are explained.
+- [ ] **M11 (minor)** `/` headline — "You're past a drop at $29,000" is ambiguous.
+- [ ] **M12 (minor)** `/` — "The lowest legal pay" quietly contradicts "we assumed full time".
+- [ ] **M13 (minor)** `/caseworker` — headline reads like a debugger, and "Net" is never defined.
+- [ ] **M14 (minor)** Español — good, with a handful of register slips.
+- [ ] **M15 (minor)** Page names — "For you" doesn't say which page is mine.
+- [x] **M16 (minor)** `/places` legend — "steps of 26¢" and no good/bad cue. *Done (places): the legend carries the measure's name and a plain cue ("darker = loses more, lighter = keeps more") beside the step widths.*
+- [x] **M17 (minor)** `/places` readout — "The road collapses" / "loses 105¢ of each extra dollar". *Done (places): "The biggest loss on the road is at $54,000: $25,833 in one step…", and the rate said again in dollars — "a raise of $28,000 leaves the family $29,362 poorer".*
+- [ ] **M18 (minor)** Housekeeping.

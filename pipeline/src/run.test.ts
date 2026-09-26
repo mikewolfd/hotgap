@@ -171,6 +171,13 @@ describe("runPipeline", () => {
         // fact about the state's families, not about the curve. Wyoming 33.6,
         // Vermont 13.7.
         biggestLossPosition: { WY: 33.6, VT: 13.7 }[state],
+        // R3: to 220% of the line ($58,630 → $59,000) the fixture loses 26¢;
+        // at its lowest on the road it is $22,337 under its start.
+        keepRateWide: -0.2578,
+        roadWideHi: 59000,
+        deepestFall: 22337,
+        pastRoadWorst: null,
+        childcareAtRoadLo: 0,
       });
       expect(result.summary!.states[state]["single-2"].cliffCount).toBeGreaterThanOrEqual(2);
       expect(result.summary!.states[state]["single-2"].dangerWidth).toBeGreaterThan(0);
@@ -254,15 +261,29 @@ describe("runFromData", () => {
     expect(result.summary).toEqual(expected);
   });
 
-  it("rebuilds from files that predate a row added to ARCHETYPES, describing the rows the files hold", async () => {
+  it("derives the no-subsidy twin from its base row when the files predate it, and marks it derived (R2, R16)", async () => {
     // Files written before single-2-nosub existed: every other row is there.
     const results = syntheticResults(["WY"]);
     delete results.WY["single-2-nosub"];
     const file = (state: string): StateFileJson => ({ generated: "2026-09-16T00:00:00.000Z", year: "2026", state, archetypes: Object.fromEntries(Object.entries(results[state]).map(([id, points]) => [id, { points }])) });
     const result = await runFromData(["WY"], async (state) => JSON.stringify(file(state)));
     expect(result.ok).toBe(true);
+    expect(result.summary!.archetypes.find((a) => a.id === "single-2-nosub")).toEqual({ id: "single-2-nosub", married: false, childAges: [3, 7], derivedFrom: "single-2" });
+    // Every swept row stays unmarked.
+    expect(result.summary!.archetypes.filter((a) => a.derivedFrom !== undefined).map((a) => a.id)).toEqual(["single-2-nosub"]);
+    expect(Object.keys(result.summary!.states.WY)).toHaveLength(ARCHETYPES.length);
+  });
+
+  it("describes the rows the files hold when a row added to ARCHETYPES has nothing to be derived from", async () => {
+    // Neither the twin nor its base: nothing to derive, so the rebuild leaves both out rather than failing.
+    const results = syntheticResults(["WY"]);
+    delete results.WY["single-2-nosub"];
+    delete results.WY["single-2"];
+    const file = (state: string): StateFileJson => ({ generated: "2026-09-16T00:00:00.000Z", year: "2026", state, archetypes: Object.fromEntries(Object.entries(results[state]).map(([id, points]) => [id, { points }])) });
+    const result = await runFromData(["WY"], async (state) => JSON.stringify(file(state)));
+    expect(result.ok).toBe(true);
     expect(result.summary!.archetypes.map((a) => a.id)).not.toContain("single-2-nosub");
-    expect(Object.keys(result.summary!.states.WY)).toHaveLength(ARCHETYPES.length - 1);
+    expect(Object.keys(result.summary!.states.WY)).toHaveLength(ARCHETYPES.length - 2);
   });
 
   it("reports gaps (not a throw) when a requested state's file can't be read, and returns no summary", async () => {

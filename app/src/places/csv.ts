@@ -27,8 +27,14 @@ import { modelLabel } from "./words.js";
  * support it — never 0, which would read as "nobody earns less".
  * `keep_rate_to_line_cents` came after them, appended by the same rule: the
  * keep rate measured to exactly twice poverty, without the road's last step.
- * `net_at_road_lo` and `net_at_road_hi` came last, by the same rule: the
+ * `net_at_road_lo` and `net_at_road_hi` came next, by the same rule: the
  * level beside the slope, net income in whole dollars at each end of the road.
+ * `keep_rate_wide_cents`, `road_wide_hi` and `deepest_fall` came last (blind
+ * review R3, 2026-09-26): the keep rate measured on to 220% of the poverty
+ * line and the earnings it runs to, and how far below its poverty-line income
+ * the family falls on the road, whole dollars, 0 where it never dips.
+ * The three counts left the page's Measure menu the same day (R5, R6) and
+ * stay here, where they describe a state: a file's columns are a contract.
  */
 export const CSV_HEADER = [
   "state", "state_name", "archetype_id", "archetype",
@@ -39,6 +45,7 @@ export const CSV_HEADER = [
   "keep_rate_cents", "road_lo", "road_hi", "road_cliff_count", "road_worst_drop", "road_worst_at", "road_worst_programs",
   "road_worst_position", "biggest_loss_position", "safe_exit_position", "families_below_road_top",
   "keep_rate_to_line_cents", "net_at_road_lo", "net_at_road_hi",
+  "keep_rate_wide_cents", "road_wide_hi", "deepest_fall",
 ] as const;
 
 /** One field, quoted only when it has to be (a comma, a quote, a line break). */
@@ -100,6 +107,8 @@ export function csvFor(summary: SummaryJson, a: Archetype, rows: StateRow[]): st
       m.keepRateToLine == null ? "" : Math.round(m.keepRateToLine * 100),
       /* The level beside the slope (road.ts `netAtLo`/`netAtHi`): net income in whole dollars at `road_lo` and `road_hi`; empty where the road runs off the axis or the file predates it. */
       m.netAtRoadLo ?? "", m.netAtRoadHi ?? "",
+      /* The road's second top and its deepest fall (R3); empty where the band runs off the axis or the file predates them. */
+      m.keepRateWide == null ? "" : Math.round(m.keepRateWide * 100), m.roadWideHi ?? "", m.deepestFall ?? "",
     ].map(csvField).join(","));
   }
   return "﻿" + lines.join("\r\n") + "\r\n";
