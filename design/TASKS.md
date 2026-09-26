@@ -331,3 +331,50 @@ travels with the slope.
       two are nearly unrelated. The two *money kept* measures show the level
       — what the family keeps at the poverty line and at twice it — and the
       keep-rate readout names both ends."* *Done, es-US too.*
+
+# Blind review findings (2026-09-26)
+
+Two blind reviews of the live site — `design/reviews/2026-09-26-policy-data-fellow.md`
+(a policy-data postdoc, findings R1–R16) and `design/reviews/2026-09-26-marketing-comms.md`
+(a marketing/comms lead, findings 1–18). Every finding is a task; the fix is in the
+review's own words unless a task says otherwise. Tick them off here.
+
+## Policy-data review
+
+- [ ] **R1 (blocker)** "Net income" counts the child-care subsidy as money and never charges the care bill
+- [ ] **R2 (blocker)** The headline count is a maximal-take-up construct and the headline does not say so
+- [ ] **R3 (major)** The keep rate is a two-point slope whose top end sits on the most common program limit, so the ranking is a knife-edge
+- [ ] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
+- [ ] **R5 (major)** "Number of cliffs" and "Cliffs on the road" are grid artefacts and reward small notches
+- [ ] **R6 (major)** "Losses that hit later, at renewal" is ranked and shaded as if more deferral were worse
+- [ ] **R7 (major)** Reach uncertainty is quoted in the wrong unit
+- [ ] **R8 (major)** The caseworker provenance line cites sources the curve did not use
+- [ ] **R9 (minor→major, depends on audience)** Option labels do not match the definitions
+- [ ] **R10 (minor)** FPL vintage is quoted as the 2026 poverty line
+- [ ] **R11 (minor)** Three different "keep rates" on one household, one word
+- [ ] **R12 (minor)** "It happens again between $106,000 and $119,000. The ones past $106,000 are past what 8 in 10 families like yours earn."
+- [ ] **R13 (minor)** Bins on the diverging keep-rate scale have unequal widths on the two sides
+- [ ] **R14 (minor)** Colour direction on the two "level" maps
+- [ ] **R15 (minor)** Reach cell definition vs "families like this"
+- [ ] **R16 (minor)** The Household menu omits the shape most exposed to the subsidy cliff without the subsidy
+
+## Marketing and comms review
+
+- [ ] **M1 (blocker)** `/places` — the headline number is the one the method says is the softer count.
+- [ ] **M2 (blocker)** `/places` — the assumption that makes the headline true is not in the headline.
+- [ ] **M3 (major)** `/places` — "keeps $80,163 at the poverty line" will be quoted as absurd.
+- [ ] **M4 (major)** `/` — "you keep $42,797" on $30,000 pay, with the explanation hidden.
+- [ ] **M5 (major)** `/` — "Counting the help you get" lists help the household doesn't get, and lists WIC for an adult with no kids.
+- [ ] **M6 (major)** `/places` — three names for the same measure, and none defined where first met.
+- [ ] **M7 (major)** `/places` — "How to read this map" is written to the developer, not the reader.
+- [ ] **M8 (major)** All three pages — nobody says who HotGap is.
+- [ ] **M9 (major)** `/` — what does a parent do next?
+- [ ] **M10 (major)** `/` — "flat stretch", "flat again", "Waits", "back to even", "safe from here" are met before they are explained.
+- [ ] **M11 (minor)** `/` headline — "You're past a drop at $29,000" is ambiguous.
+- [ ] **M12 (minor)** `/` — "The lowest legal pay" quietly contradicts "we assumed full time".
+- [ ] **M13 (minor)** `/caseworker` — headline reads like a debugger, and "Net" is never defined.
+- [ ] **M14 (minor)** Español — good, with a handful of register slips.
+- [ ] **M15 (minor)** Page names — "For you" doesn't say which page is mine.
+- [ ] **M16 (minor)** `/places` legend — "steps of 26¢" and no good/bad cue.
+- [ ] **M17 (minor)** `/places` readout — "The road collapses" / "loses 105¢ of each extra dollar".
+- [ ] **M18 (minor)** Housekeeping.
