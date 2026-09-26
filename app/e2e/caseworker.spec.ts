@@ -559,7 +559,7 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`ES-labels-${width}`] = labels;
     expect(labels).toContain("neto $51,095, con la ayuda contada");
-    expect(labels.some((l) => /¢ de cada dólar extra de media$/.test(l ?? ""))).toBe(true);
+    expect(labels.some((l) => /¢ de cada dólar extra en promedio$/.test(l ?? ""))).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: pf(`${width}-es`) });
     await noOverflow(page);

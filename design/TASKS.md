@@ -452,7 +452,9 @@ review's own words unless a task says otherwise. Tick them off here.
       below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 $1,000
       raises between them lose money; $13,000 clears the stretch."* The reach
       tile's caption is in words (R7).
-- [ ] **M14 (minor)** Español — good, with a handful of register slips.
+- [x] **M14 (minor)** Español — good, with a handful of register slips.
+      *Done.* *sueldo* for pay throughout, *en promedio* (core road.rate), *Recorra la línea*, *con ciudadanía* / *una madre o un padre* where English is neutral, *Llega después*, the state premium help as *Ayuda del estado para pagar el seguro de salud (California Premium Subsidy)*, *2× la línea {hi}*;
+      every key added 2026-09-24…26 re-read against en.json (no keys missing; es-only keys are `_` metadata and `numbers.exact` 21–29, by design); *barrido precalculado* for "committed sweep".
 - [x] **M15 (minor)** Page names — "For you" doesn't say which page is mine.
       *Done.* *My household / By state / Caseworkers* (*Mi hogar / Por estado /
       Trabajadores sociales*); the nav's hit areas are unchanged (≥ 44px).

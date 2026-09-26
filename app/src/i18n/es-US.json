@@ -2,7 +2,7 @@
   "_": {
     "language": "es-US",
     "status": "draft",
-    "note": "Borrador. Redactado por el modelo el 2026-09-17 a partir de en.json; pendiente de revisión por un hablante nativo antes de considerarse definitivo (app/README.md § Languages). Registro: el ciudadano y la hoja del cliente en usted, sencillo; el trabajador social, profesional; el periodista, citable. Los acrónimos de los programas se conservan; la frase sencilla se traduce. / A draft: machine-written 2026-09-17 from en.json, awaiting a native speaker's review. Redactado de nuevo el 2026-09-18 para el registro nuevo del ciudadano: como se lo diría una trabajadora social al otro lado del escritorio. Sigue sin revisar. / Redrafted 2026-09-18 to the new citizen register; still unreviewed. Tres lectores nativos leyeron la página el 2026-09-18 y señalaron tres frases que sonaban a máquina; están corregidas. / Three native readers flagged three machine-sounding phrases on 2026-09-18; fixed.",
+    "note": "Borrador. Redactado por el modelo el 2026-09-17 a partir de en.json; pendiente de revisión por un hablante nativo antes de considerarse definitivo (app/README.md § Languages). Registro: el ciudadano y la hoja del cliente en usted, sencillo; el trabajador social, profesional; el periodista, citable. Los acrónimos de los programas se conservan; la frase sencilla se traduce. / A draft: machine-written 2026-09-17 from en.json, awaiting a native speaker's review. Redactado de nuevo el 2026-09-18 para el registro nuevo del ciudadano: como se lo diría una trabajadora social al otro lado del escritorio. Sigue sin revisar. / Redrafted 2026-09-18 to the new citizen register; still unreviewed. Tres lectores nativos leyeron la página el 2026-09-18 y señalaron tres frases que sonaban a máquina; están corregidas. / Three native readers flagged three machine-sounding phrases on 2026-09-18; fixed. Pase de registro el 2026-09-26 (design/TASKS.md M14): «sueldo» en vez de «pago», «en promedio», ciudadanía y madre o padre sin masculino genérico, las palabras nuevas de los últimos dos días repasadas; sigue pendiente la revisión de un hablante nativo. / Register pass 2026-09-26 (M14); still awaiting a native speaker's review.",
     "drafted": "2026-09-17",
     "reviewed": null,
     "redrafted": "2026-09-18"
@@ -32,7 +32,7 @@
       },
       "kids": "{n, plural, one {un niño de {ages} años} other {niños de {ages} años}}"
     },
-    "heading": "Si su pago sube, ¿le queda más?",
+    "heading": "Si su sueldo sube, ¿le queda más?",
     "lead": "Cuatro preguntas. Calculamos su ayuda en cada nivel de sueldo y le mostramos qué pasa.",
     "privacy": "No guardamos lo que escribe. Sin registro y sin rastreo.",
     "place": {
@@ -63,7 +63,7 @@
         "year": "año"
       },
       "hours": "Horas que trabaja a la semana",
-      "hoursHint": "Déjelo en blanco si no está seguro y suponemos 40."
+      "hoursHint": "Déjelo en blanco si no lo sabe con certeza y suponemos 40."
     },
     "costs": {
       "legend": "Lo que paga cada mes",
@@ -77,12 +77,12 @@
     "chips": {
       "where": "Dónde",
       "household": "Hogar",
-      "pay": "Pago",
+      "pay": "Sueldo",
       "rent": "Renta",
       "childcare": "Cuidado de niños",
       "age": "Su edad",
       "spouseAge": "Edad de su pareja",
-      "spousePay": "Pago de su pareja",
+      "spousePay": "Sueldo de su pareja",
       "ssdi": "SSDI",
       "childSupport": "Manutención de hijos",
       "unemployment": "Pago por desempleo",
@@ -120,14 +120,14 @@
       "dollars": "Dólares",
       "choose": "Elija una opción",
       "years": "Años en EE. UU.",
-      "yearsHint": "Solo si no es ciudadano.",
+      "yearsHint": "Solo si no tiene la ciudadanía.",
       "hasDisability": "El niño {n}, de {age} años, vive con una discapacidad"
     },
     "status": {
-      "citizen": "Ciudadano de EE. UU.",
+      "citizen": "Ciudadanía de EE. UU.",
       "lpr": "Tiene green card (residente permanente)",
-      "refugee": "Refugiado",
-      "asylee": "Asilado",
+      "refugee": "Persona refugiada",
+      "asylee": "Persona asilada",
       "deportation_withheld": "Deportación suspendida",
       "cuban_haitian_entrant": "Entrante cubano o haitiano",
       "conditional_entrant": "Entrante condicional",
@@ -142,14 +142,14 @@
       "fields": {
         "zip": "su código postal",
         "state": "su código postal o estado",
-        "annualEarnings": "su pago",
+        "annualEarnings": "su sueldo",
         "hoursPerWeek": "sus horas",
         "childAges": "las edades de sus niños",
         "age": "su edad",
         "spouseAge": "la edad de su pareja",
         "monthlyRent": "su renta",
         "monthlyChildcare": "lo que paga por el cuidado de niños",
-        "spouseAnnualEarnings": "el pago de su pareja",
+        "spouseAnnualEarnings": "el sueldo de su pareja",
         "ssdiMonthly": "el SSDI",
         "childSupportMonthly": "la manutención de hijos",
         "unemploymentMonthly": "el pago por desempleo",
@@ -164,7 +164,7 @@
     }
   },
   "citizen": {
-    "loading": "Estamos calculando: revisamos su ayuda en {count} niveles de sueldo distintos, así que deme unos segundos.",
+    "loading": "Estamos calculando: revisamos su ayuda en {count} niveles de sueldo distintos, así que puede tardar unos segundos.",
     "errorTitle": "No pudimos calcular su respuesta.",
     "errors": {
       "rate_limited": "Son varios intentos seguidos. Espere un minuto y vuelva a intentarlo.",
@@ -175,13 +175,13 @@
     "skip": "Ir a la respuesta",
     "wordmark": "HotGap",
     "pageTitle": "HotGap — si gano más, ¿pierdo dinero?",
-    "heading": "Si su pago sube, ¿le queda más?",
+    "heading": "Si su sueldo sube, ¿le queda más?",
     "who": "{adults} con {kids}, en {place}.",
     "whoNoKids": "{adults} sin niños, en {place}.",
     "adults": {
       "one": "Una madre o un padre",
       "two": "Dos padres",
-      "oneNoKids": "Un adulto",
+      "oneNoKids": "Una persona adulta",
       "twoNoKids": "Una pareja"
     },
     "kidsOne": "un niño de {age} años",
@@ -196,12 +196,12 @@
       "cliff_ahead:waits": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, aunque no de inmediato.",
       "cliff_ahead:worst": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}, más de lo que ganan {n} de cada 10 familias como la suya.",
       "cliff_ahead:worstAt": "Nada baja de golpe hasta {wage}; pasado ese punto perdería unos {drop} al año, y la caída más grande está en {worstAt}.",
-      "cliff_ahead:dip": "En {wage} bajaría unos {drop}, y volvería a salir ganando para {exit}.",
+      "cliff_ahead:dip": "En {wage} bajaría unos {drop}, y para {exit} ya se habría recuperado.",
       "in_danger_zone:inside": "Su sueldo ya pasó una caída en {wage}. De aquí hasta {exit} le quedan unos {cents} centavos de cada dólar extra; en {exit} vuelve a lo que le quedaba en {peak}.",
       "in_danger_zone:stuck:inside": "Su sueldo ya pasó una caída en {wage}, y en ningún punto que revisamos, hasta {top}, vuelve a lo que le quedaba en {peak}."
     },
-    "again": "Más arriba, de {from} a {to}, un aumento otra vez no lo deja mejor que en {from}.",
-    "againMany": "Más arriba, entre {from} y {to}, hay {n} tramos más en los que un aumento no lo deja mejor.",
+    "again": "Más arriba, de {from} a {to}, otra vez un aumento no mejora lo que tenía en {from}.",
+    "againMany": "Más arriba, entre {from} y {to}, hay {n} tramos más en los que un aumento no mejora su situación.",
     "sub": {
       "more": "La línea es más que su sueldo porque la ayuda y los descuentos en los impuestos cuentan dentro de ella.",
       "less": "La línea es menos que su sueldo porque de ahí salen los impuestos y los costos de salud."
@@ -221,9 +221,9 @@
         "week": "El sueldo de abajo es por semana.",
         "hour": "El sueldo de abajo es por hora, a {hours} horas a la semana."
       },
-      "readoutHint": "Deslice el dedo por la línea para ver cualquier sueldo.",
+      "readoutHint": "Recorra la línea para ver cualquier sueldo.",
       "readoutMarks": " Pulse ] y [ para saltar entre caídas.",
-      "readout": "Con un pago de {pay}, le quedan {kept}.",
+      "readout": "Con un sueldo de {pay}, le quedan {kept}.",
       "inYourZone": " Ese sueldo está dentro de su tramo plano.",
       "inZone": " Ese sueldo está dentro de un tramo plano.",
       "outZone": " Aquí, más sueldo es más dinero.",
@@ -231,17 +231,17 @@
       "markPast": "Una caída cerca de {pay}. Pasado ese punto le quedan unos {drop} menos al año.",
       "markLater": "Una caída cerca de {pay}. Le quedarían unos {drop} menos al año, pero no ese mismo día.",
       "markMerged": "{n} caídas entre {from} y {to}, unos {sum} al año en total.",
-      "markMergedWaits": "{n} caídas entre {from} y {to}, unos {sum} al año en total. Parte de eso espera a otro día.",
+      "markMergedWaits": "{n} caídas entre {from} y {to}, unos {sum} al año en total. Parte de eso llega más adelante.",
       "axisNote": "Los números del lado empiezan en {floor}, no en $0, para que las caídas se vean bien.",
       "axisNoteBare": "Los números del lado empiezan en {floor}, no en $0.",
       "axisBreak": " Por encima de {top} el lado se aprieta para que quepa toda la línea; allí arriba las caídas se dibujan más pequeñas de lo que son.",
       "safeBeyond": " Desde {safe} en adelante, más sueldo siempre suma a lo que le queda.",
       "safeNever": " Revisamos hasta {top} y nunca encontramos un punto más allá de todos los tramos planos.",
       "estimates": " Son estimaciones, con las reglas de {year} en {state}.",
-      "aria": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}. Es plana de {zoneFrom} a {zoneTo}.{more}{worst} El hogar está en {pay}, dentro de un tramo plano.",
+      "aria": "Una línea del dinero que le queda a este hogar a medida que el sueldo sube de {from} a {to}. Es plana de {zoneFrom} a {zoneTo}.{more}{worst} El hogar está en {pay}, dentro de un tramo plano.",
       "ariaMore": " Vuelve a ser plana de {from} a {to}.",
       "ariaWorst": " La caída más grande está en {at}, donde se termina {what}.",
-      "ariaNoZone": "Una línea del dinero que le queda a este hogar a medida que el pago sube de {from} a {to}.{worst} El hogar está en {pay}.",
+      "ariaNoZone": "Una línea del dinero que le queda a este hogar a medida que el sueldo sube de {from} a {to}.{worst} El hogar está en {pay}.",
       "someHelp": "parte de la ayuda",
       "labels": {
         "later": "más adelante",
@@ -257,13 +257,13 @@
           "loses": "en el camino para salir de la pobreza, pierde {cents}¢ de cada dólar extra, en promedio"
         },
         "youKeepHelp": "le quedan {kept}, con la ayuda",
-        "youKeepTax": "le quedan {kept} tras los impuestos",
+        "youKeepTax": "le quedan {kept} después de impuestos",
         "roadFrom": "línea de pobreza {lo}",
-        "roadTo": "2× esa línea {hi}",
+        "roadTo": "2× la línea {hi}",
         "again": "otro tramo plano",
         "backToPeak": "de vuelta a lo que tenía en {peak}",
         "roadShort": {
-          "keeps": "para salir de la pobreza: {cents}¢ por dólar",
+          "keeps": "para salir de la pobreza: se queda con {cents}¢ por dólar",
           "loses": "para salir de la pobreza: pierde {cents}¢ por dólar"
         }
       },
@@ -277,12 +277,12 @@
     },
     "key": {
       "line": "El dinero que le queda",
-      "band": "Su tramo plano: sueldos en los que un aumento no lo deja mejor que antes de la caída",
+      "band": "Su tramo plano: sueldos en los que un aumento no mejora lo que tenía antes de la caída",
       "other": "Otro tramo plano, más arriba: lo mismo otra vez",
       "drop": "Una caída: pasado este sueldo le queda menos, desde este año",
-      "later": "Una caída que llega después: llega en su próxima revisión anual, no el día que sube su sueldo",
+      "later": "Una caída que llega después: se nota en su próxima revisión anual, no el día que sube su sueldo",
       "you": "Usted ahora",
-      "boundary": "Dónde termina la ayuda con la calefacción",
+      "boundary": "Donde termina la ayuda con la calefacción",
       "road": "El camino para salir de la pobreza: el sueldo desde la línea de pobreza hasta el doble",
       "leap": "El aumento que hace falta para salir de su tramo plano",
       "exit": "De vuelta a la par: el sueldo en el que vuelve a tener lo que tenía antes de la caída",
@@ -311,17 +311,17 @@
       "sweepBare": "Fuente: HotGap, con PolicyEngine. Reglas de {year}.",
       "rent": " Renta: rentas justas de mercado de HUD, {rent}.",
       "childcare": " Precio del cuidado de niños: {childcare}, llevado a dólares de {year}.",
-      "money": " El dinero que le queda es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo.",
+      "money": " El dinero que le queda es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado de niños que la familia paga de su bolsillo.",
       "heading": "De dónde salen estos números"
     },
     "table": {
       "show": "Ver los números",
-      "caption": "Los puntos que marca el dibujo. El dinero que le queda está en dólares al año.",
-      "pay": "Su pago",
+      "caption": "Los puntos que marca la imagen. El dinero que le queda está en dólares al año.",
+      "pay": "Su sueldo",
       "keep": "Le quedan",
       "drop": "Caída",
       "dropCell": "−{drop}",
-      "mark": "En el dibujo",
+      "mark": "En la imagen",
       "marks": {
         "peak": "El tope de su tramo plano",
         "you": "Usted ahora",
@@ -396,10 +396,10 @@
       "childcareNone": "Nadie en el hogar paga guardería.",
       "help": "{list}. Contamos cada una como si la recibiera.",
       "notCounted": "{list}. Las contamos como si no las recibiera.",
-      "you": "{age} años, ciudadano de EE. UU.",
-      "youNotCitizen": "{age} años, no es ciudadano de EE. UU.",
-      "spouse": "{age} años, le pagan {pay} al año.",
-      "spouseNoPay": "{age} años, sin pago.",
+      "you": "{age} años, con ciudadanía de EE. UU.",
+      "youNotCitizen": "{age} años, sin ciudadanía de EE. UU.",
+      "spouse": "{age} años, gana {pay} al año.",
+      "spouseNoPay": "{age} años, sin sueldo.",
       "nobodyDisabled": " Nadie en el hogar tiene una discapacidad.",
       "youDisabled": " Usted nos dijo que tiene una discapacidad.",
       "spouseDisabled": " Usted nos dijo que su pareja tiene una discapacidad.",
@@ -410,12 +410,12 @@
       "hours": "{hours} horas a la semana.",
       "hoursNone": "No nos lo dijo, así que supusimos tiempo completo: 40 horas por semana.",
       "selfEmployed": "Usted trabaja por cuenta propia, no para un jefe.",
-      "employerPlan": "{amount} al año salen de su pago para pagarlo.",
+      "employerPlan": "{amount} al año salen de su sueldo para pagarlo.",
       "employerPlanFree": "Con su sueldo no contamos ningún costo por él.",
       "headStart": "Vale {amount} al año para usted: lo que costaría la guardería.",
       "coverageGap": "Entre {from} y {to} no tendría ningún plan de salud: ni Medicaid ni ayuda para comprar uno. Ahí no contamos ningún costo de plan de salud.",
-      "premiumHelp": "{program}. Ayuda a pagar el seguro de salud. Lo contamos.",
-      "premiumHelpMax": "{program}, hasta {amount} al año. Ayuda a pagar el seguro de salud. Lo contamos.",
+      "premiumHelp": "Ayuda del estado para pagar el seguro de salud ({program}). La contamos.",
+      "premiumHelpMax": "Ayuda del estado para pagar el seguro de salud ({program}), hasta {amount} al año. La contamos.",
       "maTafdc": "Usamos la regla del estado para quienes ya la reciben. No la regla del primer año.",
       "unclaimed": "Usted nos dijo que no recibe {list}. Con su sueldo valdría unos {amount} al año.",
       "labels": {
@@ -449,12 +449,12 @@
       "body": " {state} tiene {program}, y nuestras cuentas no lo incluyen, así que podría faltar una caída en esta página."
     },
     "reach": {
-      "heading": "¿Qué tan común es este pago?",
+      "heading": "¿Qué tan común es este sueldo?",
       "some": "Alrededor de {n} de cada 10 {who} en {state} ganan {pay} o menos.",
       "few": "Menos de 1 de cada 10 {who} en {state} ganan {pay} o menos.",
-      "most": "Casi todos los {who} en {state} ganan {pay} o menos.",
+      "most": "Casi 10 de cada 10 {who} en {state} ganan {pay} o menos.",
       "who": {
-        "parents": "padres como usted",
+        "parents": "madres y padres como usted",
         "couples": "parejas como la suya",
         "people": "personas como usted"
       },
@@ -463,8 +463,8 @@
       "source": "De datos de encuestas de la Oficina del Censo de EE. UU. ({vintages}). Llevados a dólares de {year}.",
       "sourceBare": "De datos de encuestas de la Oficina del Censo de EE. UU.",
       "survey": {
-        "one": "ACS {year}, {n} año",
-        "range": "ACS {from}–{to}, {n} años"
+        "one": "ACS {year}, de {n} año",
+        "range": "ACS {from}–{to}, de {n} años"
       },
       "marginRange": " Contando el margen de error de la encuesta, está entre {lo} y {hi} de cada 10.",
       "cell": "“Como usted” quiere decir hogares de {state} con el mismo número de adultos, el mismo número de ellos que trabajan (uno o dos) y el mismo número de niños menores de 18 (tres o más cuentan juntos), con un jefe de hogar de 18 a 64 años. No se comparan las edades de los niños."
@@ -472,8 +472,8 @@
     "hours": {
       "heading": "El salario mínimo legal",
       "body": "El salario mínimo en {state} es {wage} por hora. A 40 horas por semana, eso son unos {fullTime} al año.",
-      "under": "A {hours} horas por semana, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y el dibujo cambia.",
-      "underAssumed": "No nos dijo sus horas, así que supusimos 40 por semana. Con eso, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y el dibujo cambia."
+      "under": "A {hours} horas por semana, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y la imagen cambia.",
+      "underAssumed": "No nos dijo sus horas, así que supusimos 40 por semana. Con eso, {pay} es menos que el salario mínimo de {state}, {wage} por hora. Si trabaja menos horas, díganoslo y la imagen cambia."
     },
     "footer": {
       "estimates": "Son estimaciones.",
@@ -528,7 +528,7 @@
     },
     "beyondReach": " Esas caídas lejanas empiezan en {at}, y {n} de cada 10 familias como la suya ganan menos que eso.",
     "toPlaces": "Vea cómo se compara {state} con otros estados",
-    "toPlacesNote": "La familia del mapa paga el alquiler típico y recibe ayuda con el cuidado infantil, así que sus cifras son distintas de las suyas.",
+    "toPlacesNote": "La familia del mapa paga la renta típica y recibe ayuda para el cuidado de niños, así que sus cifras son distintas de las suyas.",
     "takeUp": {
       "counting": "Contamos la ayuda que podría recibir: {list}.",
       "ask": "¿No recibe alguna de estas?",
@@ -549,7 +549,7 @@
         "edit": "Editar"
       },
       "heading": "El hogar",
-      "lead": "Lugar, hogar, pago y gastos mensuales. El ingreso neto se evalúa en cada nivel de pago del eje.",
+      "lead": "Lugar, hogar, sueldo y gastos mensuales. El ingreso neto se evalúa en cada nivel de sueldo del eje.",
       "privacy": "Nada de lo que se escribe aquí se guarda.",
       "place": {
         "legend": "Lugar",
@@ -569,8 +569,8 @@
         "kidAge": "Edad del niño {n}"
       },
       "pay": {
-        "legend": "Pago",
-        "amount": "Pago, antes de impuestos",
+        "legend": "Sueldo",
+        "amount": "Sueldo, antes de impuestos",
         "unit": "Por",
         "hours": "Horas a la semana",
         "hoursHint": "En blanco supone 40."
@@ -586,12 +586,12 @@
       "chips": {
         "where": "Lugar",
         "household": "Hogar",
-        "pay": "Pago",
+        "pay": "Sueldo",
         "rent": "Renta",
         "childcare": "Cuidado de niños",
         "age": "Edad",
         "spouseAge": "Edad del cónyuge",
-        "spousePay": "Pago del cónyuge",
+        "spousePay": "Sueldo del cónyuge",
         "ssdi": "SSDI",
         "childSupport": "Manutención de hijos",
         "unemployment": "Desempleo",
@@ -620,14 +620,14 @@
         "fields": {
           "zip": "el código postal",
           "state": "el código postal o el estado",
-          "annualEarnings": "el pago",
+          "annualEarnings": "el sueldo",
           "hoursPerWeek": "las horas",
           "childAges": "las edades de los niños",
           "age": "la edad",
           "spouseAge": "la edad del cónyuge",
           "monthlyRent": "la renta",
           "monthlyChildcare": "el gasto en cuidado de niños",
-          "spouseAnnualEarnings": "el pago del cónyuge",
+          "spouseAnnualEarnings": "el sueldo del cónyuge",
           "ssdiMonthly": "el SSDI",
           "childSupportMonthly": "la manutención de hijos",
           "unemploymentMonthly": "el pago por desempleo",
@@ -664,7 +664,7 @@
       },
       "breakdownFootnote": "Las cuatro partes suman exactamente la caída. Una parte a la derecha del cero se suma a la pérdida; una a la izquierda la compensa — aquí, una factura de impuestos que baja. Medicaid y CHIP nunca aparecen: su valor es el precio de lista de la cobertura, nunca efectivo, así que no puede mover el ingreso neto. Un niño que pierde la cobertura aparece en los programas perdidos.",
       "ledgerHeading": "Dónde termina cada programa",
-      "ledgerCaption": "Un programa termina en el primer pago en el que ya no está. Los adultos y los niños se informan por separado: un padre suele perder la cobertura muy por debajo del límite de un niño.",
+      "ledgerCaption": "Un programa termina en el primer sueldo en el que ya no está. Los adultos y los niños se informan por separado: una madre o un padre suele perder la cobertura muy por debajo del límite de un niño.",
       "ledgerCols": {
         "earnings": "Ingresos",
         "program": "Programa",
@@ -681,11 +681,11 @@
       "reachHeading": "Qué tan común es este sueldo",
       "estimates": "Son estimaciones según las reglas vigentes, no una determinación. Un trabajador social decide la ayuda real.",
       "who": "{adults} en {state}, {earnings} de ingresos.",
-      "archetype": "Estas son las cifras del barrido comprometido para un hogar de esta forma en {state}, no la llamada en vivo de esta familia.",
-      "stillArchetype": "Siguen siendo las cifras del barrido comprometido para un hogar de esta forma en {state}: la llamada en vivo no respondió."
+      "archetype": "Estas son las cifras del barrido precalculado para un hogar de esta forma en {state}, no la llamada en vivo de esta familia.",
+      "stillArchetype": "Siguen siendo las cifras del barrido precalculado para un hogar de esta forma en {state}: la llamada en vivo no respondió."
     },
     "status": {
-      "loading": "Evaluando… el ingreso neto se revisa en {count} niveles de pago. Un hogar nuevo tarda unos segundos.",
+      "loading": "Evaluando… el ingreso neto se revisa en {count} niveles de sueldo. Un hogar nuevo tarda unos segundos.",
       "errorTitle": "La evaluación no regresó.",
       "errors": {
         "rate_limited": "Demasiadas evaluaciones en un minuto. Espere un minuto y vuelva a intentarlo.",
@@ -715,7 +715,7 @@
       "single": "Soltero",
       "cleared": "{label} en blanco",
       "place": "Lugar {where}",
-      "pay": "Pago {pay}",
+      "pay": "Sueldo {pay}",
       "monthly": "{label} {amount} al mes",
       "yearly": "{label} {amount} al año",
       "figure": "{label} {amount}",
@@ -736,10 +736,10 @@
         "rent": "Renta",
         "childcare": "Cuidado de niños",
         "earnings": "Ingresos",
-        "pay": "Pago",
-        "unit": "Unidad de pago",
+        "pay": "Sueldo",
+        "unit": "Periodo del sueldo",
         "hours": "Horas a la semana",
-        "spouse-earnings": "Pago del cónyuge",
+        "spouse-earnings": "Sueldo del cónyuge",
         "ssdi": "SSDI",
         "child-support": "Manutención de hijos",
         "unemployment": "Desempleo",
@@ -756,7 +756,7 @@
         "exact": "A salvo desde {safe}: un aumento de {leap}.",
         "atLeast": "A salvo desde {safe}: un aumento de {leap} o más."
       },
-      "neverSafe": "El barrido nunca encontró un pago pasado el cual no quede ninguna zona."
+      "neverSafe": "El barrido nunca encontró un sueldo pasado el cual no quede ninguna zona."
     },
     "tiles": {
       "net": "Neto, después de primas y cuidado infantil",
@@ -899,12 +899,12 @@
         },
         "worst": "{n, plural, =0 {El mayor escalón hacia abajo es de {drop} en {at}.} one {El mayor escalón hacia abajo es de {drop} en {at}, donde termina {programs}.} other {El mayor escalón hacia abajo es de {drop} en {at}, donde terminan {programs}.}}",
         "safe": {
-          "none": "Ningún pago del eje está más allá de todas las zonas.",
-          "from": "Seguro desde {safe}."
+          "none": "Ningún sueldo del eje está más allá de todas las zonas.",
+          "from": "A salvo desde {safe}."
         }
       },
       "cliff": {
-        "lead": "Precipicio en {from} a {to}: {drop}.",
+        "lead": "Precipicio de {from} a {to}: {drop}.",
         "lost": "{n, plural, =0 {Ningún programa identificado.} one {Termina {programs}.} other {Terminan {programs}.}}",
         "driver": "Causa: {driver}.",
         "deferred": "Diferido hasta {until}."
@@ -920,9 +920,9 @@
       },
       "key": {
         "net": "Ingreso neto",
-        "ownZone": "Zona de este hogar — pagos en los que el neto sigue por debajo de un pico anterior",
-        "otherZones": "Otras zonas — pagos en los que el neto sigue por debajo de un pico anterior",
-        "zones": "Zonas de peligro — pagos en los que el neto sigue por debajo de un pico anterior",
+        "ownZone": "Zona de este hogar — sueldos en los que el neto sigue por debajo de un pico anterior",
+        "otherZones": "Otras zonas — sueldos en los que el neto sigue por debajo de un pico anterior",
+        "zones": "Zonas de peligro — sueldos en los que el neto sigue por debajo de un pico anterior",
         "immediate": "Precipicio inmediato",
         "deferred": "Precipicio diferido",
         "current": "Ingresos actuales",
@@ -949,9 +949,9 @@
       },
       "axisBreak": "El eje vertical está cortado en {top}: por encima, la escala se comprime {factor} veces para que quepa toda la curva.",
       "noneDeferred": "Ningún precipicio de esta curva está diferido.",
-      "glossary": "Una zona de peligro es un tramo de pago en el que el ingreso neto sigue por debajo de un pico anterior.",
+      "glossary": "Una zona de peligro es un tramo de sueldo en el que el ingreso neto sigue por debajo de un pico anterior.",
       "span": {
-        "scrolls": "El eje de x va de {from} a {to}; deslice la curva de lado a lado para verla toda.",
+        "scrolls": "El eje de x va de {from} a {to}; desplace la curva de lado para verla toda.",
         "whole": "El eje de x va de {from} a {to}, entero en la página."
       },
       "rangeFrom": "← {from}",
@@ -969,7 +969,7 @@
         },
         "merged": "{n} caídas juntas",
         "roadFrom": "línea de pobreza",
-        "roadTo": "2× la línea de pobreza",
+        "roadTo": "2× la línea",
         "again": "otra zona de peligro",
         "roadShort": {
           "keeps": "se queda con {cents}¢ de cada dólar extra en promedio",
@@ -1007,21 +1007,21 @@
         "one": "1 adulto",
         "two": "2 adultos"
       },
-      "reachNote": "El alcance es la proporción de hogares con la misma forma en {state} que ganan esta cifra o menos: dice qué tan común es el pago, nunca las probabilidades de llegar a él.",
-      "ladderNote": "Una columna cuya forma de hogar difiere está en su propia escala ({other} frente a {base}), y por eso el mismo pago puede quedar en otro percentil ahí.",
-      "archetypeNote": "Una columna marcada como arquetipo es el barrido comprometido para un hogar de esa forma en este estado, no la llamada en vivo de esta familia.",
-      "unansweredNote": "{n, plural, one {El barrido comprometido solo varía la forma y el pago de un hogar, así que un escenario que cambia otra cosa no tiene cifra hasta que responda la llamada en vivo.} other {El barrido comprometido solo varía la forma y el pago de un hogar, así que {n} escenarios que cambian otra cosa no tienen cifra hasta que responda la llamada en vivo.}}",
+      "reachNote": "El alcance es la proporción de hogares con la misma forma en {state} que ganan esta cifra o menos: dice qué tan común es el sueldo, nunca las probabilidades de llegar a él.",
+      "ladderNote": "Una columna cuya forma de hogar difiere está en su propia escala ({other} frente a {base}), y por eso el mismo sueldo puede quedar en otro percentil ahí.",
+      "archetypeNote": "Una columna marcada como arquetipo es el barrido precalculado para un hogar de esa forma en este estado, no la llamada en vivo de esta familia.",
+      "unansweredNote": "{n, plural, one {El barrido precalculado solo varía la forma y el sueldo de un hogar, así que un escenario que cambia otra cosa no tiene cifra hasta que responda la llamada en vivo.} other {El barrido precalculado solo varía la forma y el sueldo de un hogar, así que {n} escenarios que cambian otra cosa no tienen cifra hasta que responda la llamada en vivo.}}",
       "onTheWay": {
         "heading": "En el camino — {title}",
         "empty": "Ninguna caída entre aquí y allá.",
         "item": "{n, plural, =0 {{at} — un paso hacia abajo ({drop})} one {{at} — {programs} se termina ({drop})} other {{at} — {programs} se terminan ({drop})}}"
       },
-      "reachCell": "La misma forma quiere decir el mismo estado civil, el mismo número de personas que ganan (una o dos) y el mismo número de niños menores de 18 (tres o más juntos), con un jefe de hogar de 18 a 64 años; no se comparan las edades de los niños."
+      "reachCell": "La misma forma quiere decir el mismo estado civil, el mismo número de personas con sueldo (una o dos) y el mismo número de niños menores de 18 (tres o más juntos), con un jefe de hogar de 18 a 64 años; no se comparan las edades de los niños."
     },
     "assumed": {
-      "health": "El neto es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo; el alquiler no se descuenta. El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
+      "health": "El neto es lo que sobra después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo; la renta no se descuenta. El costo de salud son solo las primas: sin deducibles, copagos ni otros gastos de bolsillo.",
       "facts": "Supuesto para esta curva: {facts}; {age} años.",
-      "citizen": "ciudadano",
+      "citizen": "con ciudadanía",
       "status": "estatus: {status}",
       "savings": "{amount} en ahorros",
       "noSavings": "sin ahorros",
@@ -1044,10 +1044,10 @@
       "other": "Otros beneficios estatales en el resto: {other}.",
       "model": "Modelo: {model}.",
       "archetype": {
-        "dated": "barrido de arquetipos comprometido ({id}), generado el {generated}; no es la llamada en vivo de esta familia.",
-        "undated": "barrido de arquetipos comprometido ({id}); no es la llamada en vivo de esta familia."
+        "dated": "barrido de arquetipos precalculado ({id}), generado el {generated}; no es la llamada en vivo de esta familia.",
+        "undated": "barrido de arquetipos precalculado ({id}); no es la llamada en vivo de esta familia."
       },
-      "clamped": "El pago está por encima del rango modelado: evaluado en {clamped}, el tope del barrido.",
+      "clamped": "El sueldo está por encima del rango modelado: evaluado en {clamped}, el tope del barrido.",
       "live": {
         "inPlace": "llamada en vivo a PolicyEngine para este hogar en {where}.",
         "anywhere": "llamada en vivo a PolicyEngine para este hogar."
@@ -1082,16 +1082,16 @@
         "dated": "Impreso desde HotGap. Reglas de {year}. Barrido del {sweep}.",
         "undated": "Impreso desde HotGap. Reglas de {year}."
       },
-      "payAndKeep": "A usted le pagan {pay} al año y, contando la ayuda, le quedan {kept}."
+      "payAndKeep": "Usted gana {pay} al año y, contando la ayuda, le quedan {kept}."
     },
     "answer": {
       "inZone": "El ingreso neto — sueldo más ayuda, después de impuestos, primas y cuidado infantil — se queda por debajo de su pico de {peak} (en {start}) hasta {exit}: {nLose, plural, =0 {ningún aumento de {step} entre ambos pierde {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} aumentos de {step} entre ambos pierde dinero} other {{nLose} de los {nSteps} aumentos de {step} entre ambos pierden dinero}}; con {raise} más al año sale del tramo.",
       "inZone:stuck": "El ingreso neto — sueldo más ayuda, después de impuestos, primas y cuidado infantil — se queda por debajo de su pico de {peak} (en {start}) más allá del tope del eje, {top}: {nLose, plural, =0 {ningún aumento de {step} entre ambos pierde {floor} o más, pero ninguno vuelve a subir} one {{nLose} de los {nSteps} aumentos de {step} entre ambos pierde dinero} other {{nLose} de los {nSteps} aumentos de {step} entre ambos pierden dinero}}.",
       "cliffAhead": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año.",
-      "cliffAhead:dip": "Esta familia está a salvo hasta {at}; ahí baja unos {drop} y vuelve a ir por delante en {exit}.",
+      "cliffAhead:dip": "Esta familia está a salvo hasta {at}; ahí baja unos {drop} y para {exit} ya se ha recuperado.",
       "cliffAhead:waits": "Esta familia está a salvo hasta {at}; pasado eso, un aumento le cuesta unos {drop} al año, en la próxima renovación y no ese mismo día.",
       "cliffBehind": "Lo peor ya quedó atrás para esta familia: de {wage} en adelante, cada aumento es más dinero.",
-      "alwaysUp": "Cada aumento deja mejor a esta familia; nada cae en ningún punto hasta {top}."
+      "alwaysUp": "Con cada aumento esta familia sale ganando; nada baja en ningún punto hasta {top}."
     },
     "toCitizen": "Abrir la página en lenguaje sencillo para compartirla con el cliente"
   },
@@ -1128,8 +1128,8 @@
         "span": {
           "plain": "entre la línea de pobreza y el doble de esa línea,",
           "same": "desde la línea de pobreza ({lo}) hasta justo pasado el doble ({hi}),",
-          "akHi": "desde la línea de pobreza ({lo}) hasta justo pasado el doble ({hi}) —más alto en Alaska y Hawái—",
-          "dual": " del sueldo de este trabajador — el sueldo del segundo, {spouse}, va aparte —"
+          "akHi": "desde la línea de pobreza ({lo}) hasta justo pasado el doble ({hi}) — más alto en Alaska y Hawái —",
+          "dual": " de este sueldo — el segundo sueldo, {spouse}, se suma aparte —"
         }
       },
       "roadWorst": {
@@ -1138,7 +1138,7 @@
         "describe": "Ingreso neto perdido en el peor escalón de $1,000 entre la línea de pobreza y el doble de esa línea."
       },
       "deepestFall": {
-        "name": "Caída más honda en el camino",
+        "name": "Caída más profunda en el camino",
         "cue": "más oscuro = cae más",
         "describe": "Cuánto por debajo de lo que tenía en la línea de pobreza cae el hogar en algún punto del ascenso desde la línea de pobreza hasta justo pasado el doble, vuelva a subir o no. A diferencia de lo que conserva de cada dólar, no depende de dónde termina el camino."
       },
@@ -1168,7 +1168,7 @@
         "describe": "El aumento que un hogar debe dar de una sola vez para pasar su peor zona de peligro."
       },
       "safeExit": {
-        "name": "Sueldo sobre todo máximo anterior",
+        "name": "Sueldo sin máximo anterior más alto",
         "cue": "más oscuro = sueldo más alto",
         "describe": "Ingresos por encima de los cuales no queda ninguna zona de peligro: donde se cierra la última."
       }
@@ -1182,7 +1182,7 @@
       },
       "children": "{n, plural, =0 {sin niños} one {{n} niño ({ages})} other {{n} niños ({ages})}}",
       "phrase": {
-        "single": "{n, plural, =0 {un adulto solo sin hijos} one {una madre o padre solo con un hijo} other {una madre o padre solo con {words} hijos}}",
+        "single": "{n, plural, =0 {una persona adulta sola, sin hijos} one {una madre o un padre sin pareja, con un hijo} other {una madre o un padre sin pareja, con {words} hijos}}",
         "oneWorks": "{n, plural, =0 {una pareja sin hijos y con un solo sueldo} one {una pareja con un hijo y un solo sueldo} other {una pareja con {words} hijos y un solo sueldo}}",
         "bothWork": "{n, plural, =0 {una pareja sin hijos y con dos sueldos} one {una pareja con un hijo y dos sueldos} other {una pareja con {words} hijos y dos sueldos}}"
       },
@@ -1248,8 +1248,8 @@
         "safeExitPast": "{state} — no hay tal sueldo en la escala: el último tramo por debajo de un máximo anterior no se había cerrado en {top}, el tope del eje.",
         "floorTail": "{n, plural, one {Incompleto: {missing} no está modelado, así que la cifra es un piso.} other {Incompleto: {missing} no están modelados, así que la cifra es un piso.}}",
         "deepestFall": "{fell, select, no {{state} — la familia nunca tiene menos de lo que tenía en la línea de pobreza, en ningún punto del camino.} other {{state} — en su punto más bajo del camino, la familia tiene {fall} menos de lo que tenía en la línea de pobreza.}}",
-        "netAtRoadLo": "{state} — {value} que conserva al año con un sueldo en la línea de pobreza.",
-        "netAtRoadHi": "{state} — {value} que conserva al año con un sueldo del doble de la línea de pobreza."
+        "netAtRoadLo": "{state} — conserva {value} al año con un sueldo en la línea de pobreza.",
+        "netAtRoadHi": "{state} — conserva {value} al año con un sueldo del doble de la línea de pobreza."
       },
       "none": "{state} — no se encontró precipicio: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más, hasta {top}.",
       "noneDeferred": "{deferred, plural, one {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; 1 precipicio está diferido a una renovación posterior.} other {{state} — ningún precipicio cae con el aumento: ningún escalón de {step} de ingresos en la curva de este hogar recortó el ingreso neto en {floor} o más en el año del aumento, hasta {top}; {deferred} precipicios están diferidos a una renovación posterior.}}",
@@ -1258,9 +1258,9 @@
         "rateOnly": "{state} — {rate} desde la línea de pobreza hasta el doble.",
         "counted": "Lo que conserva es después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta.",
         "countedSubsidy": "Lo que conserva es después de impuestos, primas y el cuidado infantil que la familia paga por su cuenta; {subsidy} de eso, en la línea de pobreza, es ayuda para el cuidado infantil pagada al proveedor.",
-        "worst": "{n, plural, =0 {La mayor pérdida del camino está en {at}: {drop} de un solo paso; ningún programa por sí solo la explica.} one {La mayor pérdida del camino está en {at}: {drop} de un solo paso, cuando termina {programs}.} other {La mayor pérdida del camino está en {at}: {drop} de un solo paso, cuando terminan {programs}.}}",
+        "worst": "{n, plural, =0 {La mayor pérdida del camino está en {at}: {drop} en un solo paso; ningún programa por sí solo la explica.} one {La mayor pérdida del camino está en {at}: {drop} en un solo paso, cuando termina {programs}.} other {La mayor pérdida del camino está en {at}: {drop} en un solo paso, cuando terminan {programs}.}}",
         "holds": "Ningún aumento de {step} entre {lo} y {hi} recorta el ingreso neto en {floor} o más.",
-        "pastTop": "{holds, select, yes {Pero justo después del camino hay una caída mayor, en {at}: {drop} de un solo paso.} other {Y justo después del camino hay una caída mayor, en {at}: {drop} de un solo paso.}}",
+        "pastTop": "{holds, select, yes {Pero justo después del camino hay una caída mayor, en {at}: {drop} en un solo paso.} other {Y justo después del camino hay una caída mayor, en {at}: {drop} en un solo paso.}}",
         "position": "{n} de cada 100 familias como esta ganan menos que eso.",
         "offAxis": "{state} — el camino de este hogar para salir de la pobreza, de la línea de pobreza al doble de esa línea, queda fuera de los ingresos que se recorrieron en este estado, así que no tiene una cifra que comparar."
       },
@@ -1450,25 +1450,25 @@
       "heading": "Cómo se hicieron estos números",
       "items": {
         "engine": "Cada celda es un tipo de hogar procesado con [PolicyEngine](https://policyengine.org), una calculadora de impuestos y beneficios de código abierto, con las reglas de {year}, variando los ingresos en escalones de $1,000 desde $0 hasta más allá del 400% de la guía de pobreza para ese tamaño de hogar, más $40,000 de margen para recuperarse.",
-        "money": "La línea de dinero es lo que tiene el hogar **después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo**: el ingreso neto del hogar, contando la ayuda y los créditos fiscales —entre ellos el subsidio de cuidado infantil—, menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado, y menos su factura de cuidado infantil. El alquiler no se descuenta: ninguna ayuda se retira en función de él, y un aumento no lo cambia. No se incluyen deducibles ni copagos.",
+        "money": "La línea de dinero es lo que tiene el hogar **después de los impuestos, las primas del plan de salud y el cuidado infantil que la familia paga de su bolsillo**: el ingreso neto del hogar, contando la ayuda y los créditos fiscales —entre ellos el subsidio de cuidado infantil—, menos lo que el hogar realmente paga en primas de seguro de salud, netas del subsidio del mercado, y menos su factura de cuidado infantil. La renta no se descuenta: ninguna ayuda se retira en función de ella, y un aumento no lo cambia. No se incluyen deducibles ni copagos.",
         "household": "Cada hogar es un inquilino típico del condado más poblado del estado (nombrado debajo del mapa para el estado seleccionado), con la renta justa de mercado de HUD, las estimaciones de condado del Censo y el precio de preescolar de la Base de Datos Nacional de Precios de Cuidado Infantil del DOL para ese condado, llevado a dólares de {year} con el Índice de Costo del Empleo del BLS. El año del estudio detrás del precio, y si una mediana estatal o nacional reemplazó a un condado que la base de datos no tiene, varían por estado y se imprimen en la línea de fuente debajo del mapa.",
         "takeUp": "El subsidio de cuidado infantil está activado en esta corrida aunque, como Head Start y los vales de vivienda, llega a una minoría de las familias elegibles: su salida es el mayor precipicio que enfrentan la mayoría de los padres que trabajan con hijos pequeños, y un mapa sin él subestima a todos los estados.",
         "deferred": "Los precipicios diferidos a una renovación posterior — la continuidad de Head Start hasta el fin del año del programa, los 12 meses de Medicaid o CHIP continuo de un niño, la Asistencia Médica de Transición de un padre — se cuentan en todas las cifras de aquí como cualquier otro precipicio, y se nombran otra vez en la columna *pérdidas que llegan después, al renovar*. Son pérdidas reales; lo que dice la columna es cuáles de ellas esperan a una renovación en vez de caer con el aumento.",
         "corrections": "Cuando la cifra de un estado necesitó una corrección sobre PolicyEngine (una escala de primas aplicada localmente, el subsidio de cuidado infantil devuelto al ingreso neto, un límite de Medicaid para padres tomado del manual del estado, una prima por brecha de cobertura), aparece debajo del mapa para el estado seleccionado, a partir del propio registro de cobertura de la corrida, no de un texto guardado aquí.",
         "download": "La descarga son las filas de la tabla en el orden de la tabla, una por estado, con estas columnas: {columns}. Las celdas de dólares vacías son un estado sin precipicio o una salida segura más allá del eje; las banderas dicen qué cifras son pisos o cotas inferiores.",
         "road": "**El camino para salir de la pobreza** son los ingresos que van desde la guía federal de pobreza para el tamaño de este hogar hasta el doble de esa guía: de {lo} a {hi} para una familia de tres según la guía federal de pobreza de {fplYear}, la que usan las reglas de {year}, y Alaska y Hawái con sus propias guías más altas. Es federal a propósito, para que el camino sea el mismo en todos los estados y lo que cambie sea cómo tratan sus reglas a una familia que lo recorre. Su tope lleva un escalón de $1,000 de holgura, porque un límite de programa situado justo en la línea del doble de la pobreza cae en el escalón que empieza en el primer punto muestreado igual o superior a ella.",
-        "keepRate": "**Lo que se queda de cada dólar** es lo que el hogar conserva de cada dólar extra ganado a lo largo de ese camino: el cambio en el ingreso neto dividido entre el cambio en el pago. Es uno menos la tasa impositiva marginal efectiva, la medida que reporta la literatura sobre precipicios de beneficios, dicha en centavos porque así es como la escucha una persona. Por debajo de cero, la familia termina el ascenso más pobre de lo que empezó.",
+        "keepRate": "**Lo que se queda de cada dólar** es lo que el hogar conserva de cada dólar extra ganado a lo largo de ese camino: el cambio en el ingreso neto dividido entre el cambio en el sueldo. Es uno menos la tasa impositiva marginal efectiva, la medida que reporta la literatura sobre precipicios de beneficios, dicha en centavos porque así es como la escucha una persona. Por debajo de cero, la familia termina el ascenso más pobre de lo que empezó.",
         "level": "**Que se quede mucho de cada dólar no hace generoso a un estado.** Dice que los aumentos pueden sumarse, no cuánto tiene la familia: de un estado a otro, lo que una familia tiene en la línea de pobreza no guarda relación con lo que se queda de cada dólar, y lo que tiene al doble de la pobreza se sigue de ambas cosas. Las dos medidas de *lo que conserva* muestran el nivel —lo que la familia conserva en la línea de pobreza y al doble de ella— y la lectura de lo que se queda de cada dólar nombra los dos extremos.",
-        "position": "**Familias que ganan menos** sitúa una cifra en dólares donde están las familias: de los hogares como este en ese estado, la proporción que gana menos que esa cifra, según datos de encuesta del Censo ({vintages}) llevados a dólares de {year}. Es de corte transversal —cuántas familias ya ganan menos— y nunca la probabilidad de que una familia llegue a ese pago. Una celda que la encuesta no puede sostener se deja vacía en lugar de llenarse con un cero.",
+        "position": "**Familias que ganan menos** sitúa una cifra en dólares donde están las familias: de los hogares como este en ese estado, la proporción que gana menos que esa cifra, según datos de encuesta del Censo ({vintages}) llevados a dólares de {year}. Es de corte transversal —cuántas familias ya ganan menos— y nunca la probabilidad de que una familia llegue a ese sueldo. Una celda que la encuesta no puede sostener se deja vacía en lugar de llenarse con un cero.",
         "modeledFamily": "**Cada cifra es la familia modelada**, no un promedio de familias reales: un inquilino del condado más poblado del estado, con los hijos en cuidado pagado cuando ambos padres trabajan, que reclama aquello a lo que las reglas le dan derecho. Un hogar real con otra renta, otro arreglo de cuidado o un beneficio que nunca solicitó tiene otra curva.",
-        "groups": "**Las medidas son dos preguntas.** *De la línea de pobreza al doble* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están las familias para las que existe esta herramienta. *En cualquier sueldo* pregunta dónde está el muro más alto del estado, sea cual sea el pago en el que esté; para este hogar ese muro queda por encima de los ingresos de la familia mediana en {n} estados de {total}, y por eso ya no es la primera respuesta de la página.",
+        "groups": "**Las medidas son dos preguntas.** *De la línea de pobreza al doble* pregunta qué le pasa a una familia que sube de la línea de pobreza al doble de esa línea, que es donde están las familias para las que existe esta herramienta. *En cualquier sueldo* pregunta dónde está el muro más alto del estado, sea cual sea el sueldo en el que esté; para este hogar ese muro queda por encima de los ingresos de la familia mediana en {n} estados de {total}, y por eso ya no es la primera respuesta de la página.",
         "roadToLine": {
           "differs": "Medido exactamente hasta el doble de la pobreza, {strict} estados quedan por debajo de cero en lugar de {bad}; la diferencia son los estados cuya salida del subsidio de cuidado infantil o de SNAP cae justo en esa línea.",
           "same": "Medido exactamente hasta el doble de la pobreza, los mismos {bad} estados quedan por debajo de cero: ninguno lo está solo por una salida que cae en esa línea."
         },
         "takeUpTwin": "El gemelo «sin ayuda para el cuidado infantil» del menú de hogares muestra a la familia sin él.",
         "takeUpTwinDerived": "El gemelo «sin ayuda para el cuidado infantil» del menú de hogares muestra a la familia sin él. Se deriva de la misma corrida (en cada sueldo, el ingreso neto menos el subsidio que la familia habría tenido) y se recorrerá directamente; los programas que leen lo que la familia paga por su cuenta por el cuidado (la deducción por cuidado de dependientes de SNAP, el crédito por cuidado de dependientes) no se recalculan para él.",
-        "band": "**Dos topes y una caída.** El límite de programa más común cae justo en el doble de la línea de pobreza, así que un camino que termina un escalón antes o después se lee muy distinto. La tabla y la clasificación dan también lo que se queda de cada dólar medido hasta el 220% de la línea, y *caída más honda en el camino* mide cuánto por debajo de su ingreso en la línea de pobreza baja la familia durante el ascenso: una cifra sin tope en el que apoyarse."
+        "band": "**Dos topes y una caída.** El límite de programa más común cae justo en el doble de la línea de pobreza, así que un camino que termina un escalón antes o después se lee muy distinto. La tabla y la clasificación dan también lo que se queda de cada dólar medido hasta el 220% de la línea, y *caída más profunda en el camino* mide cuánto por debajo de su ingreso en la línea de pobreza baja la familia durante el ascenso: una cifra sin tope en el que apoyarse."
       },
       "axis": {
         "plain": "Para {household} el eje va de $0 a {top}; una cifra que se sale del eje se sale de eso.",
@@ -1516,7 +1516,7 @@
         "withSubsidy": "{household} que recibe el subsidio de cuidado infantil"
       },
       "roadWorst": {
-        "some": "La mayor pérdida de un aumento en el camino es la de {state}: {drop} de ingreso que desaparecen entre {at} y {to} de pago.",
+        "some": "La mayor pérdida de un aumento en el camino es la de {state}: {drop} de ingreso que desaparecen entre {at} y {to} de sueldo.",
         "none": "Nada en el camino le cuesta a este hogar {floor} en un solo aumento, en ninguno de {places}."
       },
       "netAtRoadLo": {
@@ -1526,7 +1526,7 @@
         "some": "Al doble de la línea de pobreza, {household} conserva menos en {state} ({value} al año) y más en {best} ({bestValue})."
       },
       "biggestLoss": {
-        "some": "La mayor pérdida de un aumento del mapa es la de {state}, {drop}, entre {at} y {to} de pago; de {places}, {miss, plural, =0 {todos tienen algún precipicio en la curva de este hogar} one {solo uno no tiene ningún precipicio} other {{miss} no tienen ningún precipicio}}.",
+        "some": "La mayor pérdida de un aumento del mapa es la de {state}, {drop}, entre {at} y {to} de sueldo; de {places}, {miss, plural, =0 {todos tienen algún precipicio en la curva de este hogar} one {solo uno no tiene ningún precipicio} other {{miss} no tienen ningún precipicio}}.",
         "none": "Ninguna curva de {places} tiene un escalón hacia abajo de {floor} o más para este hogar."
       },
       "dangerWidth": {
@@ -1542,7 +1542,7 @@
         "open": "{n, plural, one {En un estado la última zona de peligro no se había cerrado al final del eje; la salida más alta medida en los demás es la de {state}, {exit}.} other {En {n} estados la última zona de peligro no se había cerrado al final del eje; la salida más alta medida en los demás es la de {state}, {exit}.}}",
         "none": "No queda ninguna zona de peligro en {places} para este hogar."
       },
-      "holds": "Las reglas de cada estado aplicadas a la misma familia: alquila al precio típico del condado, {care}recibe {programs}.",
+      "holds": "Las reglas de cada estado aplicadas a la misma familia: renta al precio típico del condado, {care}recibe {programs}.",
       "holdsCare": "paga cuidado infantil en un centro para {kids} y ",
       "holdsNoCare": "y ",
       "holdsKids": "{n, plural, one {su hijo} =2 {sus dos hijos} other {sus {words} hijos}}",

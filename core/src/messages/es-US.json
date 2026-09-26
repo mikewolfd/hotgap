@@ -60,7 +60,7 @@
   },
   "road": {
     "sentence": "{state} — {household} que se abre camino de la pobreza al doble de la pobreza {sign, select, keeps {se queda con {cents}¢ de cada dólar extra} other {termina {cents}¢ más pobre por cada dólar extra}}.",
-    "rate": "{sign, select, keeps {se queda con {cents}¢ de cada dólar extra de media} other {pierde {cents}¢ de cada dólar extra de media}}",
+    "rate": "{sign, select, keeps {se queda con {cents}¢ de cada dólar extra en promedio} other {pierde {cents}¢ de cada dólar extra en promedio}}",
     "collapse": "El camino se derrumba en {at}, donde termina {program} y la familia pierde {drop} de un solo paso.",
     "position": "{n} de cada 100 familias como esta ganan menos",
     "keepNext": "De los próximos {over} que gane, se queda con unos {kept}.",
