@@ -97,7 +97,7 @@ describe("the answer counts the steps (design/TASKS.md § Danger-zone sentences)
   it("says how many of the zone's steps lose money for the SF household, not that every raise does", () => {
     const sf = shaped(sfNet, 30_000);
     expect(sf.personal.zone).toEqual({ startEarnings: 28_000, endEarnings: 43_000, peakNet: 44_985 });
-    expect(answerText(sf)).toBe("Net income — pay plus help, after taxes and premiums — stays below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 $1,000 raises between them lose money; $13,000 clears the stretch.");
+    expect(answerText(sf)).toBe("Net income — pay plus help, after taxes, premiums and child care — stays below its $44,985 peak (at $28,000) until $43,000: 3 of the 15 $1,000 raises between them lose money; $13,000 clears the stretch.");
   });
   it("calls a next cliff the family climbs back out of within three steps a dip, and says where it is ahead again", () => {
     const dip = shaped((e) => (e <= 28_000 ? sfNet(e) : e === 29_000 ? 43_000 : e === 30_000 ? 44_500 : 45_100 + (e - 31_000) * 0.7), 25_000);
