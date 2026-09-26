@@ -58,7 +58,8 @@ export const axisSameAsRoad = (): string => copy.readout.axisSameAsRoad;
  *
  * THE LEVEL RIDES BESIDE THE SLOPE (Level beside slope, 2026-09-26): a keep
  * rate says raises add up, not how much the family has, and across the states
- * the two are only weakly related — Wisconsin's family has $46,179 at the poverty
+ * what a family has at the poverty line is unrelated to its keep rate (r = −0.04
+ * on the committed sweep) — Wisconsin's family has $46,179 at the poverty
  * line and loses on the road, New Mexico's has $45,705 and keeps 30¢. So the
  * sentence names what the household has at both ends, in dollars; without
  * them (a file written before the levels) it is the rate alone

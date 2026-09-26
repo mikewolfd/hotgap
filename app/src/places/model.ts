@@ -139,15 +139,18 @@ export function roadSpan(rows: readonly StateRow[]): { lo: number; hi: number; d
  * ($55,000)" — and says where the road is longer; every other measure's words
  * do not depend on the household and come back as they are.
  */
-export function describeFor(measure: Measure, rows: readonly StateRow[]): string {
+export function describeFor(measure: Measure, rows: readonly StateRow[], spousePay: number | null = null): string {
+  /* On a two-earner row the road is set on family earnings but printed as this earner's pay (road.ts, R4): the
+     second earner's fixed pay is on top of every figure, and the definition says so. */
+  const dual = spousePay ? fill(copy.measures.keepRate.span.dual, { spouse: money(spousePay) }) : "";
   if (isLevel(measure.key)) {
     const ends = roadSpan(rows);
-    return ends === null ? measure.describe : describeWith(measure.key, "", ends);
+    return (ends === null ? measure.describe : describeWith(measure.key, "", ends)) + dual;
   }
   if (measure.key !== "keepRate") return measure.describe;
   const span = roadSpan(rows);
   const S = copy.measures.keepRate.span;
-  return describeWith("keepRate", span === null ? S.plain : fill(span.differs ? S.akHi : S.same, { lo: money(span.lo), hi: money(span.hi) }));
+  return describeWith("keepRate", (span === null ? S.plain : fill(span.differs ? S.akHi : S.same, { lo: money(span.lo), hi: money(span.hi) })) + dual);
 }
 
 export const measureByKey = (key: string): Measure | undefined => MEASURES.find((m) => m.key === key);
@@ -199,6 +202,9 @@ const alwaysMeasured = (key: MeasureKey): boolean => key === "keepRate" || key =
 const worksBoth = (a: Archetype): boolean => a.id.includes("dual");
 /* The `-nosub` twin (core's `isNoSubsidyTwin`): the same household with the child-care subsidy off, labelled as such. */
 const noSubsidy = (a: Archetype): boolean => isNoSubsidyTwin(a);
+
+/** The second earner's fixed pay on a two-earner row, which every road figure sits on top of; null where one adult earns. */
+export const spousePayOf = (a: Archetype): number | null => (worksBoth(a) ? FEDERAL_MIN_WAGE_FULL_TIME_ANNUAL : null);
 
 export const archLabel = (a: Archetype): string => householdLabel(a.married, worksBoth(a), a.childAges, noSubsidy(a));
 

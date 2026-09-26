@@ -19,7 +19,7 @@ import { stateName } from "../lib/names.js";
 import { answerParts, holdsText } from "./answer.js";
 import { CSV_HEADER } from "./csv.js";
 import { copy, t } from "./copy.js";
-import { archLabel, bites, countDefinition, describeFor, isLevel, MEASURES, measureByKey, measuresIn, menuOrder, modal, positionAt, rankNumbers, rankValue, roadSpan, type Archetype, type CountKey, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows } from "./model.js";
+import { archLabel, bites, countDefinition, describeFor, isLevel, MEASURES, measureByKey, measuresIn, menuOrder, modal, positionAt, rankNumbers, rankValue, roadSpan, type Archetype, type CountKey, type Grouped, type Measure, type MeasureKey, type SortKey, type StateRow, tableRows, spousePayOf } from "./model.js";
 import { TILES, TILE_ORDER } from "./tiles.js";
 import { tryItHref } from "./url.js";
 import { axisLine, axisPosition, axisSameAsRoad, binsLine, boundaryCite, boundaryCounted, boundaryFacts, countedLede, countedLine, divergingLine, floorTail, hatchedLine, carePriceLine, incompleteNote, keepPhrase, keepShort, keepSpan, keepTick, liheapMethodLine, lowerNote, lowerTitle, noneLine, pastTopLine, rankOrdinal, rankRange, roadHolds, roadOffAxisLine, roadPosition, roadRateLine, roadWorstLine, rowLabel, type LowerKey, worstStepLine } from "./words.js";
@@ -329,13 +329,13 @@ export function renderFigure(s: Scene): void {
   const span = roadSpan(s.rows);
   $("howToRead").innerHTML = rich(t("howTo.read", { floor: money(CLIFF_MIN), span: span === null ? "" : t("howTo.span", { lo: money(span.lo), hi: money(span.hi) }) }));
   /* The keep rate names its road in this household's dollars, here and in the table's definition of its column. */
-  $("figMeasure").textContent = t("howTo.measure", { measure: measure.name, describe: describeFor(measure, s.rows) });
-  $("def-colKeepRate").textContent = describeFor(measureByKey("keepRate")!, s.rows);
+  $("figMeasure").textContent = t("howTo.measure", { measure: measure.name, describe: describeFor(measure, s.rows, spousePayOf(s.arch)) });
+  $("def-colKeepRate").textContent = describeFor(measureByKey("keepRate")!, s.rows, spousePayOf(s.arch));
   /* …the second top names its dollars (R3), the modal one, as the road's span does… */
   const wide = modal(s.rows.flatMap((r) => (r.m.roadWideHi == null ? [] : [r.m.roadWideHi])));
   $("def-colKeepRateWide").textContent = t("table.defs.keepRateWide", { wide: wide === null ? "—" : money(wide) });
   /* …and the two levels name the pay they are read at. */
-  for (const key of ["netAtRoadLo", "netAtRoadHi"] as const) $(`def-${colId(key)}`).textContent = describeFor(measureByKey(key)!, s.rows);
+  for (const key of ["netAtRoadLo", "netAtRoadHi"] as const) $(`def-${colId(key)}`).textContent = describeFor(measureByKey(key)!, s.rows, spousePayOf(s.arch));
   $("grid").setAttribute("aria-label", t("figure.title", { measure: measure.name }));
   /* The legend's title is the measure's one name (R9/M6), over the scale it keys. */
   $("legendTitle").textContent = measure.name;

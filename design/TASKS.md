@@ -348,14 +348,16 @@ review's own words unless a task says otherwise. Tick them off here.
   Keep rates, cliffs and every ranking are unchanged to the ten-thousandth (the bill is constant on the axis);
   the levels fall by the bill (single-2 at the line: $52,157–$88,959 → $31,490–$59,235). Rent stays in: nothing
   is means-tested away against it. Still open for the page owners: the level note's "only weakly related"
-  (corr(keep rate, net at twice poverty) is now 0.91 for single-2), and the $0-pay point, where a parent with
-  no job is charged the whole bill with no subsidy (CA single-2: −$4,252).
+  — the note now says what a family has at the poverty line is unrelated to its keep rate (r = −0.04) and what it
+  has at twice poverty follows from both. The $0-pay point is charged the bill like every other (CA single-2:
+  −$4,252): waiving it there put a $30,000 drop at the first dollar on every no-subsidy row, so the bill stays
+  constant across the axis until the sweep charges care by hours worked (the open task above). Two-earner rows
+  say the road is this earner's pay with the second earner's on top (`measures.keepRate.span.dual`).
 - [x] **R2 (blocker)** The headline count is a maximal-take-up construct and the headline does not say so *Done (places): the headline names the construct and shows the pair — "…who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, in 2"; the to-the-line clause is the method's. The twin is derived offline from single-2's points (pipeline/src/twin.ts, `derivedFrom` in summary.json) and the method says "derived from the same run; will be swept directly". es-US too.*
 - [x] **R3 (major)** The keep rate is a two-point slope whose top end sits on the most common program limit, so the ranking is a knife-edge *Done (places): `keepRateWide` (to the first point at or above 220% FPL, counted in steps from the road's own top), `deepestFall` as a road measure (loss ramp), `pastRoadWorst` for the readout's "and a larger drop sits just past the road" (Minnesota, South Dakota); keep rate to 220% beside "to the line" in the strip, the table and the CSV.*
 - [x] **R4 (major)** For two-earner households the "road from the poverty line" starts at 147 % of poverty
   — road.ts sets it on FAMILY earnings (guideline less the spouse's pay; married-dual-2: $17,000 → $51,000 of
-  the moving earner's pay). Still open for places copy: "the poverty line ({lo})" prints the one earner's share
-  for those rows; say "of this earner's pay, the second earner's $15,080 on top".
+  the moving earner's pay); the places definition says the second earner's $15,080 is on top of every figure.
 - [x] **R5 (major)** "Number of cliffs" and "Cliffs on the road" are grid artefacts and reward small notches *Done (places): both counts left the Measure menu; they stay as table columns and CSV fields, each column's definition saying it counts at the $1,000 step and is not ranked; old `?measure=`/`?sort=` links resolve to the nearest kept measure (model.ts RETIRED_MEASURES).*
 - [x] **R6 (major)** "Losses that hit later, at renewal" is ranked and shaded as if more deferral were worse *Done (places): out of the menu, kept as a column and in the CSV, its definition calling it a label, not a harm scale; old links land on the biggest loss at any pay.*
 - [x] **R7 (major)** Reach uncertainty is quoted in the wrong unit
