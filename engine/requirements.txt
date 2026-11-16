@@ -23,7 +23,7 @@ spm-calculator==1.0.0.post1
 # because a simulation is not safe to interleave with another in the same
 # process (engine/calculate.py), so parallelism has to come from processes.
 flask==3.1.3
-gunicorn==26.2.0
+gunicorn==27.0.1
 
 # Everything else (numpy, pandas>=3, microdf, tables, us, …) is resolved from
 # the model's own metadata. Those are not pinned so the file installs across
