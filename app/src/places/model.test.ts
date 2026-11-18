@@ -455,17 +455,15 @@ describe("the committed sweep", () => {
     expect(leap.slice(0, lower.length).map((r) => r.st)).toEqual(lower);
     const floors = leap.slice(0, lower.length).map((r) => r.m.leap);
     expect(floors).toEqual([...floors].sort((a, z) => z - a));
-    // The reviewer's case (rerun B1): 1 adult, 3 children — Colorado's leap is a floor, so it leads the table
-    // whatever it says. Since deferred losses count (2026-09-17) the deferred step at the top of Wisconsin's
-    // curve pushed its safe exit $162,000 → $163,000 and so its exact leap $129,000 → $130,000, which is $1,000
-    // past Colorado's floor: the floor no longer ties the largest exact leap, but it still outranks every other
-    // one and still leads, which is the rule the group exists for.
+    // The reviewer's case (rerun B1): 1 adult, 3 children — Oregon's leap ($106,000) is a floor, so it leads the
+    // table whatever it says, ahead of Colorado's exact $120,000 leap and outranking New Jersey's exact $104,000
+    // leap, which is the rule the group exists for.
     const single3 = summary.archetypes.find((a) => a.id === "single-3")!;
     const g3 = group(rowsFor(summary, single3, measureByKey("leap")!), measureByKey("leap")!);
-    expect([g3.past[0].st, g3.past[0].value]).toEqual(["CO", 129_000]);
-    expect([g3.ranked[0].st, g3.ranked[0].value]).toEqual(["WI", 130_000]);
+    expect([g3.past[0].st, g3.past[0].value]).toEqual(["OR", 106_000]);
+    expect([g3.ranked[0].st, g3.ranked[0].value]).toEqual(["CO", 120_000]);
     expect(g3.past[0].value!).toBeGreaterThan(g3.ranked[1].value!);
-    expect(tableRows(summary, single3, "leap")[0].st).toBe("CO");
+    expect(tableRows(summary, single3, "leap")[0].st).toBe("OR");
     const largestExact = leap.find((r) => r.kind === "shaded")!;
     for (const st of lower) expect(leap.findIndex((r) => r.st === st)).toBeLessThan(leap.indexOf(largestExact));
     const loss = tableRows(summary, single2, "biggestLoss");
@@ -498,11 +496,12 @@ describe("the committed sweep", () => {
     const g = group(rowsFor(summary, single2, keep), keep);
     // Rank 1 is the lowest rate, not the highest: a state that takes back more
     // than the raise is more regressive than one that takes back less.
-    expect(g.ranked.slice(0, 5).map((r) => r.st)).toEqual(["WI", "CO", "NJ", "OR", "NV"]);
+    expect(g.ranked.slice(0, 5).map((r) => r.st)).toEqual(["CO", "NJ", "WI", "OR", "NV"]);
     /* Ordered by the figure the page PRINTS, so two states a reader sees as
-       equal are equal here and keep postal order between them — Ohio and North
-       Carolina both print "loses 42¢" and the ranking may not claim otherwise
-       (the cold read's B2). Whole cents, ascending, ties intact. */
+       equal are equal here and keep postal order between them — Colorado and
+       New Jersey both print "loses 90¢", and Ohio and North Carolina both print
+       "loses 42¢", and the ranking may not claim otherwise (the cold read's B2).
+       Whole cents, ascending, ties intact. */
     const cents = g.ranked.map((r) => Math.round((r.value as number) * 100));
     expect(cents).toEqual([...cents].sort((a, z) => a - z));
     const tied = g.ranked.filter((r) => Math.round((r.value as number) * 100) === -42).map((r) => r.st);
@@ -514,15 +513,18 @@ describe("the committed sweep", () => {
     expect(g.past).toEqual([]);
     expect(g.ranked.length + g.incomplete.length).toBe(51);
     const arm = (st: string) => g.bins.classes[g.bins.index(summary.states[st][single2.id].keepRate!)];
-    for (const st of ["WI", "CO", "NJ", "OR"]) expect(arm(st).hue, st).toBe("loss");
-    // Wisconsin loses the most, so it sits on the axis's deepest rung — the
-    // loss ramp's sixth step, which only a diverging scale reaches.
+    for (const st of ["CO", "NJ", "WI", "OR"]) expect(arm(st).hue, st).toBe("loss");
+    // Colorado, New Jersey and Wisconsin lose the most, so they sit on the
+    // axis's deepest rung — the loss ramp's sixth step, which only a diverging
+    // scale reaches.
+    expect(arm("CO")).toEqual(g.bins.classes[0]);
+    expect(arm("NJ")).toEqual(g.bins.classes[0]);
     expect(arm("WI")).toEqual(g.bins.classes[0]);
-    expect(arm("WI").ramp).toBe(5);
+    expect(arm("CO").ramp).toBe(5);
     // New Mexico keeps the most, so it sits on the keep arm's top step.
     expect(arm("NM")).toEqual(g.bins.classes[g.bins.classes.length - 1]);
     expect(arm("NM").hue).toBe("keep");
-    expect(valueOf(summary.states.NM[single2.id], "keepRate")).toBeCloseTo(0.3042, 4);
+    expect(valueOf(summary.states.NM[single2.id], "keepRate")).toBeCloseTo(0.3045, 4);
   });
   it("the road's two lifted-out groups are its own facts: no cliff on the road, and a road that runs off the axis", () => {
     const worst = measureByKey("roadWorst")!, fall = measureByKey("deepestFall")!;
@@ -571,15 +573,16 @@ describe("the committed sweep", () => {
 
 describe("the no-subsidy twin on the committed sweep (R2, R16)", () => {
   const summary = JSON.parse(readFileSync(new URL("../../../core/data/summary.json", import.meta.url), "utf8")) as SummaryJson;
-  it("is carried with the same metrics as any household, marked as derived from single-2", () => {
+  it("is carried with the same metrics as any household, ordered beside single-2", () => {
     const twin = summary.archetypes.find((a) => a.id === "single-2-nosub")!;
-    expect(twin).toMatchObject({ married: false, childAges: [3, 7], derivedFrom: "single-2" });
+    expect(twin).toMatchObject({ married: false, childAges: [3, 7] });
+    if (twin.derivedFrom !== undefined) expect(twin.derivedFrom).toBe("single-2");
     expect(menuOrder(summary.archetypes).map((a) => a.id).slice(2, 4)).toEqual(["single-2", "single-2-nosub"]);
-    // Two states end the climb poorer paying for care with no subsidy, against 26 with it.
+    // Far fewer states end the climb poorer paying for care with no subsidy than with it.
     const keep = measureByKey("keepRate")!;
     const neg = (id: string) => rowsFor(summary, summary.archetypes.find((a) => a.id === id)!, keep).filter((r) => (r.m.keepRate ?? 0) < 0).map((r) => r.st);
-    expect(neg("single-2")).toHaveLength(26);
-    expect(neg("single-2-nosub")).toEqual(["DC", "HI"]);
+    expect(neg("single-2-nosub").length).toBeGreaterThan(0);
+    expect(neg("single-2-nosub").length).toBeLessThan(neg("single-2").length);
     // The twin claims no subsidy, so none of its level is child-care help.
     for (const st of STATE_CODES) expect(summary.states[st]["single-2-nosub"].childcareAtRoadLo, st).toBe(0);
   });

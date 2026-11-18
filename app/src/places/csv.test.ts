@@ -83,13 +83,15 @@ describe("csvFor on the committed sweep", () => {
     expect(oh[col("biggest_loss_programs")]).toBe(m.biggestLossPrograms.map(programName).join("; "));
     expect(oh[col("county_name")]).toBe(summary.coverage!.OH.vintages.county.name);
   });
-  it("carries the child-care subsidy's footing on every row, from the coverage record (rerun S4): Ohio's is PolicyEngine's, Texas's HotGap's", () => {
+  it("carries the child-care subsidy's footing on every row, from the coverage record (rerun S4): Ohio's is PolicyEngine's, Texas's follows #9503", () => {
     for (const r of body) {
       const source = summary.coverage![r[col("state")]].corrections.childcareSubsidy.source;
       expect(r[col("childcare_subsidy_footing")]).toBe(source === "added by HotGap" ? "added by HotGap" : "in PolicyEngine's net income");
     }
     expect(body.find((r) => r[col("state")] === "OH")![col("childcare_subsidy_footing")]).toBe("in PolicyEngine's net income");
-    expect(body.find((r) => r[col("state")] === "TX")![col("childcare_subsidy_footing")]).toBe("added by HotGap");
+    expect(body.find((r) => r[col("state")] === "TX")![col("childcare_subsidy_footing")]).toBe(
+      summary.model?.countsChildcareSubsidy ? "in PolicyEngine's net income" : "added by HotGap",
+    );
   });
   it("carries the LIHEAP boundary's two facts from every block (#23): Ohio's limit in words and its served share as a fraction, Hawaii's share empty, never a number", () => {
     for (const r of body) {
@@ -163,18 +165,18 @@ describe("csvFor on the committed sweep", () => {
     expect([mn[col("keep_rate_cents")], mn[col("keep_rate_to_line_cents")], mn[col("keep_rate_wide_cents")], mn[col("road_wide_hi")], mn[col("deepest_fall")]]).toEqual(["9", "22", "-75", "59000", "0"]);
     // The three counts left the Measure menu (R5, R6) and stay in the file, where they describe a state.
     for (const c of ["cliff_count", "deferred_cliff_count", "road_cliff_count"] as const) expect(body.every((r) => /^\d+$/.test(r[col(c)])), c).toBe(true);
-        // A keep rate is a slope, not a level: Wisconsin's family has more than New Mexico's at the line and less at twice it
+    // A keep rate is a slope, not a level: Michigan's family has more than New Mexico's at the line and less at twice it
     // (after taxes, premiums and the child care the family pays itself, R1).
     const level = (st: string) => { const r = body.find((x) => x[col("state")] === st)!; return [r[col("net_at_road_lo")], r[col("net_at_road_hi")]]; };
-    expect(level("WI")).toEqual(["46179", "16817"]);
-    expect(level("NM")).toEqual(["45705", "54223"]);
+    expect(level("MI")).toEqual(["45882", "30831"]);
+    expect(level("WI")).toEqual(["41843", "16817"]);
+    expect(level("NM")).toEqual(["45682", "54209"]);
     // The boundary sensitivity (road.ts keepRateToLine): 26 states negative on
-    // the road, 20 of them still negative to exactly twice poverty. Counted on
-    // the stored figure — New Jersey's −0.12¢ is negative and prints as 0.
+    // the road, 17 of them still negative to exactly twice poverty.
     const bad = rows.filter((r) => (r.m.keepRate ?? 0) < 0);
     expect(bad).toHaveLength(26);
-    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) < 0)).toHaveLength(20);
-    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) >= 0).map((r) => r.st).sort()).toEqual(["DC", "DE", "MA", "OR", "PA", "VA"]);
+    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) < 0)).toHaveLength(17);
+    expect(bad.filter((r) => (r.m.keepRateToLine ?? 0) >= 0).map((r) => r.st).sort()).toEqual(["CO", "DC", "DE", "MA", "NJ", "OR", "PA", "VA", "WI"]);
     // Missouri, the plan's worked example, cell by cell.
     const mo = body.find((r) => r[col("state")] === "MO")!;
     expect([mo[col("keep_rate_cents")], mo[col("road_lo")], mo[col("road_hi")], mo[col("road_cliff_count")], mo[col("road_worst_drop")], mo[col("road_worst_at")], mo[col("road_worst_programs")]])

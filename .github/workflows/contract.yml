@@ -1,11 +1,16 @@
-# The public API is the fallback endpoint (no HOTGAP_PE_URL); this watches it
-# daily so a model update there — the TAFDC probe flipping, a variable going
-# away — is noticed before a user hits it. CI's engine-contract job covers the
-# engine the sweep actually runs on.
+# Manual contract check against an external PolicyEngine endpoint.
+# `api.policyengine.org` stopped accepting unauthenticated third-party requests
+# in October 2026 (Auth0 server credentials + Cloud Armor 403), so the daily
+# keyless cron was retired; CI's `engine-contract` job runs the full suite
+# against `engine/` on every push and pull request.
 name: API contract
 on:
-  schedule: [{ cron: "17 6 * * *" }]
   workflow_dispatch:
+    inputs:
+      url:
+        description: "POST /us/calculate URL (falls back to HOTGAP_PE_URL secret)"
+        required: false
+        type: string
 jobs:
   contract:
     runs-on: ubuntu-latest
@@ -15,3 +20,6 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run contract
+        env:
+          HOTGAP_PE_URL: ${{ inputs.url || secrets.HOTGAP_PE_URL }}
+          HOTGAP_PE_TOKEN: ${{ secrets.HOTGAP_PE_TOKEN }}

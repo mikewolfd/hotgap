@@ -45,11 +45,11 @@ file below says where it comes from and how to rebuild it.
   the engine paid nothing for, LIHEAP everywhere); `otherBenefits` — what the
   untracked remainder is, traced to a PolicyEngine variable
   (`core/src/stateOtherBenefits.ts`, pinned live by the contract suite):
-  California's and Kansas's is the HUD voucher payment PolicyEngine models
-  for an eligible renter through `housing_assistance`, a variable the
-  `spm_unit_capped_housing_subsidy: 0` take-up switch does not reach, capped
-  at the PHA utility allowance because the rent is sent as `rent` rather than
-  `pre_subsidy_rent`; New Jersey's is the $450 ANCHOR renter benefit; and
+  New Jersey's is the $450 ANCHOR renter benefit (`nj_property_tax_relief`),
+  Alaska's is the $200-per-resident 2026 energy relief payment paid alongside
+  the Permanent Fund Dividend (`ak_energy_relief`), and Vermont's is the
+  Renter Credit paid outside the income tax return on Form RCC-146
+  (`vt_renter_credit`, up to $2,500); and
   `vintages` — the model, the rent and county sources, the child-care price
   basis and the reach ladders' PUMS vintage(s), read from the data files
   rather than retyped. `npm run pipeline -- --from-data` regenerates it
@@ -143,9 +143,11 @@ the one endpoint it calls, pinned to the latest release in
 `engine/requirements.txt`. Dependabot bumps that pin; CI's `engine-contract`
 job runs the live contract suite against the engine on every push, so a
 release that breaks an assumption `core/` makes fails there. `summary.json`
-and each state file record the model that produced them (`model`). The
-public API stays the fallback for a `hotgap` run with no engine, and
-`.github/workflows/contract.yml` watches it daily.
+and each state file record the model that produced them (`model`). Because
+`api.policyengine.org` now gates unauthenticated third-party requests behind
+HTTP 403, live calls use `HOTGAP_PE_URL` (and `HOTGAP_PE_TOKEN` where
+configured), and `.github/workflows/contract.yml` runs on manual dispatch
+against that endpoint.
 
 `.github/workflows/places-data.yml` runs the sweep on the engine every
 Monday at 07:00 UTC (and on manual dispatch), running the test suite and

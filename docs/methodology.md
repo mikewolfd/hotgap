@@ -123,12 +123,12 @@ a plan, and the 2026 Medicare Part B standard premium ($202.90/month, CMS,
   `--years-in-us`, `--savings`, `--self-employed`; citizen, none and wages
   by default) and sent to the model, which gates on them: an undocumented
   parent loses the EITC and their share of SNAP, a permanent resident under
-  the five-year bar loses Medicaid — and since 2026 a marketplace subsidy
-  below the poverty line too (P.L. 119-21) — and $5,000 in the bank ends
-  SNAP where there is no broad-based categorical eligibility. Children are
-  modeled as citizens; the model applies no five-year bar to SNAP (its rule
-  is a status list); work hours are full time unless `--hours` says
-  otherwise. The archetype sweep is unchanged by any of this.
+  the five-year bar loses Medicaid and their share of SNAP — and since 2026
+  a marketplace subsidy below the poverty line too (P.L. 119-21) — and
+  $5,000 in the bank ends SNAP where there is no broad-based categorical
+  eligibility. Children are modeled as citizens; work hours are full time
+  unless `--hours` says otherwise. The archetype sweep is unchanged by any
+  of this.
 - The entitlements — SNAP, TANF, Medicaid, WIC — are taken up unless the
   household says otherwise (`--no-snap` etc.). Then the curve is the money
   it lives on without them, and the report says what each would pay at
@@ -254,25 +254,22 @@ a plan, and the 2026 Medicare Part B standard premium ($202.90/month, CMS,
   "figures incomplete" on the journalist map; the schedules, their sources
   and the before/after are in
   `docs/research/premium-assistance-nj-wa-2026-09-16.md`.
-- The childcare subsidy reaches PolicyEngine's net income in only 23 states.
-  PolicyEngine models a CCDF child-care subsidy in every state, but only the
-  states listed in `gov.household.household_state_benefits` flow into
-  `household_net_income`; in the rest the money is computed and dropped, and
-  the household is left looking POORER for holding it, because the
-  net-of-subsidy childcare bill shrinks SNAP's dependent-care deduction and
-  the CDCC while the benefit never arrives (Connecticut, single parent with a
-  3-year-old, $25,000 of pay: $34,121 against $38,102 with the subsidy forced
-  off, for an $8,850 benefit). HotGap adds it back in those states — a
-  WORKAROUND (in `core/src/parse.ts`, with the table in
-  `core/src/stateChildcareSubsidies.ts`) on a model that predates
-  policyengine-us PR #9503, which routes every state's subsidy into household
-  benefits; the client probes each endpoint for which kind it is and stands
-  the addition down where it is no longer needed. Four of the 38 states
-  whose variable is deployed today still return $0 for a plainly eligible
-  household — California, Massachusetts, Maryland and Nebraska — and HotGap
-  reports no subsidy there rather than inventing one; see
-  [local corrections and evidence](upstream/2026-09-15-local-corrections.md)
-  for each cause.
+- PolicyEngine models a CCDF child-care subsidy in every state, and from
+  policyengine-us PR #9503 on (served by the self-hosted 2.145.7 engine)
+  routes the aggregate `household_child_care_subsidies` into
+  `household_state_benefits` and therefore `household_net_income` across all
+  51 jurisdictions. On an older endpoint that predates #9503, only the 23
+  states listed in `gov.household.household_state_benefits` reached
+  `household_net_income` while the rest were computed and dropped, leaving
+  the household looking POORER for holding the subsidy (Connecticut, single
+  parent with a 3-year-old, $25,000 of pay: $34,121 against $38,102 with the
+  subsidy forced off, for an $8,850 benefit); HotGap probes each endpoint and
+  adds the dropped subsidy back only where #9503 is absent (`core/src/parse.ts`,
+  `core/src/stateChildcareSubsidies.ts`). Massachusetts and Maryland also now
+  default to licensed center care upstream (policyengine-us #9485); any state
+  whose variable still returns $0 across the sweep is recorded in
+  `summary.json`'s `childcareSubsidyUnmodeled` rather than invented locally
+  (see [local corrections and evidence](upstream/2026-09-15-local-corrections.md)).
 - Energy assistance (LIHEAP) is shown as an eligibility BOUNDARY, never
   drawn into the money line by default. It is a block grant, not an
   entitlement: a family under the state's limit is eligible to apply, and in
@@ -297,14 +294,12 @@ a plan, and the 2026 Medicare Part B standard premium ($202.90/month, CMS,
   refundable Home Heating Credit, which PolicyEngine models and HotGap
   already counts in state credits; `--heat-in-rent` halves it, as the
   state's form does. Plan 7, `docs/superpowers/plans/2026-09-16-hotgap-liheap-boundary.md`.
-- Alaska and Hawaii's marketplace subsidies are computed by PolicyEngine
-  against the 48-contiguous-states poverty guideline, not their own higher
-  guidelines (verified live 2026-09-15) — filed upstream as policyengine-us
-  #9482. HotGap's own `fpl2025` table (`core/src/policyYear.ts`) already
-  carries the correct Alaska and Hawaii guidelines for the coverage-gap and
-  premium-wrap corrections above; the marketplace premium and credit
-  PolicyEngine itself returns for an Alaska or Hawaii household are still
-  computed on the wrong line, and HotGap does not correct them.
+- Alaska and Hawaii's marketplace subsidies use their own higher poverty
+  guidelines on the self-hosted 2.145.7 engine (`aca_magi_fraction` divides
+  by state-specific `aca_fpg`, resolving policyengine-us #9482), matching
+  HotGap's `fpl2025` table (`core/src/policyYear.ts`). Endpoints predating
+  #9482 computed Alaska and Hawaii marketplace credits against the
+  48-contiguous-states guideline.
 - Before this review, a household that sent no county got PolicyEngine's
   default ACA rating area for its state — byte-identical for Connecticut and
   Illinois, and for Colorado and Indiana (policyengine-us #9480), so a

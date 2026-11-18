@@ -6,7 +6,6 @@ updates:
   - package-ecosystem: pip
     directory: /engine
     schedule: { interval: daily }
-    labels: [engine]
     groups:
       model:
         patterns: [policyengine-us, policyengine-core, spm-calculator]

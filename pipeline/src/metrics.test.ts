@@ -42,13 +42,13 @@ describe("stateMetrics on the committed CA fixture", () => {
 
 describe("stateMetrics on the committed Ohio file", () => {
   // Pinned from the committed sweep, read at test time, so the figure the
-  // places page prints for its default household ("$12,062 lost at $38,000
+  // places page prints for its default household ("$12,063 lost at $38,000
   // → $39,000, when the CCDF child care subsidy ends") is the file's.
   it("reads the worst step's earnings and programs off the single-parent curve", () => {
     const file = loadStateFile("OH")!;
     const single2 = archetypeById("single-2");
     const m = stateMetrics(evaluateCurve(answersFor("OH", single2), { year: file.year, currentEarnings: 0, points: file.archetypes["single-2"].points }, "archetype"));
-    expect(m.biggestLoss).toBe(12062);
+    expect(m.biggestLoss).toBe(12063);
     expect(m.biggestLossAt).toBe(38000);
     expect(m.biggestLossPrograms).toEqual(["childcare"]);
     expect(m.axisTop).toBe(file.archetypes["single-2"].points.at(-1)!.earnings);
@@ -88,10 +88,11 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
     expect(m.roadWorst).toBeNull();
   });
 
-  it("carries the level beside the slope: Wisconsin has more at the line and less at twice it than New Mexico", () => {
+  it("carries the level beside the slope: Michigan has more at the line and less at twice it than New Mexico, and Wisconsin collapses to $16,817", () => {
     // Levels after the child care the family pays itself (R1).
-    expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([46179, 16817]);
-    expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([45705, 54223]);
+    expect([forState("MI").netAtRoadLo, forState("MI").netAtRoadHi]).toEqual([45882, 30831]);
+    expect([forState("WI").netAtRoadLo, forState("WI").netAtRoadHi]).toEqual([41843, 16817]);
+    expect([forState("NM").netAtRoadLo, forState("NM").netAtRoadHi]).toEqual([45682, 54209]);
     // …and how much of the poverty-line level is child-care help paid to a provider (M3).
     expect(forState("WI").childcareAtRoadLo).toBe(31341);
   });
@@ -106,11 +107,11 @@ describe("stateMetrics on the road out of poverty (Plan 9)", () => {
     expect(mn.roadWideHi).toBe(59000);   // 220% of $26,650 is $58,630: the first point at or above it
     expect(Math.round(mn.keepRate! * 100)).toBe(9);
     expect(Math.round(mn.keepRateWide! * 100)).toBe(-75);
-    expect(Math.round(nj.keepRate! * 100)).toBe(-94);
-    expect(Math.round(nj.keepRateWide! * 100)).toBe(-77);
-    // Minnesota's family never falls below its poverty-line income on the road; New Jersey's falls $26,238.
+    expect(Math.round(nj.keepRate! * 100)).toBe(-90);
+    expect(Math.round(nj.keepRateWide! * 100)).toBe(-74);
+    // Minnesota's family never falls below its poverty-line income on the road; New Jersey's falls $25,162.
     expect(mn.deepestFall).toBe(0);
-    expect(nj.deepestFall).toBe(26238);
+    expect(nj.deepestFall).toBe(25162);
     // The $27,483 exit is just past Minnesota's top, and larger than anything on the road.
     expect(mn.pastRoadWorst).toEqual({ drop: 27483, at: 56000, programs: ["childcare"] });
     expect(mn.pastRoadWorst!.drop).toBeGreaterThan(mn.roadWorst!.drop);

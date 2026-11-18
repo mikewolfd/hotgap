@@ -161,22 +161,43 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(Math.abs(sfPtc - laPtc)).toBeGreaterThan(100);
   }, 90_000);
 
-  // parse.ts subtracts SPM medical out-of-pocket (the premium NET of the
-  // premium tax credit) from household_net_income. That is only right if the
-  // PTC is not already inside household_net_income. Until 2026-09-14 the code
-  // assumed it was and subtracted the PTC too, erasing the subsidy from every
-  // curve. Pin the composition live so the formula never again rests on an
-  // assumption: net = market + benefits + refundable credits − tax, and the
-  // refundable credits are the EITC and CTC only.
-  it("household_net_income = market + benefits + refundable credits − tax, and the premium tax credit is not inside it", async () => {
+  // parse.ts subtracts SPM medical out-of-pocket (the premium NET of the used
+  // premium tax credit) from household_net_income. From policyengine-us #10773
+  // on, household_refundable_tax_credits — and therefore household_net_income —
+  // also includes premium_tax_credit_in_force (used_aca_ptc) while leaving
+  // gross health costs out and keeping MOOP net of used_aca_ptc. Pin the live
+  // composition so parse.ts's net-income and state-credit formulas never rest
+  // on an assumption: net = market + benefits + refundable credits − tax,
+  // refundable credits = EITC + refundable CTC + premium_tax_credit_in_force
+  // (+ state credits, $0 above $40k in CA), and parsePEResponse takes
+  // premium_tax_credit_in_force back out of both.
+  it("household_net_income = market + benefits + refundable credits − tax, with premium_tax_credit_in_force netted out once by parsePEResponse", async () => {
     const y = (v: unknown) => ({ "2026": v });
     const probe = {
       household: {
         people: { you: { age: y(30), medicaid: y(null) }, kid: { age: y(5), medicaid: y(null), chip: y(null) } },
         families: { f: { members: ["you", "kid"] } },
         marital_units: { m: { members: ["you"] } },
-        tax_units: { t: { members: ["you", "kid"], eitc: y(null), refundable_ctc: y(null), premium_tax_credit: y(null) } },
-        spm_units: { s: { members: ["you", "kid"], spm_unit_medical_out_of_pocket_expenses: y(null) } },
+        tax_units: {
+          t: {
+            members: ["you", "kid"],
+            eitc: y(null),
+            refundable_ctc: y(null),
+            premium_tax_credit: y(null),
+            premium_tax_credit_in_force: y(null),
+          },
+        },
+        spm_units: {
+          s: {
+            members: ["you", "kid"],
+            snap: y(null),
+            tanf: y(null),
+            spm_unit_capped_housing_subsidy: y(0),
+            free_school_meals: y(null),
+            reduced_price_school_meals: y(null),
+            spm_unit_medical_out_of_pocket_expenses: y(null),
+          },
+        },
         households: {
           h: {
             members: ["you", "kid"],
@@ -196,14 +217,20 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(body.status).toBe("ok");
     const h = body.result.households.h;
     const t = body.result.tax_units.t;
+    const s = body.result.spm_units.s;
     const at = (o: any, v: string): number[] => o[v]["2026"];
     const [net, mkt, ben, ref, tax] = ["household_net_income", "household_market_income", "household_benefits", "household_refundable_tax_credits", "household_tax_before_refundable_credits"].map((v) => at(h, v));
-    const [ptc, eitc, ctc] = ["premium_tax_credit", "eitc", "refundable_ctc"].map((v) => at(t, v));
+    const [ptc, ptcInForce, eitc, ctc] = ["premium_tax_credit", "premium_tax_credit_in_force", "eitc", "refundable_ctc"].map((v) => at(t, v));
+    const moop = at(s, "spm_unit_medical_out_of_pocket_expenses");
     // Only meaningful where a subsidy actually exists.
     expect(Math.max(...ptc)).toBeGreaterThan(1000);
+    expect(Math.max(...ptcInForce)).toBeGreaterThan(1000);
+    const parsed = parsePEResponse(body, 3);
     for (let i = 0; i < 3; i++) {
       expect(net[i]).toBeCloseTo(mkt[i] + ben[i] + ref[i] - tax[i], 0);
-      expect(ref[i]).toBeCloseTo(eitc[i] + ctc[i], 0);
+      expect(ref[i]).toBeCloseTo(eitc[i] + ctc[i] + ptcInForce[i], 0);
+      expect(parsed[i].netIncome).toBeCloseTo(mkt[i] + ben[i] + eitc[i] + ctc[i] - tax[i] - moop[i], 0);
+      expect(parsed[i].stateCredits).toBe(0);
     }
   }, 90_000);
 
@@ -279,7 +306,7 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     return requestPE(payload, { timeoutMs: 90_000 }).then((body) => parsePEResponse(body, 2)[0]);
   };
 
-  it("immigration status: an undocumented parent loses the EITC and their share of SNAP; a permanent resident under the five-year bar loses Medicaid, not SNAP", async () => {
+  it("immigration status: an undocumented parent loses the EITC and their share of SNAP; a permanent resident under the five-year bar loses Medicaid and their share of SNAP", async () => {
     // Pennsylvania: an expansion state that does not cover new residents with
     // its own money (California does), so the bar shows in the adult's Medicaid.
     const citizen = await twoPoints({}, 12000, "PA");
@@ -294,9 +321,10 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     expect(adultMedicaid(citizen)).toBeGreaterThan(5000);
     expect(adultMedicaid(newLpr)).toBe(0);
     expect(adultMedicaid(settledLpr)).toBe(adultMedicaid(citizen));
-    // The model applies no five-year bar to SNAP (its rule is a status list;
-    // upstream simplification, noted in docs/methodology.md): SNAP is unchanged.
-    expect(newLpr.programs.snap).toBe(citizen.programs.snap);
+    // Five-year waiting period: a permanent resident under 5 years loses the
+    // adult's SNAP share (leaving child-only SNAP), and regains full SNAP after.
+    expect(newLpr.programs.snap).toBe(undocumented.programs.snap);
+    expect(settledLpr.programs.snap).toBe(citizen.programs.snap);
     // The children are modeled as citizens throughout.
     expect(undocumented.childPrograms.medicaid).toBe(citizen.childPrograms.medicaid);
   }, 300_000);
@@ -450,11 +478,11 @@ describe.skipIf(!RUN)("PolicyEngine /us/calculate contract", () => {
     }
   }, 300_000);
 
-  // Two states pay nothing until the provider type is named (policyengine-us
-  // #9485); HotGap names it in its own payload. Pins that the enum values
-  // exist on the endpoint and that they turn the award on.
+  // MA and MD paid nothing until policyengine-us #9485 defaulted their
+  // provider types to licensed center care. Pins that HotGap's payload draws
+  // the subsidy in both states with no provider_type override sent.
   for (const state of ["MA", "MD"] as const) {
-    it(`${state}: a 3-year-old's bill draws a subsidy through HotGap's payload (provider type named)`, async () => {
+    it(`${state}: a 3-year-old's bill draws a subsidy through HotGap's payload (provider type defaulted upstream)`, async () => {
       const answers = { ...answersFor(state, archetypeById("single-1")), childAges: [3], childDisabled: [false], monthlyChildcare: 1000, getsChildcareSubsidy: true };
       const payload = buildCurvePayload(answers);
       const household = payload.household as { axes: unknown[][] };

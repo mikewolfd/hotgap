@@ -40,7 +40,9 @@
     },
     "otherBenefits": {
       "unidentified": "not yet identified — probe the engine with the household-benefit lists (stateOtherBenefits.ts)",
-      "nj_property_tax_relief": "New Jersey ANCHOR property-tax relief, renter benefit ($450 a year under $150,000 of income)"
+      "nj_property_tax_relief": "New Jersey ANCHOR property-tax relief, renter benefit ($450 a year under $150,000 of income)",
+      "ak_energy_relief": "Alaska energy relief payment, paid with the Permanent Fund Dividend ($200 per resident in 2026)",
+      "vt_renter_credit": "Vermont Renter Credit, paid on Form RCC-146 outside the income tax return (up to $2,500 a year)"
     }
   },
   "program": {

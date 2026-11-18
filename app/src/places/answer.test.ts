@@ -22,11 +22,14 @@ describe("the keep-rate headline on the committed sweep", () => {
   // paying for care with no subsidy beside it. The boundary clause ("before
   // the step out of twice poverty") is the method's, not the headline's.
   it("names the subsidy the count depends on, and counts the family without it beside it", () => {
-    expect(answerText(scene("single-2"))).toBe(
-      "In 26 of the 50 states and the District of Columbia, a single parent of two children who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, in 2.");
+    const s = scene("single-2");
+    const bad = s.rows.filter((r) => (r.m.keepRate ?? 0) < 0).length;
+    const badNoSub = s.twinRows!.filter((r) => (r.m.keepRate ?? 0) < 0).length;
+    expect(answerText(s)).toBe(
+      `In ${bad} of the 50 states and the District of Columbia, a single parent of two children who gets the child-care subsidy climbs from the poverty line to twice it and ends up poorer than they started; paying for care with no subsidy, in ${badNoSub}.`);
     // The one keyed figure is still the count the map shades.
-    expect(answerParts(scene("single-2")).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual(["26"]);
-    expect(answerText(scene("single-2"))).not.toMatch(/step out of twice poverty/);
+    expect(answerParts(s).flatMap((p) => ("slot" in p && p.key ? [p.text] : []))).toEqual([String(bad)]);
+    expect(answerText(s)).not.toMatch(/step out of twice poverty/);
   });
   it("says the subsidy for every household that pays for care, and the pair only where the run carries a twin", () => {
     expect(answerText(scene("married-dual-2"))).toMatch(/^In \d+ of the 50 states and the District of Columbia, a two-earner couple with two children who gets the child-care subsidy climbs .* poorer than they started\.$/);
@@ -34,8 +37,10 @@ describe("the keep-rate headline on the committed sweep", () => {
     expect(answerText(scene("married-2"))).not.toMatch(/subsidy/);
   });
   it("on the twin itself, the household is the one without child-care help, and there is no pair", () => {
-    expect(answerText(scene("single-2-nosub"))).toBe(
-      "In 2 of the 50 states and the District of Columbia, a single parent of two children without child-care help climbs from the poverty line to twice it and ends up poorer than they started.");
+    const s = scene("single-2-nosub");
+    const bad = s.rows.filter((r) => (r.m.keepRate ?? 0) < 0).length;
+    expect(answerText(s)).toBe(
+      `In ${bad} of the 50 states and the District of Columbia, a single parent of two children without child-care help climbs from the poverty line to twice it and ends up poorer than they started.`);
   });
 });
 
