@@ -95,7 +95,7 @@ describe("buildPEPayload", () => {
     // (covered by its own tests below).
     for (const v of ["snap", "tanf", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"])
       expect(p.household.spm_units.spm_unit[v]["2026"]).toBeNull();
-    for (const v of ["eitc", "ctc", "refundable_ctc", "premium_tax_credit"])
+    for (const v of ["eitc", "ctc", "refundable_ctc", "premium_tax_credit", "premium_tax_credit_in_force"])
       expect(p.household.tax_units.tax_unit[v]["2026"]).toBeNull();
     for (const v of ["medicaid", "chip", "wic", "ssi"])
       expect(p.household.people.you[v]["2026"]).toBeNull();
@@ -360,18 +360,13 @@ describe("the child-care subsidy take-up toggle", () => {
     expect(people.spouse.childcare_days_per_week).toBeUndefined();
   });
 
-  it("names the provider type where the state's default pays nothing: MA by age, MD a licensed center", () => {
-    const ma = peopleOf({ ...withKids, state: "MA", getsChildcareSubsidy: true });
-    expect(ma.child1.ma_ccfa_care_provider_type).toEqual({ "2026": "CENTER_BASED_CARE_EARLY_EDUCATION" }); // age 3
-    expect(ma.child2.ma_ccfa_care_provider_type).toEqual({ "2026": "CENTER_BASED_CARE_SCHOOL_AGE" }); // age 8
-    expect(ma.you.ma_ccfa_care_provider_type).toBeUndefined();
-    const md = peopleOf({ ...withKids, state: "MD", getsChildcareSubsidy: true });
-    expect(md.child1.md_ccs_provider_type).toEqual({ "2026": "LICENSED_CENTER" });
-    expect(md.child2.md_ccs_provider_type).toEqual({ "2026": "LICENSED_CENTER" });
-    // Nothing for a state whose default already pays, and nothing at all without take-up.
-    const co = peopleOf({ ...withKids, state: "CO", getsChildcareSubsidy: true });
-    expect(Object.keys(co.child1).filter((k) => k.includes("provider_type"))).toEqual([]);
-    expect(peopleOf({ ...withKids, state: "MA" }).child1.ma_ccfa_care_provider_type).toBeUndefined();
+  it("leaves the provider type unset in every state now that MA and MD default to center care (#9485)", () => {
+    for (const state of ["MA", "MD", "CO"]) {
+      const people = peopleOf({ ...withKids, state, getsChildcareSubsidy: true });
+      for (const who of ["you", "child1", "child2"]) {
+        expect(Object.keys(people[who]).filter((k) => k.includes("provider_type")), `${state}.${who}`).toEqual([]);
+      }
+    }
   });
 
   it("still sends $0 as the pre-subsidy bill for a household that reports no childcare", () => {

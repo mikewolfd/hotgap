@@ -995,7 +995,7 @@ for (const [width, height] of [[390, 844], [1280, 900]] as const) {
       for (const el of clone.querySelectorAll(".hg-cite, #csvColumns, option")) el.remove();
       return clone.textContent!;
     });
-    check(!/\bsweep\b|\bendpoint\b|policyengine-us #|PR #|nj_property_tax_relief|PolicyEngine variable/i.test(ownText), "no sweep, endpoint, issue number or variable name in the page's own words (N7)");
+    check(!/\bsweep\b|\bendpoint\b|policyengine-us #|PR #|nj_property_tax_relief|ak_energy_relief|vt_renter_credit|PolicyEngine variable/i.test(ownText), "no sweep, endpoint, issue number or variable name in the page's own words (N7)");
     /* NO TEMPLATE SLOT REACHES THE PAGE. `t()` throws on an unfilled argument,
        which is the guard — but a message rendered as a bare string bypasses it,
        and one did: the method's definition of the road printed "at {year}

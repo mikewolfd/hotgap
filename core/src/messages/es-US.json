@@ -42,7 +42,9 @@
     },
     "otherBenefits": {
       "unidentified": "todavía sin identificar — sondee el motor con las listas de beneficios del hogar (stateOtherBenefits.ts)",
-      "nj_property_tax_relief": "Alivio del impuesto predial ANCHOR de Nueva Jersey, beneficio para inquilinos ($450 al año por debajo de $150,000 de ingresos)"
+      "nj_property_tax_relief": "Alivio del impuesto predial ANCHOR de Nueva Jersey, beneficio para inquilinos ($450 al año por debajo de $150,000 de ingresos)",
+      "ak_energy_relief": "Pago de alivio energético de Alaska, pagado junto con el Dividendo del Fondo Permanente ($200 por residente en 2026)",
+      "vt_renter_credit": "Crédito para inquilinos de Vermont, pagado en el Formulario RCC-146 fuera de la declaración de impuestos (hasta $2,500 al año)"
     }
   },
   "program": {

@@ -319,6 +319,8 @@ describe("Massachusetts TAFDC feedback loop", () => {
       expect(headers).toEqual({ "Content-Type": "application/json" });
       const denied = (async () => new Response(JSON.stringify({ status: "error", message: "Missing or invalid bearer token." }), { status: 401 })) as unknown as typeof fetch;
       await expect(requestPE({ household: {} }, { fetchImpl: denied })).rejects.toThrow(/401.*HOTGAP_PE_TOKEN/);
+      const forbidden = (async () => new Response("Forbidden", { status: 403 })) as unknown as typeof fetch;
+      await expect(requestPE({ household: {} }, { fetchImpl: forbidden })).rejects.toThrow(/403.*HOTGAP_PE_URL/);
     } finally {
       delete process.env.HOTGAP_PE_TOKEN;
     }

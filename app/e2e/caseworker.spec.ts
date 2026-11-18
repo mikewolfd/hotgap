@@ -83,11 +83,11 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     // ── The picture says what the prose used to (design/charts.md § Direct labels).
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`PF-labels-${width}-${scheme}`] = labels;
-    expect(labels).toContain("net $51,095, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
+    expect(labels).toContain("net $47,738, help counted");         /* 1: the y axis named in dollars at the diamond, and why it is not the pay */
     expect(labels.some((l) => /^−\$\d/.test(l ?? ""))).toBe(true); /* 2: the largest drop always draws */
     expect(labels.some((l) => /¢ of each extra dollar on average$/.test(l ?? ""))).toBe(true);   /* 6: the keep rate on the road out of poverty */
     // The peak's own dollar went with this pass: it printed a number within a rounding of "net" two inches away.
-    expect(labels.filter((l) => l === "$51,456")).toEqual([]);
+    expect(labels.filter((l) => l === "$47,987")).toEqual([]);
 
     // ── The rows behind the disclosures are the rows they always were.
     await open(page, "sources-panel");
@@ -114,16 +114,16 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(ledger.nth(5)).toContainText("$55,000");
     await expect(ledger.nth(5)).toContainText("CCDF child care subsidy");
     await expect(ledger.nth(5)).toContainText("Care priced at $2,773 a month for 2 children (county 2015 prices");
-    await expect(ledger.nth(3)).toContainText("$713 a year of SNAP continues at $54,000, none from $55,000.");
+    await expect(ledger.nth(3)).toContainText("$72 a year of SNAP continues at $52,000, none from $53,000.");
     await expect(ledger.filter({ hasText: "Deferred" })).toHaveCount(2);
 
     await open(page, "steps-panel");
     // The zones beyond this one lead the disclosure a counselor opens second — not the answer.
-    await expect(page.locator("#again")).toHaveText("It happens again between $45,000 and $119,000. Safe from $119,000: a raise of $73,000.");
+    await expect(page.locator("#again")).toHaveText("It happens again between $42,000 and $115,000. Safe from $115,000: a raise of $69,000.");
     await expect(page.locator("#answer")).not.toContainText("again");
     await expect(page.locator("#tiles .tile")).toHaveCount(5);
     await expect(page.locator("#tiles .tile").nth(2)).toContainText("Next cliff");
-    await expect(page.locator("#tiles .tile").nth(2)).toContainText("$41,000 → $42,000");
+    await expect(page.locator("#tiles .tile").nth(2)).toContainText("$51,000 → $52,000");
     await expect(page.locator("#tiles .tile").nth(3)).toContainText("Largest drop anywhere on the curve");
     await expect(page.locator("#tiles .tile").nth(3)).toContainText("in 100 families like this earn less");
     /* Reach in percentiles, the ladder's dollar margin read back through it (policy review R7), and in words (M13). */
@@ -133,8 +133,8 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     // The position stays on the two tiles a counselor reads out and off every row: three of four fresh
     // readers flinched at being ranked, and ten rows of it was nine too many.
     await expect(page.locator("#dropRows tr").first().locator(".hg-cite")).toHaveCount(0);
-    await expect(page.locator("#bdTitle")).toHaveText("Where the $25,449 went — $54,000 to $55,000");
-    await expect(page.locator("#bdBars")).toContainText("Sums to $25,449, the drop. Driver: benefits.");
+    await expect(page.locator("#bdTitle")).toHaveText("Where the $27,529 went — $54,000 to $55,000");
+    await expect(page.locator("#bdBars")).toContainText("Sums to $27,529, the drop. Driver: benefits.");
 
     await open(page, "assumed-panel");
     await expect(page.locator("#reachNote")).toContainText("it says how common the pay is, never the odds of getting there");
@@ -142,7 +142,7 @@ for (const width of [390, 1280] as const) for (const scheme of ["light", "dark"]
     await expect(page.locator("#reachNote")).toContainText("children's ages are not matched");
 
     expect(await page.locator("#marks .hg-mark").count()).toBeGreaterThan(0);
-    await expect(page.locator("#chartWrap")).toHaveAttribute("aria-label", /The largest step down is \$25,449 at \$54,000 where CCDF child care subsidy ends/);
+    await expect(page.locator("#chartWrap")).toHaveAttribute("aria-label", /The largest step down is \$27,529 at \$54,000 where CCDF child care subsidy ends/);
     await open(page, "howto");
     await expect(page.locator("#curveCap")).toContainText(/The y-axis starts at \$[\d,]+, not \$0; the visible range is [\d.]+× the largest drop\. The x-axis runs \$0 to \$[\d,]+; scroll the curve sideways to reach all of it\. No cliff on this curve is deferred\. Estimates only/);
 
@@ -558,7 +558,7 @@ test("es-US: the answer, the picture's labels and the disclosure names are the S
     await expect(page.locator("#compare")).toHaveText("Comparar los escenarios");
     const labels = await page.evaluate(() => [...document.querySelectorAll("#curve text.hg-label")].map((t) => t.textContent));
     measured[`ES-labels-${width}`] = labels;
-    expect(labels).toContain("neto $51,095, con la ayuda contada");
+    expect(labels).toContain("neto $47,738, con la ayuda contada");
     expect(labels.some((l) => /¢ de cada dólar extra en promedio$/.test(l ?? ""))).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: pf(`${width}-es`) });
@@ -576,7 +576,7 @@ test("390px: ] from the household's pay stops at the merged mark that holds its 
   await page.keyboard.press("]");
   const label = await page.locator("#marks .hg-mark:focus").getAttribute("aria-label");
   measured["N4-mark1-390"] = label;
-  expect(label).toMatch(/drops between \$[\d,]+ and \$[\d,]+|Cliff at \$41,000/);
+  expect(label).toMatch(/drops between \$[\d,]+ and \$[\d,]+|Cliff at \$51,000/);
   expect(label).not.toMatch(/^Cliff at \$60,000/);
 });
 
@@ -648,8 +648,8 @@ test("print from OS-dark: the controls and the bar leave, the client sheet opens
   await expect(page.locator("#handout h2")).toHaveText("Your pay and your help — Colorado, one parent, two children");
   /* The sheet's first line is the two facts the citizen answer gave up on 2026-09-18: the pay is in the
      ScenarioBar and the money kept is the label on the diamond, and paper carries neither. */
-  await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $51,095.");
-  await expect(page.locator("#handout")).toContainText("Your pay is past a drop at $38,000. From here to $45,000 you keep about 5¢ of each extra dollar; at $45,000 you're back to what you'd have kept at $36,000.");
+  await expect(page.locator("#handout p").first()).toHaveText("You're paid $38,000 a year, and with help counted you keep $47,738.");
+  await expect(page.locator("#handout")).toContainText("Your pay is past a drop at $38,000. From here to $42,000 you keep about 7¢ of each extra dollar; at $42,000 you're back to what you'd have kept at $37,000.");
   await page.screenshot({ path: shot("1280-print-from-dark"), fullPage: true });
   await page.screenshot({ path: pf("1280-print"), fullPage: true });
   await page.evaluate(() => document.getElementById("handout")!.scrollIntoView());

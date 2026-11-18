@@ -116,15 +116,21 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
 
   const rawNet = series(household, "household_net_income", expectedCount);
   // Count the real cost of health coverage the household bears: SPM medical
-  // out-of-pocket = health-insurance premiums NET of the ACA premium tax
-  // credit. PolicyEngine leaves this out of household_net_income, and the PTC
-  // is not inside household_net_income either — it is not one of the
-  // household_refundable_tax_credits (pinned live by the contract test) — so
-  // money left after paying for health is simply net income minus MOOP.
-  // Subtracting the PTC as well, as this code did until 2026-09-14, erased
-  // the subsidy and charged every household the gross premium.
+  // out-of-pocket = health-insurance premiums NET of the used ACA premium tax
+  // credit (`used_aca_ptc`). Before policyengine-us #10773, `household_net_income`
+  // excluded both health costs and the PTC, so money left after paying for
+  // health was simply `rawNet - moop`. From #10773 on, `household_net_income`
+  // adds `premium_tax_credit_in_force` (`used_aca_ptc`) via
+  // `household_refundable_tax_credits` while leaving `household_health_costs`
+  // at $0 (behind `include_health_benefits_in_net_income`) and keeping `moop`
+  // net of `used_aca_ptc` — so `rawNet - moop` would count `used_aca_ptc`
+  // twice unless `ptcInForce` is taken back out first. Pre-#10773 fixtures
+  // lack `premium_tax_credit_in_force`, leaving `ptcInForce` null.
+  const ptcInForce = "premium_tax_credit_in_force" in tax
+    ? series(tax, "premium_tax_credit_in_force", expectedCount)
+    : null;
   const moop = series(spm, "spm_unit_medical_out_of_pocket_expenses", expectedCount);
-  const net = rawNet.map((n, i) => n - moop[i]);
+  const net = rawNet.map((n, i) => n - (ptcInForce?.[i] ?? 0) - moop[i]);
 
   const programSeries = new Map<ProgramId, number[]>();
   const childSeries = new Map<ProgramId, number[]>();
@@ -258,17 +264,19 @@ export function parsePEResponse(body: unknown, expectedCount: number, opts: Pars
   // so the remainder is exactly the state's share. It drops $1,215 over the
   // single step from $26,000 to $27,000.
   //
-  // The remainder is NOT the premium tax credit and NOT a benefit, so it
-  // double-counts nothing: at $100,000 the same household's PTC is $6,450
-  // while the remainder is $25, and household_benefits is a separate term of
-  // the net-income identity from household_refundable_tax_credits (which is
-  // why otherBenefits, built from household_benefits, cannot contain it).
+  // From policyengine-us #10773 on, `household_refundable_tax_credits` also
+  // carries `premium_tax_credit_in_force` (`used_aca_ptc`) alongside the EITC,
+  // refundable CTC and state credits, so `ptcInForce` is taken out with the
+  // federal pair when present (null on pre-#10773 fixtures, where the PTC was
+  // never inside `household_refundable_tax_credits`). `household_benefits` is a
+  // separate term of the net-income identity, so `otherBenefits` cannot contain
+  // state credits either.
   const refundable = "household_refundable_tax_credits" in household
     ? series(household, "household_refundable_tax_credits", expectedCount)
     : null;
   const stateCredits = (i: number) => {
     if (!refundable) return 0;
-    const federal = (programSeries.get("eitc")?.[i] ?? 0) + (programSeries.get("ctc")?.[i] ?? 0);
+    const federal = (programSeries.get("eitc")?.[i] ?? 0) + (programSeries.get("ctc")?.[i] ?? 0) + (ptcInForce?.[i] ?? 0);
     // Float noise around a difference that is zero in most states can only go
     // negative by fractions of a cent; floor it rather than report a negative.
     return Math.max(0, refundable[i] - federal);

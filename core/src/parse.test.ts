@@ -162,6 +162,30 @@ describe("parsePEResponse", () => {
     expect(parsePEResponse(body, 101).every((p) => p.stateCredits === 0)).toBe(true);
   });
 
+  it("nets out premium_tax_credit_in_force (#10773) from both netIncome and stateCredits when served", () => {
+    // From policyengine-us #10773 on, household_refundable_tax_credits and
+    // household_net_income include premium_tax_credit_in_force (used_aca_ptc)
+    // while spm_unit_medical_out_of_pocket_expenses remains net of used_aca_ptc.
+    // Adding ptcInForce to both series must leave netIncome and stateCredits
+    // unchanged, even where used_aca_ptc differs from the raw aca_ptc ceiling.
+    const pre = parsePEResponse(fixture, 101);
+    const ptc = fixture.result.tax_units.tax_unit.premium_tax_credit["2026"] as number[];
+    const ptcInForce = ptc.map((v) => Math.round(v * 0.85 * 100) / 100);
+    const body = structuredClone(fixture);
+    body.result.tax_units.tax_unit.premium_tax_credit_in_force = { "2026": ptcInForce };
+    body.result.households.household.household_net_income["2026"] =
+      (fixture.result.households.household.household_net_income["2026"] as number[]).map((n, i) => n + ptcInForce[i]);
+    body.result.households.household.household_refundable_tax_credits["2026"] =
+      (fixture.result.households.household.household_refundable_tax_credits["2026"] as number[]).map((r, i) => r + ptcInForce[i]);
+    const post = parsePEResponse(body, 101);
+    expect(Math.max(...ptcInForce)).toBeGreaterThan(1000);
+    for (let i = 0; i < 101; i++) {
+      expect(post[i].netIncome).toBeCloseTo(pre[i].netIncome, 6);
+      expect(post[i].stateCredits).toBeCloseTo(pre[i].stateCredits, 5);
+      expect(post[i].programs.aca).toBeCloseTo(pre[i].programs.aca!, 6);
+    }
+  });
+
   it("keeps the whole child tax credit apart from the refundable part, and falls back to it", () => {
     // One child: the whole $2,200 credit at every point, while the refund
     // shrinks with the tax bill and is gone by $46,000.

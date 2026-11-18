@@ -186,31 +186,33 @@ describe("the road on the committed sweep, single parent of two", () => {
     expect(road!.worst).toBeNull();
   });
 
-  it("a keep rate is a slope, not a level: Wisconsin keeps more at the line and less at twice it than New Mexico", () => {
+  it("a keep rate is a slope, not a level: Michigan keeps more at the line and less at twice it than New Mexico, and Wisconsin collapses from $41,843 to $16,817", () => {
+    const mi = roadFor("MI").road!;
     const wi = roadFor("WI").road!;
     const nm = roadFor("NM").road!;
     // After taxes, premiums and the child care the family pays itself (R1):
-    // Wisconsin's $33,984 bill is paid by the subsidy at the line and by the
-    // family at twice it, which is the whole of its collapse.
-    expect([Math.round(wi.netAtLo!), Math.round(wi.netAtHi!)]).toEqual([46_179, 16_817]);
-    expect([Math.round(nm.netAtLo!), Math.round(nm.netAtHi!)]).toEqual([45_705, 54_223]);
+    // Wisconsin's $33,984 bill is paid largely by the subsidy at the line and by
+    // the family at twice it, which is the whole of its collapse.
+    expect([Math.round(mi.netAtLo!), Math.round(mi.netAtHi!)]).toEqual([45_882, 30_831]);
+    expect([Math.round(wi.netAtLo!), Math.round(wi.netAtHi!)]).toEqual([41_843, 16_817]);
+    expect([Math.round(nm.netAtLo!), Math.round(nm.netAtHi!)]).toEqual([45_682, 54_209]);
   });
 
   it("Massachusetts collapses at the SNAP limit on the line, which a road stopping short could not see", () => {
     // The case that fixed the definition: BBCE tests SNAP against a
     // fiscal-year-blended poverty figure a little above the calendar
     // guideline, so the cliff is the step out of $54,000 with 2 × $26,650 =
-    // $53,300. A road whose last step started at $53,000 excluded it — and
-    // the same one-step miss hid Maryland's $913 at $54,000.
+    // $53,300. A road whose last step started at $53,000 excluded it, while
+    // keeping Maryland's $781 school-meals exit at $53,000 inside the span.
     const ma = roadFor("MA").road!;
-    expect(ma.worst).toMatchObject({ startEarnings: 54_000, drop: 3513, programsLost: ["snap", "wic"] });
-    expect(roadFor("MD").road!.worst).toMatchObject({ startEarnings: 54_000, drop: 913 });
+    expect(ma.worst).toMatchObject({ startEarnings: 54_000, drop: 3504, programsLost: ["snap", "wic"] });
+    expect(roadFor("MD").road!.worst).toMatchObject({ startEarnings: 53_000, drop: 781, programsLost: ["schoolmeals"] });
   });
 
   it("nationally, a family that doubles its earnings from poverty ends up poorer than it started", () => {
     const rates = STATE_CODES.map((state) => roadFor(state).road?.keepRate ?? null);
     expect(rates.filter((r) => r === null)).toEqual([]); // every state's road is on its axis
     const mean = rates.reduce<number>((sum, r) => sum + r!, 0) / rates.length;
-    expect(mean.toFixed(2)).toBe("-0.17");
+    expect(mean.toFixed(2)).toBe("-0.16");
   });
 });

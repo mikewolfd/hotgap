@@ -169,7 +169,11 @@ async function requestOnce(fetchImpl: typeof fetch, payload: unknown, timeoutMs:
   if (res.status !== 200) {
     // A rejected payload comes back as { status: "error", message } — keep the message.
     const detail = await res.json().then((b) => (b as { message?: string })?.message, () => undefined);
-    const hint = res.status === 401 ? " (this engine wants a bearer token: set HOTGAP_PE_TOKEN)" : "";
+    const hint = res.status === 401
+      ? " (this engine wants a bearer token: set HOTGAP_PE_TOKEN)"
+      : res.status === 403
+        ? " (this endpoint refused the request: set HOTGAP_PE_URL to a self-hosted engine, or HOTGAP_PE_TOKEN if it requires one)"
+        : "";
     throw new PolicyEngineError("upstream", `PolicyEngine responded ${res.status}${detail ? `: ${detail}` : ""}${hint}`, res.status);
   }
   try {

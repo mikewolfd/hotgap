@@ -46,6 +46,32 @@ export const OTHER_BENEFIT_SOURCES: readonly OtherBenefitSource[] = [
     message: coded("coverage.otherBenefits.nj_property_tax_relief").message,
     states: ["NJ"],
   },
+  {
+    // Alaska's 2026 one-time energy relief payment: $200 per PFD-eligible
+    // resident, paid alongside the Permanent Fund Dividend (Sec. 13, ch. 34,
+    // SLA 2026, HB 263; upstream parameter gov/states/ak/dor/energy_relief).
+    // In `gov.household.household_benefits` as `ak_energy_relief`. Verified
+    // 2026-11-18 on policyengine-us 2.145.7: $200 per person ($200 to $1,000
+    // across the 1-to-5-person archetypes) at every point of every Alaska curve.
+    variable: "ak_energy_relief",
+    entity: "people",
+    label: coded("coverage.otherBenefits.ak_energy_relief").text,
+    message: coded("coverage.otherBenefits.ak_energy_relief").message,
+    states: ["AK"],
+  },
+  {
+    // Vermont's Renter Credit: up to $2,500 a year in 2026 for a low- or
+    // moderate-income renter, claimed on Form RCC-146 and paid outside the
+    // income tax return (32 V.S.A. §6066(b); upstream parameters
+    // gov/states/vt/tax/income/credits/renter). Moved into
+    // `gov.states.household.state_property_tax_refunds` and thus
+    // `gov.household.household_state_benefits` in policyengine-us 2.145.7.
+    variable: "vt_renter_credit",
+    entity: "tax_units",
+    label: coded("coverage.otherBenefits.vt_renter_credit").text,
+    message: coded("coverage.otherBenefits.vt_renter_credit").message,
+    states: ["VT"],
+  },
 ];
 
 /** The variables known to carry this state's remainder; empty where none has been traced. */

@@ -163,7 +163,7 @@ HOTGAP_PE_URL=http://127.0.0.1:8080/us/calculate npm run pipeline
 | What | When | How |
 |---|---|---|
 | Tests, typecheck, engine contract | Every push and PR | `.github/workflows/ci.yml` |
-| Public-API contract check | Daily | `.github/workflows/contract.yml` |
+| Hosted-endpoint contract check | On demand | `.github/workflows/contract.yml` |
 | Data sweep | Mondays 07:00 UTC, or by hand | `.github/workflows/places-data.yml` — tests, then commits `core/data/` if anything changed |
 | Engine image | Push to `main` touching `engine/` | `.github/workflows/engine-image.yml` builds the image; Watchtower on the droplet picks it up |
 | Site | Every push to `main` | Cloudflare's Git integration (configured in the Cloudflare dashboard) builds `app/` and deploys `worker/` — it does not wait for CI |

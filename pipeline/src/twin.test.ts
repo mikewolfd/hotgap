@@ -34,13 +34,13 @@ describe("the no-subsidy twin, derived from its base row (R2, R16)", () => {
     expect(Object.keys(input.WY)).toEqual(["single-2"]);
   });
 
-  it("on the committed sweep: Wisconsin's family keeps 7¢ of each extra dollar without the subsidy, where it loses 105¢ with it", () => {
+  it("on the committed sweep: Wisconsin's family keeps 23¢ of each extra dollar without the subsidy, where it loses 89¢ with it", () => {
     const file = loadStateFile("WI")!;
     const twin = ARCHETYPES.find((a) => a.id === "single-2-nosub")!;
     const without = stateMetrics(evaluateCurve(answersFor("WI", twin), { year: file.year, currentEarnings: 0, points: withoutSubsidy(file.archetypes["single-2"].points) }, "archetype"));
     const withIt = stateMetrics(evaluateCurve(answersFor("WI", archetypeById("single-2")), { year: file.year, currentEarnings: 0, points: file.archetypes["single-2"].points }, "archetype"));
-    expect(Math.round(withIt.keepRate! * 100)).toBe(-105);
-    expect(Math.round(without.keepRate! * 100)).toBe(7);
+    expect(Math.round(withIt.keepRate! * 100)).toBe(-89);
+    expect(Math.round(without.keepRate! * 100)).toBe(23);
     // The level loses exactly the subsidy it carried; the twin carries none.
     expect(without.netAtRoadLo).toBe(withIt.netAtRoadLo! - withIt.childcareAtRoadLo!);
     expect(without.childcareAtRoadLo).toBe(0);

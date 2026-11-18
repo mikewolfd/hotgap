@@ -58,7 +58,11 @@ const PERSON_VARS = ["medicaid", "chip", "wic", "ssi"];
 const SPM_VARS = ["snap", "tanf", "spm_unit_capped_housing_subsidy", "free_school_meals", "reduced_price_school_meals", "spm_unit_medical_out_of_pocket_expenses"];
 // `ctc` is the whole child tax credit and `refundable_ctc` only the refundable
 // part; both are requested because a step can move one without the other.
-const TAX_VARS = ["eitc", "ctc", "refundable_ctc", "premium_tax_credit"];
+// `premium_tax_credit_in_force` (policyengine-us #10773) is the used ACA
+// credit counted inside `household_refundable_tax_credits` and
+// `household_net_income`; parse.ts nets it out alongside net-of-PTC MOOP so
+// the subsidy is neither double-counted nor misread as a state credit.
+const TAX_VARS = ["eitc", "ctc", "refundable_ctc", "premium_tax_credit", "premium_tax_credit_in_force"];
 
 export interface PayloadOptions {
   /**
@@ -171,33 +175,6 @@ function applyChildcareSubsidy(spmVars: Vars, people: Record<string, Vars>, a: H
     person.childcare_hours_per_day = y(8);
     person.childcare_days_per_week = y(5);
     person.childcare_attending_days_per_month = y(20);
-    Object.assign(person, childcareProviderType(a.state, age));
-  }
-}
-
-// Massachusetts treats a child as school age from this birthday
-// (gov.states.ma.eec.ccfa.age_threshold.school_age), the NDCP's line too.
-const MA_CCFA_SCHOOL_AGE = 5;
-
-/**
- * The provider-type input two states need before they pay anything
- * (policyengine-us #9485). Every state's rate table is keyed by a provider
- * type, and 49 default it to a licensed center — the care the bill prices.
- * Maryland's defaults to NONE, and Massachusetts's to the school-age center
- * rate, a $0 rate for a child under 5 even though the model derives the
- * child's age category itself. Verified 2026-09-15 on the public API and on
- * policyengine-us 2.5.0: a 3-year-old's $12,000 bill draws $0 → $12,000 in
- * Massachusetts and $0 → $10,556 in Maryland; a school-age child in
- * Massachusetts is unchanged. Remove a state here once its default pays.
- */
-function childcareProviderType(state: string, age: number): Vars {
-  switch (state) {
-    case "MA":
-      return { ma_ccfa_care_provider_type: y(age < MA_CCFA_SCHOOL_AGE ? "CENTER_BASED_CARE_EARLY_EDUCATION" : "CENTER_BASED_CARE_SCHOOL_AGE") };
-    case "MD":
-      return { md_ccs_provider_type: y("LICENSED_CENTER") };
-    default:
-      return {};
   }
 }
 

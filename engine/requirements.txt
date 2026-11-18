@@ -1,29 +1,28 @@
 # The model, pinned: these three decide every number the service returns.
 #
-# `policyengine-us`'s own metadata (2.4.2 through 2.5.0) asks for
-# `spm-calculator>=1.0.0,<=1.0.0.post1` while its README prose says the
-# release "pins spm-calculator==0.3.1 to preserve its SPM threshold API". The
-# metadata is the machine-readable truth and the resolver picks 1.0.0.post1;
-# SPM thresholds were checked under it (a CA family of two, 2026: $37,779)
-# and are sane, so the metadata's range is what is pinned here. Revisit if
-# upstream corrects the prose in a later release.
+# `policyengine-us`'s metadata now asks for `spm-calculator>=1.1.0,<1.2` and
+# `policyengine-core>=3.36.0`; the resolver picks 1.1.0 and 3.36.1, which are
+# pinned here alongside the model.
 #
 # 2.5.0 (2026-09-16) carries 2.4.4's fix for the Massachusetts TAFDC double
-# count (policyengine-us #9478) and 2.4.3's Massachusetts CCFA rework; the
-# client detects the first by probing. 2.5.2 carries the corrected parent
-# Medicaid limits (#9475, #9499), which the client's version check retires
-# its own override on. 2.5.3 counts state SSI supplements as SNAP unearned
-# income; 2.6.x is state tax and reform aggregates. The federal CCDF chain
-# 2.5.0 removed was never requested.
-policyengine-us==2.6.10
-policyengine-core==3.32.6
-spm-calculator==1.0.0.post1
+# count (policyengine-us #9478) and 2.4.3's Massachusetts CCFA rework; 2.5.2
+# carries the corrected parent Medicaid limits (#9475, #9499), which the
+# client's version check retires its own override on. 2.145.7 also carries
+# #9472 (no marketplace premium in the coverage gap), #9482 (AK/HI poverty
+# guidelines), #9485 (center-care defaults for MA CCFA and MD CCS), #9503
+# (all 51 child-care subsidies in household_state_benefits), the 5-year SNAP
+# waiting period for LPRs, and #10773 (premium_tax_credit_in_force inside
+# household_refundable_tax_credits and household_net_income, which parse.ts
+# nets back out alongside SPM medical out-of-pocket).
+policyengine-us==2.145.7
+policyengine-core==3.36.1
+spm-calculator==1.1.0
 
 # The HTTP layer. Flask because the public API is a Flask app, and gunicorn
 # because a simulation is not safe to interleave with another in the same
 # process (engine/calculate.py), so parallelism has to come from processes.
 flask==3.1.3
-gunicorn==26.2.0
+gunicorn==27.0.1
 
 # Everything else (numpy, pandas>=3, microdf, tables, us, …) is resolved from
 # the model's own metadata. Those are not pinned so the file installs across
