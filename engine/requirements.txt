@@ -15,7 +15,7 @@
 # household_refundable_tax_credits and household_net_income, which parse.ts
 # nets back out alongside SPM medical out-of-pocket).
 policyengine-us==2.145.7
-policyengine-core==3.36.1
+policyengine-core==3.37.1
 spm-calculator==1.1.0
 
 # The HTTP layer. Flask because the public API is a Flask app, and gunicorn
